@@ -11,7 +11,7 @@ origin: risco
 
 This is the **specify** phase of the rsc-sdd chain: `constitution` → **`specify`** → `clarify` → `plan` → `tasks` → `analyze` → `implement` → `verify` → `review` → `ship`. Its single job is to turn a fuzzy intent into a written specification that states **WHAT** the change is and **WHY** it matters — and nothing about **HOW** it gets built.
 
-A spec is a contract about behaviour and outcomes, readable by a non-technical stakeholder and precise enough that a `plan` can be derived from it. The output is one file: `02-DOCS/wiki/sdd/specs/<slug>.md`, indexed in the root `CLAUDE.md` Knowledge map.
+A spec is a contract about behaviour and outcomes, readable by a non-technical stakeholder and precise enough that a `plan` can be derived from it. The output is one file: `02-DOCS/wiki/sdd/specs/<slug>.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer).
 
 ## Detect the moment — and hold the gate
 
@@ -93,7 +93,8 @@ Run these in order. It is a collaborative dialogue, not a form you fill in silen
 5. PROPOSE 2-3 approaches → distinct directions with honest trade-offs; lead with your recommendation and why
 6. PRESENT the design     → section by section (problem, users, behaviour, acceptance), scaled to complexity;
                             after EACH section ask "does this look right?" and adjust before moving on
-7. WRITE the spec         → 02-DOCS/wiki/sdd/specs/<slug>.md (WHAT/WHY), index it in CLAUDE.md, commit if a repo
+7. WRITE the spec         → 02-DOCS/wiki/sdd/specs/<slug>.md (WHAT/WHY), index it in 02-DOCS/wiki/index.md
+                            (the Knowledge map; root CLAUDE.md keeps only a short pointer), commit if a repo
 8. SELF-REVIEW            → scan for TODO/placeholder, contradictions, ambiguity, scope creep; fix inline
 9. USER APPROVES          → ask them to read the written spec and confirm; loop on changes until they approve
 10. HAND OFF              → only now, result envelope → clarify/plan. NEVER to implement.
@@ -191,7 +192,7 @@ The proposal is allowed to mention options and tradeoffs; the spec that follows 
 - Read `02-DOCS/wiki/sdd/constitution.md` first — its principles are inherited constraints, not things to re-decide. If it's missing, note that the project has no constitution yet and suggest the `constitution` phase before continuing (you can still draft a spec, but flag the absence).
 - **No constitution yet?** Still write the spec, but inherit nothing — lean harder on the wiki and the user's answers, and record every constraint you would have inherited as a *point to clarify* instead of assuming it.
 - Write the spec to `02-DOCS/wiki/sdd/specs/<slug>.md`. Create the directory if absent.
-- Add a row under the `## Knowledge map` section of the root `CLAUDE.md` linking the new spec under the `sdd/specs` topic (additive only — never delete existing rows). Create `CLAUDE.md` if absent.
+- Add a row in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) linking the new spec under the `sdd/specs` topic (additive only — never delete existing rows). Create the index if absent.
 - Log the spec's creation and any significant scoping decision to `02-DOCS/wiki/sdd/decisions.md` (append-only), so the chain keeps a trace of why scope landed where it did. This is the canonical SDD decisions log shared with `constitution` and `plan` — not the harness's own `02-DOCS/wiki/harness/decisions.md`.
 
 ## Result envelope

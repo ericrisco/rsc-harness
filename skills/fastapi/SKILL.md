@@ -480,14 +480,14 @@ shutdown, keyset pagination, caching, `ORJSONResponse` and proxy headers all liv
 
 When this skill runs in a project with a `02-DOCS/` layer (the
 [`harness`](../harness/SKILL.md) Karpathy wiki), record this project's API decisions in
-`02-DOCS/wiki/stack/fastapi.md` and link it from a `## Knowledge map` section in the root
-`CLAUDE.md`, so the next agent inherits the conventions instead of re-deriving them.
+`02-DOCS/wiki/stack/fastapi.md` and index it in `02-DOCS/wiki/index.md` (the Knowledge map index; root
+`CLAUDE.md` points to it), so the next agent inherits the conventions instead of re-deriving them.
 
 - **Read it first** on every use and stay consistent; bump its `Updated` date when a
   convention changes.
 - **Create/update it** with the project's real choices — auth model (JWT/OAuth2 provider,
   token TTLs), DB session + migration tool, error-envelope shape, settings/secrets approach,
-  deployment target — adding the `CLAUDE.md` link (and the file) if absent.
+  deployment target — indexing it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it) if absent.
 
 No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Technical conventions are
 *recorded, not gated* — never block the task on this.

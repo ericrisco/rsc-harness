@@ -14,32 +14,19 @@ workspace. If you're working in a subproject that also has its own
 
 ## Knowledge map
 
-The living record of this project's conventions lives under `02-DOCS/wiki/` and is maintained by
-the stack skills, plus the `harness/` topic maintained by the harness itself (user profile +
-decisions log). Each skill links its article here as it is created — read the relevant article
-before working in its area (the `harness/user-profile.md` first, to match the user's technical +
-accompaniment level), and update it when conventions change.
+The **full** index of this project's conventions lives in **`02-DOCS/wiki/index.md`** — maintained by
+the stack skills plus the `harness/` topic. Read the relevant article before working in its area, and
+update it when conventions change. Keep this section a **short pointer**: CLAUDE.md is read on every
+turn, so the full per-area table belongs in `02-DOCS/wiki/index.md`, not here. New index entries go
+there, not into this file.
+
+Read first, always:
 
 | Area | Article |
 |------|---------|
 | User profile (technical + accompaniment level) | `02-DOCS/wiki/harness/user-profile.md` |
-| Decisions log (append-only, "siempre 3 opciones") | `02-DOCS/wiki/harness/decisions.md` |
 | SDD constitution (project non-negotiables) | `02-DOCS/wiki/sdd/constitution.md` |
-| SDD specs (what & why, per feature) | `02-DOCS/wiki/sdd/specs/` |
-| SDD plans (technical approach, per feature) | `02-DOCS/wiki/sdd/plans/` |
-| SDD decisions (implement-phase log) | `02-DOCS/wiki/sdd/decisions.md` |
-| Brand & voice | `02-DOCS/wiki/brand/` |
-| Design system | `02-DOCS/wiki/stack/design.md` |
-| FastAPI / API | `02-DOCS/wiki/stack/fastapi.md` |
-| Next.js app | `02-DOCS/wiki/stack/nextjs.md` |
-| Go services | `02-DOCS/wiki/stack/go.md` |
-| PostgreSQL | `02-DOCS/wiki/stack/postgresdb.md` |
-| Flutter app | `02-DOCS/wiki/stack/flutter.md` |
-| Agents | `02-DOCS/wiki/stack/agents.md` |
-| Security | `02-DOCS/wiki/stack/security.md` |
-| Deployment | `02-DOCS/wiki/stack/deployment.md` |
-| Presentations | `02-DOCS/wiki/stack/presentations.md` |
-| Course storytelling | `02-DOCS/wiki/stack/course-storytelling.md` |
+| **Everything else — full index** | `02-DOCS/wiki/index.md` |
 
 ## Workspace map
 

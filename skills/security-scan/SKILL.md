@@ -216,8 +216,9 @@ Emit one `security-scan-report.json` — the machine-checkable contract CI gates
 
 In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md)
 Karpathy wiki), record the scanner choices, pinned versions, gate thresholds, and
-any accepted-risk suppressions in `02-DOCS/wiki/stack/security-scan.md`, and link
-it from the root `CLAUDE.md` `## Knowledge map`. Read it first on every run so the
+any accepted-risk suppressions in `02-DOCS/wiki/stack/security-scan.md`, and index
+it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short
+pointer to it). Read it first on every run so the
 next agent inherits the pinned tools and thresholds instead of re-deriving them.
 No `02-DOCS/`? Skip silently. Conventions are recorded, not gated — never block
 the scan on this.

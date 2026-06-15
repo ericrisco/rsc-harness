@@ -53,7 +53,7 @@ If no profile exists, default to L2 and note that the harness has not gauged the
 
 ## Inputs — locate the four artifacts
 
-Read all four before analyzing. The rsc-sdd artifacts live under `02-DOCS/wiki/sdd/` (the harness Karpathy-wiki convention), indexed from the root `CLAUDE.md` `## Knowledge map`:
+Read all four before analyzing. The rsc-sdd artifacts live under `02-DOCS/wiki/sdd/` (the harness Karpathy-wiki convention), indexed from `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it):
 
 | Artifact | Canonical location | Role in the check |
 | --- | --- | --- |
@@ -111,7 +111,7 @@ Produce a single consistency report:
 3. **Findings table** — `# | Severity | Type | Artifact A (loc) | Artifact B (loc) | Conflict | Resolve in (phase)`.
 4. **Recommended routing** — group fixes by the phase that owns them (`clarify` for spec ambiguity, `plan` for missing architecture, `tasks` for a missing done-check, `constitution` if a principle itself is wrong).
 
-Write the report to `02-DOCS/wiki/sdd/analysis/<slug>.md` (create the dir if absent) and add/refresh its row in the root `CLAUDE.md` `## Knowledge map` under the `sdd/` topic, so the next phase and the harness can find it. The report is the artifact analyze owns — it is the *only* thing analyze writes. Per-run point-in-time; overwrite on re-run, the wiki keeps history.
+Write the report to `02-DOCS/wiki/sdd/analysis/<slug>.md` (create the dir if absent) and index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) under the `sdd/` topic, so the next phase and the harness can find it. The report is the artifact analyze owns — it is the *only* thing analyze writes. Per-run point-in-time; overwrite on re-run, the wiki keeps history.
 
 Adapt the rendered verbosity to the dial (L0 = table only; L3 = full walk-through). Do not log a decision to `decisions.md` — analyze decides nothing; the phase that resolves the finding logs its own decision.
 

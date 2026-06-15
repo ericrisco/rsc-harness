@@ -51,7 +51,7 @@ Before discovery, before any recommendation, write the profile to `02-DOCS` and 
 
 - `02-DOCS/wiki/harness/user-profile.md` — the living profile (technical level, accompaniment level, goals, context, constraints). Format in `references/accompaniment-and-profile.md`.
 - `02-DOCS/wiki/harness/decisions.md` — an **append-only** decisions log. Every significant decision gets one entry, never edited or deleted. Format in `references/accompaniment-and-profile.md`.
-- Root `CLAUDE.md` → a `## Knowledge map` section linking to BOTH files. Create `CLAUDE.md` if absent (additive only — never delete existing sections).
+- Root `CLAUDE.md` → a SHORT `## Knowledge map` pointer: the read-first entries (this `user-profile.md` and the `decisions.md` log) plus a "full index → `02-DOCS/wiki/index.md`" line. Keep this pointer tiny — it loads on every turn; ALL other index entries live in `02-DOCS/wiki/index.md`, not here. Create `CLAUDE.md` if absent (additive only — never delete existing sections).
 
 If `02-DOCS/` does not yet exist (greenfield), create `02-DOCS/wiki/harness/` now — just enough to hold these two files. That, plus the `CLAUDE.md` Knowledge-map link, is everything `init` writes; ALL other `01-TOOLS/` + `02-DOCS/` scaffolding is the `harness` skill's job.
 
@@ -196,7 +196,7 @@ These thoughts mean the skill is about to break its own rules. Recognize and abo
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
-This skill's `02-DOCS` record is the **user profile** at `02-DOCS/wiki/harness/user-profile.md` plus the append-only **decisions log** at `02-DOCS/wiki/harness/decisions.md`. Both are written in Phase 1 and updated throughout, and both are linked from a `## Knowledge map` section in the root `CLAUDE.md` (created if absent, additive only). Every rsc skill reads the profile first and adapts its verbosity and question count to `accompaniment_level` and `technical_level`. Those two files plus the Knowledge-map link are everything `init` writes; ALL other `01-TOOLS/` + `02-DOCS/` scaffolding is the `harness` skill's job, and it reads this same profile.
+This skill's `02-DOCS` record is the **user profile** at `02-DOCS/wiki/harness/user-profile.md` plus the append-only **decisions log** at `02-DOCS/wiki/harness/decisions.md`. Both are written in Phase 1 and updated throughout. Because they are the read-first entries, both stay in the SHORT `## Knowledge map` pointer in the root `CLAUDE.md` (created if absent, additive only) — alongside a "full index → `02-DOCS/wiki/index.md`" line where every OTHER index entry lives. Every rsc skill reads the profile first and adapts its verbosity and question count to `accompaniment_level` and `technical_level`. Those two files plus the Knowledge-map link are everything `init` writes; ALL other `01-TOOLS/` + `02-DOCS/` scaffolding is the `harness` skill's job, and it reads this same profile.
 
 Verify the profile and the Knowledge-map link exist with `scripts/verify.sh` (read-only; warns, never fails).
 

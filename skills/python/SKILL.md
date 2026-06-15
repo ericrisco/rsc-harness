@@ -348,9 +348,9 @@ When this skill runs in a project with a `02-DOCS/` layer (the
 [`harness`](../harness/SKILL.md) Karpathy wiki), record this project's Python conventions
 there so the next agent inherits them — *recorded, not gated*, never block the task on this.
 
-1. **Find** `02-DOCS/wiki/stack/python.md`, linked from a `## Knowledge map` in the root `CLAUDE.md`.
+1. **Find** `02-DOCS/wiki/stack/python.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map index; root `CLAUDE.md` points to it).
 2. **If missing or stale**, write the project's real choices (interpreter floor, `src/` layout,
-   uv workflow, ruff/mypy config, async-vs-sync stance, data-modeling defaults) and add the link.
+   uv workflow, ruff/mypy config, async-vs-sync stance, data-modeling defaults) and index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
 3. **Read it first on every use**; bump its `Updated` date when a convention changes.
 
 No `02-DOCS/` layer? Skip silently (optionally suggest `harness`).

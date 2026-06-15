@@ -228,7 +228,7 @@ When no profile exists, default to L2 and proceed — don't stall the ship to as
 Ship is mostly git actions, but the outcome is recorded so the knowledge model stays whole:
 
 - **The landing decision** (which of the three options, and why) → append to `02-DOCS/wiki/sdd/decisions.md`, the same append-only log `implement`, `verify`, and `review` write to. Parks and discards are logged with their reason so dead-ends aren't re-walked.
-- A **shipped feature** flips its spec under `02-DOCS/wiki/sdd/specs/<slug>.md` to a shipped state (note the merge commit / PR). The harness owns the wiki; ship just keeps the `sdd/` rows in the root `CLAUDE.md` `## Knowledge map` honest.
+- A **shipped feature** flips its spec under `02-DOCS/wiki/sdd/specs/<slug>.md` to a shipped state (note the merge commit / PR). The harness owns the wiki; ship just keeps the `sdd/` rows in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) honest.
 - An **archive bundle** closes the loop under `02-DOCS/wiki/sdd/archive/<slug>/`:
   - `final-report.md` — what shipped, why, landing decision, links.
   - `apply-progress.md` — copy or link to `progress/<slug>.md`.

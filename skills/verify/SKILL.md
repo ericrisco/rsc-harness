@@ -113,7 +113,7 @@ A criterion you "reviewed by reading the code" is not verified. Reading is `revi
 
 ### 4 — RECORD
 
-Write a dated verification record to `02-DOCS/wiki/sdd/verifications/<slug>-YYYY-MM-DD.md` so the project's living knowledge carries the proof, then ensure it's indexed in the root `CLAUDE.md` `## Knowledge map` under the `sdd/` topic. Keep it short and factual:
+Write a dated verification record to `02-DOCS/wiki/sdd/verifications/<slug>-YYYY-MM-DD.md` so the project's living knowledge carries the proof, then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) under the `sdd/` topic. Keep it short and factual:
 
 ```markdown
 # Verification — <slug> — YYYY-MM-DD

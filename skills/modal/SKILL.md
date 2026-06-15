@@ -296,7 +296,8 @@ exits 0.
 
 In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) wiki), record this
 app's real Modal choices — GPU types, image base, Volume names, schedule, endpoint shape — in
-`02-DOCS/wiki/stack/modal.md` and link it from the root `CLAUDE.md` `## Knowledge map`. Read it
+`02-DOCS/wiki/stack/modal.md` and index it in `02-DOCS/wiki/index.md` (the Knowledge map; root
+`CLAUDE.md` keeps only a short pointer to it). Read it
 first on every use; create/update it with the real decisions. No `02-DOCS/`? Skip silently.
 
 ## See Also

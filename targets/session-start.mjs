@@ -107,6 +107,28 @@ ACTION: run \`npx @ericrisco/rsc audit\`. Opt out with .rsc/.no-audit.
 `);
 }
 
+// CLAUDE.md hygiene: the root CLAUDE.md is read on EVERY turn, so an overgrown one (usually
+// the Knowledge map accreting a row per wiki article) is a permanent context tax that rots
+// adherence. When it passes the ~200-line 2026 budget, nudge to offload the index into
+// 02-DOCS/wiki/index.md and keep CLAUDE.md a short pointer (the `harness` skill owns the move;
+// it's a relocation, not a delete). Opt out with .rsc/.no-claudemd-check.
+const CLAUDEMD_MAX_LINES = 200;
+if (!has('.rsc', '.no-claudemd-check')) {
+  try {
+    const lines = readFileSync(join(root, 'CLAUDE.md'), 'utf8').split('\n').length;
+    if (lines > CLAUDEMD_MAX_LINES) {
+      process.stdout.write(`
+===== rsc CLAUDE.md hygiene =====
+CLAUDE.md is ${lines} lines — over the ~${CLAUDEMD_MAX_LINES}-line budget (it's read every turn, so each line costs context).
+ACTION: offload the Knowledge map / overgrown sections into 02-DOCS/wiki/index.md and leave a short
+pointer in CLAUDE.md (no info lost — it's a move). The \`harness\` skill owns the procedure.
+Opt out with .rsc/.no-claudemd-check.
+=================================
+`);
+    }
+  } catch { /* no CLAUDE.md → nothing to check */ }
+}
+
 // Update check: compare the installed version (.rsc/.version, written at install)
 // against the latest published on npm, and nudge the agent to offer an update.
 // Fail-silent (offline / missing baseline / parse error → nothing). Disable with

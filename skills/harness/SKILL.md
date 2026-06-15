@@ -276,6 +276,31 @@ Once the structure stands, make sure the workspace has the rsc skills its stack 
    Can't run a shell? Print the exact command for another terminal tab.
 3. **Flag the new session.** New skills load at session start — tell the user to open a **new tab/session** (or reload Cursor/Codex/Gemini) in this folder for them to activate. Log the installed set in `02-DOCS/wiki/harness/decisions.md`.
 
+## Keep CLAUDE.md lean — the index lives in the wiki
+
+Root `CLAUDE.md` is read on **every** turn, so every line is a permanent context tax (2026 best
+practice: keep it **under ~200 lines**; beyond that, adherence rots as the rules that matter get
+diluted by an index nobody needs in context). The biggest growth vector is the `## Knowledge map` —
+a row per wiki article, appended by many skills, forever.
+
+**The rule:** the **full** Knowledge map lives in `02-DOCS/wiki/index.md` (loaded on demand, grows
+freely). Root `CLAUDE.md`'s `## Knowledge map` is a **short pointer** — only the read-first entries
+(`harness/user-profile.md`, `sdd/constitution.md`) plus "full index → `02-DOCS/wiki/index.md`".
+
+**Offload when it bloats (a move, never a trim — no info lost):** when `CLAUDE.md` passes ~200 lines
+(the SessionStart hook nudges you) or its `## Knowledge map` has grown past the read-first entries:
+
+1. Open `02-DOCS/wiki/index.md` (create it if absent).
+2. **Move** every Knowledge-map row beyond the read-first entries from `CLAUDE.md` into
+   `02-DOCS/wiki/index.md`, merging — don't duplicate, don't delete.
+3. Leave `CLAUDE.md`'s `## Knowledge map` as the short pointer above.
+4. Same for any other section overgrown into an index (e.g. a huge tool table): detail to the wiki,
+   pointer stays.
+
+From then on, **new index entries go to `02-DOCS/wiki/index.md`**, not `CLAUDE.md`. This is additive
+and reversible; it honors the "never delete user content" rule (you relocate it, with a pointer).
+Opt out of the size nudge with `.rsc/.no-claudemd-check`.
+
 ## Iron rules (non-negotiable)
 
 These rules cut across every phase. Violating any one of them aborts the run.
