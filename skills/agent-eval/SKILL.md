@@ -199,7 +199,7 @@ Pick by where the eval runs and what it must do. Versions as of 2026-06 — re-v
 
 ## Project grounding
 
-If the workspace has a `02-DOCS/` harness, record the eval policy in `02-DOCS/wiki/stack/evals.md`: dataset location, scorer mix, gate baseline file, judge model, and the failure modes covered. Link it from root `CLAUDE.md` under `## Knowledge map`. This is **recorded, not gated** — skip silently if there is no harness.
+If the workspace has a `02-DOCS/` harness, record the eval policy in `02-DOCS/wiki/stack/evals.md`: dataset location, scorer mix, gate baseline file, judge model, and the failure modes covered. Index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer). This is **recorded, not gated** — skip silently if there is no harness.
 
 ## verify.sh
 

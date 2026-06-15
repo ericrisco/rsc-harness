@@ -124,7 +124,7 @@ Run in order. Each step gates the next.
 4. **Write the body** in the rsc voice (see below). Tag every code/example fence with a language. Add a copy-able checklist or decision table *only where the flow actually branches* — not as decoration. Add a short anti-patterns table.
 5. **Extract references** for anything long or branch-specific.
 6. **Write the evals** — `cases.yaml` then `README.md`. → `references/eval-authoring.md`.
-7. **Wire it into the rsc plumbing** (`tags`, `recommends`, `npm run manifest`, Knowledge map). → `references/rsc-conventions.md`.
+7. **Wire it into the rsc plumbing** (`tags`, `recommends`, `npm run manifest`, and indexing any artifact in `02-DOCS/wiki/index.md` — the Knowledge map; root `CLAUDE.md` keeps only a short pointer). → `references/rsc-conventions.md`.
 8. **Self-audit against the rubric** (below). Fix every miss or justify it.
 
 ## The rsc voice
@@ -149,7 +149,7 @@ A skill ships only when every box is checked or a miss is consciously justified.
 - [ ] **Every fence language-tagged**; no placeholder/TODO prose; examples concrete.
 - [ ] **Checklist/decision table only where a flow branches**; an **anti-patterns table** present.
 - [ ] **Accompaniment dial honored** — reads the profile, adapts verbosity.
-- [ ] **Artifacts under `02-DOCS/wiki/`** and indexed in the root CLAUDE.md Knowledge map, if the skill produces any.
+- [ ] **Artifacts under `02-DOCS/wiki/`** and indexed in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer), if the skill produces any.
 - [ ] **Concrete tooling delegated** to the stack skills rather than reinvented.
 - [ ] **evals present** — `cases.yaml` (≥5 `should_trigger` incl. non-obvious, ≥4 `should_not_trigger` each with a real-sibling `route_to`, ≥1 `capability` with a `must_include` rubric) + an honest `README.md`. `scripts/eval-lint.sh` passes — but it only checks presence and the counts (≥5/≥4/≥1) and that those keys are lists; the `route_to`-points-at-a-real-sibling, non-obvious phrasings, and `must_include` quality are yours to verify here, not the linter's.
 - [ ] **verify.sh** present iff the skill has a checkable artifact; process skills rely on evals.
@@ -195,7 +195,7 @@ only when **both** are green:
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
-When authoring produces a durable design note (a skill's scope decision, a description rationale worth keeping), persist it under `02-DOCS/wiki/sdd/` and add a row to the root CLAUDE.md `## Knowledge map`, per the `../harness/SKILL.md` convention — never a stray file at the repo root. The skill's own `evals/` is the executable record of intent; the wiki note is the human-readable why.
+When authoring produces a durable design note (a skill's scope decision, a description rationale worth keeping), persist it under `02-DOCS/wiki/sdd/` and index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer), per the `../harness/SKILL.md` convention — never a stray file at the repo root. The skill's own `evals/` is the executable record of intent; the wiki note is the human-readable why.
 
 ## See Also
 

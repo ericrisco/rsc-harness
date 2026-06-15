@@ -92,7 +92,7 @@ Copy-pasteable and **situation-tagged**, so it retrieves on the trigger that mat
 - **We believed:** <the wrong assumption>
 - **Actually:** <what is true>
 - **Durable home:** <path + surface that now holds it>
-- **Fires next time via:** <rule / eval / verify.sh / Knowledge-map entry>
+- **Fires next time via:** <rule / eval / verify.sh / index entry in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer)>
 ```
 
 The last two lines are not optional. An entry with no durable home and no "fires next time" is a chat message with a date on it.
@@ -104,7 +104,7 @@ This is the rigor of this process skill, and it stands in for a `verify.sh` (thi
 - a rule the agent reads on its next pass (`CLAUDE.md` or a skill body), or
 - an eval case (`should_not_trigger` / `should_trigger`) that would have caught the miss, or
 - a `verify.sh` check on the owning skill that fails on the banned pattern, or
-- a `## Knowledge map` entry pointing at the new wiki article.
+- a `02-DOCS/wiki/index.md` entry (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) pointing at the new wiki article.
 
 If you cannot name one of those, the lesson is not captured — keep going. Prefer a surface a human can review (a rule, an eval, a profile line) over an opaque store: a single agent reflecting alone can talk itself into a local optimum, so the durable write should be legible enough for a human to sanity-check.
 

@@ -13,7 +13,7 @@ origin: risco
 
 A constitution is small, durable, and enforceable. It is **not** a wiki of everything you know about the project (that is what `02-DOCS/wiki/` already is, run by the `harness`). It is the short list of principles that, if violated, mean the work is wrong regardless of whether it runs. If a rule here cannot be checked or pointed at later, it does not belong here — move it to the stack wiki and link it.
 
-This skill produces `02-DOCS/wiki/sdd/constitution.md` and one Knowledge-map row in the root `CLAUDE.md`. It reconciles with — never duplicates — the stack conventions the harness keeps under `02-DOCS/wiki/stack/*`.
+This skill produces `02-DOCS/wiki/sdd/constitution.md` and one Knowledge-map row. The constitution is one of the few **read-first** pointer entries kept directly in the root `CLAUDE.md` `## Knowledge map` (everything else lives in `02-DOCS/wiki/index.md`, the full Knowledge map that root `CLAUDE.md` points to). It reconciles with — never duplicates — the stack conventions the harness keeps under `02-DOCS/wiki/stack/*`.
 
 ## Model tier — `heavy` (opt-in routing)
 
@@ -52,7 +52,7 @@ Do NOT use when (route instead):
 
 The harness may already hold real conventions under `02-DOCS/wiki/stack/*` (e.g. `nextjs.md`, `fastapi.md`, `postgresdb.md`). The constitution does not copy them — it **ratifies the principle and links the detail**. Run this reconciliation pass first:
 
-1. **Read the Knowledge map** in the root `CLAUDE.md`. List every `02-DOCS/wiki/stack/*` article that exists.
+1. **Read the Knowledge map** — the full index lives in `02-DOCS/wiki/index.md` (root `CLAUDE.md` keeps only a short pointer to it). List every `02-DOCS/wiki/stack/*` article that exists.
 2. **Read each stack article.** Pull out anything already phrased as a rule (a version pin, a lint config, a test threshold, a naming convention).
 3. **For each existing rule, decide:** is it a *project-wide non-negotiable* (→ ratify it as a principle, linking the stack article for detail) or a *local mechanic* (→ leave it in the stack wiki, do not lift it into the constitution)?
 4. **Contradictions are findings, not fixes.** If two stack articles disagree, or a stack article contradicts what the user states now, surface it and let the user resolve — never silently pick a winner.
@@ -137,12 +137,12 @@ The constitution is versioned so `analyze` and `review` can cite "constitution v
 - [ ] The Definition-of-Done checklist is present (what `verify` runs against).
 - [ ] Fixed principles included: human git authorship + decisions logged.
 - [ ] `02-DOCS/wiki/sdd/constitution.md` written with version + ratified date + amendment log.
-- [ ] Root `CLAUDE.md` Knowledge map has a row for the constitution (additive only — never delete sections).
+- [ ] Root `CLAUDE.md` `## Knowledge map` pointer has the read-first row for the constitution (it is one of the few entries kept in root `CLAUDE.md`; the full index lives in `02-DOCS/wiki/index.md`). Additive only — never delete sections.
 - [ ] The constitution was shown to the user and explicitly ratified.
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
-This skill's `02-DOCS` record is the constitution at `02-DOCS/wiki/sdd/constitution.md`, linked from a `## Knowledge map` row in the root `CLAUDE.md` (create `CLAUDE.md` if absent, additive only — never delete existing sections). Add this row if it is not already present:
+This skill's `02-DOCS` record is the constitution at `02-DOCS/wiki/sdd/constitution.md`. It is a **read-first** pointer entry, so its row stays in the short `## Knowledge map` pointer in the root `CLAUDE.md` (create `CLAUDE.md` if absent, additive only — never delete existing sections) — unlike other sdd artifacts, which are indexed in `02-DOCS/wiki/index.md` (the full Knowledge map that root `CLAUDE.md` points to). Add this row to the root pointer if it is not already present:
 
 ```markdown
 | Project constitution (SDD non-negotiables) | `02-DOCS/wiki/sdd/constitution.md` |
@@ -159,6 +159,6 @@ The constitution is the guardrail; now describe what to build. Hand off to **`..
 - `../sdd/SKILL.md` — the rsc-sdd dispatcher: the method, the phase map, the invoke rule.
 - `../specify/SKILL.md` — the next phase: intent → spec.
 - `../analyze/SKILL.md` — the consistency gate that checks specs/plans against this constitution.
-- `harness` — owns `02-DOCS/wiki/` (including `wiki/stack/*` and the Knowledge map this skill reconciles with and links into).
+- `harness` — owns `02-DOCS/wiki/` (including `wiki/stack/*` and the full Knowledge map at `02-DOCS/wiki/index.md` this skill reconciles with; the constitution's read-first row stays in the root `CLAUDE.md` pointer).
 - Stack skills the constitution *names but does not duplicate*: `../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`, `../design/SKILL.md`, `../secure-coding/SKILL.md`.
 - References: `references/constitution-template.md`.

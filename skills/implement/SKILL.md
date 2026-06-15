@@ -180,7 +180,7 @@ done-checks, the constitution and decision logging hold at every level, includin
 
 When you make a choice the plan did not fully specify — a library, a data shape, an error contract, a
 deviation from the plan — append it to `02-DOCS/wiki/sdd/decisions.md` (append-only; create it if
-absent and add a row to the root `CLAUDE.md` `## Knowledge map` under the `sdd/` topic). One entry:
+absent and index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) under the `sdd/` topic). One entry:
 
 ```text
 ## YYYY-MM-DD — <short title>  (feature: <slug>, task: <n>)

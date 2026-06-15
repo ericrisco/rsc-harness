@@ -37,13 +37,13 @@ Do NOT use when (delegate or decline):
 
 Run this gate before reframing a single concept:
 
-1. **Locate the teaching profile.** Read the project's root `CLAUDE.md` and look for a `## Knowledge map` section linking into `02-DOCS/wiki/teaching/` (the `harness` Karpathy-wiki convention: compiled profile articles live under `02-DOCS/wiki/teaching/`, raw inputs the user pastes live under `02-DOCS/raw/teaching/`). If `CLAUDE.md` is absent, the link is missing, or it points nowhere, treat the profile as ABSENT.
+1. **Locate the teaching profile.** Read the project's root `CLAUDE.md` and follow its short `## Knowledge map` pointer to the full index at `02-DOCS/wiki/index.md`, looking for the entry into `02-DOCS/wiki/teaching/` (the `harness` Karpathy-wiki convention: compiled profile articles live under `02-DOCS/wiki/teaching/`, raw inputs the user pastes live under `02-DOCS/raw/teaching/`). If `CLAUDE.md` is absent, the index entry is missing, or it points nowhere, treat the profile as ABSENT.
 
 2. **Check completeness** against the checklist in `references/learner-grounding.md`. The profile is complete only when every dimension is filled: the LEARNER (level, prior knowledge, pains, desires, current false beliefs, what they want to DO after); the AUDIENCE (same as the buyer or not? live vs recorded? size? context?); the target TRANSFORMATION (the one result, before→after); and constraints/format. **Any empty dimension = INCOMPLETE.**
 
 3. **If ABSENT or INCOMPLETE, STOP and interview the user.** Ask the question script from `references/learner-grounding.md`, **one focused batch at a time** (do not dump all questions at once; ask, wait, persist, then continue). Then:
    - **a.** Write/update the profile into `02-DOCS/wiki/teaching/` as wiki articles (`learner.md`, `audience.md`, `transformation.md`, `false-beliefs.md`, `constraints.md`, plus an `index.md`), following the article format in `references/learner-grounding.md`. Save any raw material the user pastes (transcripts, outlines, existing slides) verbatim into `02-DOCS/raw/teaching/` and link it from the article's `> Raw:` line. Create the directories if they do not exist.
-   - **b.** Add or update a `## Knowledge map` section in the root `CLAUDE.md` linking to the teaching profile. Create `CLAUDE.md` if absent (additive only — never delete existing sections). The exact snippet is in `references/learner-grounding.md`.
+   - **b.** Index the teaching profile in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer). Ensure root `CLAUDE.md` carries that short pointer to the index, creating `CLAUDE.md` if absent (additive only — never delete existing sections). The exact snippet is in `references/learner-grounding.md`.
 
 4. **Only once the profile exists and is complete, proceed.** Cite which articles you used (e.g. "grounded in `02-DOCS/wiki/teaching/learner.md` and `false-beliefs.md`") so every reframing is traceable to a real learner, not an imagined one.
 
@@ -188,12 +188,12 @@ Automate → `scripts/verify.sh` (read-only; warns by default, `--strict` to gat
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
-This skill's 02-DOCS record has two parts, both indexed from a `## Knowledge map` section in the root `CLAUDE.md`:
+This skill's 02-DOCS record has two parts, both indexed in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer):
 
-- The **learner + audience profile** at `02-DOCS/wiki/teaching/` — a hard gate (see "Learner grounding" above): if the root `CLAUDE.md` lacks the link or any dimension is empty (learner, audience, transformation, false beliefs, constraints), ask until complete, persist it (raw inputs to `02-DOCS/raw/teaching/`), link it from `## Knowledge map` (create `CLAUDE.md` if absent), and only then teach.
+- The **learner + audience profile** at `02-DOCS/wiki/teaching/` — a hard gate (see "Learner grounding" above): if the index lacks the entry or any dimension is empty (learner, audience, transformation, false beliefs, constraints), ask until complete, persist it (raw inputs to `02-DOCS/raw/teaching/`), index it in `02-DOCS/wiki/index.md` and ensure root `CLAUDE.md` carries the short pointer to that index (create `CLAUDE.md` if absent), and only then teach.
 - The **course teaching conventions** at `02-DOCS/wiki/stack/course-storytelling.md` (or alongside the profile under `02-DOCS/wiki/teaching/`) — the established narrative spine, the named mental models already coined, the Big Dominoes per module, and the teacher's Attractive Character. Recorded, not gated.
 
-Create/update both as decisions are made and refresh their `CLAUDE.md` links. Read them first on every use and keep every reframing consistent with them. If the project has no `02-DOCS` layer at all, skip this section silently and proceed with the in-session profile.
+Create/update both as decisions are made and keep their entries current in `02-DOCS/wiki/index.md` (root `CLAUDE.md` keeps only a short pointer to it). Read them first on every use and keep every reframing consistent with them. If the project has no `02-DOCS` layer at all, skip this section silently and proceed with the in-session profile.
 
 ## See Also
 

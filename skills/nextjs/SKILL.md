@@ -454,11 +454,11 @@ When this skill runs in a project with a `02-DOCS/` layer (the
 project's app decisions there and index them from the root `CLAUDE.md`, so the next
 agent inherits the conventions instead of re-deriving them.
 
-1. **Find the article** `02-DOCS/wiki/stack/nextjs.md`, linked from a `## Knowledge map` section in the root
-   `CLAUDE.md`.
+1. **Find the article** `02-DOCS/wiki/stack/nextjs.md`, indexed in `02-DOCS/wiki/index.md` (the
+   Knowledge map index; root `CLAUDE.md` points to it).
 2. **If missing or stale**, create/update it with the project's real choices — the caching model in use (v15 fetch-cache vs v16 `use cache`), the auth approach, server-action and data-fetching conventions, runtime choices (edge/node), and the design-system hookup —
-   then add/refresh the `CLAUDE.md` link (create the `## Knowledge map` section, and
-   `CLAUDE.md` itself, if absent).
+   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a
+   short pointer to it).
 3. **Read it first on every use** and stay consistent; when a convention changes, update the
    article (bump its `Updated` date) in the same change.
 

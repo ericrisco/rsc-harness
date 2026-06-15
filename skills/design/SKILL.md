@@ -368,8 +368,8 @@ Score = Σ(dimension × weight), max 115 (normalize to /100 by ×100/115 if you 
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
-This skill's 02-DOCS record has two parts, both indexed from a `## Knowledge map` section in
-the root `CLAUDE.md`:
+This skill's 02-DOCS record has two parts, both indexed in `02-DOCS/wiki/index.md` (the Knowledge
+map index; root `CLAUDE.md` points to it):
 
 - The **brand study** at `02-DOCS/wiki/brand/` — a hard gate (see "Brand grounding" above): if
   missing or incomplete, ask until complete before designing.
@@ -377,8 +377,8 @@ the root `CLAUDE.md`:
   (color/OKLCH, type scale, spacing, radius, shadow, motion), the 2026 direction picked, and the
   reference sites. Recorded, not gated.
 
-Create/update both as decisions are made and add/refresh their `CLAUDE.md` links (create the
-`## Knowledge map` section, and `CLAUDE.md` itself, if absent). Read them first on every use and
+Create/update both as decisions are made and index them in `02-DOCS/wiki/index.md` (the Knowledge map;
+root `CLAUDE.md` keeps only a short pointer to it). Read them first on every use and
 keep outputs consistent with them.
 
 ## See Also

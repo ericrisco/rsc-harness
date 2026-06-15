@@ -276,8 +276,8 @@ When this skill runs in a project with a `02-DOCS/` layer (the
 conventions there and index them from the root `CLAUDE.md`, so the next agent inherits them instead of
 re-deriving them.
 
-1. **Find the article** `02-DOCS/wiki/stack/presentations.md`, linked from a `## Knowledge map` section in the root `CLAUDE.md`.
-2. **If missing or stale**, create/update it with this project's real choices — the chosen pipeline (Marp / Slidev / python-pptx) and why; the theme file path and how it maps the design tokens (`02-DOCS/wiki/stack/design.md`); the standard deck arc(s); export commands and the canonical output (PDF / PPTX); presenter-vs-leave-behind convention; font-embedding and asset-location notes — then add/refresh the `CLAUDE.md` link (create the `## Knowledge map` section, and `CLAUDE.md` itself, if absent).
+1. **Find the article** `02-DOCS/wiki/stack/presentations.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map index; root `CLAUDE.md` points to it).
+2. **If missing or stale**, create/update it with this project's real choices — the chosen pipeline (Marp / Slidev / python-pptx) and why; the theme file path and how it maps the design tokens (`02-DOCS/wiki/stack/design.md`); the standard deck arc(s); export commands and the canonical output (PDF / PPTX); presenter-vs-leave-behind convention; font-embedding and asset-location notes — then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
 3. **Read it first on every use** and stay consistent; when a convention changes, update the article (bump its `Updated` date) in the same change.
 
 The deck theme is downstream of the design tokens: always reconcile `02-DOCS/wiki/stack/presentations.md`

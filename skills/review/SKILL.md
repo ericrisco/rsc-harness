@@ -219,7 +219,7 @@ Review is mostly a conversation, but two artifacts persist into the harness wiki
 - **Accepted/declined findings** of consequence → append to `02-DOCS/wiki/sdd/decisions.md` (e.g. "declined NPE finding on documents.py:42 — guarded by require_auth; added regression test"). This is the same append-only log `implement` writes to.
 - If a finding reveals a **missing constitution rule** (a defect class the project keeps hitting), propose adding it to `02-DOCS/wiki/sdd/constitution.md` so the next review catches it earlier.
 
-Index both under the root `CLAUDE.md` `## Knowledge map` (the `sdd/` topic) — the harness owns that map; this skill just keeps its rows honest.
+Index both in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) under the `sdd/` topic — the harness owns that map; this skill just keeps its rows honest.
 
 ## Next in the chain
 

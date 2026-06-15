@@ -46,6 +46,26 @@ test('session-start: no banner when .rsc/.no-harness opt-out exists', () => {
   assert.ok(!out.includes('rsc onboarding'), 'opt-out silences the banner');
 });
 
+test('session-start: nudges when CLAUDE.md exceeds the line budget', () => {
+  const root = mkdtempSync(join(tmpdir(), 'rsc-ss-'));
+  writeFileSync(join(root, 'CLAUDE.md'), `# CLAUDE\n${'x\n'.repeat(250)}`);
+  const out = runSessionStart(root);
+  assert.ok(out.includes('CLAUDE.md hygiene'), 'over-budget CLAUDE.md triggers the nudge');
+  assert.ok(out.includes('02-DOCS/wiki/index.md'), 'nudge names the offload target');
+});
+
+test('session-start: no CLAUDE.md nudge under budget or with opt-out', () => {
+  const lean = mkdtempSync(join(tmpdir(), 'rsc-ss-'));
+  writeFileSync(join(lean, 'CLAUDE.md'), `# CLAUDE\n${'x\n'.repeat(50)}`);
+  assert.ok(!runSessionStart(lean).includes('CLAUDE.md hygiene'), 'lean CLAUDE.md → no nudge');
+
+  const big = mkdtempSync(join(tmpdir(), 'rsc-ss-'));
+  writeFileSync(join(big, 'CLAUDE.md'), `# CLAUDE\n${'x\n'.repeat(250)}`);
+  mkdirSync(join(big, '.rsc'), { recursive: true });
+  writeFileSync(join(big, '.rsc/.no-claudemd-check'), '');
+  assert.ok(!runSessionStart(big).includes('CLAUDE.md hygiene'), 'opt-out silences the nudge');
+});
+
 test('session-start: auto-ingest nudge when wiki exists and inbox has a real file', () => {
   const root = mkdtempSync(join(tmpdir(), 'rsc-ss-'));
   mkdirSync(join(root, '02-DOCS/wiki'), { recursive: true });

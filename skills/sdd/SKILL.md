@@ -145,9 +145,10 @@ Every phase writes under `02-DOCS/wiki/sdd/` so the feature's reasoning outlives
 └── decisions.md             ← append-only log of decisions taken while building
 ```
 
-Index these from the root `CLAUDE.md` `## Knowledge map` under an `sdd/` topic, so every other skill reads them before working in the area. The harness maintains and improves these files just like any other wiki topic — `sdd` produces them, the harness keeps them honest.
+Index these in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) under an `sdd/` topic, so every other skill reads them before working in the area. The harness maintains and improves these files just like any other wiki topic — `sdd` produces them, the harness keeps them honest.
 
 ```markdown
+# 02-DOCS/wiki/index.md
 ## Knowledge map
 | Topic | Where | What |
 | --- | --- | --- |

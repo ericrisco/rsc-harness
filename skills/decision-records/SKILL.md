@@ -40,7 +40,7 @@ Prefer **numeric-prefix**: `NNNN-title-with-dashes.md`. Stable IDs are what make
 **Where to store** (first match wins):
 1. The project's existing convention — never invent a parallel log.
 2. A code repo with no convention: `docs/adr/` (also seen as `doc/adr/`).
-3. A harness workspace: `02-DOCS/wiki/decisions/`, linked from the wiki knowledge map.
+3. A harness workspace: `02-DOCS/wiki/decisions/`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer).
 
 ```text
 Bad:  decision-final-v2-REAL.md          # no ID, no order, will rot
@@ -169,7 +169,7 @@ A decision log is only useful if it stays navigable.
 - **Index every ADR at creation.** One row: `| 0007 | Choose Postgres | accepted | 2026-06-02 |`. No orphans.
 - **Keep supersession links live** in both directions.
 - **Review cadence.** Periodically sweep `accepted` ADRs — anything reality has overtaken gets a superseding record, not a silent edit.
-- **Link the log from the entry point** — root `CLAUDE.md` or the wiki knowledge map — so onboarding finds it. The broader wiki and onboarding doc are owned by `knowledge-ops` and `codebase-onboarding`; this skill owns only the ADRs the wiki links to. The meeting that spawned a decision routes to [`meeting-notes`](../meeting-notes/SKILL.md); the repeatable how-to it implies routes to [`sop-builder`](../sop-builder/SKILL.md).
+- **Index the log from the entry point** — `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) — so onboarding finds it. The broader wiki and onboarding doc are owned by `knowledge-ops` and `codebase-onboarding`; this skill owns only the ADRs the wiki links to. The meeting that spawned a decision routes to [`meeting-notes`](../meeting-notes/SKILL.md); the repeatable how-to it implies routes to [`sop-builder`](../sop-builder/SKILL.md).
 
 ## Anti-patterns
 

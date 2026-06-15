@@ -51,7 +51,7 @@ Run this gate. Skipping it produces a plan that drifts from intent on contact.
 3. **Read the constitution.** `02-DOCS/wiki/sdd/constitution.md` holds the project's non-negotiables
    (stack canon, quality bars, conventions). Every architectural choice must be consistent with it;
    when the plan needs to bend a principle, say so explicitly with a reason — don't bend it silently.
-4. **Read the Knowledge map.** The root `CLAUDE.md` `## Knowledge map` points at existing
+4. **Read the Knowledge map.** The full index at `02-DOCS/wiki/index.md` (root `CLAUDE.md` keeps only a short pointer to it) points at existing
    `02-DOCS/wiki/stack/*` and prior plans/decisions. Reuse what's already established. A plan that
    reinvents a pattern the project already settled is scope drift.
 
@@ -172,8 +172,8 @@ complete; it's just quiet.
 
 Write to `02-DOCS/wiki/sdd/plans/<slug>.md`, where `<slug>` matches the spec's slug exactly (one
 plan per spec, same name — that's how `tasks`, `analyze`, and `implement` find it). Use
-`references/plan-template.md` verbatim as the skeleton. Then index it: add a row under the
-`## Knowledge map` section of the root `CLAUDE.md` pointing at the new plan, so the harness wiki and
+`references/plan-template.md` verbatim as the skeleton. Then index it in `02-DOCS/wiki/index.md`
+(the Knowledge map; root `CLAUDE.md` keeps only a short pointer) pointing at the new plan, so the harness wiki and
 every later phase can find it. If a plan for this slug already exists, update it in place and note
 what changed — don't fork a `-v2`.
 

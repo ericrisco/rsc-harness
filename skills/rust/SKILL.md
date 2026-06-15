@@ -365,12 +365,12 @@ When this skill runs in a project with a `02-DOCS/` layer (the
 [`harness`](../harness/SKILL.md) Karpathy wiki), record this project's service decisions there and index
 them from the root `CLAUDE.md`, so the next agent inherits the conventions instead of re-deriving them.
 
-1. **Find the article** `02-DOCS/wiki/stack/rust.md`, linked from a `## Knowledge map` section in the
-   root `CLAUDE.md`.
+1. **Find the article** `02-DOCS/wiki/stack/rust.md`, indexed in `02-DOCS/wiki/index.md` (the
+   Knowledge map index; root `CLAUDE.md` points to it).
 2. **If missing or stale**, create/update it with the project's real choices — the crate/workspace layout,
    the runtime (tokio), the HTTP framework (axum 0.8), the error strategy (thiserror enum + IntoResponse
-   mapping), the DB layer (sqlx + pool), and tracing/concurrency defaults — then add/refresh the
-   `CLAUDE.md` link (create the `## Knowledge map` section, and `CLAUDE.md` itself, if absent).
+   mapping), the DB layer (sqlx + pool), and tracing/concurrency defaults — then index it in
+   `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
 3. **Read it first on every use** and stay consistent; when a convention changes, update the article
    (bump its `Updated` date) in the same change.
 

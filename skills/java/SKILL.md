@@ -303,13 +303,13 @@ When this skill runs in a project with a `02-DOCS/` layer (the
 [`harness`](../harness/SKILL.md) Karpathy wiki), record this project's Java decisions there
 and index them from the root `CLAUDE.md`, so the next agent inherits them instead of re-deriving.
 
-1. **Find the article** `02-DOCS/wiki/stack/java.md`, linked from a `## Knowledge map` section
-   in the root `CLAUDE.md`.
+1. **Find the article** `02-DOCS/wiki/stack/java.md`, indexed in `02-DOCS/wiki/index.md` (the
+   Knowledge map index; root `CLAUDE.md` points to it).
 2. **If missing or stale**, create/update it with the project's real choices — JDK/LTS target,
    Maven vs Gradle, the domain-modeling conventions (records/sealed), the concurrency model
    (virtual threads, structured-concurrency preview on/off), and the error/null conventions —
-   then add/refresh the `CLAUDE.md` link (create the `## Knowledge map` section and `CLAUDE.md`
-   itself if absent).
+   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a
+   short pointer to it).
 3. **Read it first on every use** and stay consistent; when a convention changes, update the
    article (bump its `Updated` date) in the same change.
 
