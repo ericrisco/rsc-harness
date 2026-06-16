@@ -200,9 +200,22 @@ what changed — don't fork a `-v2`.
   `../postgresdb/SKILL.md`).
 - Project-wide non-negotiables (stack canon, quality bars) → `../constitution/SKILL.md`.
 
+## Always propose isolation before the build
+
+Once the plan is written, **always propose isolating the work in a git worktree/branch** before
+any code is implemented — every feature, not just the risky ones. One line, calibrated to the dial:
+
+> *"Antes de implementar, ¿aíslo este trabajo en un worktree/rama propia (`../worktrees/SKILL.md`)
+> para no tocar tu rama actual? (recomendado)"*
+
+Propose it here at the plan→build boundary so the decision is made before `implement` writes a line.
+If the user accepts, hand to `../worktrees/SKILL.md` first; if they decline, note it and continue.
+If you are already on the default branch (`main`/`master`), isolation is **not** optional — say so
+and route to `worktrees` regardless. (`implement` re-checks this as a hard gate before its first commit.)
+
 ## Next in the chain
 
-Plan written, indexed, decisions logged → hand off to **`../tasks/SKILL.md`**, which turns the
-sequencing section into an ordered, independently-verifiable task list with a done-check per task.
-If planning surfaced an ambiguity the spec never resolved, loop back to **`../clarify/SKILL.md`**
-before tasking.
+Plan written, indexed, decisions logged → propose isolation (above), then hand off to
+**`../tasks/SKILL.md`**, which turns the sequencing section into an ordered, independently-verifiable
+task list with a done-check per task. If planning surfaced an ambiguity the spec never resolved,
+loop back to **`../clarify/SKILL.md`** before tasking.
