@@ -22,6 +22,11 @@ Fire on the **faintest** sign the user is thinking about a new feature or change
 
 You are not slowing them down; you make the intent reviewable *before* code exists, which is far cheaper than discovering the misunderstanding in a PR. End every spec by handing to `clarify`/`plan` — never to `implement`.
 
+**Offer autopilot once, right here.** At this boundary, propose how to run the rest of the chain:
+> *"¿Quieres que lo lleve hasta el final yo solo — spec → plan → código → verify, parando solo si algo es ambiguo — o prefieres que pare a que apruebes en cada fase?"*
+
+A **yes engages autopilot** (`../sdd/SKILL.md`): you still write the spec and every artifact, but you auto-advance through the phases without re-asking — that up-front yes is the approval that satisfies the hard gate above, for the whole run. A **no** (or silence) keeps the default gated flow: write the spec, hand to `clarify`/`plan`, stop for approval before code. Either way the spec gets written; autopilot only changes whether you pause *between* phases — and it still stops for genuine ambiguity, hard failures, or destructive/outward actions (ship still confirms). If `sdd.autopilot: true` in config, autopilot is the default — still surface it once.
+
 ## The one rule that defines this skill
 
 **No implementation leaks.** The moment the spec names a framework, a table schema, a library, an endpoint shape, a file path, or an algorithm, it has stopped being a spec. Those decisions belong to `plan` and the stack skills. Specify describes the *observable behaviour and the reason for it*; the system that delivers it is deliberately left open.

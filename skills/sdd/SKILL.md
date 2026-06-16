@@ -96,6 +96,29 @@ If you genuinely cannot tell which phase you are in, ask the user one question: 
 - `constitution` runs **once per project**, not per feature. If `02-DOCS/wiki/sdd/constitution.md` exists, read it as guardrails and move on.
 - `clarify` and `analyze` are **gates, not paperwork**. If a spec is genuinely unambiguous and tiny, name that out loud and pass through — but the bias is to run them, because skipped gates are where drift hides.
 
+## Autopilot mode — run the whole chain on one up-front yes
+
+By default the chain pauses at its gates (spec approval, plan approval). **Autopilot** trades those
+per-phase stops for a **single up-front consent**: the user says "take it all the way" once, and the
+chain runs `specify → clarify → plan → tasks → analyze → implement → verify → review` end to end
+**without asking to continue between phases** — still writing every artifact (spec, plan, decisions)
+to `02-DOCS/wiki/sdd/` as it goes, so the work stays reviewable after the fact.
+
+**How it turns on:**
+
+- `specify` **offers it at the brainstorm boundary** ("¿lo llevo hasta el final yo solo, o paramos en cada fase?"). A yes engages autopilot for this feature.
+- Or set `sdd.autopilot: true` in `02-DOCS/wiki/sdd/config.yaml` to default it on (still surfaced once per feature).
+
+**The up-front yes IS the gate.** It satisfies the new-feature gate's "spec + plan approved before code" — approval was granted in advance, for the whole run. Do not re-ask phase by phase.
+
+**Autopilot still STOPS for these — not "continue?" nags, real forks:**
+
+- **Genuine ambiguity** that would change scope, a goal, or an acceptance criterion (never guess the product).
+- **A hard failure** it can't resolve (a red test it can't green → `debug`; an `analyze` contradiction).
+- **Destructive / irreversible / outward-facing actions** — push, merge, delete, secrets. `ship` (PR/merge) still confirms: autopilot drives the **build**, not the **release**.
+
+Run the fan-out on the `developer` subagent as usual, and narrate at the accompaniment dial's volume (L0: near-silent, just show artifacts; L3: explain each phase as it passes). Autopilot changes **when you ask**, never **what gets written** — every artifact and gate-check still happens; you just don't block on a human between them.
+
 ## Read the accompaniment dial first
 
 Before dispatching, read `02-DOCS/wiki/harness/user-profile.md` and adapt — exactly as every rsc skill does. The dial sets **how much you explain and how many questions you ask at each gate**, not whether the gates exist.
