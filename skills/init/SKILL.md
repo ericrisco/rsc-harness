@@ -55,6 +55,14 @@ Before discovery, before any recommendation, write the profile to `02-DOCS` and 
 
 If `02-DOCS/` does not yet exist (greenfield), create `02-DOCS/wiki/harness/` now — just enough to hold these two files. That, plus the `CLAUDE.md` Knowledge-map link, is everything `init` writes; ALL other `01-TOOLS/` + `02-DOCS/` scaffolding is the `harness` skill's job.
 
+### Step 4 — Propose the developer model (the implementation subagent)
+
+rsc installs a **`developer`** subagent (the fan-out / implementation worker) for every assistant that supports file-based agents (Claude Code, Cursor, OpenCode, Gemini, Copilot, Junie, Kiro, Codex). It runs at the **balanced** tier by default — **Sonnet** on Anthropic tools (the provider's mid model elsewhere) — and **never** the cheapest `light` model, which is too weak to build with. Offer the choice once, calibrated to the dial:
+
+- *"La implementación la hará un sub-agente `developer`. ¿Qué modelo? **balanced / Sonnet** (rápido y económico — recomendado) o **heavy / Opus** (máxima calidad, más caro)."* Never offer `light`/Haiku.
+
+Record it to `.rsc/developer.json` (`{ "tier": "balanced" }` or `"heavy"`) and re-run the install/sync so the agent files adopt it. If you skip the question (e.g. L0), default to `balanced`. The default is also written at install time, so the developer agent is always set even when onboarding never asks — "propose at onboarding, and also when it isn't set."
+
 ### Opt-out marker — `.rsc/.no-harness`
 
 A freshly-installed session auto-starts `init` while `02-DOCS/wiki/harness/user-profile.md` is absent (the `suggest` Onboarding gate + claude's SessionStart hook). If the user does not want a harness in this repo (e.g. they installed only code skills), write an empty `.rsc/.no-harness` — this permanently silences the auto-start here even before a profile exists. Completing first contact (which writes `user-profile.md`) also silences it. The marker is project-local; commit it so the "no harness here" decision is shared by the team.

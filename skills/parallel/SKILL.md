@@ -75,6 +75,8 @@ Each subagent still owns its own discipline inside its scope — TDD via `implem
 
 **Per-unit model tier (when routing is enabled).** `parallel` has *no fixed tier* — this is the most concrete place per-phase model routing pays off. When `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`, give each unit the tier of the *kind of work it does*, not one tier for the whole fan-out: an implement-type unit → `balanced`, a scan/research/boilerplate unit → `light`, a unit doing genuine design or root-cause reasoning → `heavy`. Resolve the tier to a concrete model via `models.tiers` and **dispatch that subagent on that model** (e.g. Claude Code's `model` field on the Task/subagent) — real routing, independent of the session model. If routing is off or no profile exists, dispatch on the session model and say nothing. Full protocol: `../sdd/references/model-routing.md`.
 
+**The `developer` agent is the default worker.** rsc installs a `developer` subagent pinned to the **balanced** tier (Sonnet by default; the user's onboarding choice in `.rsc/developer.json`, never `light`). For implement-type units, **dispatch to the `developer` agent** (e.g. Claude Code `subagent_type: developer`) — that's the deliberate cost cap the user asked for. Only escalate a genuinely heavy unit (real design / root-cause) to a heavy model, and only when routing is enabled; otherwise the `developer` agent's balanced model is the floor and the ceiling.
+
 ### Skill resolution feedback
 
 Every subagent result must report:

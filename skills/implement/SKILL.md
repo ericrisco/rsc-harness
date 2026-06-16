@@ -158,6 +158,12 @@ test output. You merge the branches, then run the *combined* test suite before t
 green-in-isolation is not green-together. Hand the orchestration to `parallel`; keep the TDD
 discipline inside each branch.
 
+**Dispatch implementation work to the `developer` subagent.** rsc installs a `developer` agent
+pinned to the balanced tier (Sonnet by default, chosen at onboarding, never `light`). When you
+delegate a task or fan out via `parallel`, dispatch it to that agent (e.g. Claude Code
+`subagent_type: developer`) so the bulk of TDD execution runs on the cheaper-but-capable model
+while you stay on the session model to orchestrate. Full rationale: `../sdd/references/model-routing.md`.
+
 ## Model tier — `balanced` (opt-in routing)
 
 This phase's default model tier is **`balanced`** — it is the bulk of TDD execution: cost-sensitive, with quality balanced handles well. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch per the accompaniment dial when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model (this is where routing pays off most — fan-out runs on `balanced` while a hard sub-problem can be escalated to `heavy`). Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
