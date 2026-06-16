@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { applyInstall, listInstalled, uninstall, syncInstalled } from '../scripts/install-apply.js';
+import { applyInstall, listInstalled, uninstall, syncInstalled, purge } from '../scripts/install-apply.js';
 import { listBackups, restoreBackup } from '../scripts/lib/backups.js';
 import { doctor } from '../scripts/doctor.js';
 import { targetPaths } from '../targets/index.js';
@@ -184,6 +184,16 @@ test('multi-target sync refreshes bases for the second target\'s exclusive skill
   // Regression: with the old single global marker, claude's pass bumped it to current so
   // codex's pass saw "unchanged" and skipped refreshing nextjs's base, leaving it stale.
   assert.ok(!existsSync(join(cwd, '.rsc/skills/nextjs/STALE.txt')), 'second-target exclusive base refreshed');
+});
+
+test('claude: install writes the developer subagent (Sonnet); purge removes it', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-devagent-'));
+  await applyInstall({ skillIds: ['suggest'], target: 'claude', cwd });
+  const agent = join(cwd, '.claude/agents/developer.md');
+  assert.ok(existsSync(agent), 'developer agent installed');
+  assert.match(readFileSync(agent, 'utf8'), /model: sonnet/, 'balanced tier → Sonnet by default');
+  await purge({ cwd });
+  assert.ok(!existsSync(agent), 'developer agent removed on purge');
 });
 
 test('claude: install migrates away the legacy nested .claude/skills/rsc/ layout', async () => {
