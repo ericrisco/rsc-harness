@@ -77,6 +77,25 @@ Each subagent still owns its own discipline inside its scope — TDD via `implem
 
 **The `developer` agent is the default worker.** rsc installs a `developer` subagent pinned to the **balanced** tier (Sonnet by default; the user's onboarding choice in `.rsc/developer.json`, never `light`). For implement-type units, **dispatch to the `developer` agent** (e.g. Claude Code `subagent_type: developer`) — that's the deliberate cost cap the user asked for. Only escalate a genuinely heavy unit (real design / root-cause) to a heavy model, and only when routing is enabled; otherwise the `developer` agent's balanced model is the floor and the ceiling.
 
+**Model is REQUIRED on every dispatch.** Set each subagent's model explicitly. An omitted model
+silently inherits the session's model — usually the most expensive one — and that is how a fan-out's
+cost quietly explodes. The `developer` agent already pins balanced; if you dispatch a raw subagent,
+name its tier.
+
+### The unit report contract (statuses & escalation)
+
+Each unit reports **one of four statuses** — it does not guess or hack around a wall when unsure:
+
+- `DONE` — done-check green, the unit's frozen interface honored.
+- `DONE_WITH_CONCERNS` — green, but a flagged risk/assumption for the orchestrator to adjudicate.
+- `BLOCKED` — cannot proceed (failing dependency, a contract that doesn't hold, missing access).
+- `NEEDS_CONTEXT` — something it needed (an interface, a constraint) was not in its brief.
+
+On `BLOCKED`/`NEEDS_CONTEXT`, **never re-dispatch the same brief to the same model unchanged** —
+change something first: add the missing interface/constraint, fix the dependency, or escalate the
+tier for a genuinely hard unit. An identical re-run burns budget without progress. A `BLOCKED` unit
+is a partition signal too: if it blocked on another unit, the two were not independent — re-partition.
+
 ### Skill resolution feedback
 
 Every subagent result must report:
@@ -94,6 +113,16 @@ The orchestrator folds these into the final parallel result. If a unit claims it
 ### 3. GATHER — collect every result, hold the merge
 
 Wait for **all** units to report. Collect each one's diff, test output, and any decisions. Do not start merging the fast ones while slow ones are still running — partial merges create the exact shared-state races you partitioned to avoid. Check each result against its brief's done-check *before* it touches the integration branch: a unit that came back not-actually-done gets sent back, not merged hopefully.
+
+**Per-unit review gate (before merge).** For each non-trivial unit, run a fresh-eyes review of *that
+unit's diff alone* before it joins the integration branch — the same gate `implement` runs per task
+(full brief: `../implement/references/per-task-review.md`). Package the unit's diff as a file
+(`../implement/scripts/review-package <BASE> <HEAD>`), dispatch a fresh reviewer (NOT the unit's own
+implementer) with the diff path + the unit's done-check + its frozen interface, and fold
+`Critical`/`Important` findings back before merging. **Anti-pre-judging:** never tell the reviewer
+what not to flag or pre-rate severity. This is the cheap per-unit pass; the *combined* adversarial
+review over the whole merged diff is still `review`'s job at the end (RECONCILE only proves the seam
+compiles and tests green).
 
 ### 4. RECONCILE — merge, then prove the seam holds
 

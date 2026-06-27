@@ -1,0 +1,75 @@
+skill: roast-me
+
+# Eval cases for the roast-me skill.
+# roast-me audits the USER's own prompting behaviour — it reads their past
+# agent session transcripts, produces dual scores (Prompt Quality + Compute
+# Efficiency), names their worst habits, and tracks a trend over time.
+# It does NOT review code, does NOT review agent output quality, and is NOT
+# a general prompt-engineering tutorial.
+
+should_trigger:
+  - prompt: "Roast me."
+    why: "Canonical verbatim invocation — the skill's own trigger phrase. Must fire immediately and run the five-phase pipeline."
+
+  - prompt: "Audit my prompting habits over the last two weeks."
+    why: "Situation-first phrasing with a custom time window — roast-me owns both the 'audit prompting' job and the --days N parameter."
+
+  - prompt: "Am I prompting the AI well or am I wasting money?"
+    why: "Dual concern (prompt quality + cost) phrased as a question — maps directly to the two scores roast-me produces. No mention of 'roast' keyword."
+
+  - prompt: "Analiza mis prompts de la última semana y dime dónde soy malo."
+    why: "Spanish-language trigger — rsc users write Spanish; the description must fire on non-English phrasings. Tests the non-English trigger."
+
+  - prompt: "Puntua els meus prompts i digue'm quins hàbits hauria de canviar."
+    why: "Catalan-language trigger — a non-obvious language variant. The description lists this phrasing explicitly."
+
+  - prompt: "How much am I burning on model costs? Show me where I overspend."
+    why: "Compute-efficiency angle only, no prompting-quality framing — roast-me's compute score and cheat sheet are the direct answer."
+
+  - prompt: "Give me an honest score on how I prompt Claude."
+    why: "Non-obvious phrasing ('honest score') without the roast keyword — tests situation matching over keyword matching."
+
+should_not_trigger:
+  - prompt: "Review this pull request and flag any bugs before we merge."
+    route_to: "code-review"
+    why: "Reviewing code output is code-review's job. roast-me reviews how the user prompts, not the code they produced."
+
+  - prompt: "Write me a guide on how to prompt AI assistants effectively."
+    route_to: "prompt-engineering"
+    why: "A general tutorial on prompting technique is prompt-engineering. roast-me reads live transcripts and produces a personalised score, not a tutorial."
+
+  - prompt: "Summarise what our agent did in yesterday's session."
+    route_to: "analyze"
+    why: "Summarising what an agent did (output review) is analyse or a generic task. roast-me looks at how the USER prompted, not what the agent produced."
+
+  - prompt: "I need a system prompt template for a customer-support chatbot."
+    route_to: "chatbot"
+    why: "Authoring a system prompt for a product is a different job from auditing a user's own prompting habits. No transcript data involved."
+
+  - prompt: "Help me reduce my Anthropic API costs by switching to cheaper models in my app."
+    route_to: "llm-pipeline"
+    why: "Optimising model selection in production application code is llm-pipeline. roast-me analyses the user's interactive session spend, not application-level API calls."
+
+capability:
+  - scenario: "User runs '/roast-me --days 14'. The extractor finds 180 Claude Code prompts: 12 with unrecovered errors, 25 auto-recovered, and 15 corrections. Model tier split is 60% heavy, 30% balanced, 10% light. Top issues: 8 VAGUE openers and 5 SCOPE_CREEP cases. Show what a correct run looks like."
+    must_include:
+      - "Phase 1: runs extract_prompts.py with --days 14 and reports Scanned N sessions, Extracted 180 prompts (12 impactful errors, 25 auto-recovered)"
+      - "Reports effective_error_rate (12/180 = ~6.7%) not the raw rate (37/180 = ~20%); explicitly notes that auto-recovered errors are the agent doing its job"
+      - "Phase 2: batches into ~30-prompt groups and spawns parallel subagent passes with prompts/analyze.md, passing the batch as JSON"
+      - "Filters aggressively: only keeps issues where error_was_recovered is false or a correction immediately followed — discards the 25 auto-recovered"
+      - "Phase 3: spawns parallel compute-analysis subagents with prompts/compute.md; aggregates overuse_cases with high/medium confidence only"
+      - "Phase 4: spawns roast subagent with prompts/roast.md and all aggregated data; extracts dual score (Prompt Quality 0-100, Compute Efficiency 0-100)"
+      - "Prompt Quality score: starts at 70, deducted for VAGUE and SCOPE_CREEP issues, adjusted for rates; must land in a C-D range given 8 high + 5 medium issues"
+      - "Compute Efficiency score: 60% heavy tier with confirmed overuse triggers a low score (F range) and a personalized tier-selection cheat sheet"
+      - "Phase 5: appends to ~/.roast-me-history.json with date, both scores, grades, and focus_of_week; prints trend line if history exists"
+      - "Top 3 habits section names VAGUE openers and SCOPE_CREEP with concrete before/after rewrites and named techniques"
+      - "What You Do Well section is present and finds genuine positives from the issue-free prompts"
+      - "Focus of the Week names a single actionable change — likely a compute-related one given the large gap between quality and efficiency scores"
+
+  - scenario: "User runs '/roast-me --runtime xyz' where xyz is an unrecognised runtime. Show the correct degradation behaviour."
+    must_include:
+      - "Prints a clear message: 'Unknown runtime xyz. Known runtimes: claude, codex, gemini. Use auto to try all.'"
+      - "Exits 0 — no crash, no stack trace, no exception shown to the user"
+      - "Writes an empty result JSON and prints its path so downstream tooling does not break"
+      - "Does NOT invent records, does NOT guess data, does NOT proceed to the analysis phases"
+      - "Tells the user what to do next (try --runtime auto or check the available runtime IDs)"

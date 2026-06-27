@@ -1,0 +1,47 @@
+#!/bin/sh
+# sdd-workspace — ensures a self-ignoring scratch dir for ephemeral briefs/diffs/reports
+# and prints its absolute path to stdout. Idempotent.
+#
+# Usage: sdd-workspace [DIR_OVERRIDE]
+#   $1  optional explicit dir override; if provided, use that dir instead of auto-detecting.
+#
+# Auto-detection: if a 02-DOCS dir exists at repo root, use 02-DOCS/wiki/sdd/.scratch/
+# Otherwise fall back to ${TMPDIR:-/tmp}/rsc-sdd-<pid>.
+
+set -e
+
+if [ -n "$1" ]; then
+  SCRATCH="$1"
+else
+  # Walk up from cwd to find repo root (where 02-DOCS lives), or just use cwd.
+  _find_repo_root() {
+    _dir="$PWD"
+    while [ "$_dir" != "/" ]; do
+      if [ -d "$_dir/02-DOCS" ]; then
+        printf '%s' "$_dir"
+        return 0
+      fi
+      _dir="$(dirname "$_dir")"
+    done
+    # Not found; return empty
+    printf ''
+  }
+
+  _ROOT="$(_find_repo_root)"
+
+  if [ -n "$_ROOT" ] && [ -d "$_ROOT/02-DOCS" ]; then
+    SCRATCH="$_ROOT/02-DOCS/wiki/sdd/.scratch"
+  else
+    # Use a fixed stable name under TMPDIR so repeated calls return the same path.
+    SCRATCH="${TMPDIR:-/tmp}/rsc-sdd-scratch"
+  fi
+fi
+
+mkdir -p "$SCRATCH"
+
+# Drop a self-ignoring .gitignore so nothing in this dir is ever tracked.
+if [ ! -f "$SCRATCH/.gitignore" ]; then
+  printf '*\n' > "$SCRATCH/.gitignore"
+fi
+
+printf '%s\n' "$SCRATCH"

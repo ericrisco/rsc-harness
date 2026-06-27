@@ -100,7 +100,8 @@ Run these in order. It is a collaborative dialogue, not a form you fill in silen
                             after EACH section ask "does this look right?" and adjust before moving on
 7. WRITE the spec         → 02-DOCS/wiki/sdd/specs/<slug>.md (WHAT/WHY), index it in 02-DOCS/wiki/index.md
                             (the Knowledge map; root CLAUDE.md keeps only a short pointer), commit if a repo
-8. SELF-REVIEW            → scan for TODO/placeholder, contradictions, ambiguity, scope creep; fix inline
+8. SELF-REVIEW            → scan for TODO/placeholder, contradictions, ambiguity, scope creep; fix inline.
+                            On L2/L3 or a high-risk spec, also dispatch a FRESH-EYES review (below)
 9. USER APPROVES          → ask them to read the written spec and confirm; loop on changes until they approve
 10. HAND OFF              → only now, result envelope → clarify/plan. NEVER to implement.
 ```
@@ -109,6 +110,25 @@ Run these in order. It is a collaborative dialogue, not a form you fill in silen
 ```
 
 `<slug>` is a short kebab-case name derived from the feature (e.g. `bulk-csv-import`, `magic-link-login`). If a spec with that slug exists, read it and update rather than overwrite.
+
+### Fresh-eyes spec review (step 8, scaled to the dial)
+
+The author's own context is blind to its own gaps — the same mind that wrote the spec self-reviews it
+with the same blind spots. For an L2/L3 user or a **high-risk** spec (multi-subsystem, security/data,
+irreversible, or large scope), dispatch a **fresh-context subagent** to read the written spec cold,
+*before* the user-approval gate (step 9), and fold its findings in:
+
+- **Hand it only the spec file** (and the constitution), not your dialogue or reasoning — a fresh
+  reviewer that inherits your context inherits your blind spots.
+- **Calibrated checklist:** placeholders/TODOs, internal contradictions, ambiguity that would stall
+  planning, unstated assumptions, scope creep, and YAGNI (asked-for-but-unneeded). Tell it to *only
+  flag issues that would cause a real problem at planning time* and to **approve unless there are
+  serious gaps** — a fresh reviewer that nitpicks everything is as useless as no reviewer.
+- **It returns** `Approved` or `Issues found` with a short list; you fix the real ones inline, then
+  proceed to step 9.
+
+**Skip it** for L0/L1 on a small, low-risk spec — the self-review scan is enough there; don't spin up
+a subagent to vet a two-paragraph spec. Like the rest of the chain, ceremony scales to the stakes.
 
 ## Worked shape (abridged)
 

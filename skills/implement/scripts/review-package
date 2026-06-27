@@ -1,0 +1,59 @@
+#!/bin/sh
+# review-package BASE HEAD
+# Writes one uniquely-named file into the sdd-workspace dir containing:
+#   (a) git log --oneline BASE..HEAD
+#   (b) git diff --stat BASE..HEAD
+#   (c) git diff -U10 BASE..HEAD
+# Prints the file path to stdout.
+#
+# CRITICAL: uses the provided BASE..HEAD range — never HEAD~1.
+# Validates that both args are valid git revisions before proceeding.
+
+set -e
+
+# Resolve the directory of this script portably.
+_SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+usage() {
+  printf 'Usage: review-package <BASE> <HEAD>\n' >&2
+  printf '  BASE and HEAD must be valid git revisions.\n' >&2
+  exit 1
+}
+
+if [ $# -lt 2 ]; then
+  printf 'error: review-package requires BASE and HEAD arguments\n' >&2
+  usage
+fi
+
+BASE="$1"
+HEAD="$2"
+
+# Validate both revisions.
+if ! git rev-parse --verify "$BASE" >/dev/null 2>&1; then
+  printf 'error: BASE "%s" is not a valid git revision\n' "$BASE" >&2
+  exit 1
+fi
+if ! git rev-parse --verify "$HEAD" >/dev/null 2>&1; then
+  printf 'error: HEAD "%s" is not a valid git revision\n' "$HEAD" >&2
+  exit 1
+fi
+
+# Resolve short shas for a deterministic, collision-resistant file name.
+BASE_SHORT="$(git rev-parse --short "$BASE")"
+HEAD_SHORT="$(git rev-parse --short "$HEAD")"
+
+# Get the scratch workspace dir.
+SCRATCH="$(sh "$_SCRIPT_DIR/sdd-workspace")"
+
+OUT="$SCRATCH/review-${BASE_SHORT}-${HEAD_SHORT}.txt"
+
+{
+  printf '## Commits %s..%s\n\n' "$BASE" "$HEAD"
+  git log --oneline "${BASE}..${HEAD}"
+  printf '\n## Diff stat\n\n'
+  git diff --stat "${BASE}..${HEAD}"
+  printf '\n## Diff\n\n'
+  git diff -U10 "${BASE}..${HEAD}"
+} > "$OUT"
+
+printf '%s\n' "$OUT"

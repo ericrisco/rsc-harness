@@ -74,6 +74,7 @@ Run every one. Each compares a specific pair (or the whole set against the const
 4. **Contradiction** — direct disagreements between two artifacts: the spec says Postgres, the plan says SQLite; the spec says "no auth in v1", a task adds login. Quote both sides.
 5. **Duplication** — the same requirement stated twice in conflicting words, or two tasks doing the same job. Duplication is where contradictions breed later.
 6. **Ambiguity / underspecification** — requirements or tasks too vague to implement or to verify ("handle errors gracefully", "make it fast" with no number, a task with no done-check). These do not block by themselves but feed back to `clarify` (spec) or `tasks` (missing done-check).
+   - **Carrier completeness (isolated-implementer check).** Because `implement`/`parallel` dispatch tasks to **context-isolated** `developer` subagents that see only their own task, also confirm the plan carries a **§0 Global Constraints** block (verbatim project-wide values) and that every task whose correctness depends on a contract it doesn't own has an **Interfaces** block (`Consumes`/`Produces`, exact signatures). A constraint or neighbor-signature that lives only in prose is invisible to the blind worker — flag a missing carrier as `AMBIGUOUS` (it will surface as drift or breakage at implement time). See `../plan/references/plan-template.md` §0 and `../tasks/SKILL.md` (Per-task Interfaces).
 
 ### Requirement coverage map (build this every run)
 

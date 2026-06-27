@@ -21,7 +21,7 @@ skills that fit — one at a time — into every assistant you pick, and keeps t
 equipped as you work.
 
 From *"document my company"* to *"ship a FastAPI service"* to *"grow my YouTube
-channel"* — **231 skills across 21 domains**, every one researched against live
+channel"* — **232 skills across 21 domains**, every one researched against live
 2025-2026 sources and **adversarially scored ≥ 8.5/10** before it shipped.
 
 ```bash
@@ -129,7 +129,7 @@ $ rsc
  ██████╗ ███████╗ ██████╗     ← animated gradient wordmark
  ██╔══██╗██╔════╝██╔════╝
  ██████╔╝███████╗██║
-  231 skills · one CLI · zero bloat
+  232 skills · one CLI · zero bloat
 
 What do you want to do?          ↑↓ move · enter select
 ❯ Base install — the essentials (orient + suggest + harness + init)
@@ -243,7 +243,7 @@ just asks in plain language.
 
 ## The catalog
 
-231 skills, grouped by what you're trying to do. Click any skill to read its
+232 skills, grouped by what you're trying to do. Click any skill to read its
 `SKILL.md`. It fires on its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -328,7 +328,7 @@ Each with a `02-DOCS` feedback loop that learns from your own results. `remotion
 
 ### 🧠 Knowledge & meta
 
-[knowledge-ops](skills/knowledge-ops/) · [codebase-onboarding](skills/codebase-onboarding/) · [research-ops](skills/research-ops/) · [decision-records](skills/decision-records/) · [continuous-learning](skills/continuous-learning/) · [skill-scout](skills/skill-scout/) · [context-budget](skills/context-budget/)
+[knowledge-ops](skills/knowledge-ops/) · [codebase-onboarding](skills/codebase-onboarding/) · [research-ops](skills/research-ops/) · [decision-records](skills/decision-records/) · [continuous-learning](skills/continuous-learning/) · [skill-scout](skills/skill-scout/) · [context-budget](skills/context-budget/) · [roast-me](skills/roast-me/)
 
 ---
 

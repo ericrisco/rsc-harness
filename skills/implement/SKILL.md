@@ -1,6 +1,6 @@
 ---
 name: implement
-description: "Use when executing a planned feature into working, tested code — turning the tasks list into commits, writing code task-by-task under TDD discipline (failing test first, then the code that passes it, then refactor), with a stop-and-show checkpoint after each task. Triggers: 'implement the plan', 'build out the tasks', 'start coding this feature', 'work through the task list', 'execute the implementation', 'write the code for this spec', 'do task 3', 'continue implementing', 'red-green-refactor this', 'implement with tests first'. The SDD phase AFTER analyze and BEFORE verify. Embeds red→green→refactor and delegates concrete test tooling to the stack skill (fastapi/go/nextjs/flutter); fans independent tasks out via parallel; logs every non-obvious choice to 02-DOCS/wiki/sdd/decisions.md and stays inside the constitution. NOT spec writing, NOT planning, NOT the final lint/audit gate."
+description: "Use when an approved plan and task list exist and it is time to turn them into working, tested code — the SDD phase AFTER analyze and BEFORE verify. Enforces TDD discipline: a test fails before the code that makes it pass. Triggers: 'implement the plan', 'build out the tasks', 'start coding this feature', 'work through the task list', 'execute the implementation', 'write the code for this spec', 'do task 3', 'continue implementing', 'red-green-refactor this', 'implement with tests first'. Delegates concrete test tooling to the stack skill (fastapi/go/nextjs/flutter) and fans independent tasks out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the final lint/test/audit gate (that is `verify`)."
 tags: [sdd, implement, code]
 recommends: [verify]
 profiles: [core, full]
@@ -66,7 +66,9 @@ REFACTOR → with the test green, clean up names/duplication/shape. Re-run; stil
 CHECK    → re-read the task's done-check. Met? Constitution still honored? Decision worth logging?
 PROGRESS → append task/test/blocker/decision state to 02-DOCS/wiki/sdd/progress/<slug>.md.
 COMMIT   → commit this task as one logical unit (authorship = Eric; see ship for the rule).
-CHECKPOINT → stop and show: what changed, test output, the next task. Wait per the dial.
+REVIEW   → dispatch a fresh reviewer subagent over THIS task's commits (see "Per-task review gate").
+           Fold its Critical/Important findings back in before you move on; Minor can wait.
+CHECKPOINT → stop and show: what changed, test output, review verdict, the next task. Wait per the dial.
 ```
 
 The order is load-bearing. **Red before green** is not a suggestion — a test you write *after* the
@@ -143,6 +145,18 @@ Entry shape:
 
 This file is what makes resumes and archive reliable. Never rewrite old entries; append corrections as new entries.
 
+### Resume & recovery — trust the ledger, not memory
+
+The progress file is the source of truth across compaction and restarts:
+
+- **A task recorded `status: complete` here is DONE — never re-dispatch it.** Re-running completed
+  tasks (re-implementing, re-committing) is the single most expensive recovery failure: it rebuilds
+  work that already exists and can clobber later commits.
+- **After a compaction or a fresh session, reconstruct state from this ledger + `git log`, not from
+  memory.** Read the progress entries and the commit history first; resume at the first task not
+  marked complete. If the ledger and the working tree disagree, believe the tree and append a
+  correction entry — do not silently re-run.
+
 ## Running independent tasks in parallel
 
 When two or more tasks are genuinely disjoint — **no shared files, no shared state, no ordering
@@ -163,6 +177,62 @@ pinned to the balanced tier (Sonnet by default, chosen at onboarding, never `lig
 delegate a task or fan out via `parallel`, dispatch it to that agent (e.g. Claude Code
 `subagent_type: developer`) so the bulk of TDD execution runs on the cheaper-but-capable model
 while you stay on the session model to orchestrate. Full rationale: `../sdd/references/model-routing.md`.
+
+### The dispatch contract (carriers, statuses, escalation)
+
+A dispatched worker is **context-isolated** — it sees only what you hand it, not your session. Make
+each dispatch self-sufficient and make its return machine-checkable:
+
+- **Carry the task, not your context.** Hand the worker its task brief, its **Interfaces** block
+  (`Consumes`/`Produces`, exact signatures — from `tasks`), and the plan's **§0 Global Constraints**.
+  Anything not in those three is invisible to it. Prefer **file paths over pasted text** (use
+  `scripts/task-brief` and `scripts/review-package`, below) — pasted briefs and diffs stay resident
+  in your context and get re-read every turn.
+- **Model is REQUIRED on every dispatch.** Always set the subagent's model explicitly (the
+  `developer` agent already pins balanced). An omitted model silently inherits the session's model —
+  usually the most expensive one — which is the quiet way fan-out cost explodes.
+- **The worker reports one of four statuses** (it does not guess when unsure):
+  - `DONE` — done-check green, `Produces` contract met.
+  - `DONE_WITH_CONCERNS` — green, but it flagged a risk/assumption for you to adjudicate.
+  - `BLOCKED` — cannot proceed (failing dependency, contradiction, missing access). Stops; does not
+    hack around it.
+  - `NEEDS_CONTEXT` — a `Consumes`/constraint it needed was not in the brief. Stops; names what's missing.
+- **Never force the same model to retry unchanged.** On `BLOCKED`/`NEEDS_CONTEXT` you must *change
+  something* before re-dispatching: add the missing context/interface, fix the dependency, or
+  escalate the tier (balanced → heavy) for a genuinely hard sub-problem. Re-running an identical
+  prompt on an identical model is how a loop burns budget without progress.
+
+## Per-task review gate
+
+After a task is committed and before its checkpoint, run a **small, fresh-eyes review of that task
+alone** — catching over-/under-building while it is one commit cheap to fix, instead of waiting for
+the whole-branch review when it is buried in a large diff. It is a mid-build gate, not the finish
+line (see the boundary below).
+
+How to run it:
+
+1. **Package the diff as a file, not a paste.** `scripts/review-package <BASE> <HEAD>` where `BASE`
+   is the task's *recorded* base sha (never `HEAD~1` — that drops every commit but the last of a
+   multi-commit task). It writes the commit list + `--stat` + full diff to one file.
+2. **Dispatch a fresh reviewer subagent** (context-isolated — it must NOT inherit your session
+   reasoning). Hand it: the review-package *path*, the task's **done-check**, the task's
+   **Interfaces → Produces** contract, and the plan's **§0 Global Constraints**. With routing on,
+   balanced is the floor; escalate to heavy for a risky/security-touching task. The frozen brief
+   lives in `references/per-task-review.md`.
+3. **It returns two verdicts in one pass:** *spec compliance* (missing / extra / misunderstood vs the
+   done-check + Produces) and *code quality* — every finding tagged severity
+   (`Critical`/`Important`/`Minor`) with `file:line` evidence.
+4. **Fold `Critical`/`Important` back in now**; `Minor` may wait for the end-of-branch review.
+
+**Anti-pre-judging (hard rule).** The dispatch must never tell the reviewer what *not* to flag,
+pre-rate a finding's severity, or explain why a choice is fine ("the plan chose X, treat as Minor").
+A stated rationale never downgrades a finding — that is laundering your own bias through the reviewer.
+Hand it the evidence and the contract; let it judge.
+
+**Boundary — this does not replace the end gates.** `verify` still runs the *whole* suite and the
+acceptance criteria once at the end, and `review` still reads the *whole* diff adversarially once
+before `ship`. The per-task gate is the cheap early pass; the broad reviews remain. Skip the per-task
+gate on a genuinely trivial task (a one-line change), like the rest of the chain.
 
 ## Model tier — `balanced` (opt-in routing)
 

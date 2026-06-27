@@ -115,6 +115,31 @@ Either way, the contract is identical: **after this step, the cwd is an isolated
 base, and the default-branch checkout is exactly as it was.** Confirm that out loud (at the dial's
 level) before handing to `implement`.
 
+### Provenance-aware cleanup (don't remove a workspace you didn't create)
+
+Removing the wrong worktree leaves phantom state and can destroy someone else's in-progress work.
+Before any `git worktree remove`, clear these guards:
+
+```bash
+# 1) Are we even inside a linked worktree? (GIT_DIR != GIT_COMMON_DIR ⇒ yes)
+[ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ] && echo "linked worktree"
+# 2) Submodule false-positive guard — never treat a submodule as a worktree to remove
+git rev-parse --show-superproject-working-tree   # non-empty ⇒ this is a submodule; STOP
+# 3) cd to the MAIN working tree before removing (you cannot remove the worktree you stand in)
+cd "$(git rev-parse --git-common-dir)/.."
+git worktree remove <path>
+git worktree prune                                # self-heal stale administrative entries
+```
+
+- **Only remove worktrees rsc/you created** — those under `.worktrees/` or `worktrees/`, or the
+  `../<repo>-<slug>` this skill made. A worktree the user or a native tool owns is **not yours to
+  delete**; leave it and say so.
+- **Native tool owns its own lifecycle.** If you isolated via a native `EnterWorktree`-style tool,
+  exit through that tool's `remove`/`keep` — do **not** hand-run `git worktree remove` on a workspace
+  the native tool created; let it clean up so its tracking stays consistent.
+- **`git worktree prune`** after a remove clears stale metadata when a directory vanished out from
+  under git — cheap self-healing, safe to run.
+
 ## Native vs. git fallback — which you're using
 
 | You have… | Create | Leave intact | Discard |
