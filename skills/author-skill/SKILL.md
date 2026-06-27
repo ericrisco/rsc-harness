@@ -137,6 +137,26 @@ Match the catalog, do not invent a new register:
 - Original prose. Mine ideas from anywhere; the words are Eric's. Do **not** reproduce another ecosystem's signature artifacts or phrasing — no borrowed "1% chance" urgency blocks, no copied rationalization wording, no `*-reviewer-prompt.md` files, no verbatim flowcharts. The rsc identity is its own.
 - Cross-reference siblings by name or `../<sibling>/SKILL.md`, only ones that actually exist.
 
+## Match the form to the failure
+
+Before you write an instruction, name the **failure** it's meant to prevent — then pick the form
+that actually fixes *that* failure. The instinct is to write a prohibition ("don't do X") for
+everything. That instinct is wrong for most failures, and measurably counter-productive for one
+class: **a prohibition aimed at output shape tends to summon the very thing it forbids** (the model
+attends to the named token), and can do *worse* than saying nothing at all. Match deliberately:
+
+| The failure is… | Use this form | Why, and example |
+| --- | --- | --- |
+| **Discipline** — the agent knows the rule but skips it under pressure (time, sunk cost, "just this once") | **Prohibition + rationalization table** (`Anti-patterns → STOP`) | The agent already knows what's right; it needs the excuse pre-refuted at the moment of temptation. This is exactly what the `STOP` tables are for. "I'll skip the failing test to ship" → name the rationalization, kill it. |
+| **Wrong-shaped output** — tone, verbosity, format, structure come out wrong | **Positive recipe / contract** (show the target shape) | A prohibition ("don't be verbose", "no marketing fluff") makes it *more* likely — the model fixates on the banned shape. Give the shape to hit instead: "Reply in ≤3 sentences, lead with the verdict." Demonstrate, don't forbid. |
+| **Omitted element** — the agent forgets a required piece | **Required structural slot** (a checklist item or a template field it must fill) | You can't prohibit an absence. Make the slot mandatory so its emptiness is visible — a `Done-of-done` checkbox, a template section, a result-envelope field. |
+| **Conditional behavior** — right action depends on the situation | **Predicate-keyed conditional** ("When X → do Y; otherwise Z") | A flat rule fires in the wrong context. Key the behavior to its trigger so the agent branches correctly instead of over- or under-applying. |
+
+So: keep the `Anti-patterns → STOP` tables — they're the correct tool for *discipline* failures,
+which is most of what the SDD-discipline skills guard. But when you catch yourself writing "don't
+make it X" about the *shape* of an output, stop and rewrite it as the shape to hit. Prohibition is
+a scalpel for one failure type, not the default for all of them.
+
 ## The best-practice rubric (audit before shipping)
 
 A skill ships only when every box is checked or a miss is consciously justified.

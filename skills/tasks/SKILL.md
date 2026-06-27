@@ -175,6 +175,31 @@ delete a user's map entry).
 | T0NN |  | All done-checks pass + `verify.sh` green | every row above checked; `scripts/verify.sh` exits 0 | all | spec §Acceptance |
 ```
 
+### Per-task Interfaces (for context-isolated implementers)
+
+`implement` and `parallel` dispatch tasks to **context-isolated** workers (the `developer`
+subagent) that see *only their own task* — not the whole plan. Such a worker can't infer a
+neighbor's function signature, payload shape, or column name from a one-line row. For any task
+whose correctness depends on a contract it doesn't own, attach an **Interfaces block** right under
+its row. (Trivial, self-contained tasks don't need one — don't add ceremony where there's no
+cross-task contract.)
+
+```markdown
+**T004 — Interfaces**
+- Consumes: `auth.verifyPassword(plain: str, hash: str) -> bool` (from T003); `users.email UNIQUE`
+- Produces: `POST /login` → `200 {token}` | `401 {error}`; sets `Set-Cookie: sid=…; HttpOnly`
+```
+
+Rules:
+
+- Quote **exact** signatures/shapes, not descriptions — the isolated worker copies them, it can't
+  go look them up. "Returns the user" is invisible; `-> {id, email}` is usable.
+- `Consumes` names what the task reads from a neighbor or the environment; `Produces` names the
+  contract later tasks (and the per-task reviewer) will hold it to.
+- The plan's **§0 Global Constraints** are inherited by every task implicitly — do **not** repeat
+  them per task. Interfaces carry the *task-local* contract; Global Constraints carry the
+  *project-wide* one. Together they are everything a blind implementer needs.
+
 ## Review workload + delivery strategy forecast
 
 After the task table, append a short forecast. This protects the human reviewer

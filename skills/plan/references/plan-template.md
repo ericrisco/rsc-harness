@@ -14,6 +14,20 @@ flows, levels — not framework syntax.
 > Spec: ../specs/<slug>.md · Constitution: ../constitution.md · Status: draft | approved
 > Last updated: YYYY-MM-DD
 
+## 0. Global Constraints
+
+(The project-wide rules that EVERY task implicitly includes — copied **verbatim** from the spec
+and constitution, with exact values, not paraphrased. A context-isolated implementer only sees its
+own task, so anything not stated here or in a task's Interfaces block is invisible to it. This is
+also the **reviewer's attention lens**: the per-task reviewer reads these first and treats a
+violation as a finding. Keep it to hard, checkable values — version floors, naming/copy rules,
+authorship, framework canon, security/compliance bars. If a value matters, write the value, not
+"per the spec".)
+
+- **<Category>:** <exact value> (e.g. "Node ≥ 20", "all amounts in cents (integer)", "no
+  Co-Authored-By footer", "error envelope `{ code, message }` everywhere").
+- …
+
 ## 1. Context & constraints
 
 (One or two lines each. Cite, don't re-paste, the spec and constitution.)
@@ -122,3 +136,7 @@ unit / contract / integration / e2e. Tooling is the stack skill's job — name t
   If a section genuinely has no content (e.g. no migration), write "none — <why>", not silence.
 - **Index it.** After writing, add the plan to the root `CLAUDE.md` `## Knowledge map` so the
   harness wiki and later phases can find it.
+- **Global Constraints carry the verbatim values.** §0 is not a summary of §1 — §1 explains *which*
+  constraints shape the design and *why*; §0 lists the exact values a blind implementer and the
+  reviewer must honor. A value that lives only in prose ("use the project's naming rule") is a value
+  the isolated worker can't see. Put it in §0, exact.

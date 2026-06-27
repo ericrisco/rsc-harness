@@ -1,6 +1,6 @@
 ---
 name: ship
-description: "Use when the work is complete and verified and it is time to CLOSE the development branch — the final phase of the rsc SDD chain, after review approves the diff. Triggers: 'ship it', 'close the branch', 'open the PR', 'merge this', 'merge into main', 'create the pull request', 'how do I land this work', 'finish this feature', 'haz el merge', 'abre el PR', 'cierra la rama', 'súbelo a main', 'clean up the branch', 'I'm done, what now'. Presents exactly three landing options (direct merge / pull request / park-or-discard) matched to the workflow, runs the pre-ship safety checklist (review verdict, clean tree, rebased, no secrets), and writes the commit and PR. HARD RULE: git authorship is ALWAYS Eric — never Claude. No Co-Authored-By Claude, no 'generated with' footer in any commit or PR body. NOT running lint/type/test (that is verify), NOT reading the diff adversarially (that is review), NOT the deploy/release mechanics to a server (that is deployment). Honors the harness accompaniment dial."
+description: "Use when the work is complete and verified and it is time to CLOSE the development branch — the final phase of the rsc SDD chain, after review approves the diff. Triggers: 'ship it', 'close the branch', 'open the PR', 'merge this', 'merge into main', 'create the pull request', 'how do I land this work', 'finish this feature', 'haz el merge', 'abre el PR', 'cierra la rama', 'súbelo a main', 'clean up the branch', 'I'm done, what now'. HARD RULE it enforces: git authorship is ALWAYS Eric — never a Co-Authored-By or 'generated with' footer in any commit or PR. NOT running lint/type/test (that is `verify`), NOT reading the diff adversarially (that is `review`), NOT deploy/release mechanics to a server (that is `deployment`). Honors the harness accompaniment dial."
 tags: [sdd, ship, release, pr]
 recommends: []
 profiles: [core, full]
@@ -177,6 +177,14 @@ Never stack to hide review risk. Stack because each slice is independently revie
 
 - **Park:** leave the branch, push it so it's not lost (`git push -u origin feature/<slug>`), and log *why it's parked* to `02-DOCS/wiki/sdd/decisions.md`. Do not merge.
 - **Discard:** deletion is **destructive** — require an explicit confirmation that quotes the branch name (e.g. the literal `yes, delete feature/<slug>`) before `git branch -D`. Anything ambiguous means keep it. Log the discard and the reason so the dead-end is remembered, not re-attempted.
+
+**If the work lived in a worktree, clean it up provenance-aware.** After the merge/park/discard, only
+remove a worktree **rsc created** (under `.worktrees/`/`worktrees/` or the `../<repo>-<slug>` dir),
+never one the user or a native tool owns. Guard first: confirm it's a linked worktree
+(`git rev-parse --git-dir` ≠ `--git-common-dir`), rule out a submodule
+(`git rev-parse --show-superproject-working-tree` is empty), `cd` to the main working tree before
+removing, and run `git worktree prune` after. Full procedure: `../worktrees/SKILL.md` (Provenance-aware
+cleanup). If a native `EnterWorktree`-style tool created it, exit through that tool, not raw git.
 
 ## Commit message discipline
 

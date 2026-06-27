@@ -1,0 +1,77 @@
+#!/bin/sh
+# task-brief PLAN_FILE N
+# Extracts task number N from a plan/tasks markdown file into a brief file in the
+# sdd-workspace dir, and prints its path.
+#
+# A task starts at a heading matching: ### T<N> / ### T<N>( / ### T<N> — / ## T<N>
+# and ends just before the next ### T / ## heading.
+# If task N is not found, exits nonzero with a clear message.
+
+# Resolve the directory of this script portably.
+_SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+usage() {
+  printf 'Usage: task-brief <PLAN_FILE> <N>\n' >&2
+  printf '  PLAN_FILE  path to the tasks markdown file\n' >&2
+  printf '  N          task number to extract (e.g. 2 for T2)\n' >&2
+  exit 1
+}
+
+if [ $# -lt 2 ]; then
+  printf 'error: task-brief requires PLAN_FILE and N arguments\n' >&2
+  usage
+fi
+
+PLAN_FILE="$1"
+N="$2"
+
+if [ ! -f "$PLAN_FILE" ]; then
+  printf 'error: plan file not found: %s\n' "$PLAN_FILE" >&2
+  exit 1
+fi
+
+# Validate N is a positive integer.
+case "$N" in
+  ''|*[!0-9]*)
+    printf 'error: N must be a positive integer, got: %s\n' "$N" >&2
+    exit 1
+    ;;
+esac
+
+# Use awk to extract the task block.
+# Match start: a heading line (## or ###) followed by T<N> then space, (, —, or end of line.
+# Match end: the next heading line starting with ## (which includes ###).
+# Exit code: 0 if found, 1 if not found.
+CONTENT="$(awk -v n="$N" '
+  BEGIN { printing=0; found=0 }
+  /^#{2,3}[[:space:]]/ {
+    # Check if this heading is the target task T<n>
+    line=$0
+    pat="^#{2,3}[[:space:]]+T" n "([[:space:](]|[-]|$)"
+    if (match(line, pat)) {
+      printing=1; found=1; print; next
+    }
+    # Any other ## / ### heading stops printing
+    if (printing) { exit }
+  }
+  { if (printing) print }
+  END { if (!found) exit 1 }
+' "$PLAN_FILE")" || {
+  printf 'error: task T%s not found in %s\n' "$N" "$PLAN_FILE" >&2
+  exit 1
+}
+
+if [ -z "$CONTENT" ]; then
+  printf 'error: task T%s not found in %s\n' "$N" "$PLAN_FILE" >&2
+  exit 1
+fi
+
+# Get the scratch workspace dir.
+SCRATCH="$(sh "$_SCRIPT_DIR/sdd-workspace")"
+
+# Derive a readable unique name from the plan file basename and task number.
+PLAN_BASENAME="$(basename "$PLAN_FILE" .md)"
+OUT="$SCRATCH/brief-${PLAN_BASENAME}-T${N}.txt"
+
+printf '%s\n' "$CONTENT" > "$OUT"
+printf '%s\n' "$OUT"

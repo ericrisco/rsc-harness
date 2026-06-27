@@ -26,6 +26,7 @@ Four moves, in order:
 - **≤ 1024 characters.** Count them. Over budget = trim verb phrases and trigger duplicates first, never the boundary.
 - **Valid single-line quoted YAML.** The description is one physical line wrapped in double quotes. No raw newlines inside the value. Avoid characters that break YAML in double quotes; if you need an apostrophe inside, it is fine (single quotes are literal inside double-quoted YAML). Never put an unescaped `"` inside.
 - **Third person, present tense.** The agent reads *about* the skill. "Use when…", "Triggers on…", "Knows…". Never "I", never "you should".
+- **State triggers and boundary — never the workflow.** The description says *when* to fire and *what it is not*. It must **not** summarize the procedure the body owns (the steps, the phase count, "does X then Y then Z"). This is not a style nit — it changes behavior. A description that pre-summarizes the steps becomes a *substitute* for reading the body: the agent acts on the summary and skips the real instructions. (Observed in the wild: a skill whose description said it runs *two* reviews made the agent run only *one*, because the summary was treated as the spec; deleting the workflow summary made the agent read the body and do both.) The verb phrases in move #2 name *capabilities* ("repairing cases.yaml"), not an ordered recipe ("first lint, then split, then validate"). If your description tells the reader how the skill works step by step, cut it down to triggers + boundary.
 
 ## Budget tactics when you blow 1024
 
@@ -61,6 +62,7 @@ Before committing a description, ask:
 - Could the router tell from this line alone *when* to fire it? (situation present)
 - Are there phrasings a real user would type, in their language? (triggers present)
 - Does it say what it is **not**, naming the sibling? (boundary present)
+- Does it describe *when/what-not*, and **never** the step-by-step procedure? (no workflow summary — if a reader could skip the body and act on the description alone, it leaks the workflow)
 - Does it parse as YAML and fit 1024? (run the check)
 
 If any answer is no, it is not done.

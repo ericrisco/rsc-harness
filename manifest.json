@@ -1,7 +1,7 @@
 {
   "version": "0.1.32",
   "counts": {
-    "skills": 231
+    "skills": 232
   },
   "skills": [
     {
@@ -1123,7 +1123,7 @@
     },
     {
       "id": "debug",
-      "description": "Use when something is broken and the impulse is to start patching — a bug, a failing or flaky test, a crash, an exception, a wrong result, a regression, or behavior nobody can explain — and you want the root cause found BEFORE any fix is proposed. The on-demand rsc-sdd diagnosis discipline: reproduce → isolate → hypothesize → fix → verify, callable from inside implement (or any phase) the moment a check fails for a reason you don't understand. Triggers: 'debug this', 'why is this failing', 'this test is flaky', 'find the root cause', 'it works locally but not in CI', 'this used to work', 'track down this bug', 'the fix didn't stick', 'figure out why', 'NullPointer/segfault/500 out of nowhere', 'intermittent failure'. It diagnoses and fixes the ONE confirmed cause, then hands back. NOT writing a planned feature (implement), NOT the lint/test gate (verify), NOT adversarial diff reading (review). Honors the harness accompaniment dial.",
+      "description": "Use when something is broken and the impulse is to start patching — a bug, a failing or flaky test, a crash, an exception, a wrong result, a regression, or behavior nobody can explain — and you want the root cause found BEFORE any fix is proposed. The on-demand rsc-sdd diagnosis discipline, callable from inside implement (or any phase) the moment a check fails for a reason you don't understand. Triggers: 'debug this', 'why is this failing', 'this test is flaky', 'find the root cause', 'it works locally but not in CI', 'this used to work', 'track down this bug', 'the fix didn't stick', 'figure out why', 'NullPointer/segfault/500 out of nowhere', 'intermittent failure'. Fixes the ONE confirmed cause, then hands back. NOT writing a planned feature (that is `implement`), NOT the lint/test gate (that is `verify`), NOT adversarial diff reading (that is `review`). Honors the harness accompaniment dial.",
       "tags": [
         "debug",
         "bug",
@@ -2001,7 +2001,7 @@
     },
     {
       "id": "implement",
-      "description": "Use when executing a planned feature into working, tested code — turning the tasks list into commits, writing code task-by-task under TDD discipline (failing test first, then the code that passes it, then refactor), with a stop-and-show checkpoint after each task. Triggers: 'implement the plan', 'build out the tasks', 'start coding this feature', 'work through the task list', 'execute the implementation', 'write the code for this spec', 'do task 3', 'continue implementing', 'red-green-refactor this', 'implement with tests first'. The SDD phase AFTER analyze and BEFORE verify. Embeds red→green→refactor and delegates concrete test tooling to the stack skill (fastapi/go/nextjs/flutter); fans independent tasks out via parallel; logs every non-obvious choice to 02-DOCS/wiki/sdd/decisions.md and stays inside the constitution. NOT spec writing, NOT planning, NOT the final lint/audit gate.",
+      "description": "Use when an approved plan and task list exist and it is time to turn them into working, tested code — the SDD phase AFTER analyze and BEFORE verify. Enforces TDD discipline: a test fails before the code that makes it pass. Triggers: 'implement the plan', 'build out the tasks', 'start coding this feature', 'work through the task list', 'execute the implementation', 'write the code for this spec', 'do task 3', 'continue implementing', 'red-green-refactor this', 'implement with tests first'. Delegates concrete test tooling to the stack skill (fastapi/go/nextjs/flutter) and fans independent tasks out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the final lint/test/audit gate (that is `verify`).",
       "tags": [
         "sdd",
         "implement",
@@ -3558,6 +3558,25 @@
       "profiles": []
     },
     {
+      "id": "roast-me",
+      "description": "Use when you want honest, comedic feedback on how you prompt — analyzing your own past sessions to score prompt quality and compute efficiency, surface your worst habits, and generate a model-selection cheat sheet. Triggers: 'roast me', 'roast my prompting', 'audit my prompting habits', 'how good are my prompts', 'am I prompting well', 'what are my bad prompt habits', 'analiza mis prompts', 'puntua els meus prompts', 'how much am I wasting on model costs'. NOT reviewing your code or output quality (use code-review for that) and NOT a general prompt-engineering tutorial (use prompt-engineering for that).",
+      "tags": [
+        "prompting",
+        "self-audit",
+        "compute-efficiency",
+        "ai-hygiene",
+        "learning"
+      ],
+      "recommends": [
+        "prompt-engineering",
+        "code-review",
+        "context-budget"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
       "id": "ruby",
       "description": "Use when writing idiomatic Ruby outside Rails — plain scripts, CLIs, gems, libraries — or refactoring imperative loops into Enumerable chains, designing module mixins, packaging with Bundler, deciding whether metaprogramming is worth it, or setting up Minitest/RSpec. Triggers: 'write this in Ruby', 'refactor this loop with map/reduce', 'build a gem', 'gemspec / Gemfile.lock', 'method_missing or define_method?', 'Minitest vs RSpec', 'FrozenError after Ruby 3.4 upgrade', 'mixin vs inheritance', 'escribir una gema en Ruby', 'refactoritzar amb blocs'. NOT Rails/ActiveRecord/controllers (that is rails).",
       "tags": [
@@ -3762,7 +3781,7 @@
     },
     {
       "id": "ship",
-      "description": "Use when the work is complete and verified and it is time to CLOSE the development branch — the final phase of the rsc SDD chain, after review approves the diff. Triggers: 'ship it', 'close the branch', 'open the PR', 'merge this', 'merge into main', 'create the pull request', 'how do I land this work', 'finish this feature', 'haz el merge', 'abre el PR', 'cierra la rama', 'súbelo a main', 'clean up the branch', 'I'm done, what now'. Presents exactly three landing options (direct merge / pull request / park-or-discard) matched to the workflow, runs the pre-ship safety checklist (review verdict, clean tree, rebased, no secrets), and writes the commit and PR. HARD RULE: git authorship is ALWAYS Eric — never Claude. No Co-Authored-By Claude, no 'generated with' footer in any commit or PR body. NOT running lint/type/test (that is verify), NOT reading the diff adversarially (that is review), NOT the deploy/release mechanics to a server (that is deployment). Honors the harness accompaniment dial.",
+      "description": "Use when the work is complete and verified and it is time to CLOSE the development branch — the final phase of the rsc SDD chain, after review approves the diff. Triggers: 'ship it', 'close the branch', 'open the PR', 'merge this', 'merge into main', 'create the pull request', 'how do I land this work', 'finish this feature', 'haz el merge', 'abre el PR', 'cierra la rama', 'súbelo a main', 'clean up the branch', 'I'm done, what now'. HARD RULE it enforces: git authorship is ALWAYS Eric — never a Co-Authored-By or 'generated with' footer in any commit or PR. NOT running lint/type/test (that is `verify`), NOT reading the diff adversarially (that is `review`), NOT deploy/release mechanics to a server (that is `deployment`). Honors the harness accompaniment dial.",
       "tags": [
         "sdd",
         "ship",
