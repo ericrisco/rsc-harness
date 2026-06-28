@@ -47,4 +47,4 @@ capability:
       - "Repairs See Also so the three orphans gain bidirectional inbound links."
       - "Prunes the superseded page to _archive/ (never rm); flags the stale archive with a '> ⚠ Stale' note instead of rewriting it."
       - "Flags the conflict for human arbitration and does NOT auto-pick a winner."
-      - "Logs every operation to wiki/log.md; treats gaps.md and log.md as append-only; touches no article updated <24h ago without consent."
+      - "Logs every operation to wiki/log.md (prepended newest-first, the OKF reserved change-log); treats gaps.md as append-only; touches no article whose timestamp is <24h ago without consent."

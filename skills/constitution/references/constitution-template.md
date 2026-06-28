@@ -5,6 +5,16 @@ Render this into `02-DOCS/wiki/sdd/constitution.md`. Keep it to 1-2 screens. Eve
 ---
 
 ```markdown
+---
+type: constitution
+title: <Project> — Constitution
+description: The non-negotiable principles every rsc-sdd phase obeys.
+tags: [sdd, constitution]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: sdd
+version: v1.0.0
+---
+
 # <Project> — Constitution
 
 > Version: v1.0.0 · Ratified: YYYY-MM-DD · Last amended: YYYY-MM-DD

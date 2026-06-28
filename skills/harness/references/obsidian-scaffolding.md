@@ -31,17 +31,24 @@ not bundled with a specific raw source. Link them from the page that depends on
 them. Source-bundled originals stay in `raw/<topic>/_originals/`.
 ```
 
-## `02-DOCS/.obsidian/app.json` (attachment folder)
+## `02-DOCS/.obsidian/app.json` (attachment folder + OKF link mode)
 
 ```json
 {
   "attachmentFolderPath": "attachments",
-  "newLinkFormat": "shortest",
-  "useMarkdownLinks": false
+  "newLinkFormat": "relative",
+  "useMarkdownLinks": true,
+  "alwaysUpdateLinks": true
 }
 ```
 
-`useMarkdownLinks: false` makes new internal links wikilinks. `userIgnoreFilters`
+`useMarkdownLinks: true` makes new internal links **standard markdown links**, not
+wikilinks — this is what keeps `wiki/` a 100%-OKF-conformant bundle (OKF consumers
+follow markdown links; wikilinks `[[...]]` are non-conformant). `newLinkFormat:
+relative` writes paths relative to the current file (`../topic/page.md`), which OKF
+supports and which resolves both in Obsidian and in any OKF consumer.
+`alwaysUpdateLinks: true` makes Obsidian rewrite those relative links automatically
+on rename, so links survive moves the way wikilinks used to. `userIgnoreFilters`
 (Settings → Files & Links → Excluded files) should hide noise from search/graph:
 `raw/_originals/`, `inbox/_processed/`, `audits/`.
 
@@ -59,7 +66,7 @@ filters:
 views:
   - type: table
     name: All Articles
-    order: [file.name, topic, status, score, updated]
+    order: [file.name, topic, status, score, timestamp]
     sort:
       - property: score
         direction: DESC
@@ -74,9 +81,9 @@ filters:
 views:
   - type: table
     name: Worklog
-    order: [file.name, topic, date, status]
+    order: [file.name, topic, timestamp, status]
     sort:
-      - property: date
+      - property: timestamp
         direction: DESC
 ```
 
@@ -89,8 +96,8 @@ filters:
 views:
   - type: table
     name: Decisions
-    order: [file.name, topic, status, updated]
+    order: [file.name, topic, status, timestamp]
     sort:
-      - property: updated
+      - property: timestamp
         direction: DESC
 ```

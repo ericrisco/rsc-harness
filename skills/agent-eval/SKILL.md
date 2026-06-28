@@ -199,7 +199,7 @@ Pick by where the eval runs and what it must do. Versions as of 2026-06 — re-v
 
 ## Project grounding
 
-If the workspace has a `02-DOCS/` harness, record the eval policy in `02-DOCS/wiki/stack/evals.md`: dataset location, scorer mix, gate baseline file, judge model, and the failure modes covered. Index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer). This is **recorded, not gated** — skip silently if there is no harness.
+If the workspace has a `02-DOCS/` harness, record the eval policy in `02-DOCS/wiki/stack/evals.md`: dataset location, scorer mix, gate baseline file, judge model, and the failure modes covered. Write it as an OKF v0.1 wiki article per the harness [`wiki-article-template.md`](../harness/references/wiki-article-template.md): open with YAML frontmatter carrying a non-empty `type:` (use `type: stack`), `timestamp` in ISO 8601, and standard markdown links — never wikilinks. Index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer). This is **recorded, not gated** — skip silently if there is no harness.
 
 ## verify.sh
 

@@ -150,7 +150,7 @@ Tone by context: onboarding=warm; error=plain+reassuring, no humor;
   success=light warmth, no hype; billing=precise+calm; legal=formal+exact.
 ```
 
-**Persist it.** Write the compiled guide under `02-DOCS/wiki/brand/voice-guide.md` and the voice-DNA block beside it, per the `harness` Karpathy-wiki convention (compiled brand articles under `02-DOCS/wiki/brand/`, raw user inputs under `02-DOCS/raw/brand/`). This is the exact study `marketing`, `landing-copy`, and `content-engine` read to ground their copy. A guide in a slide deck is invisible to them.
+**Persist it.** Write the compiled guide under `02-DOCS/wiki/brand/voice-guide.md` and the voice-DNA block beside it, per the `harness` Karpathy-wiki convention (compiled brand articles under `02-DOCS/wiki/brand/`, raw user inputs under `02-DOCS/raw/brand/`). The persisted file is an OKF v0.1 wiki article: open it with YAML frontmatter carrying a non-empty `type:` (use `type: brand-voice`) — see the frontmatter block in [`references/voice-guide-template.md`](references/voice-guide-template.md). This is the exact study `marketing`, `landing-copy`, and `content-engine` read to ground their copy. A guide in a slide deck is invisible to them.
 
 ## Auditing for drift
 

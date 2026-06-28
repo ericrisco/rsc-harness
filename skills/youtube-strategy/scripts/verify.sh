@@ -13,6 +13,8 @@
 #          - a named metric/bet (a "Bets on metric:" / "metric" / "bet" field)
 #        A record missing the metric/bet field is a HARD FAILURE — a decision with
 #        no metric is an opinion, not a checkable bet.
+#     4. Each decision record carries a non-empty `type:` frontmatter field
+#        (OKF v0.1 conformance). A record with no `type` is a HARD FAILURE.
 #
 #   Missing date or Decision line is also a hard failure. A missing/empty target
 #   (a fresh channel with no wiki yet) is reported and exits 0 — no false failure.
@@ -105,6 +107,8 @@ while IFS= read -r rec; do
   grep -Eq "$DATE_RE"                    "$rec" || miss="$miss date"
   grep -Eiq '^[[:space:]-]*Decision:'    "$rec" || miss="$miss decision-line"
   grep -Eiq '(bets on metric:|metric|bet:)' "$rec" || miss="$miss metric/bet"
+  # OKF v0.1: a non-empty `type:` frontmatter field is required.
+  grep -Eiq '^[[:space:]]*type:[[:space:]]*[^[:space:]]' "$rec" || miss="$miss type"
 
   if [ -n "$miss" ]; then
     fail "$rec: missing required field(s):$miss"

@@ -8,6 +8,13 @@ template, the stage gates, and the CSV column docs you fill in.
 Every slot carries one brief in the same shape. A slot cannot leave the `idea` stage
 without it. Store briefs under `02-DOCS/wiki/content/briefs/<slug>.md`.
 
+These briefs live in the `02-DOCS/wiki/` OKF v0.1 bundle, so each brief `.md` carries YAML
+frontmatter with a non-empty `type: content-brief` (the OKF-recommended `title`/`description`/
+`tags`/`timestamp` are added where meaningful). The domain brief fields below are kept as-is —
+OKF allows any extra key. Cross-references in the body use **standard markdown links**, never
+wikilinks (e.g. `[brand voice](../brand-voice.md)`). See
+`../../harness/references/wiki-protocol.md` "## Conventions".
+
 | Field | Required | What goes here |
 |---|---|---|
 | `objective` | yes | the one outcome (e.g. "drive activation-checklist signups") |
@@ -25,6 +32,13 @@ without it. Store briefs under `02-DOCS/wiki/content/briefs/<slug>.md`.
 
 ```markdown
 ---
+# OKF v0.1 standard surface — `type` is the only REQUIRED field (non-empty).
+type: content-brief
+title: "Onboarding activation guide — brief"
+description: "Brief of record for the flagship activation-checklist guide."
+tags: [content-brief, onboarding, flagship]
+timestamp: 2026-07-01T00:00:00Z
+# Domain brief fields (OKF allows any extra key; the pipeline + verify read these).
 slug: onboarding-activation-guide
 objective: drive activation-checklist signups from new-trial users
 persona: hands-on-ops-lead
@@ -36,7 +50,7 @@ owner: ana
 target_keyword: "saas user activation checklist"
 success_metric: 100 checklist downloads in 30 days
 atomization_intent: 10 derivatives — 3 LinkedIn, 1 X thread, 2 shorts, 1 newsletter, 3 carousels
-voice_ref: 02-DOCS/wiki/brand-voice.md
+voice_ref: ../brand-voice.md
 ---
 ```
 

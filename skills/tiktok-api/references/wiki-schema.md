@@ -24,8 +24,19 @@ from colliding and lets a sibling grep `tiktok-*` for just this account.
 
 ## Account snapshot entry (one file per pull)
 
+Frontmatter is **OKF v0.1 conformant**: a non-empty `type` is the only hard
+requirement; `title`/`tags`/`timestamp` are the recommended OKF surface. The
+domain keys (`date`, `range`, `account`, `platform`, `source`, `provisional`) are
+preserved verbatim — siblings parse them, and OKF tolerates arbitrary extra keys.
+`date` is the snapshot's reporting day; `timestamp` is the ISO 8601 moment the file
+was written. Keep both.
+
 ```markdown
 ---
+type: shortform-metrics
+title: TikTok account snapshot — 2026-06-02
+tags: [tiktok, metrics, snapshot]
+timestamp: 2026-06-02T09:00:00Z
 date: 2026-06-02
 range: 2026-05-26..2026-06-01
 account: <open_id>
@@ -50,11 +61,23 @@ completion +3.1pts after the tighter cold-open; FYP share up 5pts.
 
 Newest entry on top, so a glance shows the latest. Each pull **prepends** a block —
 this is where the 24–48h settling becomes visible (the same video's
-`full_video_watched_rate` will drift between pulls).
+`full_video_watched_rate` will drift between pulls). This is an OKF append-log:
+the frontmatter header is written once and stays immutable; new dated blocks are
+prepended **above** older ones (newest-first), past blocks are never edited, and
+dates are ISO 8601.
 
 ```markdown
+---
+type: shortform-record
+title: tiktok-7399 — "cold open hook test"
+tags: [tiktok, video-log]
+timestamp: 2026-06-02T09:00:00Z
+video_id: "7399..."
+platform: tiktok
+posted: 2026-05-28
+duration: 21s
+---
 # tiktok-7399... — "cold open hook test"
-posted: 2026-05-28 | duration: 21s
 
 ## 2026-06-02 (final-ish)
 views 52,140 | completion 28.4% | avg_watched 6.1s | FYP 71%
@@ -63,13 +86,18 @@ views 52,140 | completion 28.4% | avg_watched 6.1s | FYP 71%
 views 18,900 | completion 24.1% | avg_watched 5.3s | FYP 64%
 ```
 
+On each prepend, bump the header `timestamp` to the new pull's ISO moment; never
+edit a past dated block.
+
 ## index.md
 
-A thin pointer, not a data dump:
+A thin pointer, not a data dump. As an OKF **reserved** file it carries **no
+frontmatter**, and its cross-references are standard markdown links (never
+wikilinks), so an OKF consumer can follow them straight to the snapshot files:
 
 ```markdown
 # shortform wiki — index
-- tiktok: latest snapshot → tiktok-account-2026-06-02.md
+- tiktok: latest snapshot → [tiktok-account-2026-06-02.md](./tiktok-account-2026-06-02.md)
 - open questions:
   - is the cold-open change holding completion above 27%? (watch next 2 pulls)
 ```
@@ -83,3 +111,9 @@ A thin pointer, not a data dump:
 - **Namespace by platform.** `tiktok-` prefix on every file so IG/YouTube pulls coexist.
 - **Numbers only, no interpretation.** "What changed" is a factual delta line, not a
   recommendation — what to *do* about it belongs to `shortform-strategy`.
+- **OKF v0.1 conformant.** Every snapshot and per-video file carries YAML frontmatter
+  with a non-empty `type` (`shortform-metrics` / `shortform-record`) plus the OKF
+  `title`/`tags`/`timestamp` surface; domain keys like `date` are kept additively. The
+  reserved `index.md` carries no frontmatter. All cross-references are standard markdown
+  links — never `[[wikilinks]]` — so the `shortform/` tree is a portable OKF bundle the
+  siblings (and any OKF consumer) read without translation.

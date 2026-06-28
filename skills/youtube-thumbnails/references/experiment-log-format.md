@@ -3,6 +3,14 @@
 The wiki layout, schema, filled example, and pattern-mining heuristic for the
 feedback loop in SKILL.md. Everything lives under `02-DOCS/wiki/youtube/`.
 
+`02-DOCS/wiki/` is an **OKF v0.1** bundle, so both files below carry file-level
+YAML frontmatter with a non-empty `type` (`thumbnail-experiment`) plus the OKF
+surface (`title`, `description`, `tags`, `timestamp`) — the same shared key set the
+api/strategy/packaging siblings use. The frontmatter sits once at the top of each
+file, above the table. Refresh `timestamp` when you append/rewrite. Any
+cross-reference uses a standard markdown link (`[text](./file.md)`), never an
+Obsidian `[[wikilink]]`.
+
 ## Files
 
 - `thumbnail-experiments.md` — append-only log, one row per Test & Compare run.
@@ -11,7 +19,18 @@ feedback loop in SKILL.md. Everything lives under `02-DOCS/wiki/youtube/`.
 
 ## `thumbnail-experiments.md` schema
 
-```text
+File-level frontmatter once at the top, then the append-only table below it:
+
+```markdown
+---
+type: thumbnail-experiment
+title: Thumbnail experiments log
+description: One row per Test & Compare run — variants, axis tested, winner, and the takeaway.
+tags: [youtube, thumbnails, ab-testing]
+timestamp: 2026-06-01T00:00:00Z
+---
+# Thumbnail experiments
+
 | date | video | variants | axis tested | winner | CTR | watch-time share | note |
 ```
 
@@ -38,7 +57,14 @@ feedback loop in SKILL.md. Everything lives under `02-DOCS/wiki/youtube/`.
 
 ## `thumbnail-patterns.md` shape
 
-```text
+```markdown
+---
+type: thumbnail-experiment
+title: What wins on this channel
+description: Derived summary of the settled thumbnail axes and their confidence.
+tags: [youtube, thumbnails, patterns]
+timestamp: 2026-06-01T00:00:00Z
+---
 # What wins on this channel
 
 | axis | settled winner | evidence | confidence |

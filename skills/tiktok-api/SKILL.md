@@ -251,10 +251,14 @@ A pull that prints to stdout and vanishes is wasted. **Every pull appends a date
 
 Filenames carry the `tiktok-` prefix because the same `shortform/` wiki may also hold Instagram and YouTube pulls — namespacing keeps platforms from colliding.
 
-Per-pull entry template:
+Per-pull entry template. The frontmatter is **OKF v0.1 conformant** — a non-empty `type` is the only hard requirement; `title`/`tags`/`timestamp` are the recommended OKF surface; the domain `date`/`range`/`account`/`platform`/`source` keys the siblings parse are preserved additively (OKF tolerates extra keys). `date` is the reporting day; `timestamp` is the ISO 8601 write moment:
 
 ```markdown
 ---
+type: shortform-metrics
+title: TikTok account snapshot — 2026-06-02
+tags: [tiktok, metrics, snapshot]
+timestamp: 2026-06-02T09:00:00Z
 date: 2026-06-02
 range: 2026-05-26..2026-06-01
 account: <open_id>
@@ -274,7 +278,7 @@ For You 71% · Personal profile 14% · Search 7%
 completion +3.1pts after the tighter cold-open; FYP share up 5pts.
 ```
 
-Rule: **append, never overwrite.** The feedback log *is* the value — overwriting yesterday's snapshot destroys the trend the siblings need, and erases the 24–48h settling you only see across pulls. Exact file tree, naming, and how siblings read the log: `references/wiki-schema.md`.
+Rule: **append, never overwrite.** The feedback log *is* the value — overwriting yesterday's snapshot destroys the trend the siblings need, and erases the 24–48h settling you only see across pulls. The per-video log (`videos/tiktok-<id>.md`) is an OKF append-log: write its frontmatter header once, prepend each new dated block newest-first, never edit a past block. `index.md` is the OKF reserved file — no frontmatter, standard markdown links only. Exact file tree, frontmatter, naming, and how siblings read the log: `references/wiki-schema.md`.
 
 ## 6. Rate & failure math
 

@@ -128,14 +128,21 @@ Read CTR (>~6% is healthy for new channels) and AVD/retention from the wiki to c
 A strategy session that does not write back does not compound — the next session starts from zero. On exit, append a **dated decision record** under `02-DOCS/wiki/youtube/` and, when reviewing, a **what-worked** entry tied to specific videos/playlists. Minimal record inline; full templates in `references/wiki-records.md`:
 
 ```markdown
+---
+type: youtube-strategy-record
+title: Niche down to budget mechanical keyboards for programmers
+description: Reposition from broad tech reviews to budget mechanical keyboards for programmers; hold 2/wk cadence.
+tags: [youtube, strategy-decision, positioning]
+timestamp: 2026-06-02T00:00:00Z
+---
 # 2026-06-02 — Niche down to budget mechanical keyboards for programmers
-- Context read: flat subs at 40 videos; top 3 by AVD all keyboard reviews (wiki/youtube/what-worked.md)
+- Context read: flat subs at 40 videos; top 3 by AVD all keyboard reviews ([what-worked.md](./what-worked.md))
 - Decision: reposition from "tech reviews" to "budget mechanical keyboards for programmers"; cadence 2/wk held
 - Bets on metric: AVD on keyboard videos (currently ~48%) holding while non-keyboard topics are dropped
 - Review date: 2026-09-02
 ```
 
-Every record names **the metric it is betting on** and a **review date**. A decision with no metric is an opinion, not a bet you can later check. Run `scripts/verify.sh 02-DOCS/wiki/youtube/` after writing to confirm the records are structurally complete.
+`02-DOCS/wiki/` is an OKF v0.1 bundle: every record carries a non-empty `type` (`youtube-strategy-record`) above the body, and cross-references use standard markdown links (never `[[wikilinks]]`). Every record names **the metric it is betting on** and a **review date**. A decision with no metric is an opinion, not a bet you can later check. Run `scripts/verify.sh 02-DOCS/wiki/youtube/` after writing to confirm the records are structurally complete (date, `Decision:`, metric, and `type`). Full templates in `references/wiki-records.md`.
 
 ## Anti-patterns
 

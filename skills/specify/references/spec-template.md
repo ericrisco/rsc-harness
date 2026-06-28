@@ -6,10 +6,21 @@ endpoint, library, file path, or algorithm. If you can't phrase it without
 naming the tech, it's a *point to clarify*, not a requirement.
 
 ```markdown
+---
+type: spec
+title: Spec — <Feature name>
+description: WHAT and WHY for <feature> — problem, goals, behaviour, acceptance criteria.
+tags: [sdd, spec]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: sdd
+slug: <slug>
+status: draft
+---
+
 # Spec — <Feature name>
 
 > Slug: `<slug>` · Status: draft · Created: <YYYY-MM-DD>
-> Inherits: 02-DOCS/wiki/sdd/constitution.md
+> Inherits: [constitution](../constitution.md)
 
 ## Problem & why
 <The pain, who feels it, and the cost of leaving it unsolved. One short

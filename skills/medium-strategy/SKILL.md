@@ -133,12 +133,24 @@ On a monthly/quarterly review:
 Every session ends with a dated record under `02-DOCS/wiki/medium/decisions/`. Minimum fields — the bet-on metric is mandatory, because a decision with no metric is an opinion, not a checkable bet:
 
 ```markdown
+---
+type: medium-decision
+title: Solo vs publication for AI-tools series
+description: Stay solo + canonical-import the blog series; pitch one Boost-eligible AI pub with a native original.
+tags: [medium, publications, monetization, distribution]
+timestamp: 2026-06-02T00:00:00Z
+topic: medium
+status: stable
+---
+
 # 2026-06-02 — Solo vs publication for AI-tools series
 
 Decision: Stay solo profile + canonical-import the blog series; pitch one Boost-eligible AI pub with a native original.
 Rationale: 400 followers, no editor nomination path; the blog has evergreen search traffic worth importing (external +5%, search 15%).
 Bets on metric: member reading time from external/search referral; 1 Boost nomination this quarter.
 ```
+
+`type:` is the required OKF v0.1 field; `timestamp` is ISO 8601. The `Decision:` / `Bets on metric:` lines are domain signals `verify.sh` greps for — keep them.
 
 After a review, append a `what-worked.md` entry tied to specific stories/pubs/tags (e.g. "`AI Coding Tools` long-tail + Boost → 3.2h member reading time"). Full templates, layout, and the verify.sh contract: [`references/wiki-records.md`](references/wiki-records.md). Sanity-check the wiki with `scripts/verify.sh 02-DOCS/wiki/medium/`.
 

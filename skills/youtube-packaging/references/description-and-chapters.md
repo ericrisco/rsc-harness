@@ -1,8 +1,9 @@
 # Description, chapters & feedback-log formats
 
-Offloaded depth for [../SKILL.md](../SKILL.md). Three things live here: the full
+Offloaded depth for [../SKILL.md](../SKILL.md). Four things live here: the full
 description template with a filled example, the chapter format spec with the four
-failure cases worked through, and the feedback-log entry schema with a filled row.
+failure cases worked through, the feedback-log entry schema with a filled row, and
+the OKF v0.1 frontmatter shape for the package and log when persisted into the wiki.
 
 ## 1. Description template
 
@@ -110,6 +111,31 @@ should be short and scannable — it doubles as a search jump-to target.
 One markdown table in `02-DOCS/wiki/youtube/packaging-log.md`. One row per A/B
 test, appended when Test & Compare resolves (~2 weeks).
 
+`02-DOCS/wiki/` is an **OKF v0.1** bundle, so `packaging-log.md` carries
+file-level frontmatter once at the top (a non-empty `type` plus the OKF surface
+shared across all four youtube skills), then the table below it. Refresh
+`timestamp` when you append a row; past rows are immutable.
+
+```markdown
+---
+type: youtube-package
+title: Packaging feedback log
+description: One row per Test & Compare result — title sets tried, winner, and the transferable lesson.
+tags: [youtube, packaging-log, ab-testing]
+timestamp: 2026-05-28T00:00:00Z
+---
+# Packaging feedback log
+
+| date | video | title set tried | winner | CTR | impressions | avg view duration | note |
+|------|-------|-----------------|--------|-----|-------------|-------------------|------|
+```
+
+> Note: this frontmatter is for the **persisted wiki file**. The package *draft*
+> you point `scripts/verify.sh` at uses labeled sections (`Titles:`,
+> `Description:`, …) and stays frontmatter-free so the linter parses it cleanly.
+
+Column meanings:
+
 | Column | Meaning |
 |---|---|
 | `date` | resolution date of the test (YYYY-MM-DD) |
@@ -133,3 +159,45 @@ The `note` column is the point: it turns one data row into a prior the next
 package carries forward. Always grade the winner by watched-time-per-impression
 (reflected in CTR *and* avg view duration together), never CTR alone — a high-CTR /
 low-duration row is a warning, not a win.
+
+## 4. Persisted package — the wiki file
+
+When you persist a finished package under `02-DOCS/wiki/youtube/` (e.g.
+`packages/<video-slug>.md`), wrap it in OKF v0.1 frontmatter — a non-empty `type`
+plus the shared OKF surface — so the wiki bundle stays conformant and the
+strategy/thumbnail siblings can read it. The body holds the human-readable
+package; cross-references use standard markdown links, never `[[wikilinks]]`.
+
+```markdown
+---
+type: youtube-package
+title: Package — Learn Python in 2026 (beginner tutorial)
+description: Title set, description, tags, hashtags and chapters for the 12-minute beginner Python tutorial.
+tags: [youtube, packaging]
+timestamp: 2026-05-28T00:00:00Z
+---
+# Package — Learn Python in 2026 (beginner tutorial)
+
+## Titles (A/B set)
+- Learn Python in 2026: 12-Min Beginner Tutorial
+- Python in 12 Minutes (Total Beginner)
+- I Taught a Beginner Python in 12 Min
+
+## Description
+<above-fold line + body + links + hashtag line, per §1>
+
+## Tags
+python, learn python, python tutorial, python for beginners, …
+
+## Hashtags
+#Python #LearnToCode #ProgrammingForBeginners
+
+## Chapters
+00:00 Intro — what you'll build
+…
+```
+
+> The `scripts/verify.sh` linter runs on the package **draft** (labeled sections,
+> no frontmatter). The persisted wiki file adds the frontmatter above the same
+> body — do not feed the frontmatter'd wiki copy to the linter, since its `tags:`
+> frontmatter key would be read as the Tags section.

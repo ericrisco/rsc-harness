@@ -102,9 +102,19 @@ If the user can't answer a question, that dimension stays incomplete — note th
 
 ### Visual-identity wiki article template
 
-Each `02-DOCS/wiki/brand/*.md` article follows the harness wiki format:
+Each `02-DOCS/wiki/brand/*.md` article follows the harness wiki format. It is an OKF v0.1 article: open it with YAML frontmatter carrying a non-empty `type:` (`brand-study`), then the H1 and body:
 
 ```markdown
+---
+type: brand-study
+title: Brand — Visual Identity
+description: The visual personality — OKLCH color system, type pairing & scale, and radius/shadow/motion personality.
+tags: [brand, visual-identity, design]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: brand
+status: stable
+---
+
 # Brand — Visual Identity
 
 > Sources: {user interview, YYYY-MM-DD}

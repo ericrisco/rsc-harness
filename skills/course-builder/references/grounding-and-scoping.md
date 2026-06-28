@@ -46,6 +46,29 @@ Reuse the learner profile if it exists rather than re-interviewing. When you wri
 matrix, persist them there so `course-storytelling` can pick up the same grounding for the hand-off.
 Note in the file that the profile is shared, so neither skill clobbers the other's section.
 
+Each persisted `02-DOCS/wiki/teaching/*.md` file is an OKF v0.1 wiki article: open it with YAML
+frontmatter carrying a non-empty `type:` (`type: course-outline`), then the H1 and body. Use standard
+markdown links between articles (`[Outcomes](./<course>-outcomes.md)`), never wikilinks. Mirror the
+harness `wiki-article-template.md` shape:
+
+```markdown
+---
+type: course-outline
+title: <Course> — Outcomes
+description: The measurable, ABCD-complete learning outcomes for <course>.
+tags: [course, learning-outcomes]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: teaching
+status: stable
+---
+
+# <Course> — Outcomes
+
+> Sources: {user interview, YYYY-MM-DD}
+
+...
+```
+
 ## Right-sizing scope by format
 
 The single most common failure is too many outcomes for the time. Honest ceilings:

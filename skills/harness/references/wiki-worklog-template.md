@@ -11,9 +11,13 @@ manufacture a worklog "to look busy."
 
 ```yaml
 ---
+# OKF v0.1: `type` is the only required field. The rest is the standard surface
+# (title/description/timestamp) plus rsc custom fields (topic/status/sources).
 type: worklog
+title: {What we did, one line}
+description: {One-sentence summary of the session.}
+timestamp: {YYYY-MM-DDTHH:MM:SSZ}
 topic: {inferred-topic}
-date: {YYYY-MM-DD}
 status: unprocessed
 sources: []
 ---

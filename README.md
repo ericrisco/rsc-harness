@@ -256,6 +256,26 @@ The front door and the workspace brain.
 > self-improving wiki. It governs software *or* a whole company. **orient** is the
 > always-on compass that keeps a non-technical human oriented after every step.
 
+> #### 📦 The `02-DOCS/` brain is now 100% Open Knowledge Format (OKF v0.1) conformant
+>
+> Google Cloud published the [**Open Knowledge Format**](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)
+> — a vendor-neutral standard for portable, agent-readable knowledge — built on the
+> same Karpathy *LLM-wiki* pattern our `02-DOCS/` engine has used from day one. We
+> independently converged on the same design, so adopting the standard cost almost
+> nothing. As of now, **every `02-DOCS/wiki/` is a valid, portable OKF bundle**:
+>
+> - **Markdown + YAML frontmatter**, `type` on every concept doc, OKF-standard
+>   fields (`title`, `description`, `resource`, `tags`, `timestamp`).
+> - **Standard markdown links** (not wikilinks) form the knowledge graph — any OKF
+>   consumer reads it, *and* it stays a native Obsidian vault (graph, backlinks,
+>   Properties, Bases). Same files, no export step.
+> - **Reserved files** honored: `index.md` (no frontmatter) for navigation,
+>   `log.md` (newest-first, ISO 8601) for history.
+>
+> Tarball a `wiki/` and any OKF tool — including Google's own viewer — can read it.
+> And the brain now **keeps your repo clean**: a loose file it ingests (a PDF at the
+> root, anything in `inbox/`) is *moved* into `raw/`, never left as clutter.
+
 ### 📐 Spec-Driven Development
 Take a fuzzy intent to a shipped, verified change — phase by phase. `npx @ericrisco/rsc install --profile core`.
 

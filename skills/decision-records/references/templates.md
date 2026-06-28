@@ -8,6 +8,17 @@ Filenames: `NNNN-title-with-dashes.md` where `NNNN` is a zero-padded sequential 
 
 Store under one log only — `docs/adr/` (code repo) or `02-DOCS/wiki/decisions/` (harness workspace). Maintain an index as `docs/adr/README.md` or `0000-index.md`:
 
+When the log lives in `02-DOCS/wiki/decisions/`, each ADR is a document in an OKF v0.1 bundle, so it opens with YAML frontmatter carrying a non-empty `type: decision` (plus the OKF-recommended `title`/`tags`/`timestamp`). The MADR body — `- Status:`, `- Date:`, the sections — is kept exactly as below; the frontmatter is additive and `verify.sh` keeps reading the body lines. The index file (`0000-index.md` / `README.md`) is the OKF reserved directory listing and carries **no frontmatter**. All cross-references are standard markdown links, never wikilinks. In a plain `docs/adr/` code repo the frontmatter is optional — OKF conformance governs only the wiki bundle. The OKF frontmatter block to prepend (shown once; the templates below omit it for brevity):
+
+```yaml
+---
+type: decision
+title: "<short decision title>"
+tags: [adr]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+---
+```
+
 ```markdown
 # Decision Log
 
@@ -116,7 +127,16 @@ a test, an architecture-fitness check.>
 
 ## Worked example — `0007-choose-postgres.md`
 
+Shown with the OKF frontmatter it carries when stored in `02-DOCS/wiki/decisions/`:
+
 ```markdown
+---
+type: decision
+title: "Choose Postgres over DynamoDB for the primary store"
+tags: [adr, database, billing]
+timestamp: 2026-06-02T00:00:00Z
+---
+
 # 7. Choose Postgres over DynamoDB for the primary store
 
 - Status: accepted

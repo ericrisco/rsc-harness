@@ -169,6 +169,13 @@ Filename: the post id slug, e.g. `02-DOCS/wiki/linkedin/share-701234567890123456
 
 ```markdown
 ---
+type: linkedin-record
+title: "Share 7012345678901234567 — OAuth pitfalls carousel"
+description: Performance snapshot for one LinkedIn post, pulled from organizationalEntityShareStatistics.
+tags: [linkedin, analytics, post-performance]
+timestamp: "2026-06-02T10:00:00Z"
+topic: linkedin
+status: stable
 post_urn: "urn:li:share:7012345678901234567"
 author: "urn:li:organization:12345"
 captured_at: "2026-06-02T10:00:00Z"
@@ -181,11 +188,13 @@ shares: 8
 engagement: 0.0683
 ---
 
+# Share 7012345678901234567 — OAuth pitfalls carousel
+
 Carousel on OAuth pitfalls. Highest unique-impression post this month;
 CTR ~4.4%. The "common 403 causes" hook outperformed the plain howto.
 ```
 
-Keep the front-matter keys exactly as above — `verify.sh` checks that `post_urn`, `captured_at`, `impressions`, and `engagement` are present in every file under that directory.
+`type` is the only required OKF v0.1 field; `title`/`description`/`tags`/`timestamp` are the recommended OKF surface. The DOMAIN keys below them are mandatory and must stay byte-for-byte — `verify.sh` checks that `post_urn`, `captured_at`, `impressions`, and `engagement` are present in every file under that directory. `captured_at` is the API-capture instant (a domain value verify.sh parses); `timestamp` is the OKF last-edit field — keep both. Note these files share `02-DOCS/wiki/linkedin/` with `linkedin-strategy`; using `type: linkedin-record` keeps the two skills' wiki content consistent.
 
 ## Anti-patterns
 

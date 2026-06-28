@@ -79,7 +79,7 @@ date,pillar,cluster,format,owner,stage,brief_link,atomization,mix
 
 ## The brief
 
-A slot **cannot leave the `idea` stage without a brief.** One canonical brief format means consistent output regardless of who writes it. Required fields (inline minimum):
+A slot **cannot leave the `idea` stage without a brief.** One canonical brief format means consistent output regardless of who writes it. The brief is a `.md` page in the `02-DOCS/wiki/` OKF v0.1 bundle: its YAML frontmatter carries a non-empty `type: content-brief` (plus the OKF-recommended `title`/`description`/`tags`/`timestamp`) alongside the domain fields below, and any body cross-references use standard markdown links, never wikilinks. Required fields (inline minimum):
 
 - **objective** — the one outcome this piece drives.
 - **persona** — which of the 2–4 you target.

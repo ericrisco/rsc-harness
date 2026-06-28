@@ -6,10 +6,21 @@ filled `02-DOCS` feedback-log schema.
 
 ## The package file format
 
-Emit one plain-text/markdown block per short. `scripts/verify.sh` lints exactly these
-labels (English or ES/CA, one per line, content following):
+Emit one markdown file per short under `02-DOCS/wiki/shortform/`. The `shortform/`
+wiki tree is an **OKF v0.1 bundle** shared with the `tiktok-api` and
+`shortform-strategy` siblings, so the file leads with YAML frontmatter (a non-empty
+`type` is the only OKF hard requirement; `title`/`tags`/`timestamp` are the recommended
+surface). The labeled body below is unchanged — `scripts/verify.sh` lints exactly these
+labels (English or ES/CA, one per line, content following) and ignores the frontmatter:
 
 ```text
+---
+type: shortform-package
+title: faceless productivity TikTok — package
+tags: [shortform, packaging, tiktok]
+timestamp: 2026-06-02T12:00:00Z
+platform: tiktok
+---
 Hook:
   - I deleted my to-do app. Here's why.
   - The app that runs my whole week (it's free)
