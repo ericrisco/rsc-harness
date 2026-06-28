@@ -1,50 +1,58 @@
 """Gemini CLI adapter (@google/gemini-cli).
 
-Session files: ~/.gemini/tmp/<project_hash>/chats/*.jsonl
-Format: JSON Lines. Each line is a MessageRecord.
+Session files: ~/.gemini/tmp/<project_hash>/chats/session-*.json
+Format: a SINGLE JSON object per file (not JSONL).
 
-CONFIRMED (2026-06, via official Gemini CLI docs at google-gemini.github.io
-and github.com/google-gemini/gemini-cli session-management.md):
-  - Base path: ~/.gemini/tmp/
-  - Subdirectory: <project_hash>/chats/
-  - File format: JSONL
-  - MessageRecord fields include: sessionId, projectHash, model, role,
-    content (array of {text: "..."}), and token usage fields.
+CONFIRMED (2026-06, against live ~/.gemini/tmp on macOS):
+  - Base path / layout: ~/.gemini/tmp/<project_hash>/chats/*.json
+  - File shape: {"sessionId", "projectHash", "startTime", "lastUpdated",
+    "messages": [ {"id", "timestamp", "type", "content", ...} ]}
+  - messages[].type is "user" or "gemini"; content is a plain string.
+  - gemini (assistant) messages also carry "model", "thoughts", "tokens".
+  - The format does NOT persist tool calls/errors as messages, so tool-error
+    detection is not possible here — followed_by_error stays False (honest);
+    correction detection (next user message) still works.
 
-STUBBED (exact MessageRecord schema):
-  The exact JSONL schema per line has not been verified against a live Gemini
-  CLI installation. The role/content structure is inferred from the official
-  session-management docs. If the schema differs, parse() returns [] gracefully.
-
-Degradation: if ~/.gemini/ does not exist, discover() returns [].
+Degradation: if ~/.gemini/ does not exist, discover() returns []; a file that
+is not the expected object shape yields no records (parse never raises).
 """
 
 from __future__ import annotations
 
+import datetime
 import json
 from pathlib import Path
 from typing import Any
 
-from .base import BaseAdapter
+from .base import CORRECTION_RE, BaseAdapter
+
+
+def _ts(value: Any) -> float | None:
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return datetime.datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+        except (ValueError, AttributeError):
+            return None
+    return None
 
 
 class GeminiAdapter(BaseAdapter):
     RUNTIME_ID = "gemini"
 
-    # CONFIRMED: path from official gemini-cli session-management docs.
     GEMINI_TMP_DIR = Path.home() / ".gemini" / "tmp"
 
     def discover(self) -> list[Path]:
-        """Find all *.jsonl chat files under ~/.gemini/tmp/<hash>/chats/."""
+        """Find all session *.json chat files under ~/.gemini/tmp/<hash>/chats/."""
         if not self.GEMINI_TMP_DIR.exists():
             return []
         files: list[Path] = []
         try:
-            # Pattern: ~/.gemini/tmp/<project_hash>/chats/*.jsonl
-            for jsonl in self.GEMINI_TMP_DIR.rglob("chats/*.jsonl"):
+            for jf in self.GEMINI_TMP_DIR.rglob("chats/*.json"):
                 try:
-                    if jsonl.is_file():
-                        files.append(jsonl)
+                    if jf.is_file():
+                        files.append(jf)
                 except OSError:
                     continue
         except OSError:
@@ -52,70 +60,83 @@ class GeminiAdapter(BaseAdapter):
         return sorted(files, key=lambda f: f.stat().st_mtime, reverse=True)
 
     def parse(self, path: Path) -> list[dict[str, Any]]:
-        """Parse one Gemini CLI chat JSONL file.
-
-        STUBBED schema: expected MessageRecord with {role, content: [{text}], ...}.
-        Falls back silently if the schema differs.
-        """
-        records: list[dict[str, Any]] = []
+        """Parse one Gemini chat JSON file into user-prompt records with
+        correction context. Tool errors are not represented in this format."""
         try:
-            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-        except OSError:
+            obj = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        if not isinstance(obj, dict):
             return []
 
-        for line in lines:
-            line = line.strip()
-            if not line:
+        messages = obj.get("messages")
+        if not isinstance(messages, list):
+            return []
+
+        # Normalise into an ordered timeline of {kind, text, model, ts}.
+        timeline: list[dict[str, Any]] = []
+        for m in messages:
+            if not isinstance(m, dict):
                 continue
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
+            mtype = m.get("type")
+            content = m.get("content", "")
+            if not isinstance(content, str) or not content.strip():
                 continue
+            ts = _ts(m.get("timestamp"))
+            if mtype == "user":
+                timeline.append({"kind": "user", "text": content, "ts": ts})
+            elif mtype == "gemini":
+                model = m.get("model")
+                timeline.append({
+                    "kind": "assistant",
+                    "text": content,
+                    "ts": ts,
+                    "model": str(model) if model else "",
+                })
 
-            # STUBBED: inferred from gemini-cli session-management docs.
-            role = obj.get("role", "")
-            if role not in ("user", "USER"):
-                continue
+        user_indices = [i for i, t in enumerate(timeline) if t["kind"] == "user"]
+        records: list[dict[str, Any]] = []
+        for n, idx in enumerate(user_indices):
+            turn = timeline[idx]
+            next_user = user_indices[n + 1] if n + 1 < len(user_indices) else len(timeline)
 
-            content = obj.get("content", [])
-            if isinstance(content, list):
-                parts = []
-                for block in content:
-                    if isinstance(block, dict):
-                        text = block.get("text", "")
-                        if text:
-                            parts.append(text)
-                text = "\n".join(parts)
-            elif isinstance(content, str):
-                text = content
-            else:
-                text = ""
+            # Model that answered this prompt: the first assistant reply after it.
+            model = ""
+            context_after_assistant = ""
+            for j in range(idx + 1, next_user):
+                if timeline[j]["kind"] == "assistant":
+                    model = timeline[j].get("model", "") or model
+                    if not context_after_assistant:
+                        context_after_assistant = timeline[j]["text"]
+            # context_before: last assistant text strictly before this prompt.
+            context_before = ""
+            for j in range(idx - 1, -1, -1):
+                if timeline[j]["kind"] == "assistant":
+                    context_before = timeline[j]["text"]
+                    break
 
-            if not text.strip():
-                continue
+            followed_by_correction = False
+            correction_text = ""
+            if next_user < len(timeline):
+                nxt = timeline[next_user]["text"]
+                if CORRECTION_RE.search(nxt):
+                    followed_by_correction = True
+                    correction_text = nxt
 
-            # Gemini MessageRecord may carry token counts and model name.
-            model = obj.get("model") or obj.get("modelVersion")
-            ts = obj.get("timestamp") or obj.get("createTime")
-            if isinstance(ts, str):
-                try:
-                    import datetime
-                    dt = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
-                    ts = dt.timestamp()
-                except (ValueError, AttributeError):
-                    ts = None
-            elif not isinstance(ts, (int, float)):
-                ts = None
-
-            record: dict[str, Any] = {
+            records.append({
                 "runtime": self.RUNTIME_ID,
                 "session_file": str(path),
-                "prompt_text": text,
-                "timestamp": ts,
-            }
-            if model:
-                record["model"] = str(model)
-
-            records.append(record)
+                "prompt_text": turn["text"],
+                "timestamp": turn.get("ts"),
+                "model": model,
+                "context_before": context_before,
+                # This format does not record tool errors — be honest, not invent.
+                "followed_by_error": False,
+                "error_was_recovered": False,
+                "followed_by_correction": followed_by_correction,
+                "correction_text": correction_text,
+                "error_tool": "",
+                "error_text": "",
+            })
 
         return records

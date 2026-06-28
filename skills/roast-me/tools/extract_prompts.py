@@ -33,6 +33,7 @@ from typing import Any
 # ---------------------------------------------------------------------------
 _TOOLS_DIR = Path(__file__).parent
 sys.path.insert(0, str(_TOOLS_DIR))
+from adapters.base import CORRECTION_RE
 from adapters.registry import get_adapters, list_runtime_ids
 
 # ---------------------------------------------------------------------------
@@ -42,15 +43,11 @@ from adapters.registry import get_adapters, list_runtime_ids
 MAX_PROMPTS = 300
 PROMPT_TEXT_LIMIT = 1500
 CORRECTION_TEXT_LIMIT = 500
+ERROR_TEXT_LIMIT = 500
 CONTEXT_BEFORE_LIMIT = 500
 
-CORRECTION_PATTERNS = re.compile(
-    r"\b(no[,.]?\s|wrong|instead|actually|don'?t|shouldn'?t|stop|not that|"
-    r"I said|I meant|I asked|that'?s not|please don'?t|why did you|"
-    r"you should have|that was wrong|incorrect|try again|redo|"
-    r"that broke|you broke|revert|undo)\b",
-    re.IGNORECASE,
-)
+# Single source of truth for the correction heuristic — shared with every adapter.
+CORRECTION_PATTERNS = CORRECTION_RE
 
 # Model tier classification (provider-neutral labels).
 # Maps substrings found in model IDs to tier names.
@@ -144,13 +141,15 @@ def normalise_record(raw: dict[str, Any], position: int, total: int) -> dict[str
         "has_xml_tags": has_xml_tags,
         "has_file_paths": has_file_paths,
         "has_code_blocks": has_code_blocks,
-        # These will be populated by post-processing when session context is available.
-        "followed_by_error": False,
-        "error_was_recovered": False,
-        "followed_by_correction": False,
-        "correction_text": "",
-        "error_tool": "",
-        "error_text": "",
+        # Error/correction context: honored from the adapter when it does its own
+        # session-aware detection (codex, gemini); defaults to False for adapters
+        # that only surface raw prompts. Claude uses process_claude_sessions instead.
+        "followed_by_error": bool(raw.get("followed_by_error", False)),
+        "error_was_recovered": bool(raw.get("error_was_recovered", False)),
+        "followed_by_correction": bool(raw.get("followed_by_correction", False)),
+        "correction_text": truncate(raw.get("correction_text", ""), CORRECTION_TEXT_LIMIT),
+        "error_tool": raw.get("error_tool", "") or "",
+        "error_text": truncate(raw.get("error_text", ""), ERROR_TEXT_LIMIT),
         "context_before": truncate(raw.get("context_before", ""), CONTEXT_BEFORE_LIMIT),
         # Compute fields (best-effort from adapter)
         "model": model_id,
