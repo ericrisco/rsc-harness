@@ -131,6 +131,16 @@ Engagement rising while cadence held?
 Append a dated decision record under `02-DOCS/wiki/linkedin/decisions/`. Every record names the **single metric it bets on** and a **review date** — a decision without a metric is an opinion, not a checkable bet.
 
 ```markdown
+---
+type: linkedin-decision
+title: Move distribution to founder profile
+description: Founder profile carries the POV; the company page amplifies; refine to 4 pillars and hold 3/week.
+tags: [linkedin, distribution, positioning, cadence]
+timestamp: 2026-06-02T00:00:00Z
+topic: linkedin
+status: stable
+---
+
 # 2026-06-02 — Move distribution to founder profile
 
 Context read: SSI 48 (flat 90d); top-2 dwell-time posts both carousels on
@@ -143,6 +153,8 @@ Social-selling rhythm: 80/20 engage/create.
 Bets on metric: SSI 48 -> 65 within 90 days (proxy for inbound).
 Review date: 2026-09-02.
 ```
+
+The `type:` field is required (OKF v0.1); `timestamp` is ISO 8601. The dated heading and the `Decision:` / `Bets on metric:` / `Review date:` lines are domain signals `verify.sh` greps for — keep them.
 
 After writing, run `scripts/verify.sh 02-DOCS/wiki/linkedin/` to confirm the record is structurally complete. Full templates and the what-worked format: `references/wiki-records.md`.
 

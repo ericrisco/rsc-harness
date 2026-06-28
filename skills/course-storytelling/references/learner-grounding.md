@@ -81,9 +81,19 @@ If the user can't answer a question, that dimension stays incomplete — note th
 
 ### Profile wiki article template
 
-Each `02-DOCS/wiki/teaching/*.md` article follows the harness wiki format:
+Each `02-DOCS/wiki/teaching/*.md` article follows the harness wiki format. It is an OKF v0.1 article: open it with YAML frontmatter carrying a non-empty `type:` (`teaching-profile`), then the H1 and body:
 
 ```markdown
+---
+type: teaching-profile
+title: Teaching — Learner
+description: Who is learning, their level and prior knowledge, their pains and desires, and what they can DO after.
+tags: [teaching, learner, profile]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: teaching
+status: stable
+---
+
 # Teaching — Learner
 
 > Sources: {user interview, YYYY-MM-DD}
@@ -116,9 +126,19 @@ After this, the learner can: …
 
 ### False-beliefs article specifics
 
-`false-beliefs.md` must type every belief so `brunson-frameworks.md` can match it to a breaking story:
+`false-beliefs.md` must type every belief so `brunson-frameworks.md` can match it to a breaking story (same OKF frontmatter; `type: teaching-profile`):
 
 ```markdown
+---
+type: teaching-profile
+title: Teaching — False Beliefs
+description: The learner's blocking beliefs, typed vehicle / internal / external, each with a breaking story.
+tags: [teaching, false-beliefs, profile]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: teaching
+status: stable
+---
+
 # Teaching — False Beliefs
 
 > Sources: {user interview, YYYY-MM-DD}

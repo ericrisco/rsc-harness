@@ -2,6 +2,8 @@
 
 The read/write loop's storage. Everything is append-only markdown so future strategy sessions compound instead of restarting from generic advice.
 
+Every `.md` file written here is part of the `02-DOCS/wiki/` OKF v0.1 bundle, so each carries YAML frontmatter with a non-empty `type:` (the only required OKF field). Cross-references between files use **standard markdown links** (`[Text](./pillars.md)`) — never wikilinks (`[[...]]`). The domain lines `verify.sh` greps for (the dated heading, `Decision:`, the metric/bet field) stay exactly as below.
+
 ## File layout
 
 ```text
@@ -18,13 +20,23 @@ A running `decisions.md` log at the root is also accepted instead of `decisions/
 
 ## Bootstrap (empty/absent dir)
 
-When `02-DOCS/wiki/linkedin/` does not exist, create it with `positioning.md`, `pillars.md`, `decisions/`, and `what-worked.md` before you decide. Seed `positioning.md` with whatever the account already implies (title, current posts) so the first decision has a baseline to react to.
+When `02-DOCS/wiki/linkedin/` does not exist, create it with `positioning.md`, `pillars.md`, `decisions/`, and `what-worked.md` before you decide. Seed `positioning.md` with whatever the account already implies (title, current posts) so the first decision has a baseline to react to. Each of `positioning.md`, `pillars.md`, and `what-worked.md` gets OKF frontmatter — use `type: linkedin-positioning`, `type: linkedin-pillars`, and `type: linkedin-record` respectively (templates below).
 
 ## Decision-record template
 
 Every record carries: a dated heading, a context-read line (what you grounded in), a decision line, the single metric it bets on, and a review date. Missing the metric or the review date means it is not a checkable bet.
 
 ```markdown
+---
+type: linkedin-decision
+title: <short decision title>
+description: <one-sentence summary of the choice>
+tags: [linkedin, <pillars|cadence|distribution|ssi>]
+timestamp: <YYYY-MM-DDTHH:MM:SSZ>
+topic: linkedin
+status: stable
+---
+
 # 2026-06-02 — <short decision title>
 
 Context read: <what you pulled from the wiki — prior positioning, current pillars,
@@ -39,9 +51,23 @@ SSI 48 -> 65 within 90 days, or median dwell time +X%, or inbound DMs/week>.
 Review date: <YYYY-MM-DD — when the next session checks whether the bet paid>.
 ```
 
+`type` (required) + `timestamp` (ISO 8601, last meaningful edit) are the OKF surface; everything below the frontmatter is the domain content `verify.sh` checks. A running `decisions.md` log at the root carries one frontmatter block at the top (`type: linkedin-decision`); its dated `## ` entries are prepended newest-first and never edited.
+
 ## what-worked template
 
+`what-worked.md` is a single running file; new review blocks are prepended newest-first under one frontmatter block at the top.
+
 ```markdown
+---
+type: linkedin-record
+title: What worked — LinkedIn
+description: Running log of which pillars, formats, and posts earned dwell time and SSI movement.
+tags: [linkedin, what-worked, dwell-time, ssi]
+timestamp: 2026-09-02T00:00:00Z
+topic: linkedin
+status: stable
+---
+
 ## 2026-09-02 review
 
 - Pillar "pipeline reliability" — RISING. 2 carousels in top-3 dwell time. Double down.

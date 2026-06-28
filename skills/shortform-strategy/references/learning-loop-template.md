@@ -38,9 +38,17 @@ Run once a month, reading `02-DOCS/raw/shortform/metrics.csv`:
 
 ## Decision-record template
 
-Append to `02-DOCS/wiki/shortform/decisions.md`. Every block is dated, rests on a named metric, and carries a revisit date so it is an experiment, not folklore.
+`02-DOCS/wiki/shortform/decisions.md` is an OKF v0.1 append-log: the frontmatter header (a non-empty `type` is the only OKF hard requirement; `title`/`tags`/`timestamp` are recommended) is written once, then each new block is **prepended newest-first** under the H1. Every block is dated (ISO 8601), rests on a named metric, and carries a revisit date so it is an experiment, not folklore. Past blocks are immutable; bump the header `timestamp` on each append.
 
 ```markdown
+---
+type: shortform-decision-log
+title: Shortform strategy decisions
+tags: [shortform, strategy, decisions]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+---
+# Shortform strategy decisions
+
 ## YYYY-MM-DD — <short decision title>
 **Decision:** <what changes, concretely — cadence/positioning/series/trend rule>
 **Rationale:** <the one-line why>

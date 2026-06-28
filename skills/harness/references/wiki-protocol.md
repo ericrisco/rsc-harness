@@ -84,8 +84,9 @@ special files:
 
 - `wiki/index.md` — Global index. One row per article, grouped by topic, with
   link + summary + Updated date + Score.
-- `wiki/log.md` — Append-only operation log (every ingest, query, lint,
-  maintenance pass, and improve pass).
+- `wiki/log.md` — Operation log (every ingest, query, lint, maintenance pass,
+  and improve pass). OKF reserved file: **newest entry first** (prepended at the
+  top), ISO 8601 dates, past entries never edited or deleted. No frontmatter.
 - `wiki/gaps.md` — Append-only knowledge-gap log. Topics wanted but missing,
   concepts mentioned across multiple articles without their own page, queries
   that couldn't be answered well. Read by the Improve pass.
@@ -152,12 +153,19 @@ Templates live alongside this file in `references/`:
 `02-DOCS/` opens directly as an Obsidian vault (the human's "base folder" is
 `02-DOCS/` itself, not the repo root). The agent writes the wiki; the human
 **reads** it in Obsidian — graph, backlinks, Properties, and `.base` views — which
-is exactly the Karpathy split. Navigation is **structure** (wikilinks + frontmatter
-+ Bases), not semantic similarity: **no vector DB, no embeddings, no RAG**, and no
-embedding/search plugins. The `.base` views become the human navigation; `index.md`
-+ `scores.json` remain the machine layer + fallback. The exact scaffolding (the
-`.base` files, `.obsidian/app.json`, attachments, `.gitignore`, excluded files) is
-materialized from `obsidian-scaffolding.md` during Initialization.
+is exactly the Karpathy split. Navigation is **structure** (markdown links +
+frontmatter + Bases), not semantic similarity: **no vector DB, no embeddings, no
+RAG**, and no embedding/search plugins. The `.base` views become the human
+navigation; `index.md` + `scores.json` remain the machine layer + fallback. The
+exact scaffolding (the `.base` files, `.obsidian/app.json`, attachments,
+`.gitignore`, excluded files) is materialized from `obsidian-scaffolding.md` during
+Initialization.
+
+The win is that **the same files serve both surfaces**: because internal links are
+standard markdown (not wikilinks) and frontmatter uses the OKF standard field
+names, `wiki/` is simultaneously a native Obsidian vault AND a portable, 100%-OKF
+v0.1-conformant knowledge bundle — readable by any OKF consumer, no export step.
+See the OKF conformance rules in [Conventions](#conventions).
 
 ## Initialization
 
@@ -272,7 +280,7 @@ After the primary article, check for ripple effects:
 2. Scan `02-DOCS/wiki/index.md` entries in other topics for articles covering
    related concepts.
 3. Update every article whose content is materially affected. Each updated
-   file gets its Updated date refreshed.
+   file gets its `timestamp` refreshed.
 
 Archive pages are never cascade-updated (they are point-in-time snapshots).
 
@@ -280,10 +288,10 @@ Archive pages are never cascade-updated (they are point-in-time snapshots).
 
 Update `02-DOCS/wiki/index.md`: add or update entries for every touched
 article. When adding a new topic section, include a one-line description.
-The Updated date reflects when the article's knowledge content last changed,
-not the file system timestamp. See `wiki-index-template.md` for format.
+The article's `timestamp` reflects when its knowledge content last changed,
+not the file system mtime. See `wiki-index-template.md` for format.
 
-Append to `02-DOCS/wiki/log.md`:
+Prepend to `02-DOCS/wiki/log.md` (newest entry first, at the top):
 
 ```
 ## [YYYY-MM-DD] ingest | <primary article title>
@@ -351,7 +359,7 @@ sweep (on demand or scheduled) gives it order.
 
 ### Post-Sweep log
 
-Append to `02-DOCS/wiki/log.md`:
+Prepend to `02-DOCS/wiki/log.md` (newest entry first, at the top):
 
 ```
 ## [YYYY-MM-DD] sweep | <S> ingested, <F> failed, <A> articles touched
@@ -379,8 +387,8 @@ just another source of chaos: it lands in `raw/worklog/` and is Compiled into
 ### What it captures
 
 One `raw/worklog/YYYY-MM-DD-<slug>.md` per meaningful unit of work, in the format
-of `wiki-worklog-template.md` (frontmatter `type: worklog`, `topic`, `date`,
-`status: unprocessed`): what we did, why (intent + decisions), files touched
+of `wiki-worklog-template.md` (frontmatter `type: worklog`, `title`, `topic`,
+`timestamp`, `status: unprocessed`): what we did, why (intent + decisions), files touched
 (`path:line`), outcome with evidence, open questions/next, commands. This
 generalizes the SDD session-summary convention to *any* work.
 
@@ -407,7 +415,7 @@ safety rule the curation pass honors.
    (`status: unprocessed`). Infer `topic` from content.
 2. **Compile.** Run the normal Compile (Fetch is a no-op — the worklog is already
    `raw`): distill durable points into `wiki/<topic>/` articles (update existing
-   before creating new), add wikilink cross-refs + `## Related`, cascade.
+   before creating new), add markdown-link cross-refs + `## Related`, cascade.
 3. **Route decisions.** Every significant decision is appended to
    `wiki/harness/decisions.md` (append-only, the "siempre 3 opciones" shape).
 4. **Close.** Flip the worklog's `status` to `processed` (the raw stays as
@@ -415,7 +423,7 @@ safety rule the curation pass honors.
 
 ### Post-Sweep log
 
-Append to `02-DOCS/wiki/log.md`:
+Prepend to `02-DOCS/wiki/log.md` (newest entry first, at the top):
 
 ```markdown
 ## [YYYY-MM-DD] worklog | <slug> → <A> articles touched
@@ -439,10 +447,34 @@ workspace and ingests them on its own — so the user never has to remember to f
 sources. It runs automatically (SessionStart nudge + daily cron; see Triggers) and
 on request.
 
-The hard rule that keeps "automatic, workspace-wide" safe: **ingesting is
-non-destructive** (read + create wiki pages + copy the original into
-`raw/<topic>/_originals/`), so it is safe to do unattended. **Moving or deleting
-anything is destructive** and always requires explicit, quoted consent.
+The hard rule that keeps "automatic, workspace-wide" safe: **ingesting never
+destroys data** — the original is always preserved inside the brain at
+`raw/<topic>/_originals/`. What it does NOT do is leave the workspace cluttered:
+once a source is safely in `raw/`, the loose original is **relocated, not left in
+place** (see "Clean-as-you-go" below), so ingesting a file actually *tidies* the
+tree. **Deleting** a file or a folder outright is still destructive and always
+requires explicit, quoted consent.
+
+### Clean-as-you-go — a clean repo is the invariant
+
+The brain is the home for sources; the workspace is not a junk drawer. So when the
+sweep ingests a **loose document at the workspace root** or **anything in
+`inbox/`**, the original is **MOVED into the brain**, not copied — the byte-for-byte
+file lands in `raw/<topic>/_originals/` and the root/inbox is left clean. Nothing is
+lost: the file still exists, in `raw/`, which is version-controlled-adjacent
+evidence. This is the literal contract the user asked for: *a PDF dropped at the
+root that gets ingested ends up in `raw/`, not at the root.*
+
+Scope of the move (deliberately narrow, so we never yank files out of places the
+user organized on purpose):
+
+- **Loose files at the workspace root** (a stray `factura.pdf`, `notes.txt`) → **moved** into `raw/<topic>/_originals/` after a verified ingest.
+- **`inbox/` contents** → **moved** (this was already the inbox contract: process → `inbox/_processed/`; the durable copy is in `raw/`).
+- **Files nested inside a structured folder the user maintains** (e.g. a project's own `docs/`, a `/transcripts` directory) → **copied**, and the sweep **proposes** consolidating + removing the now-redundant folder with quoted consent. Never silently moved.
+
+A move only ever happens **after** the original is confirmed written to
+`raw/<topic>/_originals/` (or fully captured as text in `raw/`). If anything fails,
+the original stays exactly where it was.
 
 ### Steps
 
@@ -450,16 +482,23 @@ anything is destructive** and always requires explicit, quoted consent.
 2. **Scan** — walk the workspace minus `.rscignore` (and minus detected app source
    dirs). Consider only document-like files. A file is **un-ingested** when its
    `path` is absent from `wiki/.ingested.json` OR its content hash differs.
-3. **Classify** each candidate folder:
-   - **Clearly documentary** (a folder of docs/transcripts/pdfs, no code) →
-     **auto-ingest**: Compile to `wiki/`, copy the original into
-     `raw/<topic>/_originals/` (**copy, never move** — the source stays put).
+3. **Classify** each candidate and apply the Clean-as-you-go rule:
+   - **Loose document at the workspace root** → **auto-ingest, then MOVE** the
+     original into `raw/<topic>/_originals/`. The root is left clean.
+   - **Clearly documentary folder** (docs/transcripts/pdfs, no code) →
+     **auto-ingest**: Compile to `wiki/`, **copy** the original into
+     `raw/<topic>/_originals/` (the source stays put for now), then **propose**
+     removing the now-redundant folder (quoted consent — step 5).
    - **Ambiguous** (mixed, or possibly app data) → **list it and propose**; do not
      touch it. Log it to `gaps.md` so the next pass remembers.
-4. **Record** every ingested source in `wiki/.ingested.json`.
-5. **Offer cleanup** — for a folder the sweep fully ingested, **offer** to remove it
-   once empty, with the consent quoted back from the user. **Never auto-delete**, and
-   never a folder the sweep did not itself empty.
+4. **Record** every ingested source in `wiki/.ingested.json` (the move/copy is
+   recorded with its new `raw/` location).
+5. **Offer cleanup** — for a documentary folder the sweep fully ingested, **offer**
+   to remove it once redundant, with the consent quoted back from the user.
+   **Never auto-delete**, and never a folder the sweep did not itself empty.
+   (Root-level loose files and `inbox/` files need no such offer — they are moved
+   into `raw/` as part of the ingest, which is non-destructive: the file is
+   relocated, never deleted.)
 
 ### Ledger — `wiki/.ingested.json`
 
@@ -481,8 +520,12 @@ Un-ingested = path absent OR hash changed. `inbox/` files still move to
 - **Ledger-idempotent.** Never reprocess a source whose path+hash is recorded.
 - **Scoped by `.rscignore`.** Never scan code, build output, `01-TOOLS/`, the
   wiki's own `raw/`+`wiki/`, or non-document files (see `ingest-ignore-defaults.md`).
-- **Copy, don't move.** Discovered originals are copied; the source is left in place.
-- **Consent for destruction.** Removing an emptied folder is quoted-consent only.
+- **Clean-as-you-go.** Loose root-level files and `inbox/` contents are **moved**
+  into `raw/` after a verified ingest (the repo stays clean); files nested in a
+  user-maintained folder are **copied** and consolidation is proposed with consent.
+  A move never precedes the original being safely written to `raw/`.
+- **Never delete.** The original is relocated into `raw/`, never destroyed.
+  Removing an emptied/redundant folder is quoted-consent only.
 - **Ambiguity is proposed, not grabbed.**
 
 ---
@@ -538,7 +581,7 @@ When the user explicitly asks to archive or save the answer to the wiki:
    content is a synthesized answer, not raw material).
 3. Update `02-DOCS/wiki/index.md`. Add a row pointing to the `.html` file,
    prefix the Summary with `[Archived]`. The link target is the HTML path.
-4. Append to `02-DOCS/wiki/log.md`:
+4. Prepend to `02-DOCS/wiki/log.md` (newest entry first, at the top):
    ```
    ## [YYYY-MM-DD] query | Archived: <page title>
    ```
@@ -557,7 +600,7 @@ Fix these automatically:
 `02-DOCS/wiki/` files (excluding index.md and log.md):
 
 - File exists but missing from index → add entry with `(no summary)`
-  placeholder. For Updated, use the article's metadata Updated date if
+  placeholder. For the Updated column, use the article's `timestamp` if
   present; otherwise fall back to file's last modified date.
 - Index entry points to nonexistent file → mark as `[MISSING]` in the
   index. Do not delete the entry; let the user decide.
@@ -599,7 +642,7 @@ These rely on your judgment. Report findings without auto-fixing:
 
 ### Post-Lint
 
-Append to `02-DOCS/wiki/log.md`:
+Prepend to `02-DOCS/wiki/log.md` (newest entry first, at the top):
 
 ```
 ## [YYYY-MM-DD] lint | <N> issues found, <M> auto-fixed
@@ -631,7 +674,7 @@ Operations:
          - (orphan_penalty)
    ```
    Where:
-   - `freshness_weight` = 1.0 if Updated within 30 days, 0.5 within 90, 0.1 beyond 180.
+   - `freshness_weight` = 1.0 if `timestamp` within 30 days, 0.5 within 90, 0.1 beyond 180.
    - `orphan_penalty` = 5 if zero inbound links AND zero citations, else 0.
    - `conflict_count` = number of explicit conflict annotations in the article body.
 
@@ -669,12 +712,12 @@ When the counter hits N, run:
      sections, accurate See Also).
    - **Preserve the old version** at `wiki/<topic>/_archive/<article>__YYYY-MM-DD.md`
      so the user can revert.
-   - Bump the Updated date.
+   - Bump the `timestamp`.
 2. **Pick 1 top gap** from `wiki/gaps.md`. If there's enough raw material for
    it (≥2 raw sources mention the concept), create a new article. Mark the
    gap as `[FILLED YYYY-MM-DD]` in `wiki/gaps.md` instead of deleting (audit trail).
 3. **Refresh 1 stale archive** — if any archived query answer cites articles
-   whose Updated dates are newer than the archive's, append a `> ⚠ Stale:
+   whose `timestamp` is newer than the archive's, append a `> ⚠ Stale:
    underlying sources updated YYYY-MM-DD` note to the archive (read-only flag,
    don't rewrite).
 4. **Reset counter** to 0.
@@ -767,39 +810,62 @@ These apply to all Layers:
 1. **Never overwrite without preservation.** Rewrites always archive the old
    version to `wiki/<topic>/_archive/`. The archive folder is gitignored
    from compaction (lives forever unless the user prunes).
-2. **Never touch articles the human just touched.** If `Updated` < 24h ago,
+2. **Never touch articles the human just touched.** If `timestamp` < 24h ago,
    skip in Micro-Improve. (Deep Improve respects this via the consent prompt.)
 3. **Never auto-resolve conflicts.** Heuristic Lint flags contradictions;
    the user resolves.
 4. **Always log every change** to `wiki/log.md`. The log is the audit trail
    for everything autonomous.
-5. **`wiki/gaps.md` and `wiki/log.md` are append-only.** No edits to past
-   entries. Compaction (in Deep Improve) only removes `[FILLED]` gaps older
-   than 90 days, and only adds a single compaction marker entry to the log.
+5. **`wiki/log.md` is newest-first + immutable; `wiki/gaps.md` is append-only.**
+   New `log.md` entries are prepended at the top (OKF reserved-file rule); new
+   `gaps.md` entries are appended. Past entries in either are never edited.
+   Compaction (in Deep Improve) only removes `[FILLED]` gaps older than 90 days,
+   and only adds a single compaction marker entry to the log.
 
 ---
 
 ## Conventions
 
-- **Obsidian-friendly markdown.** Internal cross-references use **wikilinks**
-  (`[[Page]]` / `[[Page|alias]]`) — resolved by filename, no path needed — so the
-  Obsidian graph + backlinks come for free and survive moves. (Legacy relative
-  markdown links still resolve in Obsidian; the migration pass converts them.)
+- **`wiki/` is an OKF v0.1 bundle.** The whole `wiki/` directory conforms to the
+  Open Knowledge Format ([spec](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)):
+  it is portable, tarball-able, and any OKF consumer (Obsidian, the OKF HTML
+  visualizer, an agent) can read it without translation. The conformance rules
+  the rest of this protocol enforces:
+  1. Every non-reserved `.md` file has valid YAML frontmatter with a non-empty
+     `type`. (Reserved files `index.md` and `log.md` are exempt — see below.)
+  2. The frontmatter standard surface is `type` (required) + `title, description,
+     resource, tags, timestamp` (recommended, OKF-named). rsc adds custom fields
+     (`aliases, topic, status, sources, score`) — OKF allows any extra key.
+  3. The knowledge graph is built from **standard markdown links** — NEVER
+     wikilinks (`[[...]]`). An OKF consumer follows markdown links; it cannot
+     follow `[[...]]`.
+- **Standard markdown links, relative paths.** Internal cross-references use
+  `[Text](./same-topic.md)` / `[Text](../other-topic/page.md)` / `[Text](../../raw/<topic>/<file>.md)`.
+  Obsidian is configured (`useMarkdownLinks: true`, `newLinkFormat: relative`,
+  `alwaysUpdateLinks: true` — see `obsidian-scaffolding.md`) so the graph +
+  backlinks render and links auto-rewrite on rename. The `aliases` field keeps the
+  old kebab slug so pre-migration links still resolve.
 - **Frontmatter on curated articles.** Every `wiki/<topic>/` article carries the
-  YAML frontmatter from `wiki-article-template.md` (`title, aliases, tags, type,
-  topic, status, sources, updated, score`). This is what powers Obsidian
-  Properties + the `.base` views. Operational files (`index.md`, `log.md`,
-  `gaps.md`) may use simpler formats.
+  YAML frontmatter from `wiki-article-template.md` (`type, title, description,
+  resource, tags, timestamp` + custom `aliases, topic, status, sources, score`).
+  This powers OKF consumers AND Obsidian Properties + the `.base` views. The two
+  OKF **reserved** files are exempt: `index.md` carries **no frontmatter** (it is
+  a directory listing) and `log.md` is the change log (see below).
+- **`log.md` is newest-first.** Per the OKF reserved-file rule, new entries are
+  **prepended at the top** (newest first), use ISO 8601 dates, and past entries
+  are never edited or deleted. `gaps.md` stays append-only (it is a custom file,
+  not OKF-reserved).
 - **Human-readable wiki filenames** (`Month-End Close.md`) for clean graph nodes;
-  the old kebab slug goes in `aliases` so prior links/wikilinks still resolve.
+  the old kebab slug goes in `aliases` so prior links still resolve.
   `raw/` and `raw/worklog/` filenames stay kebab + date (chaos, not display).
 - `wiki/` supports one level of topic subdirectories only. No deeper
   nesting.
 - Today's date for log entries, Collected dates, and Archived dates.
-  Updated dates reflect when the article's knowledge content last changed.
-  Published dates come from the source (use `Unknown` when unavailable).
-- Inside `wiki/` files, internal references use wikilinks. In conversation
-  output, use project-root-relative paths (e.g., `02-DOCS/wiki/topic/Article.md`).
+  The `timestamp` field (ISO 8601) reflects when the article's knowledge content
+  last changed. Published dates come from the source (use `Unknown` when unavailable).
+- Inside `wiki/` files, internal references use relative markdown links. In
+  conversation output, use project-root-relative paths (e.g.,
+  `02-DOCS/wiki/topic/Article.md`).
 - Ingest updates both `02-DOCS/wiki/index.md` and `02-DOCS/wiki/log.md`.
   Archive (from Query) updates both. Lint updates `02-DOCS/wiki/log.md`
   (and `02-DOCS/wiki/index.md` only when auto-fixing index entries). Plain

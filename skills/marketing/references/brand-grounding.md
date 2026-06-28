@@ -91,9 +91,19 @@ If the user can't answer a question, that dimension stays incomplete — note th
 
 ### Brand wiki article template
 
-Each `02-DOCS/wiki/brand/*.md` article follows the harness wiki format:
+Each `02-DOCS/wiki/brand/*.md` article follows the harness wiki format. It is an OKF v0.1 article: open it with YAML frontmatter carrying a non-empty `type:` (`brand-study`), then the H1 and body:
 
 ```markdown
+---
+type: brand-study
+title: Brand — Value Proposition
+description: The core benefit and what makes this brand different from the named alternatives.
+tags: [brand, value-proposition]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: brand
+status: stable
+---
+
 # Brand — Value Proposition
 
 > Sources: {user interview, YYYY-MM-DD}
@@ -124,9 +134,19 @@ One paragraph: the core benefit and what makes it different.
 
 ### Voice article specifics
 
-`voice.md` must contain the do/don't word lists and link to every raw sample:
+`voice.md` must contain the do/don't word lists and link to every raw sample (same OKF frontmatter; `type: brand-study`):
 
 ```markdown
+---
+type: brand-study
+title: Brand — Tone & Voice
+description: Tone descriptors, do/don't word lists, and the voice fingerprint extracted from real samples.
+tags: [brand, voice, tone]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: brand
+status: stable
+---
+
 # Brand — Tone & Voice
 
 > Sources: {user interview, YYYY-MM-DD}

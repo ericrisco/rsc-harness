@@ -122,10 +122,15 @@ Good: 2026-05-20 · pricing · Acme · acme.com/pricing
 ## The tracker artifacts
 
 Three structured files. Required fields named here; full schema + a filled end-to-end example
-competitor live in `references/tracker-schema.md`.
+competitor live in `references/tracker-schema.md`. The profile is a `.md` page under the
+`02-DOCS/wiki/` OKF v0.1 bundle, so its YAML frontmatter carries a non-empty `type: competitor`
+(plus the OKF-recommended `title`/`description`/`tags`/`timestamp`) alongside the domain keys;
+its body uses standard markdown links, never wikilinks. The two CSVs are data files, not OKF
+documents.
 
-- **Competitor profile** (one per rival): `name`, `positioning_line`, `segment`, pricing tiers
-  (each with `amount`, `currency`, `source_url`, `date`), feature-matrix rows, watched URLs.
+- **Competitor profile** (one per rival): OKF frontmatter (`type: competitor`, …) + the domain
+  keys `name`, `positioning_line`, `segment`, pricing tiers (each with `amount`, `currency`,
+  `source_url`, `date`), feature-matrix rows, watched URLs.
 - **Feature matrix** (CSV): rows = features, columns = competitors, each cell sourced + dated.
 - **Change log** (CSV, append-only): `date,competitor,axis,url,old_value,new_value,materiality,action`.
 

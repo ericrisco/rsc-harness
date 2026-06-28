@@ -454,9 +454,9 @@ agent inherits the conventions instead of re-deriving them.
 
 1. **Find the article** `02-DOCS/wiki/stack/agents.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map index; root `CLAUDE.md` points to it).
 2. **If missing or stale**, create/update it with the project's real choices — the provider(s) and model routing, where the provider adapter lives, tool/RAG conventions, the eval gates, and the observability backend —
-   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
+   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it). Write it as an OKF v0.1 wiki article per the harness [`wiki-article-template.md`](../harness/references/wiki-article-template.md): open with YAML frontmatter carrying a non-empty `type:` (use `type: stack`), and use standard markdown links — never wikilinks.
 3. **Read it first on every use** and stay consistent; when a convention changes, update the
-   article (bump its `Updated` date) in the same change.
+   article (bump its `timestamp`) in the same change.
 
 No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the
 brand study, technical conventions are *recorded, not gated* — never block the task on this.

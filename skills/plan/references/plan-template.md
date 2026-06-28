@@ -9,9 +9,20 @@ flows, levels — not framework syntax.
 ---
 
 ```markdown
+---
+type: plan
+title: Plan — <feature name>
+description: The structure-level implementation plan for <feature> — contracts, shapes, flows.
+tags: [sdd, plan]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: sdd
+slug: <slug>
+status: draft
+---
+
 # Plan — <feature name>
 
-> Spec: ../specs/<slug>.md · Constitution: ../constitution.md · Status: draft | approved
+> Spec: [../specs/<slug>.md](../specs/<slug>.md) · Constitution: [../constitution.md](../constitution.md) · Status: draft | approved
 > Last updated: YYYY-MM-DD
 
 ## 0. Global Constraints

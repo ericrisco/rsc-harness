@@ -2,6 +2,20 @@
 
 Fill every slot. Delete the instruction lines in italics before you ship. The finished file lives at `02-DOCS/wiki/brand/voice-guide.md`. A fully worked mini-example follows the blank template — copy its shape, not its content.
 
+The persisted guide is an OKF v0.1 wiki article: it MUST open with YAML frontmatter carrying a non-empty `type`. Copy the block below verbatim to the top of `02-DOCS/wiki/brand/voice-guide.md`, fill the values, and set `timestamp` to the ISO 8601 datetime of the edit:
+
+```yaml
+---
+type: brand-voice
+title: <brand> — Voice & Tone Guide
+description: How the <brand> brand sounds — traits, rules, dimensions, word bank, and AI voice-DNA.
+tags: [brand-voice, tone-of-voice, voice-guide]
+timestamp: YYYY-MM-DDTHH:MM:SSZ
+topic: brand
+status: stable
+---
+```
+
 ---
 
 ## Blank template

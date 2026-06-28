@@ -26,10 +26,16 @@ Default is discard. Climb only when a rung's criterion is met.
 4. **New article** — genuinely new, single-thesis, homeless subject.
    - Example: "Our refund SLA and escalation path." Distinct thesis, no existing
      home → new `wiki/payments/refund-sla-and-escalation.md`, then link it both
-     ways with the Stripe page and reference it in `wiki/index.md`.
+     ways with the Stripe page (standard markdown links, e.g.
+     `[Stripe webhook retry policy](./stripe-webhook-retry-policy.md)`) and reference
+     it in `wiki/index.md`.
+   - Conform to OKF v0.1: the new article carries YAML frontmatter with a non-empty
+     `type:` plus the recommended `title`/`description`/`tags`/`timestamp`, per
+     `../../harness/references/wiki-article-template.md`. Never wikilinks.
 
 Topic rule in practice: before `mkdir wiki/<new-topic>/`, scan `index.md` for an
 existing topic that fits. One level of subdirs only — `wiki/<topic>/<article>.md`.
+The reserved `index.md` is a directory listing and carries **no frontmatter**.
 
 ## Split recipe — carve one article into two
 
@@ -75,16 +81,18 @@ unresolved conflict annotation, and a pile of old `[FILLED]` gaps.
    `rm`. Log.
 3. **Conflict** (`conflict_count > 0`, two pages disagree): you do **not** decide.
    Surface both claims to the human, get the ruling, then annotate the losing
-   claim with `> Superseded by [winner](winner.md) per owner decision YYYY-MM-DD`
-   and clear the conflict annotation. Log.
+   claim with `> Superseded by [winner](./winner.md) per owner decision YYYY-MM-DD`
+   (standard markdown link, never a wikilink) and clear the conflict annotation. Log.
 4. **Gap compaction:** only `[FILLED YYYY-MM-DD]` gaps **older than 90 days** may
-   be compacted, via a single marker line in `log.md` — `gaps.md` stays
-   append-only; you never delete a gap entry.
+   be compacted, via a single marker line prepended to `log.md` (newest first) — `gaps.md`
+   stays append-only; you never delete a gap entry.
 
 ## `wiki/log.md` entry shapes
 
-`log.md` is append-only. Match the protocol's `## [YYYY-MM-DD] <op> | …` format.
-One line (or short block) per manual operation:
+`log.md` is the OKF reserved change-log: **newest entry first** — prepend each new entry at the
+top of the file (it has no frontmatter, ISO 8601 dates, immutable past entries). Match the
+protocol's `## [YYYY-MM-DD] <op> | …` format. One line (or short block) per manual operation
+(shown below newest-last only for readability; in the file the latest sits on top):
 
 ```markdown
 ## [2026-06-02] capture | new | wiki/payments/refund-sla-and-escalation.md
@@ -113,4 +121,6 @@ Compacted 4 [FILLED] gaps older than 90 days into this marker. No gap entries de
 ```
 
 Keep entries terse and factual: date, op, target paths, one-line why. The log is
-the audit trail the rails depend on — never edit a past entry, only append.
+the audit trail the rails depend on — never edit a past entry; prepend the new one at the top
+(newest first, per the OKF reserved-file rule). `gaps.md` stays append-only (new entries at the
+bottom).

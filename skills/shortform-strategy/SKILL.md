@@ -113,9 +113,21 @@ Every decision must end up in the ledger so next month's call is grounded.
 
 ### Decision record format
 
-Append every call to `02-DOCS/wiki/shortform/decisions.md` as a dated block:
+`02-DOCS/wiki/shortform/decisions.md` is an OKF append-log: write the frontmatter
+header once (a non-empty `type` is the only OKF hard requirement; `title`/`tags`/`timestamp`
+are the recommended surface), then **prepend each new dated block newest-first** so the
+latest call is on top. Use ISO 8601 dates; never edit a past block. Bump the header
+`timestamp` on each append. Header + one block:
 
 ```markdown
+---
+type: shortform-decision-log
+title: Shortform strategy decisions
+tags: [shortform, strategy, decisions]
+timestamp: 2026-06-02T10:00:00Z
+---
+# Shortform strategy decisions
+
 ## 2026-06-02 — Drop daily posting to 4 Reels/week
 **Decision:** Cut from ~7 thin posts/week to 4 strong Reels/week, fixed Tue/Fri.
 **Rationale:** Reach fell as volume rose; consistency > velocity past the ceiling.
@@ -140,10 +152,22 @@ Append every call to `02-DOCS/wiki/shortform/decisions.md` as a dated block:
 
 ## Persist it
 
-Write the account's brain back so it compounds (mirrors the harness Karpathy-wiki convention):
+Write the account's brain back so it compounds (mirrors the harness Karpathy-wiki convention). The `shortform/` wiki tree is an **OKF v0.1 bundle** shared with the `tiktok-api` and `shortform-packaging` siblings: every `.md` written here carries YAML frontmatter with a non-empty `type`, cross-references are standard markdown links (never `[[wikilinks]]`), and `decisions.md` follows the OKF newest-first append-log rule.
 
-- `02-DOCS/wiki/shortform/strategy.md` — positioning, cadence/mix, KPI, length bands, current series.
-- `02-DOCS/wiki/shortform/decisions.md` — the dated decision log (format above).
-- `02-DOCS/raw/shortform/metrics.csv` — the per-post ledger (schema in `references/learning-loop-template.md`).
+- `02-DOCS/wiki/shortform/strategy.md` — positioning, cadence/mix, KPI, length bands, current series. Lead with frontmatter; the body keeps the H1 + sections the linter checks:
 
-Verify a produced strategy doc with `scripts/verify.sh 02-DOCS/wiki/shortform/strategy.md` — a read-only structural lint (positioning, cadence, completion KPI, ride-or-skip rule, ≥1 dated decision, sends/saves logged).
+  ```markdown
+  ---
+  type: shortform-strategy
+  title: Shortform account strategy
+  tags: [shortform, strategy, positioning, cadence]
+  timestamp: 2026-06-02T10:00:00Z
+  ---
+  # Shortform account strategy
+  ...
+  ```
+
+- `02-DOCS/wiki/shortform/decisions.md` — the dated decision log, OKF append-log (`type: shortform-decision-log`, newest block on top; format above).
+- `02-DOCS/raw/shortform/metrics.csv` — the per-post ledger (schema in `references/learning-loop-template.md`). This is `raw/`, not `wiki/` — a CSV, no frontmatter.
+
+Verify a produced strategy doc with `scripts/verify.sh 02-DOCS/wiki/shortform/strategy.md` — a read-only structural lint (positioning, cadence, completion KPI, ride-or-skip rule, ≥1 dated decision, sends/saves logged). The lint reads body content, so the added frontmatter does not affect it.

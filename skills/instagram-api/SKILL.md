@@ -190,6 +190,13 @@ This is the checkable deliverable. One file per media id, idempotent overwrite (
 
 ```markdown
 ---
+type: instagram-metrics
+title: "Reel 17888888888888888"
+description: Performance snapshot for one Instagram Reel, pulled from Graph API v25.0.
+tags: [instagram, reels, insights, shortform]
+timestamp: "2026-06-02T08:00:00Z"
+topic: shortform
+status: stable
 platform: instagram
 media_type: REELS
 media_id: "17888888888888888"
@@ -213,7 +220,7 @@ Performance snapshot pulled from Graph API v25.0. Metric set is the
 current valid Reels set; no deprecated names requested.
 ```
 
-Why front-matter + media-id filename: the wiki is queried by key, and re-pulls must be diffable, not additive.
+`type` is the only required OKF v0.1 field; `title`/`description`/`tags`/`timestamp` are the recommended OKF surface (`timestamp` mirrors the pull instant). The DOMAIN keys below are mandatory and stay byte-for-byte — `verify.sh` requires a pinned `graph_version` and greps the `metrics` block for deprecated names; `pulled_at` is the API-pull instant verify/diff rely on. Keep both `pulled_at` and `timestamp`. Why front-matter + media-id filename: the wiki is queried by key, and re-pulls must be diffable, not additive (the idempotent overwrite re-stamps `timestamp` and `pulled_at` together).
 
 ## Migration & gotchas
 

@@ -117,6 +117,25 @@ If `02-DOCS/` exists, learn before you write:
 - Bias toward the title/subtitle patterns and topics that historically beat a 50% read ratio for *this* author; avoid angles that drew clicks but bounced.
 - After a notable result, append the learned pattern to `02-DOCS/wiki/medium/read-ratio-patterns.md` so the next draft inherits it.
 
+`read-ratio-patterns.md` lives in the `02-DOCS/wiki/` OKF v0.1 bundle, so it carries YAML frontmatter with a non-empty `type:` — one block at the top, with new pattern blocks prepended newest-first below it. Use `type: medium-record` (the same type the `medium-strategy` skill writes under `02-DOCS/wiki/medium/`, keeping the two skills' wiki content consistent). Create it with this header if it does not yet exist:
+
+```markdown
+---
+type: medium-record
+title: Read-ratio patterns — Medium
+description: Title/subtitle/topic patterns that historically beat a 50% read ratio for this author.
+tags: [medium, read-ratio, titles, hooks]
+timestamp: 2026-06-02T00:00:00Z
+topic: medium
+status: stable
+---
+
+## 2026-06-02 — <pattern learned>
+- <title/subtitle archetype + topic that beat the 50% read ratio, with the number observed>
+```
+
+Cross-references use standard markdown links (`[Text](./what-worked.md)`), never wikilinks (`[[...]]`).
+
 If `02-DOCS/` is absent, proceed from the craft defaults above and say so in one line, rather than inventing stats.
 
 ## Anti-patterns

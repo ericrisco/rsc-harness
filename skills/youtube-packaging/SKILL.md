@@ -46,7 +46,13 @@ produce generic copy in someone else's voice.
   hook, the keyword, and the audience all at once.)
 
 Persist what you write under `02-DOCS/wiki/youtube/` (the package) and raw test
-results under `02-DOCS/raw/youtube/`.
+results under `02-DOCS/raw/youtube/`. `02-DOCS/wiki/` is an **OKF v0.1** bundle:
+every package or log file persisted there carries YAML frontmatter with a
+non-empty `type` (`youtube-package`) plus the OKF surface (`title`, `description`,
+`tags`, `timestamp`) shared with the strategy/thumbnail/api siblings, and all
+cross-references use standard markdown links — never `[[wikilinks]]`. The OKF
+frontmatter shape for the persisted package and log is in
+[references/description-and-chapters.md](references/description-and-chapters.md).
 
 ## The title
 
@@ -158,7 +164,9 @@ carry forward what won as priors: if numeric titles beat curiosity titles 3 test
 running on this channel, the new set leans numeric. If a hashtag set tanked, drop
 it.
 
-**Append after you test.** One row per test:
+**Append after you test.** One row per test, into `02-DOCS/wiki/youtube/packaging-log.md`
+(OKF v0.1: file-level `type: youtube-package` frontmatter at the top, the table
+below it, newest rows appended, past rows immutable):
 
 ```text
 | date | video | title set tried | winner | CTR | impressions | avg view duration | note |

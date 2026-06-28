@@ -39,12 +39,14 @@ Run the daily curation pass for this 02-DOCS second brain.
 
 Use the harness wiki-protocol.md as the contract. First run the Auto-Ingest Sweep:
 process inbox/, then scan the workspace (minus .rscignore) for un-ingested documents,
-ingest the clearly-documentary folders (copy originals, never move), record them in
-wiki/.ingested.json, and list ambiguous folders as proposals (do not grab them).
-Then compile pending raw/worklog/ material into wiki/ pages (update existing before
-creating new), keep frontmatter + wikilinks consistent, append significant decisions
-to wiki/harness/decisions.md, refresh the .base-backed navigation, recompute
-scores.json + the score: property, and append a dated entry to wiki/log.md.
+applying Clean-as-you-go (move loose root-level + inbox files into raw/ after a
+verified ingest; copy files nested in user-maintained folders and propose
+consolidation), record them in wiki/.ingested.json, and list ambiguous folders as
+proposals (do not grab them). Then compile pending raw/worklog/ material into wiki/
+pages (update existing before creating new), keep frontmatter + relative markdown
+links OKF-consistent, append significant decisions to wiki/harness/decisions.md,
+refresh the .base-backed navigation, recompute scores.json + the score: property,
+and prepend a dated entry (newest first) to wiki/log.md.
 
 Be conservative. If the topic map no longer fits, record a recommendation in
 wiki/gaps.md or a page's Open Questions instead of moving large parts of the

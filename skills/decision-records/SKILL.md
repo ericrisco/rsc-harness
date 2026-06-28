@@ -56,9 +56,22 @@ Map every ADR to the **MADR 4.0.0 template** (released 2024-09-17 — the curren
 
 Required spine, in order: **Title → Status → Date → Context and Problem Statement → Decision Drivers → Considered Options → Decision Outcome → Consequences**. The MADR-optional sections (Confirmation, Pros and Cons of the Options, More Information) you add only when they pull weight.
 
-Minimal skeleton — this is enough for most decisions:
+Minimal skeleton — this is enough for most decisions. When the ADR lives in a harness
+workspace (`02-DOCS/wiki/decisions/`), it is part of an OKF v0.1 bundle, so it opens with YAML
+frontmatter carrying a non-empty `type: decision` (plus the OKF-recommended `title`/`tags`/
+`timestamp`). The body keeps the human-readable `- Status:`/`- Date:` lines verbatim — they are
+the decision's domain record and `scripts/verify.sh` reads them, so the frontmatter is purely
+additive. Cross-references use standard markdown links, never wikilinks. (In a plain code repo
+under `docs/adr/`, the frontmatter is optional — OKF conformance only governs the wiki bundle.)
 
 ```markdown
+---
+type: decision
+title: "Choose Postgres over DynamoDB for the primary store"
+tags: [adr, database, billing]
+timestamp: 2026-06-02T00:00:00Z
+---
+
 # 7. Choose Postgres over DynamoDB for the primary store
 
 - Status: accepted

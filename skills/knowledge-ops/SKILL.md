@@ -29,7 +29,7 @@ Every gardening request is one of four operations. Identify which before you act
 | **Link** | Pages are unreachable or under-connected | `scores.json` orphan_penalty (=5), low inbound count | `## See Also` in articles, `index.md` |
 | **Prune** | Answers are stale, articles superseded, conflicts unresolved, gaps bloated | freshness, conflict annotations, old `[FILLED]` gaps | `_archive/`, `log.md`, `gaps.md` |
 
-Whichever you do, append a line to `wiki/log.md` (append-only). The exact entry shapes per operation live in `references/gardening-playbook.md`.
+Whichever you do, record a line in `wiki/log.md`. `log.md` is the OKF reserved change-log: new entries are **prepended at the top (newest first)**, ISO 8601 dates, and past entries are never edited or deleted. (`gaps.md` is the append-only file — new entries go at the bottom.) The exact entry shapes per operation live in `references/gardening-playbook.md`.
 
 ## Capture — the bar is high
 
@@ -40,7 +40,7 @@ Walk the altitude ladder, lowest rung first; stop at the first that fits:
 1. **Discard** — ephemeral, re-derivable, or already covered. Most things stop here.
 2. **Leave in `raw/` only** — a source worth keeping but not worth a synthesized article yet. It stays immutable in `raw/<topic>/`, no `wiki/` page.
 3. **Merge into an existing article** — adds a section or fact to a page that already exists. Prefer this over a new page.
-4. **New article** — last resort: a genuinely new, single-thesis subject with no home.
+4. **New article** — last resort: a genuinely new, single-thesis subject with no home. Any new article follows the OKF v0.1 article template (`../harness/references/wiki-article-template.md`): YAML frontmatter with a non-empty `type:`, the OKF-recommended `title`/`description`/`tags`/`timestamp`, and standard markdown links — never wikilinks. The reserved `index.md` stays frontmatter-free.
 
 Worked examples for each rung are in `references/gardening-playbook.md`.
 
@@ -72,7 +72,7 @@ Every article earns **≥1 inbound link** or is a conscious leaf you can justify
 
 - Use `scores.json` as your worklist: sort by lowest score / orphan penalty, fix those first.
 - `## See Also` is **bidirectional** — if A links B, B links A.
-- Same-topic link: `[Refund SLA](refund-sla-and-escalation.md)`. Cross-topic link: `[OAuth setup](../auth/oauth-setup.md)`. Why: the protocol's relative-link convention; `../` crosses one topic boundary, matching the one-level layout.
+- Use **standard markdown links** only — NEVER wikilinks (`[[...]]`). An OKF consumer follows markdown links; it cannot follow `[[...]]`. If you find a `[[...]]` link while gardening, convert it. Same-topic link: `[Refund SLA](./refund-sla-and-escalation.md)`. Cross-topic link: `[OAuth setup](../auth/oauth-setup.md)`. Why: the protocol's relative-link convention; `./` is same-topic, `../` crosses one topic boundary, matching the one-level layout. See `../harness/references/wiki-protocol.md` "## Conventions".
 - When you add a genuinely new top-level subject, make sure `wiki/index.md` references it so the map stays complete.
 
 ## Prune — archive, retire, arbitrate, compact
@@ -81,8 +81,8 @@ Every article earns **≥1 inbound link** or is a conscious leaf you can justify
 
 - **Conflicts:** you **flag** contradictions and the **human arbitrates**. Once they choose a winner, you may apply the resolution and annotate the loser — but you never auto-pick. Why: silently choosing a side is data corruption.
 - **Stale answers:** mark a page or archived copy with a `> ⚠ Stale — superseded YYYY-MM-DD` note rather than rewriting history.
-- **Compaction is bounded:** only `[FILLED YYYY-MM-DD]` gaps **older than 90 days** may be compacted, and only via a single marker in the log. `gaps.md` and `log.md` are append-only — gaps get a `[FILLED]` stamp, never a deletion.
-- **Log every prune** to `wiki/log.md`. Exact entry shapes per operation: `references/gardening-playbook.md`.
+- **Compaction is bounded:** only `[FILLED YYYY-MM-DD]` gaps **older than 90 days** may be compacted, and only via a single marker prepended to `log.md`. `gaps.md` is append-only and `log.md` is newest-first (both immutable past entries) — gaps get a `[FILLED]` stamp, never a deletion.
+- **Log every prune** by prepending to `wiki/log.md` (newest first). Exact entry shapes per operation: `references/gardening-playbook.md`.
 
 A full worked prune session (stale + superseded + conflict + gap compaction, all logged) is in the playbook.
 
@@ -92,9 +92,9 @@ These are hard constraints, not suggestions. They come from `../harness/referenc
 
 1. **Preserve before overwrite.** Never overwrite an article without first copying the old version to `wiki/<topic>/_archive/<article>__YYYY-MM-DD.md`.
 2. **Never auto-resolve a conflict.** Flag it; the human arbitrates.
-3. **`gaps.md` and `log.md` are append-only.** Gaps get `[FILLED YYYY-MM-DD]`; nothing is ever edited out.
-4. **Log every change** to `wiki/log.md`.
-5. **Never touch an article whose `Updated` is < 24h ago** without explicit user say-so. Why: it is likely still being worked.
+3. **`gaps.md` is append-only; `log.md` is newest-first.** New `gaps.md` entries are appended at the bottom; new `log.md` entries are prepended at the top (the OKF reserved-file rule). Past entries in either are immutable — gaps get `[FILLED YYYY-MM-DD]`, nothing is ever edited out.
+4. **Log every change** by prepending to `wiki/log.md` (newest first).
+5. **Never touch an article whose `timestamp` is < 24h ago** without explicit user say-so. Why: it is likely still being worked. (`timestamp` is the OKF last-meaningful-edit field, ISO 8601 — see `../harness/references/wiki-protocol.md` "## Conventions".)
 
 ## Anti-patterns
 
@@ -105,7 +105,7 @@ These are hard constraints, not suggestions. They come from `../harness/referenc
 | Auto-picking a winner in a contradiction | Silent data corruption; you guessed | Flag it; let the human arbitrate |
 | Re-running `harness` to fix a broken link | Wrong tool — the Maintenance Pass already auto-fixes links | Repair `## See Also` by hand; let automation handle the rest |
 | Nesting `wiki/a/b/c.md` | Breaks the one-level topic rule | Flatten to `wiki/<topic>/<article>.md` |
-| Editing a past `log.md` / `gaps.md` entry | Breaks the append-only audit trail | Append a new line |
+| Editing a past `log.md` / `gaps.md` entry | Breaks the immutable audit trail | Add a new entry — prepend to `log.md` (newest first), append to `gaps.md` |
 | Splitting on length alone | Two halves of one thesis are worse than one page | Split on thesis count, not line count |
 | Creating a new topic for a one-off note | Topic sprawl; reuse beats create | File under the nearest existing topic |
 

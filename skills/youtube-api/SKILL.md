@@ -215,10 +215,15 @@ A pull that prints to stdout and vanishes is wasted. **Every pull appends a date
   videos/<VIDEO_ID>.md      # per-video running log, newest entry on top
 ```
 
-Per-pull entry template:
+Per-pull entry template (OKF v0.1: non-empty `type` + the domain keys siblings parse):
 
 ```markdown
 ---
+type: youtube-metrics
+title: Channel snapshot 2026-05-31
+description: Channel KPIs, traffic and retention for 2026-05-01..2026-05-31.
+tags: [youtube, channel-snapshot]
+timestamp: 2026-05-31T00:00:00Z
 date: 2026-05-31
 range: 2026-05-01..2026-05-31
 channel: MINE
@@ -237,7 +242,7 @@ Sharp drop 0.00→0.06 (intro), recovers, second dip ~0.55.
 avg_view_pct +2.1pts; SUGGESTED share up 6pts after the Ep.13 packaging change.
 ```
 
-Rule: **append, never overwrite.** The feedback log *is* the value — overwriting yesterday's snapshot destroys the trend the siblings need. Exact file tree, naming, and how siblings read the log: `references/wiki-schema.md`.
+Rule: **append, never overwrite.** The feedback log *is* the value — overwriting yesterday's snapshot destroys the trend the siblings need. `02-DOCS/wiki/` is an OKF v0.1 bundle: keep the domain keys (`date`, `range`, `channel`, `source`) the siblings parse, add `type`/`timestamp` alongside them, use standard markdown links (never `[[wikilinks]]`), and leave the reserved `index.md` frontmatter-free. Exact file tree, naming, per-video log shape, and how siblings read the log: `references/wiki-schema.md`.
 
 ## 7. Quota & failure math
 

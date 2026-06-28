@@ -61,6 +61,13 @@ One file per published media id. Idempotent: re-pulls overwrite the same file (m
 
 ```markdown
 ---
+type: instagram-metrics      # required OKF v0.1 field (non-empty)
+title: "Reel <media_id>"     # OKF recommended surface
+description: Performance snapshot for one Instagram Reel, pulled from Graph API v25.0.
+tags: [instagram, reels, insights, shortform]
+timestamp: "<ISO 8601 UTC>"  # OKF last-edit; re-stamped each re-run alongside pulled_at
+topic: shortform
+status: stable
 platform: instagram          # always "instagram" for this skill
 media_type: REELS            # REELS | IMAGE | CAROUSEL | STORIES
 media_id: "<published media id>"   # NOT the container id
@@ -83,6 +90,6 @@ metrics:                     # only valid, non-deprecated names
 One-paragraph note: which valid metric set was pulled and on which graph_version.
 ```
 
-Required keys: `platform`, `media_type`, `media_id`, `published_at`, `graph_version`, `pulled_at`, `metrics`. The `metrics` block must contain only current metric names — verify.sh greps for deprecated tokens and a pinned `graph_version`.
+`type` is the only required OKF v0.1 field; the rest of the OKF surface (`title`, `description`, `tags`, `timestamp`) is recommended. Required DOMAIN keys (kept byte-for-byte): `platform`, `media_type`, `media_id`, `published_at`, `graph_version`, `pulled_at`, `metrics`. The `metrics` block must contain only current metric names — verify.sh greps for deprecated tokens and a pinned `graph_version`. `pulled_at` (the API-pull instant) and the OKF `timestamp` are re-stamped together on each idempotent overwrite — keep both.
 
 **Watch-time units:** `ig_reels_avg_watch_time` and `ig_reels_video_view_total_time` are returned by the API in **milliseconds** (see the metric notes above). Persist them raw under `_ms`-suffixed keys, matching the wire value. If you instead report seconds, divide by 1000 at ingest and rename to a `_s` suffix — do not keep the API key name while silently changing the unit.

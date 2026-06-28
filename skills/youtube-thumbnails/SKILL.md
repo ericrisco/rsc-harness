@@ -125,17 +125,22 @@ the video doesn't cash. That is a promise problem, not an image problem.
 ## The feedback loop (wiki)
 
 Every test result goes to the channel wiki. Exact path:
-`02-DOCS/wiki/youtube/`.
+`02-DOCS/wiki/youtube/`. `02-DOCS/wiki/` is an **OKF v0.1** bundle: both files
+below carry file-level frontmatter with a non-empty `type` (`thumbnail-experiment`)
+plus the OKF surface (`title`, `description`, `tags`, `timestamp`) shared with the
+api/strategy/packaging siblings, and cross-references use standard markdown links,
+never `[[wikilinks]]`.
 
-**Log file** — `thumbnail-experiments.md`, one row per test:
+**Log file** — `thumbnail-experiments.md`, frontmatter at the top then one row per
+test (append-only, ISO 8601 dates, past rows immutable):
 
 ```text
 | date | video | variants | axis tested | winner | CTR | watch-time share | note |
 ```
 
-**Derived file** — `thumbnail-patterns.md`, a running table of what wins on THIS
-channel (e.g. "faces beat objects 4/5 tests", "no-text wins on tutorials"). You
-update this after each logged test.
+**Derived file** — `thumbnail-patterns.md`, frontmatter at the top then a running
+table of what wins on THIS channel (e.g. "faces beat objects 4/5 tests", "no-text
+wins on tutorials"). You update this after each logged test.
 
 **Next-concept rule:** the next thumbnail keeps the winning level of every axis
 already settled by the log, and tests the next unsettled axis. You only re-test a

@@ -63,8 +63,13 @@ stranger's voice that contradicts what already won.
 4. **No script or no settled angle? Route OUT** (see Handoffs). Never invent here.
 
 Persist the package under `02-DOCS/wiki/shortform/` and raw test results under
-`02-DOCS/raw/shortform/`. Pattern depth lives in
-[references/package-templates.md](references/package-templates.md).
+`02-DOCS/raw/shortform/`. The `shortform/` wiki tree is an **OKF v0.1 bundle** shared
+with the `tiktok-api` and `shortform-strategy` siblings: each persisted package `.md`
+leads with YAML frontmatter carrying a non-empty `type: shortform-package` (plus the
+recommended `title`/`tags`/`timestamp`), and any cross-references use standard markdown
+links, never `[[wikilinks]]`. The raw feedback log under `02-DOCS/raw/shortform/` is
+`raw/`, not `wiki/` — no frontmatter required. The full frontmatter + pattern depth
+lives in [references/package-templates.md](references/package-templates.md).
 
 ## The two-second decision
 

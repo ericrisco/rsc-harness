@@ -5,12 +5,28 @@ captures (the diffed HTML/JSON snapshots) go under `02-DOCS/raw/competitors/<riv
 rule that overrides everything: **a price or feature cell without a `source_url` + `date` is
 not knowledge — leave it blank and say so.**
 
+`02-DOCS/wiki/` is an OKF v0.1 bundle, so the one `.md` file here (the competitor profile)
+carries YAML frontmatter with a non-empty `type:`; the two CSVs are data files, not OKF
+documents. Any cross-references in the profile body use **standard markdown links** (e.g.
+`[Beta](./beta.md)`), never wikilinks. See `../../harness/references/wiki-protocol.md`
+"## Conventions".
+
 ## 1. Competitor profile (one file per rival)
 
 Markdown front-matter + body. One per rival, named `02-DOCS/wiki/competitors/<rival>.md`.
+The frontmatter is OKF v0.1 conformant: `type:` is the only required field (non-empty);
+`title`/`description`/`tags`/`timestamp` are the recommended standard surface. All the
+domain keys below (`name`, `positioning_source.date`, every `pricing_tiers[].date`, …) are
+kept verbatim — OKF allows any extra key and `verify.sh` reads them, so adding the OKF
+fields is purely additive.
 
 ```yaml
 ---
+type: competitor
+title: Acme
+description: "Tracker of record for Acme — positioning, pricing tiers, and watched surfaces."
+tags: [competitor, pricing-watch, feature-watch]
+timestamp: 2026-05-28T00:00:00Z
 name: Acme
 positioning_line: "The all-in-one workspace for remote-first teams"
 positioning_source: { url: "https://acme.com", date: "2026-05-28" }
@@ -28,6 +44,9 @@ pricing_tiers:
 
 ## Notes
 Repositioned from "project tool" to "workspace" in Q2 2026 — see change log 2026-05-12.
+
+## Related
+- [Beta](./beta.md) — closest competing positioning; cross-watch their pricing moves.
 ```
 
 Every `pricing_tiers` row and any feature claim must carry `source_url` + `date`. If you only
