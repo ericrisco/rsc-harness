@@ -17,9 +17,21 @@ An adapter MUST:
 
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
+
+#: Shared correction detector — a user message matching this right after a prompt
+#: signals the previous turn went wrong. Single source of truth for every adapter
+#: (and re-used by extract_prompts.py) so the heuristic never drifts between runtimes.
+CORRECTION_RE = re.compile(
+    r"\b(no[,.]?\s|wrong|instead|actually|don'?t|shouldn'?t|stop|not that|"
+    r"I said|I meant|I asked|that'?s not|please don'?t|why did you|"
+    r"you should have|that was wrong|incorrect|try again|redo|"
+    r"that broke|you broke|revert|undo)\b",
+    re.IGNORECASE,
+)
 
 
 class BaseAdapter(ABC):

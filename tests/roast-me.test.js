@@ -272,3 +272,110 @@ test('extract_prompts.py: accepts bare number for days (positional argument)', (
   const data = JSON.parse(readFileSync(outputPath, 'utf8'));
   assert.equal(data.metadata.days, 3, `expected days=3, got ${data.metadata.days}`);
 });
+
+// ---------------------------------------------------------------------------
+// Codex + Gemini adapters — real on-disk formats (synthetic fixtures, no PII).
+// ---------------------------------------------------------------------------
+
+function readOutput(result) {
+  const line = result.stdout.split('\n').find((l) => l.startsWith('Output: '));
+  assert.ok(line, `no 'Output:' line in stdout:\n${result.stdout}\n${result.stderr}`);
+  const p = line.replace('Output: ', '').trim();
+  assert.ok(existsSync(p), `output file not created at ${p}`);
+  return JSON.parse(readFileSync(p, 'utf8'));
+}
+
+function runExtractorRuntime(fakeHome, runtime) {
+  return spawnSync('python3', [EXTRACTOR, '--runtime', runtime, '--days', '365'], {
+    encoding: 'utf8',
+    env: { ...process.env, HOME: fakeHome },
+  });
+}
+
+// Mirrors the real Codex envelope: {timestamp, type, payload}. The genuine prompt
+// is event_msg/user_message; tool failures are response_item/function_call_output
+// carrying "exited with code N".
+function buildCodexRolloutJsonl() {
+  const L = [
+    { timestamp: '2026-06-01T10:00:00Z', type: 'turn_context', payload: { model: 'gpt-5.1', cwd: '/x' } },
+    { timestamp: '2026-06-01T10:00:01Z', type: 'event_msg', payload: { type: 'user_message', message: 'Audit the formatter output for 2015' } },
+    { timestamp: '2026-06-01T10:00:02Z', type: 'response_item', payload: { type: 'function_call', name: 'exec_command', arguments: '{}' } },
+    { timestamp: '2026-06-01T10:00:03Z', type: 'response_item', payload: { type: 'function_call_output', call_id: 'c1', output: 'Process exited with code 1\nbash: foo: command not found' } },
+    { timestamp: '2026-06-01T10:00:30Z', type: 'event_msg', payload: { type: 'user_message', message: "no, that's wrong — revert it" } },
+    { timestamp: '2026-06-01T10:00:40Z', type: 'event_msg', payload: { type: 'agent_message', message: 'Reverted.' } },
+    { timestamp: '2026-06-01T10:01:00Z', type: 'event_msg', payload: { type: 'user_message', message: 'Now add unit tests for the parser module' } },
+  ];
+  return L.map((e) => JSON.stringify(e)).join('\n') + '\n';
+}
+
+function createFakeCodexHome() {
+  const fakeHome = mkdtempSync(join(tmpdir(), 'roast-me-codex-'));
+  const dir = join(fakeHome, '.codex', 'sessions', '2026', '06', '28');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'rollout-2026-06-28T10-00-00-abc.jsonl'), buildCodexRolloutJsonl(), 'utf8');
+  return fakeHome;
+}
+
+// Mirrors the real Gemini chat file: one JSON object with a messages[] array of
+// {id, timestamp, type: "user"|"gemini", content}. No tool errors are persisted.
+function buildGeminiSessionJson() {
+  return JSON.stringify({
+    sessionId: 's1',
+    projectHash: 'deadbeef',
+    startTime: '2026-06-01T10:00:00Z',
+    lastUpdated: '2026-06-01T10:05:00Z',
+    messages: [
+      { id: 'm1', timestamp: '2026-06-01T10:00:00Z', type: 'user', content: 'Write a tagline for the product' },
+      { id: 'm2', timestamp: '2026-06-01T10:00:05Z', type: 'gemini', content: 'Here is one.', model: 'gemini-2.5-pro', tokens: { total: 12 } },
+      { id: 'm3', timestamp: '2026-06-01T10:01:00Z', type: 'user', content: "no, that's not what I asked — try again" },
+      { id: 'm4', timestamp: '2026-06-01T10:01:05Z', type: 'gemini', content: 'Sure.', model: 'gemini-2.5-pro' },
+    ],
+  });
+}
+
+function createFakeGeminiHome() {
+  const fakeHome = mkdtempSync(join(tmpdir(), 'roast-me-gemini-'));
+  const dir = join(fakeHome, '.gemini', 'tmp', 'deadbeefhash', 'chats');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'session-2026-06-01T10-00-s1.json'), buildGeminiSessionJson(), 'utf8');
+  return fakeHome;
+}
+
+test('extract_prompts.py: codex adapter parses real envelope, detects tool error + correction', (t) => {
+  if (!PYTHON_AVAILABLE) { t.skip('python3 not available'); return; }
+
+  const data = readOutput(runExtractorRuntime(createFakeCodexHome(), 'codex'));
+  const prompts = data.prompts;
+
+  // 3 genuine user_message prompts (AGENTS.md/developer injections excluded by design).
+  assert.equal(prompts.length, 3, `expected 3 codex prompts, got ${prompts.length}`);
+
+  const first = prompts.find((p) => p.prompt_text.includes('Audit the formatter'));
+  assert.ok(first, 'first codex prompt not found');
+  assert.equal(first.runtime, 'codex');
+  assert.equal(first.model, 'gpt-5.1', 'model should come from turn_context');
+  assert.equal(first.followed_by_error, true, 'non-zero exit code → followed_by_error');
+  assert.equal(first.error_tool, 'exec_command', 'error_tool from the preceding function_call');
+  // It was corrected by the user, so it is NOT auto-recovered → it counts as impactful.
+  assert.equal(first.followed_by_correction, true, 'next user message is a correction');
+  assert.equal(first.error_was_recovered, false, 'error + correction ⇒ not auto-recovered');
+  assert.ok(data.metadata.effective_error_rate > 0, 'an un-recovered error must raise effective_error_rate');
+});
+
+test('extract_prompts.py: gemini adapter parses messages[], detects correction, no fake errors', (t) => {
+  if (!PYTHON_AVAILABLE) { t.skip('python3 not available'); return; }
+
+  const data = readOutput(runExtractorRuntime(createFakeGeminiHome(), 'gemini'));
+  const prompts = data.prompts;
+
+  assert.equal(prompts.length, 2, `expected 2 gemini prompts, got ${prompts.length}`);
+
+  const first = prompts.find((p) => p.prompt_text.includes('Write a tagline'));
+  assert.ok(first, 'first gemini prompt not found');
+  assert.equal(first.runtime, 'gemini');
+  assert.equal(first.model, 'gemini-2.5-pro', 'model captured from the assistant reply');
+  assert.equal(first.followed_by_correction, true, 'next user message is a correction');
+  // Gemini chat files do not persist tool errors — must never be invented.
+  assert.equal(first.followed_by_error, false, 'gemini format has no tool-error signal');
+  assert.equal(data.metadata.effective_error_rate, 0, 'no errors ⇒ effective_error_rate 0');
+});
