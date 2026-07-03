@@ -2,7 +2,7 @@
 
 Regla: una fase por iteración. Al iniciar, coger LA PRIMERA fase PENDIENTE. Al terminar, actualizar esta tabla y commitear solo `docs/wiki/`.
 
-Numeración de specs: global y única (SPEC-001, SPEC-002…), sin huecos. Próximo número libre: **SPEC-052**.
+Numeración de specs: global y única (SPEC-001, SPEC-002…), sin huecos. Próximo número libre: **SPEC-055**.
 
 | # | Fase | Archivo | Estado | Fecha | Specs |
 |---|------|---------|--------|-------|-------|
@@ -14,7 +14,7 @@ Numeración de specs: global y única (SPEC-001, SPEC-002…), sin huecos. Próx
 | 6 | Multi-target | `05-multi-target.md` | COMPLETA | 2026-07-03 | 5 (SPEC-036…040) |
 | 7 | Seguridad y código | `06-seguridad-y-codigo.md` | COMPLETA | 2026-07-03 | 5 (SPEC-041…045) |
 | 8 | Marketing y distribución | `07-marketing-distribucion.md` | COMPLETA | 2026-07-03 | 6 (SPEC-046…051) |
-| 9 | Docs y escritura | `08-docs-escritura.md` | PENDIENTE | — | — |
+| 9 | Docs y escritura | `08-docs-escritura.md` | COMPLETA | 2026-07-03 | 3 (SPEC-052…054) |
 | 10 | Roadmap (síntesis) | `09-roadmap.md` | PENDIENTE | — | — |
 
 ## Notas entre iteraciones
