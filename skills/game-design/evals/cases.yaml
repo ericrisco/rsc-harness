@@ -1,0 +1,47 @@
+skill: game-design
+
+should_trigger:
+  - prompt: "I've been building my game for months and it just isn't fun to play. What's wrong?"
+    why: "The signature 'why isn't my game fun' trigger; answer diagnoses which loop is starved and pushes prototype-the-core-verb-in-greybox."
+  - prompt: "Help me design the core gameplay loop for a roguelike deckbuilder."
+    why: "Core-loop design plus moment-to-moment → session → meta layering is the central job."
+  - prompt: "My in-game gold keeps inflating so late-game upgrades feel free. How do I fix the economy?"
+    why: "Economy/faucets-vs-sinks and runaway-inflation fixes (escalating sinks, caps, prestige); the pseudo-formula applies."
+  - prompt: "Everyone in my card game just plays the same one deck because it beats everything. How do I rebalance?"
+    why: "Dominant-strategy detection and pushing toward intransitive (rock-paper-scissors) balance."
+  - prompt: "The difficulty in my platformer spikes weirdly — some levels are trivial, then a wall. How should the curve work?"
+    why: "Difficulty curve as a sawtooth in the flow channel, high-leverage knobs, one-at-a-time tuning."
+  - prompt: "I keep adding features and never finishing. How do I decide what to cut?"
+    why: "Scope control (the #1 indie killer): cut features not quality, define the one thing, vertical slice, cut list, kill your darlings."
+  - prompt: "El juego no engancha después de la primera partida, ¿cómo lo arreglo?"
+    why: "Spanish — starved meta loop / return-reason; diagnoses reward funding across loop layers."
+  - prompt: "How do I make combat feel punchier and more satisfying without touching the story or the netcode?"
+    why: "Game feel / juice as design intent (hit-stop, screenshake, feedback); explicitly excludes story and netcode."
+
+should_not_trigger:
+  - prompt: "Write the C# script that moves my player character and handles jumping in Unity."
+    route_to: unity
+    why: "Engine implementation code; this skill decides what to build, the engine skill writes it."
+  - prompt: "Write the dialogue tree and backstory for my game's main antagonist."
+    route_to: game-storytelling
+    why: "Narrative and character writing, not systems/mechanics design."
+  - prompt: "Lay out the rooms and enemy placement for level 3 of my metroidvania."
+    route_to: level-design
+    why: "Spatial and encounter layout applies mechanics; it is not core mechanic/economy design."
+  - prompt: "Implement client-side prediction and lag compensation for my multiplayer shooter."
+    route_to: gamedev-multiplayer
+    why: "Netcode is a technical domain, not moment-to-moment or economy design intent."
+  - prompt: "Set up my Steam store page and build the release pipeline for launch."
+    route_to: gamedev-shipping
+    why: "Release logistics, not design."
+
+capability:
+  - scenario: "A solo dev's incremental/idle game feels grindy and the currency inflates until upgrades are free; they ask how to fix the design."
+    must_include:
+      - "Diagnoses which loop is starved (moment-to-moment / session / meta) and checks that each layer's reward funds the next"
+      - "Models the economy with net_income_rate = faucet_rate − sink_rate and time_to_afford = cost / net_income_rate"
+      - "Prescribes escalating/exponential sinks (cost(n) = base × growth^n), consumable sinks, caps, or prestige resets to stop runaway inflation"
+      - "Requires each currency to have a distinct sink, and tunables to be data-driven rather than hard-coded"
+      - "Names the target MDA aesthetic instead of 'more fun', and frames unlocks as new verbs/choices not just +N%"
+      - "Recommends prototyping the fix and playtesting for behavior (retention, time-per-tier), not just opinion"
+      - "Defers engine implementation to godot/unity/unreal and records the design in 02-DOCS/wiki/design/ only if a harness exists"

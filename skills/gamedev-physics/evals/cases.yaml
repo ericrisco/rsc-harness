@@ -1,0 +1,54 @@
+skill: gamedev-physics
+
+should_trigger:
+  - prompt: "My player keeps falling through the floor when he moves fast, but it's fine when he walks slowly. Godot 4."
+    why: "Classic tunneling symptom (speed-dependent fall-through); routes here for CCD / fixed-tick + shapecast-then-move, not a generic debugger."
+  - prompt: "Two crates that should bump into each other just pass straight through. How do I set up the collision layer and mask so they collide?"
+    why: "Direct collision layer/mask filtering question — the #1-confusion section this skill owns."
+  - prompt: "In Unity should I put my rigidbody movement in Update or FixedUpdate? My box vibrates against the ground."
+    why: "Fixed-timestep placement + jitter stability, both core determinism topics; also touches the Unity version contract."
+  - prompt: "What's the difference between AddForce with Impulse mode, VelocityChange, and just setting velocity on a rigidbody?"
+    why: "Forces vs impulses vs direct velocity is an explicit section with a per-engine table."
+  - prompt: "I want a coin pickup that detects when the player walks over it but doesn't physically block them. What component do I use?"
+    why: "Trigger/Area overlap-with-no-response — colliders/triggers section; must not be treated as solid collision."
+  - prompt: "Building a first-person character controller in Godot 4 — how do I do gravity, jumping, and slopes with CharacterBody3D?"
+    why: "Character controller with move_and_slide/velocity and slope/step handling; also exercises the Godot 4 no-args move_and_slide version contract."
+  - prompt: "My rigidbody physics 'explodes' whenever a heavy object rests on a light one, or when I move the object by setting its transform each frame."
+    why: "Mass-ratio instability + writing transform on a dynamic body — two determinism guardrails this skill owns."
+
+should_not_trigger:
+  - prompt: "My water surface shader is shimmering and the reflections flicker at grazing angles. Fix the material."
+    route_to: "gamedev-shaders"
+    why: "Visual/material jitter from a shader, not simulated physics; explicitly delegated in the NOT-when clause."
+  - prompt: "My enemies need to find a path around obstacles to the player using a navmesh and avoid each other."
+    route_to: "gamedev-pathing"
+    why: "Navigation/pathfinding decides where to go; physics only executes the move. Delegated to gamedev-pathing."
+  - prompt: "How do I set up the Godot editor, import my project, and configure export templates for Android?"
+    route_to: "godot"
+    why: "Engine setup/editor/export tooling belongs to the godot engine skill, not the cross-engine physics concept skill."
+  - prompt: "Sync player movement across clients with server-authoritative netcode and rollback so it stays consistent."
+    route_to: "gamedev-multiplayer"
+    why: "Netcode/rollback is multiplayer's domain; this skill only supplies the deterministic fixed-tick foundation."
+  - prompt: "Design the combat loop and difficulty curve for my roguelike."
+    route_to: "game-design"
+    why: "Gameplay/systems design, no physics simulation, colliders, or bodies involved."
+
+capability:
+  - scenario: "User's fast bullet tunnels through thin walls in Unity 6, and they ask why and how to fix it, including a code snippet."
+    must_include:
+      - "Explains tunneling: the body moves more than its own thickness in one physics tick so no overlap is tested (discrete collision)"
+      - "Recommends enabling Continuous Collision Detection via Rigidbody.collisionDetectionMode = Continuous (or ContinuousDynamic/ContinuousSpeculative) on the fast body"
+      - "Offers the raycast/shapecast-then-move alternative for very small, very fast projectiles as more reliable than CCD"
+      - "Places physics movement in FixedUpdate, not Update"
+      - "Uses linearVelocity (not the deprecated Rigidbody.velocity) if it sets velocity directly, per Unity 6"
+  - scenario: "User asks for a Godot 4 CharacterBody3D controller with gravity, jump, and slope handling."
+    must_include:
+      - "Uses CharacterBody3D with a velocity property and calls move_and_slide() with NO arguments (Godot 4), not the Godot 3 move_and_slide(velocity, ...) signature"
+      - "Runs the movement in _physics_process(delta), the fixed-tick callback"
+      - "Adds gravity as velocity += gravity * delta but does NOT multiply the whole velocity by delta before move_and_slide()"
+      - "Uses is_on_floor() for grounded/jump checks and mentions floor_max_angle and/or floor_snap_length for slopes/steps"
+  - scenario: "User cannot get a pickup trigger and a colliding wall filtered correctly and asks about layers/masks."
+    must_include:
+      - "States layer = what the object is, mask = what it scans for, as independent bit sets"
+      - "Gives the correct per-engine mechanism: Godot collision_layer/collision_mask (mask must include the other's layer), Unity Layer Collision Matrix + LayerMask, or Unreal object channels + Block/Overlap/Ignore responses"
+      - "Uses a trigger/Area (Godot Area, Unity IsTrigger, Unreal Overlap response) for the detect-but-don't-block pickup, and notes a Unity trigger needs a Rigidbody on one object"

@@ -1,0 +1,58 @@
+skill: level-design
+
+should_trigger:
+  - prompt: "I've built the first level of my platformer but playtesters say it's boring in the middle and then brutal at the end. How do I fix the pacing?"
+    why: "Direct pacing complaint on a built level — the intensity-graph / sawtooth + breather guidance. 'Boring in the middle, brutal at the end' is a flat-then-spike curve the skill diagnoses."
+  - prompt: "Players keep getting lost in my second map — they wander into dead ends and can't find the exit. What am I doing wrong?"
+    why: "Navigation/readability failure ('players get lost') — the skill's guidance layer: landmarks, light-led critical path, denying wrong turns visually. Lostness is a readability bug the skill owns."
+  - prompt: "How should I lay out the blockout for a new FPS arena before I start making art?"
+    why: "Explicit blockout request and the blockout->greybox->playtest->art pipeline plus metrics block and arena-shape design. Core Use-when trigger."
+  - prompt: "I want to teach the player how a new grappling-hook mechanic works through the level itself, without a tutorial popup. How do I structure that?"
+    why: "Teaching a mechanic through space = introduce->develop->twist->combine. The mechanic itself is game-design's, but structuring the SPACE that teaches it is level design."
+  - prompt: "Where should I put the secret rooms and the best loot in my dungeon so exploring feels rewarding but not frustrating?"
+    why: "Reward & secret placement + risk/reward + breadcrumbing. 'Rewarding but not frustrating' is exactly the reward-the-observation-not-the-pixel-hunt guidance."
+  - prompt: "My combat arena feels like everyone just hides behind one wall and pokes out. How do I make the fights more dynamic?"
+    why: "Arena-shape design: static peek-war means missing flanks/verticality and bad cover rhythm. The skill's encounter/arena section addresses this directly."
+  - prompt: "How do I guide players toward the objective using lighting and color instead of a giant waypoint marker?"
+    why: "Guidance without hand-holding via light/color/composition and the reserved interact-color language. Explicit 'instead of a waypoint' framing is the skill's core."
+
+should_not_trigger:
+  - prompt: "How high should the player be able to jump and how much should double-jump cost stamina? I'm balancing the movement system."
+    route_to: "game-design"
+    why: "This is the movement RULE/economy itself (systemic mechanic + stamina cost tuning), which game-design owns. Level design consumes the jump metric; it doesn't set or balance it."
+  - prompt: "Write the environmental storytelling and the audio-log script for the abandoned lab area to reveal the backstory."
+    route_to: "game-storytelling"
+    why: "Narrative content — what the space SAYS (backstory, audio-log writing). Level design places the beat; game-storytelling authors it."
+  - prompt: "How do I bake the nav mesh and set the agent radius so enemies path around my level geometry in Unity?"
+    route_to: "unity"
+    why: "Engine-specific level tooling (nav-mesh bake, agent radius in Unity). Explicitly out of scope; the engine skill implements the layout the design decided."
+  - prompt: "My Godot TileMap isn't showing collision on the ground layer and the player falls through. How do I fix it?"
+    route_to: "godot"
+    why: "Engine tooling bug — TileMap collision setup in Godot. This is implementation, not the craft of layout/pacing/readability."
+  - prompt: "How should I design the loot rarity tiers and drop-rate curves for the whole game's economy?"
+    route_to: "game-design"
+    why: "Loot-table / economy systems design across the whole game — a systemic concern game-design owns, not the placement of a reward within one level's space."
+  - prompt: "How do I optimize the frame rate in my Unreal level — the shadows and draw calls are tanking performance?"
+    route_to: "unreal"
+    why: "Engine performance/rendering optimization (draw calls, shadow cost) is engine tooling, owned by the unreal skill, not level-design craft."
+
+capability:
+  - scenario: "A designer says: 'My level's first playthrough is fun but by the middle testers get bored and then the final room feels unfairly hard. It's already fully textured and lit. How do I fix it?'"
+    must_include:
+      - "Diagnoses a flawed intensity curve (flat/boring middle, spike at the end) and prescribes a sawtooth: peaks with breathers/safe rooms between, difficulty trending up with checkpoint resets."
+      - "Recommends adding a breather/safe room after peaks so intensity drops and the next peak reads, and varying encounter length/spacing to kill the monotony."
+      - "Flags that the level is already textured/lit as a process problem — layout changes should be validated in blockout/greybox, and warns that art-first makes pacing fixes expensive."
+      - "Frames the final-room spike as a telegraph/difficulty-curve issue (signpost the ramp, reset at a checkpoint) rather than just lowering difficulty."
+  - scenario: "A developer asks: 'Players keep getting lost in my level and walk right past the exit. I don't want to add a waypoint arrow. How do I guide them?'"
+    must_include:
+      - "Treats lostness as a readability/guidance bug, not player error, and keeps guidance diegetic (no waypoint)."
+      - "Uses light to lead (players move toward light/contrast; light the critical path, objective, and exit; keep dead-ends dim)."
+      - "Establishes a dominant landmark per area for self-location and frames the exit with composition/leading lines."
+      - "Recommends a reserved, consistent accent color for interactables/path used nowhere decoratively, and consistent affordances."
+      - "Prescribes watching a fresh, uncoached playtester (and/or position/dwell heatmaps) to locate exactly where players hesitate or diverge, without answering 'where do I go?'."
+  - scenario: "A designer asks: 'I have a new mechanic — a portal gun — and I want the level to teach it without any text tutorial.'"
+    must_include:
+      - "Lays out the introduce -> develop -> twist -> combine progression (or equivalent teach-through-space structure)."
+      - "Introduces the mechanic somewhere it cannot hurt the player (safe, zero-risk first encounter) before any real stakes."
+      - "Builds up through low-stakes use, a recontextualizing twist, and a final combine/mastery test that layers earlier learning."
+      - "Notes that the space itself teaches (no tutorial popup) and that the mechanic's rules belong to game-design while the teaching layout is level design."

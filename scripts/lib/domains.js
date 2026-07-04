@@ -17,6 +17,7 @@ export const DOMAINS = [
   { title: 'AI — run it on', ids: ['replicate', 'runpod', 'modal', 'huggingface', 'ollama', 'together-fireworks', 'fal'] },
   { title: 'Languages', ids: ['typescript', 'python', 'java', 'csharp-dotnet', 'php', 'ruby', 'cpp', 'elixir', 'bash-scripting', 'sql', 'go'] },
   { title: 'Frameworks & app stacks', ids: ['fastapi', 'nextjs', 'react', 'react-native', 'vue-nuxt', 'angular', 'svelte', 'astro', 'solid-js', 'htmx', 'nodejs', 'nestjs', 'django', 'laravel', 'rails', 'spring-boot', 'phoenix', 'flutter', 'swift-ios', 'kotlin-android', 'compose-multiplatform', 'expo', 'tauri', 'electron', 'rust', 'wordpress', 'shopify', 'no-code-app', 'chrome-extension', 'api-design'] },
+  { title: 'Game development', ids: ['godot', 'unity', 'unreal', 'game-design', 'game-storytelling', 'level-design', 'gamedev-shaders', 'gamedev-multiplayer', 'gamedev-physics', 'gamedev-pathing', 'gamedev-shipping'] },
   { title: 'Databases & data layer', ids: ['postgresdb', 'mysql', 'mongodb', 'redis', 'supabase', 'neon', 'planetscale', 'sqlite-turso', 'prisma-orm', 'drizzle-orm', 'firebase', 'dynamodb', 'vector-db', 'clickhouse-analytics', 'duckdb', 'db-migrations', 'backups'] },
   { title: 'Ship & operate — platforms', ids: ['vercel', 'netlify', 'cloudflare', 'railway', 'render', 'fly-io', 'coolify', 'hetzner', 'digitalocean', 'aws-essentials', 'gcp-essentials'] },
   { title: 'Ship & operate — devops', ids: ['docker', 'github-actions', 'git-workflow', 'domains-dns', 'monitoring', 'email-deliverability', 'scaling', 'deployment'] },

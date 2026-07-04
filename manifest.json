@@ -1,7 +1,7 @@
 {
   "version": "0.1.34",
   "counts": {
-    "skills": 232
+    "skills": 243
   },
   "skills": [
     {
@@ -1738,6 +1738,156 @@
       "profiles": []
     },
     {
+      "id": "game-design",
+      "description": "Use when designing or repairing the design of a game — inventing mechanics and systems, shaping the core loop, layering moment-to-moment / session / meta loops, planning progression, economy, currencies and sinks/faucets, tuning difficulty curves and balance, killing dominant strategies, adding 'juice'/game feel as design intent, prototyping and playtesting, or controlling scope, and especially when the ask is 'why isn't my game fun'. Triggers: 'design the core loop', 'my game isn't fun / doesn't hook', 'balance the economy', 'the difficulty curve feels off', 'players found a dominant strategy', 'how do I scope this', 'reward / progression loop', 'diseñar la mecánica', 'el juego no engancha', 'com equilibro l'economia'. NOT writing engine code, scripts or shaders (route to godot/unity/unreal), NOT narrative, dialogue or story beats (route to game-storytelling), NOT level layout or encounter placement (route to level-design).",
+      "tags": [
+        "game-design",
+        "mechanics",
+        "core-loop",
+        "balancing",
+        "progression",
+        "playtesting",
+        "scope",
+        "fun"
+      ],
+      "recommends": [
+        "level-design",
+        "game-storytelling",
+        "godot",
+        "unity",
+        "unreal"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "game-storytelling",
+      "description": "Use when designing a game's STORY as an interactive system: premise, theme and narrative pillars; branching narrative and meaningful choice; dialogue trees with state and flags; quests, objectives and fail states; worldbuilding; environmental and systemic storytelling; and keeping story in harmony with play (avoiding ludonarrative dissonance). Engine-agnostic — it designs the narrative graph, variables and beats, then hands the wiring to the engine skill. Triggers: 'write my game's story/premise', 'branching narrative', 'dialogue system/tree', 'quest structure', 'worldbuilding', 'meaningful choices', 'illusion of choice', 'Ink/Yarn Spinner/Twine/articy narrative', 'story keeps fighting the gameplay'. NOT core mechanics, systems or balance (that's game-design); NOT spatial/level layout or encounter placement (that's level-design); NOT the actual dialogue-node code, save format or plugin wiring inside an engine (that's godot/unity/unreal).",
+      "tags": [
+        "game",
+        "narrative",
+        "story",
+        "dialogue",
+        "quest",
+        "branching",
+        "worldbuilding"
+      ],
+      "recommends": [
+        "game-design",
+        "level-design"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "gamedev-multiplayer",
+      "description": "Use when adding multiplayer, netcode, or replication to a game — syncing players/state across a network, online co-op or PvP, client-server vs peer-to-peer, server-authoritative design, client-side prediction + server reconciliation, snapshot interpolation, lag compensation, tick/netrate, and per-engine wiring: Godot 4.x MultiplayerSpawner/MultiplayerSynchronizer/@rpc/ENetMultiplayerPeer/set_multiplayer_authority, Unity Netcode for GameObjects (NetworkObject/NetworkBehaviour/NetworkVariable/[Rpc]/ServerRpc/ClientRpc), Unreal Actor replication (Replicated/ReplicatedUsing, Server/Client/NetMulticast RPCs, relevancy). Triggers: 'how do I sync players', 'client and server desync', 'players rubber-band or teleport', 'who has authority', 'laggy movement', 'cheater set their own health'. NOT single-player gameplay, AI, or input (route to engine skill godot/unity/unreal), and NOT matchmaking, dedicated-server hosting, or backend infra (route to deployment).",
+      "tags": [
+        "multiplayer",
+        "netcode",
+        "replication",
+        "networking",
+        "prediction",
+        "authority"
+      ],
+      "recommends": [
+        "godot",
+        "unity",
+        "unreal",
+        "gamedev-physics"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "gamedev-pathing",
+      "description": "Use when implementing AI navigation or pathfinding in a game - moving enemies/NPCs/units toward goals, \\\"how do enemies navigate the level\\\", A*/Dijkstra/JPS/HPA* search, choosing grid vs waypoint-graph vs navmesh, baking a navmesh and tuning agent radius/height, off-mesh/nav links, dynamic obstacles and re-baking, steering (seek/flee/arrive/pursue/wander/path-following/flocking), local avoidance (RVO/ORCA, crowds), and flow fields for many agents to one goal. Per-engine: Godot 4.x (NavigationServer2D/3D, NavigationRegion, NavigationAgent, get_next_path_position), Unity (NavMeshAgent + NavMeshObstacle + AI Navigation baking), Unreal (RecastNavMesh + AIController + Behavior Trees/EQS). Triggers: \\\"my enemies get stuck\\\", \\\"units clump together\\\", \\\"navmesh not updating\\\", \\\"agentes se atascan\\\". NOT physics/rigidbody collision response or character-controller tuning (gamedev-physics), and NOT high-level enemy AI behaviour design like aggro/states/difficulty (game-design).",
+      "tags": [
+        "pathfinding",
+        "navmesh",
+        "navigation",
+        "steering",
+        "a-star"
+      ],
+      "recommends": [
+        "godot",
+        "unity",
+        "unreal",
+        "gamedev-physics"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "gamedev-physics",
+      "description": "Use when working with a game engine's physics — rigid bodies, colliders, collision layers/masks, character controllers, joints, forces vs impulses, raycasts/shapecasts, or when physics is unstable. Triggers: \\\"my character falls through the floor\\\", \\\"bullet tunnels through walls at high speed\\\", \\\"rigidbody jitters / vibrates / explodes\\\", \\\"objects that should collide pass through each other\\\", \\\"which collision layer and mask do I set\\\", \\\"kinematic vs dynamic body\\\", \\\"move_and_slide / CharacterBody\\\", \\\"AddForce vs impulse vs setting velocity\\\", \\\"physics in FixedUpdate or _physics_process\\\", \\\"slope and step detection\\\", \\\"trigger / Area overlap not firing\\\", Godot RigidBody/StaticBody/CharacterBody/Area, Unity Rigidbody/Collider/CharacterController, Unreal Chaos/collision presets. NOT rendering, materials, or visual jitter from shaders (use gamedev-shaders); NOT AI navigation, pathfinding, or navmesh (use gamedev-pathing).",
+      "tags": [
+        "physics",
+        "collision",
+        "rigidbody",
+        "character-controller",
+        "colliders"
+      ],
+      "recommends": [
+        "godot",
+        "unity",
+        "unreal",
+        "gamedev-pathing"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "gamedev-shaders",
+      "description": "Use when writing shaders, materials, VFX, or post-processing for a game engine, or asking \\\"how do I make this effect\\\" — covers the vertex→fragment pipeline, UVs / normals / coordinate spaces, and per-engine authoring in Godot 4.x (shader_type spatial/canvas_item/particles, source_color, hint_screen_texture, ShaderMaterial), Unity 6 (Shader Graph vs HLSL, URP/HDRP, ShaderLab), and Unreal 5.x (Material graph, material domains, Custom HLSL node). Includes recipes for dissolve, rim/outline, toon/cel, water/flow, force field, hologram; full-screen post-process; and shader performance (overdraw, texture-sample cost, branching, mobile). Triggers: \\\"write a dissolve shader\\\", \\\"rim light\\\", \\\"toon shading\\\", \\\"screen-space effect\\\", \\\"my shader is slow on mobile\\\", \\\"cómo hago un shader de agua\\\". NOT gameplay or engine-API code (→ godot / unity / unreal) and NOT physics simulation, collision, or rigid bodies (→ gamedev-physics).",
+      "tags": [
+        "shaders",
+        "vfx",
+        "materials",
+        "post-processing",
+        "shadergraph"
+      ],
+      "recommends": [
+        "godot",
+        "unity",
+        "unreal",
+        "gamedev-shipping"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "gamedev-shipping",
+      "description": "Use when exporting, building, packaging, or publishing a game — per engine (Godot export templates, Unity Build Profiles, Unreal Shipping vs Development) and per platform: desktop (Windows/macOS/Linux; macOS codesign + notarytool notarization), web (the COOP same-origin + COEP require-corp headers threaded SharedArrayBuffer WebAssembly builds need, and that Godot's C#/.NET edition can't export to web), mobile (Android JDK 17 build template, AAB vs APK, release keystore; iOS provisioning). Also store prep (icons/splash, metadata, age ratings, AAB for Play, Mac App Store, Steamworks/SteamPipe, itch.io butler), headless-export CI/CD, build/version numbers, and ship-time size/startup optimization. Triggers: 'export my game', 'build for Steam', 'ship to web/mobile', 'publish to the Play Store', 'notarize my Mac build', 'itch.io upload', 'SharedArrayBuffer is not defined'. NOT for writing gameplay/runtime code (that's the engine skill — godot/unity/unreal) or hosting a normal web app/API/container (→ deployment).",
+      "tags": [
+        "export",
+        "build",
+        "release",
+        "packaging",
+        "store",
+        "steam",
+        "itch",
+        "notarization",
+        "webassembly",
+        "aab"
+      ],
+      "recommends": [
+        "godot",
+        "unity",
+        "unreal",
+        "deployment"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
       "id": "gcp-essentials",
       "description": "Use when running a small product on the core of Google Cloud with the gcloud CLI: creating a project, deploying a container to Cloud Run, standing up a Cloud Storage bucket, a managed Cloud SQL Postgres/MySQL, and wiring them together with least-privilege IAM. Triggers: 'deploy to Cloud Run', 'gcloud run deploy', 'set up a GCP project', 'crear bucket en GCP', 'desplegar a Cloud Run', 'service account sin claves JSON', 'why is my Cloud Run running as the default service account', 'connect Cloud Run to Cloud SQL', 'turn off the bucket public access'. NOT AWS (that is aws-essentials).",
       "tags": [
@@ -1844,6 +1994,29 @@
         "deployment"
       ],
       "profiles": []
+    },
+    {
+      "id": "godot",
+      "description": "Use when writing, reviewing, or debugging Godot 4.x games in GDScript (typed) or C# — nodes/scenes/custom Resources, autoload singletons and an EventBus, signals via Callable, @onready/@export/@tool, static typing, CharacterBody2D/3D + velocity + move_and_slide(), _process vs _physics_process, .tscn/.tres text formats, and headless GUT/gdUnit4 tests. Enforces Godot 4 APIs and rejects Godot 3 leftovers: yield→await, onready→@onready, .instance()→.instantiate(), KinematicBody→CharacterBody, Spatial→Node3D, string connect(\\\"sig\\\",obj,\\\"m\\\")→Callable. Triggers: 'write a Godot player controller', 'my move_and_slide does nothing', 'port this Godot 3 script to 4', 'connect a signal in Godot', 'GDScript won't type-check', 'CharacterBody2D won't move', 'add an autoload', 'escribe un script de Godot', 'por qué no se mueve mi personaje'. NOT Unity MonoBehaviour or Unreal (route to unity/unreal); NOT pure C++/CMake tooling unrelated to GDExtension (that is cpp); NOT shader code in .gdshader (that is gamedev-shaders).",
+      "tags": [
+        "godot",
+        "gdscript",
+        "game-dev",
+        "csharp",
+        "godot4"
+      ],
+      "recommends": [
+        "gamedev-shaders",
+        "gamedev-multiplayer",
+        "gamedev-physics",
+        "gamedev-pathing",
+        "gamedev-shipping",
+        "game-design",
+        "cpp"
+      ],
+      "profiles": [
+        "full"
+      ]
     },
     {
       "id": "google-workspace",
@@ -2288,6 +2461,26 @@
         "gdpr-privacy"
       ],
       "profiles": []
+    },
+    {
+      "id": "level-design",
+      "description": "Use when designing a game level, map, arena, or encounter — laying out a blockout/greybox, fixing pacing that drags or spikes, guiding players without hand-holding, placing secrets and rewards, or diagnosing a level that plays as boring, confusing, or where players get lost or stuck. Engine-agnostic craft: the blockout->greybox->playtest->art pipeline, sightlines and landmarks, tension/release rhythm, the introduce->develop->twist->combine encounter progression, readability via light/color/composition, and traversal heatmaps. Triggers: 'design this level', 'my level is boring/confusing', 'players keep getting lost', 'how do I pace this', 'blockout', 'greybox', 'encounter design', 'where do I put the secret'. NOT systemic mechanics or economy tuning (that's game-design), NOT narrative or story beats (that's game-storytelling), and NOT engine-specific level tooling — nav meshes, occlusion, tilemap editors, lightmap baking (that's the godot/unity/unreal skill).",
+      "tags": [
+        "level-design",
+        "blockout",
+        "pacing",
+        "encounter",
+        "playtest"
+      ],
+      "recommends": [
+        "game-design",
+        "godot",
+        "unity",
+        "unreal"
+      ],
+      "profiles": [
+        "full"
+      ]
     },
     {
       "id": "linkedin-api",
@@ -4473,6 +4666,52 @@
         "dashboard"
       ],
       "profiles": []
+    },
+    {
+      "id": "unity",
+      "description": "Use when writing, reviewing, or structuring Unity game code in C# for current Unity 6 LTS (6000.x) — GameObjects and Transform hierarchy, MonoBehaviour lifecycle, prefabs and prefab variants, ScriptableObjects for data, scenes and additive loading, the new Input System, coroutines vs async/await/Awaitable, Addressables, and build/player settings for 2D and 3D. Triggers: 'my Unity script', 'Awake vs Start', 'why is my physics jittery', MonoBehaviour .cs files, 'set up the new Input System', 'ScriptableObject config', 'load a scene additively', 'Instantiate a prefab', 'convert Input.GetAxis to the new system', 'build for Android/WebGL', 'por qué no se llama mi Start', 'com carrego una escena en additiu'. NOT Godot/GDScript (that is godot); NOT Unreal/Blueprint/C++ engine work (that is unreal); NOT the netcode wire protocol itself (that is gamedev-multiplayer).",
+      "tags": [
+        "unity",
+        "csharp",
+        "game-dev",
+        "monobehaviour",
+        "input-system"
+      ],
+      "recommends": [
+        "gamedev-multiplayer",
+        "gamedev-physics",
+        "gamedev-shaders",
+        "gamedev-pathing",
+        "gamedev-shipping",
+        "godot",
+        "unreal"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "unreal",
+      "description": "Use when building, scripting, or debugging a game in Unreal Engine 5 (UE5) with Blueprint and/or C++ — gameplay framework (Actor/Pawn/Character/GameMode/PlayerController), Actor lifecycle and tick, UPROPERTY/UFUNCTION/UCLASS reflection and garbage collection, Enhanced Input, dynamic multicast delegates, UMG widgets, Paper2D sprites/flipbooks, and Blueprint↔C++ parity (exposing C++ to Blueprint, calling Blueprint from C++). Triggers: \\\"UE5\\\", \\\"Unreal\\\", \\\"Blueprint\\\", \\\"make a Character in C++\\\", \\\"expose this to Blueprint\\\", \\\"BlueprintCallable\\\", \\\"why is my UObject garbage collected\\\", \\\"Enhanced Input mapping context\\\", \\\"UMG widget\\\", \\\"Paper2D flipbook\\\", \\\".uproject\\\", \\\"GameMode vs GameState\\\". NOT for Godot (→ godot), NOT for Unity/C#/MonoBehaviour (→ unity), NOT for language-only C++ memory/RAII questions with no Unreal types (→ cpp).",
+      "tags": [
+        "unreal",
+        "ue5",
+        "blueprint",
+        "unreal-engine",
+        "gamedev"
+      ],
+      "recommends": [
+        "cpp",
+        "gamedev-shipping",
+        "gamedev-multiplayer",
+        "game-design",
+        "gamedev-physics",
+        "godot",
+        "unity"
+      ],
+      "profiles": [
+        "full"
+      ]
     },
     {
       "id": "vector-db",

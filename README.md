@@ -12,7 +12,7 @@
   ██    ██   ███████     ███████ 
 ```
 
-# `rsc` — 231 agent skills, one CLI, zero bloat
+# `rsc` — 242 agent skills, one CLI, zero bloat
 
 **A self-recommending skill catalog for 17 coding assistants** — Claude Code,
 Codex, GitHub Copilot, Cursor, Gemini, Windsurf, Cline, Antigravity, Zed and more.
@@ -243,7 +243,7 @@ just asks in plain language.
 
 ## The catalog
 
-232 skills, grouped by what you're trying to do. Click any skill to read its
+243 skills, grouped by what you're trying to do. Click any skill to read its
 `SKILL.md`. It fires on its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -325,6 +325,12 @@ Each with a `02-DOCS` feedback loop that learns from your own results. `remotion
 ### 🏗️ Frameworks & app stacks
 
 [fastapi](skills/fastapi/) · [nextjs](skills/nextjs/) · [react](skills/react/) · [react-native](skills/react-native/) · [vue-nuxt](skills/vue-nuxt/) · [angular](skills/angular/) · [svelte](skills/svelte/) · [astro](skills/astro/) · [solid-js](skills/solid-js/) · [htmx](skills/htmx/) · [nodejs](skills/nodejs/) · [nestjs](skills/nestjs/) · [django](skills/django/) · [laravel](skills/laravel/) · [rails](skills/rails/) · [spring-boot](skills/spring-boot/) · [phoenix](skills/phoenix/) · [flutter](skills/flutter/) · [swift-ios](skills/swift-ios/) · [kotlin-android](skills/kotlin-android/) · [compose-multiplatform](skills/compose-multiplatform/) · [expo](skills/expo/) · [tauri](skills/tauri/) · [electron](skills/electron/) · [rust](skills/rust/) · [wordpress](skills/wordpress/) · [shopify](skills/shopify/) · [no-code-app](skills/no-code-app/) · [chrome-extension](skills/chrome-extension/) · [api-design](skills/api-design/)
+
+### 🎮 Game development
+
+Three engines + engine-agnostic disciplines. Every engine skill pins the current version and bans deprecated APIs, so the agent stops emitting stale Godot-3 / legacy-Unity code.
+
+[godot](skills/godot/) · [unity](skills/unity/) · [unreal](skills/unreal/) · [game-design](skills/game-design/) · [game-storytelling](skills/game-storytelling/) · [level-design](skills/level-design/) · [gamedev-shaders](skills/gamedev-shaders/) · [gamedev-multiplayer](skills/gamedev-multiplayer/) · [gamedev-physics](skills/gamedev-physics/) · [gamedev-pathing](skills/gamedev-pathing/) · [gamedev-shipping](skills/gamedev-shipping/)
 
 ### 🗄️ Databases & data layer
 

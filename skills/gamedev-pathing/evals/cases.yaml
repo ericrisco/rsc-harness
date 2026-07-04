@@ -1,0 +1,49 @@
+skill: gamedev-pathing
+
+should_trigger:
+  - prompt: "My enemies in Godot 4 keep getting stuck on walls and never reach the player. How do I get them to actually path around the level?"
+    why: "Core trigger: AI navigation in Godot 4.x. Should produce a NavigationAgent3D loop with target_position + get_next_path_position, and flag agent-radius baking as the stuck-on-walls cause."
+  - prompt: "I've got 400 zombies all chasing the player in my Unity horde game and the framerate tanks because each one runs its own pathfinding. What's the right approach?"
+    why: "Many-agents-to-one-goal is the flow-field trigger; should recommend a Dijkstra-from-goal flow field instead of per-agent A*, plus local avoidance."
+  - prompt: "In Unreal my AI won't walk around a crate I spawn at runtime — it just walks straight through where it should be. The navmesh doesn't seem to update."
+    why: "Dynamic-obstacle / re-bake trigger; should point to RecastNavMesh Runtime Generation = Dynamic (or a NavModifier), Can Ever Affect Navigation, not a static bake."
+  - prompt: "What's the difference between using a grid, a waypoint graph, and a navmesh for pathfinding, and when should I pick each?"
+    why: "Representation trade-offs are a named core section; should give the grid/waypoint/navmesh table with the 'navmesh for free-roaming characters' rule."
+  - prompt: "My squad of units all pile onto the exact same spot and jitter against each other when they reach the destination. How do I make them spread out and stop dancing?"
+    why: "Local avoidance / crowd trigger (RVO/ORCA reciprocal avoidance); should distinguish avoidance from collision and enable the engine's crowd/avoidance system, plus arrive-behaviour to stop jitter."
+  - prompt: "Explain A* — how the heuristic works, what admissible means, and when I'd use JPS or a hierarchical version instead."
+    why: "Search-algorithm core section; should cover f=g+h, admissibility/consistency, octile vs Euclidean h, JPS for uniform grids, HPA* for huge maps."
+  - prompt: "Els meus NPCs no saben baixar d'una plataforma a una altra al navmesh, com els connecto?"
+    why: "Catalan off-mesh-link trigger; should recommend an explicit directional nav link (NavigationLink / NavMeshLink / NavLinkProxy)."
+
+should_not_trigger:
+  - prompt: "My character controller sinks into the floor and bounces off walls weirdly — the rigidbody collision response feels wrong."
+    route_to: "gamedev-physics"
+    why: "Collision response / rigidbody / character-controller tuning is physics, not navigation; steering only sets intended velocity, physics resolves the contact."
+  - prompt: "Design my enemy AI: when should the boss enrage, how does aggro/threat work, and how do difficulty tiers change its behaviour?"
+    route_to: "game-design"
+    why: "High-level behaviour/encounter/difficulty design is what the AI decides, not how it moves through space — belongs to game-design."
+  - prompt: "Write a GDScript state machine for my player's idle/run/jump/attack animation states in Godot."
+    route_to: "godot"
+    why: "General GDScript / animation state machine is engine-language work, not the navigation subsystem."
+  - prompt: "Set up a dedicated server so multiple players' positions stay in sync with low latency."
+    route_to: "gamedev-multiplayer"
+    why: "Netcode / replication / lag compensation is multiplayer networking, unrelated to pathfinding."
+  - prompt: "How do I bake lighting and set up baked global illumination for my Unity level?"
+    route_to: "unity"
+    why: "'Baking' here is lightmaps, not a navmesh; near-miss on the word 'bake' that must route to the engine skill, not navigation."
+
+capability:
+  - scenario: "In Godot 4.x, make a CharacterBody3D enemy chase the player across a baked navmesh, pathing around static geometry and avoiding other enemies, without getting stuck in doorways."
+    must_include:
+      - "Uses a NavigationAgent3D with the `target_position` property (NOT the removed set_target_location) to set the goal"
+      - "Calls `get_next_path_position()` each physics frame (NOT the Godot-3 `get_next_location()`) and moves toward it"
+      - "Enables avoidance (`avoidance_enabled = true`), feeds `set_velocity(desired)`, and reads the safe velocity from the `velocity_computed` signal before move_and_slide()"
+      - "Separates global pathfinding (occasional, on new goal) from per-frame steering/movement — does not re-run a full search every frame"
+      - "Names agent radius in the navmesh bake as the fix for getting stuck in doorways / clipping walls"
+      - "Notes that local avoidance (RVO) is distinct from physics collision response"
+  - scenario: "Advise on moving 500+ units to a single rally point in an RTS efficiently."
+    must_include:
+      - "Recommends a flow field instead of per-agent A*"
+      - "Describes building it via Dijkstra/BFS from the goal to make an integration/cost field, then a per-cell direction vector agents sample in O(1)"
+      - "Layers local avoidance / separation on top so units don't stack on the goal cell"

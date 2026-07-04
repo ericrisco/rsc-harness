@@ -16,6 +16,10 @@ const OUTCOMES = {
   'building-agents': 'Your own AI agent',
   'secure-coding': 'Make it secure',
   deployment: 'Put it online',
+  godot: 'Your game (Godot)',
+  unity: 'Your game (Unity)',
+  unreal: 'Your game (Unreal)',
+  'game-design': "Design a game that's fun",
 };
 
 export function hasOutcome(id) {

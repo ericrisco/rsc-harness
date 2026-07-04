@@ -1,0 +1,45 @@
+skill: gamedev-shaders
+
+should_trigger:
+  - prompt: "Write me a dissolve shader in Godot 4 that burns an object away from bottom to top with a glowing orange edge."
+    why: "Dissolve is a named recipe and the core use case; Godot 4 .gdshader authoring is owned here."
+  - prompt: "How do I make a rim light / fresnel glow on a 3D character in Unity URP?"
+    why: "Rim/fresnel is a named recipe; 'how do I make X effect' is an explicit trigger; Unity shader authoring is per-engine mapped here."
+  - prompt: "My translucent particle shader tanks the framerate on mobile. How do I fix the overdraw?"
+    why: "Shader performance — overdraw, transparency, mobile — is a dedicated section; symptom-only trigger routes here, not to a generic profiler."
+  - prompt: "Set up a full-screen post-process effect in Unreal that reads scene depth and draws outlines."
+    why: "Post-processing / full-screen effects per engine is a core section; Unreal Post Process material + SceneTexture is covered."
+  - prompt: "Cómo hago un shader de agua con refracción y espuma en los bordes."
+    why: "Spanish water/flow recipe request; the description carries the Spanish 'cómo hago un shader de agua'."
+  - prompt: "Convert this toon/cel shading effect from my Godot project to a Unity Shader Graph."
+    why: "Toon/cel is a named recipe and cross-engine conversion is an explicit use case; the skill carries a Godot↔Unity↔Unreal map."
+  - prompt: "What coordinate space are NORMAL and VIEW in inside a Godot spatial fragment shader, and why does my world-space fresnel look wrong?"
+    why: "Coordinate-spaces / fundamentals plus a Godot-specific gotcha (view-space normals) both live in this skill."
+
+should_not_trigger:
+  - prompt: "Write the GDScript that spawns enemies on a timer and tracks the player's score."
+    route_to: "godot"
+    why: "Gameplay logic and engine APIs belong to the engine skill; this skill only owns the shading, not the script around it."
+  - prompt: "My rigid body tunnels through thin walls at high speed — how do I fix the collision detection?"
+    route_to: "gamedev-physics"
+    why: "Physics simulation and collision (continuous collision detection) is gamedev-physics; a shader has nothing to do with it."
+  - prompt: "My build has 40k shader variants and takes an hour to compile — how do I strip variants for the console ship?"
+    route_to: "gamedev-shipping"
+    why: "Shader-variant stripping in the build/ship pipeline is gamedev-shipping; this skill keeps per-shader authoring performance."
+  - prompt: "Optimize this SQL query that's doing a full table scan on every page load."
+    route_to: "sql"
+    why: "'Shader is slow' overlaps the word 'optimize' but this is database work with zero GPU/material surface."
+  - prompt: "Set up the URP asset, camera stack, and renderer features for my Unity project's rendering settings."
+    route_to: "unity"
+    why: "Project-level render pipeline configuration is engine setup (unity), not writing a shader/material; this skill starts once you're authoring the shader itself."
+
+capability:
+  - scenario: "Author a Godot 4.x spatial dissolve shader that burns an object away with a glowing edge, and expose it to be animated from code."
+    must_include:
+      - "Starts with 'shader_type spatial;' (a valid Godot 4 shader type token)"
+      - "Samples a noise texture and uses discard (or ALPHA_SCISSOR) below an animatable threshold uniform to cut the pixels"
+      - "Adds an emissive edge band via smoothstep around the threshold so the burn edge glows (uses EMISSION)"
+      - "Declares color uniforms with the ': source_color' hint (NOT the removed Godot 3 'hint_color')"
+      - "Does NOT use the removed SCREEN_TEXTURE/DEPTH_TEXTURE built-ins; if a screen/depth read is needed it declares a 'hint_screen_texture'/'hint_depth_texture' uniform"
+      - "Explains driving the threshold uniform from code via set_shader_parameter or an AnimationPlayer track (not hard-coded)"
+      - "Notes that discard disables early-Z / costs overdraw, or otherwise addresses the performance implication"

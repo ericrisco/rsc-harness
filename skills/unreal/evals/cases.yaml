@@ -1,0 +1,45 @@
+skill: unreal
+
+should_trigger:
+  - prompt: "In my UE5 project, write a Character in C++ that moves and jumps with Enhanced Input, then let designers subclass it in Blueprint."
+    why: "Core hybrid workflow: C++ ACharacter base + Enhanced Input + Blueprint subclass — the skill's central use case."
+  - prompt: "How do I expose this C++ function and a float variable to Blueprint so a designer can call and tweak them?"
+    why: "Blueprint↔C++ parity / exposure via BlueprintCallable + UPROPERTY(EditAnywhere, BlueprintReadWrite)."
+  - prompt: "My UObject keeps getting garbage collected and the pointer crashes at random — I'm holding it in a plain member. What's wrong?"
+    why: "Symptom-only trigger for the GC/UPROPERTY(TObjectPtr) rule — the #1 Unreal C++ gotcha this skill owns."
+  - prompt: "What's the difference between GameMode, GameState, PlayerController and PlayerState, and where do I put the player's score?"
+    why: "Gameplay Framework responsibilities — the reference table routes score to PlayerState and match rules to server-only GameMode."
+  - prompt: "Set up a Paper2D player with idle/run/jump flipbook animations that swap on movement."
+    why: "Paper2D (APaperCharacter + UPaperFlipbookComponent) is explicitly covered for 2D."
+  - prompt: "I want a UMG health bar widget in C++ bound to a progress bar in the WBP and shown on screen."
+    why: "UMG basics: UUserWidget + meta=(BindWidget) + CreateWidget/AddToViewport."
+  - prompt: "Declare an event other Blueprints and C++ can bind to when the player dies, and broadcast it from C++."
+    why: "Dynamic multicast delegate + BlueprintAssignable + Broadcast/AddDynamic is owned here."
+
+should_not_trigger:
+  - prompt: "In Godot 4, how do I structure nodes and connect signals for my player scene?"
+    route_to: "godot"
+    why: "Godot's node/signal model is a different engine; unreal must not answer engine-specific Godot questions."
+  - prompt: "My Unity MonoBehaviour Start() runs before my other script's Awake() — how do I fix the execution order?"
+    route_to: "unity"
+    why: "Unity/C#/MonoBehaviour lifecycle belongs to the unity skill, not Unreal's Actor lifecycle."
+  - prompt: "Explain unique_ptr vs shared_ptr ownership and how to avoid a use-after-free in my plain C++ library."
+    route_to: "cpp"
+    why: "Pure C++ smart-pointer/RAII with no Unreal types goes to cpp; unreal owns only the UObject/GC model layered on top."
+  - prompt: "Design the core game loop and progression economy for my roguelike before I build anything."
+    route_to: "game-design"
+    why: "Mechanics/loop/economy design is engine-agnostic and precedes implementation — game-design, not unreal."
+  - prompt: "Tune Unreal's cook settings, pak/IoStore, and set up CI to produce signed console builds."
+    route_to: "gamedev-shipping"
+    why: "Deep cooking/packaging/certification pipeline is delegated to gamedev-shipping; unreal only covers the build-config overview."
+
+capability:
+  - scenario: "Author a UE5 first-person Character in C++ that walks and jumps via Enhanced Input, exposes a movement-speed tunable, fires a Blueprint-bindable OnDied event, and is meant to be subclassed in Blueprint."
+    must_include:
+      - "Uses Enhanced Input (UInputAction + UInputMappingContext + UEnhancedInputComponent->BindAction, context added through UEnhancedInputLocalPlayerSubsystem) — NOT legacy Action/Axis mappings or InputComponent->BindAxis"
+      - "Class derives from ACharacter (or APawn) and uses GENERATED_BODY(), not GENERATED_UCLASS_BODY()"
+      - "Components/refs kept alive via UPROPERTY() using TObjectPtr<T> rather than a raw UObject*/AActor* member"
+      - "Adds the input mapping context in BeginPlay (or on possession), not in the constructor, and does no gameplay logic in the constructor"
+      - "Exposes the speed tunable with UPROPERTY(EditAnywhere, BlueprintReadWrite) and marks it UCLASS(Blueprintable) for the Blueprint subclass"
+      - "Declares the death event as a DECLARE_DYNAMIC_MULTICAST_DELEGATE... with a UPROPERTY(BlueprintAssignable) member and Broadcast()s it (dynamic, not plain multicast)"
+      - "Lists the EnhancedInput module dependency in the .Build.cs"
