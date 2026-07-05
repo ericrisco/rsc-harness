@@ -1,0 +1,51 @@
+skill: game-storytelling
+
+should_trigger:
+  - prompt: "I'm making a narrative RPG and I want the whole story to branch based on player choices, but I'm terrified it'll balloon into thousands of scenes I can't write. How should I structure it?"
+    why: "Branching narrative + the combinatorial-explosion fear — the skill's core containment guidance (foldback, gates, reconvergence, state-over-structure). Structure of the narrative graph, not engine code."
+  - prompt: "Help me write the premise, theme, and pillars for my game before I start on any of the actual story content."
+    why: "Premise/theme/narrative-pillars foundation — the skill's 'do this first' section. Explicitly narrative-design groundwork, not mechanics or balance."
+  - prompt: "My dialogue in Ink feels like it has a hundred fake choices that all lead to the same line. How do I make the choices actually matter?"
+    why: "Meaningful choice vs. illusion of choice, in a portable dialogue format (Ink). The skill owns choice design and state; it is not Ink-engine wiring."
+  - prompt: "Players say my game's story doesn't match the gameplay — the character is supposed to be a pacifist healer but the whole loop is shooting enemies. What do I do?"
+    why: "Ludonarrative dissonance — the verb/reward audit and reconciliation is a flagship section. Non-obvious phrasing but squarely narrative-vs-mechanics harmony."
+  - prompt: "I need to design the quest structure for my game — how objectives are tracked, what happens on failure, and how side quests unlock. Can you help lay that out?"
+    why: "Quests & objectives: states, tracking, fail states, dependencies. The skill owns the quest state machine as a design artifact."
+  - prompt: "How can I tell the backstory of this abandoned station through the environment instead of dumping it all in audio logs?"
+    why: "Environmental / show-don't-tell storytelling — the skill's environmental section, preferring diegetic delivery over text-dumps."
+  - prompt: "Which tool should I use to author a branching dialogue tree — Yarn Spinner, Twine, or articy? And how do I keep it localization-ready?"
+    why: "Dialogue-tool selection (tools as pointers) plus localization-readiness — both explicit skill sections. Choosing/authoring the narrative, not wiring the runner into an engine."
+
+should_not_trigger:
+  - prompt: "Design the combat system for my game — how melee combos, stamina, and damage scaling should work and feel balanced."
+    route_to: "game-design"
+    why: "Core mechanics, systems, and balance — what the player DOES. The skill explicitly defers verbs/systems/economy/balance to game-design."
+  - prompt: "Lay out the blockout for this level — where the cover, sightlines, enemy spawns, and the sniper perch go."
+    route_to: "level-design"
+    why: "Spatial layout and encounter placement. The skill defers the geometry of a space (even story-bearing space) to level-design."
+  - prompt: "Wire my Ink story file into Unity — set up the InkRunner, bind the choices to UI buttons, and serialize the story state into my save system."
+    route_to: "unity"
+    why: "Engine integration: dialogue runner, UI binding, save/serialize. The skill authors portable narrative and hands wiring to the engine skill (here, unity)."
+  - prompt: "Write me a short story / novella set in my game's universe — just prose fiction, no choices or branching."
+    route_to: "none"
+    why: "Linear prose fiction with no interactive/branching structure is general creative writing, not interactive narrative design; the skill scopes to story-as-system."
+  - prompt: "Write the Steam store description and the launch trailer voiceover script to market my game."
+    route_to: "marketing"
+    why: "External-facing marketing copy, not in-game narrative. The skill defers store/trailer copy to marketing."
+
+capability:
+  - scenario: "A dev says: 'My branching RPG has about 12 major player choices and I want them all to matter, but I can't author 4000 scenes. And several of my choices feel fake — they lead to the same outcome.' Design the narrative structure."
+    must_include:
+      - "Names the combinatorial-explosion problem explicitly (roughly 2^N futures for N independent binary choices) as why 12 free choices is unauthorable"
+      - "Recommends a foldback / string-of-pearls topology with reconvergence (bottlenecks) so branches rejoin on load-bearing beats"
+      - "Uses gates and state-over-structure: model choices as named flags/variables and have one scene read the flag and swap lines, instead of duplicating scenes"
+      - "Distinguishes meaningful choice (a flag some later node reads back to the player) from illusion of choice, and says you may fake the outcome but never sell fake stakes as consequential"
+      - "Keeps a small budget of global/persistent choices (collapsed into summary variables for endings) while most choices stay local/weave"
+      - "Stays engine-agnostic: produces the narrative graph and a state/flag model, and hands runner/save wiring to the engine skill rather than writing engine code"
+  - scenario: "A dev says: 'Reviewers complain the story doesn't fit the game. My protagonist is written as a compassionate doctor, but the core loop is mowing down hundreds of soldiers.' Diagnose and fix."
+    must_include:
+      - "Identifies this as ludonarrative dissonance: the mechanics/verbs contradict the story the game tells"
+      - "Runs a verb audit (the dominant verb is 'kill', which contradicts 'compassionate doctor') and a reward audit (what the game rewards is the loudest narrative voice)"
+      - "Prefers fixing the cheaper piece — usually re-framing the narrative to match the mechanic — while flagging to game-design when only a mechanic change can resolve it"
+      - "Addresses reconciling failure/death fiction (respawns/checkpoints) with the story rather than leaving it unexplained"
+      - "Frames story as a system in service of play, not a layer of words bolted on to excuse the mechanics"

@@ -1,0 +1,55 @@
+skill: gamedev-shipping
+
+should_trigger:
+  - prompt: "My Godot game runs in the editor but the exported web build just shows a black screen and the console says 'SharedArrayBuffer is not defined'. How do I host it?"
+    why: "The signature web-ship failure: threaded WebAssembly needs COOP same-origin + COEP require-corp headers set at the host — core web-export-headers scope."
+  - prompt: "How do I export and package my Unity 6 project as an AAB for the Google Play Store and sign it?"
+    why: "Per-engine (Unity Build Profiles) + per-platform Android AAB vs APK + release keystore signing — squarely this skill's packaging boundary."
+  - prompt: "I built my macOS game but users get a 'can't be opened because Apple cannot check it for malware' warning. What do I need to do before distributing it?"
+    why: "macOS Gatekeeper rejection → the codesign (Hardened Runtime) + notarytool + stapler chain this skill owns."
+  - prompt: "Set up a GitHub Actions workflow that headless-exports my Godot game for web and Linux on every tag and uploads the artifacts."
+    why: "Headless-export CI/CD with matching export templates and version numbering — the CI section and stores-and-ci reference."
+  - prompt: "I'm ready to publish to Steam. How do I upload my build with SteamPipe and push it to a beta branch first?"
+    why: "Steamworks/SteamPipe VDF upload via steamcmd and branch promotion — store-prep scope."
+  - prompt: "What's the difference between Development and Shipping when packaging my Unreal game, and which do I use for release?"
+    why: "Unreal build-configuration choice for release packaging — per-engine export/build scope (Shipping vs Development)."
+  - prompt: "Can I export my Godot C# project to the web? It keeps failing."
+    why: "The known limitation: Godot's C#/.NET edition has no web export in 4.x — this skill must state that and route the user (GDScript or non-web target)."
+  - prompt: "Push my HTML5 and Windows builds to itch.io with butler and bump the version."
+    why: "itch.io butler channels + userversion, plus the SharedArrayBuffer support checkbox for web — store-prep scope."
+
+should_not_trigger:
+  - prompt: "Add double-jump and coyote-time to my player controller in Godot."
+    route_to: "godot"
+    why: "Gameplay/runtime code is the engine skill's job; this skill only packages and ships what the engine produces."
+  - prompt: "Write a Dockerfile and Coolify config to deploy my Next.js web app with a Postgres database."
+    route_to: "deployment"
+    why: "Hosting a normal containerized web app/API is deployment's domain; a game ship is static WASM files or a native binary, not a container."
+  - prompt: "My multiplayer game has rubber-banding; how do I add client-side prediction and server reconciliation?"
+    route_to: "gamedev-multiplayer"
+    why: "Netcode runtime behavior, not build/release — belongs to the multiplayer skill."
+  - prompt: "Help me design the progression curve and reward economy for my roguelike."
+    route_to: "game-design"
+    why: "Game feel/economy design is not an export or packaging task."
+  - prompt: "Optimize this fragment shader that's tanking my frame rate on mobile."
+    route_to: "gamedev-shaders"
+    why: "Runtime rendering performance is a shader-authoring concern, distinct from ship-time build-size/startup optimization."
+
+capability:
+  - scenario: "User's threaded Godot 4 web export fails with 'SharedArrayBuffer is not defined' and they plan to host it on Netlify (and later ask about GitHub Pages)."
+    must_include:
+      - "Explains threaded WASM needs cross-origin isolation via BOTH Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy: require-corp response headers"
+      - "Gives the Netlify _headers (or equivalent) config setting both headers, and notes itch.io's SharedArrayBuffer checkbox as an alternative"
+      - "Notes GitHub Pages can't set headers, so use a single-threaded export or the coi-serviceworker shim"
+      - "Mentions self.crossOriginIsolated === true as the verification check"
+      - "Warns that Godot's C#/.NET edition has no web export in 4.x (only GDScript/standard)"
+  - scenario: "User wants to ship a signed macOS desktop build for distribution outside the App Store."
+    must_include:
+      - "codesign with --options runtime (Hardened Runtime is mandatory for notarization) using a Developer ID Application identity"
+      - "Submit with xcrun notarytool submit --wait (not the deprecated altool)"
+      - "Staple the ticket with xcrun stapler staple so it verifies offline, and that skipping notarization means Gatekeeper blocks it"
+  - scenario: "User asks how to produce and sign an Android release for Google Play from Unity."
+    must_include:
+      - "Requires JDK 17 and building an AAB (not APK) for Google Play"
+      - "Generate/keep a release keystore (keytool) and never commit it; use Play App Signing"
+      - "versionCode must strictly increase on every upload"

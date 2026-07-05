@@ -1,0 +1,44 @@
+skill: gamedev-multiplayer
+
+should_trigger:
+  - prompt: "I have a single-player platformer in Godot 4 and I want to add online co-op. How do I sync the two players' positions and let one host the game?"
+    why: "Adding multiplayer/sync to a game is the core trigger; should produce ENetMultiplayerPeer host/join + MultiplayerSynchronizer/authority guidance."
+  - prompt: "In my Unity shooter the client sets its own health with a NetworkVariable and players can cheat. How should authority actually work?"
+    why: "Server-authoritative / never-trust-the-client + NetworkVariable write permissions; center of gravity of this skill."
+  - prompt: "Players rubber-band and teleport around when there's lag in my online game. What's the right way to fix the jitter?"
+    why: "Symptom text for prediction/reconciliation + snapshot interpolation; routes here without the word 'netcode'."
+  - prompt: "Should I use a dedicated server or peer-to-peer for my PvP game, and how do I stop clients from cheating?"
+    why: "Topology + authority decision, the second core section; not an infra/hosting question about how to run the server."
+  - prompt: "In Unreal, how do I replicate a health value to all clients and run a RepNotify when it changes, and what's the difference between a Server RPC and a NetMulticast?"
+    why: "Unreal Actor replication mapping: ReplicatedUsing/DOREPLIFETIME + Server vs NetMulticast RPC semantics."
+  - prompt: "What tick rate should my authoritative server run at, and how do I test multiplayer locally with fake latency before I ship?"
+    why: "Tick/netrate + local multiplayer testing with simulated latency, both explicitly owned here."
+  - prompt: "Is ServerRpc/ClientRpc still the way to do RPCs in Unity Netcode for GameObjects, or is there a newer attribute?"
+    why: "Version-contract question the skill answers directly: unified [Rpc(SendTo.X)] preferred, legacy pair still supported, UNet removed."
+
+should_not_trigger:
+  - prompt: "How do I read gamepad input and make my character jump in Godot 4?"
+    route_to: "godot"
+    why: "Single-player input/gameplay is the engine skill's job; no network dimension."
+  - prompt: "Set up a matchmaking backend and auto-scale dedicated game servers on a cloud provider with a lobby database."
+    route_to: "deployment"
+    why: "Server hosting/matchmaking/orchestration infra is delegated to deployment; this skill designs the in-game net layer, not the fleet."
+  - prompt: "My character controller clips through walls at high speed and collisions feel inconsistent — how do I fix the physics?"
+    route_to: "gamedev-physics"
+    why: "Collision/character-controller/determinism is physics; netcode consumes determinism but doesn't own the physics fix."
+  - prompt: "Build a realtime chat app with presence indicators over WebSockets for my website."
+    route_to: "webhooks"
+    why: "Generic web realtime that is not a game world/simulation is not this skill's domain."
+  - prompt: "Do a general threat model and authz review of my app's permission boundaries."
+    route_to: "secure-coding"
+    why: "Language/domain-agnostic threat modeling is secure-coding; this skill keeps only game-specific anti-cheat controls."
+
+capability:
+  - scenario: "In Godot 4.x, wire a server-authoritative 'fire weapon' from a client so the server validates and applies the shot, with the same code working on a listen-server host. Show the RPC and the authority handling."
+    must_include:
+      - "Uses ENetMultiplayerPeer (create_server / create_client) assigned to multiplayer.multiplayer_peer — NOT the removed NetworkedMultiplayerENet"
+      - "Declares the intent RPC with @rpc(\"any_peer\", ...) so a client may call it, and the client sends it with rpc_id(1, ...) to the server"
+      - "Gates the body with multiplayer.is_server() (or is_multiplayer_authority) so authoritative logic runs once, correctly on a listen host"
+      - "Identifies the sender with multiplayer.get_remote_sender_id() and validates before applying (server decides the result, client sends intent only)"
+      - "Uses no Godot 3.x APIs (no master/puppet/remote keywords, no rset, no rpc_config as a legacy call)"
+      - "Distinguishes replicating authoritative state (e.g. via MultiplayerSynchronizer / a replicated var) from firing the one-shot RPC event"
