@@ -1,7 +1,7 @@
 {
   "version": "0.1.35",
   "counts": {
-    "skills": 243
+    "skills": 244
   },
   "skills": [
     {
@@ -1556,6 +1556,29 @@
         "secure-coding"
       ],
       "profiles": []
+    },
+    {
+      "id": "fable-operator",
+      "description": "Use when a task needs reliable, verified, well-communicated reasoning: analysis, debugging, review, advice, decisions, explanations, technical questions, or drafting anything the user will act on — any substantive request, even when rigor isn't asked for. Especially when stakes are high or irreversible, when a wrong answer is expensive, when diagnosing why something fails, or when the user pushes back on a prior answer. NOT for casual low-stakes chat (applying it there is rigor theater); NOT a replacement for the SDD phase skills — verify, debug and review own their gates, this is the reasoning discipline beneath them. Invoke on demand with /fable-operator.",
+      "tags": [
+        "reasoning",
+        "verification",
+        "rigor",
+        "debugging",
+        "review",
+        "decision-making",
+        "epistemics"
+      ],
+      "recommends": [
+        "sdd",
+        "verify",
+        "debug",
+        "review"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
     },
     {
       "id": "fal",

@@ -20,6 +20,7 @@ const OUTCOMES = {
   unity: 'Your game (Unity)',
   unreal: 'Your game (Unreal)',
   'game-design': "Design a game that's fun",
+  'fable-operator': 'Reason it through, reliably',
 };
 
 export function hasOutcome(id) {

@@ -1,0 +1,52 @@
+skill: fable-operator
+
+should_trigger:
+  - prompt: "We're about to run this migration on the production database tonight. Can you check it's safe?"
+    why: "Consequential/irreversible action the user will act on — core trigger; expects triage-to-irreversible, decomposition into independently-checkable claims, verify the rollback, name what the decision hinges on."
+
+  - prompt: "Our checkout p99 latency tripled after Tuesday's deploy and nobody knows why. Help me figure it out."
+    why: "Diagnosis of a failing/slow system — §6 trigger; expects ≥2 hypotheses before investigating, discriminating evidence, reproduce-before-fix."
+
+  - prompt: "I calculated we need 47 servers to handle the launch. Does that number hold up?"
+    why: "A load-bearing quantitative claim the user will act on; expects order-of-magnitude Fermi check + re-derivation by a different route, and calibrated confidence."
+
+  - prompt: "No, that's wrong — I already told you we're on Postgres 16, not 14. Redo your answer."
+    why: "User pushes back on a prior answer — explicit trigger; expects rereading the actual earlier text (not memory), owning the error in one sentence, and not deferring reflexively."
+
+  - prompt: "Draft the email to the board explaining why we're cutting the project. I'll send it as-is."
+    why: "Drafting something the user will act on, high stakes — expects answer-first structure, load-bearing claims verified/labeled, and the irreversibility (a sent message) named."
+
+  - prompt: "Is this analysis correct? Walk me through whether the conclusion actually follows."
+    why: "Review/verification of a conclusion — expects the adversarial pass (strongest attack, class-typical failure, steelman the runner-up) rather than a confirmation re-read."
+
+should_not_trigger:
+  - prompt: "What's a good name for my cat?"
+    route_to: "none"
+    why: "Casual, low-cost-if-wrong — §0 says applying the full method here is rigor theater; answer directly and briefly."
+
+  - prompt: "Run the verification gate on this branch: tests, lint, types, and the acceptance criteria."
+    route_to: "verify"
+    why: "This is the SDD post-build gate, which the verify skill owns; fable-operator is the reasoning discipline beneath it, not the gate runner."
+
+  - prompt: "Set up a new Next.js 15 app with the app router and a Postgres connection."
+    route_to: "nextjs"
+    why: "A concrete stack build task — the framework skill owns the how; no substantive reasoning fork to arbitrate."
+
+  - prompt: "What's the capital of Australia?"
+    route_to: "none"
+    why: "A single settled fact with no decision riding on it — standard/casual, not consequential; no method needed."
+
+  - prompt: "Reproduce and root-cause this specific null-pointer crash, then fix it."
+    route_to: "debug"
+    why: "A dedicated debugging engagement is the debug phase skill's job; fable-operator informs the diagnostic posture but debug owns the reproduce→isolate→fix→verify loop."
+
+capability:
+  - scenario: "A founder asks whether to migrate their production database to a new engine this weekend, citing a benchmark that shows it is '3x faster'. They will act on the answer."
+    must_include:
+      - "Triage the request as consequential/irreversible and name the irreversibility out loud (a weekend prod migration is hard to undo)"
+      - "Identify the single load-bearing claim (the '3x faster' benchmark) and verify it by re-derivation / checking it applies to THIS workload, not accept it as given"
+      - "Decompose into independently-checkable claims (rollback is real against post-migration state, downtime window, data compatibility) rather than judging 'safe' holistically"
+      - "Label remembered-but-unverified claims as bin-2/bin-3 with provenance instead of uniform confidence"
+      - "Run an adversarial pass — the strongest specific argument against migrating now, plus the class-typical failure"
+      - "Answer-first: lead with an actionable recommendation, then reasoning, then the concrete risk and the assumption doing the most work"
+      - "Flag that the decision hinges on which specific claim, so the founder knows where to point their own verification"
