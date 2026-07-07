@@ -12,7 +12,7 @@
   ██    ██   ███████     ███████ 
 ```
 
-# `rsc` — 242 agent skills, one CLI, zero bloat
+# `rsc` — 243 agent skills, one CLI, zero bloat
 
 **A self-recommending skill catalog for 17 coding assistants** — Claude Code,
 Codex, GitHub Copilot, Cursor, Gemini, Windsurf, Cline, Antigravity, Zed and more.
@@ -243,7 +243,7 @@ just asks in plain language.
 
 ## The catalog
 
-243 skills, grouped by what you're trying to do. Click any skill to read its
+244 skills, grouped by what you're trying to do. Click any skill to read its
 `SKILL.md`. It fires on its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -354,7 +354,7 @@ Three engines + engine-agnostic disciplines. Every engine skill pins the current
 
 ### 🧠 Knowledge & meta
 
-[knowledge-ops](skills/knowledge-ops/) · [codebase-onboarding](skills/codebase-onboarding/) · [research-ops](skills/research-ops/) · [decision-records](skills/decision-records/) · [continuous-learning](skills/continuous-learning/) · [skill-scout](skills/skill-scout/) · [context-budget](skills/context-budget/) · [roast-me](skills/roast-me/)
+[knowledge-ops](skills/knowledge-ops/) · [codebase-onboarding](skills/codebase-onboarding/) · [research-ops](skills/research-ops/) · [decision-records](skills/decision-records/) · [continuous-learning](skills/continuous-learning/) · [skill-scout](skills/skill-scout/) · [context-budget](skills/context-budget/) · [roast-me](skills/roast-me/) · [fable-operator](skills/fable-operator/)
 
 ---
 
