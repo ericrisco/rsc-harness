@@ -1,0 +1,5 @@
+# Evals — zapier
+
+`cases.yaml` has three groups. `should_trigger` covers the real Zapier MCP surface — Bearer connect, discover/enable/invoke of read and write actions, the 2-tasks-per-call cost question, and (crucially) the "is there an API to manage my Zaps?" prompt the skill must catch in order to answer honestly — with Spanish and Catalan phrasings. `should_not_trigger` routes adjacent asks to named siblings: flow design → automation-flows, programmatic workflow CRUD → n8n, operating Make's API → make, typed code client → api-connector-builder, inbound receiver → webhooks. The two `capability` scenarios assert the MCP connect/invoke flow (endpoint, Bearer, `.env`, discover→enable→invoke, write confirmation, 2-task cost, Enterprise-not-enforced) and the honest-boundary behavior (no public Zap-CRUD API → route to n8n/Make, don't fake one).
+
+No automated runner. Score by judgement: feed each trigger/no-trigger prompt to the routing layer and confirm it activates or routes to the listed sibling; for each `capability`, have the skill respond and check every `must_include` bullet by hand.

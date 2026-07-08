@@ -2,7 +2,7 @@
 name: automation-flows
 description: "Use when building or fixing a no-code automation on n8n, Make, or Zapier — wiring a trigger to multi-app steps with branching, data mapping, retries, and an error path, or choosing the platform by its billing model. Triggers: 'wire up a Zap / Make scenario / n8n workflow that does X when Y happens', 'new Stripe payment → Notion row → Slack message in n8n', 'my Zap keeps failing silently, add error handling and retries', 'should I use Make or Zapier for 50k runs a month', 'my automation bill exploded', 'give me the JSON to import into n8n', 'automatiza esto en Make sin código', 'munta un workflow a n8n amb gestió d'errors', 'por qué se me dispara el Zap dos veces'. NOT writing a typed API client in code with auth/pagination/backoff (that is api-connector-builder), NOT building the inbound endpoint that receives and verifies webhook events in your own app (that is webhooks), NOT scripting one vendor's SDK directly (that is stripe / notion-connector / google-workspace / whatsapp-telegram)."
 tags: [automation, n8n, make, zapier, no-code, workflows, error-handling, integrations]
-recommends: [webhooks, api-connector-builder, stripe, notion-connector, google-workspace, whatsapp-telegram, error-handling]
+recommends: [automation-strategy, n8n, make, zapier, power-automate, webhooks, api-connector-builder, error-handling, stripe, notion-connector, google-workspace, whatsapp-telegram]
 profiles: []
 origin: risco
 ---

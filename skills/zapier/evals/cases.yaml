@@ -1,0 +1,50 @@
+skill: zapier
+
+should_trigger:
+  - prompt: "Connect Zapier MCP to my agent and have it post a message to our #alerts Slack channel."
+    why: Canonical Zapier MCP use — Bearer connect, then discover/enable/invoke a write action in an app.
+  - prompt: "Run a Zapier action from Claude to create a new HubSpot contact when I give you a name and email."
+    why: Action-invocation by natural language across the app catalog — the core MCP deliverable, a write action.
+  - prompt: "Let my agent search my Gmail through Zapier and summarize the unread threads."
+    why: Read action via execute_zapier_read_action — free-to-just-do, exactly the MCP read path.
+  - prompt: "How many Zapier tasks does one Zapier MCP tool call cost?"
+    why: The cost reality (2 tasks per successful call, failed calls free) is a load-bearing fact this skill owns.
+  - prompt: "Is there a Zapier API I can call to programmatically create and manage my Zaps?"
+    why: The honesty boundary is this skill's core value — it must fire to say NO public API exists and route to n8n/Make or the visual builder.
+  - prompt: "ejecuta una acción de Zapier desde mi agente para añadir una fila a Google Sheets"
+    why: Spanish; invoke a Zapier write action from an agent — squarely MCP action-invocation.
+  - prompt: "connecta Zapier MCP al meu agent i mostra'm quines accions de Notion puc activar"
+    why: Catalan; connect the MCP server and run discover/enable for an app's actions.
+
+should_not_trigger:
+  - prompt: "Design a Zap: new Typeform response → filter → Slack message, with an error path and dedup on the submission id."
+    route_to: automation-flows
+    why: Designing what the flow should be (branching, error/dedup path) is automation-flows; this skill only invokes actions, it doesn't design flows.
+  - prompt: "I need to programmatically create, version, and delete 200 workflows from our CI pipeline."
+    route_to: n8n
+    why: Full workflow CRUD by API — Zapier cannot do this; n8n (or Make) has the CRUD API and portable JSON. No Zapier mentioned.
+  - prompt: "Create and activate a Make scenario through its API and pull its execution history."
+    route_to: make
+    why: Operating Make's own API is the make sibling skill, not Zapier MCP.
+  - prompt: "Write a TypeScript client for the Acme REST API with OAuth, pagination, and exponential backoff."
+    route_to: api-connector-builder
+    why: A typed API client in code, not an MCP action invocation.
+  - prompt: "Build the endpoint in my Express app that receives and verifies incoming webhook signatures."
+    route_to: webhooks
+    why: Building the inbound receiver in your own app code; this skill consumes hooks to start Zaps, it doesn't build the receiver.
+
+capability:
+  - scenario: "User wants their agent to send a Slack message to #alerts via Zapier MCP whenever they ask. Set up the connection and invoke the action safely."
+    must_include:
+      - "Connect via the hosted MCP server: endpoint https://mcp.zapier.com/api/v1/connect, Streamable HTTP, Authorization: Bearer <key>."
+      - "Credentials in .env as ZAPIER_MCP_URL and ZAPIER_MCP_API_KEY, never committed."
+      - "The discover -> enable -> invoke lifecycle (discover_zapier_actions, enable_zapier_action, then execute_zapier_write_action)."
+      - "Write-safety rule: reads are free to run, but the write action's exact payload (channel, text) is shown to the user for confirmation before invoking."
+      - "Cost note: each successful tool call consumes 2 Zapier tasks; failed calls are free."
+      - "Enterprise app/action restrictions are NOT enforced through MCP; scope the key deliberately."
+  - scenario: "User asks for a way to programmatically create and update their own Zaps from a script."
+    must_include:
+      - "States plainly there is NO public REST API for a normal account to create/read/update/delete its own Zaps."
+      - "Does not invent or improvise an API — names the limit instead."
+      - "Routes to n8n or Make (which have full workflow CRUD APIs) or to the visual builder via automation-flows."
+      - "Clarifies the Partner API (SaaS vendors embedding Zapier) and Workflow API (published-integration developers) are narrow and do not cover normal-account Zap management."

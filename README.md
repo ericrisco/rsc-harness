@@ -12,7 +12,7 @@
   ██    ██   ███████     ███████ 
 ```
 
-# `rsc` — 243 agent skills, one CLI, zero bloat
+# `rsc` — 248 agent skills, one CLI, zero bloat
 
 **A self-recommending skill catalog for 17 coding assistants** — Claude Code,
 Codex, GitHub Copilot, Cursor, Gemini, Windsurf, Cline, Antigravity, Zed and more.
@@ -243,7 +243,7 @@ just asks in plain language.
 
 ## The catalog
 
-244 skills, grouped by what you're trying to do. Click any skill to read its
+249 skills, grouped by what you're trying to do. Click any skill to read its
 `SKILL.md`. It fires on its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -305,6 +305,12 @@ Each with a `02-DOCS` feedback loop that learns from your own results. `remotion
 ### 🔌 Connect & automate
 
 [stripe](skills/stripe/) · [email-connector](skills/email-connector/) · [google-workspace](skills/google-workspace/) · [notion-connector](skills/notion-connector/) · [whatsapp-telegram](skills/whatsapp-telegram/) · [automation-flows](skills/automation-flows/) · [api-connector-builder](skills/api-connector-builder/) · [webhooks](skills/webhooks/) · [data-scraper](skills/data-scraper/) · [spreadsheet-ops](skills/spreadsheet-ops/) · [calendar-scheduling](skills/calendar-scheduling/) · [document-processing](skills/document-processing/) · [e-signature](skills/e-signature/)
+
+### ⚙️ Automation
+
+Operate the big automation platforms **programmatically or via MCP** — create and manage automations *dynamically*, not just design them on a canvas. `automation-strategy` decides whether / what / which platform; the platform skills drive the live REST API or MCP server (harness connectors ship for each). Complements `automation-flows` (visual design + importable workflow JSON).
+
+[automation-strategy](skills/automation-strategy/) · [n8n](skills/n8n/) · [make](skills/make/) · [zapier](skills/zapier/) · [power-automate](skills/power-automate/)
 
 ### 📊 Data & analytics
 

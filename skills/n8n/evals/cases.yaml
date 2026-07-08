@@ -1,0 +1,45 @@
+skill: n8n
+
+should_trigger:
+  - prompt: "Push my workflow JSON to n8n over the API with curl and turn it on."
+    why: Canonical operate task — POST /workflows then the separate /activate endpoint. Core deliverable.
+  - prompt: "I set active:true in my POST to /api/v1/workflows but the workflow stays inactive. Why?"
+    why: The read-only-active gotcha — active/tags are ignored on create; must call /workflows/{id}/activate.
+  - prompt: "Wire n8n-mcp into Claude Code so it can call n8n_create_workflow and n8n_update_partial_workflow against my instance."
+    why: MCP operate path — configuring the management tier with N8N_API_URL + N8N_API_KEY.
+  - prompt: "How do I run an n8n workflow by its id from a shell script, and can I pass it input data?"
+    why: POST /workflows/{id}/execute (recent) plus the no-custom-input limit → webhook trigger for params.
+  - prompt: "Delete this workflow from my n8n via the API — is there an undo?"
+    why: Hard-delete irreversibility; must export (GET) first, no trash.
+  - prompt: "desplega este workflow a mi n8n.cloud por la API y valídalo antes de activarlo"
+    why: Spanish; programmatic deploy + validate + activate against cloud — same REST surface.
+  - prompt: "Validate and autofix my n8n workflow before I create it, then list its executions."
+    why: n8n_validate_workflow / n8n_autofix_workflow then n8n_executions — MCP management lifecycle.
+
+should_not_trigger:
+  - prompt: "Design an n8n flow: Stripe payment → Notion row → Slack, with an error path and dedup. Give me the importable JSON."
+    route_to: automation-flows
+    why: Designing the trigger/steps/error shape and producing the JSON is automation-flows; this skill only deploys/operates that JSON.
+  - prompt: "Should I use n8n, Make, or Zapier for 50k runs a month, and self-host or cloud?"
+    route_to: automation-strategy
+    why: Platform/cost-model selection, not operating a specific live n8n instance.
+  - prompt: "Create this scenario in my Make account programmatically."
+    route_to: make
+    why: Operating a different platform (Make) — its own skill; Make also has no create-via-API story like n8n's.
+  - prompt: "Write a TypeScript client for the Acme REST API with API-key auth, cursor pagination, and exponential backoff."
+    route_to: api-connector-builder
+    why: A typed HTTP client in code, not driving n8n's API or MCP.
+  - prompt: "Build the endpoint in my Express app that receives and verifies inbound webhook signatures."
+    route_to: webhooks
+    why: An inbound receiver in the user's own app; here webhooks are only n8n triggers, not something this skill builds.
+
+capability:
+  - scenario: "User has an importable n8n workflow JSON (webhook trigger → HTTP node → Slack) and wants it deployed to their n8n.cloud instance: created, tested, activated, and later safely removed — via the REST API and/or n8n-mcp."
+    must_include:
+      - "Reads N8N_API_URL/N8N_HOST + N8N_API_KEY from env; key from Settings → n8n API; sends it as the X-N8N-API-KEY header (not a bearer token)."
+      - "Builds the create body per automation-flows' n8n-workflow-json schema (name, nodes, connections, settings); node credentials referenced by the credential store, never inlined."
+      - "Creates with POST /workflows (or n8n_create_workflow) and captures the returned id for subsequent calls."
+      - "States that active (and tags) are read-only on create/update and activates with a separate POST /workflows/{id}/activate."
+      - "Notes POST /workflows/{id}/execute takes no custom input (and is a recent endpoint), so runtime params require POSTing to a Webhook node URL."
+      - "Exports the workflow (GET /workflows/{id}) before any DELETE, and states DELETE is a hard delete with no trash."
+      - "When driving via MCP, validates/autofixes (n8n_validate_workflow / n8n_autofix_workflow) before create; notes management tools need the two env vars while node-knowledge tools do not."

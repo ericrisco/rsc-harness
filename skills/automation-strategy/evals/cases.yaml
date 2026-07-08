@@ -1,0 +1,48 @@
+skill: automation-strategy
+
+should_trigger:
+  - prompt: "Should we automate our weekly invoice-reconciliation process? It changes a bit every month."
+    why: The core whether-to-automate decision — and the "changes every month" signals the stability trap this skill exists to catch.
+  - prompt: "n8n vs Make vs Zapier vs Power Automate — which one should we standardize on as a company?"
+    why: Platform selection across all four engines by billing model and ecosystem fit; a strategy/routing decision, not a build.
+  - prompt: "What's the ROI on automating this task, and should we build a custom script or use a no-code platform?"
+    why: Payback math plus build-vs-buy — squarely §2, before anyone builds.
+  - prompt: "Our automations keep breaking and nobody knows why. Help us design a proper automation strategy."
+    why: Fleet-health / orchestration-discipline diagnosis — missing error paths, ownership, observability across a fleet.
+  - prompt: "We're a Microsoft 365 shop. Does it even make sense to pay for Zapier, or use what we have?"
+    why: Ecosystem-fit selection (MS 365 → Power Automate) and TCO reasoning; a platform-choice decision.
+  - prompt: "¿Merece la pena automatizar esto o me sale más caro de mantener que hacerlo a mano?"
+    why: Spanish; ROI / maintenance-cost gate — the "pet not a tool" payback question.
+  - prompt: "Automating this last quarter cost us more than it saved. What did we get wrong?"
+    why: TCO / over-automation post-mortem — the maintenance-eats-the-ROI and over-automation anti-patterns.
+
+should_not_trigger:
+  - prompt: "Give me the importable n8n JSON for a webhook → Notion → Slack flow with error handling."
+    route_to: automation-flows
+    why: A concrete build/artifact request; automation-flows owns design and the importable workflow JSON.
+  - prompt: "Use the n8n API to create and activate this workflow on my instance."
+    route_to: n8n
+    why: Driving a specific platform's live API to CRUD/activate — the n8n platform skill, not the strategy layer.
+  - prompt: "Write a TypeScript client for the Acme REST API with OAuth, pagination, and exponential backoff."
+    route_to: api-connector-builder
+    why: Generic typed API client in code; that is api-connector-builder, not automation strategy.
+  - prompt: "Build the Express endpoint that receives and verifies Stripe webhook signatures."
+    route_to: webhooks
+    why: Building the inbound receiver in your own app; webhooks owns receipt, this skill treats webhooks only as triggers.
+  - prompt: "Set up the Make scenario: on new HubSpot deal, create a Trello card and email the owner."
+    route_to: automation-flows
+    why: A specific flow to build on a named platform — design goes to automation-flows, operation to the make skill; not a strategy question.
+  - prompt: "How do I rotate and store the API keys my flow uses securely in code?"
+    route_to: secure-coding
+    why: Secrets-engineering implementation detail; §4 sets the policy but secure-coding owns the how.
+
+capability:
+  - scenario: "A 30-person Microsoft 365 company asks: 'We do a manual monthly vendor-payment run — pull approved invoices, pay them, notify finance. Should we automate it, on what platform, and how do we not screw it up?' Produce the strategy recommendation."
+    must_include:
+      - "Runs the §1 gate on frequency × time-saved × error-rate × stability before recommending automation."
+      - "Flags the payment/commit step as irreversible/high-blast-radius and keeps it human-in-the-loop behind an approval gate (automate prep, human clicks to pay)."
+      - "Payback math that explicitly includes ongoing maintenance cost, not just time saved."
+      - "Recommends a platform by billing unit and ecosystem fit — notes Microsoft 365 fit points to Power Automate — and routes the build to that platform skill / automation-flows rather than building here."
+      - "States the honest limit that Power Automate has no clean public API to author end-user 'My flows' (and Zapier can't create Zaps via API), so a plan can't depend on API-creating them."
+      - "Specifies orchestration guarantees as requirements: idempotency/dedup key, error path + retry/backoff, dead-letter, heartbeat/alert to a named owner, secrets in a vault, dev/prod split, and a kill-switch."
+      - "Does NOT emit importable workflow JSON or platform API code — defers the build to automation-flows / the platform skill."
