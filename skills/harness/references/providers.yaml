@@ -3406,8 +3406,9 @@ providers:
         set -a; source "$SCRIPT_DIR/.env"; set +a
         : "${MAKE_ZONE:?MAKE_ZONE not set (e.g. eu1.make.com)}"
         : "${MAKE_API_TOKEN:?MAKE_API_TOKEN not set}"
-        NAME=$(curl -fsS "https://${MAKE_ZONE%/}/api/v2/users/me" -H "Authorization: Token $MAKE_API_TOKEN" | python3 -c 'import json,sys; print(json.load(sys.stdin)["authUser"]["name"])')
-        echo "OK — Make API reachable on $MAKE_ZONE (user: $NAME)."
+        # envelope-agnostic smoke test: -f fails on 4xx/5xx (wrong zone/token); no response-shape parsing
+        curl -fsS "https://${MAKE_ZONE%/}/api/v2/users/me" -H "Authorization: Token $MAKE_API_TOKEN" > /dev/null
+        echo "OK — Make API reachable on $MAKE_ZONE (token accepted)."
       README.md: |
         # MAKE
         Make.com (formerly Integromat). Scenarios via /api/v2; blueprint is a stringified JSON

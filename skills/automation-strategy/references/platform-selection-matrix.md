@@ -33,10 +33,10 @@ because it rides existing M365 licenses.
 | Axis | n8n | Make | Zapier | Power Automate |
 | --- | --- | --- | --- | --- |
 | Free / entry | self-host free; cloud Starter ≈ €20/mo | ≈ 1,000 credits free; Core ≈ $9/mo | 100 tasks/mo free; Pro ≈ $19.99/mo | bundled in many M365 plans; premium add-ons |
-| App breadth | ~1,000 nodes + generic HTTP + code | ~1,500, often deep per app | ~8,000+ — widest catalog | strong on MS + growing 3rd-party connectors |
+| App breadth | ~1,000 nodes + generic HTTP + code | ~1,500, often deep per app | ~9,000+ apps — widest catalog | strong on MS + growing 3rd-party connectors |
 | Self-host / data residency | **yes — your infra** | no (EU/US regions) | no | Microsoft cloud / Dataverse regions |
 | Who runs/maintains it | technical; you run the box | mid; visual but rich | non-technical-friendly | IT/business in a Microsoft shop |
-| Portability | high (export/import JSON) | low (no portable export) | low (no portable export) | low (tied to MS solutions) |
+| Portability | high (export/import JSON + self-hostable runtime) | medium (blueprint export/import, runs only on Make) | low (no portable export) | low (tied to MS solutions) |
 | Complex logic / code | code nodes, sandboxed by default (n8n 2.0) | functions + routers | limited (Code by Zapier) | expressions + Azure Functions escape hatch |
 
 ## Programmatic + MCP maturity (honest)

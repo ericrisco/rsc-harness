@@ -78,9 +78,9 @@ Pick on **billing unit first** — it's the axis that dictates cost at scale, an
 | **Billing unit** | per **execution** (whole run = 1, any # of steps); self-host = $0 | per **credit** (each module action = 1; was "operations", renamed 2025-08-27) | per **task** (every action counts) | per **user** or per **flow** (premium); bundled with many M365 plans |
 | **Best cost shape** | few long/complex flows, high volume | moderate multi-step flows | many short simple flows | teams already paying for M365 |
 | **Self-host / data residency** | **yes** — your infra, your data | no (EU/US regions only) | no | Microsoft cloud / Dataverse regions |
-| **Ecosystem fit** | technical teams, raw HTTP, code nodes | mid-market, deep per-app modules | widest app catalog (~8,000+) | **native to Microsoft 365** — Teams, SharePoint, Outlook, Dataverse |
+| **Ecosystem fit** | technical teams, raw HTTP, code nodes | mid-market, deep per-app modules | widest app catalog (~9,000+) | **native to Microsoft 365** — Teams, SharePoint, Outlook, Dataverse |
 | **Programmatic + MCP maturity** | public REST API to CRUD workflows; community MCP; strongest for code-driven ops | management API + MCP support maturing | rich API for actions + Zapier MCP to expose actions to agents — **but no public API to create Zaps** | Flow management APIs + solutions/ARM — **but no clean public API to create end-user "My flows"** |
-| **Portability** | high — export/import JSON | low — no portable export | low — no portable export | low — tied to MS solutions |
+| **Portability** | high — export/import JSON + self-hostable runtime | medium — blueprint export/import, but runs only on Make | low — no portable export | low — tied to MS solutions |
 
 **Routing shortcuts:** already living in Microsoft 365 → **Power Automate** (`../power-automate/SKILL.md`). Data must stay on your own infra, or high volume where execution-billing wins → **n8n** (`../n8n/SKILL.md`). Obscure app, non-technical owner → **Zapier** (`../zapier/SKILL.md`). Deep per-app modules, mid volume → **Make** (`../make/SKILL.md`).
 
