@@ -3384,6 +3384,106 @@ providers:
       CREDENTIALS.md: |
         Dashboard: https://app.n8n.cloud/settings/api (or self-hosted equivalent).
         `N8N_API_KEY` — secret. Required for all REST API calls.
+        API surface: workflows CRUD + `/activate` `/deactivate` + `/workflows/{id}/execute`
+        (recent; no custom input — use a Webhook trigger for runtime params). See the `n8n` skill.
+
+  - id: MAKE
+    category: automatizacion
+    detectors:
+      imports: []
+      env_vars: ["MAKE_API_TOKEN", "MAKE_ZONE"]
+      deps: []
+    dashboard_url: "https://www.make.com/en/help/tools/api"
+    env_example: |
+      MAKE_ZONE=eu1.make.com        # your zone: eu1/eu2/us1/us2 (wrong zone => auth error)
+      MAKE_API_TOKEN=               # Profile > API/token; scopes are fixed at creation
+      MAKE_TEAM_ID=
+    files:
+      test_connection.sh: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        set -a; source "$SCRIPT_DIR/.env"; set +a
+        : "${MAKE_ZONE:?MAKE_ZONE not set (e.g. eu1.make.com)}"
+        : "${MAKE_API_TOKEN:?MAKE_API_TOKEN not set}"
+        NAME=$(curl -fsS "https://${MAKE_ZONE%/}/api/v2/users/me" -H "Authorization: Token $MAKE_API_TOKEN" | python3 -c 'import json,sys; print(json.load(sys.stdin)["authUser"]["name"])')
+        echo "OK — Make API reachable on $MAKE_ZONE (user: $NAME)."
+      README.md: |
+        # MAKE
+        Make.com (formerly Integromat). Scenarios via /api/v2; blueprint is a stringified JSON
+        round-trip. Base URL is zone-scoped. See the `make` skill for dynamic create/manage.
+      CREDENTIALS.md: |
+        Dashboard: Profile > API (https://www.make.com/en/help/tools/api).
+        `MAKE_API_TOKEN` — secret; token scopes are immutable after creation. Wrong `MAKE_ZONE`
+        returns an auth error even with a valid token. Endpoints are case-sensitive.
+
+  - id: ZAPIER
+    category: automatizacion
+    detectors:
+      imports: []
+      env_vars: ["ZAPIER_MCP_URL", "ZAPIER_MCP_API_KEY"]
+      deps: []
+    dashboard_url: "https://mcp.zapier.com"
+    env_example: |
+      ZAPIER_MCP_URL=https://mcp.zapier.com/api/v1/connect
+      ZAPIER_MCP_API_KEY=           # Bearer key from the Zapier MCP dashboard (2 tasks per call)
+    files:
+      test_connection.sh: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        set -a; source "$SCRIPT_DIR/.env"; set +a
+        : "${ZAPIER_MCP_URL:?ZAPIER_MCP_URL not set}"
+        : "${ZAPIER_MCP_API_KEY:?ZAPIER_MCP_API_KEY not set}"
+        # Zapier exposes no account-CRUD REST API; smoke-test the MCP endpoint with an initialize handshake.
+        CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$ZAPIER_MCP_URL" \
+          -H "Authorization: Bearer $ZAPIER_MCP_API_KEY" -H "Content-Type: application/json" \
+          -H "Accept: application/json, text/event-stream" \
+          -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"rsc","version":"1"}}}')
+        case "$CODE" in 2*) echo "OK — Zapier MCP endpoint reachable (HTTP $CODE).";; *) echo "FAIL — HTTP $CODE" >&2; exit 1;; esac
+      README.md: |
+        # ZAPIER
+        Zapier has NO public API for a normal user to create/manage their own Zaps. Programmatic
+        use = Zapier MCP (runs pre-configured actions across 9,000+ apps; does not author Zaps).
+        See the `zapier` skill for the honest boundary and when to use n8n/Make instead.
+      CREDENTIALS.md: |
+        Dashboard: https://mcp.zapier.com — generate an MCP server + Bearer key.
+        `ZAPIER_MCP_API_KEY` — secret (Bearer). Each successful tool call costs 2 Zapier tasks.
+
+  - id: POWER_AUTOMATE
+    category: automatizacion
+    detectors:
+      imports: []
+      env_vars: ["PA_DATAVERSE_URL", "PA_TENANT_ID", "PA_CLIENT_ID", "PA_CLIENT_SECRET"]
+      deps: []
+    dashboard_url: "https://make.powerautomate.com"
+    env_example: |
+      PA_DATAVERSE_URL=https://<org>.crm.dynamics.com   # your Dataverse org URL (region domain varies)
+      PA_TENANT_ID=                 # Entra tenant id
+      PA_CLIENT_ID=                 # Entra app registration (needs a Dataverse application user)
+      PA_CLIENT_SECRET=
+    files:
+      test_connection.sh: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        set -a; source "$SCRIPT_DIR/.env"; set +a
+        : "${PA_DATAVERSE_URL:?PA_DATAVERSE_URL not set}"
+        : "${PA_TENANT_ID:?PA_TENANT_ID not set}"; : "${PA_CLIENT_ID:?PA_CLIENT_ID not set}"; : "${PA_CLIENT_SECRET:?PA_CLIENT_SECRET not set}"
+        TOKEN=$(curl -fsS "https://login.microsoftonline.com/${PA_TENANT_ID}/oauth2/v2.0/token" \
+          -d "grant_type=client_credentials&client_id=${PA_CLIENT_ID}&client_secret=${PA_CLIENT_SECRET}&scope=${PA_DATAVERSE_URL%/}/.default" \
+          | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+        N=$(curl -fsS "${PA_DATAVERSE_URL%/}/api/data/v9.2/workflows?\$filter=category%20eq%205&\$top=1" \
+          -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)["value"]))')
+        echo "OK — Dataverse reachable; cloud-flow query returned $N row(s)."
+      README.md: |
+        # POWER_AUTOMATE
+        Microsoft Power Automate cloud flows via the Dataverse Web API (solution-aware flows only;
+        `api.flow.microsoft.com` is unsupported). Auth is Entra OAuth. See the `power-automate` skill.
+      CREDENTIALS.md: |
+        Register an Entra app; add it as a Dataverse application user with a security role granting
+        Process (workflow) privileges. `PA_CLIENT_SECRET` — secret. Only flows inside a Dataverse
+        solution are code-manageable; personal "My Flows" are not.
 
 # Categories used to group tools in 01-TOOLS/README.md.
 categories:

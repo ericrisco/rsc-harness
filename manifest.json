@@ -1,7 +1,7 @@
 {
   "version": "0.1.37",
   "counts": {
-    "skills": 244
+    "skills": 249
   },
   "skills": [
     {
@@ -302,15 +302,48 @@
         "integrations"
       ],
       "recommends": [
+        "automation-strategy",
+        "n8n",
+        "make",
+        "zapier",
+        "power-automate",
         "webhooks",
         "api-connector-builder",
+        "error-handling",
         "stripe",
         "notion-connector",
         "google-workspace",
-        "whatsapp-telegram",
-        "error-handling"
+        "whatsapp-telegram"
       ],
       "profiles": []
+    },
+    {
+      "id": "automation-strategy",
+      "description": "Use when deciding whether a process is worth automating, choosing an automation platform, sizing ROI / build-vs-buy, designing an automation strategy, or diagnosing why a fleet of automations keeps breaking — the discipline layer that runs BEFORE anyone builds. Triggers: 'should we automate this?', 'is this worth automating', 'n8n vs Make vs Zapier vs Power Automate — which do we pick', 'custom script or no-code platform', \\\"what's the ROI on automating X\\\", 'design our automation strategy', 'our automations keep breaking', 'automating this cost more than it saved', '¿merece la pena automatizar esto?', 'qué plataforma de automatización elegimos'. NOT building the flow on a platform (design + importable artifact is automation-flows; driving a live platform API/MCP is the n8n / make / zapier / power-automate skills), NOT a typed API client with auth/pagination/backoff (api-connector-builder), NOT the inbound endpoint that receives webhook events in your app (webhooks).",
+      "tags": [
+        "automation",
+        "strategy",
+        "roi",
+        "build-vs-buy",
+        "platform-selection",
+        "orchestration",
+        "idempotency",
+        "n8n",
+        "make",
+        "zapier",
+        "power-automate"
+      ],
+      "recommends": [
+        "automation-flows",
+        "n8n",
+        "make",
+        "zapier",
+        "power-automate"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
     },
     {
       "id": "aws-essentials",
@@ -2656,6 +2689,30 @@
       "profiles": []
     },
     {
+      "id": "make",
+      "description": "Use when operating Make.com (formerly Integromat) programmatically — driving its REST API v2 or the Make MCP server from code or an agent to create, read, update, activate, run, clone, or delete scenarios, connections, hooks, and data stores. Triggers: 'create a Make scenario via the API', 'export a scenario blueprint, mutate it, and push it back', 'start/stop/run a Make scenario from a script', 'clone this Integromat scenario into another team', 'connect the Make MCP server so an agent runs my scenarios as tools', 'my valid Make API token returns an auth error' (zone trap), 'automatiza escenarios de Make.com desde la API'. NOT designing what the flow should do — trigger, branching, mapping, dedup, error path (automation-flows), NOT choosing Make vs n8n vs Zapier by billing model (automation-strategy), NOT operating n8n / Zapier / Power Automate (their skills), NOT a generic typed REST client with pagination/backoff (api-connector-builder) or an inbound webhook receiver in your own app (webhooks).",
+      "tags": [
+        "make",
+        "integromat",
+        "automation",
+        "scenarios",
+        "blueprint",
+        "mcp",
+        "no-code",
+        "api",
+        "workflows"
+      ],
+      "recommends": [
+        "automation-flows",
+        "automation-strategy",
+        "api-connector-builder",
+        "webhooks"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
       "id": "market-research",
       "description": "Use when you need a defensible picture of a MARKET as a whole — sizing it with TAM/SAM/SOM, cutting it into reachable segments, and proving demand is real and moving — with a dated source behind every number. Triggers: 'how big is the market for X', 'size this market', 'what's our TAM', 'is there real demand for this', 'who are the segments', 'where's the beachhead', 'sanity-check this TAM before the raise', 'top-down or bottom-up', '¿qué tamaño tiene el mercado de X', 'calcula el TAM', 'hay demanda real para esto', 'quina mida té aquest mercat'. NOT profiling specific named rivals and their moves (that is competitor-watch), NOT building a named list of accounts to sell to (that is lead-gen).",
       "tags": [
@@ -2857,6 +2914,28 @@
         "backups"
       ],
       "profiles": []
+    },
+    {
+      "id": "n8n",
+      "description": "Use when operating a live n8n instance programmatically — driving its public REST API (`{host}/api/v1`, `X-N8N-API-KEY`) or the n8n-mcp server to create, validate, test, activate/deactivate, list, update, or delete workflows and read executions, on self-host or `*.app.n8n.cloud`. Triggers: 'deploy this workflow to my n8n over the API', 'push my workflow JSON to n8n with curl', 'I set active:true in the create call but it stays inactive', 'connect n8n-mcp / n8n_create_workflow to Claude', 'validate and autofix my n8n workflow', 'run an n8n workflow by id from a script', 'delete a workflow via the API', 'automatiza n8n por API', 'desplega el workflow a n8n.cloud'. NOT designing the flow's trigger-step-error logic or hand-building the importable workflow JSON (that is automation-flows), NOT operating Make / Zapier / Power Automate (their own skills), NOT a typed API client with auth+pagination+retry (api-connector-builder), NOT the inbound webhook receiver in your own app (webhooks).",
+      "tags": [
+        "n8n",
+        "automation",
+        "workflows",
+        "mcp",
+        "rest-api",
+        "no-code",
+        "integrations"
+      ],
+      "recommends": [
+        "automation-flows",
+        "automation-strategy",
+        "api-connector-builder",
+        "webhooks"
+      ],
+      "profiles": [
+        "full"
+      ]
     },
     {
       "id": "neon",
@@ -3261,6 +3340,30 @@
         "secure-coding"
       ],
       "profiles": []
+    },
+    {
+      "id": "power-automate",
+      "description": "Use when operating Microsoft Power Automate cloud flows programmatically — creating, enabling, updating, listing or deleting flows through the Dataverse Web API (the workflow table, category 5) with Entra ID / OAuth2 auth, or reading action-level run history via the third-party FlowStudio MCP. Triggers: 'create a Power Automate cloud flow with the Dataverse API', 'enable my flow by code / set statecode to 1', 'why can't I create or edit a My Flow programmatically', 'PATCH the workflow clientdata', 'automatizar el despliegue de un flujo de Power Automate desde código'. NOT designing the flow or authoring its definition (automation-flows), NOT choosing a platform by billing model (automation-strategy), NOT a generic typed REST client with auth/pagination/backoff (api-connector-builder), NOT the endpoint receiving an HTTP-trigger POST in your app (webhooks), NOT scripting Microsoft 365 / Graph mail & calendar directly (no first-party skill — api-connector-builder, or google-workspace).",
+      "tags": [
+        "power-automate",
+        "dataverse",
+        "microsoft",
+        "flows",
+        "entra",
+        "oauth",
+        "mcp",
+        "m365",
+        "automation"
+      ],
+      "recommends": [
+        "automation-flows",
+        "automation-strategy",
+        "api-connector-builder",
+        "webhooks"
+      ],
+      "profiles": [
+        "full"
+      ]
     },
     {
       "id": "presentations",
@@ -5037,6 +5140,29 @@
         "design"
       ],
       "profiles": []
+    },
+    {
+      "id": "zapier",
+      "description": "Use when operating Zapier from an agent through the official hosted Zapier MCP server — Bearer-key connect, then discover an app's actions, enable one, and invoke a read or write action (or fire a Zap Catch Hook trigger) across 9,000+ apps like Slack, Gmail, Notion, HubSpot by natural language. Triggers: 'connect Zapier MCP to Claude/Cursor', 'run a Zapier action to post to Slack / create a HubSpot contact', 'let my agent search my Gmail through Zapier', 'invoke Zapier actions from my tool', 'how many tasks does a Zapier MCP call cost', 'ejecuta una acción de Zapier desde el agente', 'connecta Zapier MCP al meu agent'. NOT programmatically creating/reading/updating/deleting your own Zaps — Zapier has NO public API for that on a normal account, so say so and route to n8n or make, which have full workflow CRUD APIs. NOT deciding what a flow should be or its error/dedup design (that is automation-flows). NOT a SaaS vendor embedding Zapier via the Partner/Workflow API (rare; see references).",
+      "tags": [
+        "zapier",
+        "mcp",
+        "automation",
+        "integrations",
+        "no-code",
+        "actions",
+        "workflows"
+      ],
+      "recommends": [
+        "automation-flows",
+        "automation-strategy",
+        "n8n",
+        "make",
+        "api-connector-builder"
+      ],
+      "profiles": [
+        "full"
+      ]
     }
   ]
 }

@@ -1,0 +1,43 @@
+skill: power-automate
+
+should_trigger:
+  - prompt: "Create a Power Automate cloud flow via the Dataverse Web API and turn it on from my deploy script."
+    why: Canonical programmatic operate — POST /workflows (category 5) then enable via statecode; the core deliverable.
+  - prompt: "Why can't I edit my flow under 'My Flows' with the API? Every call I make fails."
+    why: The load-bearing honesty limit — My Flows are not code-manageable; must route to the solution-aware answer.
+  - prompt: "Enable my Power Automate flow by code — set statecode to 1 after I create it."
+    why: Enable-via-statecode is the explicit lifecycle step new flows come up Off (0) and need PATCH to 1.
+  - prompt: "Automatizar el despliegue de un flujo de Power Automate dentro de una solución de Dataverse desde CI."
+    why: Spanish; solution-aware programmatic deployment with a service principal — squarely this skill.
+  - prompt: "Use FlowStudio MCP to pull the action-level inputs and outputs of my flow's last failed run."
+    why: MCP run-history debugging that the Dataverse API doesn't expose per action — the MCP path this skill owns.
+  - prompt: "PATCH the clientdata of an existing workflow row to update the flow's definition."
+    why: Update lifecycle against the workflow table, including the clientdata string-encoding concern.
+
+should_not_trigger:
+  - prompt: "Design a 'new Stripe payment → post to Teams' automation and give me the importable definition."
+    route_to: automation-flows
+    why: Designing what the flow does and authoring its definition is the design skill; this one operates a definition, it doesn't invent it.
+  - prompt: "Should I use Power Automate or n8n for about 50k runs a month?"
+    route_to: automation-strategy
+    why: Platform selection by billing/constraints, not operating a live Power Automate flow.
+  - prompt: "Write a typed TypeScript client for the Dataverse Web API with token refresh, pagination, and exponential backoff."
+    route_to: api-connector-builder
+    why: Generic client engineering (auth/pagination/retry) even though the API is Dataverse; this skill uses endpoints surgically, it doesn't build the client.
+  - prompt: "Build the Express endpoint that receives my flow's HTTP-trigger POST and verifies it."
+    route_to: webhooks
+    why: Building the inbound receiver in your own app; this skill operates/triggers flows, it does not build the receiver.
+  - prompt: "Send an email and read a calendar via Microsoft Graph from my Node backend."
+    route_to: api-connector-builder
+    why: Scripting Microsoft 365 via Graph directly is not a Power Automate flow; no first-party MS-Graph skill, so build a typed Graph client.
+
+capability:
+  - scenario: "User has an Entra app registration and wants to create an automated cloud flow inside a Dataverse solution, enable it, later update its definition, and finally remove it safely. Walk the full programmatic lifecycle."
+    must_include:
+      - "Acquire an Entra OAuth2 token from https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token (client_credentials) with scope {PA_DATAVERSE_URL}/.default."
+      - "POST /api/data/v9.2/workflows with category=5, type=1, primaryentity=\"none\", name, and clientdata as a STRING-encoded JSON (definition + connectionReferences), not a nested object."
+      - "State the honesty limit: only flows inside a Dataverse solution are code-manageable; classic My Flows cannot be created or edited by code."
+      - "New flow comes up statecode=0 (Off); enable with PATCH workflows({workflowid}) statecode=1 using If-Match: *; validate connection references resolve before enabling."
+      - "Update via PATCH (send only changed fields), and note api.flow.microsoft.com is unsupported — use the Dataverse Web API or the Power Automate Management connector; flag api.powerplatform.com as an evolving alternative."
+      - "Irreversibility rule: ExportSolution to a saved base64 zip BEFORE DELETE workflows({workflowid}) — deletion has no undo."
+      - "For action-level run debugging use the third-party FlowStudio MCP (get_live_flow_run_action_outputs), flagged as NOT Microsoft-affiliated."

@@ -21,6 +21,11 @@ const OUTCOMES = {
   unreal: 'Your game (Unreal)',
   'game-design': "Design a game that's fun",
   'fable-operator': 'Reason it through, reliably',
+  'automation-strategy': 'Decide what to automate',
+  n8n: 'Automate with n8n (API/MCP)',
+  make: 'Automate with Make (API/MCP)',
+  zapier: 'Automate with Zapier (MCP)',
+  'power-automate': 'Automate with Power Automate',
 };
 
 export function hasOutcome(id) {

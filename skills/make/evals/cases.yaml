@@ -1,0 +1,45 @@
+skill: make
+
+should_trigger:
+  - prompt: "Create a Make.com scenario from a blueprint via the API and activate it from my deploy script."
+    why: Core operate task — POST /scenarios with a blueprint string, then /start.
+  - prompt: "Export a Make scenario blueprint, change the Notion module's mapping, and push it back."
+    why: The blueprint round-trip (GET /blueprint → mutate → PATCH as a string) this skill owns.
+  - prompt: "My Make API token keeps returning an auth error even though it's valid and the scopes look right."
+    why: Classic zone trap — wrong {zone} in the base URL, not a token problem.
+  - prompt: "Connect the Make MCP server so Claude can run my scenarios as tools."
+    why: MCP transport + tool-tier setup; the agent-operator path.
+  - prompt: "Clone this Integromat scenario into another team and stop the original from a cron job."
+    why: /clone and /stop lifecycle endpoints driven programmatically.
+  - prompt: "Automatiza la creación de escenarios en Make.com desde la API, incluyendo teamId y scheduling."
+    why: Spanish phrasing of programmatic scenario creation; required teamId + scheduling string.
+  - prompt: "Read my Make org's real API rate limit before I bulk-update 200 scenarios."
+    why: GET /organizations/{id} → license.apiLimit, plus rate-limit awareness for API operation.
+
+should_not_trigger:
+  - prompt: "Design a Make scenario that dedupes Stripe webhooks and has a proper error path before an external call."
+    route_to: automation-flows
+    why: Flow design (trigger, dedup, error handler) — build it there, then encode the blueprint here.
+  - prompt: "Should I use Make, n8n, or Zapier for 80k runs a month given the billing models?"
+    route_to: automation-strategy
+    why: Platform choice by cost model, not operating a Make account.
+  - prompt: "Create and activate an n8n workflow via its REST API."
+    route_to: n8n
+    why: Different platform; n8n has its own operate skill.
+  - prompt: "Build a typed TypeScript client for a REST API with OAuth refresh, pagination, and exponential backoff."
+    route_to: api-connector-builder
+    why: Generic API-client engineering, not Make-specific operation.
+  - prompt: "Verify the HMAC signature on inbound webhooks arriving at my Express endpoint and queue them."
+    route_to: webhooks
+    why: Inbound receiver in the user's own app, not Make's hooks API.
+
+capability:
+  - scenario: "Programmatically create a Make scenario from a template blueprint, dry-run it, activate it, and later delete it safely — plus offer the Make MCP path for an agent operator."
+    must_include:
+      - "Zoned base URL https://{zone}.make.com/api/v2 with header Authorization: Token {token}, and the zone trap (wrong zone → auth error with a valid token)."
+      - "POST /scenarios requires teamId, plus blueprint and scheduling sent as JSON STRINGS (not objects)."
+      - "Blueprint round-trip: GET /scenarios/{id}/blueprint (or a template), mutate the JSON, send back as a string on create/PATCH."
+      - "Dry-run with POST /scenarios/{id}/run and inspect output before POST /scenarios/{id}/start to activate."
+      - "Irreversibility rule: export the blueprint to a file before DELETE /scenarios/{id} — deletion is permanent."
+      - "Token scopes are fixed at creation and cannot be widened later; endpoints are case-sensitive."
+      - "Make MCP server (GA, free; runs cost credits) via OAuth https://mcp.make.com or token URL https://{zone}.make.com/mcp/u/{MCP_TOKEN}/stateless|stream|sse, with run tools (all plans) vs management tools (paid)."
