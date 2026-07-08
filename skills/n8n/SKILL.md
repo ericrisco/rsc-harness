@@ -99,7 +99,7 @@ n8n_create_workflow     { "name": "...", "nodes": [ … ], "connections": { … 
 
 ```bash
 curl -sS -X POST "$N8N_API_URL/api/v1/workflows/$ID/execute" -H "X-N8N-API-KEY: $N8N_API_KEY"
-curl -sS -X POST "$N8N_HOST/webhook-test/my-path" -H "Content-Type: application/json" -d '{"foo":"bar"}'
+curl -sS -X POST "$N8N_API_URL/webhook-test/my-path" -H "Content-Type: application/json" -d '{"foo":"bar"}'
 ```
 ```
 n8n_test_workflow       { "id": "$ID" }
