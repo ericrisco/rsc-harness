@@ -1,0 +1,42 @@
+skill: unsloth
+
+should_trigger:
+  - prompt: "I want to QLoRA fine-tune Llama-3.1-8B but it OOMs on my 16GB GPU — how do I make it fit?"
+    why: Core niche — fast, low-VRAM single-GPU fine-tuning; the fit problem is exactly what load_in_4bit + get_peft_model + adamw_8bit + unsloth gradient checkpointing solve.
+  - prompt: "How do I fine-tune gpt-oss on a single 24GB GPU roughly 2x faster with less VRAM?"
+    why: Names the backend's headline (2x/less-VRAM), a single GPU, and a supported MoE model — squarely this skill.
+  - prompt: "My chat fine-tune's loss looks like it's covering the user turn — how do I mask the prompt so it only trains on the response?"
+    why: The train_on_responses_only / get_chat_template masking problem, the load-bearing gotcha owned here.
+  - prompt: "After training my LoRA with Unsloth, how do I export it to GGUF Q4_K_M for Ollama?"
+    why: Export mechanics (save_pretrained_gguf, quant choice, handoff to ollama) are half of this skill.
+  - prompt: "Turn a base Qwen into a reasoning model with GRPO on one GPU using reward functions."
+    why: GRPO/reasoning FT via GRPOTrainer + fast_inference vLLM, the low-VRAM RL path this skill covers.
+  - prompt: "Vull ajustar un model a una sola GPU sense quedar-me sense VRAM amb Unsloth."
+    why: Catalan; single-GPU low-VRAM fine-tuning with Unsloth by name — the exact trigger.
+
+should_not_trigger:
+  - prompt: "Should I fine-tune, use RAG, or just prompt-engineer for my support bot? And SFT vs DPO?"
+    route_to: finetuning
+    why: The whether/why/which-method decision is the method layer, not the backend that makes it run.
+  - prompt: "How do I format my conversations into a JSONL messages dataset for fine-tuning?"
+    route_to: training-data
+    why: Dataset construction/quality; this skill assumes the dataset already exists.
+  - prompt: "I exported a GGUF — how do I run it locally, write a Modelfile, and size VRAM in Ollama?"
+    route_to: ollama
+    why: Running the exported artifact locally is Ollama's job; Unsloth stops at producing the file.
+  - prompt: "Serve my merged 16-bit model at high throughput with tensor parallelism and continuous batching."
+    route_to: vllm
+    why: Serving-engine flags/throughput are the serving skill, not the training backend.
+  - prompt: "Which open model and license should I pick as my base — Llama vs Qwen vs Gemma?"
+    route_to: open-weights
+    why: Base-model selection + license tradeoffs are the choosing layer, not the fine-tuning backend.
+
+capability:
+  - scenario: "I have one RTX 4090 (24GB). Fine-tune Llama-3.1-8B-Instruct on my chat JSONL with Unsloth so loss is only on the assistant turns, then export a Q4_K_M GGUF to run in Ollama. It keeps OOMing."
+    must_include:
+      - "FastLanguageModel.from_pretrained with load_in_4bit=True and max_seq_length, using a pre-quantized unsloth/*-bnb-4bit base id (verify the current id)."
+      - "get_peft_model with r/lora_alpha/target_modules and use_gradient_checkpointing='unsloth'; plus VRAM levers for OOM (batch size + gradient_accumulation_steps, optim='adamw_8bit')."
+      - "get_chat_template for the correct Llama-3.1 template AND train_on_responses_only with matching instruction_part/response_part so loss is response-only — with a decode/label sanity check."
+      - "Export via save_pretrained_gguf(quantization_method='q4_k_m') and the note that running it is an ollama job (create from the GGUF, run); merge to 16bit for vLLM instead."
+      - "The honesty hedge: the ~2x faster / ~70% less VRAM headline is model/GPU/config-specific vs a HF+FA2 QLoRA baseline — verify current numbers at docs.unsloth.ai and don't quote one number as gospel."
+      - "The single-GPU guardrail (OSS core is single-GPU; multi-GPU/multi-node is the paid/verify-live tier) and the boundary that method choice is finetuning, not this."

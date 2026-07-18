@@ -1,0 +1,45 @@
+skill: nlp
+
+should_trigger:
+  - prompt: "Should I use BPE or WordPiece for my tokenizer, and what's the difference?"
+    why: "Core tokenization-algorithm choice this skill owns; no retrieval or training context."
+  - prompt: "BERT vs GPT vs T5 — which one do I pick for classifying support tickets into 6 categories?"
+    why: "Model-type-per-task decision (encoder vs decoder vs enc-dec) is the skill's opening decision gate."
+  - prompt: "My tokenizer splits Catalan text into way more tokens than the English equivalent, so it costs more — why?"
+    why: "Multilingual over-fragmentation / fertility tax is section 4; the cost symptom points squarely here."
+  - prompt: "Is BLEU or ROUGE a meaningful metric for judging my summaries, or is it misleading?"
+    why: "Metric selection plus the weak-correlation caveat for open-ended generation, owned in section 3."
+  - prompt: "How do I evaluate a NER model properly — entity-level F1 vs per-token accuracy?"
+    why: "Token-classification evaluation with seqeval entity-F1 is explicitly the skill's task + metric."
+  - prompt: "quin model faig servir per classificar text: un encoder tipus BERT o un LLM generatiu?"
+    why: "Catalan trigger on the encoder-vs-decoder model-type decision, the skill's primary gate."
+  - prompt: "My fine-tuned classifier gives garbage at inference but was fine in training — could the tokenizer be the problem?"
+    why: "Non-obvious: the classic train/inference tokenizer mismatch that corrupts silently, the skill's load-bearing guardrail."
+
+should_not_trigger:
+  - prompt: "Which embedding model and chunk size should I use to make semantic search return relevant results?"
+    route_to: embeddings-search
+    why: "Retrieval embedding choice, chunking and recall@k are the retrieval technique layer, not task modeling."
+  - prompt: "Build the full RAG pipeline: retrieve context, prompt the model, and generate a grounded answer."
+    route_to: rag
+    why: "End-to-end retrieve→generate answer loop and groundedness live in rag, past where nlp stops."
+  - prompt: "Rewrite my system prompt with few-shot examples so the model stops refusing valid requests."
+    route_to: prompt-engineering
+    why: "Prompt wording / few-shot design, not tokenization, architecture, or metrics."
+  - prompt: "Fine-tune Llama with LoRA on my instruction dataset using trl and peft."
+    route_to: finetuning
+    why: "Actually training/adapting the network is the finetuning method skill, not picking type/metric."
+  - prompt: "Convert my customer chats into a JSONL messages dataset with system/user/assistant turns for training."
+    route_to: training-data
+    why: "Building the training corpus format is training-data, not NLP task modeling or metrics."
+
+capability:
+  - scenario: "A team has 40k multilingual support tickets (English + Catalan + Arabic) to auto-route into 8 categories and also to extract product names as entities. They're unsure whether to use a big generative LLM, why Arabic tickets seem to cost far more tokens, and how to know if the models are any good."
+    must_include:
+      - "Picks an encoder (BERT-family / ModernBERT, multilingual e.g. XLM-R) with a classification head for the 8-way routing rather than a large generative decoder, justifying cost/latency/accuracy, and hedges that specific checkpoints and licenses must be checked on the model card"
+      - "Loads the tokenizer from the same checkpoint and uses it identically at train and inference, calling out that a train/inference tokenizer mismatch corrupts results silently"
+      - "Explains the Arabic token blow-up as tokenizer over-fragmentation / fertility (2–15x more tokens on non-English scripts), recommends a multilingual SentencePiece-based tokenizer and measuring fertility per language before committing"
+      - "Uses a token-classification (NER) setup with B-/I-/O labels aligned to subwords (-100 on continuations/specials) for product-name extraction"
+      - "Evaluates routing with macro-F1 (not raw accuracy, because classes are imbalanced) and NER with entity-level F1 via seqeval (not per-token accuracy)"
+      - "Notes that if any free-text summarization/quality judgment is added, BLEU/ROUGE/chrF correlate weakly with human judgment on open-ended output and an LLM-as-judge plus human spot-check is needed, with judge-bias mitigation"
+      - "Routes retrieval/vector search to embeddings-search, the RAG answer loop to rag, prompt wording to prompt-engineering, and the actual training to finetuning/deep-learning"

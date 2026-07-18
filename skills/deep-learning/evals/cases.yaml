@@ -1,0 +1,48 @@
+skill: deep-learning
+
+should_trigger:
+  - prompt: "My PyTorch training loss isn't going down at all — the loop looks fine, what am I missing?"
+    why: "Core training-loop debugging in Torch; the diagnosis lands on the five-step loop and its silent bugs, this skill's center."
+  - prompt: "Loss becomes NaN after a few hundred steps when I turn on float16. How do I fix it?"
+    why: "AMP fp16 underflow / missing GradScaler and the bf16 alternative — the mixed-precision section owns this."
+  - prompt: "How do I use torch.autocast and GradScaler, and should I pick bf16 or fp16?"
+    why: "Explicit AMP API + the bf16-vs-fp16 decision this skill teaches."
+  - prompt: "I need to train this model across 4 GPUs — DDP or FSDP, and how do I launch it?"
+    why: "Distributed choice by memory-fit plus torchrun launch is a named section (and references/distributed.md)."
+  - prompt: "My validation accuracy is way worse than training and I think I forgot model.eval()."
+    why: "Non-obvious guardrail: eval() vs train() flips Dropout/BatchNorm; squarely a load-bearing gotcha here."
+  - prompt: "Gradients seem to add up across batches and training blows up — is my loop wrong?"
+    why: "Non-obvious: the symptom is a missing optimizer.zero_grad(), the flagship silent bug of this skill; no API named."
+  - prompt: "Build a CNN from scratch in PyTorch and write the training loop to fit it on my image dataset."
+    why: "From-scratch net + custom loop in Torch — inside the boundary vs finetuning/ML."
+  - prompt: "vull entrenar una xarxa neuronal des de zero amb PyTorch i que sigui reproduïble"
+    why: "Catalan trigger: from-scratch neural net + reproducibility, both owned here."
+
+should_not_trigger:
+  - prompt: "Fine-tune Llama with QLoRA on my instruction dataset using trl and peft."
+    route_to: finetuning
+    why: "Adapting a pretrained LLM with LoRA/QLoRA is the finetuning method skill, not general net training."
+  - prompt: "Should I use XGBoost or a random forest for this tabular churn dataset?"
+    route_to: machine-learning
+    why: "Classic/tabular GBDT modeling — no autograd, no PyTorch loop."
+  - prompt: "Which tokenizer and how do I compute F1/BLEU for my text classification task?"
+    route_to: nlp
+    why: "Tokenization and NLP task metrics live in nlp; only the raw training loop routes back here."
+  - prompt: "Serve my trained model with vLLM and set the right batching flags for throughput."
+    route_to: vllm
+    why: "Inference/serving engine, not training."
+  - prompt: "Set up a clean Python project with uv, pytest, and type checking for my model code."
+    route_to: python
+    why: "Env/packaging/testing hygiene, not the neural-net training itself."
+
+capability:
+  - scenario: "A user is training a from-scratch image classifier in PyTorch on one A100. Training loss is unstable and sometimes NaNs, validation numbers look wrong, and they want it faster and reproducible. Write the training setup and explain the fixes."
+    must_include:
+      - "Correct five-step loop with optimizer.zero_grad(set_to_none=True) EVERY step, explaining that PyTorch accumulates .grad so skipping zero_grad silently sums gradients across batches"
+      - "AMP via torch.autocast on forward+loss only with torch.amp.GradScaler; recommends bf16 on A100 (no scaler needed) and notes fp16 REQUIRES the scaler to avoid underflow NaNs"
+      - "Gradient clipping done after scaler.unscale_(optimizer), and CrossEntropyLoss fed raw logits (no Softmax before it)"
+      - "model.eval() plus torch.no_grad() for validation, stating it changes Dropout/BatchNorm behavior and prevents graph build, and model.train() to switch back — as the cause of bad val numbers"
+      - "AdamW with weight decay excluded from bias/Norm params, plus a warmup→cosine schedule (LinearLR + CosineAnnealingLR via SequentialLR) with step() cadence matching the scheduler units"
+      - "torch.compile(model) offered as the speedup, noting first steps are slow due to compilation"
+      - "Reproducibility: seed random/numpy/torch, torch.use_deterministic_algorithms(True), cudnn.deterministic/benchmark=False, CUBLAS_WORKSPACE_CONFIG, and the honest caveat that results are NOT guaranteed across PyTorch releases/platforms or CPU-vs-GPU even with identical seeds"
+      - "Checkpoints save model+optimizer+scheduler+scaler state_dicts (not the model object), resuming model first; version hedged to PyTorch 2.x (~2.13, verify)"

@@ -1,0 +1,42 @@
+skill: open-weights
+
+should_trigger:
+  - prompt: "Which open-weight model should I pick for a customer-support chatbot I plan to ship commercially?"
+    why: "Core selection + license-clearance question across families — the CHOICE layer this skill owns."
+  - prompt: "Can I use Llama commercially in my SaaS product, or does its license restrict that?"
+    why: "License-class question on Llama (Meta Community License, not OSI-open) — the load-bearing section."
+  - prompt: "Is Qwen Apache-2.0 across every size, or do I have to check each model card separately?"
+    why: "Per-size license variance — squarely the verify-the-card rule this skill teaches."
+  - prompt: "What is the largest open LLM I can realistically run on a single 24GB GPU?"
+    why: "Size-to-VRAM budgeting to narrow the model choice before picking — this skill's §4."
+  - prompt: "Is the original Codestral safe to use in a commercial product, or is it non-commercial only?"
+    why: "Restricted/non-commercial (MNPL) gate — the fatal-if-missed license class."
+  - prompt: "Quin model obert puc fer servir legalment en un producte comercial i que càpiga en una GPU de 16GB?"
+    why: "Catalan (non-English) phrasing; open-model selection + license + VRAM fit — this skill's whole remit."
+
+should_not_trigger:
+  - prompt: "Download the Llama weights from the Hub with the hf CLI and push a model card."
+    route_to: huggingface
+    why: "Getting/hosting weights on HF — huggingface's job; this skill only says WHICH repo, not how to pull it."
+  - prompt: "My 70B OOMs in Ollama at 128K context — how do I shrink the KV cache to make it fit?"
+    route_to: ollama
+    why: "Operational, single-box run + per-request KV-cache math — ollama, not the selection layer."
+  - prompt: "Serve a 70B across two 80GB GPUs with tensor parallelism and high request throughput."
+    route_to: vllm
+    why: "Production serving engine + tensor-parallel flags — vllm owns serving, not model choice."
+  - prompt: "Fine-tune Qwen on my instruction dataset with LoRA and export the adapter."
+    route_to: finetuning
+    why: "Adapting a chosen base with LoRA/SFT — finetuning; this skill only chooses+clears the base first."
+  - prompt: "Build a retrieval pipeline over our docs with chunking, an index, and reranking."
+    route_to: rag
+    why: "Designing a retrieval system, not selecting or licensing an open model."
+
+capability:
+  - scenario: "Choose an open-weight model for a commercial customer-support assistant that must run on a single 24GB GPU, and confirm its license lets you ship."
+    must_include:
+      - "verify the license on the EXACT model + size card, never assert it from memory — licenses change per version, size, and month"
+      - "classify the license: OSI-open (Apache-2.0/MIT) vs custom-community (Llama Meta Community, Gemma 1-3) vs non-commercial/restricted"
+      - "Llama is NOT OSI-open: Meta Community License with an acceptable-use policy, a 'Built with Llama' attribution requirement, and a >700M-monthly-active-users clause"
+      - "pick a size that fits 24GB: ~32B at 4-bit (~20GB) or an 8-14B, leaving headroom for KV cache — a 70B at fp16 (~140GB) does not fit one GPU"
+      - "a fine-tune or distill inherits its base model's license obligations"
+      - "hand off after choosing: huggingface to download/host, ollama to run locally, vllm to serve, finetuning to adapt"

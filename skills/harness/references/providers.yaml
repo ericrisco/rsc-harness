@@ -3486,6 +3486,40 @@ providers:
         Process (workflow) privileges. `PA_CLIENT_SECRET` — secret. Only flows inside a Dataverse
         solution are code-manageable; personal "My Flows" are not.
 
+  - id: WANDB
+    category: ia_training
+    detectors:
+      imports: ["import wandb", "from wandb", "@wandb/sdk"]
+      env_vars: ["WANDB_API_KEY", "WANDB_ENTITY", "WANDB_PROJECT"]
+      deps: ["wandb"]
+    dashboard_url: "https://wandb.ai/authorize"
+    env_example: |
+      # Weights & Biases — experiment tracking for training runs. Key: https://wandb.ai/authorize
+      WANDB_API_KEY=
+      # WANDB_ENTITY=       # team or username (optional default)
+      # WANDB_PROJECT=      # default project (optional)
+    files:
+      test_connection.sh: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        set -a; source "$SCRIPT_DIR/.env"; set +a
+        : "${WANDB_API_KEY:?WANDB_API_KEY not set}"
+        # GraphQL viewer whoami; W&B authenticates the API key via HTTP basic (key in the password field).
+        # If the GraphQL shape/auth changes, the portable fallback is: pip install wandb && wandb login --verify
+        USER=$(curl -fsS "https://api.wandb.ai/graphql" -u "api:$WANDB_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{"query":"query { viewer { username } }"}' \
+          | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["viewer"]["username"])')
+        echo "OK — W&B authed as $USER."
+      README.md: |
+        # WANDB
+        Weights & Biases — experiment tracking / MLOps for training runs (loss curves, sweeps,
+        artifacts). Used by the `finetuning`, `deep-learning`, and `machine-learning` skills.
+      CREDENTIALS.md: |
+        Dashboard: https://wandb.ai/authorize (copy your API key).
+        `WANDB_API_KEY` — secret. Verify with `wandb login --verify` if the GraphQL check is flaky.
+
 # Categories used to group tools in 01-TOOLS/README.md.
 categories:
   infra: "Infra & deploy"
@@ -3509,3 +3543,4 @@ categories:
   feature_flags: "Feature flags"
   chat_webhooks: "Chatops webhooks"
   automatizacion: "Automation"
+  ia_training: "AI / training & MLOps"

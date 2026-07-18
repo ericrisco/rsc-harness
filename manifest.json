@@ -1,7 +1,7 @@
 {
   "version": "0.1.39",
   "counts": {
-    "skills": 249
+    "skills": 257
   },
   "skills": [
     {
@@ -1192,6 +1192,32 @@
       "profiles": []
     },
     {
+      "id": "deep-learning",
+      "description": "Use when training or debugging a neural network in PyTorch — writing the training loop, chasing loss that won't drop or goes NaN, adding mixed precision (AMP), scaling across GPUs, or making a run reproducible. Covers tensors/autograd/nn.Module, torch.compile, the forward→loss→backward→step→zero_grad loop and its silent bugs, AdamW + cosine/warmup schedulers, DDP vs FSDP vs DeepSpeed ZeRO, checkpointing and seeds. PyTorch-first (JAX/TF exist). Triggers: 'my training loss isn't decreasing', 'loss becomes NaN after a few steps', 'how do I use torch.autocast and GradScaler', 'train this model across 4 GPUs', 'val accuracy is worse than train and I forgot model.eval()', 'gradients seem to add up across batches', 'build a CNN from scratch and train it', 'entrenar una xarxa neuronal des de zero amb PyTorch'. NOT adapting a pretrained LLM with LoRA/QLoRA (that is finetuning); NOT classic/tabular models like XGBoost or sklearn (that is machine-learning); NOT tokenization or NLP task metrics (that is nlp).",
+      "tags": [
+        "pytorch",
+        "deep-learning",
+        "neural-networks",
+        "training-loop",
+        "autograd",
+        "mixed-precision",
+        "amp",
+        "ddp",
+        "fsdp",
+        "optimizer",
+        "lr-scheduler",
+        "reproducibility",
+        "torch-compile"
+      ],
+      "recommends": [
+        "machine-learning",
+        "finetuning",
+        "nlp",
+        "python"
+      ],
+      "profiles": []
+    },
+    {
       "id": "deployment",
       "description": "Use when containerizing an app, writing a Dockerfile, setting up GitHub Actions CI/CD, choosing a deploy target, or deploying to Coolify, Vercel, or a Hetzner VPS — multi-stage builds (FastAPI/uv, Go/distroless, Next.js standalone, Flutter web, Postgres), BuildKit build secrets, image scanning (trivy/hadolint), OIDC to registries (no long-lived secrets), least-privilege GITHUB_TOKEN, zero-downtime/rolling deploys, env/secrets flow GitHub→Coolify, healthchecks, rollback, and a hosting decision matrix (Vercel vs Hetzner+Coolify vs a third option). Trigger phrases: 'dockerize', 'write a Dockerfile', 'CI pipeline', 'GitHub Actions', 'deploy', 'ship it', 'where should I host this', 'Coolify', 'Vercel', 'Hetzner', 'VPS', 'docker-compose for local dev'.",
       "tags": [
@@ -1694,6 +1720,30 @@
         "pitch-deck",
         "investor-materials",
         "fundraising"
+      ],
+      "profiles": []
+    },
+    {
+      "id": "finetuning",
+      "description": "Use when adapting an open-weight model to a target FORM or BEHAVIOR — tone, output format, domain style, a reasoning/tool-calling pattern — via LoRA/QLoRA or full fine-tuning with TRL SFTTrainer and then preference optimization (DPO/ORPO/KTO/GRPO); when choosing fine-tune vs prompt vs RAG vs longer context; when setting LoRA r/alpha/target_modules; when eval loss climbs while train loss keeps falling; when the adapter seems to have learned nothing; when inference outputs garbage after a run. Triggers: 'fine-tune Llama/Qwen on our data', 'LoRA vs QLoRA vs full fine-tune', 'SFT then DPO/ORPO/KTO/GRPO', 'set target_modules / rank / alpha', 'my fine-tune overfits', 'the model forgot everything after training', 'write a GRPO reward function', 'ajustar un modelo amb LoRA amb les nostres dades'. NOT adding facts or fresh knowledge to a model (that is rag); NOT the fast single-GPU Unsloth backend or GGUF export (that is unsloth); NOT serving the trained model (that is vllm).",
+      "tags": [
+        "finetuning",
+        "lora",
+        "qlora",
+        "sft",
+        "dpo",
+        "grpo",
+        "peft",
+        "trl",
+        "preference-optimization"
+      ],
+      "recommends": [
+        "training-data",
+        "unsloth",
+        "open-weights",
+        "huggingface",
+        "vllm",
+        "rag"
       ],
       "profiles": []
     },
@@ -2203,7 +2253,7 @@
     },
     {
       "id": "huggingface",
-      "description": "Use when running open models or working on the Hugging Face platform: calling a model via the Inference Providers router or InferenceClient, downloading/uploading/versioning repos on the Hub with the hf CLI, deploying a dedicated Inference Endpoint with scale-to-zero, hosting a Gradio Space with ZeroGPU, picking an open model by task/license/size, or loading a model locally with transformers. Triggers: 'call an open model through Hugging Face', 'InferenceClient embeddings', 'hf download/upload', 'write a model card', 'router.huggingface.co', 'my hf-inference serverless call 404s on a 70B model', 'scale-to-zero endpoint', 'ZeroGPU Space', 'desplegar un modelo de Hugging Face con escalado a cero', 'necesito controlar el coste de inferencia en HF'. NOT serving a model locally on your own machine (that is ollama), NOT renting and operating your own GPU box (that is runpod), NOT generating creative images via a hosted API (that is replicate-images).",
+      "description": "Use when running open models or working on the Hugging Face platform: calling a model via the Inference Providers router or InferenceClient, downloading/uploading/versioning repos on the Hub with the hf CLI, deploying a dedicated Inference Endpoint with scale-to-zero, hosting a Gradio Space with ZeroGPU, picking an open model by task/license/size, or loading a model locally with transformers. Triggers: 'call an open model through Hugging Face', 'InferenceClient embeddings', 'hf download/upload', 'write a model card', 'router.huggingface.co', 'my hf-inference serverless call 404s on a 70B model', 'scale-to-zero endpoint', 'ZeroGPU Space', 'desplegar un modelo de Hugging Face con escalado a cero'. NOT serving a model locally on your own machine (that is ollama), NOT renting and operating your own GPU box (that is runpod), NOT generating creative images via a hosted API (that is replicate-images), NOT fine-tuning with trl/peft (that is finetuning), NOT building training datasets (that is training-data).",
       "tags": [
         "huggingface",
         "inference-providers",
@@ -2689,6 +2739,31 @@
       "profiles": []
     },
     {
+      "id": "machine-learning",
+      "description": "Use when the task is a classic/tabular machine-learning problem — predict a column from rows of features with trees and scikit-learn: fit a RandomForest / XGBoost / LightGBM classifier or regressor, build a leak-proof Pipeline + ColumnTransformer, choose a cross-validation scheme (stratified / k-fold / time-series / grouped), pick the right metric on imbalanced classes (precision/recall/F1/ROC-AUC/PR-AUC, not accuracy), or debug a model that aced CV then collapsed in production. Triggers: 'train a model to predict churn/fraud/price', 'my ROC-AUC is 0.99 — is that leakage', 'which metric for imbalanced classes', 'cross-validation without leaking', 'XGBoost vs LightGBM', 'add a DummyClassifier baseline', 'entrena un modelo de clasificación tabular con scikit-learn'. NOT neural-net / PyTorch training (that is deep-learning), NOT cleaning the raw dirty table first (that is data-cleaning), NOT BI dashboards or forecasting a dated series (that is analytics/forecasting), NOT text/token modeling (that is nlp).",
+      "tags": [
+        "machine-learning",
+        "scikit-learn",
+        "sklearn",
+        "xgboost",
+        "lightgbm",
+        "tabular",
+        "gbdt",
+        "cross-validation",
+        "data-leakage",
+        "classification",
+        "regression",
+        "pipeline"
+      ],
+      "recommends": [
+        "deep-learning",
+        "data-cleaning",
+        "python",
+        "training-data"
+      ],
+      "profiles": []
+    },
+    {
       "id": "make",
       "description": "Use when operating Make.com (formerly Integromat) programmatically — driving its REST API v2 or the Make MCP server from code or an agent to create, read, update, activate, run, clone, or delete scenarios, connections, hooks, and data stores. Triggers: 'create a Make scenario via the API', 'export a scenario blueprint, mutate it, and push it back', 'start/stop/run a Make scenario from a script', 'clone this Integromat scenario into another team', 'connect the Make MCP server so an agent runs my scenarios as tools', 'my valid Make API token returns an auth error' (zone trap), 'automatiza escenarios de Make.com desde la API'. NOT designing what the flow should do — trigger, branching, mapping, dedup, error path (automation-flows), NOT choosing Make vs n8n vs Zapier by billing model (automation-strategy), NOT operating n8n / Zapier / Power Automate (their skills), NOT a generic typed REST client with pagination/backoff (api-connector-builder) or an inbound webhook receiver in your own app (webhooks).",
       "tags": [
@@ -3036,6 +3111,29 @@
       "profiles": []
     },
     {
+      "id": "nlp",
+      "description": "Use when choosing how to tokenize text or which transformer type fits an NLP task, when a tokenizer over-fragments non-English text or inflates token cost, when picking a language metric, or when classification / NER / summarization output looks wrong and you can't tell whether the tokenizer, the architecture, or the metric is at fault. Covers BPE / WordPiece / SentencePiece-Unigram / byte-level BPE, special tokens, encoder (BERT) vs decoder (GPT) vs encoder-decoder (T5) choice, classification, NER, seq2seq, sentence embeddings, and metrics (F1, entity-F1, BLEU / ROUGE / chrF, perplexity, LLM-as-judge). Triggers: 'BPE or WordPiece', 'BERT vs GPT vs T5 for this task', 'tokenizer splits Catalan into too many tokens', 'is BLEU good for summaries', 'entity F1 for NER', 'quin model faig servir per classificar text'. NOT retrieval / vector search (that is embeddings-search), NOT the RAG loop (that is rag), NOT prompt wording (that is prompt-engineering), NOT training the net (that is finetuning / deep-learning).",
+      "tags": [
+        "nlp",
+        "tokenization",
+        "bpe",
+        "wordpiece",
+        "ner",
+        "text-classification",
+        "bleu",
+        "rouge",
+        "perplexity",
+        "transformers"
+      ],
+      "recommends": [
+        "deep-learning",
+        "embeddings-search",
+        "rag",
+        "training-data"
+      ],
+      "profiles": []
+    },
+    {
       "id": "no-code-app",
       "description": "Use when building an app on a no-code/low-code platform (Bubble, Softr, Glide, with Airtable/Xano backends) — picking the tool, modeling the data, taming usage/cost metering, or planning the exit before lock-in. Triggers: 'build a CRM without code', 'Bubble or Glide for my MVP', 'monta una app sin codi per reserves', 'my Bubble bill suddenly exploded' (workload-unit metering), 'Glide updates overage', 'how do I avoid getting locked into a no-code tool', 'when should I stop and write real code'. NOT a coded web app (that is nextjs).",
       "tags": [
@@ -3131,6 +3229,24 @@
         "modal",
         "llm-pipeline",
         "rag"
+      ],
+      "profiles": []
+    },
+    {
+      "id": "open-weights",
+      "description": "Use when choosing an open-weight LLM and clearing it for use — which family and size fit a task, hardware and budget, and above all whether the license lets you ship (Llama, Qwen, Mistral/Mixtral, Gemma, DeepSeek, Phi, gpt-oss, and others). Owns the license-CLASS map (OSI-open Apache/MIT vs custom-community like Llama/Gemma vs non-commercial/restricted like the original Codestral) and the always-verify-the-model-card rule, plus size-to-VRAM budgeting and quant formats (GGUF/AWQ/GPTQ, what Q4_K_M means). Triggers: 'which open model should I use', 'can I use Llama/Gemma commercially', 'is Qwen Apache-2.0', 'what open LLM fits a 24GB GPU', 'is this license safe to ship in a product', 'quin model obert puc fer servir legalment'. NOT how to download or host on HF (that is huggingface), NOT running it locally (that is ollama), NOT serving at throughput (that is vllm), NOT fine-tuning it (that is finetuning) — this layer only tells you WHICH model and whether the license permits it, then hands off.",
+      "tags": [
+        "open-weights",
+        "open-source-llm",
+        "model-selection",
+        "model-licenses",
+        "llama-qwen-mistral-gemma"
+      ],
+      "recommends": [
+        "huggingface",
+        "ollama",
+        "finetuning",
+        "vllm"
       ],
       "profiles": []
     },
@@ -4732,6 +4848,29 @@
       "profiles": []
     },
     {
+      "id": "training-data",
+      "description": "Use when assembling or curating the corpus a fine-tune trains on: turning raw examples into JSONL in the format a trainer expects (Alpaca instruction, conversational messages, DPO preference pairs, KTO binary-label), matching your data to the model's chat template, generating synthetic or distilled examples, deduplicating and decontaminating against eval sets, or quality-filtering. Triggers: 'what format should my fine-tuning dataset be in', 'build a DPO preference dataset', 'convert my Q&A into the messages/chat format', 'my chat template does not match my training data', 'generate synthetic instruction data with distilabel', 'dedup and decontaminate my training set', 'quants exemples necessito i com filtro la qualitat del dataset abans d'entrenar'. NOT cleaning tabular rows/nulls/dtypes (that is data-cleaning), NOT building a retrieval corpus of chunks+embeddings (that is embeddings-search), NOT running the trainer or picking LoRA hyperparameters (that is finetuning/unsloth).",
+      "tags": [
+        "training-data",
+        "fine-tuning-dataset",
+        "jsonl",
+        "chat-template",
+        "preference-data",
+        "dpo",
+        "kto",
+        "synthetic-data",
+        "decontamination",
+        "dataset-curation"
+      ],
+      "recommends": [
+        "finetuning",
+        "unsloth",
+        "huggingface",
+        "data-cleaning"
+      ],
+      "profiles": []
+    },
+    {
       "id": "translation-l10n",
       "description": "Use when adding a second or Nth language to a web/app product, wiring i18n plumbing (extract strings, ICU messages, locale routing), fixing broken plurals or dates, or making a UI survive other languages (RTL, text expansion). Triggers: 'ship the app in French and Arabic', 'set up next-intl routing with generateStaticParams', 'our Russian plurals always show the singular', 'German text overflows the buttons', 'dates still show American format for Spanish users', 'the Arabic layout is mirrored wrong', 'traducir la app al árabe y montar el glosario', 'necessito localitzar el producte'. NOT defining the brand's tone in one language (that is brand-voice).",
       "tags": [
@@ -4840,6 +4979,26 @@
       ]
     },
     {
+      "id": "unsloth",
+      "description": "Use when fine-tuning an open-weight LLM fast on ONE GPU with low VRAM — Unsloth's FastLanguageModel/FastModel + 4-bit QLoRA + trl SFTTrainer, response-only loss masking via get_chat_template/train_on_responses_only, GRPO reasoning FT, and export to merged-16bit / GGUF / push_to_hub for Ollama or vLLM. Triggers: 'fine-tune Llama/Qwen/Gemma/gpt-oss on a single 16GB/24GB GPU', 'QLoRA OOMs on my GPU, make it fit', 'train ~2x faster with less VRAM', 'why is my loss covering the prompt / how do I mask the user turn', 'save my LoRA as GGUF Q4_K_M for Ollama', 'ajustar un modelo en una sola GPU sense quedar-me sense VRAM'. NOT whether/why/which method to fine-tune or trl/peft theory (that is finetuning), NOT running the exported GGUF locally (that is ollama), NOT serving-engine flags/throughput (that is vllm), NOT building the JSONL dataset (that is training-data).",
+      "tags": [
+        "unsloth",
+        "qlora",
+        "lora",
+        "single-gpu",
+        "gguf",
+        "fine-tuning"
+      ],
+      "recommends": [
+        "finetuning",
+        "training-data",
+        "open-weights",
+        "ollama",
+        "huggingface"
+      ],
+      "profiles": []
+    },
+    {
       "id": "vector-db",
       "description": "Use when operating a vector store as a data layer — choosing or migrating between Pinecone, Qdrant, Weaviate, or pgvector; designing a collection/index (distance metric, dimensions, HNSW m/ef_construction, named vectors); filtering on metadata/payload; running hybrid dense+sparse search; or picking quantization to cut RAM and cost. Symptoms: search returns garbage, filters get silently ignored, recall is low, queries are slow, the bill is too high, a filtered query returns fewer than k rows. Triggers: 'set up a vector database', 'my similarity search ignores the metadata filter', 'ef_search vs recall', 'move off Pinecone to pgvector to cut cost', 'hybrid search with RRF', 'why does my filtered query return fewer than k results', 'crear una colección en Qdrant con cuantización binaria', 'la cerca vectorial retorna resultats dolents'. NOT how to produce, chunk, or judge embeddings (that is embeddings-search).",
       "tags": [
@@ -4916,6 +5075,25 @@
         "brand-voice",
         "podcast",
         "ads"
+      ],
+      "profiles": []
+    },
+    {
+      "id": "vllm",
+      "description": "Use when self-hosting an open-weight LLM for high-throughput, concurrent serving with vLLM — running `vllm serve` as an OpenAI-compatible endpoint, splitting a model across GPUs with tensor/pipeline parallelism, loading AWQ/GPTQ/FP8/compressed-tensors quants, serving one or many LoRA adapters, or debugging KV-cache OOM from --gpu-memory-utilization / --max-model-len. Triggers: 'serve a 70B to many users at once', 'point my OpenAI client at a self-hosted model', 'split a model across 4 GPUs with tensor parallel', 'why does vllm OOM at long context', 'serve my fine-tuned LoRA adapter', 'health check my vllm server', 'servir un modelo abierto con alta concurrencia en mis propias GPUs'. NOT renting/provisioning the GPU box itself (that is runpod / modal), NOT single-user laptop inference (that is ollama), NOT a hosted inference API you do not operate (that is together-fireworks / huggingface).",
+      "tags": [
+        "vllm",
+        "llm-serving",
+        "inference-server",
+        "tensor-parallel",
+        "quantization"
+      ],
+      "recommends": [
+        "open-weights",
+        "finetuning",
+        "runpod",
+        "modal",
+        "ollama"
       ],
       "profiles": []
     },
