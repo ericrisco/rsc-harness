@@ -12,7 +12,7 @@
   ██    ██   ███████     ███████ 
 ```
 
-# `rsc` — 248 agent skills, one CLI, zero bloat
+# `rsc` — 256 agent skills, one CLI, zero bloat
 
 **A self-recommending skill catalog for 17 coding assistants** — Claude Code,
 Codex, GitHub Copilot, Cursor, Gemini, Windsurf, Cline, Antigravity, Zed and more.
@@ -243,7 +243,7 @@ just asks in plain language.
 
 ## The catalog
 
-249 skills, grouped by what you're trying to do. Click any skill to read its
+257 skills, grouped by what you're trying to do. Click any skill to read its
 `SKILL.md`. It fires on its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -323,6 +323,12 @@ Operate the big automation platforms **programmatically or via MCP** — create 
 ### 🛰️ AI — run it on
 
 [replicate](skills/replicate/) · [runpod](skills/runpod/) · [modal](skills/modal/) · [huggingface](skills/huggingface/) · [ollama](skills/ollama/) · [together-fireworks](skills/together-fireworks/) · [fal](skills/fal/)
+
+### 🎓 AI — train it
+
+Train and adapt open models end to end: classic ML, deep learning, NLP, fine-tuning (with Unsloth), building training datasets, choosing open-weight models by license/size, and serving them at throughput with vLLM. Facts that move monthly (versions, model licenses) are verified at author time and hedged.
+
+[machine-learning](skills/machine-learning/) · [deep-learning](skills/deep-learning/) · [nlp](skills/nlp/) · [finetuning](skills/finetuning/) · [training-data](skills/training-data/) · [unsloth](skills/unsloth/) · [open-weights](skills/open-weights/) · [vllm](skills/vllm/)
 
 ### 🗣️ Languages
 

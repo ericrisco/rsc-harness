@@ -1,0 +1,54 @@
+skill: machine-learning
+
+should_trigger:
+  - prompt: "Train a model on this customer table to predict who will churn, and tell me how well it actually generalizes."
+    why: Core ask — supervised tabular classification with an honest generalization estimate; the headline use case.
+  - prompt: "My gradient-boosting model scores 0.99 ROC-AUC in cross-validation but tanks in production. Is this leakage?"
+    why: Leakage debugging (#1 sin) — only this skill explains fit-on-train-only, target-derived features, and the sacred test set.
+  - prompt: "My positive class is 2% of the rows — which metric should I optimize, and is accuracy lying to me?"
+    why: The accuracy trap on imbalance → PR-AUC/precision/recall/F1; the metric-selection reasoning is this skill's.
+  - prompt: "Set up cross-validation for this dataset so no test information leaks into training or preprocessing."
+    why: Pipeline + ColumnTransformer + splitter choice so transforms fit per fold — the leakage-safe CV pattern lives here.
+  - prompt: "XGBoost or LightGBM for my tabular regression problem, and should I even bother with a neural net?"
+    why: GBDT choice + the trees-beat-deep-nets-on-tabular finding; classic-model territory, not deep-learning.
+  - prompt: "Add a proper baseline so I can tell whether my random forest is actually doing anything."
+    why: DummyClassifier/DummyRegressor floor — a load-bearing rigor step this skill insists on.
+  - prompt: "Entrena un modelo de clasificación tabular con scikit-learn y dame una métrica honesta, no solo accuracy."
+    why: Spanish trigger — same tabular-classification-with-honest-metric intent, no English keyword present.
+
+should_not_trigger:
+  - prompt: "Train a convolutional neural network in PyTorch to classify these product images."
+    route_to: deep-learning
+    why: Neural nets on images — PyTorch training, explicitly the deep-learning boundary, not tabular sklearn.
+  - prompt: "This CSV is full of nulls, duplicate rows, and 'N/A' strings — fix it before I can model anything."
+    route_to: data-cleaning
+    why: Producing the validated table is upstream; this skill starts once the table is clean.
+  - prompt: "Classify these free-text support tickets into topics straight from the ticket wording."
+    route_to: nlp
+    why: Text/token modeling is nlp's domain; route free-text problems there (a TF-IDF baseline can still live in an ML pipeline, but the framing is NLP).
+  - prompt: "Forecast next quarter's revenue from this monthly time-series."
+    route_to: forecasting
+    why: Projecting a dated series forward is a forecasting product, not a tabular predict-a-column task.
+  - prompt: "Build a KPI dashboard and executive summary from this already-clean sales table."
+    route_to: business-intelligence
+    why: Explaining KPIs / dashboards consumes data; it is not model training.
+  - prompt: "Assemble a JSONL dataset of chat messages and preference pairs to fine-tune an LLM."
+    route_to: training-data
+    why: Building an LLM training corpus, not a tabular ML model.
+
+capability:
+  - scenario: >
+      Given a clean, validated table of ~50k rows for a churn/fraud problem where only ~3% of rows are
+      positive, produce a trustworthy modeling workflow: hold out a test set, build a leak-proof pipeline,
+      cross-validate, pick a sensible metric and model, beat a baseline, and report an honest final number.
+    must_include:
+      - Splits off a held-out test set FIRST with train_test_split(..., stratify=y, random_state=...), and leaves it untouched until the single final evaluation
+      - Puts all learned preprocessing (impute/scale/encode) INSIDE a Pipeline + ColumnTransformer so it is fit on the train fold only
+      - Uses StratifiedKFold (not plain KFold) for the imbalanced classes, with an integer random_state for reproducible folds
+      - Establishes a DummyClassifier baseline (e.g. strategy="most_frequent") that the real model must beat
+      - Defaults to a GBDT (HistGradientBoostingClassifier / XGBoost / LightGBM) and notes that trees still beat deep nets on tabular data (Grinsztajn 2022, arXiv:2207.08815)
+      - Reports PR-AUC (average_precision) / precision / recall / F1 / confusion_matrix and explicitly does NOT use accuracy, because the classes are imbalanced
+      - Names data/target leakage as the #1 risk and audits for target-derived or not-available-at-prediction-time features
+      - Cross-validates the whole pipeline via cross_validate/GridSearchCV (scoring the pipeline, never globally-preprocessed data)
+      - Treats the 0.5 decision threshold as a tunable choice (e.g. from the PR curve or TunedThresholdClassifierCV), not a law
+      - Hedges the scikit-learn version (current major ~1.9, verify at scikit-learn.org) instead of asserting a frozen pin as fact

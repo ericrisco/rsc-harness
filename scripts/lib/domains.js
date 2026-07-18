@@ -16,6 +16,7 @@ export const DOMAINS = [
   { title: 'Data & analytics', ids: ['analytics', 'dashboard', 'kpi-framework', 'reporting', 'ab-testing', 'forecasting', 'data-cleaning', 'business-intelligence'] },
   { title: 'AI — build it in', ids: ['building-agents', 'rag', 'embeddings-search', 'prompt-engineering', 'llm-pipeline', 'agent-eval', 'chatbot', 'ai-media', 'replicate-images', 'structured-extraction', 'agent-safety', 'cost-tracking'] },
   { title: 'AI — run it on', ids: ['replicate', 'runpod', 'modal', 'huggingface', 'ollama', 'together-fireworks', 'fal'] },
+  { title: 'AI — train it', ids: ['machine-learning', 'deep-learning', 'nlp', 'finetuning', 'training-data', 'unsloth', 'open-weights', 'vllm'] },
   { title: 'Languages', ids: ['typescript', 'python', 'java', 'csharp-dotnet', 'php', 'ruby', 'cpp', 'elixir', 'bash-scripting', 'sql', 'go'] },
   { title: 'Frameworks & app stacks', ids: ['fastapi', 'nextjs', 'react', 'react-native', 'vue-nuxt', 'angular', 'svelte', 'astro', 'solid-js', 'htmx', 'nodejs', 'nestjs', 'django', 'laravel', 'rails', 'spring-boot', 'phoenix', 'flutter', 'swift-ios', 'kotlin-android', 'compose-multiplatform', 'expo', 'tauri', 'electron', 'rust', 'wordpress', 'shopify', 'no-code-app', 'chrome-extension', 'api-design'] },
   { title: 'Game development', ids: ['godot', 'unity', 'unreal', 'game-design', 'game-storytelling', 'level-design', 'gamedev-shaders', 'gamedev-multiplayer', 'gamedev-physics', 'gamedev-pathing', 'gamedev-shipping'] },

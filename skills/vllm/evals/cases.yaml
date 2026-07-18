@@ -1,0 +1,47 @@
+skill: vllm
+
+should_trigger:
+  - prompt: "I need to serve Llama 3.3 70B to hundreds of concurrent users on our own GPUs — what should I run?"
+    why: Core niche — high-throughput concurrent self-hosted serving is exactly what vLLM (PagedAttention + continuous batching) is for.
+  - prompt: "Split a model across 4 A100s with vLLM tensor parallelism and expose an OpenAI-compatible endpoint."
+    why: --tensor-parallel-size plus the OpenAI-compatible server, both owned here.
+  - prompt: "My vllm serve keeps OOMing once requests get to long context — how do I fix it?"
+    why: Non-obvious — KV cache scales with max-model-len × concurrency; fix is --max-model-len / --gpu-memory-utilization, the load-bearing guardrail.
+  - prompt: "How do I serve my fine-tuned LoRA adapter on top of the base model without merging it?"
+    why: --enable-lora + --lora-modules, routing by the request model field — serving the finetuning output.
+  - prompt: "Point my existing OpenAI Python client at a self-hosted vLLM server instead of api.openai.com."
+    why: The /v1 OpenAI-compatible surface with a repointed base_url — a defining vLLM path.
+  - prompt: "Is serving an AWQ quant on vLLM actually faster, or just smaller in VRAM?"
+    why: Quantization tradeoff (memory vs throughput by batch regime), an explicit section here.
+  - prompt: "Servir un modelo abierto con alta concurrencia en mis propias GPUs con endpoint compatible con OpenAI."
+    why: Spanish; the concurrent self-hosted OpenAI-compatible serving framing that defines vLLM.
+
+should_not_trigger:
+  - prompt: "Rent an A100 box in the cloud so I have somewhere to run my inference server."
+    route_to: runpod
+    why: Provisioning/renting the GPU box, not the serving engine flags that run on it.
+  - prompt: "Wrap my model in a serverless container that autoscales GPUs with traffic."
+    route_to: modal
+    why: The box + autoscaling around the process; vLLM is the engine inside, not the scaler.
+  - prompt: "I just want to run a 7B locally on my laptop for myself, no concurrency."
+    route_to: ollama
+    why: Single-user / laptop inference — no concurrency to exploit, so vLLM's machinery is wasted.
+  - prompt: "Which open model and quant should I even pick for a 24GB GPU under a permissive license?"
+    route_to: open-weights
+    why: Model/size/license/quant selection is the knowledge layer feeding vLLM, not a serving-flag question.
+  - prompt: "Just call a hosted inference API for Llama so I don't run any servers."
+    route_to: together-fireworks
+    why: A hosted API the user does not operate; vLLM is for a server you run yourself.
+  - prompt: "Fine-tune Llama 3 on my dataset to produce a LoRA adapter."
+    route_to: finetuning
+    why: Producing the adapter is training; vLLM serves the result, it does not train it.
+
+capability:
+  - scenario: "We have one node with 4 A100 80GB GPUs and need to serve Llama-3.3-70B to many concurrent users behind an OpenAI-compatible endpoint, including one fine-tuned LoRA adapter, without OOMing at long context."
+    must_include:
+      - Starts the server with `vllm serve <model>` and notes it is OpenAI-compatible (/v1/chat/completions, /v1/models) so an OpenAI client works by repointing base_url.
+      - Uses `--tensor-parallel-size 4` because the 70B does not fit one GPU but fits the node, and notes a model that fits one GPU should not be split.
+      - Serves the adapter with `--enable-lora` + `--lora-modules name=path`, routing by the request `model` field, and requires `--max-lora-rank` >= the trained rank.
+      - Caps `--max-model-len` and sets `--gpu-memory-utilization` (default ~0.92) because KV cache scales with context × concurrency — the top OOM cause.
+      - Sets `--api-key` (or VLLM_API_KEY) so the endpoint is not left open, and checks `/health` (no auth) then `/v1/models` to confirm what is served.
+      - Names the boundary — renting/provisioning the box is runpod/modal, single-user is ollama — and hedges that vLLM ships ~weekly so versions/defaults should be verified.

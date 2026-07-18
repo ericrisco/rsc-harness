@@ -1,0 +1,41 @@
+skill: training-data
+
+should_trigger:
+  - prompt: "What format should my fine-tuning dataset be in if I want to run DPO?"
+    why: "Core format-by-trainer decision — preference type {prompt, chosen, rejected}. Squarely this skill."
+  - prompt: "I have thousands of Q&A pairs. Convert them into the conversational messages format for SFT."
+    why: "Turning raw examples into the messages/role-content JSONL a trainer eats — the central deliverable."
+  - prompt: "My fine-tuned chat model never stops generating and repeats itself. I formatted the training data myself with the chat tokens."
+    why: "Non-obvious: hand-typed chat tokens / missing EOS = train/inference template mismatch. User never names the fix; this skill diagnoses it."
+  - prompt: "Generate synthetic instruction-tuning data with distilabel and then deduplicate it before training."
+    why: "Synthetic data (§3) + dedup (§4) — distilabel pipeline and MinHash, both this skill."
+  - prompt: "Do I need to decontaminate my training set against MMLU before I trust my eval numbers?"
+    why: "Decontamination against benchmark test sets — the load-bearing guardrail; leakage inflates eval."
+  - prompt: "Quants exemples necessito i com filtro la qualitat del dataset abans d'entrenar un model?"
+    why: "Catalan; quality-over-quantity filtering (LIMA) before training. This skill's §5."
+
+should_not_trigger:
+  - prompt: "Clean this messy CSV: fix the nulls and sentinels, dedupe the rows, and normalize the category column."
+    route_to: data-cleaning
+    why: "Tabular row cleaning (nulls/dtypes/dupe rows) — the explicit boundary; not an LLM training corpus."
+  - prompt: "Chunk our documentation, embed it, and build an index so we can retrieve relevant passages."
+    route_to: embeddings-search
+    why: "A retrieval corpus of chunks+embeddings, not a training corpus of messages/preference pairs."
+  - prompt: "Set the LoRA rank, learning rate, and batch size and launch the QLoRA fine-tune."
+    route_to: finetuning
+    why: "Running the trainer and choosing hyperparameters — training-data stops at the validated file."
+  - prompt: "Run the fine-tune on my single 4090 with Unsloth and export the result to GGUF for Ollama."
+    route_to: unsloth
+    why: "The actual training backend + export, not corpus preparation."
+  - prompt: "Help me write a better system prompt so the model returns clean JSON at inference time."
+    route_to: prompt-engineering
+    why: "Prompt craft for inference, no training corpus involved."
+
+capability:
+  - scenario: "I have 8,000 raw customer-support transcripts and want to fine-tune a chat model on them. Prepare the dataset."
+    must_include:
+      - "convert to conversational `messages` (role/content) — or Alpaca instruction/input/output — as JSONL, one JSON object per line, ending each SFT example on an assistant turn"
+      - "render through the TARGET model's chat template via apply_chat_template (add_generation_prompt=False for training) instead of hand-writing special tokens, because a template mismatch silently wrecks the run with no error"
+      - "deduplicate near-duplicates (MinHash/LSH) and decontaminate against the eval/benchmark test sets, or the reported eval score is inflated"
+      - "quality-filter over raw volume (LIMA, arXiv 2305.11206) — a few thousand curated examples beat a large noisy dump for alignment"
+      - "record the dataset license AND check source-usage/model-output terms — distilling another model's outputs may violate its ToS; keep per-example provenance"

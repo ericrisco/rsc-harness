@@ -1,0 +1,50 @@
+skill: finetuning
+
+should_trigger:
+  - prompt: "We want Qwen to always answer in our brand voice and emit a fixed JSON schema — fine-tune it on ~2k of our examples."
+    why: A form/behavior adaptation (tone + output format) with demonstrations — the core SFT use case finetuning owns.
+  - prompt: "Should I use LoRA, QLoRA, or full fine-tuning to adapt an 8B model on a single 24GB GPU?"
+    why: The memory/quality method choice (LoRA vs QLoRA vs full FT) is squarely this skill's decision.
+  - prompt: "I ran SFT and now want to prefer the better of two answers — set up DPO after it with our chosen/rejected pairs."
+    why: SFT → preference optimization pipeline; picking DPO for paired preference data is finetuning's job.
+  - prompt: "My fine-tune's train loss keeps dropping but eval loss is climbing and it forgot general chat — what's wrong?"
+    why: Overfitting (watch eval not train loss) plus catastrophic forgetting — both are finetuning diagnostics.
+  - prompt: "My LoRA run finished but the adapter barely changed anything — did I set target_modules wrong?"
+    why: The classic silent failure (wrong/too-few target_modules → adapter learns ~nothing) lives here.
+  - prompt: "Correctness is checkable for our math tasks — write a GRPO reward function to RL the model toward right answers."
+    why: GRPO with a reward function for a verifiable task is a finetuning preference-optimization method.
+  - prompt: "Ajustar un model Qwen amb LoRA amb les nostres dades perquè segueixi el nostre estil."
+    why: Catalan — LoRA fine-tuning to teach a house style is a form/behavior adaptation this skill owns.
+
+should_not_trigger:
+  - prompt: "The bot needs to answer from our latest policy PDFs and cite them — it keeps giving stale info."
+    route_to: rag
+    why: Facts/freshness/citations are supplied by retrieval, not baked into weights — fine-tuning teaches form, not facts.
+  - prompt: "The prompt works sometimes; can I get consistent JSON with a few-shot example instead of training?"
+    route_to: prompt-engineering
+    why: The cheaper, reversible lever to exhaust before spending a GPU; no training needed.
+  - prompt: "Which open model should I pick by license and size for commercial use — Llama vs Qwen vs Mistral?"
+    route_to: open-weights
+    why: Base-model selection by license/size/task is the choice layer feeding finetuning, not the training method.
+  - prompt: "Build and dedup our instruction JSONL and preference pairs corpus and check for contamination."
+    route_to: training-data
+    why: Constructing/validating the training corpus is training-data; finetuning consumes an already-clean corpus.
+  - prompt: "Run our fine-tuned model as a high-throughput API with batching and adapter hot-swapping."
+    route_to: vllm
+    why: Serving the trained model (throughput, adapter hot-swap) is vllm, not the training discipline.
+  - prompt: "Give me the fastest single-GPU way to fine-tune and export a GGUF for llama.cpp."
+    route_to: unsloth
+    why: A specific fast single-GPU backend plus GGUF export is unsloth; finetuning stays backend-agnostic.
+
+capability:
+  - scenario: "A team wants an 8B open model to consistently reply in their support tone and always return a fixed JSON envelope, on one 24GB GPU. They have ~1,500 curated examples and later some thumbs-up/down feedback. Design the approach end to end."
+    must_include:
+      - Applies the decision gate and confirms this is a form/behavior task (tone + format), explicitly contrasting it with RAG (facts) and prompting.
+      - Chooses QLoRA (4-bit NF4 base + LoRA adapters, arXiv 2305.14314) as the memory-efficient default for a single 24GB GPU.
+      - Uses TRL SFTTrainer with an SFTConfig and a PEFT LoraConfig, passing peft_config (and quantization_config for QLoRA); target_modules="all-linear".
+      - States LoRA hyperparameters: r/alpha with the alpha≈2r heuristic and a LoRA-appropriate learning rate (~1e-4–2e-4), 1–3 epochs.
+      - Warns that the chat template at train time must match serving and eos_token must be aligned, or inference outputs garbage.
+      - Notes the ~1,500 curated examples fit LIMA's quality-over-quantity finding (2305.11206) and routes corpus building to training-data.
+      - Defines evaluation on a held-out set with a task metric and says to watch EVAL loss (not train loss) for overfitting, plus contamination check.
+      - For the later thumbs-up/down feedback, recommends KTO (unpaired binary preference) rather than DPO (which needs paired chosen/rejected).
+      - Hedges that trl/peft/transformers versions and import paths (and model licenses) must be verified at author time as they change frequently.
