@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configure Claude Code &amp; Codex for your project — rsc</title>
+<meta name="description" content="One command sets up Claude Code, Codex, Cursor and 14 more AI coding agents for your project. rsc installs only the skills that fit — free, MIT.">
+<link rel="canonical" href="https://ericrisco.github.io/rsc-harness/">
+<link rel="alternate" hreflang="en" href="https://ericrisco.github.io/rsc-harness/">
+<link rel="alternate" hreflang="es" href="https://ericrisco.github.io/rsc-harness/es/">
+<link rel="alternate" hreflang="x-default" href="https://ericrisco.github.io/rsc-harness/">
+<meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#fdfdfb" media="(prefers-color-scheme: light)">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="rsc">
+<meta property="og:title" content="Configure Claude Code &amp; Codex for your project — rsc">
+<meta property="og:description" content="One command sets up 17 AI coding agents for your project. rsc reads your repo and installs only the skills that fit. Or paste this URL into your agent and it does it for you.">
+<meta property="og:url" content="https://ericrisco.github.io/rsc-harness/">
+<meta property="og:image" content="https://ericrisco.github.io/rsc-harness/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="es_ES">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Configure Claude Code &amp; Codex for your project — rsc">
+<meta name="twitter:description" content="One command sets up 17 AI coding agents for your project. Or paste this URL into your agent and it configures everything for you.">
+<meta name="twitter:image" content="https://ericrisco.github.io/rsc-harness/og.png">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23151a21'/%3E%3Ctext x='50' y='68' font-family='monospace' font-size='46' font-weight='700' text-anchor='middle' fill='%23fdfdfb'%3Ersc%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "rsc",
+      "alternateName": "@ericrisco/rsc",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "macOS, Linux, Windows (Node.js >= 18)",
+      "description": "A command-line installer that configures AI coding agents — Claude Code, Codex, Cursor, Gemini and 13 more — by installing only the skills a project needs, one at a time.",
+      "url": "https://ericrisco.github.io/rsc-harness/",
+      "downloadUrl": "https://www.npmjs.com/package/@ericrisco/rsc",
+      "installUrl": "https://www.npmjs.com/package/@ericrisco/rsc",
+      "softwareHelp": "https://github.com/ericrisco/rsc-harness#readme",
+      "license": "https://opensource.org/licenses/MIT",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "author": { "@type": "Person", "name": "Eric Risco", "url": "https://github.com/ericrisco" }
+    },
+    {
+      "@type": "WebSite",
+      "name": "rsc",
+      "url": "https://ericrisco.github.io/rsc-harness/",
+      "inLanguage": ["en", "es"],
+      "publisher": { "@type": "Person", "name": "Eric Risco" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "rsc", "item": "https://ericrisco.github.io/rsc-harness/" }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="rsc — home">
+      <span class="logo" aria-hidden="true">rsc</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-hide" href="#how">How it works</a>
+      <a class="nav-hide" href="#agents">For agents</a>
+      <a class="nav-hide" href="#skills">Skills</a>
+      <a href="https://github.com/ericrisco/rsc-harness" rel="noopener">GitHub</a>
+      <span class="lang" role="group" aria-label="Language">
+        <a href="./" aria-current="true" hreflang="en">EN</a>
+        <a href="es/" hreflang="es">ES</a>
+      </span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">One command · 17 assistants · zero config</p>
+        <h1>Configure <span class="hl">Claude Code</span> &amp; <span class="hl">Codex</span> for your project</h1>
+        <p class="lead">
+          Run one command and rsc reads your repo, asks what you want to build, and
+          installs only the skills that fit — into every AI coding agent you use.
+        </p>
+        <div class="hero-cta">
+          <button class="btn" type="button" data-copy="#cmd-hero" data-done="Copied ✓">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            Copy install command
+          </button>
+          <a class="btn btn-ghost" href="#agents">Give it to your agent</a>
+        </div>
+        <p class="hero-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          No API key. No global install. <b>Free &amp; open source (MIT).</b>
+        </p>
+      </div>
+
+      <div class="term reveal" aria-label="Terminal showing the install command">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">your-project — bash</span></div>
+        <div class="term-body">
+          <div class="copy-row">
+            <span class="cmd" id="cmd-hero"><span class="prompt">$ </span>npx @ericrisco/rsc@latest</span>
+            <button class="copy-btn" type="button" data-copy="#cmd-hero" data-done="Copied ✓">Copy</button>
+          </div>
+          <div class="out">? Which assistants?  ◉ Claude Code  ◉ Codex  ◯ Cursor …</div>
+          <div class="out">? What do you want to do?  › ship a FastAPI service</div>
+          <div class="out">✓ reading repo · matching skills…</div>
+          <div class="ok">✓ installed: orient · suggest · harness · fastapi · postgresdb</div>
+          <div><span class="prompt">$ </span><span class="caret" aria-hidden="true"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANSWER-FIRST INTRO + STATS -->
+  <section class="section-tint" aria-labelledby="what-h">
+    <div class="wrap">
+      <div class="section-head" style="max-width:56ch">
+        <h2 id="what-h" style="font-size:var(--step-2)">How to set up Claude Code or Codex for a project with rsc</h2>
+        <p>
+          rsc is a free command-line installer for AI coding agents. Run
+          <code>npx @ericrisco/rsc@latest</code> in your project root: it asks which
+          assistants you use and what you want to build or manage, reads your repository,
+          then installs only the matching skills — one at a time, so nothing you don't use
+          touches the model's context. Prefer to delegate? Paste this page's URL into your
+          agent and it runs the setup for you.
+        </p>
+      </div>
+      <div class="stats reveal">
+        <div class="stat"><div class="n">257</div><div class="l">quality-gated skills</div></div>
+        <div class="stat"><div class="n">17</div><div class="l">coding assistants</div></div>
+        <div class="stat"><div class="n">≥ 8.5/10</div><div class="l">adversarial quality gate</div></div>
+        <div class="stat"><div class="n">1</div><div class="l">command to start</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNATURE: give it to your agent -->
+  <section id="agents" aria-labelledby="agent-h">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">The agent-native way</p>
+        <h2 id="agent-h" style="font-size:var(--step-3)">Don't install it. Let your agent do it.</h2>
+        <p class="lead" style="margin-top:1rem">
+          rsc is built for agents. Hand this page's link to Claude Code, Cursor, Codex or
+          Gemini and it follows the on-page instructions: it confirms which assistants you
+          use, what you want, then installs everything in your project root.
+        </p>
+        <ul style="margin-top:1.25rem; padding-left:1.1rem; color:var(--muted); display:grid; gap:0.5rem">
+          <li>Reads your repo and picks the skills that match.</li>
+          <li>Asks you the setup questions instead of guessing.</li>
+          <li>Keeps proposing the next skill as your work changes.</li>
+        </ul>
+      </div>
+
+      <div class="agent-card reveal">
+        <div class="head">
+          <span class="avatar" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
+          </span>
+          <span class="who">Your coding agent <span>· paste this in</span></span>
+        </div>
+        <div class="agent-prompt">
+          <p>Copy this prompt into Claude Code, Cursor, Codex or Gemini:</p>
+          <div class="prompt-box" id="agent-prompt" data-copy-text="Read https://ericrisco.github.io/rsc-harness/ and set up rsc for this project. Ask me which coding assistants I use and what I want to build or manage, then run the install in the project root.">
+            <span class="u">›</span> Read <b>https://ericrisco.github.io/rsc-harness/</b> and set up rsc for this project. Ask me which coding assistants I use and what I want to build or manage, then run the install in the project root.
+          </div>
+        </div>
+        <div class="agent-actions">
+          <button class="copy-btn" type="button" data-copy="#agent-prompt" data-done="Copied ✓">Copy prompt</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS (dark, rhythm) -->
+  <section id="how" class="section-dark" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">How it works</p>
+        <h2 id="how-h">From one command to an equipped project</h2>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <h3>Run it in your repo</h3>
+          <p>In your project root, run <code>npx @ericrisco/rsc@latest</code>. No global install, no API key.</p>
+        </div>
+        <div class="step reveal">
+          <h3>Pick assistants &amp; intent</h3>
+          <p>A plain-language wizard asks which of the 17 assistants to target and what you want to do.</p>
+        </div>
+        <div class="step reveal">
+          <h3>Only what fits, installed</h3>
+          <p>rsc detects your stack and installs the floor plus the matching skills — one at a time, symlinked once.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOR AI AGENTS — machine-readable, answer-first instructions -->
+  <section class="section-tint" aria-labelledby="inst-h">
+    <div class="wrap">
+      <div class="section-head" style="max-width:60ch">
+        <p class="eyebrow">For AI agents reading this page</p>
+        <h2 id="inst-h" style="font-size:var(--step-2)">Instructions: install rsc into the user's project</h2>
+        <p>If you are an AI coding agent and your user asked you to install rsc / this harness / these skills, do the following, in order:</p>
+      </div>
+      <div class="term" style="max-width:56rem">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">agent-instructions</span></div>
+        <div class="term-body" style="line-height:1.9">
+          <div class="out">1. Confirm with the user which assistants to target (Claude Code, Codex, Cursor, Gemini, …) and what they want to build or manage.</div>
+          <div class="out">2. Make sure you are in the <span class="ok">root of the user's project</span> — not inside a clone of the rsc-harness repo.</div>
+          <div class="copy-row" style="margin:.4rem 0">
+            <span class="cmd" id="cmd-agent"><span class="prompt">$ </span>npx @ericrisco/rsc@latest</span>
+            <button class="copy-btn" type="button" data-copy="#cmd-agent" data-done="Copied ✓">Copy</button>
+          </div>
+          <div class="out">3. Answer the wizard on the user's behalf only after confirming their choices; otherwise let them choose.</div>
+          <div class="out">4. Non-interactive target select: <span class="cmd">npx @ericrisco/rsc@latest --target claude,codex</span></div>
+          <div class="out">5. Already installed? Refresh with <span class="cmd">rsc sync</span>. Add one skill: <span class="cmd">rsc add &lt;id&gt;</span>.</div>
+          <div class="out" style="color:var(--code-caret)">⚠ Do not run <span class="cmd">npx @ericrisco/rsc</span> from inside a clone of this repo — it resolves to the local unlinked bin and fails with "command not found". Use <span class="cmd">@latest</span> or <span class="cmd">node scripts/rsc.js</span>.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES / BENEFITS -->
+  <section id="skills" aria-labelledby="feat-h">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Why rsc</p>
+        <h2 id="feat-h" style="font-size:var(--step-3)">Granular, honest, self-driving</h2>
+        <p>Most skill packs dump hundreds of files into your context. rsc is the opposite bet.</p>
+      </div>
+      <div class="bento">
+        <div class="card reveal">
+          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg></div>
+          <h3>Granular by default</h3>
+          <p>The unit of installation is one skill. Install <code>fastapi</code> without ever pulling <code>go</code>. Nothing you don't use touches the model's context.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg></div>
+          <h3>Self-recommending</h3>
+          <p>An always-on detector watches your work and names the next skill the moment a task needs it — a one-word confirm installs it.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h3>Quality-gated</h3>
+          <p>Every skill was researched against live 2025–2026 sources and had to clear an adversarial <b>≥ 8.5/10</b> behavioral rubric before it shipped.</p>
+        </div>
+        <div class="card reveal span2">
+          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+          <h3>Not code-only</h3>
+          <p>Beyond languages and frameworks, rsc can run a whole operation: bookkeeping, invoicing, GDPR, pitch decks, SEO, and a YouTube / TikTok / LinkedIn presence — each wired to a knowledge loop that learns from your own results.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6M12 19h8"/></svg></div>
+          <h3>One base, every IDE</h3>
+          <p>Skill files are written once to your project and symlinked into each assistant you pick — no copy duplicated across IDEs.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASSISTANTS -->
+  <section class="section-tint" aria-labelledby="assist-h">
+    <div class="wrap">
+      <div class="section-head" style="max-width:52ch">
+        <p class="eyebrow">Works with</p>
+        <h2 id="assist-h" style="font-size:var(--step-2)">17 coding assistants, one catalog</h2>
+        <p>Pick any combination. rsc pre-marks the one it detects in your folder.</p>
+      </div>
+      <div class="assist reveal">
+        <div class="a pri"><span class="badge" aria-hidden="true"></span>Claude Code</div>
+        <div class="a pri"><span class="badge" aria-hidden="true"></span>Codex CLI</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Cursor</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>GitHub Copilot</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Gemini CLI</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Windsurf</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Cline</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Antigravity</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Zed</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Continue</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Roo</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Amp</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>opencode</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Jules</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Junie</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Kiro</div>
+        <div class="a"><span class="badge" aria-hidden="true"></span>Aider</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="section-dark cta-final" aria-labelledby="cta-h">
+    <div class="wrap">
+      <p class="eyebrow">Get started</p>
+      <h2 id="cta-h">Equip your agent in one command</h2>
+      <p>Run it in your project, or paste this page's link into your agent.</p>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">your-project — bash</span></div>
+        <div class="term-body">
+          <div class="copy-row">
+            <span class="cmd" id="cmd-final"><span class="prompt">$ </span>npx @ericrisco/rsc@latest</span>
+            <button class="copy-btn" type="button" data-copy="#cmd-final" data-done="Copied ✓">Copy</button>
+          </div>
+        </div>
+      </div>
+      <div class="hero-cta" style="justify-content:center; margin-top:1.5rem">
+        <a class="btn btn-accent" href="https://www.npmjs.com/package/@ericrisco/rsc" rel="noopener">View on npm</a>
+        <a class="btn btn-ghost" href="https://github.com/ericrisco/rsc-harness" rel="noopener">Star on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span class="muted">© <span id="yr">2026</span> Eric Risco · rsc · MIT</span>
+    <nav class="links" aria-label="Footer">
+      <a href="https://github.com/ericrisco/rsc-harness" rel="noopener">GitHub</a>
+      <a href="https://www.npmjs.com/package/@ericrisco/rsc" rel="noopener">npm</a>
+      <a href="https://agentskills.io/specification" rel="noopener">Agent Skills spec</a>
+      <a href="es/" hreflang="es">Español</a>
+      <a href="llms.txt">llms.txt</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="app.js" defer></script>
+</body>
+</html>

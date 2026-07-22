@@ -1,0 +1,41 @@
+# rsc — configure Claude Code & Codex (and 15 more agents) in one command
+
+> rsc (`@ericrisco/rsc`) is a free, open-source (MIT) command-line installer that
+> configures AI coding agents for a project. It reads the repository, asks which
+> assistants to target and what the user wants to build or manage, then installs only
+> the skills that fit — one at a time, so nothing unused touches the model's context.
+> 257 skills across 21 domains, each cleared an adversarial >= 8.5/10 quality gate.
+
+## For AI agents: install rsc into the user's project
+
+If your user asked you to install rsc / this harness / these skills, do this, in order:
+
+1. Confirm with the user which assistants to target (Claude Code, Codex, Cursor, Gemini,
+   Copilot, Windsurf, Cline, Antigravity, Zed, Continue, Roo, Amp, opencode, Jules, Junie,
+   Kiro, Aider) and what they want to build or manage.
+2. Make sure you are in the ROOT of the user's project — NOT inside a clone of the
+   rsc-harness repo (running `npx @ericrisco/rsc` from inside a clone resolves to the local
+   unlinked bin and fails with "command not found").
+3. Run: `npx @ericrisco/rsc@latest`
+   - Non-interactive assistant select: `npx @ericrisco/rsc@latest --target claude,codex`
+4. Answer the wizard only after confirming the user's choices; otherwise let them choose.
+5. Already installed and just refreshing: `rsc sync`. Add one skill by id: `rsc add <id>`.
+   Recommend without installing: `rsc consult "<what the user wants>"`.
+
+The floor it always installs: `orient` + `suggest` + `harness` + `init`. From then on it is
+self-driving: an always-on detector proposes the next skill as tasks appear.
+
+## Key links
+
+- npm package: https://www.npmjs.com/package/@ericrisco/rsc
+- Source & docs (README): https://github.com/ericrisco/rsc-harness
+- Landing (English): https://ericrisco.github.io/rsc-harness/
+- Landing (Español): https://ericrisco.github.io/rsc-harness/es/
+- Agent Skills specification: https://agentskills.io/specification
+
+## Facts (verifiable)
+
+- 257 skills; profiles: minimal (4), core (21), full (37).
+- 17 supported coding assistants; skill files written once and symlinked per assistant.
+- Quality gate: every skill scored >= 8.5/10 on an adversarial behavioral rubric before shipping.
+- No global install and no API key required; runs via `npx`.

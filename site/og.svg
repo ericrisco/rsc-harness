@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12161c"/>
+      <stop offset="1" stop-color="#0b0e12"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- hairline grid accent -->
+  <g stroke="#1e242c" stroke-width="1">
+    <line x1="0" y1="157" x2="1200" y2="157"/>
+    <line x1="0" y1="473" x2="1200" y2="473"/>
+  </g>
+
+  <!-- logo chip -->
+  <rect x="80" y="86" width="72" height="72" rx="18" fill="#f7f7f4"/>
+  <text x="116" y="135" text-anchor="middle" font-size="30" font-weight="700" fill="#12161c">rsc</text>
+  <text x="176" y="134" font-size="30" font-weight="700" fill="#f7f7f4" font-family="ui-sans-serif, system-ui, sans-serif">rsc</text>
+
+  <!-- headline -->
+  <text x="80" y="290" font-size="66" font-weight="700" fill="#f7f7f4" font-family="ui-sans-serif, system-ui, sans-serif" letter-spacing="-2">Configure <tspan fill="#63d68a">Claude Code</tspan> &amp; <tspan fill="#63d68a">Codex</tspan></text>
+  <text x="80" y="360" font-size="66" font-weight="700" fill="#f7f7f4" font-family="ui-sans-serif, system-ui, sans-serif" letter-spacing="-2">for your project</text>
+
+  <!-- command -->
+  <rect x="80" y="410" width="640" height="64" rx="12" fill="#171c22" stroke="#2a323c"/>
+  <text x="104" y="450" font-size="26" fill="#63d68a">$</text>
+  <text x="130" y="450" font-size="26" fill="#e8ebee">npx @ericrisco/rsc@latest</text>
+
+  <!-- footer stats -->
+  <text x="80" y="556" font-size="24" fill="#9aa4b0" font-family="ui-sans-serif, system-ui, sans-serif">257 skills &#183; 17 coding assistants &#183; one command &#183; free &amp; MIT</text>
+</svg>

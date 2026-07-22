@@ -1,0 +1,22 @@
+# rsc landing — robots.txt
+# AI search bots are welcome (they feed citations in ChatGPT Search, Perplexity, Gemini).
+# Do NOT block search bots here or the site loses those citations.
+
+User-agent: *
+Allow: /
+
+# AI answer-engine SEARCH crawlers (citations) — explicitly allowed
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Claude-SearchBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: GPTBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+
+Sitemap: https://ericrisco.github.io/rsc-harness/sitemap.xml
