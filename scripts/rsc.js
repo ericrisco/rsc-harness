@@ -102,6 +102,24 @@ function printNextSteps(targets, ids) {
   say('\n   Add something by hand anytime:    npx @ericrisco/rsc add <skill>');
   say('   Browse the catalog / get picks:   npx @ericrisco/rsc consult "whatever you need"');
   say('────────────────────────────────────────────────────────');
+  printAgentHandoff();
+}
+
+// A machine-readable handoff addressed to the AGENT (not the human). After an
+// equipping install the skills + hooks are on disk but NOT live until the session
+// reloads (Claude Code loads them at SessionStart; Codex reads AGENTS.md next turn).
+// "Minute 1" = the user's NEXT message works with everything loaded — so we tell the
+// agent to reload, confirm it's equipped, and explicitly NOT auto-start a task.
+function printAgentHandoff() {
+  say('\n════════════════ AGENT HANDOFF ════════════════');
+  say('rsc is installed but NOT active in this session yet.');
+  say('AGENT, do this now:');
+  say('  1. Reload/restart this session so the new skills + hooks load');
+  say('     (Claude Code: restart the session · Codex/AGENTS.md tools: next turn).');
+  say('  2. After reload you are EQUIPPED — orient + suggest are always-on.');
+  say('  3. Tell the user rsc is ready; they can start in their own words.');
+  say('     Do NOT auto-start a task — wait for the user.');
+  say('════════════════════════════════════════════════');
 }
 
 async function wizard() {
@@ -171,7 +189,8 @@ async function main() {
       }
       const ids = [...new Set(['orient', 'suggest', ...requested])];
       for (const t of targets) await applyInstall({ skillIds: ids, target: t });
-      return void say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
+      say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
+      return void say('   ↻ Reload/restart your assistant so the new skill activates.');
     }
     case 'install': {
       const profile = flag('profile') || 'minimal';
@@ -179,7 +198,9 @@ async function main() {
       let ids = skillsForProfile(loadManifest(), profile);
       ids = [...new Set(['orient', 'suggest', ...ids])].filter((id) => !without.includes(id));
       for (const t of targets) await applyInstall({ skillIds: ids, target: t });
-      return void say(`✅ Profile '${profile}' installed for ${targets.join(', ')} (${ids.length} skills)`);
+      say(`✅ Profile '${profile}' installed for ${targets.join(', ')} (${ids.length} skills)`);
+      printAgentHandoff();
+      return;
     }
     case 'consult': {
       const ids = await recommendIds(argv.slice(1).join(' '));

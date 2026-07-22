@@ -131,6 +131,30 @@ test('rsc sync --dry-run reports installed skills', () => {
   assert.ok(sync.stdout.includes('fastapi'));
 });
 
+test('rsc install prints the agent handoff (reload → equipped → ready, no auto-task)', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-handoff-'));
+  const result = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'install', '--profile', 'minimal', '--target', 'claude'], {
+    cwd,
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const out = result.stdout;
+  assert.ok(out.includes('AGENT HANDOFF'), `handoff banner present:\n${out}`);
+  assert.ok(/reload|restart/i.test(out), 'tells the agent to reload/restart');
+  assert.ok(out.includes('orient + suggest'), 'names the always-on floor as equipped');
+  assert.ok(/do not auto-start/i.test(out), 'forbids auto-starting a task');
+});
+
+test('rsc add nudges to reload so the new skill activates', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-add-reload-'));
+  const result = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'fastapi', '--target', 'claude'], {
+    cwd,
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(/reload|restart/i.test(result.stdout), `add reminds to reload:\n${result.stdout}`);
+});
+
 test('rsc upgrade --dry-run prints npm upgrade command', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-upgrade-'));
   const result = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'upgrade', '--target', 'claude', '--dry-run'], {

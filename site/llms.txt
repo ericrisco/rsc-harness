@@ -21,6 +21,11 @@ If your user asked you to install rsc / this harness / these skills, do this, in
 4. Answer the wizard only after confirming the user's choices; otherwise let them choose.
 5. Already installed and just refreshing: `rsc sync`. Add one skill by id: `rsc add <id>`.
    Recommend without installing: `rsc consult "<what the user wants>"`.
+6. Leave the user ready to work ("minute 1"): after install the skills + hooks are NOT active
+   until the session reloads. Tell the user to reload/restart (Claude Code: restart the
+   session; Codex/AGENTS.md tools: picked up next turn). After reload you are EQUIPPED —
+   orient + suggest are always-on. Confirm rsc is ready and let the user start in their own
+   words; do NOT auto-start a task — wait for the user.
 
 The floor it always installs: `orient` + `suggest` + `harness` + `init`. From then on it is
 self-driving: an always-on detector proposes the next skill as tasks appear.
