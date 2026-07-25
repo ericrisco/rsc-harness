@@ -1,6 +1,6 @@
 ---
 name: tasks
-description: "Use when you have an approved implementation plan and need to break it into an ordered, independently-verifiable task list before any code is written — the SDD `tasks` phase (GitHub Spec Kit lineage: constitution → specify → clarify → plan → tasks → analyze → implement). Turns a plan into numbered tasks, each with an explicit done-check (the literal command or observation that proves it complete), dependencies, and a parallel-safe marker. Triggers: 'break the plan into tasks', 'make a task list', 'task breakdown', 'descompón el plan en tareas', 'lista de tareas', 'what are the steps to build this', 'turn the plan into a checklist', 'sequence the work', 'which tasks can run in parallel', 'give each task a done-check'. Appends the task list into the plan artifact under 02-DOCS/wiki/sdd/plans/<slug>.md. NOT writing the plan itself (that is `plan`), NOT the consistency gate over the artifacts (that is `analyze`), NOT executing the tasks (that is `implement`)."
+description: "Use when an approved plan needs slicing into an ordered task list before any code — the SDD `tasks` phase. Each row carries a literal done-check, dependencies, a parallel-safe marker and a spec trace, appended to the plan artifact. NOT writing the plan (that is `plan`), NOT the consistency gate (that is `analyze`), NOT executing the tasks (that is `implement`)."
 tags: [sdd, tasks, breakdown]
 recommends: [analyze, implement]
 profiles: [core, full]
@@ -20,29 +20,25 @@ task list says "T004: implement `POST /login`; done when `pytest
 tests/auth/test_login.py` is green AND a 401 is returned for a bad password —
 depends on T002, T003; parallel-safe with T005." The difference is that the
 second one can be **handed to a subagent, executed, and verified** with no
-further questions.
-
-This is a process skill. It writes no runtime code. It produces one artifact: an
-ordered, checkable task list appended to the plan it was built from.
+further questions. This phase writes zero runtime code; it produces one artifact,
+appended to the plan it was built from.
 
 ## Model tier — `balanced` (opt-in routing)
 
-This phase's default model tier is **`balanced`** — it decomposes an approved plan into verifiable tasks: structured work, not architecture. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch per the accompaniment dial when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
+This phase's default tier is **`balanced`**: decomposing an approved plan is
+structured work, not architecture. Routing is off unless `models.enabled: true`
+in `02-DOCS/wiki/sdd/config.yaml`; when on, resolve the tier and apply it per
+`../sdd/references/model-routing.md`, which owns the resolution order and the
+announcement rules. Routing off or no profile → honor the session model silently.
 
 ## Read the harness profile first
 
-Before producing anything, read `02-DOCS/wiki/harness/user-profile.md` for the
-technical level and the **accompaniment dial**, and adapt:
-
-- **L0 (cavernícola)** — emit the task table, nothing else. No commentary.
-- **L1 (breve)** — one line of *why this slicing* above the table.
-- **L2 (explica decisiones)** — justify the ordering and the parallel markers as
-  you go; flag the risky tasks.
-- **L3 (acompañamiento total)** — explain the slicing method, walk each
-  dependency, and confirm the done-checks make sense to the user before writing.
-
-If no profile exists, assume non-technical + ask the two gauging questions the
-harness defines before slicing. Never invent a level.
+Read `02-DOCS/wiki/harness/user-profile.md` before producing anything and match
+the accompaniment dial: **L0** emit the task table and nothing else; **L1** add
+one line of *why this slicing* above it; **L2** justify the ordering and the
+parallel markers as you go, flagging the risky tasks; **L3** walk each dependency
+and confirm the done-checks make sense to the user before writing. No profile →
+assume non-technical and let `init` gauge the level; never invent one.
 
 ## Inputs (refuse to start without them)
 
@@ -154,10 +150,10 @@ The task list is **not** a new document. Append it to the existing plan under a
 ```
 
 Then ensure the plan is indexed in `02-DOCS/wiki/index.md` (the Knowledge map;
-root `CLAUDE.md` keeps only a short pointer) under
-the `sdd/` topic (the `plan` phase usually added the row; confirm it points at
-`02-DOCS/wiki/sdd/plans/<slug>.md`, add it if missing — additive only, never
-delete a user's map entry).
+root `CLAUDE.md` keeps only a short pointer) under the `sdd/` topic — the `plan`
+phase usually added the row, so confirm it points at
+`02-DOCS/wiki/sdd/plans/<slug>.md` and add it if missing. Additive only: never
+delete a user's map entry.
 
 ### The table format
 
@@ -181,8 +177,8 @@ delete a user's map entry).
 subagent) that see *only their own task* — not the whole plan. Such a worker can't infer a
 neighbor's function signature, payload shape, or column name from a one-line row. For any task
 whose correctness depends on a contract it doesn't own, attach an **Interfaces block** right under
-its row. (Trivial, self-contained tasks don't need one — don't add ceremony where there's no
-cross-task contract.)
+its row. Trivial, self-contained tasks don't need one — don't add ceremony where there's no
+cross-task contract.
 
 ```markdown
 **T004 — Interfaces**
@@ -190,15 +186,13 @@ cross-task contract.)
 - Produces: `POST /login` → `200 {token}` | `401 {error}`; sets `Set-Cookie: sid=…; HttpOnly`
 ```
 
-Rules:
-
-- Quote **exact** signatures/shapes, not descriptions — the isolated worker copies them, it can't
-  go look them up. "Returns the user" is invisible; `-> {id, email}` is usable.
-- `Consumes` names what the task reads from a neighbor or the environment; `Produces` names the
-  contract later tasks (and the per-task reviewer) will hold it to.
-- The plan's **§0 Global Constraints** are inherited by every task implicitly — do **not** repeat
-  them per task. Interfaces carry the *task-local* contract; Global Constraints carry the
-  *project-wide* one. Together they are everything a blind implementer needs.
+Quote **exact** signatures and shapes, not descriptions — the isolated worker copies them, it can't
+go look them up. "Returns the user" is invisible; `-> {id, email}` is usable. `Consumes` names what
+the task reads from a neighbor or the environment; `Produces` names the contract later tasks (and
+the per-task reviewer) will hold it to. The plan's **§0 Global Constraints** are inherited by every
+task implicitly — do **not** repeat them per task. Interfaces carry the *task-local* contract;
+Global Constraints carry the *project-wide* one. Together they are everything a blind implementer
+needs.
 
 ## Review workload + delivery strategy forecast
 
@@ -216,12 +210,11 @@ before a giant diff exists.
 | Suggested delivery | single-pr / ask-on-risk / autochain / exception | matched to config.review_budget |
 ```
 
-Rules:
-
-- If estimated changed lines exceed `config.sdd.review_budget.line_budget` (default 400), recommend splitting or `ask-on-risk`.
-- If many areas or cross-stack contracts are touched, recommend `autochain` or a feature-track branch.
-- If the change is tiny, recommend `single-pr`.
-- If a deadline or emergency justifies a large review, mark `exception` and require explicit user approval later.
+Pick the delivery strategy from the forecast: tiny change → `single-pr`; estimated
+lines over `config.sdd.review_budget.line_budget` (default 400) → recommend
+splitting or `ask-on-risk`; many areas or cross-stack contracts touched →
+`autochain` or a feature-track branch. A deadline or emergency that justifies a
+large review is marked `exception` and requires explicit user approval later.
 
 ## Anti-patterns → STOP
 
@@ -235,19 +228,6 @@ Rules:
 | "The plan is thin here, I'll guess the slice" | `analyze` will reject the guess next phase. Tighten the plan first. |
 | "I'll start coding the easy task while I list the rest" | This phase writes zero runtime code. Implementation is `implement`. |
 | "Renumber the IDs so they're contiguous" | Downstream phases cite IDs. They're stable once written. Append, don't renumber. |
-
-## Done-of-done for this phase
-
-Before handing off, confirm:
-
-- [ ] Every plan deliverable maps to at least one task.
-- [ ] Every task has a runnable done-check (a command or a checkable observation).
-- [ ] Every task traces to a spec line; no orphan tasks.
-- [ ] Dependencies form a valid order (nothing precedes what it needs).
-- [ ] `[P]` markers only on file/state-disjoint tasks.
-- [ ] The list is appended under `## Tasks` in the plan artifact, indexed in the Knowledge map at `02-DOCS/wiki/index.md` (root `CLAUDE.md` keeps only a short pointer).
-- [ ] A final closer task gates on all done-checks + `verify.sh`.
-- [ ] Review workload forecast and suggested delivery strategy appended.
 
 ## Result envelope
 
@@ -272,14 +252,11 @@ End with:
 
 ## Next in the SDD chain
 
-The task list is now the contract for the rest of the build. Hand off:
-
-- **→ `analyze`** — the consistency gate. Before any code, cross-check
-  constitution ↔ spec ↔ plan ↔ **tasks** for gaps, contradictions, and scope
-  drift. Orphan tasks and untraceable scope surface here. Report only; the user
-  resolves.
-- then **→ `implement`** — execute the tasks in order, TDD-style (red → green →
-  refactor), using `parallel` for the `[P]` tasks and `worktrees` for isolation.
+The task list is now the contract for the rest of the build. Hand off to
+**`analyze`** — the consistency gate that cross-checks constitution ↔ spec ↔ plan
+↔ **tasks** and surfaces orphan tasks and untraceable scope — and then to
+**`implement`**, which executes the list TDD-style, using `parallel` for the `[P]`
+tasks and `worktrees` for isolation.
 
 Do not jump straight to `implement`. The whole point of writing a checkable list
 was to let `analyze` audit it cheaply *before* code exists.
@@ -287,4 +264,3 @@ was to let `analyze` audit it cheaply *before* code exists.
 ## Orientación (siempre)
 
 Cierra cada turno con el **bloque-brújula** (📍 dónde estás · ✅ qué hiciste · 🧭 por qué · ➡️ siguiente, terminando en pregunta), calibrado al dial de `02-DOCS/wiki/harness/user-profile.md`. **Nunca termines en seco.** Protocolo completo: skill `orient` → `skills/orient/references/orientation-contract.md`. (Defiere a `suggest` el "¿instalo la skill que falta?".)
-
