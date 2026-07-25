@@ -96,6 +96,68 @@ If the skill already meets the rubric, **say so and change only the description.
 diff beats a large invented one. Several skills in the pilot needed 5-line diffs; that is a good
 outcome, not a failed pass. Never pad, and never cut substance to hit a number.
 
+---
+
+# For the orchestrator
+
+Everything above is for the agent doing one skill. This half is for whoever is driving the fleet.
+
+## Resuming, from nothing
+
+There is no state file to keep in sync, on purpose. **The remote branches are the ledger:**
+
+```bash
+# what is done
+git ls-remote --heads origin 'refs/heads/skill/*'
+# what is left = skills/ minus those, minus what is already merged to main
+```
+
+So a cold session resumes with: *read this brief, compute the skills with no `skill/*` branch, launch
+one agent per skill in its own worktree.* Nothing from any previous conversation is required.
+
+## Order: by profile, not alphabetically
+
+A skill's `description` is in context for everyone who installs it, so migrate by blast radius:
+
+1. `minimal` profile — in every rsc install.
+2. `core` profile — the default install (the SDD chain plus the control plane).
+3. High-install stack skills — `nextjs`, `react`, `fastapi`, `postgresdb`, `design`, `typescript`,
+   `python`, `go`, `flutter`, `secure-coding`, `deployment`.
+4. Everything else.
+
+If a run is cut short, this ordering means the part that was finished is the part that everyone pays for.
+
+## Sharp edges (each one cost a real mistake)
+
+- **`manifest.json` is derived.** Agents must never touch it — hundreds of parallel edits collide on
+  the same lines. Regenerate once, centrally, with `npm run manifest` after merging.
+- **A fresh worktree has no `node_modules`** (it is gitignored, so it is not checked out). `npm test`
+  and `npm run validate` cannot run there. `scripts/eval-lint.sh` can — it uses python3.
+- **Result-envelope blocks are asymmetric.** `specify`, `tasks`, `implement`, `verify`, `ship`,
+  `parallel` and `sdd` have one; `plan`, `analyze`, `clarify`, `constitution`, `review` and `debug`
+  do not. Tell each agent which case it is in, or it will helpfully invent one.
+- **`author-skill` is special.** It teaches how to write skills, so it documented the *old*
+  conventions. There, rewriting the guidance IS the migration — and the change has to reach its
+  `references/` and `evals/`, which graded produced skills against the old rubric.
+- **Short ids break greps.** `go`, `rag`, `php` match half of `eval-lint`'s output. Give those agents
+  an anchored pattern (`grep -E '^go +'`).
+- **Compound bash commands are denied whole.** The `ship-guard` hook rejects the entire call if any
+  part matches `git checkout main`, so a chained `commit && push && checkout main` runs *nothing*.
+  Split them.
+
+## Content problems found while migrating — do NOT fix them in a format pass
+
+Agents surfaced these and correctly left them alone. They need their own change:
+
+- `sdd` claims every phase ends with a parseable envelope; six phases have none (see above).
+- `eval-lint` does not actually verify that a `route_to` names a real skill — `course-storytelling`
+  routes to `deep-research`, which does not exist. The rubric lists this as a deterministic gate, so
+  the gate is currently decorative. (The 1024-char description limit had the same problem; that one
+  is now enforced in `schema/frontmatter.schema.json`.)
+- `clarify`'s body calls itself "the fourth phase" while the chain it prints puts it third.
+- `cold-outreach` never names `linkedin-outreach` in its route table, though the reverse link exists.
+- `data-policy` says "walk five columns" and then lists six.
+
 ## Return value
 
 ```json
