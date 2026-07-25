@@ -2170,7 +2170,7 @@
     },
     {
       "id": "harness",
-      "description": "Use when you want to control, govern or maintain the harness of a workspace — software OR a non-code base (a company, an ops desk, a personal knowledge vault). The harness is the CONTROL PLANE: the `01-TOOLS/` operational tooling layer + the `02-DOCS/` Karpathy chaos→knowledge engine + the root Knowledge map. Triggers: 'control the harness', 'gestiona el arnés', 'manage 01-TOOLS and 02-DOCS', 'audit my workspace', 'audita mi proyecto', 'procesa el inbox', 'sal a pasear', migrating numbered `XX-*` folders into the canonical structure, detecting external provider integrations (Stripe, Mailjet, Hetzner, Firebase, OAuth, Postgres…) and scaffolding connection-ready tools, generating root `CLAUDE.md`/`AGENTS.md`, or consolidating scattered docs into a living wiki. `init` is the bootstrap front door; THIS skill is the ongoing control. Brownfield-first; greenfield is the degenerate case.",
+      "description": "Use to control, govern or maintain a workspace's harness — software or non-code (a company, an ops desk, a knowledge vault). The harness is the control plane: the `01-TOOLS/` tooling layer, the `02-DOCS/` chaos→knowledge wiki, and the root Knowledge map. It audits, migrates legacy `XX-*` folders, scaffolds provider tooling, sweeps the inbox, and generates root CLAUDE.md/AGENTS.md. Brownfield-first. NOT the bootstrap front door (that is `init`, which hands off here).",
       "tags": [
         "harness",
         "company",
