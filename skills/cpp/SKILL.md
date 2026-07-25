@@ -1,6 +1,6 @@
 ---
 name: cpp
-description: "Use when writing, reviewing, modernizing, building, or debugging C++ - RAII and resource lifetime, smart-pointer ownership (unique_ptr/shared_ptr/weak_ptr), move semantics and the Rule of Zero/Five, target-based CMake with FetchContent, and killing undefined behavior with ASan/UBSan/TSan plus clang-tidy. Triggers: \"modernize this C++\", \"who owns this pointer\", \"use-after-free\", \"double free\", \"dangling reference\", \"segfault under load\", \"should this move be noexcept\", \"write a CMakeLists with FetchContent\", .cpp/.hpp/.ixx files, \"revisa este código C++\", \"tengo un segfault\", \"fuga de memoria\". NOT borrow-checker / Result-Option / cargo memory-safety (that is rust)."
+description: "Use when writing, reviewing, modernizing, building, or debugging C++ - RAII and resource lifetime, smart-pointer ownership, move semantics and the Rule of Zero/Five, target-based CMake with FetchContent, and killing undefined behavior with ASan/UBSan/TSan plus clang-tidy. NOT borrow-checker / Result-Option / cargo memory safety (that is rust)."
 tags: [cpp, c++, modern-cpp, raii, cmake]
 recommends: [rust, secure-coding, deployment]
 origin: risco
@@ -23,30 +23,13 @@ behind confirmed compiler support. Compiler matrix:
 | Clang | 13–18 progressively | in progress (Clang 23 dev) | `-std=c++23` / `-std=c++2c` |
 | MSVC | latest | partial | `/std:c++23` / `/std:c++latest` |
 
-## When to use / When NOT to use
-
-**Use when:**
-
-- Authoring or reviewing any `.cpp` / `.cc` / `.hpp` / `.h` / `.ixx` (module) file.
-- Deciding ownership: value / `unique_ptr` / `shared_ptr` / `weak_ptr` / borrowed `span` / `string_view` / `const&`.
-- Modernizing legacy C++: ripping out `new`/`delete`, owning raw pointers, manual loops, C-style casts.
-- Writing or fixing a **CMake** build (target-based, `FetchContent`, presets).
-- Hunting UB: enabling ASan/UBSan/TSan, reading the report, applying the lifetime/bounds/overflow/race fix.
-- Move semantics / Rule of Zero/Five / value-category and `noexcept` questions.
-
-**When NOT to use (delegate):**
-
-- Rust borrow-checker, `Result`/`Option`, cargo, ownership-via-compiler -> [`rust`](../rust/SKILL.md).
-  C++ buys safety with discipline (RAII + smart pointers + sanitizers); do not conflate the mechanisms.
-- Language-agnostic threat modeling, authz, OWASP-class review -> [`secure-coding`](../secure-coding/SKILL.md)
-  (this skill keeps the C++-specific controls: bounds, lifetime, integer overflow, format-string, sanitizers).
-- Containerizing/shipping the binary (Dockerfile, GitHub Actions) -> [`deployment`](../deployment/SKILL.md)
-  (this skill stops at the CMake build + a sanitizer-CI note).
-- Recording per-project C++ conventions in a workspace wiki -> [`harness`](../harness/SKILL.md)
-  (see "Project grounding" below).
-
-The C++-specific memory/UB controls — sanitizers, bounds, lifetime, signed overflow — live
-**here**, not in `secure-coding`.
+Delegate: borrow-checker, `Result`/`Option`, cargo, ownership-via-compiler ->
+[`rust`](../rust/SKILL.md) — C++ buys safety with discipline (RAII + smart pointers +
+sanitizers); do not conflate the mechanisms. Language-agnostic threat modeling, authz,
+OWASP-class review -> [`secure-coding`](../secure-coding/SKILL.md); the C++-specific
+memory/UB controls (bounds, lifetime, integer overflow, format-string, sanitizers) stay
+**here**. Containerizing and shipping the binary -> [`deployment`](../deployment/SKILL.md);
+this skill stops at the CMake build + a sanitizer-CI note.
 
 ## Decision rules
 
@@ -59,20 +42,19 @@ Apply these on every C++ edit:
    only when you need polymorphism, shared lifetime, or a large/stable address. Why: values can't dangle.
 3. **Name the owner.** Exactly one type owns each resource; everyone else borrows. Why: ambiguous
    ownership is how use-after-free is born.
-4. **`make_unique`/`make_shared`, never `new`.** Why: no naked owning pointer ever exists, so there
-   is nothing to forget to `delete`, and it's exception-safe.
-5. **Never an owning raw pointer.** Raw pointers/references are non-owning borrows only. Why: a raw
-   pointer that owns is a leak or a double-free waiting on the next early `return`/throw.
+4. **`make_unique`/`make_shared`, never `new`.** So no naked owning pointer ever exists.
+5. **Never an owning raw pointer.** Raw pointers/references are non-owning borrows only.
 6. **Borrow with `span` / `string_view` / `const T&`.** Pass a view, not a copy or an owner, for
-   read access. Why: zero-copy and the callee provably can't free what it doesn't own.
-7. **`const` and `constexpr` by default.** Make everything you can immutable and compile-time. Why:
-   the compiler enforces what you don't mutate and moves work off the hot path.
+   read access. Why: zero-copy, and the callee provably can't free what it doesn't own.
+7. **`const` and `constexpr` by default.** Why: the compiler enforces what you don't mutate and
+   moves work off the hot path.
 8. **No UB by construction.** No use-after-move, OOB index, signed overflow, uninitialized read, or
-   data race. Why: UB is not a runtime error — the optimizer is licensed to do anything.
+   data race.
 9. **Sanitizers + warnings-as-errors in CI.** Build and test under `-fsanitize=address,undefined`
-   with `-Werror`. Why: most C++ bugs are invisible until a sanitizer or a warning surfaces them.
+   with `-Werror`.
 10. **Target-based CMake only.** `target_link_libraries` / `target_compile_features`, never
-    directory-level `include_directories`/`link_libraries`. Why: directory commands leak flags globally and break composition.
+    directory-level `include_directories`/`link_libraries`. Why: directory commands leak flags
+    globally and break composition.
 
 ## Ownership & smart pointers
 
@@ -277,7 +259,7 @@ bad index is UB, not an exception.
 - **Local gate:** `./scripts/verify.sh` from the project root runs format + an ASan/UBSan,
   warnings-as-errors build + `ctest` + optional tidy/cppcheck. Missing tools are skipped, not failed.
 
-## Anti-patterns / rationalizations -> STOP
+## Anti-patterns
 
 | Rationalization | Reality / Do instead |
 | --- | --- |
@@ -307,41 +289,14 @@ bad index is UB, not an exception.
 | Format | `clang-format -i src/*.cpp` |
 | Static analysis | `clang-tidy -p build src/*.cpp` · `cppcheck --enable=warning src/` |
 | Std flag | GCC/Clang `-std=c++23` (C++26: GCC `-std=c++26`, Clang `-std=c++2c`), MSVC `/std:c++23` |
-| Own a resource | `auto p = std::make_unique<T>(...);` |
-| Borrow a range | `std::span<const T>` / `std::string_view` |
 | Local gate | `./scripts/verify.sh` (run in your project root) |
 
-## Project grounding (02-DOCS + CLAUDE.md)
+## Project grounding (02-DOCS)
 
-When this skill runs in a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md)
-Karpathy wiki), record this project's C++ decisions there and index them in `02-DOCS/wiki/index.md`,
-so the next agent inherits them instead of re-deriving them.
-
-1. **Find the article** `02-DOCS/wiki/stack/cpp.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, create/update it with the project's real choices — std version and
-   compiler matrix, CMake layout and presets, the sanitizer/warning policy, and the ownership/error
-   conventions — then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
-3. **Read it first on every use** and stay consistent; when a convention changes, update the article
-   (bump its `Updated` date) in the same change.
-
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Technical conventions are
-*recorded, not gated* — never block the task on this.
-
-## See Also
-
-Sibling skills (all resolve under `skills/`):
-
-- [`rust`](../rust/SKILL.md) - the other systems language; compiler-enforced ownership instead of
-  RAII discipline. Any borrow-checker / `Result`-`Option` / cargo question goes there.
-- [`secure-coding`](../secure-coding/SKILL.md) - language-agnostic threat modeling and authz/abuse
-  review (this skill keeps the C++-specific memory/UB controls).
-- [`deployment`](../deployment/SKILL.md) - containerizing and shipping the built binary (this skill
-  stops at the CMake build + a sanitizer-CI note).
-- [`harness`](../harness/SKILL.md) - the `02-DOCS/` workspace wiki where per-project C++ conventions
-  are recorded (see "Project grounding").
-
-Local references (read when):
-
-- `references/cmake.md` - full target-based CMake template, presets, FetchContent, sanitizer/warning flags.
-- `references/undefined-behavior.md` - the UB catalog, which sanitizer catches each, fixes, ASan-report walkthrough.
-- `references/move-and-templates.md` - value categories, Rule of Five, perfect forwarding, CTAD, C++20 concepts.
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) Karpathy wiki), read
+`02-DOCS/wiki/stack/cpp.md` first and stay consistent with it. If it is missing or stale, write
+this project's real choices there — std version and compiler matrix, CMake layout and presets, the
+sanitizer/warning policy, the ownership/error conventions — index it in `02-DOCS/wiki/index.md`
+(the Knowledge map; root `CLAUDE.md` keeps only a pointer to it), and bump its `Updated` date in
+the same change as any convention change. No `02-DOCS/` layer? Skip silently (optionally suggest
+`harness`). Conventions are *recorded, not gated* — never block the task on this.
