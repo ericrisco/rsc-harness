@@ -1,6 +1,6 @@
 ---
 name: harness
-description: "Use when you want to control, govern or maintain the harness of a workspace — software OR a non-code base (a company, an ops desk, a personal knowledge vault). The harness is the CONTROL PLANE: the `01-TOOLS/` operational tooling layer + the `02-DOCS/` Karpathy chaos→knowledge engine + the root Knowledge map. Triggers: 'control the harness', 'gestiona el arnés', 'manage 01-TOOLS and 02-DOCS', 'audit my workspace', 'audita mi proyecto', 'procesa el inbox', 'sal a pasear', migrating numbered `XX-*` folders into the canonical structure, detecting external provider integrations (Stripe, Mailjet, Hetzner, Firebase, OAuth, Postgres…) and scaffolding connection-ready tools, generating root `CLAUDE.md`/`AGENTS.md`, or consolidating scattered docs into a living wiki. `init` is the bootstrap front door; THIS skill is the ongoing control. Brownfield-first; greenfield is the degenerate case."
+description: "Use to control, govern or maintain a workspace's harness — software or non-code (a company, an ops desk, a knowledge vault). The harness is the control plane: the `01-TOOLS/` tooling layer, the `02-DOCS/` chaos→knowledge wiki, and the root Knowledge map. It audits, migrates legacy `XX-*` folders, scaffolds provider tooling, sweeps the inbox, and generates root CLAUDE.md/AGENTS.md. Brownfield-first. NOT the bootstrap front door (that is `init`, which hands off here)."
 tags: [harness, company, ops, docs, wiki, connect, tools, knowledge]
 recommends: [init]
 profiles: [minimal, core, full]
@@ -11,66 +11,65 @@ profiles: [minimal, core, full]
 The **harness** is the control plane of a workspace. A workspace need not be code: it can be a company, an ops desk, a legal archive, a personal knowledge vault. Whatever it is, the harness is the durable apparatus that keeps it operable and legible, made of three parts:
 
 - **`01-TOOLS/<PROVIDER>/`** — the operational tooling layer. One folder per external provider, co-locating credentials (`.env`) with the scripts that consume them. Each tool ships a working `test_connection` against the real API.
-- **`02-DOCS/`** — the **Karpathy chaos→knowledge engine**: a domain-agnostic LLM wiki (`inbox/` + `raw/` + `raw/worklog/` + `wiki/` + `wiki/index.md` + `wiki/log.md` + `wiki/gaps.md` + `wiki/scores.json` + the `.base` views), fully embedded in this skill. It feeds from **two on-ramps**: (1) the user drops **any raw file in any format** (PDF, image, CSV, JSON, txt, html…) into `inbox/`, and an **Auto-Ingest Sweep** ("the agent goes for a walk") extracts, classifies, cross-links, and compiles it — and goes further, **discovering un-ingested documents anywhere in the workspace** (a stray `/transcripts`, `/facturas`…), bounded by `.rscignore` and de-duplicated by the `wiki/.ingested.json` ledger, fired automatically at SessionStart (when the inbox has material) and by the daily cron. Ingest keeps the repo clean: a loose file it ingests at the workspace root (or anything in `inbox/`) is **moved into `raw/`** (relocated, never deleted — a dropped PDF ends up in `raw/`, not at the root), while files inside a user-maintained folder are copied and consolidation is proposed; removing a redundant folder needs explicit consent; (2) a **Worklog Sweep** captures **what we do** — every meaningful session of work is itself a `raw` source (`raw/worklog/`) compiled into the wiki, fired by a `PreCompact`/`SessionEnd` hook, by an explicit milestone (a commit), or by the daily curation automation (`references/daily-curation-automation.md`). The `wiki/` is a **100%-OKF-v0.1 bundle** (Google's [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)) AND an **Obsidian-native** vault at the same time — standard markdown links, OKF-standard YAML frontmatter (Properties), readable filenames, and `.base` views give a real graph + live tables — structure, **not vector DB / embeddings / RAG**. The agent writes it; the human reads it in Obsidian. See `references/wiki-protocol.md` for the protocol, `references/ingest-formats.md` for the multiformat Fetch, `references/wiki-worklog-template.md` for the work capture, and `references/obsidian-scaffolding.md` for the vault scaffolding. Topics are inferred from content (`finanzas/`, `legal/`, `crm/`…), never hardcoded. The wiki **self-improves continuously**: every Ingest, Sweep and Query triggers a Maintenance Pass (deterministic lint, score recomputation, gap detection, Related/See-Also sweep), and every N interactions a Micro-Improve runs. Deep Improve runs on explicit request or via the scheduled daily curation. No external skill needed.
+- **`02-DOCS/`** — the **Karpathy chaos→knowledge engine**: a domain-agnostic LLM wiki
+  (`inbox/`, `raw/`, `raw/worklog/`, `wiki/` with its `index.md` / `log.md` / `gaps.md` /
+  `scores.json` and `.base` views), embedded in this skill — no external sub-skill required.
+
+  Two on-ramps feed it. **Ingest**: the user drops any file in any format into `inbox/`, and the
+  Auto-Ingest Sweep extracts, classifies, cross-links and compiles it — then goes for a walk,
+  discovering un-ingested documents anywhere in the workspace, bounded by `.rscignore` and
+  de-duplicated through the `wiki/.ingested.json` ledger. **Worklog**: every meaningful session of
+  work is itself a raw source in `raw/worklog/`, captured on `PreCompact`/`SessionEnd`, at a commit
+  milestone, or by the daily curation pass.
+
+  Ingest relocates, never deletes: a loose file at the workspace root moves into `raw/`; a file
+  inside a folder the user maintains is copied, and consolidating that folder needs explicit consent.
+
+  The `wiki/` is simultaneously an OKF-v0.1 bundle
+  ([Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf))
+  and an Obsidian-native vault: markdown links, YAML frontmatter, readable filenames, `.base` views
+  giving a real graph and live tables. **Structure, not vector DB / embeddings / RAG.** The agent
+  writes it; the human reads it in Obsidian. Topics are inferred from content (`finanzas/`, `legal/`,
+  `crm/`…), never hardcoded.
+
+  It compounds on its own: every Ingest, Sweep and Query triggers a Maintenance Pass (lint, score
+  recomputation, gap detection, Related sweep), a Micro-Improve runs every N interactions, and Deep
+  Improve runs on request or on the daily schedule. Protocol → `references/wiki-protocol.md`;
+  formats → `references/ingest-formats.md`; capture → `references/wiki-worklog-template.md`;
+  vault → `references/obsidian-scaffolding.md`.
 - **The Knowledge map** — the `## Knowledge map` section of the root `CLAUDE.md` that indexes the wiki (including the `harness/` topic) and is read by every other skill before it works in its area.
 
 `harness` is the **protagonist concept**. `init` is the bootstrap front door — it gauges the user, drafts the profile, and hands off the first scaffold. THIS skill (`harness`) is the **ongoing control**: it audits, migrates, scaffolds, sweeps the inbox, and keeps the wiki, the tooling and the Knowledge map honest over the life of the workspace. It also generates root `CLAUDE.md` and `AGENTS.md`, and migrates legacy `XX-*` numbered folders into the canonical layout.
 
-## Core behavior of the whole harness — non-technical-first + accompaniment dial
+## How the harness talks to the user
 
-This is the behavior the **entire harness honors** and that every other skill reads back. It governs how the agent talks, how many questions it asks, and how it decides things — for every interaction, not just the first.
+Read `02-DOCS/wiki/harness/user-profile.md` before you start and adapt verbosity and question count
+to the `technical_level` and `accompaniment_level` you find. L0 means terse and almost silent; L3
+means explain everything and ask a lot. No profile yet → assume non-technical, and let `init` run
+first contact (it owns the two gauging questions and the dial; do not re-ask them here).
 
-### 1. Always start assuming NON-TECHNICAL
+Two files carry the state, both indexed from the root `CLAUDE.md` Knowledge map under `harness/`:
+`user-profile.md` for the living portrait of the user, and `decisions.md` as an append-only log —
+date, requirements gathered, options presented, choice, why. Log every significant decision you take.
 
-The system **always starts assuming the user is non-technical.** The **very first question on first contact** gauges technical level, framed kindly — for example:
+`.rsc/.no-harness` is the user's explicit "no harness in this repo". Treat it as canonical: never
+overwrite it, never delete it, never auto-start onboarding past it.
 
-> "¿Te manejas con código y términos técnicos, o prefieres que te lo explique todo en cristiano?"
+For long SDD work, write the recovery note `02-DOCS/wiki/sdd/sessions/<date>-<slug>.md` before
+context compacts or the work is handed off — active artifacts, phase, last verdict, next steps,
+risks, commands. It is what lets the next agent resume without trusting chat history.
 
-Default to **non-technical framing** (plain language, no jargon, analogies over internals) until the user tells you otherwise. Never assume fluency.
+### Significant decisions: requirements first, then exactly three options
 
-### 2. Immediately ask the accompaniment / explanation level
+For any significant decision (deploy target, database, hosting, tooling), gather the requirements
+that actually drive the choice *before* presenting anything — for a deploy: expected and concurrent
+users, budget, data residency, the team's ops comfort, scaling needs. At L0 ask only the few that
+change the answer; at L3 ask all of them, one at a time. Then present exactly three options with
+honest trade-offs, recommend one in language matched to their level, and log it.
 
-Right after the technical-level question, ask the desired **accompaniment level**, describing each option clearly so the user can choose. It is a dial:
-
-- **L0 "Modo cavernícola"** — mínimas palabras. Hazlo y ya, casi sin explicar.
-- **L1 "Breve"** — una línea de *por qué* en cada paso.
-- **L2 "Explica decisiones"** — justifica cada decisión relevante al avanzar.
-- **L3 "Acompañamiento total"** — explica TODO, hace muchas preguntas para contextualizar cada cosa, razona cada decisión. Ideal para no-técnicos.
-
-### 3. Persist the profile + adapt every skill to it
-
-Persist the technical level, the accompaniment level, and **all ongoing analysis of the user** (goals, context, constraints, decisions taken) into `02-DOCS`:
-
-- `02-DOCS/wiki/harness/user-profile.md` — technical level, accompaniment level, goals, context, constraints (the living portrait of the user).
-- `02-DOCS/wiki/harness/decisions.md` — an **append-only** log of every significant decision taken, with date, the requirements gathered, the 3 options presented, the choice, and the why.
-
-Both files are referenced from the root `CLAUDE.md` `## Knowledge map` under the `harness/` topic. **Every skill READS `user-profile.md`** at the start of its work and **ADAPTS its verbosity and how many questions it asks** to the technical + accompaniment level found there. L0 means terse and almost silent; L3 means explain everything and ask a lot. When the level is unknown (no profile yet), default to non-technical + ask the two gauging questions before proceeding.
-
-`harness` itself MUST: (a) READ `02-DOCS/wiki/harness/user-profile.md` and adapt its own verbosity/questioning to the technical + accompaniment level; (b) LOG every significant decision it takes to `02-DOCS/wiki/harness/decisions.md` (append-only); (c) use the "siempre 3 opciones" pattern below for any significant decision.
-
-For long SDD work, the harness also respects the SDD session-summary convention:
-when context is about to compact, pause, or hand off, write
-`02-DOCS/wiki/sdd/sessions/<date>-<slug>.md` with active artifacts, current
-phase, last verdict, next steps, risks, commands and skill_resolution. This is
-not a replacement for the wiki; it is the recovery note that lets the next
-agent resume without trusting chat history.
-
-**Opt-out marker.** When a workspace has no profile yet, a freshly-installed session auto-starts `init` (via the `suggest` Onboarding gate and claude's SessionStart hook). A `.rsc/.no-harness` file is the explicit opt-out: present → never auto-start onboarding in this repo, even without a profile. `harness` treats it as canonical and never overwrites or deletes it.
-
-### 4. Decision pattern — "siempre 3 opciones"
-
-For **any significant decision** (deploy target, database, framework, hosting, tooling…):
-
-1. **FIRST gather the relevant requirements by asking the user.** For a deploy decision, that means: expected number of users, concurrent users, budget, data region / residency, the team's ops comfort, scaling needs. Don't present options before you understand the constraints. (At L3, ask all of them, one kind question at a time; at L0, ask only the few that actually change the answer.)
-2. **THEN present EXACTLY 3 options** with honest trade-offs and a **clear recommendation matched to their answers AND their accompaniment level.** Explain *why* each one, in language matched to the user's technical level.
-
-Canonical deploy example:
-
-1. **Hetzner VPS + Coolify** — barato, control total, self-managed (tú llevas el mantenimiento).
-2. **Vercel** — zero-ops, gestionado, escala solo; caro a escala.
-3. **Una tercera según el caso** — Fly.io / Railway / cloud gestionado, elegida por las respuestas del usuario.
-
-`harness` decides whether a decision is in scope or belongs elsewhere: it applies the pattern itself for harness-level choices, but **defers concrete deploy specifics to `deployment`** (which owns the deploy mechanics). In every case the requirements-first → 3-options → recommendation shape, and the decisions.md log entry, are the same.
+The canonical deploy trio is Hetzner+Coolify (cheap, total control, self-managed), Vercel (zero-ops,
+scales itself, costly at scale), and a third chosen from their answers. Apply the pattern yourself
+for harness-level choices, but defer concrete deploy mechanics to `deployment`, which owns them.
 
 ## Core principle
 
@@ -302,9 +301,10 @@ From then on, **new index entries go to `02-DOCS/wiki/index.md`**, not `CLAUDE.m
 and reversible; it honors the "never delete user content" rule (you relocate it, with a pointer).
 Opt out of the size nudge with `.rsc/.no-claudemd-check`.
 
-## Iron rules (non-negotiable)
+## Invariants
 
-These rules cut across every phase. Violating any one of them aborts the run.
+These are not style preferences you can weigh against convenience — each one exists because
+breaking it destroys something the user cannot get back. Violating any aborts the run.
 
 1. **Audit before action.** Nothing is written before the AUDIT is rendered and CONSENT is given.
 2. **Explicit consent only.** Silence, ambiguity, "ok" all mean NO. Only the exact-form strings count as yes.
@@ -317,22 +317,6 @@ These rules cut across every phase. Violating any one of them aborts the run.
 9. **Out-of-scope dirs are invisible.** `node_modules/`, `.venv/`, `.next/`, `__pycache__/`, `.git/`, `dist/`, `build/`, `.dart_tool/` are never read for detection and never touched.
 10. **`references/wiki-protocol.md` is the source of truth for `02-DOCS`.** Do not invent a different wiki structure.
 11. **Subproject internals are out of scope.** `.env.example`, `requirements.txt`, `package.json`, source files inside subprojects are READ for detection only. They are NEVER moved, renamed, modified, or deleted. The skill operates exclusively on workspace-root artifacts (`CLAUDE.md`, `AGENTS.md`, `01-TOOLS/`, `02-DOCS/`, and `XX-*` legacy folders at the root level).
-
-## Rationalizations — STOP
-
-These thoughts mean the skill is about to violate its own rules. Recognize them and abort:
-
-| Excuse | Reality |
-|--------|---------|
-| "The user clearly meant yes when they said 'ok'" | No. They didn't say the exact string. Re-prompt. |
-| "Just this one tool is obviously needed even without evidence" | No. Catalog says no detector hit = no tool. |
-| "I'll write the `.env` with placeholder values — it's not real credentials" | No. `.env` is reserved for real credentials. Use `.env.example` only. |
-| "The existing `CLAUDE.md` is clearly outdated, I'll rewrite it" | No. Merge additively. The user owns their `CLAUDE.md`. |
-| "These files in `00-TOOLS/RANDOM/` look like docs to me, I'll move them" | If the classification confidence isn't high, mark AMBIGUOUS and leave in place. |
-| "I'll delete the legacy folder since it's empty after migration" | Only after the second exact-string consent. Empty + no consent = preserve. |
-| "Let me also reorganize the subproject internals while I'm here" | No. The skill operates on workspace root only. Subproject internals are out of scope. |
-| "The wiki structure could be a bit different here" | No. Follow `references/wiki-protocol.md` verbatim. |
-| "The `01-TOOLS/_TEMPLATE/` should be flavored with the user's first detected tool" | No. `_TEMPLATE/` is generic boilerplate with placeholders. Detected tools come from the catalog, not the template. |
 
 ## Red flags — abort and re-plan
 
