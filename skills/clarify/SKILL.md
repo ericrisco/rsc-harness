@@ -1,6 +1,6 @@
 ---
 name: clarify
-description: "Use when a spec exists and you need to de-risk it BEFORE planning — hunt the ambiguities, unstated assumptions, edge cases, and underspecified areas, ask the user the high-leverage questions, then bake the answers back into the spec. The fourth phase of the rsc SDD chain (constitution → specify → clarify → plan → tasks → analyze → implement → verify → review → ship). Triggers: 'clarify the spec', 'what's ambiguous here', 'poke holes in this spec', 'is this spec ready to plan', 'aclara el spec', 'qué falta en este spec', 'review the requirements before we build', 'de-risk before planning', 'what questions should I answer first', 'this spec feels vague', a spec under 02-DOCS/wiki/sdd/specs/ heading into planning, or a plan that keeps stalling on unknowns. Reads the spec + constitution + harness profile; writes resolved answers back into the same spec file. NOT spec authoring (specify) and NOT the technical plan (plan)."
+description: "Use when a spec exists and must be de-risked before planning — hunt its ambiguities, unstated assumptions and edge cases, ask the few build-changing questions, bake the answers back into the spec. The rsc SDD gate between `specify` (writes the spec) and `plan` (designs the build). NOT the cross-artifact consistency check (that is `analyze`)."
 tags: [sdd, clarify, questions]
 recommends: [plan]
 profiles: [core, full]
@@ -11,25 +11,18 @@ origin: risco
 
 A spec written in one sitting always lies a little. It states what the author *thought of*, and stays silent on everything they didn't — the edge cases, the unstated defaults, the words that mean two things. Those silences don't disappear; they get discovered later, mid-implementation, where they cost ten times as much to fix. **Clarify is the gate that drags those silences into the open while they are still cheap.**
 
-This is the fourth phase of the rsc SDD chain. `specify` turned a fuzzy intent into a spec; `clarify` interrogates that spec, asks the user the questions that actually change the build, and writes the answers back so the spec becomes safe to plan from. It produces **no new artifact** — it sharpens the existing one in place. When clarify is done, `plan` can start without tripping over unknowns.
+This is the fourth phase of the rsc SDD chain (`constitution` → `specify` → **`clarify`** → `plan` → `tasks` → `analyze` → `implement` → `verify` → `review` → `ship`); the method itself lives in `../sdd/SKILL.md`. `specify` turned a fuzzy intent into a spec; clarify interrogates that spec, asks the user the questions that actually change the build, and writes the answers back so the spec becomes safe to plan from. It produces **no new artifact** — it sharpens the existing one in place. The line is **specify creates, clarify de-risks, plan designs**: if you find yourself proposing how to *build* it, you have left clarify.
 
-## When to use / when NOT to use
+**Model tier: `balanced`** — this phase ranks and asks the few high-leverage questions, it does not design architecture. Resolve and apply it per `../sdd/references/model-routing.md`; routing is off unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`.
 
-Use when:
+**Accompaniment dial.** Read the level from `02-DOCS/wiki/harness/user-profile.md` (the dial and the `02-DOCS/wiki/` convention are owned by `../harness/SKILL.md`). Clarify is question-heavy, so the dial matters here more than almost anywhere — it sets **how many questions you ask and how you frame them**. With no profile: default to non-technical framing, ask the two gauging questions (technical level + accompaniment) first, then proceed at the stated level.
 
-- A spec exists (typically `02-DOCS/wiki/sdd/specs/<slug>.md`) and is heading into planning.
-- A spec "feels vague", or planning keeps stalling because something wasn't decided.
-- You want a structured pass over ambiguities, edge cases, and unstated assumptions before committing engineering effort.
-- A review or a teammate flagged "this isn't ready to build yet".
-
-Do NOT use when (delegate instead):
-
-- The intent is still fuzzy and there is no spec yet → that's **specify** (capture the what & why first; clarify needs something to interrogate).
-- The spec is clear and you want the technical *how* (architecture, interfaces, data flow) → that's **plan**.
-- You want a consistency cross-check across constitution ↔ spec ↔ plan ↔ tasks → that's **analyze** (clarify works on the spec alone, before a plan exists).
-- The thing you're "clarifying" is a runtime bug's root cause → that's **debug**.
-
-The line: **specify creates, clarify de-risks, plan designs.** If you find yourself proposing how to *build* it, you've left clarify.
+| Dial | Ask |
+| --- | --- |
+| **L0** "cavernícola" | ONLY the questions whose answer changes the architecture or scope. Propose safe defaults for everything else and list them tersely as "assumed unless you object". Minimal prose. |
+| **L1** "breve" | The high-leverage batch, one line of *why* per question. |
+| **L2** "explica decisiones" | The batch plus the trade-off behind each option, so the user chooses informed. |
+| **L3** "acompañamiento total" | Walk the taxonomy out loud, explain what each kind of gap costs if left unresolved, ask broadly (including the medium-leverage questions), and teach the *why* as you go. Ideal for non-technical users who benefit from seeing the hidden decisions. |
 
 ## Read first — the inputs
 
@@ -37,7 +30,7 @@ Clarify never works blind. Before asking a single question, load three things:
 
 1. **The spec.** Read the target spec under `02-DOCS/wiki/sdd/specs/<slug>.md` end to end. If the path wasn't given, find the most recently touched spec or ask which one.
 2. **The constitution.** Read `02-DOCS/wiki/sdd/constitution.md` if it exists. Its principles (stack canon, quality bars, conventions) resolve a surprising number of "ambiguities" without bothering the user — if the constitution already fixes the auth method or the data region, that's answered, not open.
-3. **The harness profile.** Read `02-DOCS/wiki/harness/user-profile.md` for the technical level and accompaniment dial. This sets **how many questions you ask and how you phrase them** (see the dial section below). If no profile exists, default to non-technical framing and ask the two gauging questions first.
+3. **The harness profile.** `02-DOCS/wiki/harness/user-profile.md`, for the dial above.
 
 Citing what you read ("checked the constitution — auth is already fixed to OAuth, so that's not an open question") shows your work and prevents re-litigating settled decisions.
 
@@ -68,40 +61,21 @@ Run in order. The discipline is: find many candidate gaps, keep only the ones th
 
 2. **Resolve what you already can.** For each candidate, check the constitution and the spec's own later sections before asking the user. Many "gaps" are answered elsewhere. Mark each candidate **resolved-internally** (cite the source), **inferable** (a safe default you'll propose, not silently assume), or **must-ask** (only the user can decide).
 
-3. **Rank by leverage.** Sort the must-ask list by impact: how much does the build change depending on the answer? A question whose two answers lead to two different architectures ranks above a cosmetic one. Cut low-leverage questions — clarify is not an interrogation, it's the *few* questions that matter. Cap the batch to the dial (below).
+3. **Rank by leverage.** Sort the must-ask list by impact: how much does the build change depending on the answer? A question whose two answers lead to two different architectures ranks above a cosmetic one. Cut low-leverage questions — clarify is not an interrogation, it's the *few* questions that matter. Cap the batch to the dial.
 
-4. **Ask — one focused batch, the right size for the dial.** Present the high-leverage questions. For decisions with real trade-offs, frame them as a choice with a recommendation, not an open prompt (see the question-shape rule). Wait for answers. Never ask and answer in the same breath; never assume the user's intent on a must-ask item.
+4. **Ask — one focused batch, sized to the dial.** How you ask determines whether you get a usable answer:
+   - **Make it a decision, not an essay prompt.** "Should deletes be soft (recoverable, hidden) or hard (gone immediately)? I'd recommend soft because the spec mentions an audit trail — confirm?" beats "How should deletion work?".
+   - **Carry your own recommendation** when there's a defensible default, matched to the constitution. The user confirms or overrides — far less effort than authoring from scratch.
+   - **Quote the spec.** Anchor each question to the exact line or section it came from, so the user sees *why* it's open.
+   - **One batch, ranked, then stop.** Don't drip questions one at a time over many turns unless the dial is L3; don't dump thirty at once. Then wait: never ask and answer in the same breath, and never assume the user's intent on a must-ask item.
 
-5. **Bake the answers back into the spec.** This is the deliverable. For each resolved item, edit the spec in place:
+5. **Bake the answers back into the spec.** This is the deliverable — an un-baked answer is a lost answer. For each resolved item, edit the spec in place:
    - Tighten the relevant section with the decided behavior.
    - Add or sharpen acceptance criteria so the decision is now observable.
    - Append a `## Clarifications` log to the spec: dated entries of `Q → decision → why`, so the *reasoning* survives, not just the result.
    - Move anything explicitly dropped into an `## Out of scope` section so it's bounded, not dangling.
+
    Then re-read the spec once more: did resolving one gap open a new one? If so, one more short loop. Otherwise, the gate is passed.
-
-## Question-shape rule
-
-How you ask determines whether you get a usable answer.
-
-- **Make it a decision, not an essay prompt.** "Should deletes be soft (recoverable, hidden) or hard (gone immediately)? I'd recommend soft because the spec mentions an audit trail — confirm?" beats "How should deletion work?".
-- **Carry your own recommendation** when there's a defensible default, matched to the constitution. The user confirms or overrides — far less effort than authoring from scratch.
-- **One batch, ranked, then stop.** Don't drip questions one at a time over many turns unless the dial is L3. Don't dump thirty at once. Ask the few that matter, together.
-- **Quote the spec.** Anchor each question to the exact line or section it came from, so the user sees *why* it's open.
-
-## Model tier — `balanced` (opt-in routing)
-
-This phase's default model tier is **`balanced`** — it ranks and asks the few high-leverage questions, not architecture. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch per the accompaniment dial when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
-
-## The accompaniment dial
-
-Read the level from `02-DOCS/wiki/harness/user-profile.md` and adapt **how many questions and how you frame them** — clarify is question-heavy, so the dial matters here more than almost anywhere:
-
-- **L0 (cavernícola)** — ask ONLY the questions whose answer changes the architecture or scope. Propose safe defaults for everything else and list them tersely as "assumed unless you object". Minimal prose.
-- **L1 (breve)** — the high-leverage batch, one line of *why* per question.
-- **L2 (explica decisiones)** — the batch plus the trade-off behind each option, so the user chooses informed.
-- **L3 (acompañamiento total)** — walk the taxonomy out loud, explain what each kind of gap costs if left unresolved, ask broadly (including the medium-leverage questions), and teach the *why* as you go. Ideal for non-technical users who benefit from seeing the hidden decisions.
-
-When no profile exists: default to non-technical framing, ask the two gauging questions (technical level + accompaniment) first, then proceed at the stated level.
 
 ## Worked micro-example
 
@@ -124,40 +98,25 @@ Resolved-internally (cite): constitution fixes storage to the project's object s
 
 After baking back, the spec line becomes a bounded, testable behavior with acceptance criteria ("rejects files >5 MB with a clear message", "accepts PNG/JPG/HEIC only", "replacing a photo deletes the prior file") and a `## Clarifications` entry recording why.
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization | Reality / fix |
+| Anti-pattern | Why it breaks the gate / do instead |
 | --- | --- |
-| "The spec reads clear enough, skip clarify" | Clear to the author ≠ unambiguous. Run the taxonomy; the gaps you can't see are exactly the expensive ones. |
-| "I'll just assume the sensible default and move on" | An assumption is an unrecorded decision. Either it's resolvable from the constitution (cite it) or it's a must-ask. Silent defaults resurface as bugs. |
-| "Let me also sketch how we'd build this while I'm here" | That's `plan`. Clarify decides *what*, not *how*. Proposing architecture means you left the gate. |
-| "I'll ask everything I can think of to be safe" | Thirty questions is noise that buries the three that matter. Rank by leverage; ask the few; default the rest. |
-| "I'll fire questions one at a time across many turns" | Below L3 that's death by a thousand prompts. Batch the high-leverage set once. |
-| "I answered the questions in my head, the spec is fine as-is" | The deliverable is the *edited spec* + the Clarifications log. An un-baked answer is a lost answer. |
-| "Edge cases are the implementer's problem" | Edge cases are *spec* problems. Resolving them now is the whole point of the gate. |
-| "It's ambiguous but the user is busy, I'll guess" | A wrong guess costs more than a question. Frame it as a one-tap decision with a recommendation. |
+| Skipping clarify because the spec "reads clear enough" | Clear to the author ≠ unambiguous. Run the taxonomy; the gaps you can't see are exactly the expensive ones. |
+| Assuming the sensible default and moving on | An assumption is an unrecorded decision. Either it's resolvable from the constitution (cite it) or it's a must-ask. Silent defaults resurface as bugs — and "the user is busy" is not an exception; a wrong guess costs more than a one-tap question. |
+| Sketching how you'd build it while you're in there | That's `plan`. Clarify decides *what*, not *how*. Proposing architecture means you left the gate. |
+| Asking everything you can think of, to be safe | Thirty questions is noise that buries the three that matter. Rank by leverage, ask the few, default the rest — and batch them once instead of dripping one per turn. |
+| Answering the questions in your head and leaving the spec as-is | The deliverable is the *edited spec* plus the Clarifications log, not a clean conscience. |
+| Leaving edge cases "to the implementer" | Edge cases are *spec* problems. Resolving them now is the whole point of the gate. |
 
-## Done check — is the gate passed?
+## Exit gate
 
-- [ ] Spec, constitution, and harness profile all read; settled questions cited, not re-asked.
-- [ ] The spec was scanned against the full ambiguity taxonomy (all ten categories considered).
-- [ ] Candidate gaps were ranked by leverage; only the build-changing ones were put to the user.
-- [ ] Questions were framed as decisions with recommendations, in one dial-sized batch.
-- [ ] Every resolved answer is baked into the spec body (behavior tightened, acceptance criteria added).
-- [ ] A dated `## Clarifications` log captures Q → decision → why for each resolved item.
-- [ ] Dropped items are bounded under `## Out of scope`, not left dangling.
-- [ ] A final re-read confirmed resolving gaps didn't open new ones (or a short loop closed them).
+The gate is passed when the spec, constitution and profile were all read (settled questions cited, not re-asked); all ten taxonomy categories were considered; only the build-changing gaps were put to the user, as dial-sized decisions with recommendations; every answer is baked into the spec body with observable acceptance criteria, logged under `## Clarifications` and bounded under `## Out of scope`; and the final re-read opened no new gap.
 
 ## Next in the chain
 
-When the gate is passed and the spec is de-risked, hand off to **plan** — turn the now-sharp spec into a technical implementation plan (architecture, interfaces, data flow, testing strategy, risks), deferring stack specifics to the relevant stack skill. The SDD chain continues: clarify → **plan** → tasks → analyze → implement → verify → review → ship.
-
-## See Also
-
-- `../harness/SKILL.md` — the accompaniment dial and the `02-DOCS/wiki/` convention this skill reads and writes into.
-- The SDD chain (sibling phases): `specify` (creates the spec clarify interrogates), `plan` (consumes the de-risked spec), `analyze` (cross-checks constitution ↔ spec ↔ plan ↔ tasks), `debug` (root-cause diagnosis, callable any time), `constitution` (the principles clarify reads as guardrails).
+Hand off to **`plan`** — turn the now-sharp spec into a technical implementation plan (architecture, interfaces, data flow, testing strategy, risks), deferring stack specifics to the relevant stack skill. The chain continues: clarify → **plan** → tasks → analyze → implement → verify → review → ship. `debug` is callable any time if what you are "clarifying" turns out to be a runtime fault, not a spec gap.
 
 ## Orientación (siempre)
 
 Cierra cada turno con el **bloque-brújula** (📍 dónde estás · ✅ qué hiciste · 🧭 por qué · ➡️ siguiente, terminando en pregunta), calibrado al dial de `02-DOCS/wiki/harness/user-profile.md`. **Nunca termines en seco.** Protocolo completo: skill `orient` → `skills/orient/references/orientation-contract.md`. (Defiere a `suggest` el "¿instalo la skill que falta?".)
-
