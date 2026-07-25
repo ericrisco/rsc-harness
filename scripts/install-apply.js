@@ -49,6 +49,10 @@ function ensureBase(id, cwd, baseVersions) {
   return dest;
 }
 
+// Every file wireHook() materializes, so they are covered by the pre-write backup and
+// reported by a --dry-run. Keep in sync with targets/claude.js wireHook(): a file it
+// writes but this omits is silently absent from the snapshot, so `rsc restore` cannot
+// bring it back.
 function generatedHookFiles({ target, cwd }) {
   if (target !== 'claude') return [];
   return [
@@ -56,6 +60,8 @@ function generatedHookFiles({ target, cwd }) {
     join(cwd, '.rsc', 'worklog-checkpoint.mjs'),
     join(cwd, '.rsc', 'ship-guard.mjs'),
     join(cwd, '.rsc', 'danger-guard.mjs'),
+    join(cwd, '.rsc', 'userprompt-gate.mjs'),
+    join(cwd, '.rsc', 'hook-once.mjs'),
   ];
 }
 

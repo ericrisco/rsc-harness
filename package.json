@@ -32,7 +32,9 @@
     "targets",
     "schema",
     "skills",
-    "manifest.json"
+    "manifest.json",
+    "!**/__pycache__/**",
+    "!**/*.pyc"
   ],
   "keywords": [
     "agent-skills",

@@ -102,6 +102,7 @@ harness/
 │   ├── audit-report-template.md      ← exact format of the audit report shown to user
 │   ├── wiki-protocol.md              ← embedded wiki protocol + Inbox/Worklog Sweep + Continuous Improvement
 │   ├── ingest-formats.md             ← multiformat Fetch (PDF, image, CSV, JSON, html…)
+│   ├── ingest-ignore-defaults.md     ← what the sweep skips by default (the .rscignore baseline)
 │   ├── inbox-readme-template.md      ← the inbox/README.md drop-zone contract
 │   ├── wiki-raw-template.md          ← format for raw/<topic>/*.md
 │   ├── wiki-worklog-template.md      ← format for raw/worklog/*.md (work-driven capture)

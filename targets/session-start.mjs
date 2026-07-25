@@ -5,13 +5,25 @@
 // Always emits suggest's always-on body; appends an onboarding banner when the
 // workspace has no harness profile yet, and an auto-ingest nudge when there is
 // un-ingested material waiting in the inbox.
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, existsSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { homedir } from 'node:os';
+import { claimOnce, readHookInput } from './hook-once.mjs';
 
 const STALE_AUDIT_DAYS = 14; // periodic skill-audit cadence (kept in sync with scripts/audit.js)
 
 const suggestMd = process.argv[2];
 const root = process.argv[3] || process.cwd();
+
+// When rsc is wired in more than one scope (user + project), every scope runs this script and the
+// always-on body lands once per scope. Both invocations share Claude Code's session_id, so the
+// first one to claim the event emits and the rest stay silent. `source` is part of the key so a
+// later compaction — which reuses the session_id — still re-injects, as it must.
+// No session id (no stdin / older Claude Code) → claimOnce fails open and we emit as before.
+const hook = readHookInput();
+const emitBody = hook.session_id
+  ? claimOnce(`ss:${hook.session_id}:${hook.source || 'startup'}`)
+  : true;
 
 const has = (...p) => existsSync(join(root, ...p));
 
@@ -31,7 +43,64 @@ function auditDue() {
   } catch { return true; }
 }
 
-try { process.stdout.write(readFileSync(suggestMd, 'utf8')); } catch { /* missing → emit nothing */ }
+if (emitBody) {
+  try { process.stdout.write(readFileSync(suggestMd, 'utf8')); } catch { /* missing → emit nothing */ }
+}
+
+// De-dup above only works when EVERY wired scope runs an updated hook. A scope left behind keeps
+// emitting its own copy and cannot be silenced from here, so the only honest move is to say which
+// scope is lagging and how to fix it. Cadence-limited (this is advice, not an alarm) and opt-out-able.
+const SCOPE_WARN_DAYS = 7;
+
+function versionAt(scopeRoot) {
+  try { return readFileSync(join(scopeRoot, '.rsc', '.version'), 'utf8').trim() || null; } catch { return null; }
+}
+
+function isWiredScope(scopeRoot) {
+  try { return readFileSync(join(scopeRoot, '.claude', 'settings.json'), 'utf8').includes('.rsc/'); } catch { return false; }
+}
+
+function olderThan(a, b) {
+  const pa = String(a).split('.').map(Number); const pb = String(b).split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) < (pb[i] || 0)) return true;
+    if ((pa[i] || 0) > (pb[i] || 0)) return false;
+  }
+  return false;
+}
+
+function scopeWarnDue() {
+  try {
+    const { lastRun } = JSON.parse(readFileSync(join(root, '.rsc', 'dup-scope.json'), 'utf8'));
+    return (Date.now() - new Date(lastRun).getTime()) / 86400000 >= SCOPE_WARN_DAYS;
+  } catch { return true; }
+}
+
+if (!has('.rsc', '.no-scope-check') && scopeWarnDue()) {
+  // The complementary scope: from a project root it is the user's home, and vice versa.
+  const home = homedir();
+  const other = resolve(root) === resolve(home) ? (hook.cwd && resolve(hook.cwd) !== resolve(home) ? hook.cwd : null) : home;
+  const mine = versionAt(root);
+  const theirs = other ? versionAt(other) : null;
+  // Both versions must be readable to make a claim; an unreadable scope is not evidence of a problem.
+  if (other && mine && theirs && isWiredScope(other) && olderThan(theirs, mine)) {
+    process.stdout.write(`
+===== rsc duplicate rsc scope =====
+rsc is wired in TWO scopes and one is out of date, so this session receives the always-on
+block and the SDD gate TWICE — once per scope. Only the updated scope can de-duplicate.
+  this scope:    ${root} (${mine})
+  lagging scope: ${other} (${theirs})
+ACTION: update the lagging scope, then it will stay silent on its own:
+  cd "${other}" && npx @ericrisco/rsc@latest
+Opt out with .rsc/.no-scope-check · this notice repeats at most every ${SCOPE_WARN_DAYS} days.
+===================================
+`);
+    try {
+      mkdirSync(join(root, '.rsc'), { recursive: true });
+      writeFileSync(join(root, '.rsc', 'dup-scope.json'), JSON.stringify({ lastRun: new Date().toISOString() }) + '\n');
+    } catch { /* unwritable → the notice simply repeats next session */ }
+  }
+}
 
 const profile = join(root, '02-DOCS', 'wiki', 'harness', 'user-profile.md');
 const optout = join(root, '.rsc', '.no-harness');
