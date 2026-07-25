@@ -1,6 +1,6 @@
 ---
 name: chrome-extension
-description: "Use when building, structuring, or shipping a Manifest V3 browser extension and hitting its quirks — the service worker keeps dying or losing state between events, permission warnings scare users away, the Chrome Web Store rejected the listing, or you must drag an old Manifest V2 extension to V3. Triggers: 'build a Chrome extension', 'my background script keeps resetting its state', 'store rejected me for excessive permissions', 'migrate MV2 to MV3', 'content script messaging to the popup', 'declarativeNetRequest ad blocker', 'crear una extensión de Chrome', 'publicar a la Chrome Web Store', 'el service worker se muere'. NOT a generic web app (that is nextjs)."
+description: "Use when building or shipping a Manifest V3 browser extension and hitting its quirks — service worker dying and losing state, permission warnings, a Chrome Web Store rejection, content-script/worker/popup messaging, or an MV2-to-V3 migration. NOT a generic web app (that is `nextjs`), NOT a desktop shell (that is `electron`)."
 tags: [chrome-extension, manifest-v3, browser-extension, service-worker, chrome-web-store]
 recommends: [nextjs, react, gdpr-privacy, secure-coding, vercel]
 origin: risco
@@ -134,7 +134,7 @@ chrome.action.onClicked.addListener(async (tab) => {
 
 - `run_at`: `document_start` (before DOM), `document_end`, or `document_idle` (default, after load). Pick `document_start` only if you must beat the page's own scripts.
 - **Isolated world** (default): your content script's JS is sandboxed from the page's JS — they share the DOM but not variables. Use **MAIN world** (`"world": "MAIN"`) only when you must touch the page's own JS objects, and know it loses the isolation guarantee.
-- For dynamic, user-supplied injection, `chrome.userScripts.execute()` exists (Chrome 135, Mar 2025) — see references.
+- For dynamic, user-supplied injection, `chrome.userScripts.execute()` exists (Chrome 135, Mar 2025) — see [references/store-and-migration.md](references/store-and-migration.md).
 
 ## Storage, alarms, no remote code
 
