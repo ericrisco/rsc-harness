@@ -48,6 +48,9 @@ export function unwireHook(paths) {
 export function wireHook(paths) {
   const scriptDest = join(paths.projectRoot, '.rsc', 'session-start.mjs');
   mkdirSync(dirname(scriptDest), { recursive: true });
+  // Shared by session-start + userprompt-gate. Hooks are materialized file by file, so a module
+  // they import must be copied as their SIBLING — a subdirectory import would break once copied.
+  copyFileSync(join(HERE, 'hook-once.mjs'), join(paths.projectRoot, '.rsc', 'hook-once.mjs'));
   copyFileSync(join(HERE, 'session-start.mjs'), scriptDest);
 
   const suggestMd = `${paths.skillDir('suggest')}/SKILL.md`;

@@ -122,6 +122,35 @@ function printAgentHandoff() {
   say('════════════════════════════════════════════════');
 }
 
+// What the harness costs in context before the user types anything. Printed ahead of the raw
+// health JSON because it is the part a human acts on: the figures say whether the harness is
+// paying its way, and the findings say what to do about it.
+const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
+
+function printContextBudget(b) {
+  if (!b) return;
+  say('\n════════════════ CONTEXT BUDGET ════════════════');
+  if (b.notApplicable.length) {
+    say(`  ${b.note}`);
+  } else {
+    say(`  Per session start : ${kb(b.sessionStartBytes)}   (always-on body, per wired scope)`);
+    say(`  Per user turn     : ${kb(b.perTurnBytes)}`);
+  }
+  say(`  Skill descriptions: ${kb(b.descriptionsBytes)}   (${b.installedSkills} installed, always in context)`);
+  if (b.topContributors.bodies.length) {
+    const top = b.topContributors.bodies.map((t) => `${t.id} ${kb(t.bytes)}`).join(' · ');
+    say(`  Heaviest bodies   : ${top}`);
+  }
+  for (const s of b.scopes.filter((x) => x.wired)) {
+    say(`  Scope ${s.label.padEnd(8)}: ${s.root}${s.version ? ` (${s.version})` : ''}${s.status === 'unknown' ? ' — UNREADABLE' : ''}`);
+  }
+  for (const f of b.findings) {
+    say(`\n  [${f.severity.toUpperCase()}] ${f.summary}`);
+    say(`  → ${f.action}`);
+  }
+  say('════════════════════════════════════════════════\n');
+}
+
 async function wizard() {
   const m = loadManifest();
   await banner();
@@ -241,8 +270,12 @@ async function main() {
     }
     case 'list':
       return void say(listInstalled({ target }).join('\n') || '(nothing installed)');
-    case 'doctor':
-      return void say(JSON.stringify(doctor({ target }), null, 2));
+    case 'doctor': {
+      const report = doctor({ target });
+      if (argv.includes('--json')) return void say(JSON.stringify(report, null, 2));
+      printContextBudget(report.contextBudget);
+      return void say(JSON.stringify({ ...report, contextBudget: undefined }, null, 2));
+    }
     case 'sync': {
       const dry = argv.includes('--dry-run');
       for (const t of targets) {

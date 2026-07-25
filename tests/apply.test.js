@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, existsSync, readFileSync, lstatSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, existsSync, readFileSync, lstatSync, statSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,13 +13,15 @@ import { targetPaths } from '../targets/index.js';
 const SESSION_START = join(dirname(fileURLToPath(import.meta.url)), '..', 'targets', 'session-start.mjs');
 const CLI_VERSION = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')).version;
 
-function runSessionStart(root, env = {}) {
+function runSessionStart(root, env = {}, input = undefined) {
   const suggest = join(root, 'suggest-SKILL.md');
   writeFileSync(suggest, '# rsc-suggest — detect & install\nalways-on body\n');
   // Default: skip the update check so unrelated tests never hit the network.
   // Update tests opt in by passing RSC_NO_UPDATE_CHECK:'' + RSC_LATEST:'<v>'.
   const merged = { ...process.env, RSC_NO_UPDATE_CHECK: '1', ...env };
-  return spawnSync('node', [SESSION_START, suggest, root], { encoding: 'utf8', env: merged }).stdout;
+  // `input` is the hook payload Claude Code writes to stdin; omitted → no stdin, fail-open.
+  const opts = { encoding: 'utf8', env: merged, ...(input === undefined ? {} : { input }) };
+  return spawnSync('node', [SESSION_START, suggest, root], opts).stdout;
 }
 
 test('session-start: emits suggest body + banner when no profile and no opt-out', () => {
@@ -259,6 +261,134 @@ test('claude: install wires the UserPromptSubmit new-feature gate (idempotent, o
   assert.equal(silenced.stdout.trim(), '', 'opt-out marker silences the gate');
 });
 
+// --- cross-scope de-duplication (spec: context-budget) --------------------------------
+// rsc wired in both user and project scope runs two copies of every hook, so the always-on
+// body and the SDD gate each land twice. Both copies see the same session_id / prompt_id.
+
+const countOf = (haystack, needle) => haystack.split(needle).length - 1;
+
+test('session-start: two scopes in one session emit the always-on body exactly once', () => {
+  const markers = mkdtempSync(join(tmpdir(), 'rsc-markers-'));
+  const rootA = mkdtempSync(join(tmpdir(), 'rsc-scopeA-'));
+  const rootB = mkdtempSync(join(tmpdir(), 'rsc-scopeB-'));
+  const payload = JSON.stringify({ session_id: 'sess-1', hook_event_name: 'SessionStart', source: 'startup' });
+
+  const first = runSessionStart(rootA, { RSC_HOOK_MARKER_DIR: markers }, payload);
+  const second = runSessionStart(rootB, { RSC_HOOK_MARKER_DIR: markers }, payload);
+
+  assert.equal(countOf(first, 'detect & install'), 1, 'the first scope emits the body');
+  assert.equal(countOf(second, 'detect & install'), 0, 'the second scope stays silent');
+});
+
+test('session-start: a later compaction in the same session re-emits the body', () => {
+  const markers = mkdtempSync(join(tmpdir(), 'rsc-markers-'));
+  const root = mkdtempSync(join(tmpdir(), 'rsc-scope-'));
+  const startup = JSON.stringify({ session_id: 'sess-2', source: 'startup' });
+  const compact = JSON.stringify({ session_id: 'sess-2', source: 'compact' });
+
+  assert.equal(countOf(runSessionStart(root, { RSC_HOOK_MARKER_DIR: markers }, startup), 'detect & install'), 1);
+  // Re-injection after a compaction is the whole point of the always-on layer — never suppress it.
+  assert.equal(countOf(runSessionStart(root, { RSC_HOOK_MARKER_DIR: markers }, compact), 'detect & install'), 1);
+});
+
+test('session-start: without a session id it fails open and still emits', () => {
+  const markers = mkdtempSync(join(tmpdir(), 'rsc-markers-'));
+  const root = mkdtempSync(join(tmpdir(), 'rsc-scope-'));
+
+  // No stdin at all (older Claude Code, or a non-hook invocation): duplicated context is a cost,
+  // a missing always-on layer is a behaviour change. Always choose the cost.
+  assert.equal(countOf(runSessionStart(root, { RSC_HOOK_MARKER_DIR: markers }), 'detect & install'), 1);
+  assert.equal(countOf(runSessionStart(root, { RSC_HOOK_MARKER_DIR: markers }), 'detect & install'), 1);
+});
+
+test('userprompt-gate: two scopes in one turn emit the gate exactly once', async () => {
+  const markers = mkdtempSync(join(tmpdir(), 'rsc-markers-'));
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-gate-dedup-'));
+  await applyInstall({ skillIds: ['suggest'], target: 'claude', cwd });
+  const gate = join(cwd, '.rsc/userprompt-gate.mjs');
+  const env = { ...process.env, RSC_HOOK_MARKER_DIR: markers };
+  const turn = JSON.stringify({ session_id: 'sess-3', prompt_id: 'turn-1', prompt: 'añade login' });
+
+  const first = spawnSync('node', [gate, cwd], { encoding: 'utf8', env, input: turn });
+  const second = spawnSync('node', [gate, cwd], { encoding: 'utf8', env, input: turn });
+
+  assert.equal(countOf(first.stdout, 'new-feature gate'), 1, 'first scope emits the gate');
+  assert.equal(countOf(second.stdout, 'new-feature gate'), 0, 'second scope stays silent');
+});
+
+test('userprompt-gate: the next turn emits the gate again', async () => {
+  const markers = mkdtempSync(join(tmpdir(), 'rsc-markers-'));
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-gate-turns-'));
+  await applyInstall({ skillIds: ['suggest'], target: 'claude', cwd });
+  const gate = join(cwd, '.rsc/userprompt-gate.mjs');
+  const env = { ...process.env, RSC_HOOK_MARKER_DIR: markers };
+
+  const t1 = spawnSync('node', [gate, cwd], {
+    encoding: 'utf8', env, input: JSON.stringify({ session_id: 'sess-4', prompt_id: 'turn-1' }),
+  });
+  const t2 = spawnSync('node', [gate, cwd], {
+    encoding: 'utf8', env, input: JSON.stringify({ session_id: 'sess-4', prompt_id: 'turn-2' }),
+  });
+
+  assert.equal(countOf(t1.stdout, 'new-feature gate'), 1);
+  assert.equal(countOf(t2.stdout, 'new-feature gate'), 1, 'a new prompt_id is a new turn');
+});
+
+// De-dup only works when BOTH scopes run an updated hook. A scope left on an older version keeps
+// printing its own copy and cannot be silenced from here — so say so, with the fix.
+function wireStubScope(root, version) {
+  mkdirSync(join(root, '.claude'), { recursive: true });
+  writeFileSync(join(root, '.claude/settings.json'), JSON.stringify({
+    hooks: { SessionStart: [{ hooks: [{ type: 'command', command: `node "${root}/.rsc/session-start.mjs"` }] }] },
+  }));
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  writeFileSync(join(root, '.rsc/.version'), `${version}\n`);
+}
+
+test('session-start: warns when another wired scope is on an older version', () => {
+  const home = mkdtempSync(join(tmpdir(), 'rsc-home-'));
+  const project = mkdtempSync(join(tmpdir(), 'rsc-proj-'));
+  wireStubScope(home, '0.1.40');
+  wireStubScope(project, '0.2.0');
+
+  const out = runSessionStart(project, { HOME: home, RSC_HOOK_MARKER_DIR: mkdtempSync(join(tmpdir(), 'm-')) },
+    JSON.stringify({ session_id: 's', source: 'startup', cwd: project }));
+
+  assert.ok(out.includes('duplicate rsc scope'), 'names the problem');
+  assert.ok(out.includes('0.1.40'), 'names the lagging version');
+  assert.ok(out.includes(home), 'names which scope to update');
+});
+
+test('session-start: no warning when both scopes are on the same version', () => {
+  const home = mkdtempSync(join(tmpdir(), 'rsc-home-'));
+  const project = mkdtempSync(join(tmpdir(), 'rsc-proj-'));
+  wireStubScope(home, '0.2.0');
+  wireStubScope(project, '0.2.0');
+
+  const out = runSessionStart(project, { HOME: home, RSC_HOOK_MARKER_DIR: mkdtempSync(join(tmpdir(), 'm-')) },
+    JSON.stringify({ session_id: 's', source: 'startup', cwd: project }));
+
+  assert.ok(!out.includes('duplicate rsc scope'), 'de-dup already handles it silently');
+});
+
+test('session-start: the scope warning honors its opt-out and its cadence', () => {
+  const home = mkdtempSync(join(tmpdir(), 'rsc-home-'));
+  const project = mkdtempSync(join(tmpdir(), 'rsc-proj-'));
+  wireStubScope(home, '0.1.40');
+  wireStubScope(project, '0.2.0');
+  const payload = JSON.stringify({ session_id: 's', source: 'startup', cwd: project });
+  const env = () => ({ HOME: home, RSC_HOOK_MARKER_DIR: mkdtempSync(join(tmpdir(), 'm-')) });
+
+  assert.ok(runSessionStart(project, env(), payload).includes('duplicate rsc scope'), 'first run warns');
+  assert.ok(!runSessionStart(project, env(), payload).includes('duplicate rsc scope'),
+    'cadence suppresses the repeat');
+
+  writeFileSync(join(project, '.rsc/.no-scope-check'), '');
+  rmSync(join(project, '.rsc/dup-scope.json'), { force: true });
+  assert.ok(!runSessionStart(project, env(), payload).includes('duplicate rsc scope'),
+    'opt-out silences it outright');
+});
+
 test('install creates a backup before overwriting managed hook files', async () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-install-backup-'));
   mkdirSync(join(cwd, '.claude'), { recursive: true });
@@ -306,6 +436,30 @@ test('syncInstalled dry-run reports managed paths without mutating stale base fi
 
   assert.ok(preview.paths.some((p) => p.includes('.claude/skills/fastapi')));
   assert.ok(existsSync(join(cwd, '.rsc/skills/fastapi/STALE.txt')));
+});
+
+test('every wired hook script is a managed path, so a backup can restore it', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-hookpaths-'));
+  // `suggest` is what plans the hook step (install-plan.js) — without it nothing is wired.
+  await applyInstall({ skillIds: ['suggest'], target: 'claude', cwd });
+
+  // wireHook() materializes these; managedPathsForInstall() must cover all of them or
+  // the pre-write snapshot silently misses one and `rsc restore` cannot bring it back.
+  const preview = await syncInstalled({ target: 'claude', cwd, dryRun: true });
+  for (const script of [
+    'session-start.mjs',
+    'worklog-checkpoint.mjs',
+    'ship-guard.mjs',
+    'danger-guard.mjs',
+    'userprompt-gate.mjs',
+    'hook-once.mjs',
+  ]) {
+    assert.ok(existsSync(join(cwd, '.rsc', script)), `${script} is written by wireHook`);
+    assert.ok(
+      preview.paths.some((p) => p.endsWith(join('.rsc', script))),
+      `${script} is reported as a managed path`,
+    );
+  }
 });
 
 test('syncInstalled refreshes installed skills and creates a sync backup', async () => {

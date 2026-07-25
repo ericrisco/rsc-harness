@@ -13,22 +13,19 @@
 // Fail-open (never blocks a turn). Opt out per project with .rsc/.no-feature-gate.
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { claimOnce, readHookInput, SDD_GATE_TEXT } from './hook-once.mjs';
 
 const root = process.argv[2] || process.cwd();
 
 // Opt-out: a project that does not want the always-on gate drops this marker file.
 if (existsSync(join(root, '.rsc', '.no-feature-gate'))) process.exit(0);
 
-process.stdout.write(`===== rsc SDD new-feature gate (highest precedence) =====
-Before acting on this turn: if the user wants to BUILD, ADD, or CHANGE a feature — in
-ANY language, judged by intent, not by keywords — you MUST route it through SDD via
-\`specify\` FIRST. No feature code is written by ANY skill (stack skills included —
-nextjs/react/fastapi/flutter/go/postgresdb/building-agents/design — and any builder skill
-such as chatbot/course-builder/marketing) until a spec AND a plan exist and the user has
-approved them. No skill outranks this gate.
-- Unclear / in-between? -> \`specify\` (the safe default; a skipped spec is where drift hides).
-- One-line / low-risk change, or a bug fix restoring intended behaviour? -> skip the chain,
-  do it, and say so out loud.
-Full gate + decision table live in the always-on \`suggest\` body; method in \`sdd\`.
-=========================================================
-`);
+// rsc wired in both user and project scope runs this once per scope, so the gate lands twice on
+// every turn. `prompt_id` is unique per turn and identical across scopes, which makes the dedup
+// exact — no time heuristic needed. Older Claude Code has no prompt_id: fall back to the prompt
+// text, and if there is nothing to key on at all, emit (a duplicated gate beats a missing one).
+const hook = readHookInput();
+const turnKey = hook.prompt_id || (hook.prompt ? `p${hook.prompt.length}:${hook.prompt.slice(0, 64)}` : null);
+if (hook.session_id && turnKey && !claimOnce(`up:${hook.session_id}:${turnKey}`)) process.exit(0);
+
+process.stdout.write(SDD_GATE_TEXT);
