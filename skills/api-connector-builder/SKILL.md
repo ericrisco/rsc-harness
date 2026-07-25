@@ -1,6 +1,6 @@
 ---
 name: api-connector-builder
-description: "Use when writing a client against a third-party REST or GraphQL API and the boring-but-critical parts keep biting — token refresh mid-run, only-the-first-page results, random 429s, banned keys. Covers auth flow selection (API key, Bearer, OAuth2 client-credentials, auth-code+PKCE, device), pagination to exhaustion (offset, cursor/keyset, Link header, Relay connections), retry-with-jitter on transient failures only, and rate-limit-aware throttling. Triggers: 'write a connector for the Linear/Shopify API', 'this API keeps 429-ing us', 'paginate through all results', 'token expires mid-run add refresh', 'wrap this REST API as a typed SDK', 'conector para una API que nos limita', 'recórreme totes les pàgines'. NOT receiving inbound callbacks (that is webhooks), NOT chaining many services into a flow (that is automation-flows), NOT designing your own API surface (that is api-design)."
+description: "Use when writing a client for someone else's REST or GraphQL API: auth flow choice and token refresh, pagination to exhaustion, retry-with-jitter on transient failures only, rate-limit-aware throttling. NOT inbound callbacks (that is `webhooks`), NOT chaining services (that is `automation-flows`), NOT designing your own API (that is `api-design`)."
 tags: [api, rest, graphql, oauth, pagination, retries, rate-limiting, http-client, connector]
 recommends: [webhooks, automation-flows, api-design, data-scraper, secure-coding, error-handling, structured-extraction]
 origin: risco
@@ -12,31 +12,18 @@ You are writing a client for **someone else's** HTTP API. You do not own the
 contract; you obey it. The deliverable is one typed connector module per vendor
 that authenticates, walks the whole result set, retries only transient failures
 with backoff, and stays under the rate limit without getting the key banned.
+One connector = one vendor: mixed clients tangle two auth schemes and two
+rate-limit budgets into something no one can reason about.
 
 Four pillars, every time: **auth, pagination, retries, rate limits.** If your
 connector skips any one of them it works in the demo and breaks in production —
 on page 2, on token expiry, on the first 429, or on a flaky network.
 
-This skill goes **outbound** (you call them). Receiving their callbacks is the
-inverse and lives in `webhooks`.
-
-## Operating posture
-
-- **Read the vendor docs before writing a line.** Invented endpoints and guessed
-  field names 404 in prod. Find the real base URL, version, and error envelope.
-- **Secrets come from env or a secret store, never source.** Hardcoded keys leak
-  through git history and screenshots and you cannot rotate them cleanly.
-- **One connector = one vendor.** Mixed clients tangle two auth schemes and two
-  rate-limit budgets into one tangle no one can reason about.
-- **Every request gets a timeout.** A hung socket with no timeout stalls the
-  whole run forever; the default in most clients is "wait indefinitely".
-- **Log request id + status + attempt, never the token.** Logs get shipped to
-  third parties; a logged bearer token is a leaked credential.
-
 ## Step 0 — read the contract
 
-Before any code, extract these from the vendor's docs. Each one changes what you
-write, so missing one means a rewrite.
+Read the vendor docs before writing a line — invented endpoints and guessed
+field names 404 in prod. Extract these first; each one changes what you write,
+so missing one means a rewrite.
 
 | Find in their docs        | Why it changes your code                                  |
 | ------------------------- | --------------------------------------------------------- |
@@ -202,8 +189,9 @@ def iter_records(client):
             return
 ```
 
-Full code for every style — offset, keyset, `Link`-header parsing, and GraphQL
-Relay connection walking, in Python and TS — is in `references/pagination.md`.
+Full code for every style — offset, keyset, `Link`-header parsing, GraphQL Relay
+connection walking, in Python and TS, plus dedup-on-overlap notes — is in
+`references/pagination.md`.
 
 ## Putting it together
 
@@ -272,12 +260,7 @@ export async function request(path: string, init: RequestInit = {}, attempt = 0)
 | Token in query string                 | Token ends up in logs / referrers        | Bearer in the `Authorization` header         |
 | Implicit / password OAuth grant       | Removed in OAuth 2.1; insecure           | Auth-Code + PKCE, or Client Credentials      |
 
-## References & verify
-
-- `references/auth-flows.md` — per-flow walkthroughs, token storage + rotation,
-  OAuth 2.1 deltas, RFC 9700 refresh rotation, DPoP note. Python + TS.
-- `references/pagination.md` — full code for offset, cursor/keyset, Link-header,
-  and GraphQL Relay walking. Exhaustion-loop and dedup-on-overlap notes.
+## Verify
 
 Run `scripts/verify.sh` over the connector you write: it greps for hardcoded
 secrets, asserts a retry mechanism and a pagination loop and a request timeout
