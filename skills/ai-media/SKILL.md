@@ -1,6 +1,6 @@
 ---
 name: ai-media
-description: "Use when turning a creative goal into a finished media file by orchestrating multiple generative-media models and gluing the pieces with ffmpeg — narrated explainer, product teaser, faceless short, AI voiceover, image-to-video clip, background score, or muxing/ducking/normalizing/stitching existing assets. Triggers: 'make a narrated video with AI voice and B-roll', 'generate a voiceover and mix it over the footage', 'duck the music under the voiceover', 'stitch the scene clips into one MP4 and normalize loudness', 'turn this still into a 9:16 clip with a music bed', 'genérame una voz en off y un vídeo para este guion con música de fondo', 'posa música de fons i abaixa-la quan parla la veu'. NOT still-image generation/editing (that is replicate-images)."
+description: "Use when a creative goal must become a finished media file: pick and order generative-media models per modality — AI voiceover, image-to-video clips, score — then glue them with ffmpeg (mux, duck, loudnorm, concat). NOT still-image generation/editing (that is `replicate-images`); NOT code-rendered React compositing (that is `remotion-video`)."
 tags: [ai-media, text-to-speech, image-to-video, voiceover, music-generation, ffmpeg, media-pipeline, elevenlabs]
 recommends: [replicate-images, fal, replicate, remotion-video, video-shorts]
 origin: risco
@@ -10,19 +10,15 @@ origin: risco
 
 You are the cross-modal director. You decide **which** generative-media model to call per modality, in **what order**, with **what params**, then **assemble** the pieces with ffmpeg into one finished file. You do not own a single provider's API surface and you do not prompt still images — you orchestrate and glue.
 
-## The one rule
-
-**Plan the whole pipeline before you generate a single asset.** Media generation is slow and metered: a re-roll of a 10 s Veo clip or a 90 s music track costs real money and minutes. Lock the scene list, the aspect ratio, the target loudness, and the model per modality *first*, then generate once. A draft pass at low res/short duration is cheaper than discovering at mux time that your clips are 9:16 and your VO is the wrong sample rate.
-
 ## Pipeline shape — decide what the goal needs
 
-Map the goal to modalities and an ordered step list. The "delegate to" column is where the actual call mechanics live — you pick the model and params, those skills run the call.
+Map the goal to modalities and an ordered step list, and **lock that plan before you generate a single asset** — media generation is slow and metered, so a re-roll of a 10 s Veo clip or a 90 s music track costs real money and minutes. Fixing the scene list, aspect ratio, target loudness and model per modality *first* is cheaper than discovering at mux time that your clips are 9:16 and your VO is the wrong sample rate. The "delegate to" column is where the actual call mechanics live — you pick the model and params, those skills run the call.
 
 | Goal | Needs | Ordered steps | Delegate calls to |
 |------|-------|---------------|-------------------|
 | Narrated explainer | stills + img→video + VO + music | script → per-scene stills → clip per scene → VO → music → conform → concat → mix+duck → loudnorm → MP4 | `replicate-images`, `fal`/`replicate` |
 | Product teaser (1 hero) | 1 still + img→video + music | still → clip → music → mix → loudnorm → MP4 | `replicate-images`, `fal`/`replicate` |
-| Faceless short | stills + img→video + VO + music + captions | (explainer pipeline) + burn captions | `replicate-images`, `video-shorts` for the script |
+| Faceless short | stills + img→video + VO + music + captions | (explainer pipeline) + burn captions | `replicate-images`; `../video-shorts/SKILL.md` for the script |
 | Just a voiceover | VO only | script → TTS → loudnorm | — |
 | Just a clip from a still | img→video only | still (input) → clip | `fal`/`replicate` |
 | Code-rendered explainer | none of the above | render from React/TS | **stop — route to `remotion-video`** |
@@ -96,7 +92,7 @@ Costs are per-minute and plan-dependent — treat them as approximate and **veri
 
 ## Assembly with ffmpeg
 
-Four operations. Each is a copy-paste recipe; full filter graphs and pitfalls are in `references/ffmpeg-assembly.md`.
+Four operations. Each is a copy-paste recipe; full filter graphs, caption burning and pitfalls are in `references/ffmpeg-assembly.md`.
 
 **(a) Mux VO onto video** — map both streams, copy video, take the shorter duration:
 
@@ -182,15 +178,3 @@ Emit this as a runnable script. `scripts/verify.sh` lints it (loudnorm present, 
 | Shipping generated music without checking rights | "generated" ≠ "licensed to sell" — legal exposure | confirm commercial rights per model/plan |
 | Prompting/editing the still inside this skill | duplicates `replicate-images`' job, worse prompts | delegate the still, consume it here |
 | Mastering loudness by cranking the TTS | clipping, no true-peak control | set level with `loudnorm`, not the generator |
-
-## Hand-offs
-
-- Still-image generation/editing (the source frames) → `../replicate-images/SKILL.md`
-- The per-provider call mechanics (queue, webhook, FileOutput, cost) → `../fal/SKILL.md`, `../replicate/SKILL.md`
-- Code-rendered, frame-exact compositing in React/TS → `../remotion-video/SKILL.md`
-- Writing the short's script + cut direction → `../video-shorts/SKILL.md`
-
-## References
-
-- `references/models-and-params.md` — current per-modality model map (TTS tiers + output_format codes + per-char cost; img→video duration/aspect/fps/control/native-audio/open-source + fal & replicate endpoint ids; music cost/licensing/duration).
-- `references/ffmpeg-assembly.md` — full ffmpeg cookbook: mux, two-pass loudnorm, sidechaincompress with worked filter graphs, amix fallback, concat demuxer vs filter, conforming res/fps/SAR, burning captions, pitfalls.
