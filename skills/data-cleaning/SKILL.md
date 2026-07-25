@@ -1,6 +1,6 @@
 ---
 name: data-cleaning
-description: "Use when a raw dataset is too dirty to trust — nulls and sentinels (-1, 999, \"N/A\"), duplicate rows, inconsistent categories (USA / U.S. / United States), mixed types in one column, junk whitespace/encoding, out-of-range numbers or malformed dates — and you need it cleaned the same way every time, with a schema that fails loud on bad input. Triggers: 'clean and dedupe this CSV', 'normalize these messy categories', 'why did my integer column turn into floats', 'build a repeatable cleaning pipeline', 'add a validation gate before this feeds my model', 'quarantine the bad rows instead of dropping them', 'limpiar y deduplicar este dataset', 'normalitzar dades brutes abans d''analitzar', 'mis fechas se parsean mal y unas filas se duplican'. NOT producing or repairing a spreadsheet/formula/.xlsx (that is spreadsheet-ops), NOT scraping rows off a website (that is data-scraper), NOT parsing fields out of PDFs/HTML (that is structured-extraction)."
+description: "Use when a raw table is too dirty to trust — nulls, sentinels, duplicate rows, category sprawl, mixed types, bad dates — and you need a re-runnable clean() plus a schema gate that fails loud. NOT emitting .xlsx (that is spreadsheet-ops), NOT acquiring rows (that is data-scraper), NOT parsing PDF/HTML into rows (that is structured-extraction)."
 tags: [data-cleaning, data-quality, pandas, pandera, validation, deduplication, reproducibility, polars]
 recommends: [duckdb, spreadsheet-ops, structured-extraction, data-scraper, analytics, business-intelligence, forecasting, python]
 profiles: []
@@ -16,28 +16,17 @@ the same input always yields the same output: versions pinned, sorts determinist
 a seed. If you can't re-run it tomorrow and get the identical result, you haven't cleaned the data — you've
 edited a snapshot.
 
-Current stack (verified 2026-06-02): **pandas 3.0.x** (3.0.0 shipped 2026-01-21). Two 3.0 facts shape how you
-read and assert: the default `str` dtype is **PyArrow-backed when PyArrow is installed, NumPy-object-backed
-otherwise** (PDEP-14 deliberately kept the object fallback to avoid a hard PyArrow dependency — PyArrow is
-*recommended, not required*), and the new string dtype uses **`NaN` missing-value semantics** like every other
-default dtype, so test for null with `pd.isna()`, not by comparing against a specific token. Install PyArrow
-to get the faster backed path. **pandera 0.31.1** (supports pandas ≥ 3) for in-pipeline schema validation.
-**Polars** and **DuckDB** when pandas runs out of RAM. Pin them: `pandas==3.0.3`, `pandera==0.31.1`.
+Cleaning **starts** once you hold tabular rows and **ends** at a validated table/DataFrame/Parquet. Before
+that boundary the job is acquisition ([`data-scraper`](../data-scraper/SKILL.md),
+[`structured-extraction`](../structured-extraction/SKILL.md)); after it, consumption
+([`spreadsheet-ops`](../spreadsheet-ops/SKILL.md), [`analytics`](../analytics/SKILL.md),
+[`business-intelligence`](../business-intelligence/SKILL.md),
+[`forecasting`](../forecasting/SKILL.md)). Multi-GB analytical SQL is an engine choice, not a cleaning one
+— [`duckdb`](../duckdb/SKILL.md).
 
-## Do you need this skill? (decide first)
-
-| Your situation | Reach for |
-| --- | --- |
-| Rows are dirty (nulls, dupes, mixed types, bad dates) and you want a re-runnable clean + a gate | **data-cleaning** (this skill) |
-| You need an `.xlsx` / formula / styled sheet / chart *out* | [`spreadsheet-ops`](../spreadsheet-ops/SKILL.md) |
-| The data is still on a website — you have to *acquire* it | [`data-scraper`](../data-scraper/SKILL.md) |
-| Fields are trapped in PDF/HTML/free text and must be *parsed into rows* | `structured-extraction` |
-| Multi-GB analytical SQL / heavy groupby-join is the actual bottleneck | [`duckdb`](../duckdb/SKILL.md) |
-| The table is already clean and you want charts / KPIs / a model | [`analytics`](../analytics/SKILL.md), `business-intelligence`, `forecasting` |
-
-Cleaning **starts** once you hold tabular rows and **ends** at a validated table/DataFrame/Parquet. The
-boundary with every consumer sibling is that validated table. (Some routed siblings may not be built in
-this collection yet; the routing decision still holds.)
+Current stack (verified 2026-06-02): **pandas 3.0.x** (3.0.0 shipped 2026-01-21) and **pandera 0.31.1**
+(supports pandas ≥ 3) for in-pipeline schema validation; **Polars** and **DuckDB** when pandas runs out of
+RAM. Pin them: `pandas==3.0.3`, `pandera==0.31.1`.
 
 ## The pipeline shape
 
@@ -73,18 +62,19 @@ df = pd.read_csv("raw.csv")
 # GOOD — explicit, deterministic, real nullable types
 df = pd.read_csv(
     "raw.csv",
-    dtype_backend="pyarrow",          # real nullable ints/strings; no silent float-cast — REQUIRES pyarrow installed; use "numpy_nullable" if it isn't
+    dtype_backend="pyarrow",          # real nullable ints/strings; no silent float-cast
     na_values=["", "N/A", "NA", "null", "-1", "999"],  # YOUR sentinels become real NA
     keep_default_na=True,             # keep pandas' default NA tokens too
     encoding="utf-8",                 # state it; don't let locale decide
 )
 ```
 
-pandas 3.0 notes that matter here: `dtype_backend="pyarrow"` only works if pyarrow is actually installed —
-it's recommended but *not* a hard pandas dependency, so install it (`pip install pyarrow`) or fall back to
-`dtype_backend="numpy_nullable"` when it's absent. The default `str` dtype is PyArrow-backed when pyarrow is
-present and NumPy-object-backed otherwise, but either way it uses `NaN` missing-value semantics — so assert
-nullability with `pd.isna()`, never by comparing against which null token appeared.
+Two pandas 3.0 facts that read depends on. `dtype_backend="pyarrow"` only works if pyarrow is actually
+installed — PDEP-14 deliberately kept a NumPy-object fallback so PyArrow stays *recommended, not required*
+— so `pip install pyarrow` for the faster backed path, or pass `dtype_backend="numpy_nullable"` when it is
+absent. And the default `str` dtype (PyArrow-backed when pyarrow is present, NumPy-object-backed otherwise)
+uses **`NaN` missing-value semantics** like every other default dtype: test for null with `pd.isna()`, never
+by comparing against whichever null token happened to appear.
 
 ## Profile before you fix
 
@@ -145,6 +135,10 @@ bad = parsed.isna() & df["signup"].notna()
 assert bad.sum() == 0, f"{bad.sum()} dates failed the expected format — inspect before proceeding"
 df["signup"] = parsed
 ```
+
+Copy-paste versions of all of these — category mapping with unmapped→quarantine, a robust date parser,
+unicode/encoding repair, a sentinel→NA table, numeric clip-vs-reject, plus Polars equivalents — are in
+[references/normalization-recipes.md](references/normalization-recipes.md).
 
 ## Dedupe
 
@@ -210,14 +204,16 @@ except pa.errors.SchemaErrors as e:
 
 `coerce=True` fixes types the contract expects; `nullable` states which columns may hold NA; field
 `Check`s (`ge`, `le`, `isin`, `unique`) are the allowed-value rules. `strict` catches columns that
-shouldn't be there. Together they are the data contract in code.
+shouldn't be there. Together they are the data contract in code. Log the row-count diff on every run —
+`in`, `out`, coerced, quarantined — so what the pipeline changed is an auditable record, not an assumption.
 
 When to escalate beyond pandera: reach for **GX Core 1.0** (Great Expectations' rebranded OSS — Data
 Context → Data Source → Expectation Suite → Validation Definition → Checkpoint) when you need a *shared
 data-quality platform* across many datasets and teams with a results store and docs. Use **dbt model
 contracts** (enforced at build) plus **dbt tests** (post-materialization) when the cleaning lives in a
-SQL warehouse, not Python. Full pandera patterns, the GX checkpoint sketch, the dbt YAML, and the
-"which validator" chooser are in [references/validation-patterns.md](references/validation-patterns.md).
+SQL warehouse, not Python. The full `DataFrameModel` (custom `@pa.check`, lazy `SchemaErrors` report,
+valid/quarantine split helper), the GX checkpoint sketch, the dbt model-contract + `data_tests` YAML, and
+the "which validator" chooser are in [references/validation-patterns.md](references/validation-patterns.md).
 
 ## Scale — when pandas hurts
 
@@ -226,28 +222,15 @@ that, or when a groupby/join dominates the runtime, switch the *mechanics* (not 
 
 - **Polars** for clean-at-scale: `pl.scan_csv(...)` (lazy, parallel, Rust), then `.unique()`,
   `.drop_nulls()`, `.fill_null(...)`, `.str.*` — the same profile→normalize→dedupe→validate shape, faster.
-  pandera validates Polars frames too.
+  pandera validates Polars frames too, and the
+  [recipes reference](references/normalization-recipes.md) has the Polars equivalent of every fix above.
 - **DuckDB** when the bottleneck is analytical SQL over multi-GB files — point heavy joins/aggregations
   there: [`duckdb`](../duckdb/SKILL.md). It is an *engine* choice; correctness/normalization is still this
   skill's job.
 
-Polars equivalents for every recipe above are in
-[references/normalization-recipes.md](references/normalization-recipes.md).
-
-## Reproducibility checklist
-
-- [ ] Library versions pinned (`pandas==3.0.3`, `pandera==0.31.1`) — same input → same output.
-- [ ] Read with explicit `dtype_backend` + `na_values`; no silent int→float cast.
-- [ ] Dedupe has an explicit `subset` key AND a deterministic `sort_values(..., kind="stable")` before it.
-- [ ] No `random` / sampling without a fixed seed; stable tie-breaks everywhere.
-- [ ] Raw source untouched; output written to a NEW artifact.
-- [ ] Schema validated on output; `lazy=True` so all violations surface together.
-- [ ] Failing rows **quarantined**, not silently dropped.
-- [ ] Row-count diff logged (`in`, `out`, coerced, quarantined) — an auditable record of what changed.
-
 ## Anti-patterns
 
-| Rationalization | Reality → STOP |
+| Anti-pattern | Why it breaks |
 | --- | --- |
 | "`fillna(0)` to get rid of the nulls" | Zero is a value; it distorts every mean/sum/model. Impute deliberately and add a `_was_missing` flag. |
 | "`drop_duplicates()` — done" | No `subset`, no sort → which row survives is nondeterministic. Define the key, `sort_values(kind="stable")`, set `keep`. |
@@ -259,27 +242,18 @@ Polars equivalents for every recipe above are in
 | "Validation passed, so we're good" | A gate that never fails is a no-op. Feed it a known-bad row and confirm it *rejects*. |
 | "It's slow, rewrite everything in Polars" | Switch the engine, not the discipline — profile→normalize→dedupe→validate still applies. |
 
-## References
-
-- [references/validation-patterns.md](references/validation-patterns.md) — full pandera `DataFrameModel`
-  (coerce, custom `@pa.check`, lazy `SchemaErrors` report, valid/quarantine split helper), GX Core 1.0
-  checkpoint sketch, dbt model-contract + `data_tests` YAML, and the "which validator" chooser.
-- [references/normalization-recipes.md](references/normalization-recipes.md) — copy-paste recipes: category
-  mapping with unmapped→quarantine, robust date parser, unicode/encoding repair, sentinel→NA table, numeric
-  clip-vs-reject, and Polars equivalents (`unique`, `drop_nulls`, `fill_null`, `str.*`) for scale.
-
 ## Verify
 
-Run `scripts/verify.sh` from anywhere. It does static structure checks on this skill (frontmatter keys,
-references present) always, and — when pandas + pandera are installed — extracts the documented pattern,
-feeds it one clearly-good row and one clearly-bad row, and asserts the good row PASSES validation while the
-bad row is FLAGGED/quarantined, proving the gate is not a no-op. If pandas/pandera aren't installed it
-prints SKIP for the runtime check and still passes the static checks. No network.
+`scripts/verify.sh` runs from anywhere, no network. It does static structure checks on this skill
+(frontmatter keys, references present) always, and — when pandas + pandera are installed — extracts the
+documented pattern, feeds it one clearly-good row and one clearly-bad row, and asserts the good row PASSES
+validation while the bad row is FLAGGED/quarantined, proving the gate is not a no-op. Without
+pandas/pandera it prints SKIP for the runtime check and still passes the static checks.
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
 In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) wiki), record this dataset's
 cleaning decisions — the schema/contract, the category mapping tables, the dedupe key, the quarantine
-location, version pins — in `02-DOCS/wiki/data/<dataset>.md` and link it from the root `CLAUDE.md`
-`## Knowledge map`. Read it first on every re-run so the contract stays consistent. No `02-DOCS/`? Skip
+location, version pins — in `02-DOCS/wiki/data/<dataset>.md`, link it from the root `CLAUDE.md`
+`## Knowledge map`, and read it first on every re-run so the contract stays consistent. No `02-DOCS/`? Skip
 silently. Conventions are recorded, never gated.
