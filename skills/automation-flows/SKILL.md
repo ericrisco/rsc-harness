@@ -1,6 +1,6 @@
 ---
 name: automation-flows
-description: "Use when building or fixing a no-code automation on n8n, Make, or Zapier — wiring a trigger to multi-app steps with branching, data mapping, retries, and an error path, or choosing the platform by its billing model. Triggers: 'wire up a Zap / Make scenario / n8n workflow that does X when Y happens', 'new Stripe payment → Notion row → Slack message in n8n', 'my Zap keeps failing silently, add error handling and retries', 'should I use Make or Zapier for 50k runs a month', 'my automation bill exploded', 'give me the JSON to import into n8n', 'automatiza esto en Make sin código', 'munta un workflow a n8n amb gestió d'errors', 'por qué se me dispara el Zap dos veces'. NOT writing a typed API client in code with auth/pagination/backoff (that is api-connector-builder), NOT building the inbound endpoint that receives and verifies webhook events in your own app (that is webhooks), NOT scripting one vendor's SDK directly (that is stripe / notion-connector / google-workspace / whatsapp-telegram)."
+description: "Use when building or fixing a no-code automation on n8n, Make, or Zapier — trigger to multi-app steps with data mapping, dedup, retries and an error path — or picking the platform by billing unit (task vs credit vs execution). NOT a typed API client in code (that is api-connector-builder), NOT a webhook receiver in your own app (that is webhooks)."
 tags: [automation, n8n, make, zapier, no-code, workflows, error-handling, integrations]
 recommends: [automation-strategy, n8n, make, zapier, power-automate, webhooks, api-connector-builder, error-handling, stripe, notion-connector, google-workspace, whatsapp-telegram]
 profiles: []
@@ -9,15 +9,11 @@ origin: risco
 
 # Automation flows — glue many SaaS apps on a visual platform, with an error path that actually fires
 
-You are building a working automation on a hosted visual platform: a trigger, a chain of app actions with branching and explicit data mapping, and — non-negotiably — an error-handling and retry strategy. A flow that has no error path is not done. It is a silent failure waiting for the day the API hiccups and nobody notices the orders stopped syncing.
+You are building a working automation on a hosted visual platform: a trigger, a chain of app actions with branching and explicit data mapping, and an error-handling and retry strategy without which the flow is not done.
 
 Your job is two things at once: **platform judgement** (pick n8n vs Make vs Zapier by the constraints) and a **buildable artifact** (an importable n8n workflow JSON, or a precise numbered build sheet for Make/Zapier, which have no portable export).
 
 This skill stops the moment the right answer is real code. Writing a typed API client → `../api-connector-builder/SKILL.md`. Building the endpoint that *receives* a webhook in your own app → `../webhooks/SKILL.md`. Scripting one vendor directly → `../stripe/SKILL.md`, `../notion-connector/SKILL.md`, `../google-workspace/SKILL.md`, `../whatsapp-telegram/SKILL.md`.
-
-## The iron rule
-
-Every flow ships with an error path. Before you call a flow done, you must be able to point at: where a failed run goes, how many times it retries, and who gets told. No exceptions.
 
 ## 1. Pick the platform
 
@@ -60,7 +56,7 @@ Good: Trigger = Airtable "new record" webhook              → fires the instant
 
 ## 3. Error handling — the spine
 
-This is what separates a toy from production. Full per-platform recipes (including the manual exponential-backoff loop) live in `references/error-handling.md`; here is the working core.
+Every flow ships with an error path, because a flow without one is a silent failure waiting for the day the API hiccups and nobody notices the orders stopped syncing. Before you call a flow done you must be able to point at three things: where a failed run goes, how many times it retries, and who gets told. Full per-platform recipes (including the manual exponential-backoff loop) live in `references/error-handling.md`, and the retry/backoff theory under them in `../error-handling/SKILL.md`; here is the working core.
 
 **n8n.** Build a dedicated **Error Workflow** that begins with the **Error Trigger** node — it runs only when a monitored workflow fails. Wire it to Slack/email/a log row, then set it as the main flow's `settings.errorWorkflow`. On risky nodes (anything hitting an external API) toggle **Retry On Fail** (Max Tries 3–5, set a Wait between tries) and, where a single failed item shouldn't kill the run, **Continue On Fail** (the node emits an error object instead of halting). n8n's built-in retry is **linear** — for true exponential backoff you build a wait/loop yourself (recipe in references).
 
@@ -108,7 +104,9 @@ Good: webhook → lookup event_id in store →
 
 **If n8n is chosen, produce an importable workflow JSON** the user can paste into *Import from File/Clipboard*. It must have a non-empty `nodes` array (including a trigger node), a `connections` object, and `settings.errorWorkflow` pointing at the Error Workflow. Reference credentials by the n8n **credential store**, never paste secrets inline. Full schema and a minimal trigger→action→error example: `references/n8n-workflow-json.md`.
 
-**If Make or Zapier is chosen, produce a numbered build sheet** — neither has a portable export you can hand over. One row per step: `# | app | action | field mapping (source → target) | error directive`. End with the trigger type and the dedup key. The capability eval covers these prose sheets; `verify.sh` covers the JSON.
+**If Make or Zapier is chosen, produce a numbered build sheet** — neither has a portable export you can hand over. One row per step: `# | app | action | field mapping (source → target) | error directive`. End with the trigger type and the dedup key.
+
+Run `scripts/verify.sh` on any JSON you emit: read-only, no network, no credentials — it parses the file and checks a non-empty `nodes` array, a `connections` object, and ≥1 trigger node (exits 0 on an empty target).
 
 ## Anti-patterns
 
@@ -122,11 +120,3 @@ Good: webhook → lookup event_id in store →
 | Secrets pasted inline in a node | Leaked in exports, unrotatable, shared everywhere | Use the platform credential store, reference by name |
 | One mega-flow doing everything | Unreadable, untestable, one failure nukes all | Split: trigger → sub-flow per concern |
 | Choosing platform by familiarity | Bill 10× higher than the right unit; "my automation bill exploded" | Pick by billing unit (task vs op vs execution) up front |
-
-## References & verification
-
-- `references/error-handling.md` — per-platform error deep dive, the manual exponential-backoff loop for n8n, and the three dedup patterns.
-- `references/n8n-workflow-json.md` — importable n8n JSON schema, minimal example, import steps, what `verify.sh` checks.
-- `scripts/verify.sh` — read-only; validates any `*.json` workflow you emit (parses, non-empty `nodes`, `connections` object, ≥1 trigger node). No network, no credentials. Exits 0 on an empty target.
-
-Cross-skills: webhook receiver → `../webhooks/SKILL.md`; typed API client in code → `../api-connector-builder/SKILL.md`; deeper retry/backoff theory → `../error-handling/SKILL.md`.
