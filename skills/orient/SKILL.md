@@ -52,3 +52,9 @@ When the user says "explícame más / menos", "no me expliques tanto", or "ensé
 - Ask before deciding at any real fork; do not decide alone when the user can choose.
 - Never invent project state — situate the user from what is actually built (read the Knowledge map / repo if unsure).
 - Defer the "install a missing skill?" prompt to `suggest`.
+
+## See Also
+
+- `references/orientation-contract.md` — the full brújula contract: block anatomy, what each of the
+  four beats must contain, and how the dial changes their depth. Read it when a turn ends ambiguously
+  or when calibrating a new dial level.

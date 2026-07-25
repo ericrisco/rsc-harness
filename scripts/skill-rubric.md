@@ -11,9 +11,9 @@ dishonest 9.
 
 | # | Dimension | Weight | What a 10 looks like |
 |---|---|---|---|
-| 1 | **Triggering & description** | 0.15 | Third-person, `Use when …` lead, concrete `Triggers:` incl. ≥1 non-obvious phrasing and ≥1 Spanish/Catalan phrasing, explicit `NOT … (that is <sibling>)` boundary, ≤1024 chars, parses as single-line quoted YAML. |
+| 1 | **Triggering & description** | 0.15 | Third-person, `Use when …` lead, an explicit `NOT … (that is <sibling>)` boundary, and nothing else it can do without. Judged on **discriminative power, not coverage**: could a reader pick this skill over its nearest sibling from the description alone? Aim ≤350 chars; ≤1024 is the hard limit. Parses as single-line quoted YAML. |
 | 2 | **Scope & boundary** | 0.10 | One job. Body never drifts into a sibling's territory; it delegates by name. Near-miss prompts route to the correct existing sibling. |
-| 3 | **Body craft & progressive disclosure** | 0.15 | 120–400 lines, references pointed to inline (not orphaned), rsc voice, every fence language-tagged, a checklist/decision table only where the flow branches, an anti-patterns table present. |
+| 3 | **Body craft & progressive disclosure** | 0.15 | **The smallest body that routes correctly** — ≤400 lines is a ceiling, not a target, and there is no minimum: a skill that does its job in 60 lines scores higher than the same skill padded to 200. Every `references/` file is pointed to inline from this body (an unlinked reference is never loaded, so it is dead weight). rsc voice, every fence language-tagged, a checklist/decision table only where the flow branches, an anti-patterns table present. |
 | 4 | **Correctness, grounding & freshness** | **0.25** | Every load-bearing claim is accurate and **current (2025–2026)**: real library/API versions, no hallucinated flags/endpoints. The spec cites **authoritative sources with dates**; nothing rests on stale or invented facts. This is the heaviest dimension by design. |
 | 5 | **Actionability** | 0.15 | Concrete and runnable: real numbers, paths, commands, decision rules — not adjectives. A practitioner could act from it without leaving the skill. |
 | 6 | **Evals quality** | 0.10 | ≥5 `should_trigger` (incl. non-obvious), ≥4 `should_not_trigger` each with a `route_to` that names a **real** sibling, ≥1 `capability` with a meaningful `must_include` rubric. The cases are genuine, not filler. |
@@ -34,6 +34,7 @@ dishonest 9.
 ## How the reviewer must work (anti-cheat)
 
 - **Independent pass.** Review the artifact as written; do not assume the author's intent filled a gap.
-- **Evidence, not vibes.** For dimension 1 quote the char count; for 3 quote the SKILL.md line count; for 4 quote at least two source titles **with their dates** from the spec and name any claim you could not verify; for 6 count the entries.
+- **Evidence, not vibes.** For dimension 1 quote the char count **and name the sibling the description distinguishes this skill from**; for 3 quote the SKILL.md line count **and name anything that could be cut without losing routing**; for 4 quote at least two source titles **with their dates** from the spec and name any claim you could not verify; for 6 count the entries.
+- **Length is a cost, never a credit.** Do not reward a longer description or body for being thorough. Every line is paid for in context on every turn the skill is installed, whether or not it is invoked. If two versions route the same, the shorter one scores higher.
 - **Freshness is mandatory.** If the skill names a version, API, or pricing that is plausibly out of date, dimension 4 is capped at 6 until a current source is cited. "Looks right" is not a source.
 - **Fix loop.** Below 8.5, return a concrete `mustFix` list; the author applies it and re-scores. Up to two fix rounds. If still < 8.5, **record the real score and flag it** — never round up to pass.

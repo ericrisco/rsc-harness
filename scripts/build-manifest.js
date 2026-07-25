@@ -47,6 +47,22 @@ export function validateFrontmatter() {
   return errors;
 }
 
+// A skill's `description` is in context on every turn it is installed, invoked or not, so the
+// catalog's total description weight is the one number that scales with the catalog itself.
+// The hard failure stays at the schema limit; this reports the soft ceiling the rubric asks for,
+// because turning 257 skills red the day the rubric changed would help nobody.
+export const DESCRIPTION_CEILING_CHARS = 350;
+
+export function descriptionWeight() {
+  const rows = skillDirs().map((id) => {
+    const fm = parseFrontmatter(readFileSync(join(SKILLS, id, 'SKILL.md'), 'utf8'));
+    return { id, chars: (fm.description || '').length };
+  });
+  const total = rows.reduce((s, r) => s + r.chars, 0);
+  const over = rows.filter((r) => r.chars > DESCRIPTION_CEILING_CHARS).sort((a, b) => b.chars - a.chars);
+  return { total, count: rows.length, mean: Math.round(total / (rows.length || 1)), over };
+}
+
 function main() {
   const arg = process.argv[2];
   const out = join(ROOT, 'manifest.json');
@@ -54,6 +70,14 @@ function main() {
     const errs = validateFrontmatter();
     if (errs.length) { console.error(errs.join('\n')); process.exit(1); }
     console.log('frontmatter OK');
+    const w = descriptionWeight();
+    console.log(
+      `description weight: ${(w.total / 1024).toFixed(1)} KB across ${w.count} skills `
+      + `(mean ${w.mean} chars) · ${w.over.length} over the ${DESCRIPTION_CEILING_CHARS}-char ceiling`,
+    );
+    if (w.over.length) {
+      console.log(`  heaviest: ${w.over.slice(0, 5).map((r) => `${r.id} (${r.chars})`).join(', ')}`);
+    }
     return;
   }
   const manifest = buildManifest();
