@@ -77,18 +77,21 @@ Your worktree has **no `node_modules`**, so:
 ## Ship
 
 Commit only `skills/<id>/`. Subject `refactor(<id>): <what you actually did>`. The body says what you
-removed **and why**, and — just as important — what you deliberately **kept** and why. Close with:
+removed **and why**, and — just as important — what you deliberately **kept** and why.
 
-```text
-Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+**Authorship is Eric, never Claude.** No `Co-Authored-By` for any AI, no "Generated with Claude Code"
+footer, nothing attributing the work to a tool — in the commit *or* the PR body. This is the hard
+rule the `ship` skill enforces (`skills/ship/SKILL.md`), and it applies to this migration like
+everything else in the repo. Verify before pushing:
+
+```bash
+git log -1 --format='%b' | grep -iE 'co-authored-by.*(claude|anthropic|ai)|generated with|claude code' \
+  && echo "AUTHORSHIP VIOLATION — strip it" || echo "authorship clean"
 ```
 
 Then `git push -u origin skill/<id>` and `gh pr create`. The PR body carries before/after description
-chars, before/after body bytes, what went, what stayed, and the eval-lint result. Close it with:
-
-```text
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-```
+chars, before/after body bytes, what went, what stayed, and the eval-lint result — and no AI
+attribution line.
 
 ## Judgment
 
@@ -144,6 +147,10 @@ If a run is cut short, this ordering means the part that was finished is the par
 - **Compound bash commands are denied whole.** The `ship-guard` hook rejects the entire call if any
   part matches `git checkout main`, so a chained `commit && push && checkout main` runs *nothing*.
   Split them.
+- **The id `parallel` is unusable in a git command.** A sandbox guard aimed at GNU `parallel` matches
+  the substring, so `git checkout -b skill/parallel` is refused. That skill's branch has to be
+  created from the pushed commit with `gh api` instead. Any future id containing a blocked tool name
+  will behave the same way.
 
 ## Content problems found while migrating — do NOT fix them in a format pass
 
