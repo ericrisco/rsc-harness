@@ -3252,7 +3252,7 @@
     },
     {
       "id": "orient",
-      "description": "Always-on. The brújula: after every action keep the human oriented — situate them on the project map, say what just happened, teach the why at their level, and propose the next step as a question. NEVER end a turn in seco (dead-end). Reads technical_level + accompaniment_level from 02-DOCS/wiki/harness/user-profile.md and calibrates how much it explains; rewrites the dial when the user asks for more/less ('explícame más', 'explícame menos', 'no me expliques tanto', 'enséñame'). Complements suggest (which installs missing skills) — orient guides the person, not the toolbox. Fires on every turn that finishes an action, reaches a decision fork, or leaves the user unsure what to do next.",
+      "description": "Always-on. The brújula: close every turn by situating the person — where they are, what just happened, why it mattered, and the next step as a question, never a dead end. Reads the accompaniment and technical dials from 02-DOCS and calibrates how much it explains, rewriting the dial when the user asks for more or less. NOT the missing-skill installer (that is `suggest`).",
       "tags": [
         "orient",
         "guide",
