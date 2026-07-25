@@ -1,6 +1,6 @@
 ---
 name: competitor-watch
-description: "Use when you keep a named set of rivals under continuous, dated observation — tracking their pricing, features, positioning, and changelog over time, turning page diffs into a maintained tracker plus a classified change log on a cadence. Use when asked what moved at a competitor this month, whether a rival changed price or shipped something, or for a feature matrix kept current rather than written once. Triggers: 'set up competitor monitoring', 'watch their pricing page', 'did [rival] reposition or launch anything', 'what moved at [competitor] this month', 'keep this comparison matrix updated', 'track how their positioning shifted over 6 months', 'monitoritza els competidors i avisa-m quan canviïn de preu', 'vigila los precios de la competencia'. NOT sizing the market or producing the competitor list (that is market-research), NOT setting our own price (that is pricing), NOT building the sales battlecard (that is sales-pipeline)."
+description: "Use when an already-named set of rivals is watched on a cadence — pricing, features, positioning and changelog diffed into a maintained tracker plus an append-only, classified change log. NOT sizing the market or choosing who the rivals are (that is `market-research`), NOT one-off page extraction (that is `data-scraper`)."
 tags: [competitive-intelligence, monitoring, pricing-tracking, feature-tracking, marketing-ops]
 recommends: [market-research, pricing, sales-pipeline, brand-voice, data-scraper, automation-flows, seo-geo]
 origin: risco
@@ -11,33 +11,17 @@ origin: risco
 You run a **standing watch**, not a one-shot study. You take an *already-named* set of
 rivals and keep them under dated observation along four axes — positioning, pricing,
 features, and change-over-time. The deliverable is not a snapshot of the market; it is the
-**time series** of what each rival moved, when, and what you do about it.
+**time series** of what each rival moved, when, and what you do about it. Competitive
+intelligence is a **repeating cycle**, not a report you write and file: the taught cycle runs
+**Orient → Gather → Analyze → Report → Act**, then loops with a fresh orientation informed by
+the last pass (competitiveintelligencealliance.io, accessed 2026-06-02).
 
-Three hard stops up front, so you don't drift into a neighbour's job:
-
-- You do **not** size the market or invent the competitor list — that is `../market-research/SKILL.md`.
-- You do **not** decide *our* price, packaging, or tiers — that is `../pricing/SKILL.md`.
-- You do **not** build the sales battlecard / "why we win" — that is `../sales-pipeline/SKILL.md`.
-
-The near-miss that catches people is `market-research`: it answers *"what is the market and
-who is in it"* once and often **produces the list you watch**. You are the downstream loop
-that watches that list forever. The other near-miss is `../data-scraper/SKILL.md`: it owns
-the generic mechanics of pulling data off a page on demand; you *use* change detection as a
-means, but your identity is the maintained tracker + classified change log + cadence. "Extract
-this one table once" → data-scraper. "Keep watching these five companies" → you.
-
-## The loop is the product
-
-Competitive intelligence is a **repeating cycle**, not a report you write and file. The
-taught cycle runs **Orient → Gather → Analyze → Report → Act**, then loops with a fresh
-orientation informed by the last pass (competitiveintelligencealliance.io, accessed 2026-06-02).
-
-- **The output is a re-run tracker, not a one-time document.** *Why:* a market changes
-  the week after you "finish" the study; a snapshot is stale on arrival.
-- **Every pass appends to a change log, it does not overwrite the last.** *Why:* the value
-  is the delta over time — "Pro tier went \$49→\$59 in May" — not the current cell alone.
-- **Watch the vital few, not everyone.** Pick the 3–7 rivals that move your roadmap. *Why:*
-  watching 30 companies produces noise nobody reads; depth on the few beats breadth on the many.
+Two near-misses decide the routing (the rest are in **Handoffs**, below). `../market-research/SKILL.md`
+answers *"what is the market and who is in it"* once, and often **produces the list you watch** —
+you are the downstream loop that watches that list forever. `../data-scraper/SKILL.md` owns the
+generic mechanics of pulling data off a page on demand; you *use* change detection as a means, but
+your identity is the maintained tracker + classified change log + cadence. "Extract this one table
+once" → data-scraper. "Keep watching these five companies" → you.
 
 ## Ethics gate — runs FIRST, before any capture
 
@@ -61,8 +45,9 @@ If a request needs any of those, **refuse and reframe to the legal equivalent**:
 1. **Get the competitor list.** If there is none, or it's unvalidated guesswork → STOP and
    route to `../market-research/SKILL.md`. *Why:* watching the wrong rivals forever is worse
    than not watching. You are not the one who decides who the competitors are.
-2. **Pick the watch-axes** from the canonical surface list (below). Don't watch everything —
-   watch what changes your decisions.
+2. **Pick the vital few, then the watch-axes.** The 3–7 rivals that move your roadmap, and only
+   the surfaces (below) that change your decisions. *Why:* watching 30 companies on every axis
+   produces noise nobody reads; depth on the few beats breadth on the many.
 3. **Persist the tracker of record** under `02-DOCS/wiki/competitors/` (one profile per rival
    + a shared change log); keep raw captures under `02-DOCS/raw/competitors/`. *Why:* the
    tracker is a maintained artifact, not a chat answer — it has to live somewhere re-runnable.
@@ -191,8 +176,8 @@ recommend a SaaS. Full docker-compose + per-axis watch recipe is in `references/
 ## Verify
 
 After you emit a tracker / change log / config, run `scripts/verify.sh` against your project
-docs. It lints (read-only): required tracker columns present; **every pricing/feature row has
-a non-empty `source_url` and `date`** (the anti-invention guard); change-log `axis` and
-`materiality` are in the allowed sets and every row has a `url` + `date`; and it **warns** when
-a monitoring-config entry pairs a slow axis with a sub-15-min cadence or a pricing axis with a
-slower-than-daily cadence. It exits 0 on an empty/clean target — no false failures.
+docs. Read-only lint: required tracker columns present; **every pricing/feature row has a
+non-empty `source_url` and `date`** (the anti-invention guard); change-log `axis` and
+`materiality` in the allowed sets, with a `url` + `date` on every row; and a **warning** when a
+monitoring-config entry pairs a slow axis with a sub-15-min cadence, or pricing with a
+slower-than-daily one. It exits 0 on an empty/clean target — no false failures.
