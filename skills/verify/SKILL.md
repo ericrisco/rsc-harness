@@ -1,6 +1,6 @@
 ---
 name: verify
-description: "Use when implementation is finished and someone is about to say it's done, shipped, working, or ready to merge in the rsc-sdd flow — the post-implementation GATE that demands evidence before any 'done' claim. Triggers: 'verify this feature', 'is it done?', 'run the checks', 'lint/type/test before merge', 'did the acceptance criteria pass', 'confirm the tasks are complete', 'gate before review', 'audit the change', 'are we green', 'prove it works'. Runs the relevant stack skill's scripts/verify.sh (lint, type-check, tests, coverage, dependency/vuln audit), then walks every task done-check and every spec acceptance criterion, attaching the actual command output as evidence. Writes the verification record under 02-DOCS/wiki/sdd/ and points to the review phase. NOT writing tests or features (that is implement), NOT adversarial code reading (that is review), NOT root-cause diagnosis of a failing test (that is debug). Honors the harness accompaniment dial."
+description: "Use when implementation is finished and about to be called done or merged — the rsc-sdd evidence gate: runs the stack's scripts/verify.sh (lint, type, test, audit), walks every task done-check and acceptance criterion, records a dated verdict. NOT judging the diff by eye (that is `review`, spec-less `code-review`), NOT diagnosis (that is `debug`)."
 tags: [sdd, verify, test]
 recommends: [review]
 profiles: [core, full]
@@ -15,21 +15,7 @@ The one rule everything else serves: **a claim of done is a claim about evidence
 
 This is a process skill. It does not own the lint/type/test tooling — the **stack skills do** (`../fastapi/SKILL.md`, `../go/SKILL.md`, `../nextjs/SKILL.md`, `../flutter/SKILL.md`, each shipping `scripts/verify.sh`; data-layer checks come from `../postgresdb/SKILL.md`, security from `../secure-coding/SKILL.md`). `verify` orchestrates them and judges the whole against the spec.
 
-## When to use / when not to
-
-Use when:
-
-- Implementation of a task or feature is complete and you (or the user) are about to say so.
-- A fix has been applied and you need to confirm it actually resolves the issue, with the app's own checks.
-- You're at the gate before the `review` phase, or before a merge / PR.
-- Someone asks "is it done?", "are we green?", "did it pass?", "can I merge?".
-
-Do NOT use when:
-
-- You're still writing tests or production code → that's the `implement` phase (TDD lives there).
-- A check is failing and you need to find out *why* → that's `debug` (reproduce → isolate → fix). `verify` reports the failure and hands off; it does not diagnose.
-- You're reading the diff adversarially for design/correctness smells a test can't catch → that's `review`.
-- There is no spec or task list to verify against → you're earlier in the chain; go to `specify`/`plan`/`tasks` first.
+Not this phase: still writing tests or production code → `../implement/SKILL.md` (TDD lives there); a check is failing and you need to know *why* → `../debug/SKILL.md` (`verify` reports the failure and hands off, it does not diagnose); reading the diff adversarially for design/correctness smells a test can't catch → `../review/SKILL.md`, or `../code-review/SKILL.md` when there is no spec/plan chain to key off; nothing to verify *against* → you're earlier in the chain, go to `../specify/SKILL.md` / `../plan/SKILL.md` / `../tasks/SKILL.md` first.
 
 ## Model tier — `balanced` (opt-in routing)
 
@@ -37,14 +23,12 @@ This phase's default model tier is **`balanced`** — it runs the checks and int
 
 ## Read the room first (accompaniment dial)
 
-Before running anything, read `02-DOCS/wiki/harness/user-profile.md` for the technical + accompaniment level and adapt:
+Before running anything, read `02-DOCS/wiki/harness/user-profile.md` for the technical + accompaniment level; no profile yet → default to non-technical framing. The verdict itself (pass / fail per item) never changes with the dial — only how much you explain around it.
 
 - **L0** — run the gate, show pass/fail and the one-line failing summary. Minimal words.
 - **L1** — add one line of *why* per failing check.
 - **L2** — narrate each gate (what lint/type/test/audit checks and why it matters here).
 - **L3** — explain every result, what each acceptance criterion means in plain language, and what the user should decide next.
-
-If no profile exists yet, default to non-technical framing and keep the verdict legible. The verdict itself (pass / fail per item) never changes with the dial — only how much you explain around it.
 
 ## The gate (run in this order)
 
@@ -105,11 +89,9 @@ Rules for RUN:
 The stack gate proves the code is *clean and tested*. It does **not** prove the feature does what the spec asked. Walk both lists explicitly:
 
 - **Task done-checks** — for each task in the plan, confirm its done-check is satisfiable from evidence (a passing test, a file that exists, an endpoint that returns the documented shape). Mark each ✅ with the evidence or ❌ with what's missing.
-- **Acceptance criteria** — for each criterion in the spec, point at the concrete evidence that satisfies it. A criterion with no test and no observable proof is **unverified** — treat it as a FAIL item, not a pass, until there is evidence.
+- **Acceptance criteria** — for each criterion in the spec, point at the concrete evidence that satisfies it. A criterion with no test and no observable proof is **unverified** — treat it as a FAIL item, not a pass, until there is evidence. A criterion you "reviewed by reading the code" is not verified either: reading is `review`; verifying needs an observable result.
 
 Where a criterion needs runtime proof (a page renders, a command produces output), drive it through the relevant tool — defer browser/app runtime to the stack skill's own runtime guidance rather than inventing a check here.
-
-A criterion you "reviewed by reading the code" is not verified. Reading is `review`; verifying needs an observable result.
 
 ### 4 — RECORD
 
@@ -151,9 +133,9 @@ Append-only spirit: don't overwrite a prior run's record; a new run is a new dat
 - **FAIL** the moment any item lacks passing evidence. List the open items precisely (which check, which criterion, what's missing). Do not soften it. A single unverified acceptance criterion fails the whole gate.
 - Hand each failing kind to the right place: a failing test/type error → `debug`; a missing test for a criterion → back to `implement`; a spec ambiguity that surfaced → `clarify`.
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization | Reality |
+| Anti-pattern | Why it fails / fix |
 | --- | --- |
 | "The tests passed last run, I'll trust that." | Re-run now. Code changed since; stale green is not green. Evidence is current, or it isn't evidence. |
 | "verify.sh printed SKIP for the tests — close enough." | A SKIP is *unverified*, not passing. The criterion it covers is still open until a real run passes. |
@@ -163,13 +145,7 @@ Append-only spirit: don't overwrite a prior run's record; a new run is a new dat
 | "One acceptance criterion is unproven; ship the rest." | The gate is all-or-nothing. One unverified criterion fails the whole verdict. |
 | "A test is failing — let me just fix it real quick." | That's `debug`, a different discipline. `verify` reports the failure and hands off; it does not patch mid-gate. |
 | "I'll write the verdict, then run the checks to confirm." | Backwards. RUN and WALK first; the verdict is the *consequence* of output you already read. |
-
-## Red flags — abort the verdict
-
-- You're about to type "done"/"passing"/"works" and you cannot point to a specific line of command output that proves it. Stop; go run it.
-- The stack `verify.sh` for a touched stack doesn't exist or didn't run — the gate is incomplete; say so instead of declaring PASS.
-- An acceptance criterion has no test and no observable proof — it's unverified; the verdict is FAIL.
-- A failing check tempts you to fix it inline — that's scope drift into `debug`; record the failure and hand off.
+| "The gate is mostly green, I'll call it done." | If you cannot point at the line of command output that proves a claim, you have no claim. Go run it. |
 
 ## Result envelope
 
@@ -194,7 +170,7 @@ End with:
 
 ## Next in the chain
 
-A **PASS** record is the entry ticket to the next phase: **`review`** (adversarial read of the diff for what the gate can't catch), then **`ship`** (PR/merge with Eric-only authorship). A **FAIL** routes back: failing checks to **`debug`**, missing coverage to **`implement`**, surfaced ambiguity to **`clarify`**. Either way the verification record under `02-DOCS/wiki/sdd/verifications/` travels with the work as its proof.
+A **PASS** record is the entry ticket to the next phase: **`../review/SKILL.md`** (adversarial read of the diff for what the gate can't catch), then **`../ship/SKILL.md`** (PR/merge). A **FAIL** routes back per the VERDICT step. Either way the verification record under `02-DOCS/wiki/sdd/verifications/` travels with the work as its proof.
 
 ## Orientación (siempre)
 
