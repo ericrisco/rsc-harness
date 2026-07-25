@@ -1,6 +1,6 @@
 ---
 name: cost-tracking
-description: "Use when you need to track and cap what an AI or cloud app spends — capturing per-request tokens, pricing them against a current rate table, ledgering spend per user/feature/model/tenant, and firing budget alerts or a hard cap before the bill lands instead of after. Triggers: 'track token costs per request', 'cap our OpenAI/Claude spend', 'budget alert before we blow the bill', 'attribute cost per user or tenant', 'a runaway agent loop just burned $X', 'is prompt caching actually cheaper and where is the break-even', 'why is our bill 3x the estimate', 'reconcile billed usage against the response usage object', 'cuánto gastamos en tokens este mes', 'pon un tope de gasto a la API y avísame al 80%', 'controlar el cost de la IA'. NOT company cash runway or burn (that is finance-ops), NOT cost-per-unit margin (that is unit-economics), NOT the accounting record of the spend (that is bookkeeping)."
+description: "Use when metering and capping AI or cloud app spend — tokens read from the response `usage` object, priced off a dated rate table, ledgered per user/tenant/feature, with alerts and a hard cap before the bill. NOT cash runway (that is `finance-ops`), NOT cost-per-unit margin (that is `unit-economics`), NOT booking the spend (that is `bookkeeping`)."
 tags: ["cost-tracking", "token-accounting", "llm-spend", "budgets", "alerts", "prompt-caching", "billing-guardrails", "finops"]
 recommends: ["finance-ops", "unit-economics", "analytics", "stripe", "aws-essentials", "gcp-essentials"]
 origin: risco
@@ -110,7 +110,7 @@ CREATE TABLE llm_cost_ledger (
 );
 ```
 
-This is an *operational* ledger, not the accounting record — categorizing the spend into the books is `bookkeeping`.
+This is an *operational* ledger, not the accounting record — categorizing the spend into the books is `bookkeeping`, and the same rows feed the cost numerator in `unit-economics` and one input line in `finance-ops`. "Cost per active user" on the behavior side is `analytics`; charging customers for metered usage is `stripe`.
 
 ## Budgets, alerts, caps
 
@@ -144,7 +144,7 @@ App-level metering is your real-time guard. Cloud billing alerts are a **delayed
 - **AWS** Cost Anomaly Detection is ML-based, runs ~3x/day with up to 24h data delay → SNS → Lambda. AWS Budgets adds threshold alerts on the same pipe.
 - **GCP/Azure** are threshold-only. GCP's budget → Pub/Sub → Cloud Function is the one that can actually *pause or throttle* a workload programmatically.
 
-Route every cloud alert into the **same alert pipe** as your app-level budget alerts so there's one place to look. The 24h delay is exactly why the in-app cap exists: by the time AWS notices the anomaly, the loop already spent the money. Recipes and the alert-routing pattern are in `references/cloud-caps.md`.
+Route every cloud alert into the **same alert pipe** as your app-level budget alerts so there's one place to look. The 24h delay is exactly why the in-app cap exists: by the time AWS notices the anomaly, the loop already spent the money. Recipes and the alert-routing pattern are in `references/cloud-caps.md`; the cap plumbing in depth is `aws-essentials` / `gcp-essentials`.
 
 ## Build vs buy
 
@@ -173,11 +173,3 @@ Route every cloud alert into the **same alert pipe** as your app-level budget al
 ## Verify the artifact
 
 `scripts/verify.sh [path]` lints a candidate cost config/ledger (yaml/json/ts) and fails if: a pricing entry lacks `effective_date` or `source`; a model referenced in logic is missing from the table; the ledger schema lacks an idempotency/request key or any attribution key; the budget declares no soft+hard pair; or cost looks derived from a `len()`/char estimate instead of a `usage` field. It is read-only and exits 0 on a clean config and on no config found — no false failure.
-
-## Where this hands off
-
-- Company cash runway / burn / forecast → `finance-ops` (cost-tracking is one input line).
-- Cost-per-unit margin, contribution, CAC:LTV → `unit-economics` (this produces the cost numerator).
-- "Cost per active user" behavior side / product telemetry → `analytics`.
-- Billing customers, metered usage charges → `stripe`.
-- The AWS/GCP cap plumbing in depth → `aws-essentials` / `gcp-essentials`.
