@@ -4,6 +4,11 @@ node_modules/
 .env.local
 *.log
 .rsc/
+# .claude/ is the same kind of thing as .rsc/: wiring rsc GENERATES for this machine —
+# settings.json with absolute paths, symlinked skill dirs, the installed developer agent.
+# Left untracked-but-not-ignored it also makes rsc's own ship-guard treat every rsc-wired
+# repo as having an abandoned diff, which blocks switching branches.
+.claude/
 
 # Per-tool ignores already exist inside each skill's _TEMPLATE/.gitignore.
 
