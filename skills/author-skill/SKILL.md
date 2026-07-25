@@ -1,6 +1,6 @@
 ---
 name: author-skill
-description: "Use when authoring a NEW skill or editing an existing one for the rsc catalog — writing or fixing a SKILL.md, crafting a trigger-rich third-person description that fires on the right prompts, deciding what goes in references/ vs the body, writing evals/cases.yaml + evals/README.md, or wiring a skill into the catalog (tags, recommends, manifest). Triggers: 'write a skill', 'author a skill', 'create a new skill', 'escribe una skill', 'haz una skill nueva', 'edit this skill', 'improve this skill', 'my skill never triggers', 'my skill always fires', 'fix the description', 'the frontmatter is invalid', 'write evals for this skill', 'add this skill to the catalog', 'audit this skill against the rubric', 'progressive disclosure', 'SKILL.md too long'. Knows the rsc conventions: hybrid layout, tags/recommends frontmatter, manifest.json, the npx @ericrisco/rsc CLI, the Knowledge map. NOT building runtime features (that is the SDD chain) and NOT general docs."
+description: "Use when authoring a NEW rsc skill or editing an existing one — scoping it to one job, writing the description that decides whether it ever loads, splitting the body into references/, writing its evals, auditing it against the rubric. NOT building a product feature (that is `specify`) and NOT designing an agent loop (that is `building-agents`)."
 tags: [skill, authoring, meta]
 recommends: []
 origin: risco
@@ -8,38 +8,13 @@ origin: risco
 
 # author-skill — write skills that trigger and teach
 
-This is the **meta skill**: it authors and edits the other skills in the rsc catalog. A skill is two things bolted together — a **description that fires at the right moment**, and a **body that makes the agent better once it fires**. Most skills fail on the first. This skill exists to get both right, to the bar the rsc catalog already holds.
+This is the **meta skill**: it authors and edits the other skills in the rsc catalog. A skill is two things bolted together — a **description that fires at the right moment**, and a **body that makes the agent better once it fires**. Most skills fail on the first. Treat them as two separate engineering problems with two separate quality bars.
 
-It lives in `rsc-core` next to `init` and `harness`, the same way those govern the workspace. Where the SDD chain (`specify` → `plan` → … → `ship`) builds *product*, `author-skill` builds *the tools that build product*. Use it whenever a skill is born or edited.
+Where the SDD chain (`specify` → `plan` → … → `ship`) builds *product*, `author-skill` builds *the tools that build product*. Use it whenever a skill is born or edited.
 
-## When to use / when NOT to use
+**Not this skill — delegate:** a product feature specced or planned → `../specify/SKILL.md`, `../plan/SKILL.md`. An autonomous agent or tool-calling loop → `../building-agents/SKILL.md`. Generic project docs or a wiki article → the `../harness/SKILL.md` 02-DOCS engine. Bootstrapping a workspace or profiling the user → `../init/SKILL.md`.
 
-Use when:
-
-- Writing a brand-new skill from a one-line intent ("I keep re-explaining how we do X — make it a skill").
-- Editing an existing skill: tightening the description, splitting the body into `references/`, adding a checklist or anti-patterns table.
-- A skill mis-triggers — never fires when it should, or fires on everything.
-- Writing or repairing `evals/cases.yaml` + `evals/README.md`.
-- Wiring a finished skill into the catalog — `tags`, `recommends`, and the manifest (the rsc plumbing).
-- Auditing a skill against the rubric below before it ships.
-
-Do NOT use when (delegate or decline):
-
-- The user wants to *build a product feature* with a written spec/plan — that is the SDD chain (`../specify/SKILL.md` → `../plan/SKILL.md` → …), not a skill.
-- The user wants to design an autonomous agent / tool-calling loop — that is `../building-agents/SKILL.md`.
-- The user wants generic project docs or a wiki article — that is the `../harness/SKILL.md` 02-DOCS engine.
-- Bootstrapping a workspace or profiling the user — that is `../init/SKILL.md`.
-
-## Read the user profile first (accompaniment dial)
-
-Before writing, read `02-DOCS/wiki/harness/user-profile.md` for the technical level and the accompaniment dial, and **adapt**:
-
-- **L0** — draft the whole skill, show it, move on. Minimal narration.
-- **L1** — one line of *why* per major choice (why this trigger, why split that reference).
-- **L2** — justify each structural decision as you make it.
-- **L3** — explain everything, ask before committing to a name/scope, walk the rubric out loud.
-
-When no profile exists, default to non-technical framing and ask the two gauging questions (technical level + dial) before going deep. Skill authoring is itself a technical act — many users will want L2/L3 here even if they run L0 elsewhere.
+Read `02-DOCS/wiki/harness/user-profile.md` and work at the accompaniment dial it records; `../init/SKILL.md` owns that dial and sets it. With no profile, default to non-technical framing and ask for the technical level and the dial before going deep — skill authoring is itself a technical act, so many users want more narration here than they do elsewhere.
 
 ## What a skill is (the anatomy)
 
@@ -55,33 +30,33 @@ skills/<id>/
     └── verify.sh
 ```
 
-The **frontmatter** decides *if* the skill loads. The **body** decides *how good* the agent is once it does. Treat them as two separate engineering problems with two separate quality bars.
+The **frontmatter** decides *if* the skill loads. The **body** decides *how good* the agent is once it does.
 
 ## The description — the single highest-leverage line
 
-The description is the only part of a skill the agent reads at *every* turn to decide whether to pull the skill in. A vague description is a skill that never fires; an over-broad one is a skill that hijacks unrelated turns. Get this right before anything else.
+The description sits in context on **every turn the skill is installed**, invoked or not. The body is only paid for when the skill fires; the description is paid for always. So length here is a cost, never a credit. A vague description is a skill that never fires; an over-broad one hijacks unrelated turns. Get this right before anything else.
 
 Rules, all enforced:
 
 1. **Third person, present tense.** "Use when authoring a new skill…" — never "I help you…" or "You should…". The agent is reading *about* the skill.
-2. **Trigger-rich.** Lead with a `Use when …` clause naming the *situations* and *symptoms*, then a `Triggers:` list of concrete phrasings — including non-obvious ones and at least one other language the user actually writes in (rsc users mix Spanish/Catalan). The router matches on these.
-3. **Draw the boundary.** End with what it is **NOT** and which sibling owns that instead. Negative space prevents hijacking as much as positive triggers cause firing.
-4. **≤ 1024 characters, valid single-line quoted YAML.** One physical line, wrapped in double quotes, internal quotes escaped or avoided. If it does not parse, the skill does not load.
+2. **Discriminative, not exhaustive.** Lead with a `Use when …` clause naming the *situation*, then only the capabilities that separate this skill from its neighbours. Do **not** append a `Triggers: '…', '…'` phrase list: the model matches on meaning, so a keyword bank in three languages buys nothing and is charged on every turn. The test is *discrimination, not coverage* — could a reader pick this skill over its nearest sibling from this line alone?
+3. **Draw the boundary.** End with a `NOT <x> (that is <sibling>)` clause, naming a sibling that actually exists under `skills/`. Negative space prevents hijacking as much as positive matching causes firing.
+4. **Aim ≤ 350 characters; 1024 is the schema-enforced hard limit.** One physical line, wrapped in double quotes, internal quotes escaped or avoided. If it does not parse, the skill does not load.
 5. **`origin: risco`** on its own line. This marks it as ours.
 
 ```yaml
-# Good — situation + symptoms + phrasings + boundary
-description: "Use when X happens or the user shows symptom Y — doing A, fixing B, choosing C. Triggers: 'phrase one', 'frase en español', 'a non-obvious one'. NOT Z (that is `sibling`)."
+# Good — situation, the few capabilities that discriminate, a real boundary
+description: "Use when X happens or the user shows symptom Y — doing A, fixing B, choosing C. NOT Z (that is `sibling`)."
 
-# Bad — first person, no triggers, no boundary, would never route well
+# Bad — first person, no situation, no boundary; competes with every sibling on every turn
 description: "I help you write great skills and make them work."
 ```
 
-The full description recipe, the character-budget tactics, and a worked before/after → `references/description-recipe.md`.
+The full recipe, the budget tactics, and a worked before/after → `references/description-recipe.md`.
 
 ## Progressive disclosure — the body is an index, not an encyclopedia
 
-The body is loaded in full whenever the skill fires, so every line competes for the agent's attention. Keep the body **~120–400 lines**: the method, the rules, the decision points, and *pointers* to depth. Push anything long, reference-like, or rarely-needed into `references/<topic>.md` and link to it inline ("full table → `references/foo.md`").
+The body is loaded in full whenever the skill fires, so every line competes for the agent's attention. Write **the smallest body that still routes correctly**: 400 lines is a ceiling, not a target, and there is no floor — a skill that does its job in 60 lines beats the same skill padded to 200. Push anything long, reference-like, or rarely-needed into `references/<topic>.md` and link it inline at the point of use ("full table → `references/foo.md`").
 
 Decide where a paragraph lives:
 
@@ -92,12 +67,12 @@ Decide where a paragraph lives:
 | It is short and load-bearing | It is reference detail that would bloat the body |
 | Cutting it would change behavior | It is an example that illustrates but does not instruct |
 
-If the body creeps past ~400 lines, that is the signal to extract a reference — not to keep scrolling. A skill the agent half-reads is worse than a short one it reads fully.
+Every file under `references/` must be linked from the body. An unlinked reference is never loaded, so it is dead weight in the package — link it or delete it.
 
 ## The hybrid structure — when each piece earns its place
 
 - **SKILL.md** — always. Frontmatter + focused body.
-- **references/** — only when the body genuinely needs offloaded depth. Do not create an empty `references/` to look complete; a 150-line single-file skill is fine.
+- **references/** — only when the body genuinely needs offloaded depth. Do not create an empty `references/` to look complete; a single-file skill is fine.
 - **evals/** — always. `cases.yaml` + `README.md`. A skill with no evals is unverifiable and does not ship.
 - **scripts/verify.sh** — only when the skill produces a *checkable artifact* (code, config, copy with a ban-list). **Process skills** — those judged on the safety rails they install in the agent's behavior, like the SDD-phase skills or this one — do **not** ship a `verify.sh`; their evals carry a capability scenario instead.
 
@@ -119,10 +94,10 @@ The full protocol lives once in the `orient` skill; the footer only references i
 Run in order. Each step gates the next.
 
 1. **Name & scope.** One skill, one job. Pick a short kebab-case `<id>` that is the job, not the domain. If you can not say the job in one sentence, the scope is wrong — split it. Check no sibling already owns this; if one half-owns it, decide *edit the sibling* vs *new skill* before writing.
-2. **Draft the description.** Per the recipe above. This first, because writing it forces the scope clear. → `references/description-recipe.md`.
+2. **Draft the description.** Per the rules above. This first, because writing it forces the scope clear. → `references/description-recipe.md`.
 3. **Outline the body.** Method, rules, decision points. Mark what becomes a reference.
-4. **Write the body** in the rsc voice (see below). Tag every code/example fence with a language. Add a copy-able checklist or decision table *only where the flow actually branches* — not as decoration. Add a short anti-patterns table.
-5. **Extract references** for anything long or branch-specific.
+4. **Write the body** in the rsc voice (see below). Tag every code/example fence with a language. Add a checklist or decision table *only where the flow actually branches* — not as decoration. Add a short anti-patterns table.
+5. **Extract references** for anything long or branch-specific, and link each one inline.
 6. **Write the evals** — `cases.yaml` then `README.md`. → `references/eval-authoring.md`.
 7. **Wire it into the rsc plumbing** (`tags`, `recommends`, `npm run manifest`, and indexing any artifact in `02-DOCS/wiki/index.md` — the Knowledge map; root `CLAUDE.md` keeps only a short pointer). → `references/rsc-conventions.md`.
 8. **Self-audit against the rubric** (below). Fix every miss or justify it.
@@ -132,7 +107,7 @@ Run in order. Each step gates the next.
 Match the catalog, do not invent a new register:
 
 - Direct, second-person-to-the-agent instruction ("Read the profile first", "Cut any section with no job").
-- Rules stated as non-negotiables with a one-line *why*, not a lecture.
+- A rule gets stated where it applies, with a one-line *why* that makes it obviously absolute — not a lecture, and not a shouted NON-NEGOTIABLE.
 - Concrete over abstract: a number, a path, a Bad→Good pair beats an adjective.
 - Original prose. Mine ideas from anywhere; the words are Eric's. Do **not** reproduce another ecosystem's signature artifacts or phrasing — no borrowed "1% chance" urgency blocks, no copied rationalization wording, no `*-reviewer-prompt.md` files, no verbatim flowcharts. The rsc identity is its own.
 - Cross-reference siblings by name or `../<sibling>/SKILL.md`, only ones that actually exist.
@@ -147,27 +122,27 @@ attends to the named token), and can do *worse* than saying nothing at all. Matc
 
 | The failure is… | Use this form | Why, and example |
 | --- | --- | --- |
-| **Discipline** — the agent knows the rule but skips it under pressure (time, sunk cost, "just this once") | **Prohibition + rationalization table** (`Anti-patterns → STOP`) | The agent already knows what's right; it needs the excuse pre-refuted at the moment of temptation. This is exactly what the `STOP` tables are for. "I'll skip the failing test to ship" → name the rationalization, kill it. |
+| **Discipline** — the agent knows the rule but skips it under pressure (time, sunk cost, "just this once") | **The rule stated at the step it governs, with its why** — plus one row in the anti-patterns table | A rule in an appendix is skimmed; a rule in context is followed. "Do not ship a failing test — a red test merged is a lie in the suite", written at the ship step. Do not build a separate rationalization bank restating rules already in the flow; it is paid for on every load and read as decoration. |
 | **Wrong-shaped output** — tone, verbosity, format, structure come out wrong | **Positive recipe / contract** (show the target shape) | A prohibition ("don't be verbose", "no marketing fluff") makes it *more* likely — the model fixates on the banned shape. Give the shape to hit instead: "Reply in ≤3 sentences, lead with the verdict." Demonstrate, don't forbid. |
 | **Omitted element** — the agent forgets a required piece | **Required structural slot** (a checklist item or a template field it must fill) | You can't prohibit an absence. Make the slot mandatory so its emptiness is visible — a `Done-of-done` checkbox, a template section, a result-envelope field. |
 | **Conditional behavior** — right action depends on the situation | **Predicate-keyed conditional** ("When X → do Y; otherwise Z") | A flat rule fires in the wrong context. Key the behavior to its trigger so the agent branches correctly instead of over- or under-applying. |
 
-So: keep the `Anti-patterns → STOP` tables — they're the correct tool for *discipline* failures,
-which is most of what the SDD-discipline skills guard. But when you catch yourself writing "don't
-make it X" about the *shape* of an output, stop and rewrite it as the shape to hit. Prohibition is
-a scalpel for one failure type, not the default for all of them.
+So: an anti-patterns table earns its place when it names concrete **failure modes** the flow above
+does not already state. A table that re-lists rules from the body is pure cost — delete it and move
+each rule to its step. And when you catch yourself writing "don't make it X" about the *shape* of an
+output, rewrite it as the shape to hit.
 
 ## The best-practice rubric (audit before shipping)
 
 A skill ships only when every box is checked or a miss is consciously justified.
 
 - [ ] **Frontmatter parses** as YAML; `name` matches the directory `<id>`; `origin: risco` present.
-- [ ] **Description ≤ 1024 chars**, third-person, `Use when…` lead, concrete `Triggers:` (incl. a non-obvious and a non-English phrasing), and a `NOT … (that is sibling)` boundary.
+- [ ] **Description** third-person, `Use when…` lead, an explicit `NOT … (that is sibling)` boundary naming a real sibling, ≤ 350 chars target / ≤ 1024 hard limit — judged on discrimination against the nearest sibling, not coverage.
 - [ ] **One job.** The body never drifts into a second skill's territory; it delegates instead.
-- [ ] **Body 120–400 lines**, focused; long/branch-specific material lives in `references/`.
-- [ ] **Progressive disclosure** real — references are pointed to inline, not orphaned.
+- [ ] **Body ≤ 400 lines** — a ceiling, not a target, with no floor. Long/branch-specific material lives in `references/`.
+- [ ] **Every `references/` file linked** inline from the body; none orphaned.
 - [ ] **Every fence language-tagged**; no placeholder/TODO prose; examples concrete.
-- [ ] **Checklist/decision table only where a flow branches**; an **anti-patterns table** present.
+- [ ] **Checklist/decision table only where a flow branches**; an **anti-patterns table** present, naming failure modes rather than restating rules.
 - [ ] **Accompaniment dial honored** — reads the profile, adapts verbosity.
 - [ ] **Artifacts under `02-DOCS/wiki/`** and indexed in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer), if the skill produces any.
 - [ ] **Concrete tooling delegated** to the stack skills rather than reinvented.
@@ -199,28 +174,20 @@ only when **both** are green:
    A failing `lift` means the body adds nothing a bare agent didn't already do — fix the body,
    don't game the checklist.
 
-## Anti-patterns / rationalizations → STOP
+## Anti-patterns
 
-| Rationalization | Reality / fix |
+| Failure mode | Reality / fix |
 | --- | --- |
-| "I'll polish the description later, the body matters more" | The description is *why the body ever runs*. Write it first, to bar. |
-| "More triggers = fires more = better" | Over-broad descriptions hijack unrelated turns. Add the `NOT` boundary and prune. |
-| "One skill that does specify + plan + implement is convenient" | One skill, one job. A multi-job skill triggers fuzzily and teaches poorly. Split it. |
-| "The body is long because the topic is rich" | Past ~400 lines the agent skims. Extract references; keep the body an index. |
-| "I'll skip evals, I'll just test it by hand once" | Unverifiable = does not ship. Write `cases.yaml`, including near-misses with `route_to`. |
-| "It's basically superpowers' writing-skills, I'll mirror it" | Mine the idea, write it in the rsc voice. Copied artifacts/phrasing are a defect. |
-| "I'll add a `references/` folder so it looks thorough" | Empty references are noise. Add depth only where the body points to it. |
-| "verify.sh on every skill is more rigorous" | A process skill has no artifact to grep. Its rigor is the capability eval. |
-| "Linking `../foo/SKILL.md` is fine even if foo isn't in this repo" | A dead link is a defect. Reference only siblings that exist. |
+| Description written last, once the body is done | The description is *why the body ever runs*, and drafting it first forces the scope clear. Write it first, to bar. |
+| Description padded for coverage — more phrasings, more languages, more verbs | It is in context on every turn, invoked or not. Prune until it discriminates against the nearest sibling and stops. |
+| One skill covering specify + plan + implement | Multi-job skills trigger fuzzily and teach poorly. One skill, one job — split it. |
+| Body grown past ~400 lines "because the topic is rich" | The agent skims what it cannot hold. Extract a reference and link it inline. |
+| A `references/` folder added to look thorough, or a reference nothing links to | An unlinked reference is never loaded — dead weight in the package. Link it at point of use or delete it. |
+| Evals skipped: "I'll just test it by hand once" | Unverifiable = does not ship. Write `cases.yaml`, near-misses with `route_to` included. |
+| `verify.sh` added to a process skill for rigor | A process skill has no artifact to grep. Its rigor is the capability eval. |
+| `../foo/SKILL.md` linked to something not in this repo | A dead link is a defect. Verify the directory exists under `skills/`. |
+| Another catalog mirrored wholesale ("it's basically superpowers' writing-skills") | Mine the idea, write it in the rsc voice. Copied artifacts or phrasing are a defect. |
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
 When authoring produces a durable design note (a skill's scope decision, a description rationale worth keeping), persist it under `02-DOCS/wiki/sdd/` and index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer), per the `../harness/SKILL.md` convention — never a stray file at the repo root. The skill's own `evals/` is the executable record of intent; the wiki note is the human-readable why.
-
-## See Also
-
-- `../harness/SKILL.md` — the 02-DOCS Knowledge-map convention these artifacts live in; the bar this catalog holds.
-- `../init/SKILL.md` — the front door that profiles the user and sets the dial this skill reads.
-- `../building-agents/SKILL.md` — for autonomous agents/tool-loops, a different craft than authoring a skill.
-- `../specify/SKILL.md` — when the user wants a *product feature* specced, not a skill authored.
-- References: `references/description-recipe.md`, `references/eval-authoring.md`, `references/rsc-conventions.md`.

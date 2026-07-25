@@ -33,7 +33,7 @@ Every `SKILL.md` frontmatter MUST satisfy `schema/frontmatter.schema.json`:
 ```yaml
 ---
 name: my-skill                  # lowercase-kebab, matches the directory id
-description: Use when ...        # trigger-rich, third-person
+description: Use when ...        # third-person, situation + NOT boundary, ~350 chars
 tags: [keyword, keyword]         # what the consult advisor searches over (≥1)
 recommends: [sibling-skill]      # what the system offers to install next (real ids)
 profiles: [core, full]           # optional: named-profile membership
