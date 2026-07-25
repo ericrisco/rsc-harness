@@ -1,6 +1,6 @@
 ---
 name: coolify
-description: "Use when self-hosting apps, managed databases and deploys on a VPS you own with Coolify instead of paying a managed PaaS — installing Coolify on a fresh Ubuntu/Debian box, claiming the first-admin account, deploying from a Git repo (Nixpacks/Railpack/Dockerfile/compose), provisioning Postgres/MySQL/MongoDB/Redis in-product, wiring scheduled DB backups to S3-compatible storage, or custom domains + automatic SSL via the built-in Traefik proxy. Triggers: 'install Coolify', 'self-host my app on a cheap VPS', 'my Vercel/Heroku bill is killing me, move it to a box I own', 'control plane on my own server', 'nightly Postgres backups to R2 in Coolify', 'montar mi propio PaaS en un VPS barato con Coolify', 'autoallotjar les meves apps amb Coolify'. NOT the managed push-and-forget PaaS where someone else owns the box (that is railway), NOT sizing/hardening the VPS itself (that is hetzner / digitalocean), NOT generic Docker image authoring (that is docker)."
+description: "Use when self-hosting apps and databases with Coolify on a VPS you own — install, first-admin lockdown, Git-to-deploy (Nixpacks/Dockerfile/compose), managed Postgres/Redis, scheduled S3 backups, domains + auto-SSL. NOT a PaaS someone else runs (that is `railway`), NOT sizing/hardening the box (that is `hetzner`), NOT authoring Dockerfiles (that is `docker`)."
 tags: [coolify, self-hosting, paas, vps, docker, deployment, devops]
 recommends: [hetzner, digitalocean, docker, postgresdb, backups, domains-dns, github-actions]
 origin: risco
@@ -65,7 +65,9 @@ curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
 Why root: the installer wires Docker and system services; the docs state non-root is not fully supported.
 Why claim immediately: the registration page is open until someone takes it.
 
-Full install transcript, non-LTS/other-OS notes, and dashboard-domain setup → `references/install-and-proxy.md`.
+Full install transcript, non-LTS/other-OS steps, dashboard-domain setup, Traefik (default) vs Caddy,
+wildcard domains + the DNS-01 challenge, and common SSL failures with their fixes →
+`references/install-and-proxy.md`.
 
 ## Port & firewall matrix
 
@@ -106,7 +108,8 @@ Then:
 4. **Attach the domain + SSL** — add `app.example.com`, point its DNS A record at the box (DNS itself is
    the `domains-dns` skill), and the Traefik proxy provisions Let's Encrypt automatically on ports 80/443.
 
-Build-pack deep-dive + a worked, lint-clean compose example → `references/deploy-recipes.md`.
+Build-pack decision deep-dive plus a worked, lint-clean `docker-compose.yml` (env-ref secrets, named
+volumes, healthcheck, pinned image) — the verify.sh target → `references/deploy-recipes.md`.
 
 ## Managed databases
 
@@ -137,8 +140,8 @@ Backblaze B2, MinIO, Wasabi.
 4. **Run the restore drill — once, before you need it.** Download a dump, decompress, replay it into a
    throwaway DB, confirm the row counts. An untested backup is a guess. Schedule a recurring drill.
 
-Per-provider S3 setup, per-engine dump/restore commands, and the full restore runbook →
-`references/databases-and-backups.md`.
+S3 destination setup for R2/B2/MinIO/Wasabi/AWS, per-engine dump/restore commands, retention, the
+step-by-step restore runbook and its consistency caveats → `references/databases-and-backups.md`.
 
 ## Operate the box
 
@@ -173,15 +176,6 @@ example/your `docker-compose.y*ml`: fails on a hardcoded secret literal (must be
 without a named volume, a missing `healthcheck:`, or a floating `:latest` tag on a build-context service;
 and confirms the canonical port matrix (8000/80/443/6001/6002) is documented. Read-only, no network, no
 live deploy. Exits 0 on a clean/empty target.
-
-## References
-
-- `references/install-and-proxy.md` — full install transcript, non-LTS/other-OS steps, Traefik (default)
-  vs Caddy, wildcard domains + DNS-01 challenge, common SSL failures and fixes.
-- `references/databases-and-backups.md` — per-engine dump commands, S3 destination setup for
-  R2/B2/MinIO/Wasabi/AWS, retention, the step-by-step restore runbook, consistency caveats.
-- `references/deploy-recipes.md` — build-pack decision deep-dive and a worked, lint-clean
-  `docker-compose.yml` (env-ref secrets, named volumes, healthcheck, pinned image) — the verify.sh target.
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
