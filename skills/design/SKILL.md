@@ -1,6 +1,6 @@
 ---
 name: design
-description: "Use when designing a modern UI, building/writing a high-converting landing page or web page, refreshing a hero, choosing type/color/spacing/motion, or making an interface feel premium instead of generic/AI-templated. Brand-grounded: reads the project's 02-DOCS brand study first and STOPS to interview the user if it is missing or incomplete. Research-first: studies award-winning current work (Awwwards, Godly, Land-book, Refactoring UI, Linear/Stripe/Vercel/Resend-tier) and pulls current 2026 trends with citations before prescribing. Ships Tailwind v4 + Next.js 15 + React 19 patterns with correctly-stated WCAG 2.2 AA and Core Web Vitals (LCP/INP/CLS) as hard design constraints; ties to 'marketing' for the words and 'nextjs' for the build. Triggers: 'design a landing page', 'build a web page', 'make this look premium', 'pick a color palette', 'this UI feels generic', 'bento section', 'design review', 'modern UI'."
+description: "Use when designing or refreshing a web UI or landing page — visual concept, type/color/spacing/motion tokens, composition, rescuing a UI that reads AI-generic, or a graded design review. Brand-grounded and research-first; ships Tailwind v4 + Next.js 15 under WCAG 2.2 AA and Core Web Vitals budgets. NOT the words on the page (that is `marketing`), NOT the App Router build (that is `nextjs`)."
 tags: [design, ux, ui, landing, conversion]
 recommends: [nextjs, marketing]
 origin: risco
@@ -10,64 +10,25 @@ origin: risco
 
 *Research the best current work, then ship a premium, accessible, fast, high-converting interface.*
 
-## When to use / When NOT to use
+> **SDD gate.** If this fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, hand off to `../specify/SKILL.md` first — it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build straight from here only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
 
-> **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
+**Hand-offs.** The WORDS are `../marketing/SKILL.md`'s: it co-owns the `02-DOCS/wiki/brand/` study (the words dimensions there, the visual ones here), and deep keyword research, GEO, or a technical SEO audit belongs to it — this skill only enforces SEO-aware *structure* in markup. The BUILD (App Router / React 19) is `../nextjs/SKILL.md`'s. Mirroring the brand tokens into a Flutter app is `../flutter/SKILL.md`'s. Pure backend/data/infra with no UI surface: decline — there is nothing to design. Three references live outside this repo and are named for direction only, not invocable here: *frontend-design-direction* for dense internal tooling used daily (never paint a marketing skin on a tool that needs repeated daily use — fold its judgment in via the DIRECTION BRIEF); *liquid-glass-design* for native iOS 26 SwiftUI Liquid Glass (this skill ships the *web* glass approximation only); *motion-ui* / *motion-foundations* for motion-code mechanics (springs, `AnimatePresence` internals, layout animations — this skill sets motion *intent + budget*).
 
-Use when:
+## Brand grounding — before you design anything
 
-- Building a new landing or marketing page.
-- Doing a redesign or a polish pass on an existing surface.
-- Writing hero, value-prop, pricing, or FAQ copy.
-- Choosing a visual system: type, color, spacing, radius, shadow, motion.
-- Rescuing a UI that "feels generic / AI-slop".
-- Running pre-launch design QA.
-
-Do NOT use when (delegate or decline):
-
-- Pure backend/data/infra work with no UI surface → decline; there is nothing to design.
-- Dense internal operational tooling used daily (not a sales page) → apply product-domain judgment and do NOT force a landing composition (the *frontend-design-direction* lens, an external reference — not a repo skill).
-- Native iOS/SwiftUI Liquid Glass material → the *liquid-glass-design* reference (external; this skill ships the *web* glass approximation only).
-- Deep motion code mechanics (springs, `AnimatePresence` internals, layout animations) → the *motion-ui* / *motion-foundations* references (external; this skill sets motion *intent + budget*).
-- Deep keyword research, GEO, or a technical SEO audit → the `../marketing/SKILL.md` sibling (it owns SEO-aware structure + keyword/intent; this skill only enforces SEO-aware *structure* in markup).
-
-**Tool vs. landing page:** A SaaS operations tool should be dense, quiet, and scannable — never paint a marketing skin on a tool that needs repeated daily use.
-
-## Brand grounding (read this first)
-
-Before producing ANY landing / web-page / marketing output, ground in the project's brand study. A design with no brand behind it is a guess, and a guess defaults to your AI-generic prior. This step is mandatory and self-reinforcing: **an incomplete brand study is a hard stop, not a warning.**
+A design with no brand behind it is a guess, and a guess defaults to your AI-generic prior. That is why this gate is a hard stop rather than a warning: **an incomplete brand study blocks the work.**
 
 Follow the harness 02-DOCS convention (brand study = wiki articles under `02-DOCS/wiki/brand/`, raw inputs under `02-DOCS/raw/brand/`, linked from root `CLAUDE.md`):
 
 1. **Locate the brand study.** Read the project root `CLAUDE.md` and look for a `## Brand & voice` section pointing into `02-DOCS/wiki/brand/...`. If present, read those articles.
-2. **If the link is MISSING, or the brand study is ABSENT or INCOMPLETE** (any checklist dimension empty), STOP. Do not design yet. Instead:
-   - Ask the user the targeted question script — **ONE focused batch at a time**, not a wall of questions — until every dimension in the completeness checklist is filled. (→ `references/brand-grounding.md`)
-   - Write/update the brand study into `02-DOCS/wiki/brand/` (and paste any raw inputs the user gives — screenshots, existing palettes, competitor lists — into `02-DOCS/raw/brand/`), following the wiki article format, and update `wiki/index.md` + `wiki/log.md`.
-   - Add/update a `## Brand & voice` section in the root `CLAUDE.md` linking to it (create `CLAUDE.md` if absent).
+2. **If the link is MISSING, or the brand study is ABSENT or INCOMPLETE** (any checklist dimension empty), STOP. Do not design yet. Ask the user the targeted question script — **ONE focused batch at a time**, not a wall of questions — until every dimension in the completeness checklist is filled (→ `references/brand-grounding.md`). Write/update the brand study into `02-DOCS/wiki/brand/` (and paste any raw inputs the user gives — screenshots, existing palettes, competitor lists — into `02-DOCS/raw/brand/`), following the wiki article format, update `wiki/index.md` + `wiki/log.md`, and add/update a `## Brand & voice` section in the root `CLAUDE.md` linking to it (create `CLAUDE.md` if absent).
 3. **Only once the brand study exists and is sufficient, proceed** — and cite which brand articles drove which decisions in your output (e.g. "palette from `02-DOCS/wiki/brand/visual-identity.md`").
 
 The completeness checklist spans visual identity (OKLCH color system, type pairing & scale, logo, imagery/illustration mood, density, radius/shadow/motion personality), reference/inspiration sites the user loves, layout preferences, dark-mode stance, accessibility & performance constraints, and brand voice/positioning (so copy and design agree). Full checklist + exact question script → `references/brand-grounding.md`.
 
-The order is: **brand grounding → trend research → build.** If the brand study lacks aesthetic direction, or the user asks for "modern" / "2026" / "premium", run the research-first protocol (below) and fold current, cited findings into the output.
+The order is: **brand grounding → trend research → build.**
 
-## The non-negotiables
-
-These are constraints, not preferences. Violating any one is a defect, not a style choice.
-
-1. **Ground in the brand study before you design.** No `02-DOCS/wiki/brand/` study, or an incomplete one → STOP and complete it. (→ "Brand grounding" above, `references/brand-grounding.md`)
-2. **Research before you prescribe.** Run the research protocol; never ship from stale memory — your default taste skews AI-generic. Pull current 2026 trends with citations + dates. (→ `references/research-method.md`, `references/trends-2026.md`)
-3. **5-second value prop.** What it is, who it's for, and why it's better must be legible above the fold in 5 seconds.
-4. **One `<h1>` per page;** semantic landmarks (`header`/`nav`/`main`/`section`/`footer`).
-5. **Core Web Vitals are design constraints:** LCP < 2.5s, INP < 200ms, CLS < 0.1. (INP replaced FID in March 2024 — measure INP.)
-6. **WCAG 2.2 AA:** 4.5:1 text contrast (3:1 large text / UI), visible focus, `prefers-reduced-motion` honored. Target size: 24×24px is the AA floor (SC 2.5.8 Target Size (Minimum)); 44×44px is the recommended quality bar (Apple HIG / pointer comfort) — aim for 44, never ship below 24.
-7. **Design tokens, never magic numbers.** Tailwind v4 `@theme` → CSS vars.
-8. **Spacing on a 4/8px scale; type on a modular scale; color allocated 60-30-10.**
-9. **Motion must guide attention, communicate state, or preserve continuity** — else delete it.
-10. **Copy is benefit-led and specific.** No hype; the ban-list is enforced. (→ `references/copywriting-frameworks.md`)
-11. **Match the product domain.** Density and composition follow the audience and the job, not a template.
-12. **Commit to a visual concept and one signature element.** A page with no point of view defaults to AI-generic. Name the concept in one sentence; manufacture the ONE distinctive idea (not a gradient); force scale contrast and section rhythm; run the senior-designer crit before shipping. (→ "From competent to premium" below, `references/signature-and-craft.md`)
-
-## Decision rules (pick a direction first)
+## Pick a direction first
 
 Fill the direction brief before you write a single line of markup:
 
@@ -80,7 +41,7 @@ DIRECTION BRIEF (fill before coding)
 5. Constraints ...... framework, a11y, perf budget, existing design system/tokens
 ```
 
-Then map the project type to composition, density, and motion budget:
+Then map the project type to composition, density, and motion budget. Density and composition follow the audience and the job, not a template — a SaaS operations tool should be dense, quiet, and scannable.
 
 | Project type | Composition | Density | Motion budget |
 | --- | --- | --- | --- |
@@ -93,7 +54,7 @@ Then map the project type to composition, density, and motion budget:
 
 ## Research-first protocol
 
-Trends churn quarterly and your built-in aesthetic prior is the median of every AI template ever scraped. Counter it with a loop:
+Trends churn quarterly and your built-in aesthetic prior is the median of every AI template ever scraped. Never prescribe from stale memory; counter it with a loop:
 
 1. Define 2–3 reference archetypes from the DIRECTION BRIEF (e.g. "Linear-grade dev tool, dark, type-led").
 2. WebSearch award galleries and tier-1 product sites: `awwwards.com`, `godly.website`, `land-book.com`, `mobbin.com`, Refactoring UI, and the tier-1 sites (Linear, Stripe, Vercel, Cursor, Resend).
@@ -102,46 +63,24 @@ Trends churn quarterly and your built-in aesthetic prior is the median of every 
 5. Synthesize a one-paragraph DESIGN DIRECTION with citations (which URL contributed what).
 6. Only THEN build; re-check the result against the references in QA.
 
-Re-research per project — trends churn, competitors moved, and the domain dictates the reference set. Do not rely on stale memory: whenever the brand study lacks aesthetic direction or the user asks for "modern" / "2026" / "premium", WebSearch/WebFetch current trends (award sites, Linear/Stripe/Vercel/Resend-tier, current type/color/motion/layout moves), fold the findings into the output **with citations + dates**, and refresh `references/trends-2026.md`. Full loop, source map, and synthesis template → `references/research-method.md`. Current snapshot (dated, cited) → `references/trends-2026.md`.
+Re-research per project — trends churn, competitors moved, and the domain dictates the reference set. Whenever the brand study lacks aesthetic direction or the user asks for "modern" / "2026" / "premium", run this loop, fold the findings into the output **with citations + dates**, and refresh `references/trends-2026.md`. Full loop, source map, and synthesis template → `references/research-method.md`. Current snapshot (dated, cited) → `references/trends-2026.md`.
 
 ## From competent to premium (the part that earns the score)
 
-Obeying every non-negotiable gets you to *competent* — a page that ships and passes review. It does NOT
-get you to premium, because every constraint catches an *absence* (no missing `<h1>`, contrast passes),
-while premium is a *presence*: a point of view. Competent-but-generic is the default failure mode of
-under-specified design output. Close it with four deliberate moves, in order, before and during the build:
+Obeying every constraint gets you to *competent* — a page that ships and passes review. It does NOT get you to premium, because every constraint catches an *absence* (no missing `<h1>`, contrast passes), while premium is a *presence*: a point of view. Competent-but-generic is the default failure mode of under-specified design output. Close it with four deliberate moves, in order, before and during the build:
 
-1. **Choose a visual concept.** One sentence the whole page answers to — `[feeling] + [structural metaphor]
-   for [audience doing job]` (e.g. "quiet instrument-panel precision for ops engineers"). Drawn from the
-   brand study + research exemplars, never your prior. If you cannot name what makes this surface different
-   from the median SaaS page, you have no concept yet, and the output will default to generic.
-2. **Manufacture the ONE signature element** the brief asks for — the thing you'd describe first to a
-   friend. Pick exactly one from a real vocabulary, biased by domain: a hero that *demonstrates not
-   describes* (live terminal / real chart / actual diff), an owned type moment, a structural signature
-   (asymmetric split, horizontal feature rail, editorial index), a material signature (hairline grid, one
-   grain pass, duotone), a motion signature, or a real-number/proof signature. Never default to "a
-   gradient". It must be true to the product, and cite the research exemplar that inspired it.
-3. **Force scale contrast.** Generic pages are tonally flat — headline, titles, body all within ~1.5×.
-   Make the hero dominant **3–5× the body**, demote eyebrows/labels/metadata smaller and quieter than
-   feels comfortable, and allow **one focal point per viewport**. If a section feels flat, add contrast,
-   not elements.
-4. **Give the page rhythm.** Ten identical `py-24` white card-grid sections read as one stripe. Vary
-   format (full-bleed vs. contained, alternate media sides), background (a dark section between light ones
-   anchors a CTA), density (a breathing statement after a dense grid), and container idiom (not everything
-   is a bordered card). Inter-section gap > intra-section gap, padding stepping on the scale.
+1. **Choose a visual concept.** One sentence the whole page answers to — `[feeling] + [structural metaphor] for [audience doing job]` (e.g. "quiet instrument-panel precision for ops engineers"). Drawn from the brand study + research exemplars, never your prior. If you cannot name what makes this surface different from the median SaaS page, you have no concept yet, and the output will default to generic.
+2. **Manufacture the ONE signature element** the brief asks for — the thing you'd describe first to a friend. Pick exactly one from a real vocabulary, biased by domain: a hero that *demonstrates not describes* (live terminal / real chart / actual diff), an owned type moment, a structural signature (asymmetric split, horizontal feature rail, editorial index), a material signature (hairline grid, one grain pass, duotone), a motion signature, or a real-number/proof signature. Never default to "a gradient". It must be true to the product, and cite the research exemplar that inspired it.
+3. **Force scale contrast.** Generic pages are tonally flat — headline, titles, body all within ~1.5×. Make the hero dominant **3–5× the body**, demote eyebrows/labels/metadata smaller and quieter than feels comfortable, and allow **one focal point per viewport**. If a section feels flat, add contrast, not elements.
+4. **Give the page rhythm.** Ten identical `py-24` white card-grid sections read as one stripe. Vary format (full-bleed vs. contained, alternate media sides), background (a dark section between light ones anchors a CTA), density (a breathing statement after a dense grid), and container idiom (not everything is a bordered card). Inter-section gap > intra-section gap, padding stepping on the scale.
 
-Then, **before claiming done, run the senior-designer crit** and make at least one concrete change as a
-result: What is the one idea here (name it in a sentence)? Would this place on Awwwards/Godly or just pass
-review? What is the single most generic element right now — and replace it. Where does the eye land first,
-and is that what should win? If the logo were removed, would anyone know whose product this is? Does every
-section earn its place, or is one there out of habit (cut it)?
+Then, **before claiming done, run the senior-designer crit** and make at least one concrete change as a result: What is the one idea here (name it in a sentence)? Would this place on Awwwards/Godly or just pass review? What is the single most generic element right now — and replace it. Where does the eye land first, and is that what should win? If the logo were removed, would anyone know whose product this is? Does every section earn its place, or is one there out of habit (cut it)?
 
-Full method — concept formula, signature vocabulary, scale/rhythm rules, the crit, and a worked
-generic→signature dev-tool hero — → `references/signature-and-craft.md`.
+Concept formula, signature vocabulary, scale/rhythm rules, the crit, and a worked generic→signature dev-tool hero → `references/signature-and-craft.md`.
 
 ## Visual system in 90 seconds
 
-Copy-pasteable foundation. Tokens once, consume everywhere.
+Copy-pasteable foundation. Tokens once, consume everywhere — design tokens, never magic numbers.
 
 - Tailwind v4 `@theme` block (OKLCH): tokens become CSS vars and utilities automatically — no `tailwind.config.js`.
 - Type scale via `next/font` (one display + one text face) plus a fluid `clamp()` ladder.
@@ -227,7 +166,9 @@ Full section-by-section anatomy, CTA cadence, pricing psychology, JSON-LD → `r
 
 ## Conversion copy in one pass
 
-- The 5s value-prop test: a stranger reads the hero and can say what it is, who it's for, why it's better.
+Copy is benefit-led and specific, or the page has no value prop. One `<h1>` per page; semantic landmarks (`header`/`nav`/`main`/`section`/`footer`).
+
+- The 5s value-prop test: a stranger reads the hero and can say what it is, who it's for, why it's better — legible above the fold in 5 seconds.
 - Headline formula slots: outcome + timeframe; "X without Y"; the job-to-be-done.
 - Framework picker: PAS for pain-aware cold traffic; AIDA for broad / top-of-funnel; FAB/JTBD for feature → benefit translation.
 - CTA: put the value on the button ("Start free", "Get my estimate"), never "Submit".
@@ -243,7 +184,7 @@ Frameworks, value-prop canvas, Bad→Good rewrites, VOICE block → `references/
 
 ## Motion & interaction budget
 
-- Purposeful-only: motion must guide attention, communicate state, or preserve continuity.
+- Purposeful-only: motion must guide attention, communicate state, or preserve continuity — else delete it.
 - Timing defaults: enter 200–350ms, exit ~150ms, press `scale(0.97)`.
 - Never `transition: all` — it animates layout props and janks.
 - Compositor-only properties: `transform`, `opacity`, `filter`.
@@ -293,7 +234,7 @@ img  { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 
 Depth recipes, glass, noise, concentric math → `references/visual-system.md`.
 
-## Anti-patterns / rationalizations → STOP
+## Anti-patterns
 
 | Rationalization | Reality / Fix |
 | --- | --- |
@@ -308,6 +249,8 @@ Depth recipes, glass, noise, concentric math → `references/visual-system.md`.
 | "`transition: all` is convenient" | It animates layout props → jank. List exact properties. |
 
 ## Quick reference
+
+Accessibility and Core Web Vitals are **design constraints, not post-launch tuning** — violating one is a defect, not a style choice. **WCAG 2.2 AA:** 4.5:1 text contrast (3:1 large text / UI), visible focus, `prefers-reduced-motion` honored. Target size: 24×24px is the AA floor (SC 2.5.8 Target Size (Minimum)); 44×44px is the recommended quality bar (Apple HIG / pointer comfort) — aim for 44, never ship below 24. **Core Web Vitals:** LCP < 2.5s, INP < 200ms, CLS < 0.1. (INP replaced FID in March 2024 — measure INP.)
 
 | Lever | Default | Token / where |
 | --- | --- | --- |
@@ -366,36 +309,11 @@ The checklist above is pass/fail. When the user asks for a *design review*, a *c
 
 Score = Σ(dimension × weight), max 115 (normalize to /100 by ×100/115 if you want a percentage). **Bands (on the /115 raw total):** < 69 ships generic — redo; 69–91 competent but improvable — name the lowest two and fix; 92–108 premium; 109+ award-tier. (These are the prior 60/80/95-per-100 cutoffs rescaled to 115.) A surface that scores well on every constraint dimension but low on #1–2 is the classic "competent but generic" result — fix concept and signature first, it has the most leverage. For each dimension below 8, give one concrete, actionable fix (not "improve spacing" but "section padding jumps 48→96px with no 64px step — add `py-16` on mobile"). Cite the brand article or trend source that sets the bar where relevant.
 
-## Project grounding (02-DOCS + CLAUDE.md)
+## Recording the decisions (02-DOCS)
 
-This skill's 02-DOCS record has two parts, both indexed in `02-DOCS/wiki/index.md` (the Knowledge
-map index; root `CLAUDE.md` points to it):
+Two records, both indexed in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it), both read first on every use so outputs stay consistent with them:
 
-- The **brand study** at `02-DOCS/wiki/brand/` — a hard gate (see "Brand grounding" above): if
-  missing or incomplete, ask until complete before designing.
-- The **design-system decisions** at `02-DOCS/wiki/stack/design.md` — the chosen tokens
-  (color/OKLCH, type scale, spacing, radius, shadow, motion), the 2026 direction picked, and the
-  reference sites. Recorded, not gated.
+- The **brand study** at `02-DOCS/wiki/brand/` — the hard gate above: missing or incomplete → ask until complete before designing.
+- The **design-system decisions** at `02-DOCS/wiki/stack/design.md` — the chosen tokens (color/OKLCH, type scale, spacing, radius, shadow, motion), the 2026 direction picked, and the reference sites. Recorded, not gated; create/update it as decisions are made.
 
-Create/update both as decisions are made and index them in `02-DOCS/wiki/index.md` (the Knowledge map;
-root `CLAUDE.md` keeps only a short pointer to it). Read them first on every use and
-keep outputs consistent with them.
-
-## See Also
-
-**Sibling skills in this repo** (these resolve to real skills you can invoke):
-
-- `../marketing/SKILL.md` — the WORDS: value prop, hero/section copy, microcopy, launch, and SEO-aware copy structure + keyword/intent capture. Co-owns the `02-DOCS/wiki/brand/` study (it owns the words dimensions; this skill owns the visual ones). Hand off deep keyword/SEO/GEO work here.
-- `../nextjs/SKILL.md` — the BUILD: App Router / React 19 stack implementation.
-- `../flutter/SKILL.md` — mirror the brand tokens into a Flutter app.
-- `../harness/SKILL.md` — the `02-DOCS` wiki protocol the brand study follows.
-
-**External / inspiration references** (NOT skills in this repo — names of well-known craft references and external skill ecosystems, cited for direction, not invocable here):
-
-- *frontend-design-direction* — product-domain design direction (e.g. dense internal tools vs sales pages); fold its judgment in via the DIRECTION BRIEF rather than expecting a sibling skill.
-- *make-interfaces-feel-better* — polish-pass micro-detail thinking; this skill's "Premium details that compound" table covers the same ground in-repo.
-- *motion-ui* / *motion-foundations* — deep motion-code mechanics (spring config, `AnimatePresence` internals, layout animations); this skill sets motion *intent + budget* and defers mechanics outward.
-- *product-lens* — validating the "why" before you build.
-- *liquid-glass-design* — native iOS 26 Liquid Glass material (this skill ships the *web* glass approximation only).
-
-- References (in this skill): `references/brand-grounding.md`, `references/research-method.md`, `references/trends-2026.md`, `references/signature-and-craft.md`, `references/visual-system.md`, `references/landing-anatomy-and-cro.md`, `references/copywriting-frameworks.md`, `references/motion-and-interaction.md`.
+The wiki article protocol both follow is `../harness/SKILL.md`'s.
