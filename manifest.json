@@ -2280,7 +2280,7 @@
     },
     {
       "id": "implement",
-      "description": "Use when an approved plan and task list exist and it is time to turn them into working, tested code — the SDD phase AFTER analyze and BEFORE verify. Enforces TDD discipline: a test fails before the code that makes it pass. Triggers: 'implement the plan', 'build out the tasks', 'start coding this feature', 'work through the task list', 'execute the implementation', 'write the code for this spec', 'do task 3', 'continue implementing', 'red-green-refactor this', 'implement with tests first'. Delegates concrete test tooling to the stack skill (fastapi/go/nextjs/flutter) and fans independent tasks out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the final lint/test/audit gate (that is `verify`).",
+      "description": "Use when an approved plan and task list exist and it is time to turn them into working, tested code — the SDD phase after `analyze` and before `verify`. Enforces TDD: a failing test comes before the code that makes it pass, one task at a time, appended to a progress ledger that survives compaction. Delegates test tooling to the stack skill and fans disjoint tasks out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the final lint/test/audit gate (that is `verify`).",
       "tags": [
         "sdd",
         "implement",
