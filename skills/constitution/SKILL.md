@@ -1,6 +1,6 @@
 ---
 name: constitution
-description: "Use when capturing or revising a project's non-negotiable principles — its stack canon, quality bars, naming/structure conventions, branching/commit rules, testing thresholds, security and accessibility floors, the things every later phase must obey. This is the FIRST rsc-sdd phase, run once per project (then amended). Writes/updates 02-DOCS/wiki/sdd/constitution.md and links it from the root CLAUDE.md Knowledge map; reconciles with conventions the harness already holds under 02-DOCS/wiki/stack/*. Triggers: 'set the project principles', 'define our engineering standards', 'establecer las reglas del proyecto', 'project constitution', 'what are our non-negotiables', 'lock the stack canon', 'quality bar', 'coding standards doc', 'amend the constitution', 'ratify principle', 'definition of done for the repo'. NOT a feature spec (that's specify) and NOT an implementation plan (that's plan)."
+description: "Use when setting or amending a project's non-negotiables — stack canon, quality bars, conventions, security/a11y floors — as numbered, testable rules later phases obey. First rsc-sdd phase; writes 02-DOCS/wiki/sdd/constitution.md. NOT a feature spec (that is `specify`), NOT the technical plan (that is `plan`), NOT the wiki itself (that is `harness`)."
 tags: [sdd, constitution, principles]
 recommends: [specify]
 profiles: [core, full]
@@ -13,7 +13,7 @@ origin: risco
 
 A constitution is small, durable, and enforceable. It is **not** a wiki of everything you know about the project (that is what `02-DOCS/wiki/` already is, run by the `harness`). It is the short list of principles that, if violated, mean the work is wrong regardless of whether it runs. If a rule here cannot be checked or pointed at later, it does not belong here — move it to the stack wiki and link it.
 
-This skill produces `02-DOCS/wiki/sdd/constitution.md` and one Knowledge-map row. The constitution is one of the few **read-first** pointer entries kept directly in the root `CLAUDE.md` `## Knowledge map` (everything else lives in `02-DOCS/wiki/index.md`, the full Knowledge map that root `CLAUDE.md` points to). It reconciles with — never duplicates — the stack conventions the harness keeps under `02-DOCS/wiki/stack/*`.
+Not this phase: *what to build* → `../specify/SKILL.md`; the technical approach for one feature → `../plan/SKILL.md`; setting up `01-TOOLS/` + `02-DOCS/` or capturing general project knowledge → `harness`; concrete stack mechanics (*how* to configure Ruff, pytest, Tailwind tokens) → the relevant stack skill (`../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`, `../design/SKILL.md`, `../secure-coding/SKILL.md`). The constitution *names* the bar; the stack skill *enforces* it.
 
 ## Model tier — `heavy` (opt-in routing)
 
@@ -21,7 +21,7 @@ This phase's default model tier is **`heavy`** — it sets the project's non-neg
 
 ## Honor the accompaniment dial first
 
-Before asking anything, read `02-DOCS/wiki/harness/user-profile.md` and match its `technical_level` and `accompaniment_level`. The constitution interview adapts:
+Before asking anything, read `02-DOCS/wiki/harness/user-profile.md` and match its `technical_level` and `accompaniment_level`. No profile yet → default to non-technical and ask the two gauging questions, or point the user at `init`; never assume fluency. The constitution interview adapts:
 
 | Level | How this skill behaves |
 |-------|------------------------|
@@ -29,24 +29,6 @@ Before asking anything, read `02-DOCS/wiki/harness/user-profile.md` and match it
 | L1 — breve | One line of *why* per principle proposed. Ask 3-4 questions max. |
 | L2 — explica decisiones | Justify each principle as you propose it; surface trade-offs where a rule constrains the team. |
 | L3 — acompañamiento total | Explain what a constitution is and why each section matters, one kind question at a time, before writing anything. Non-technical framing. |
-
-If there is no profile yet, default to non-technical and ask the two gauging questions (technical level, accompaniment level) before proceeding — or point the user at `init`. Never assume fluency.
-
-## When to use / when NOT to use
-
-Use when:
-
-- A project is being set up and needs its principles fixed before features are specified.
-- The team keeps relitigating the same decisions (test coverage, formatting, branch naming) and wants them ratified once.
-- An existing repo has implicit conventions that should be made explicit and enforceable.
-- A principle needs to change — amend the constitution (see the amendment protocol).
-
-Do NOT use when (route instead):
-
-- The user wants to describe *what to build* → `../specify/SKILL.md` (a feature spec, not project-wide law).
-- The user wants the *technical approach* for a feature → `../plan/SKILL.md`.
-- The user wants to set up `01-TOOLS/` + `02-DOCS/` or capture general project knowledge → `harness` (the constitution lives inside that wiki, but the wiki itself is the harness's job).
-- The user wants concrete stack mechanics (e.g. *how* to configure Ruff, pytest, Tailwind tokens) → the relevant stack skill (`fastapi`, `nextjs`, `go`, `postgresdb`, `flutter`, `design`). The constitution *names* the bar; the stack skill *enforces* it.
 
 ## Reconcile before you write (do not duplicate the stack wiki)
 
@@ -64,7 +46,7 @@ The rule of thumb: the constitution says *"every endpoint is typed and tested to
 Every principle in the constitution is one numbered, testable statement. A vague aspiration is not a principle.
 
 - **Imperative and specific.** "Code is formatted with the repo's formatter on every commit" — not "we value clean code".
-- **Checkable.** There must be a way for `analyze` and `verify` to tell whether it held. Prefer a number, a command, or a named artifact.
+- **Checkable.** There must be a way for `../analyze/SKILL.md` and `verify` to tell whether it held. Prefer a number, a command, or a named artifact.
 - **Owned.** If enforcement lives in a stack skill or a script, link it.
 - **Falsifiable in review.** A reviewer can point at a diff and say "this violates principle 4".
 
@@ -116,10 +98,10 @@ The constitution is versioned so `analyze` and `review` can cite "constitution v
 - **Ratification.** A new or amended constitution is shown to the user and ratified explicitly before it takes effect. At L0, "ratify" is a quick yes; at L3, walk each change.
 - **Downstream notice.** When a principle changes mid-project, flag that existing specs/plans may now be inconsistent — `analyze` will catch the drift on the next run.
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization | Reality / fix |
-|-----------------|---------------|
+| Anti-pattern | Why it fails / fix |
+|--------------|--------------------|
 | "I'll write a thorough constitution covering everything about the project." | That's the wiki, not the constitution. Keep only enforceable non-negotiables; link the rest. |
 | "This stack detail is important, I'll paste the lint config in here." | No. Ratify the principle, link `wiki/stack/*` for the mechanic. The constitution names the bar; the stack skill enforces it. |
 | "Two stack articles disagree — I'll just pick the stricter one." | Contradictions are findings. Surface them; the user resolves. |
@@ -137,7 +119,7 @@ The constitution is versioned so `analyze` and `review` can cite "constitution v
 - [ ] The Definition-of-Done checklist is present (what `verify` runs against).
 - [ ] Fixed principles included: human git authorship + decisions logged.
 - [ ] `02-DOCS/wiki/sdd/constitution.md` written with version + ratified date + amendment log.
-- [ ] Root `CLAUDE.md` `## Knowledge map` pointer has the read-first row for the constitution (it is one of the few entries kept in root `CLAUDE.md`; the full index lives in `02-DOCS/wiki/index.md`). Additive only — never delete sections.
+- [ ] Root `CLAUDE.md` `## Knowledge map` pointer has the read-first row for the constitution.
 - [ ] The constitution was shown to the user and explicitly ratified.
 
 ## Project grounding (02-DOCS + CLAUDE.md)
@@ -153,12 +135,3 @@ Every later rsc-sdd phase reads this file before it works. The harness maintains
 ## Next in the chain
 
 The constitution is the guardrail; now describe what to build. Hand off to **`../specify/SKILL.md`** — turn a fuzzy intent into a spec (what & why, no implementation), grounded in these principles. The full chain: **constitution → specify → clarify → plan → tasks → analyze → implement → verify → review → ship** (with `debug`, `worktrees`, `parallel` callable on demand). The dispatcher is `../sdd/SKILL.md`.
-
-## See Also
-
-- `../sdd/SKILL.md` — the rsc-sdd dispatcher: the method, the phase map, the invoke rule.
-- `../specify/SKILL.md` — the next phase: intent → spec.
-- `../analyze/SKILL.md` — the consistency gate that checks specs/plans against this constitution.
-- `harness` — owns `02-DOCS/wiki/` (including `wiki/stack/*` and the full Knowledge map at `02-DOCS/wiki/index.md` this skill reconciles with; the constitution's read-first row stays in the root `CLAUDE.md` pointer).
-- Stack skills the constitution *names but does not duplicate*: `../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`, `../design/SKILL.md`, `../secure-coding/SKILL.md`.
-- References: `references/constitution-template.md`.
