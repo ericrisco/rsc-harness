@@ -1,6 +1,6 @@
 ---
 name: community
-description: "Use when building or running a persistent two-way community space — Discord, Telegram, or Circle — and you need structure, onboarding, moderation, rituals, growth, or health metrics; covers picking the platform, standing up channels/roles/spaces, the rules/verification gate, the 3-layer moderation stack, an operating-rhythm of rituals, lurker-to-contributor growth loops, and the few metrics that prove it is alive. Triggers: 'set up our Discord server', 'our community is a graveyard / dead chat', 'we keep getting spam raids and scam DMs', 'Discord vs Telegram vs Circle', 'design community rituals / weekly cadence', 'how do I get lurkers to post', 'community onboarding flow', 'community health metrics', 'monta la comunitat de Discord', 'la comunidad está muerta, nadie escribe'. NOT customer churn-prevention for a paid product (that is retention), NOT one-to-many broadcast email (that is newsletter), and NOT running a single live event (that is webinar)."
+description: "Use when building or running a persistent two-way community space — Discord, Telegram, Circle: platform choice, structure, onboarding, native→bot→human moderation, rituals, growth loops, health metrics. NOT churn of paying product customers (that is `retention`), NOT broadcast email (that is `newsletter`), NOT one live event (that is `webinar`)."
 tags: [community, discord, telegram, moderation, growth, rituals]
 recommends: [retention, newsletter, social-publisher, brand-voice, whatsapp-telegram, webinar]
 profiles: []
@@ -10,15 +10,6 @@ origin: risco
 # community
 
 Run the community like a **product with a job**, not a vanity chat room. The space — a Discord server, a Telegram group+channel, a Circle — is the product. **Onboarding is activation, rituals are the feature, moderation is reliability, and one north-star metric tied to your purpose is the only number that matters.** A room with 5,000 silent members is a failed product, not a big one. Design the system around the conversation, not the conversation itself.
-
-## When to use
-
-- Standing up a new Discord / Telegram / Circle from zero: structure, roles, onboarding, rules.
-- A community exists but is a graveyard — lurkers only, no rhythm, nobody posts — needs rituals + re-activation.
-- Moderation is on fire: spam waves, raids, scam DMs, bans applied by mood, no incident process.
-- Choosing between Discord vs Telegram vs Circle for a given audience, purpose, and monetization model.
-- Designing a growth loop that compounds (referrals, intro rituals, partner cross-posts) instead of buying dead members.
-- Defining community health metrics and targets and instrumenting the few that prove the thing is alive.
 
 ## When NOT to use — route instead
 
@@ -32,9 +23,9 @@ Run the community like a **product with a job**, not a vanity chat room. The spa
 | Actually code or host the Discord/Telegram bot (gateway, slash handlers) | `whatsapp-telegram`, `automation-flows` |
 | Define the voice/name/tone the community speaks in | `../brand-voice/SKILL.md` |
 
-You own the **persistent, two-way space and its ongoing operating rhythm.** The boundary that bites most: `retention` keeps *buyers of a product* from churning; you keep *members of a shared space* active and contributing. They rhyme (cohorts, re-activation) but the subject differs — a SaaS seat vs a Discord membership. When a near-miss is really "send a broadcast," it is `newsletter`/`social-publisher`; when it is "stop churn of buyers," it is `retention`; when it is "run an event," it is `webinar`.
+You own the **persistent, two-way space and its ongoing operating rhythm.** The boundary that bites most: `retention` keeps *buyers of a product* from churning; you keep *members of a shared space* active and contributing. They rhyme (cohorts, re-activation) but the subject differs — a SaaS seat vs a Discord membership.
 
-## Step 0 — Purpose & north-star gate (hard rule)
+## Step 0 — Purpose & north-star gate
 
 **Do not design a single channel until you have (a) a one-line purpose and (b) one business metric tied to it.** Why: a community without a job becomes a dead chat — there is no signal to design toward, so you sprawl channels and beg for activity. This is the most common cause of graveyards.
 
@@ -191,7 +182,7 @@ Then validate it:
 scripts/verify.sh path/to/moderation-config.yaml
 ```
 
-`verify.sh` checks the required keys exist, that `north_star_metric` is non-empty, that all three moderation layers are declared, and that at least one ritual has a cadence — it catches the most common defect (a "plan" with no purpose, no mod layers, or no rhythm).
+`verify.sh` checks the required keys exist, that `north_star_metric` is non-empty, that all three moderation layers are declared, and that at least one ritual has a cadence — it catches the most common defect (a "plan" with no purpose, no mod layers, or no rhythm). **Do not go live until it passes and the north-star plus at least one health metric (TTFR or DAU/MAU) are instrumented.**
 
 ## Anti-patterns
 
@@ -205,21 +196,3 @@ scripts/verify.sh path/to/moderation-config.yaml
 | Treating 90% lurkers as permanent | Leaves activation on the table | 90-9-1 is a range; move lurkers up a tier |
 | Monetizing on Circle before activation works | Charging for a dead room churns instantly | Prove rhythm + retention, then gate/monetize |
 | Broadcasting in a two-way space | Wrong tool; kills conversation | One-to-many → `../newsletter/SKILL.md` / `../social-publisher/SKILL.md` |
-
-## Launch-readiness checklist
-
-Gate before "go live":
-
-- [ ] Purpose written in one line **and** one north-star business metric chosen (Step 0).
-- [ ] Platform chosen by decision rule, not vibes.
-- [ ] ≤ ~6 channels/spaces, each justified by the purpose.
-- [ ] Onboarding path wired: role-on-join → rules gate → prompted intro → where-to-ask.
-- [ ] All 3 moderation layers configured (native + bot + human) sized to expected scale.
-- [ ] ≥ 1 ritual scheduled with an explicit cadence.
-- [ ] North-star + ≥ 1 health metric (TTFR or DAU/MAU) instrumented.
-- [ ] `community-plan.md` + `moderation-config.yaml` emitted and `verify.sh` passes.
-
-## References
-
-- `references/platform-playbooks.md` — per-platform setup depth: Discord (AutoMod filters, verification levels, Rules/Membership Screening, Onboarding, bots by size), Telegram (group+channel hybrid, native anti-spam >200, slow-mode, CAPTCHA bots), Circle (Spaces, 2026 plan ladder + fees, monetization gating).
-- `references/metrics-and-rituals.md` — metric definitions + benchmarks (DAU/WAU/MAU stickiness, cohort retention, TTFR, answered rate, returning-member ratio, the business-metric menu), the 90-9-1 reality, and a ritual template library + sample weekly calendar.
