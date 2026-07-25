@@ -1,6 +1,6 @@
 ---
 name: ab-testing
-description: "Use when designing or analyzing a controlled experiment — writing a falsifiable hypothesis, sizing a test from a minimum detectable effect, reading significance/confidence intervals/power, or rescuing a test that 'won't go significant'. Triggers: 'how many users do I need to detect a 2% lift', 'is this result significant', 'control 540/10000 vs variant 590/10000', 'why is my A/B test inconclusive', 'we keep peeking and stopping early', 'set up CUPED to speed up the test', 'sample ratio mismatch', 'cuántos usuarios necesito para el test', 'el experiment no surt significatiu'. NOT recurring metric tracking (that is analytics), NOT defining north-star/KPI trees (that is kpi-framework), NOT projecting a metric forward (that is forecasting)."
+description: "Use when designing or analyzing a controlled experiment — falsifiable hypothesis, sample size from an MDE, reading significance/CI/power, CUPED, or rescuing tests that won't go significant. NOT recurring metric tracking (that is `analytics`), NOT north-star/KPI trees (that is `kpi-framework`), NOT projecting metrics forward (that is `forecasting`)."
 tags: [ab-testing, experimentation, statistics, cuped, sample-size, hypothesis-testing]
 recommends: [analytics, kpi-framework, forecasting, data-cleaning, python, reporting]
 origin: risco
@@ -13,23 +13,9 @@ It is a dashboard you stare at until it tells you what you wanted to hear. The d
 entirely *before* traffic ships: a falsifiable hypothesis, one primary metric, a sample size derived
 from the smallest effect worth detecting, and a stop rule you cannot renegotiate at 2pm on day four.
 
-Do the math first. This skill is opinionated about refusing to declare a winner from a peeked dashboard.
-
-## When to use
-
-- Designing an A/B or multivariate test: hypothesis, primary + guardrail metrics, randomization unit.
-- Computing required sample size / duration from a baseline rate, a minimum detectable effect (MDE), and power.
-- Analyzing a finished test: two-proportion z-test or Welch t-test, lift, confidence interval, p-value.
-- Reducing required traffic with CUPED (pre-experiment covariate adjustment).
-- Diagnosing an "inconclusive" test: underpowered, peeked, sample-ratio mismatch, multiple comparisons.
-
-For the failure-mode math (peeking, sequential methods, FDR corrections, SRM, Simpson's paradox) see
-`references/pitfalls.md`. For full runnable sizing/CUPED/SRM snippets and a worked numeric example see
-`references/sample-size-and-cuped.md`.
-
 ## Pre-test checklist — every line true before any traffic
 
-Refuse to ship until all of these exist on paper. Each one is a place experiments die silently.
+Each one is a place experiments die silently.
 
 - [ ] A **falsifiable hypothesis** — names the change, the direction, and the metric it moves.
 - [ ] Exactly **ONE primary metric**. More than one primary = multiple comparisons = inflated false positives.
@@ -90,7 +76,8 @@ n = TTestIndPower().solve_power(effect_size=effect, alpha=0.05, power=0.80, rati
 
 Then convert n to a calendar plan: `days = ceil((n_per_arm * num_arms) / daily_eligible_users)`. If that
 is 9 days, run a clean **two full weeks** anyway — weekday/weekend mix is part of the population, and a
-6-day test oversamples whoever shows up Tuesday. Full worked example in `references/sample-size-and-cuped.md`.
+6-day test oversamples whoever shows up Tuesday. Full worked example (12% baseline, +1.5pp MDE, 80%
+power) plus runnable sizing, n→duration, CUPED θ and SRM snippets: `references/sample-size-and-cuped.md`.
 
 ## Step 3 — Run discipline
 
@@ -101,12 +88,14 @@ inflates the Type-I error far above 5% — with enough looks, a null test crosse
 If you genuinely need to stop early, use a *sequential / always-valid* method (confidence sequences,
 e.g. Netflix's anytime-valid CIs) that holds Type-I error under continuous monitoring. Sequential is
 strong for **killing losers early** and weak for **calling winners early** — for a confident win, the
-fixed-horizon read is tighter. Details and the peeking math: `references/pitfalls.md`.
+fixed-horizon read is tighter.
 
 **Gate on SRM before you trust anything.** Compute a chi-square test on the observed split versus the
 intended ratio. If p < 0.001 the assignment or logging is broken — a bot filter dropping one arm, a
-redirect, a caching bug. Fix the instrumentation and rerun; do not "adjust for it." See the SRM snippet
-in references.
+redirect, a caching bug. Fix the instrumentation and rerun; do not "adjust for it."
+
+The peeking Type-I math, sequential/always-valid options, SRM diagnosis, novelty/primacy effects,
+Simpson's paradox in segments and HARKing all live in `references/pitfalls.md`.
 
 ## Step 4 — Analyze
 
@@ -148,20 +137,6 @@ with the outcome, or — the cardinal sin — a covariate measured *after* assig
 estimate. The covariate MUST be pre-treatment and independent of which arm a user lands in. Runnable
 θ-via-OLS snippet in `references/sample-size-and-cuped.md`.
 
-## Decision table
-
-| Question | Use |
-|---|---|
-| Metric is a binary conversion | Two-proportion z-test |
-| Metric is continuous, large n | Welch's t-test |
-| Metric is revenue / heavy-tailed | Mann-Whitney U or t-test on log/winsorized |
-| 1–3 decision-critical metrics | Bonferroni correction |
-| Many exploratory metrics/segments | Benjamini-Hochberg (FDR) |
-| Need to stop early to kill a loser | Sequential / always-valid CIs |
-| Want a confident winner | Fixed horizon, read once at planned n |
-| Recurring users + pre-period signal | Add CUPED |
-| Brand-new users / no pre-period data | Skip CUPED |
-
 ## Anti-patterns
 
 | Bad | Why it is wrong | Do instead |
@@ -175,13 +150,6 @@ estimate. The covariate MUST be pre-treatment and independent of which arm a use
 | Call a winner from an underpowered test | "Not significant" then ≠ "no effect"; you lacked power | Reach planned n, or report the CI and say "inconclusive, here is the range" |
 | Decide the hypothesis after seeing results (HARKing) | Turns the whole analysis into a fishing expedition | Pre-register hypothesis + primary metric before launch |
 | Run 6 days because it "looks significant" | Oversamples one weekday slice of the population | Run full weeks; honor the fixed horizon |
-
-## References
-
-- `references/sample-size-and-cuped.md` — full runnable snippets (proportion sizing, continuous sizing,
-  n→duration, CUPED θ via OLS, SRM chi-square) and a worked example: 12% baseline, +1.5pp MDE, 80% power.
-- `references/pitfalls.md` — peeking Type-I math, sequential/always-valid options, Bonferroni vs FDR with
-  the 17-vs-12 example, SRM diagnosis, novelty/primacy effects, Simpson's paradox in segments, HARKing.
 
 ## Checkable artifact
 
