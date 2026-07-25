@@ -1,6 +1,6 @@
 ---
 name: data-scraper
-description: "Use when you need data that lives on a website with no usable API — listings, prices, public records, directories — and the scrape must stay legal and not get blocked. Triggers: 'scrape this site', 'extract data from a webpage', 'build a crawler', 'pull all the prices off this catalog', 'my scraper keeps getting 429s / IP-banned', 'the selectors break every time the site redesigns', 'is it legal to scrape this without getting sued', 'extreure dades d'una web', 'scrapear una página sin que me bloqueen'. NOT parsing HTML/PDF you already have into fields (that is structured-extraction), NOT a site that already exposes a documented API or key (that is api-connector-builder)."
+description: "Use when data lives on a website with no usable API — listings, prices, public records — and the scrape must stay legal and not get blocked: legal gate, extraction path, durable selectors, pacing, resilience. NOT parsing bytes you already hold into fields (that is structured-extraction), NOT a documented API or key (that is api-connector-builder)."
 tags: [web-scraping, crawler, anti-bot, robots-txt, gdpr-compliance, playwright, rate-limiting]
 recommends: [api-connector-builder, structured-extraction, data-cleaning, gdpr-privacy, webhooks]
 origin: risco
@@ -124,11 +124,5 @@ A recurring crawler must survive crashes, redeploys, and the target's schema dri
 | No resume — a crash restarts from zero | Wastes budget, doubles load on the host | Disk-persisted resumable queue |
 | Hardcoding one User-Agent forever | Stale UA is an easy bot tell | Current full header set; rotate when justified |
 | Retrying with no backoff | Lockstep retries self-DDoS the host | Exponential backoff + jitter; honor `Retry-After` |
-
-## References
-
-- **`references/legal-compliance.md`** — robots.txt + ai.txt parsing, ToS red-flag list, GDPR lawful-basis decision flow, minimization/retention checklist, and the 2024-2025 case summaries (Meta v. Bright Data, hiQ v. LinkedIn, Reddit v. Perplexity).
-- **`references/anti-bot.md`** — `curl_cffi` impersonation profiles with an example, realistic header sets, Playwright launch/stealth config, the proxy taxonomy (datacenter / residential / mobile) and when each is justified, and the CAPTCHA line you do not cross.
-- **`references/frameworks.md`** — copy-paste resilient starters: Crawlee Python (`RequestQueue` + router + per-host concurrency), Playwright direct, Scrapy AUTOTHROTTLE, and an `httpx` + `selectolax` static template.
 
 When in doubt about whether a scrape is defensible, the answer is the gate. Run it, write down the outcome, and only then send a request.
