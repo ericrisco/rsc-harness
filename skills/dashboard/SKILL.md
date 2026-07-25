@@ -1,6 +1,6 @@
 ---
 name: dashboard
-description: "Use when building or fixing a KPI dashboard that decision-makers will actually open and act on within one screen — arranging which metrics earn a tile, framing each tile so it answers a decision at a glance, and picking the right chart per metric. Triggers: 'build a KPI dashboard for leadership', 'exec dashboard on one screen', 'nobody opens the dashboard we built', '20 tiles and I still can't tell if the business is healthy', 'which chart for each of these metrics', 'munta un dashboard de KPIs per a direcció amb el north-star a dalt', 'el dashboard tiene demasiados gráficos y nadie lo mira'. NOT defining the metrics or their targets (that is kpi-framework), wiring the data (that is analytics), or writing a narrative status report (that is reporting)."
+description: "Use when building or fixing a KPI dashboard decision-makers must read in one screen: which metrics earn a tile, how each tile is framed to answer a decision, and which chart fits it. NOT defining the metrics or their targets (that is kpi-framework), wiring the data (that is analytics), or writing a narrative status report (that is reporting)."
 tags: [kpi-dashboard, data-visualization, executive-dashboard, chart-selection, dashboard-design, at-a-glance]
 recommends: [kpi-framework, analytics, reporting, forecasting, business-intelligence, ab-testing, design, spreadsheet-ops]
 origin: risco
@@ -15,19 +15,11 @@ A dashboard is read in **5 seconds by someone who will not scroll**. If a busy r
 
 You do **not** decide which metrics matter (that is [kpi-framework](../kpi-framework/SKILL.md)) and you do **not** wire the data source (that is [analytics](../analytics/SKILL.md)). You take a metric set that already exists and make it readable at a glance.
 
-Run `scripts/verify.sh dashboard.yaml` before you hand off. It checks shape and discipline (tile budget, one north-star, required keys, banned charts) — never whether the numbers are correct.
-
-## The one rule: the 5-second read
-
-A dashboard is a **glance, not a report**. The reader looks at the top-left, gets the headline, and decides whether anything needs their attention. Everything you do serves that.
-
-- One north-star tile, read first, top-left. Why: a screen with no clear entry point forces the reader to hunt, and they won't.
-- If a tile does not change a decision, it is decoration. Cut it (Decision Test below).
-- A bare number is not actionable. Every number carries a comparison.
+Run `scripts/verify.sh dashboard.yaml` before you hand off. It checks shape and discipline — tile count 1-9, exactly one `north_star: true`, the required keys on every tile, no banned charts — never whether the numbers are correct.
 
 ## The Decision Test gate
 
-No tile exists until its metric names the **action it drives**. Ask: *what does someone do differently based on this number?* If the answer is vague ("good to know", "shows we're growing"), the metric is vanity — cut it or convert it.
+No tile exists until its metric names the **action it drives**. Ask: *what does someone do differently based on this number?* If the answer is vague ("good to know", "shows we're growing"), the metric is vanity — cut it or convert it. A tile that changes no decision is decoration.
 
 | Vanity metric (Bad) | Actionable conversion (Good) | Decision it drives |
 | --- | --- | --- |
@@ -94,12 +86,7 @@ Choose the chart from the **shape of the question**, not from what looks impress
 | Correlation | Scatter | Shows relationship between two measures |
 | Distribution | Histogram | Shape of spread, not just average |
 
-Kill-list (verify.sh enforces the first two):
-
-- No `pie` beyond 5 categories — slices become unreadable. Use a sorted bar.
-- No `gauge` / `dial` — they waste space and resist comparison. Use a **bullet chart**.
-- No dual-axis trickery — two y-axes invent correlations that aren't there.
-- No 3D, no donut-with-center-number gimmicks.
+Kill-list: no `pie` beyond 5 categories (sorted bar instead) and no `gauge` / `dial` (bullet chart instead) — verify.sh rejects both; no dual-axis, which invents correlations that aren't there; no 3D and no donut-with-center-number gimmicks.
 
 ## Layout & data-ink
 
@@ -177,7 +164,7 @@ layout:
   groups: [growth, revenue, health]
 ```
 
-verify.sh parses this, counts tiles (must be 1-9), checks exactly one `north_star: true`, requires `metric/chart/comparison/owner/refresh/decision` on every tile, and rejects banned charts.
+The keys verify.sh requires on every tile: `metric`, `chart`, `comparison`, `owner`, `refresh`, `decision`.
 
 ## Anti-patterns
 
@@ -195,11 +182,4 @@ verify.sh parses this, counts tiles (must be 1-9), checks exactly one `north_sta
 
 ## Handoff
 
-- Metrics undefined? Define the north-star, metric tree, targets and owners first → [kpi-framework](../kpi-framework/SKILL.md).
-- No data behind the tiles? Instrument events, funnels, attribution → [analytics](../analytics/SKILL.md).
-- Need a written status with commentary on *why* a number moved → [reporting](../reporting/SKILL.md).
-- Projecting a metric forward under scenarios → [forecasting](../forecasting/SKILL.md).
-- Self-serve slice-and-dice / semantic layer → [business-intelligence](../business-intelligence/SKILL.md).
-- Reading out an experiment / variant significance → [ab-testing](../ab-testing/SKILL.md).
-- Visual polish, spacing, type scale of the rendered screen → [design](../design/SKILL.md).
-- Pulling/joining the underlying numbers in a sheet → [spreadsheet-ops](../spreadsheet-ops/SKILL.md).
+Beyond the routes named above: reading out an experiment or variant significance → [ab-testing](../ab-testing/SKILL.md); visual polish, spacing and type scale of the rendered screen → [design](../design/SKILL.md); pulling or joining the underlying numbers in a sheet → [spreadsheet-ops](../spreadsheet-ops/SKILL.md).
