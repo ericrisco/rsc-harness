@@ -1,6 +1,6 @@
 ---
 name: postgresdb
-description: Use when designing or reviewing a PostgreSQL schema (types, constraints, normalization), writing or optimizing SQL, choosing or adding indexes, reading EXPLAIN/ANALYZE, planning a migration (expand-contract, concurrent index, batched backfill), or operating/securing Postgres (roles, RLS, PgBouncer pooling, VACUUM/autovacuum, pg_stat_statements, declarative partitioning, backups/PITR). Triggers - "slow query", "add an index", "EXPLAIN", "design this table", "zero-downtime migration", "row level security", "connection pool", "N+1", "JSONB", "full-text search", "pgvector". PostgreSQL 16; ORM-agnostic (SQLAlchemy/Alembic, Prisma, golang-migrate, raw SQL).
+description: Use when PostgreSQL engine behaviour decides the answer — schema and type design, index choice, reading EXPLAIN on a slow query, zero-downtime DDL and backfills, or ops (roles, RLS, pooling, vacuum, partitioning, PITR). PG16, ORM-agnostic. NOT portable query logic (that is `sql`), NOT a managed provider's platform surface (that is `neon`).
 tags: [postgres, sql, database, migrations]
 recommends: [secure-coding]
 origin: risco
@@ -12,25 +12,9 @@ Engine-level PostgreSQL 16 guidance: design correct schemas, pick the right inde
 fix slow SQL, run zero-downtime migrations, and operate/secure the database. Tooling-agnostic; every
 example is runnable.
 
-## When to use / When NOT to use
-
-> **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
-
-**When to use:**
-
-- Schema/DDL decisions: types, keys, constraints, generated/identity columns, enum-vs-lookup, jsonb-vs-column.
-- Any query that is slow, scans too much, or returns wrong cardinality; reading a plan.
-- Index decisions: which kind, column order, partial/covering, and when NOT to add one.
-- Migrations against tables with real data or live traffic.
-- Concurrency: isolation, locking, deadlocks, queues.
-- Ops: pooling, vacuum, monitoring, partitioning, backups, RLS, least-privilege roles.
-
-**When NOT to use:**
-
-- ORM-API ergonomics (Prisma `updateMany` count trap, SQLAlchemy session lifecycle) → your ORM's own docs. This skill owns the **SQL the ORM emits and the engine behavior underneath**.
-- Non-Postgres engines (MySQL/SQLite/ClickHouse) — different MVCC, locking, planner.
-- App-layer caching / Redis / Kafka as products; only Postgres-as-queue via `SKIP LOCKED` is in scope.
-- Cloud-vendor console clicks — we give the SQL/params, not the RDS/Cloud SQL UI path.
+New, non-trivial feature with no approved spec + plan under `02-DOCS/wiki/sdd/`? Hand off to
+[`specify`](../specify/SKILL.md) before writing feature code (method: [`sdd`](../sdd/SKILL.md)); build
+straight from here only for a genuinely one-line, low-risk change.
 
 Deep dives: [schema-and-indexing](references/schema-and-indexing.md) (types, constraints, every index
 kind, bloat) · [query-optimization](references/query-optimization.md) (EXPLAIN, joins, concurrency,
@@ -38,18 +22,13 @@ JSONB/FTS/pgvector) · [migrations](references/migrations.md) (zero-downtime DDL
 [operations-and-security](references/operations-and-security.md) (roles, RLS, pooling, vacuum,
 partitioning, backups).
 
-## Non-negotiables
-
-1. `timestamptz` always for events; store UTC. Never naive `timestamp`.
-2. Money is `numeric(19,4)`, never `float`/`double precision`.
-3. Every FK gets a covering index — Postgres does **not** auto-index FK columns.
-4. `text` + `CHECK (length(...) <= n)`, not `varchar(n)` as a length hack.
-5. Index creation on a live table is **always** `CONCURRENTLY` (so it cannot run inside a txn).
-6. Never `ADD COLUMN ... NOT NULL` without a default/backfill plan; never add a volatile default on a large table without a batched backfill.
-7. Read the plan before adding an index: `EXPLAIN (ANALYZE, BUFFERS)` or it didn't happen.
-8. Migrations are forward-only in prod; never edit an applied migration.
-9. `SET lock_timeout` + `SET statement_timeout` around DDL on hot tables.
-10. RLS is opt-in per table and the **table owner bypasses it** — verify with a non-owner role (use `FORCE ROW LEVEL SECURITY` for the owner too).
+**Not this skill.** ORM-API ergonomics (Prisma `updateMany` count trap, SQLAlchemy session lifecycle)
+and per-runner migration wiring → that tool's own docs; this skill owns the **SQL the ORM emits and
+the engine behavior underneath**. Other engines → [`mysql`](../mysql/SKILL.md),
+[`sqlite-turso`](../sqlite-turso/SKILL.md), [`clickhouse-analytics`](../clickhouse-analytics/SKILL.md)
+(different MVCC, locking, planner). App-layer caching / Redis / Kafka as products are out — only
+Postgres-as-queue via `SKIP LOCKED` is in scope. Cloud-vendor console clicks →
+[`deployment`](../deployment/SKILL.md); we give the SQL and params, not the RDS/Cloud SQL UI path.
 
 ## Decision rules
 
@@ -90,6 +69,9 @@ Fast lookups; runnable DDL lives in the references.
 
 Hash indexes: almost never — equality-only, no multicolumn, rarely beats btree even though WAL-logged
 since PG10.
+
+Read the plan **before** adding an index — `EXPLAIN (ANALYZE, BUFFERS)` or it didn't happen. An index
+the planner never picks is pure write tax on every insert and update, forever.
 
 ### When NOT to add an index
 
@@ -262,9 +244,30 @@ Read these four first:
 
 Full method in [query-optimization](references/query-optimization.md).
 
-## Anti-patterns / rationalizations → STOP
+## DDL on a live table
 
-| Rationalization | Reality → STOP |
+Full sequences (zero-downtime expand-contract, batched backfills, per-ORM runners) in
+[migrations](references/migrations.md). These four are absolute because each one is a lock you cannot
+take back once traffic is on the table:
+
+1. Index creation on a live table is **always** `CONCURRENTLY` — plain `CREATE INDEX` holds ACCESS
+   EXCLUSIVE for the entire build and blocks every writer. It therefore cannot run inside a txn.
+2. Never `ADD COLUMN ... NOT NULL` without a default/backfill plan, and never add a **volatile**
+   default (`now()`, `gen_random_uuid()`) on a large table without a batched backfill — a volatile
+   default rewrites the whole table under ACCESS EXCLUSIVE. A non-volatile constant is instant (PG11+).
+3. `SET lock_timeout` + `SET statement_timeout` around DDL on hot tables, so a blocked statement fails
+   fast instead of parking an ACCESS EXCLUSIVE request that every reader behind it then queues on.
+4. Migrations are forward-only in prod; never edit an applied migration — it has already run
+   somewhere, so the next environment replays a history that no longer matches the one in production.
+
+Lock modes: `CREATE INDEX CONCURRENTLY` takes SHARE UPDATE EXCLUSIVE (allows writes); plain
+`CREATE INDEX`, `ALTER TABLE ... TYPE`, `ADD COLUMN` with a volatile default, and `VACUUM FULL` take
+ACCESS EXCLUSIVE (blocks everything). Full table in
+[migrations](references/migrations.md#lock-impact-reference).
+
+## Anti-patterns
+
+| Claim | Reality |
 | --- | --- |
 | "I'll add the FK index later, the query works now" | Unindexed FK = seq scan + heavy lock cascade on parent `DELETE`/`UPDATE`. Index it now. |
 | "UUID PK is fine everywhere" | Random v4 fragments the B-tree and bloats WAL. Use `IDENTITY` internally or uuid **v7**. |
@@ -274,6 +277,7 @@ Full method in [query-optimization](references/query-optimization.md).
 | "Store money as float, round on display" | Silent drift across arithmetic. `numeric(19,4)`. |
 | "`ADD COLUMN ... NOT NULL DEFAULT now()`" | Volatile default rewrites the table under ACCESS EXCLUSIVE. Non-volatile constant is instant (PG11+). |
 | "One big `jsonb` blob beats columns" | No constraints, no per-key stats, GIN bloat. Promote hot keys to typed columns. |
+| "RLS is on, so the table is protected" | RLS is opt-in per table and the **table owner bypasses it**. Verify with a non-owner role; add `FORCE ROW LEVEL SECURITY` to cover the owner too. |
 | "RLS policy calling `auth.uid()` per row" | Re-evaluated per row. Wrap: `(SELECT auth.uid())` so it runs once. |
 | "`CREATE INDEX` in the migration is fine" | Blocks writes for the whole build. `CREATE INDEX CONCURRENTLY` (outside a txn). |
 | "`VACUUM FULL` will fix bloat" | Takes ACCESS EXCLUSIVE, rewrites the table. Use autovacuum tuning / `REINDEX CONCURRENTLY`. |
@@ -289,12 +293,6 @@ Full method in [query-optimization](references/query-optimization.md).
 | Serializable (SSI) | + write skew | invariants across rows | retry `40001` with backoff |
 
 Retry the txn on SQLSTATE `40001` (serialization_failure) and `40P01` (deadlock_detected).
-
-### Lock modes (DDL)
-
-`CREATE INDEX CONCURRENTLY` takes SHARE UPDATE EXCLUSIVE (allows writes); plain `CREATE INDEX`,
-`ALTER TABLE ... TYPE`, `ADD COLUMN` with a volatile default, and `VACUUM FULL` take ACCESS EXCLUSIVE
-(blocks everything). Full table in [migrations](references/migrations.md#lock-impact-reference).
 
 ### Diagnostic one-liners
 
@@ -337,38 +335,20 @@ FROM pg_stat_user_indexes WHERE idx_scan = 0 ORDER BY relname;
 
 ## Verify
 
-Run `scripts/verify.sh` from your project root. It lints discovered SQL with `sqlfluff` (if
+Run `scripts/verify.sh` from your project root: it lints discovered SQL with `sqlfluff` (if
 configured), syntax-sanity-checks migration files (the quote/paren balance check is dollar-quote and
-block-comment aware) and flags foot-guns (`CREATE INDEX` without `CONCURRENTLY` in a migration,
+block-comment aware), flags foot-guns (`CREATE INDEX` without `CONCURRENTLY` in a migration,
 `ADD COLUMN ... NOT NULL` without `DEFAULT`, `VACUUM FULL`), and — only if `DATABASE_URL` and `psql`
 are present — checks that `pg_stat_statements` is enabled. It exits non-zero **only** on a real
-`sqlfluff` lint error; everything else (missing tools, heuristic quote/paren warnings, DB unreachable)
-is advisory `[skip]`/`[warn]`, never a failure. Runs on stock macOS bash 3.2; it never writes and
-never connects without `DATABASE_URL`.
+`sqlfluff` lint error; everything else (missing tools, heuristic warnings, DB unreachable) is advisory
+`[skip]`/`[warn]`. Runs on stock macOS bash 3.2; never writes, never connects without `DATABASE_URL`.
 
-## Project grounding (02-DOCS + CLAUDE.md)
+## Project grounding
 
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this
-project's database decisions there and index them from the root `CLAUDE.md`, so the next
-agent inherits the conventions instead of re-deriving them.
-
-1. **Find the article** `02-DOCS/wiki/stack/postgresdb.md`, indexed in `02-DOCS/wiki/index.md` (the
-   Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, create/update it with the project's real choices — schema and naming conventions, the migration tool, indexing/partitioning decisions, the pooling setup, and any RLS policies —
-   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a
-   short pointer to it).
-3. **Read it first on every use** and stay consistent; when a convention changes, update the
-   article (bump its `Updated` date) in the same change.
-
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the
-brand study, technical conventions are *recorded, not gated* — never block the task on this.
-
-## See Also
-
-- [references/schema-and-indexing.md](references/schema-and-indexing.md) — types, constraints, all index kinds, bloat.
-- [references/query-optimization.md](references/query-optimization.md) — EXPLAIN, joins, concurrency, JSONB/FTS/pgvector.
-- [references/migrations.md](references/migrations.md) — zero-downtime DDL, lock-impact table, per-ORM.
-- [references/operations-and-security.md](references/operations-and-security.md) — roles, RLS, pooling, vacuum, partitioning, backups.
-- Sibling skills: [`harness`](../harness/SKILL.md) (scaffolds the `01-TOOLS/POSTGRES` operational tool). Stack siblings: [`fastapi`](../fastapi/SKILL.md), [`nextjs`](../nextjs/SKILL.md), [`go`](../go/SKILL.md), [`flutter`](../flutter/SKILL.md), [`secure-coding`](../secure-coding/SKILL.md), [`deployment`](../deployment/SKILL.md).
-- Out of scope here — these are external tools with their own upstream documentation, not skills in this collection: ORM-surface traps (Prisma's `updateMany` count, serverless connection exhaustion) and per-runner migration wiring (Prisma, Alembic, golang-migrate, Drizzle, …). This skill owns the engine-level SQL and migration mechanics those tools sit on top of; for the tool's own API/CLI, read that tool's docs.
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) Karpathy wiki), read
+`02-DOCS/wiki/stack/postgresdb.md` first and stay consistent with it. Missing or stale? Write the
+project's real choices there — schema and naming conventions, migration tool, indexing/partitioning
+decisions, pooling setup, RLS policies — index it in `02-DOCS/wiki/index.md` (the Knowledge map; root
+`CLAUDE.md` keeps only a pointer), and bump its `Updated` date in the same change, so the next agent
+inherits the conventions instead of re-deriving them. No `02-DOCS/` layer? Skip silently (optionally
+suggest `harness`) — technical conventions are *recorded, not gated*; never block the task on this.
