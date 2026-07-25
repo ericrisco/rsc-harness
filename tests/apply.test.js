@@ -626,12 +626,15 @@ test('cross-target: onboarding gate text rides suggest into a non-claude target'
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cwd-'));
   await applyInstall({ skillIds: ['suggest'], target: 'codex', cwd });
   const agents = readFileSync(join(cwd, 'AGENTS.md'), 'utf8');
-  assert.ok(agents.includes('Onboarding gate'), 'gate section injected cross-target');
+  // These assert the FUNCTIONS that must ride cross-target, not the wording that carries them.
+  // The always-on-diet spec deliberately replaced the long trigger-phrase lists with
+  // meaning-based matching, so pinning example phrases here would pin the thing we removed.
+  assert.ok(agents.includes('user-profile.md'), 'first-contact onboarding gate injected cross-target');
   assert.ok(agents.includes('.no-harness'), 'opt-out marker documented in the injected block');
-  assert.ok(agents.includes('Mid-task capability intent'), 'capability-intent detector injected cross-target');
-  assert.ok(agents.includes('quiero montar una pagina web'), 'plain-language startup trigger documented in the injected block');
-  assert.ok(agents.includes('automatiza este flujo'), 'technology/automation trigger documented in the injected block');
-  assert.ok(agents.includes('write a cold email sequence'), 'creation/marketing trigger documented in the injected block');
+  assert.ok(agents.includes('catalog --available'), 'capability detector injected cross-target');
+  assert.ok(agents.includes('by meaning'), 'detector matches semantically, not by keyword');
+  // A hookless target has no per-turn gate, so the routing rule must be IN this block.
+  assert.ok(agents.includes('specify'), 'SDD routing rule survives into a hookless assistant');
 });
 
 test('unknown target throws', async () => {
