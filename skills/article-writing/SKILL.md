@@ -1,6 +1,6 @@
 ---
 name: article-writing
-description: "Use when drafting a long-form blog post or article from a topic or target query and you need publishable prose plus the on-page surface that ships with it — an answer-first lede, a question-shaped H2/H3 hierarchy, title tag, meta description, slug, FAQ block, and Article/FAQPage JSON-LD. Use when an intro buries the answer, a draft rambles or reads padded with AI tells, or a piece needs depth matched to search intent for AI Overviews and featured snippets. Triggers: 'write a blog post about X', 'draft a 1500-word article', 'rewrite this intro so the answer comes first', 'add FAQ schema to this post', 'cut the fluff out of this draft', 'escriu un article de blog sobre teletreball optimitzat per SEO', 'redacta un artículo optimizado para SEO'. NOT keyword research or which topics to target (that is seo-geo), and NOT the editorial calendar or content pipeline (that is content-engine)."
+description: "Use when writing one long-form article end to end — answer-first lede, question-shaped headings, plus its on-page surface (title, meta, slug, FAQ, Article/FAQPage JSON-LD) — or fixing a draft that buries the answer or reads AI-padded. NOT keyword research or topic selection (that is `seo-geo`), NOT the editorial calendar (that is `content-engine`)."
 tags: [article, blog, long-form, seo-writing, geo, on-page, eeat, copywriting]
 recommends: [seo-geo, content-engine, brand-voice, landing-copy, technical-writing, case-studies]
 origin: risco
@@ -11,15 +11,6 @@ origin: risco
 Draft one long-form article end to end: the prose **and** the on-page surface that ships with it — answer-first lede, question-shaped headings, title tag, meta description, slug, FAQ block, and the JSON-LD that makes the piece machine-readable.
 
 You own a single finished article. You do not pick the topic, build the calendar, or define the house voice — those are siblings below.
-
-## When to use
-
-- Drafting a blog post or long-form article from a topic or a target query.
-- Turning a brief or outline into finished, publishable prose at the right depth.
-- Writing the answer-first lede — the first ~200 words that fully answer the primary query.
-- Restructuring a rambling draft into a question-shaped H2/H3 hierarchy.
-- Writing the on-page surface: title tag, meta description, H1, slug, FAQ section, and Article/FAQPage JSON-LD.
-- Cutting an AI-tell, fluff-padded draft down to the depth the query actually needs.
 
 ## When NOT to use
 
@@ -108,14 +99,6 @@ Every article ships with these. Keep them in the file's front-matter or a clearl
 - **H1**: exactly one, matching the query.
 - **Slug**: short, lowercase, hyphenated, keyword-bearing, no stop-word noise — `/compost-in-apartment` not `/how-to-start-composting-in-your-apartment-today`.
 - **FAQ block**: 3–6 real questions from "People also ask", each answered in 2–4 sentences.
-
-Quick checklist:
-
-- [ ] Title 50–60 chars, keyword in first ~35
-- [ ] Meta 140–160 chars, value-first
-- [ ] Exactly one H1
-- [ ] Slug short + keyword-bearing
-- [ ] FAQ questions match visible page content
 
 Full pixel/char tables, slug rules, and copy-ready `Article`/`BlogPosting` + `FAQPage` JSON-LD (JSON-LD only — never microdata) live in [`references/on-page-seo.md`](references/on-page-seo.md). The JSON-LD must describe what is actually on the page; schema that does not match visible content is a quality flag, not a win.
 
