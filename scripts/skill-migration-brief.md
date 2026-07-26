@@ -179,6 +179,10 @@ Agents surfaced these and correctly left them alone. They need their own change:
 - `clarify`'s body calls itself "the fourth phase" while the chain it prints puts it third.
 - `cold-outreach` never names `linkedin-outreach` in its route table, though the reverse link exists.
 - `data-policy` says "walk five columns" and then lists six.
+- `marketing/references/seo-geo.md` (20 KB) and marketing's landing-section material substantially
+  duplicate the standalone `seo-geo` and `landing-copy` skills. Three skills, one body of content,
+  paid for three times by anyone who installs all three. Needs a content-level de-duplication pass,
+  not a format one.
 
 ## Return value
 
