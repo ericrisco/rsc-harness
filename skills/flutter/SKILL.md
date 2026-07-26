@@ -1,6 +1,6 @@
 ---
 name: flutter
-description: "Use when building, structuring, testing or optimizing a Flutter app (Dart 3, Riverpod 3 / Bloc, go_router, Material 3, freezed, widget & golden tests). Triggers: creating a Flutter feature, choosing state management, wiring navigation/auth guards, modeling async/error state, JSON/dio data layer, killing widget rebuilds/jank, or writing widget/golden/integration tests. Stack: Flutter 3.44 / Dart 3.12."
+description: "Use when building, structuring, testing or optimizing a Flutter app — feature-first layering, Riverpod 3 or Bloc, typed go_router, freezed models, a dio data layer, Material 3, jank hunting, widget/golden tests. Targets Flutter 3.44 / Dart 3.12. NOT React Native (that is `react-native`), NOT Compose Multiplatform (that is `compose-multiplatform`)."
 tags: [flutter, dart, mobile, app, ios, android]
 recommends: [design, deployment]
 origin: risco
@@ -8,35 +8,28 @@ origin: risco
 
 # Flutter & Dart app architecture
 
-## What this skill is
+The opinionated default stack for a production Flutter app: **feature-first + layered** folders,
+**Riverpod 3** with codegen for shared/async state, a **typed go_router**, **freezed** immutable
+models, a **dio** data layer, and explicit `Result<T, Failure>` error modeling — all on **Material 3**.
+Escape hatches are first-class: **Bloc/Cubit** instead of Riverpod when the team already runs Bloc,
+and raw `http`/`get_it` are allowed — but **pick one of each per app, never mix two**. Pinned versions
+this skill targets: **Flutter 3.44 / Dart 3.12**, **Riverpod 3.0**, **go_router 17.2.x**
+(+ `go_router_builder 4.3.x`), **freezed 3.x** / `json_serializable`, **dio 5.x**, **mocktail 1.x**.
 
-The opinionated default stack for a production Flutter app: **feature-first + layered**
-folders, **Riverpod 3** with codegen for shared/async state, a **typed go_router**, **freezed**
-immutable models, a **dio** data layer, and explicit `Result<T, Failure>` error modeling — all on
-**Material 3**. Escape hatches exist and are first-class: use **Bloc/Cubit** instead of Riverpod when
-the team already runs Bloc, and raw `http`/`get_it` are allowed — but **pick one of each per app, never
-mix two**. Pinned versions this skill targets: **Flutter 3.44 / Dart 3.12**, **Riverpod 3.0**,
-**go_router 17.2.x** (+ `go_router_builder 4.3.x`), **freezed 3.x** / `json_serializable`, **dio 5.x**,
-**mocktail 1.x**. When you load this skill inside the user's repo, it touches only the `pubspec.yaml`
-subproject — never the FastAPI/Go/Next.js siblings.
-
-## When to use / When NOT to use
+## Boundaries
 
 > **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
 
-**Use when:**
+This skill owns the `pubspec.yaml` subproject and nothing else in the repo. Hand off when the UI is
+Compose Multiplatform (`compose-multiplatform`), SwiftUI/native iOS (`swift-ios`) or React Native
+(`react-native`); when the work is on a FastAPI/Go/Next.js sibling in the same monorepo (use that
+skill). For a pure Dart **server/CLI** with no widget tree, general Dart applies but skip the
+UI/nav/perf references. For a single-file throwaway sample, say architecture is overkill and do not
+impose layering.
 
-- Building a new Flutter feature or screen, or choosing/refactoring state management.
-- Setting up routing, DI, theming, or the data layer; reviewing Dart for null-safety, sealed/pattern
-  matching, immutability, async-gap discipline, or rebuild hygiene.
-- Investigating performance/jank, wiring build flavors, or scaffolding unit/widget/golden/integration tests.
-
-**Do NOT use when:**
-
-- The UI is Compose Multiplatform, native Android-Kotlin, or SwiftUI — use the Compose/native skill.
-- It is a pure Dart **server/CLI** with no widget tree — general Dart applies, but skip the UI/nav/perf references.
-- The work is on a FastAPI/Go/Next.js sibling in the same monorepo — use that skill; this one only owns the Flutter subproject.
-- It is a single-file throwaway sample — note that architecture is overkill, do not impose layering.
+Around the edges: `harness` owns the workspace `01-TOOLS`/`02-DOCS` layer and flavor secrets; `fastapi`,
+`go` and `nextjs` build the backends this app talks to; `secure-coding` reviews token handling and
+deep-link validation; `deployment` handles store/CI release; `design` owns the Material 3 token system.
 
 ## Decision rules
 
@@ -379,70 +372,29 @@ encapsulation → `references/i18n-and-dependencies.md`.
 - Dependency hygiene: `pubspec.lock` committed for apps, `flutter pub outdated` audited on a cadence,
   dependencies vetted by pub points before adding.
 - No `print()` → `dart:developer` `log()`.
+- Gate the branch with `scripts/verify.sh`, run inside the Flutter project (format / codegen / analyze / tests).
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization | Reality |
+| Anti-pattern | Why it fails / do instead |
 |---|---|
-| "I'll just `user!` here" | bang crashes in prod; use `?.`/`??` or an if-case pattern. |
-| "`_buildHeader()` is fine" | extract to a `const` widget class — enables element reuse + const propagation. |
-| "`bool isLoading` + `bool isError` is simpler" | allows impossible states; use `AsyncValue`/sealed. |
-| "I'll `setState` at the top of the page" | rebuilds the whole subtree; scope it or `.select()`. |
-| "global provider for this checkbox" | ephemeral UI state = local `setState`/`ValueNotifier`. |
-| "mix `Navigator.push` with go_router for one screen" | one router; mixing breaks deep links + back stack. |
-| "use `context` after `await`, it's fine" | guard `context.mounted` / `ref.mounted`; stale context crashes. |
-| "hardcode `Colors.blue` just here" | use `colorScheme`; breaks dark mode + theming. |
-| "`ListView(children: [...])` for the feed" | use `.builder`; the concrete form builds all children eagerly. |
-| "`catch (e)` everything" | use `on`-typed clauses; never catch `Error` (it is a bug). |
-| "ship raw `DioException.toString()` to the user" | map to a `Failure` with a localized message. |
-| "`print()` for logging" | use `dart:developer` `log()` — has levels and can be filtered. |
-| "use legacy `StateProvider`" | Riverpod 3 `Notifier`; legacy is `package:riverpod/legacy.dart` only. |
-| "`pumpAndSettle` will fix the flaky test" | hangs on infinite animations; use explicit `pump(Duration)`. |
+| `user!` to unwrap | bang crashes in prod; use `?.`/`??` or an if-case pattern. |
+| `_buildHeader()` helper methods | extract to a `const` widget class — enables element reuse + const propagation. |
+| `setState` at the top of the page | rebuilds the whole subtree; scope it or `.select()`. |
+| `Navigator.push` mixed into go_router for one screen | one router; mixing breaks deep links + back stack. |
+| `context` used after an `await` | guard `context.mounted` / `ref.mounted`; a stale context crashes. |
+| hardcoded `Colors.blue` | use `colorScheme`; hardcoding breaks dark mode + theming. |
+| `ListView(children: [...])` for a feed | use `.builder`; the concrete form builds all children eagerly. |
+| `catch (e)` on everything | use `on`-typed clauses; never catch `Error` (it is a bug). |
+| raw `DioException.toString()` shown to the user | map to a `Failure` with a localized message. |
+| `print()` for logging | use `dart:developer` `log()` — has levels and can be filtered. |
 
-## Quick reference
+## Project grounding (02-DOCS)
 
-| Concern | Default API | Reference |
-|---|---|---|
-| model | `@freezed` | `references/architecture-and-state.md` |
-| sync state | `Notifier` / `Cubit` | `references/architecture-and-state.md` |
-| async state | `AsyncNotifier` / `AsyncValue` | `references/architecture-and-state.md` |
-| DI | `@riverpod` providers / `get_it` | `references/architecture-and-state.md` |
-| routing | typed `go_router` | `references/ui-and-navigation.md` |
-| errors | `Result` / sealed | `references/architecture-and-state.md` |
-| http | `dio` + interceptor | `references/architecture-and-state.md` |
-| long list | `ListView.builder` | `references/performance.md` |
-| off-thread | `Isolate.run` | `references/performance.md` |
-| unit test | `ProviderContainer.test()` | `references/testing.md` |
-| widget test | `ProviderScope` override | `references/testing.md` |
-| golden | `matchesGoldenFile` | `references/testing.md` |
-| l10n | ARB + `gen_l10n` + `intl` | `references/i18n-and-dependencies.md` |
-| deps | `flutter pub outdated` / `melos` | `references/i18n-and-dependencies.md` |
-| verify | `scripts/verify.sh` | `scripts/verify.sh` |
-
-## Project grounding (02-DOCS + CLAUDE.md)
-
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this
-project's app decisions there and index them in `02-DOCS/wiki/index.md`, so the next
-agent inherits the conventions instead of re-deriving them.
-
-1. **Find the article** `02-DOCS/wiki/stack/flutter.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, create/update it with the project's real choices — the state-management choice (Riverpod/Bloc), the architecture layers, routing, the Material 3 token system, and codegen setup —
-   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
-3. **Read it first on every use** and stay consistent; when a convention changes, update the
-   article (bump its `Updated` date) in the same change.
-
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the
-brand study, technical conventions are *recorded, not gated* — never block the task on this.
-
-## See Also
-
-- `references/architecture-and-state.md` — layering, DI, Result/Failure, Riverpod 3 & Bloc deep dives.
-- `references/ui-and-navigation.md` — widgets, Material 3 tokens, responsive, typed go_router, a11y.
-- `references/testing.md` — unit/widget/golden/integration + coverage.
-- `references/performance.md` — rebuilds, paint, jank, isolates, build flavors.
-- `references/i18n-and-dependencies.md` — ARB/ICU l10n, RTL, locale-aware formatting, pub points, `melos`.
-- `scripts/verify.sh` — run inside your Flutter project to gate format/codegen/analyze/tests.
-- Sibling skills: `harness` (workspace `01-TOOLS`/`02-DOCS`, flavor secrets); `fastapi`,
-  `go` and `nextjs` for the backends this app talks to; `secure-coding` for token handling and deep-link
-  validation; `deployment` for store/CI release; `design` for the Material 3 token system.
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) wiki), this app's decisions
+live in `02-DOCS/wiki/stack/flutter.md`, indexed in `02-DOCS/wiki/index.md`. Read it first and stay
+consistent. Missing or stale? Write the real choices there — state management (Riverpod/Bloc), the
+architecture layers, routing, the Material 3 token system, codegen setup — index it, and bump its
+`Updated` date in the same change a convention changes, so the next agent inherits it instead of
+re-deriving it. No `02-DOCS/` layer? Skip silently: technical conventions are *recorded, not gated*,
+so never block the task on this.
