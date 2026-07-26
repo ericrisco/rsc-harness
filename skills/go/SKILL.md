@@ -1,6 +1,6 @@
 ---
 name: go
-description: "Use when writing, reviewing, testing, securing, or shipping Go code or HTTP services - Go idioms (simplicity, useful zero value, accept-interfaces/return-structs, functional options, embedding), error wrapping with %w and errors.Is/As, goroutines/channels/context/errgroup concurrency, net/http with Go 1.22 routing, log/slog structured logging, graceful shutdown, cmd/-internal/-pkg/ layout, table-driven tests with httptest/-race/fuzz, and govulncheck/SQL-parametrization security. Triggers - \"write a Go service/handler\", \"review this Go code\", \"add tests\", \"fix a goroutine leak\", \"is this idiomatic Go\", .go files, go.mod, net/http, slog, chi, errgroup."
+description: "Use when writing, reviewing, testing, or shipping Go code and HTTP services: idioms, `%w` error wrapping, goroutine/context/errgroup concurrency, net/http 1.22 routing, log/slog, project layout, table-driven tests, Go hardening. NOT language-agnostic threat modeling (that is `secure-coding`), NOT Dockerfile/CI shipping (that is `deployment`)."
 tags: [go, golang, http, backend, service]
 recommends: [postgresdb, secure-coding, deployment]
 origin: risco
@@ -8,55 +8,27 @@ origin: risco
 
 # Idiomatic Go services
 
-Write, review, test, secure, and ship idiomatic Go HTTP services.
-
 Targets **Go 1.22+** (Go 1.26 is the current stable release): enhanced `net/http` routing
 (`mux.HandleFunc("GET /users/{id}", h)` + `r.PathValue`), `log/slog` structured
 logging, and fixed loop-variable semantics (no more `tt := tt`).
 
-## When to use / When NOT to use
-
 > **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
 
-**Use when:**
-
-- Authoring, reviewing, or testing any `.go` file.
-- Designing or wiring a Go HTTP API (`net/http`, chi, middleware, handlers).
-- Debugging concurrency: goroutine leaks, data races, deadlocks, context plumbing.
-- Structuring a Go module (`cmd/`, `internal/`, `pkg/`, constructor injection).
-- Hardening or shipping a Go binary (timeouts, TLS, `govulncheck`, graceful shutdown).
-
-**When NOT to use (delegate):**
-
-- Language-agnostic abuse/authz review, threat modeling, OWASP-class bugs -> `secure-coding`
-  (this skill keeps Go-specific controls: SQL params, server timeouts, `govulncheck`, TLS defaults).
-- Containerfile / k8s / CI pipeline authoring -> `deployment` (this skill ships only a Docker note + `ldflags`).
-- Recording per-project conventions in a workspace wiki -> `harness` (see "Project grounding" below).
-- Non-service Go (CLI tooling, codegen, ML): patterns apply, but the HTTP/production half is irrelevant.
+## Boundary
 
 Go error handling and HTTP contract design (status-code taxonomy, REST resource naming) live
-**here**, not in a separate skill — this skill is the canonical authority for both in Go.
+**here** — this skill is the canonical authority for both in Go. Delegate outward:
 
-## Decision rules
+- Language-agnostic abuse/authz review, threat modeling, OWASP-class bugs ->
+  [`secure-coding`](../secure-coding/SKILL.md). This skill keeps the Go-specific controls:
+  SQL params, server timeouts, `govulncheck`, TLS defaults.
+- Containerfile / k8s / CI pipeline authoring -> [`deployment`](../deployment/SKILL.md).
+  This skill ships only a Docker note + `ldflags`.
+- Recording per-project conventions in a workspace wiki -> [`harness`](../harness/SKILL.md)
+  (see "Project grounding" below).
 
-Apply these on every Go edit:
-
-1. Clear over clever; return early, keep the happy path unindented.
-2. Accept interfaces, return concrete structs; define interfaces in the **consumer** package.
-3. Make the zero value useful; never ship a type that panics before a constructor runs.
-4. `context.Context` is the **first** param, never stored in a struct, never `nil` (use
-   `context.TODO()` while wiring).
-5. Wrap every crossed boundary with `fmt.Errorf("verb: %w", err)`; classify with
-   `errors.Is`/`errors.As`, never string-match messages.
-6. No package-level mutable state; inject dependencies through constructors.
-7. Every goroutine needs a known exit path (context or a closed channel); a started
-   goroutine you cannot stop is a leak.
-8. Validate at the boundary; parametrize every SQL query; set all server timeouts; run
-   `govulncheck` before shipping.
-9. Tests are table-driven with subtests; run `-race` in CI; treat `go vet`/`staticcheck`
-   failures as build failures.
-10. Pick value-or-pointer receiver per type and stay consistent; mutating / large /
-    contains-`sync` -> pointer.
+Non-service Go (CLI tooling, codegen, ML): the patterns apply, but the HTTP/production half
+is irrelevant.
 
 ## Idioms
 
@@ -124,7 +96,8 @@ type Service struct {
 // Bad: deep type trees (Base -> Middle -> Leaf) modeling "is-a" inheritance - avoid.
 ```
 
-**Early return.** Invert the error and `return`; keep the happy path flat (no arrow code).
+**Early return.** Clear over clever: invert the error and `return`; keep the happy path flat
+(no arrow code).
 
 ```go
 // Good: each failure returns immediately; the success path is unindented.
@@ -144,12 +117,13 @@ func save(ctx context.Context, u *User) error {
 never a global `var db *sql.DB` opened in `init()` - globals couple everything and kill
 testability.
 
+**Receivers.** Pick value or pointer per type and stay consistent across its method set;
+mutating / large / contains-`sync` -> pointer.
+
 **Go 1.22 loopvar.** Loop variables are per-iteration now. Stop emitting the workaround:
 inside `for _, tt := range tests` the line `// tt := tt` is obsolete - DELETE it.
 
 ## Errors
-
-Go error handling is owned here — the sentinel/typed/wrap/classify model below is canonical.
 
 **Sentinel vs typed.** Sentinels for identity; typed errors for data.
 
@@ -159,7 +133,7 @@ type ValidationError struct{ Field, Msg string }  // typed: carries data
 func (e *ValidationError) Error() string { return fmt.Sprintf("%s: %s", e.Field, e.Msg) }
 ```
 
-**Wrap and classify.** Wrap with `%w`; never compare message strings.
+**Wrap and classify.** Wrap every crossed boundary with `%w`; never compare message strings.
 
 ```go
 err := fmt.Errorf("find user %s: %w", id, ErrNotFound)
@@ -218,13 +192,12 @@ func read(name string) (err error) {
 }
 ```
 
-**Anti-patterns:** `if err.Error() == "not found"` (string match); `panic` for control flow;
-swallowing with `_ = err`.
-
 ## Concurrency (essentials)
 
-Bound work with a context deadline; bound concurrency with `errgroup` — the derived `ctx`
-cancels siblings on first error, and `g.SetLimit(n)` caps in-flight goroutines:
+`context.Context` is the **first** param of every call, never stored in a struct, never `nil`
+(use `context.TODO()` while wiring). Bound work with a context deadline; bound concurrency
+with `errgroup` — the derived `ctx` cancels siblings on first error, and `g.SetLimit(n)` caps
+in-flight goroutines:
 
 ```go
 g, ctx := errgroup.WithContext(ctx)
@@ -321,16 +294,18 @@ HTTP handlers via `httptest`: `req := httptest.NewRequest("GET", "/users/1", nil
 `w := httptest.NewRecorder()`; `h.ServeHTTP(w, req)`; then assert on `w.Code` / `w.Body`.
 
 Use `t.Helper()` in assertions, `t.TempDir()` for files, `t.Cleanup()` for teardown,
-`t.Setenv()` for env. Run `go test -race -cover ./...`. Stdlib `testing` is the default;
-reach for `testify/require` only for deep-equality or large suites.
+`t.Setenv()` for env. Run `go test -race -cover ./...`, and treat `go vet` / `staticcheck`
+failures as build failures. Stdlib `testing` is the default; reach for `testify/require` only
+for deep-equality or large suites.
 
 Golden files, fuzzing, benchmarks, httptest matrices, interface fakes ->
 `references/testing.md`.
 
 ## Security (embedded)
 
-Parametrize SQL (PostgreSQL; prefer `pgx v5` over `database/sql`); cap request bodies and reject unknown
-fields; set a TLS floor and trust the `crypto/tls` defaults:
+Validate at the boundary: parametrize SQL (PostgreSQL; prefer `pgx v5` over `database/sql`);
+cap request bodies and reject unknown fields; set a TLS floor and trust the `crypto/tls`
+defaults:
 
 ```go
 // Good                                       // Bad: string interpolation = SQL injection.
@@ -372,26 +347,26 @@ timeout, 503 on failure). Graceful shutdown as shown above.
 Docker note: distroless/static base, `CGO_ENABLED=0`, multi-stage build. Full Containerfile
 -> `deployment`.
 
-## Anti-patterns / rationalizations -> STOP
+## Anti-patterns
 
-| Rationalization | Reality / Do instead |
+| Anti-pattern | Do instead |
 | --- | --- |
-| "I'll store ctx in the struct to avoid threading it" | No. `ctx` is the first arg of every call. |
-| "`_ = err` here, it can't fail" | Handle, log, or document why; `errcheck` catches it. |
-| "string-compare the error message" | `errors.Is`/`errors.As`; messages are not API. |
-| "global `db`/`logger` is simpler" | Inject via constructor; globals kill testability. |
-| "fire the goroutine, it'll finish" | Unbounded/unstoppable goroutine = leak; give it ctx + buffer. |
-| "I'll add `tt := tt` to be safe" | Go 1.22 fixed loopvar; it's noise now. |
-| "interface in the provider package, return the interface" | Return structs; interface lives with the consumer. |
-| "no timeouts, the LB handles it" | Set all four `http.Server` timeouts; Slowloris is real. |
-| "`panic` for this bad input" | Return an error; panic only for programmer bugs / `main` wiring. |
-| "skip `-race`, tests pass" | Race bugs are silent; `-race` in CI is mandatory. |
-| "`fmt.Sprintf` into SQL, the input's trusted" | Parametrize ($1...); trust nothing at the boundary. |
-| "testify everywhere" | Stdlib first; reach for testify only when it earns its weight. |
+| Storing `ctx` in a struct to avoid threading it | `ctx` is the first arg of every call. |
+| `_ = err` because it "can't fail" | Handle, log, or document why; `errcheck` catches it. |
+| String-comparing the error message | `errors.Is` / `errors.As`; messages are not API. |
+| Global `db` / `logger` because it's "simpler" | Inject via constructor; globals kill testability. |
+| Fire-and-forget goroutine ("it'll finish") | Unbounded/unstoppable goroutine = leak; give it ctx + buffer. |
+| `tt := tt` added "to be safe" | Go 1.22 fixed loopvar; it's noise now. |
+| Interface in the provider package, returning the interface | Return structs; interface lives with the consumer. |
+| No timeouts because "the LB handles it" | Set all four `http.Server` timeouts; Slowloris is real. |
+| `panic` on bad input | Return an error; panic only for programmer bugs / `main` wiring. |
+| Skipping `-race` because tests pass | Race bugs are silent; `-race` in CI is mandatory. |
+| `fmt.Sprintf` into SQL on "trusted" input | Parametrize (`$1`...); trust nothing at the boundary. |
+| `testify` everywhere | Stdlib first; reach for testify only when it earns its weight. |
 
-## Quick reference
+## Toolchain gate
 
-| Task | Idiom / command |
+| Task | Command |
 | --- | --- |
 | Format | `gofmt -w .` / `goimports -w .` |
 | Vet | `go vet ./...` |
@@ -399,40 +374,17 @@ Docker note: distroless/static base, `CGO_ENABLED=0`, multi-stage build. Full Co
 | Test (race+cover) | `go test -race -cover ./...` |
 | Fuzz | `go test -fuzz=Fuzz -fuzztime=30s` |
 | Vulns | `govulncheck ./...` |
-| Wrap error | `fmt.Errorf("verb: %w", err)` |
-| Classify error | `errors.Is` / `errors.As` |
-| Route | `mux.HandleFunc("GET /p/{id}", h)` + `r.PathValue("id")` |
-| Log | `slog.Info("msg", "key", val)` |
-| Shutdown | `signal.NotifyContext` + `srv.Shutdown(ctx)` |
-| Leak guard | buffered chan + `select { case ch<-v: case <-ctx.Done(): }` |
 | Local gate | `./scripts/verify.sh` (run in your module root) |
 
-## Project grounding (02-DOCS + CLAUDE.md)
+## Project grounding (02-DOCS)
 
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this
-project's service decisions there and index them in `02-DOCS/wiki/index.md`, so the next
-agent inherits the conventions instead of re-deriving them.
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) Karpathy wiki), this
+project's service decisions live in `02-DOCS/wiki/stack/go.md`, indexed from
+`02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
+Read it first on every use and stay consistent. If it is missing or stale, write the project's
+real choices there — the project layout, the router (stdlib 1.22 / chi), the error and `slog`
+conventions, concurrency/timeout defaults — index it, and bump its `Updated` date in the same
+change.
 
-1. **Find the article** `02-DOCS/wiki/stack/go.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, create/update it with the project's real choices — the project layout, the router (stdlib 1.22 / chi), the error and `slog` logging conventions, and concurrency/timeout defaults —
-   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
-3. **Read it first on every use** and stay consistent; when a convention changes, update the
-   article (bump its `Updated` date) in the same change.
-
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the
-brand study, technical conventions are *recorded, not gated* — never block the task on this.
-
-## See Also
-
-Sibling skills (all resolve under `skills/`):
-
-- [`secure-coding`](../secure-coding/SKILL.md) - threat modeling and language-agnostic authz/abuse/OWASP review (this skill keeps the Go-specific controls).
-- [`deployment`](../deployment/SKILL.md) - Docker multi-stage, GitHub Actions CI, Coolify/Vercel/Hetzner shipping (this skill ships only the Docker note + `ldflags`).
-- [`harness`](../harness/SKILL.md) - the `02-DOCS/` workspace wiki where per-project Go conventions are recorded (see "Project grounding").
-
-Local references (read when):
-
-- `references/concurrency.md` - goroutines, channels, errgroup, leaks, race detector.
-- `references/http-services.md` - routing, middleware, slog, graceful shutdown, full skeleton.
-- `references/testing.md` - table tests, httptest, fakes, golden files, fuzz, benchmarks.
+No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the brand study,
+technical conventions are *recorded, not gated* — never block the task on this.
