@@ -164,10 +164,18 @@ If a run is cut short, this ordering means the part that was finished is the par
 Agents surfaced these and correctly left them alone. They need their own change:
 
 - `sdd` claims every phase ends with a parseable envelope; six phases have none (see above).
-- `eval-lint` does not actually verify that a `route_to` names a real skill — `course-storytelling`
-  routes to `deep-research`, which does not exist. The rubric lists this as a deterministic gate, so
-  the gate is currently decorative. (The 1024-char description limit had the same problem; that one
-  is now enforced in `schema/frontmatter.schema.json`.)
+- **`evals/cases.yaml` files carry stale claims about what the catalog contains, in both
+  directions.** Three agents hit this independently: `course-storytelling` routes a negative to
+  `deep-research`, which does not exist; `flutter` routes its Compose/SwiftUI negatives to `"none"`
+  on the grounds those skills are "not in this catalog", though `compose-multiplatform` and
+  `swift-ios` now are; `postgresdb` said the same of ORM traps, stale since `prisma-orm` and
+  `drizzle-orm` shipped. This drifts every time the catalog grows.
+
+  The root cause is that `eval-lint` does not actually verify a `route_to` names a real skill,
+  even though the rubric lists exactly that as a deterministic gate — so the gate is decorative.
+  (The 1024-char description limit had the same problem; that one is now enforced in
+  `schema/frontmatter.schema.json`.) Fixing the linter is worth more than fixing the instances:
+  it converts a recurring drift into a build error.
 - `clarify`'s body calls itself "the fourth phase" while the chain it prints puts it third.
 - `cold-outreach` never names `linkedin-outreach` in its route table, though the reverse link exists.
 - `data-policy` says "walk five columns" and then lists six.
