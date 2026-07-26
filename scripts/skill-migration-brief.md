@@ -49,6 +49,13 @@ The goal is the smallest body that still routes correctly. 400 lines is a ceilin
 
 - The **anti-patterns table**. The rubric requires one, and it is a different animal from a
   rationalization table: it names concrete failure modes, not rules already stated above it.
+
+  **The hybrid case, which is common:** a table titled something like *"Anti-patterns /
+  rationalizations — STOP"*, with an *Excuse → Reality* framing. Do not delete it and do not leave
+  it as-is. **Keep every row, re-column it to `Anti-pattern | Do instead`, and drop the STOP /
+  excuse framing.** The rows are the value; the borrowed urgency wrapper is what dimension 7
+  forbids. Handling this the same way everywhere is what keeps the catalog consistent — deleting it
+  in one skill and keeping it in the next is worse than either choice applied uniformly.
 - Decision tables where the flow genuinely branches.
 - Tables specific to *this* skill's phase (e.g. what to show at each checkpoint) — that is not the
   generic dial.
