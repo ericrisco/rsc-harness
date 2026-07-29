@@ -1,6 +1,6 @@
 ---
 name: game-storytelling
-description: "Use when designing a game's STORY as an interactive system: premise, theme and narrative pillars; branching narrative and meaningful choice; dialogue trees with state and flags; quests, objectives and fail states; worldbuilding; environmental and systemic storytelling; and keeping story in harmony with play (avoiding ludonarrative dissonance). Engine-agnostic — it designs the narrative graph, variables and beats, then hands the wiring to the engine skill. Triggers: 'write my game's story/premise', 'branching narrative', 'dialogue system/tree', 'quest structure', 'worldbuilding', 'meaningful choices', 'illusion of choice', 'Ink/Yarn Spinner/Twine/articy narrative', 'story keeps fighting the gameplay'. NOT core mechanics, systems or balance (that's game-design); NOT spatial/level layout or encounter placement (that's level-design); NOT the actual dialogue-node code, save format or plugin wiring inside an engine (that's godot/unity/unreal)."
+description: "Use when a game's story is the work: premise and pillars, branching topology, meaningful choice, dialogue state, quests, environmental storytelling, ludonarrative harmony. Author portable — engine wiring is `godot`/`unity`/`unreal`. NOT the mechanics and economy the story serves (that is `game-design`), NOT level layout (that is `level-design`)."
 tags: [game, narrative, story, dialogue, quest, branching, worldbuilding]
 recommends: [game-design, level-design]
 profiles: [full]
@@ -9,23 +9,11 @@ origin: risco
 
 # Game Storytelling — Narrative Design (engine-agnostic)
 
-*Design the story as a system the player operates, not a script they watch. This skill owns the narrative graph — premise, pillars, branches, choices, dialogue state, quests, and the storytelling embedded in the world — and hands the runtime wiring to the engine skill.*
+*Design the story as a system the player operates, not a script they watch. This skill owns the narrative graph — premise, pillars, branches, choices, dialogue state, quests, and the storytelling embedded in the world.*
 
-You produce **design artifacts**: a premise/theme/pillars doc, a branch topology, a state/flag table, dialogue in a portable format (Ink/Yarn/Twee/articy), quest specs, and environmental beats. You do **not** write engine node code, save-serialization, or plugin glue — that is `godot`/`unity`/`unreal`. A mechanic question (what the player *does*, economy, balance) is `game-design`; where things sit in space is `level-design`.
+You produce **design artifacts**: a premise/theme/pillars doc, a branch topology, a state/flag table, dialogue in a portable format (Ink/Yarn/Twee/articy), quest specs, and environmental beats. Story is a **system in service of play**; when you catch yourself designing a great scene the mechanics can't honor, reconcile it (see Ludonarrative harmony) rather than ship the dissonance.
 
-## Fires on / When NOT
-
-Use when the request is about: a game's story or premise; branching or non-linear narrative; a dialogue system, tree, or conversation logic; quests, objectives, or mission structure; worldbuilding/lore for a game; meaningful choice vs. the illusion of choice; environmental or systemic storytelling; or story that "fights" the gameplay (ludonarrative dissonance).
-
-Do NOT use (delegate or decline):
-
-- Core loop, verbs, systems, progression, economy, difficulty, or balance → **game-design**.
-- Spatial layout, encounter placement, sightlines, blockout, pacing *of a space* → **level-design**.
-- Implementing the dialogue runner, save/serialize of story state, or wiring Ink/Yarn/articy into a build → the engine skill (**godot/unity/unreal**).
-- Prose fiction, a screenplay, or a novel with no interactive/branching structure → general writing.
-- Marketing copy, store page, or trailer script → **marketing**.
-
-Story is a **system in service of play**. When you catch yourself designing a great scene the mechanics can't honor, reconcile it (see Ludonarrative harmony) rather than ship the dissonance.
+Boundaries: **game-design** owns what the player *does* — core loop, verbs, systems, progression, economy, difficulty, balance — and the story serves those verbs; call it when resolving dissonance needs a *mechanic* change, or when designing the conditions for systemic/emergent story. **level-design** owns spatial layout, encounter placement, sightlines, blockout and the pacing *of a space* — the space environmental storytelling lives inside; co-own the set-dressing. **godot / unity / unreal** implement the dialogue runner, quest state, save-serialization of story state, and the Ink/Yarn/articy plugin glue — author portable, they wire it. **marketing** owns the store page, premise pitch and trailer copy (external-facing, not in-game narrative). Prose fiction, a screenplay, or a novel with no interactive/branching structure is general writing, not this skill.
 
 ## Premise, theme, and pillars (do this first)
 
@@ -119,25 +107,18 @@ Deliver story *through the world* so the player assembles it and feels ownership
 - **VO considerations** *(design-side, not recording — that's audio/engine)* — write for the ear (contractions, short clauses); budget line counts early (VO is expensive and near-frozen once recorded); keep a **stable line ID** on every spoken line; don't splice recorded fragments across variables (gender/number/name concatenation breaks in most languages).
 - **Localization-readiness** *(so the loc pipeline can do its job)* — externalize all player-facing text to string tables keyed by stable id; **never concatenate** sentences or embed grammar in code (gender/plural/word-order differ per language — use full templated strings with ICU-style placeholders); allow +30–40% text expansion; keep variables as named tokens (`{playerName}`), not positional; leave translator notes per line.
 
-## Anti-patterns / rationalizations → STOP
+## Anti-patterns
 
-| Rationalization | Reality / Fix |
+| Anti-pattern | Do instead |
 | --- | --- |
-| "I'll just branch it, players love choices" | Pure trees explode (2^N). Use foldback + gates; reconverge on beats. |
-| "This choice feels huge" (but nothing reads it back) | If no later node reads the flag, the choice is noise. Show the consequence or cut it. |
-| "Both options lead to the same scene, that's fine" | Only if it's expression, not stakes. Never sell a fake choice as consequential. |
-| "The story explains why he's a mass murderer" | Words don't beat verbs. Fix the ludonarrative dissonance, don't narrate around it. |
-| "Add an audio log to explain the backstory" | Text-dump is the fallback. Try to *show* it environmentally first. |
-| "We'll localize later, just hardcode the strings" | Concatenation and hardcoded text break loc. Externalize to keyed string tables now. |
-| "The quest can't be failed, simpler that way" | Sometimes; but soft-locking the game on a missed step is a defect — leave an escape. |
-| "Let me wire this Ink file into Unity real quick" | Not this skill. Author portable narrative; hand wiring to the engine skill. |
-
-## Related skills
-
-- **game-design** — the verbs, systems, economy, and balance the story must serve; call it when resolving dissonance needs a *mechanic* change, or when designing systemic/emergent story conditions.
-- **level-design** — the spatial layout and encounter flow environmental storytelling lives inside; co-own set-dressing narrative.
-- **godot / unity / unreal** — the engine that wires the dialogue runner, quest state, save/serialize, and Ink/Yarn/articy plugins. Author portable; they implement.
-- **marketing** — store page, premise pitch, trailer copy (external-facing, not in-game narrative).
+| Branching everything because "players love choices" | Pure trees explode (2^N). Use foldback + gates; reconverge on beats. |
+| A choice that feels huge but no later node reads it back | If no later node reads the flag, the choice is noise. Show the consequence or cut it. |
+| Both options lead to the same scene, and it's sold as a big decision | Fine as expression, not as stakes. Never sell a fake choice as consequential. |
+| Explaining in the story why he's a mass murderer | Words don't beat verbs. Fix the ludonarrative dissonance, don't narrate around it. |
+| Adding an audio log to explain the backstory | Text-dump is the fallback. Try to *show* it environmentally first. |
+| Hardcoding strings, "we'll localize later" | Concatenation and hardcoded text break loc. Externalize to keyed string tables now. |
+| A quest that can't be failed because it's simpler that way | Sometimes right; but soft-locking the game on a missed step is a defect — leave an escape. |
+| Wiring the Ink file into Unity here | Not this skill. Author portable narrative; hand wiring to the engine skill. |
 
 ## Checklist
 
@@ -151,9 +132,3 @@ Deliver story *through the world* so the player assembles it and feels ownership
 - [ ] Environmental/diegetic delivery preferred over text-dumps and non-diegetic narration where the world can carry it.
 - [ ] All player-facing text externalized to keyed string tables; no concatenation; variables are named tokens; +30–40% expansion allowed.
 - [ ] VO lines have stable IDs, are written for the ear, and the script is locked before recording is proposed.
-
-## References
-
-- `references/branching-and-state.md` — topologies + diagrams, meaningful vs. illusory choice, state modeling, and the combinatorial-explosion containment kit.
-- `references/dialogue-tools.md` — Ink/Yarn/Twine/articy compared, the four primitives, a "pick one" guide, and the same conversation in three formats.
-- `references/environmental-storytelling.md` — show-don't-tell catalog, diegetic vs. non-diegetic delivery, systemic/emergent storytelling and the anecdote factory.
