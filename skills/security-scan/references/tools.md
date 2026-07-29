@@ -95,4 +95,3 @@ trivy image --format sarif --output trivy-img.sarif <pinned-image@sha256:...>
 - Every recipe emits SARIF 2.1.0 so findings merge into one report. Where a tool
   only emits native JSON (`npm audit`, `pip-audit`, TruffleHog), normalize it to
   the report schema in `triage.md` rather than gating on its raw shape.
-</content>

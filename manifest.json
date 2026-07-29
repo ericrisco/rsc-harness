@@ -1889,7 +1889,7 @@
     },
     {
       "id": "gamedev-multiplayer",
-      "description": "Use when adding multiplayer, netcode, or replication to a game — syncing players/state across a network, online co-op or PvP, client-server vs peer-to-peer, server-authoritative design, client-side prediction + server reconciliation, snapshot interpolation, lag compensation, tick/netrate, and per-engine wiring: Godot 4.x MultiplayerSpawner/MultiplayerSynchronizer/@rpc/ENetMultiplayerPeer/set_multiplayer_authority, Unity Netcode for GameObjects (NetworkObject/NetworkBehaviour/NetworkVariable/[Rpc]/ServerRpc/ClientRpc), Unreal Actor replication (Replicated/ReplicatedUsing, Server/Client/NetMulticast RPCs, relevancy). Triggers: 'how do I sync players', 'client and server desync', 'players rubber-band or teleport', 'who has authority', 'laggy movement', 'cheater set their own health'. NOT single-player gameplay, AI, or input (route to engine skill godot/unity/unreal), and NOT matchmaking, dedicated-server hosting, or backend infra (route to deployment).",
+      "description": "Use when adding multiplayer or netcode to a game — client-server vs P2P, server authority and anti-cheat, state replication vs RPCs, prediction and reconciliation, lag compensation, plus Godot 4 / Unity NGO / Unreal wiring. NOT single-player gameplay (that is `godot`, `unity`, `unreal`), NOT matchmaking or server hosting (that is `deployment`).",
       "tags": [
         "multiplayer",
         "netcode",
@@ -1910,7 +1910,7 @@
     },
     {
       "id": "gamedev-pathing",
-      "description": "Use when implementing AI navigation or pathfinding in a game - moving enemies/NPCs/units toward goals, \\\"how do enemies navigate the level\\\", A*/Dijkstra/JPS/HPA* search, choosing grid vs waypoint-graph vs navmesh, baking a navmesh and tuning agent radius/height, off-mesh/nav links, dynamic obstacles and re-baking, steering (seek/flee/arrive/pursue/wander/path-following/flocking), local avoidance (RVO/ORCA, crowds), and flow fields for many agents to one goal. Per-engine: Godot 4.x (NavigationServer2D/3D, NavigationRegion, NavigationAgent, get_next_path_position), Unity (NavMeshAgent + NavMeshObstacle + AI Navigation baking), Unreal (RecastNavMesh + AIController + Behavior Trees/EQS). Triggers: \\\"my enemies get stuck\\\", \\\"units clump together\\\", \\\"navmesh not updating\\\", \\\"agentes se atascan\\\". NOT physics/rigidbody collision response or character-controller tuning (gamedev-physics), and NOT high-level enemy AI behaviour design like aggro/states/difficulty (game-design).",
+      "description": "Use when making NPCs, enemies, or units navigate a level — grid vs waypoint vs navmesh, A*/JPS, navmesh baking and agent radius, off-mesh links, steering, RVO crowd avoidance, and flow fields in Godot 4.x, Unity, Unreal. NOT collision response or character controllers (that is gamedev-physics), NOT aggro or difficulty design (that is game-design).",
       "tags": [
         "pathfinding",
         "navmesh",
@@ -4175,7 +4175,7 @@
     },
     {
       "id": "security-scan",
-      "description": "Use when running automated security scanners over a repo or app and turning the raw output into a triaged, ranked, gate-able report: scan for vulnerabilities before shipping, audit dependencies/lockfiles for known CVEs, find secrets committed to the tree or git history, run SAST, or wire scanners into CI. Triggers: 'scan this repo for vulnerabilities', 'check my package-lock for CVEs', 'did anyone commit AWS keys', 'scan git history for leaked keys', 'my lockfile has a transitive CVE', 'is aquasecurity/trivy-action@latest safe', 'set up Semgrep/gitleaks to fail CI', 'escanea el repo en busca de vulnerabilidades', 'audita las dependencias', 'analitza les dependències'. NOT threat-modeling, OWASP design reasoning, or authoring the fix (that is secure-coding).",
+      "description": "Use when automated scanners drive a security sweep of a repo or app — SAST, dependency/lockfile CVEs, secrets in the tree or git history, IaC misconfig — and the raw output has to become one deduped, exploitability-ranked report CI can gate on. NOT threat-modeling, OWASP design reasoning, or hand-authoring the fix (that is `secure-coding`).",
       "tags": [
         "security",
         "sast",

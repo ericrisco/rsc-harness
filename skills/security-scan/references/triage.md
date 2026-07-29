@@ -90,4 +90,3 @@ This is the contract `scripts/verify.sh` gates on.
 - **Gate:** any `findings[]` with `status: "open"` and `severity: "critical"`
   → fail. Strict mode also fails on `open` + `high`. `suppressed`/`fixed` never
   fail. An empty/clean report exits `0`.
-</content>

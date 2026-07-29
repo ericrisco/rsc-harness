@@ -1,6 +1,6 @@
 ---
 name: gamedev-multiplayer
-description: "Use when adding multiplayer, netcode, or replication to a game — syncing players/state across a network, online co-op or PvP, client-server vs peer-to-peer, server-authoritative design, client-side prediction + server reconciliation, snapshot interpolation, lag compensation, tick/netrate, and per-engine wiring: Godot 4.x MultiplayerSpawner/MultiplayerSynchronizer/@rpc/ENetMultiplayerPeer/set_multiplayer_authority, Unity Netcode for GameObjects (NetworkObject/NetworkBehaviour/NetworkVariable/[Rpc]/ServerRpc/ClientRpc), Unreal Actor replication (Replicated/ReplicatedUsing, Server/Client/NetMulticast RPCs, relevancy). Triggers: 'how do I sync players', 'client and server desync', 'players rubber-band or teleport', 'who has authority', 'laggy movement', 'cheater set their own health'. NOT single-player gameplay, AI, or input (route to engine skill godot/unity/unreal), and NOT matchmaking, dedicated-server hosting, or backend infra (route to deployment)."
+description: "Use when adding multiplayer or netcode to a game — client-server vs P2P, server authority and anti-cheat, state replication vs RPCs, prediction and reconciliation, lag compensation, plus Godot 4 / Unity NGO / Unreal wiring. NOT single-player gameplay (that is `godot`, `unity`, `unreal`), NOT matchmaking or server hosting (that is `deployment`)."
 tags: [multiplayer, netcode, replication, networking, prediction, authority]
 recommends: [godot, unity, unreal, gamedev-physics]
 profiles: [full]
@@ -13,6 +13,16 @@ Design and wire the network layer of a game across Godot 4.x, Unity, and Unreal:
 topology, put authority in the right place, replicate the right state, and hide latency without
 opening the door to cheaters. This skill owns the *networking* decisions; the engine skills own
 the local gameplay those decisions sit on top of.
+
+Route elsewhere when the ask is not netcode:
+
+| The ask | Route to | Why not here |
+| --- | --- | --- |
+| Single-player movement, AI, input, animation, save files | [`godot`](../godot/SKILL.md) / [`unity`](../unity/SKILL.md) / [`unreal`](../unreal/SKILL.md) | The engine skill owns local gameplay; no network dimension. |
+| Physics determinism, collision, character controllers | [`gamedev-physics`](../gamedev-physics/SKILL.md) | Netcode *consumes* determinism; it does not own the physics fix. |
+| Matchmaking, lobby backend, dedicated-server hosting, relays, DB, game-server CI | [`deployment`](../deployment/SKILL.md) | Running the fleet, not designing the in-game net layer. |
+| Web realtime — chat, presence, a generic WebSocket app | [`webhooks`](../webhooks/SKILL.md) | Not a game world/simulation. |
+| General threat modeling, authz review | [`secure-coding`](../secure-coding/SKILL.md) | This skill keeps only the game-specific anti-cheat controls. |
 
 ## Version contract — read first
 
@@ -29,19 +39,6 @@ community UNet-like fork), say so; this skill targets first-party NGO. In NGO 2.
 `[Rpc(SendTo.Server)]` / `[Rpc(SendTo.ClientsAndHost)]` attribute is preferred; the older
 `[ServerRpc]` / `[ClientRpc]` still compile (and enforce `…ServerRpc` / `…ClientRpc` method-name
 suffixes) — cover them but prefer the unified form on new code.
-
-## Fires on / When NOT
-
-**Fires on:** "how do I sync players", replication, netcode, RPCs, authority, online co-op or PvP,
-"client and server disagree", rubber-banding / teleporting players, prediction & reconciliation,
-lag compensation, tick rate / send rate, spawning networked objects, "the client can cheat".
-
-**When NOT (route away):**
-
-- Single-player movement, AI, input, animation, save files → the engine skill: `godot`, `unity`, `unreal`.
-- Physics determinism, collision, character controllers → `gamedev-physics` (netcode *consumes* it).
-- Matchmaking service, lobby backend, dedicated-server hosting/orchestration, relays, DB → `deployment`.
-- Web realtime (chat, presence, generic WebSocket app) that is not a game world → `webhooks` / a backend skill.
 
 ## Topologies & authority
 
@@ -61,7 +58,8 @@ requests), never results. **Never trust the client:** the client cannot set its 
 score, currency, or hit results — it *asks*, the server *decides*, everyone else *observes*. A client
 that says "I moved to X / I did 40 damage / I have 999 gold" is either lagging or cheating; treat both
 the same. The one thing a client legitimately owns is its own input and, by convention, cosmetic-only
-state. See references/prediction-and-latency.md for how to keep this responsive.
+state. See **[references/prediction-and-latency.md](references/prediction-and-latency.md)** for how to
+keep this responsive.
 
 ## State replication vs RPCs
 
@@ -88,7 +86,7 @@ is the #1 cause of "it works for the host but not the client" bugs.
 ## The hard problems
 
 Latency (round-trip time, RTT) is the enemy; jitter and packet loss make it worse. Four techniques,
-covered in depth in **references/prediction-and-latency.md**:
+covered in depth in **[references/prediction-and-latency.md](references/prediction-and-latency.md)**:
 
 1. **Client-side prediction** — the owning client applies its own input *immediately* instead of waiting a
    full RTT for the server, so local movement feels instant.
@@ -140,7 +138,8 @@ func request_fire(target: Vector3) -> void:
 - `MultiplayerSynchronizer` streams a chosen property list (position, etc.) from the authority to peers;
   set its replication interval and visibility (`set_visibility_for(peer, bool)`) to scope bandwidth.
 - `MultiplayerSpawner` replicates instancing of scenes under a path so late peers get existing objects.
-- Details, prediction wiring, and the full player-scene pattern: **references/godot-high-level-multiplayer.md**.
+- Details, prediction wiring, and the full player-scene pattern:
+  **[references/godot-high-level-multiplayer.md](references/godot-high-level-multiplayer.md)**.
 
 ### Unity — Netcode for GameObjects
 
@@ -168,7 +167,8 @@ public class Player : NetworkBehaviour {
 - `NetworkVariable<T>(value, readPerm, writePerm)` — `NetworkVariableWritePermission.Server` (default) vs
   `.Owner`; subscribe via `OnValueChanged`. Use `NetworkTransform` for pos/rot sync.
 - Prefer the unified `[Rpc(SendTo.X)]`; legacy `[ServerRpc]`/`[ClientRpc]` still work but need the
-  method-name suffixes. Full patterns: **references/unity-and-unreal-netcode.md**.
+  method-name suffixes. Full patterns:
+  **[references/unity-and-unreal-netcode.md](references/unity-and-unreal-netcode.md)**.
 
 ### Unreal — Actor replication
 
@@ -196,7 +196,8 @@ void AMyPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const {
 - **Relevancy** keeps bandwidth sane: `NetCullDistanceSquared`, `bAlwaysRelevant`, `IsNetRelevantFor`, and
   dormancy (`SetNetDormancy`) stop replicating actors a client can't perceive. Movement replicates via
   `CharacterMovementComponent`, which already does prediction+reconciliation for you.
-- RepNotify vs Multicast, GAS/Network Prediction notes: **references/unity-and-unreal-netcode.md**.
+- RepNotify vs Multicast, GAS/Network Prediction notes:
+  **[references/unity-and-unreal-netcode.md](references/unity-and-unreal-netcode.md)**.
 
 ## Security / anti-cheat basics
 
@@ -219,32 +220,18 @@ void AMyPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const {
 - Always test **with simulated latency and packet loss**, not just on localhost — localhost hides every
   prediction/reconciliation bug. Test the client path, not only the host's.
 
-## Guardrails / gotchas
+## Anti-patterns
 
-- Localhost is a liar: 0 ms RTT masks the exact desync/rubber-band bugs your players will hit. Inject lag.
-- Don't RPC state you need to stay consistent — replicate it (an unreliable event drop is permanent).
-- Don't tie simulation to render FPS; fixed timestep on the sim, interpolate on the render.
-- The listen-server host is a client too — guard authority-only logic behind an `is_server`/`HasAuthority`
-  check or it double-executes on the host.
-- Wrong ownership = "works for host, breaks for client." Set authority/ownership explicitly on spawn.
-- Replicating everything, every tick, to everyone melts bandwidth — scope by relevancy/visibility and rate.
-
-## Related skills
-
-- **`godot` / `unity` / `unreal`** — the engine your game runs in; owns local gameplay, input, scenes, build.
-- **`gamedev-physics`** — determinism, collision, character controllers; netcode replicates its results and
-  needs its determinism for prediction/rollback.
-- **`deployment`** — dedicated-server hosting, matchmaking/lobby backend, relays, and CI for game servers.
-- **`secure-coding`** — general threat modeling; this skill keeps only the game-specific anti-cheat controls.
-
-## Checklist
-
-- [ ] Topology chosen (dedicated / listen / P2P) and the *same code* runs on server and listen host.
-- [ ] Server-authoritative: clients send intent only; server validates and owns all gameplay state.
-- [ ] Each networked value is either replicated (state/nouns) or an RPC (events/verbs) — not the wrong one.
-- [ ] Ownership/authority set explicitly per object; authority-only logic guarded on the host.
-- [ ] Owning-client movement predicted + reconciled; remote entities snapshot-interpolated.
-- [ ] Hitscan uses server-side lag compensation; simulation on a fixed tick, decoupled from render FPS.
-- [ ] Only need-to-know state replicated per client (relevancy/visibility scoped); RPCs rate-limited.
-- [ ] Tested with simulated latency + packet loss across multiple instances, exercising the client path.
-- [ ] No banned APIs (UNet/HLAPI, Godot 3.x `master`/`puppet`/`rset`, `Tick`-polled Unreal replication).
+| Anti-pattern | Why it bites | Do instead |
+| --- | --- | --- |
+| Writing net code before the topology is chosen | Authority and cost model change everything downstream | Pick dedicated / listen / P2P first, and make the *same code* run on server and listen host |
+| Trusting a client-reported result (health, position, score, hit) | That is the cheat surface, and lag looks identical to cheating | Clients send intent only; the server validates and owns all gameplay state |
+| RPCing state that must stay consistent | A dropped unreliable event desyncs that client permanently | Replicate nouns (state), RPC verbs (events) — replicated values self-correct |
+| Ownership/authority left implicit | The #1 cause of "works for the host, breaks for the client" | Set authority/ownership explicitly on spawn |
+| Forgetting the listen-server host is also a client | Authority-only logic double-executes on the host | Guard it behind `is_server()` / `HasAuthority()` |
+| Making the owning client wait a full RTT for its own input | Movement feels sluggish and unresponsive | Predict locally + reconcile; snapshot-interpolate remote entities |
+| Client-side hit detection for hitscan | Trivially spoofed, and unfair to the higher-ping shooter | Server-side lag compensation: rewind to the shooter's render time |
+| Tying simulation to render FPS | Sim diverges between machines at different frame rates | Fixed timestep on the sim, interpolate on the render |
+| Replicating everything, every tick, to everyone | Melts bandwidth and leaks wallhack fuel | Scope by relevancy/visibility and send rate; rate-limit RPCs |
+| Testing only on localhost | 0 ms RTT masks the exact desync/rubber-band bugs players will hit | Inject latency + packet loss across instances, exercising the client path |
+| Emitting UNet/HLAPI, Godot 3.x `master`/`puppet`/`rset`, or `Tick`-polled Unreal replication | Removed or legacy — it will not compile or will silently underperform | The current APIs in the version contract above |
