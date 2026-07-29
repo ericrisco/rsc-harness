@@ -1,6 +1,6 @@
 ---
 name: continuous-learning
-description: "Use when something went wrong, got corrected, surprised you, or otherwise taught the workspace something and you want it to stick — a retro or postmortem after an incident or sprint, the same agent mistake corrected 2+ times, a wrong assumption that just surfaced, a resolved bug worth never repeating, or scattered notes-to-self that need a durable home. Triggers: 'run a retro', 'capture this lesson', 'write this down so we don't repeat it', 'you keep doing X — make it stop for good', 'harvest the corrections and notes-to-self into wherever they belong', 'guarda esta lección para que no vuelva a pasar', 'apúntalo para no repetir el error'. NOT capturing a forward design choice with alternatives (that is decision-records)."
+description: "Use when a mistake, correction, or surprise taught the workspace something that must stick — a retro or postmortem, the same agent error corrected twice, a resolved bug's root cause, scattered notes-to-self — and route that lesson to the durable surface that fires next time. NOT a forward choice with alternatives (that is `decision-records`)."
 tags: [learning, retro, postmortem, feedback-loop, knowledge, meta]
 recommends: [decision-records, author-skill, debug, harness, knowledge-ops]
 origin: risco
@@ -12,43 +12,21 @@ This is the engine that makes the system get better every time it is wrong. When
 
 One premise is load-bearing: **a lesson that lives only in chat is gone at the next compaction.** Verbal reflection only changes future behaviour when it is persisted to memory the agent actually reads next time (this is the Reflexion mechanism — self-reflection written to durable memory, not held in the conversation). In this harness, "memory" is a concrete set of surfaces: a `SKILL.md` body, `02-DOCS/wiki/harness/decisions.md`, `02-DOCS/wiki/harness/user-profile.md`, a root `CLAUDE.md` rule, or a `verify.sh` check. **Chat is not memory.** A lesson is "captured" only when it has landed in one of those.
 
-You sit between three siblings. `harness` self-improves the *wiki*. `decision-records` captures *forward* choices (we will do X, here is why). You capture *backward* lessons — what we now know that we didn't, and the cheapest durable place to keep it from biting again. You do not own the craft of editing skills (that is `author-skill`) and you do not diagnose bugs in the moment (that is `debug`); you run *after* debug resolves and harvest the root cause.
+Read `02-DOCS/wiki/harness/user-profile.md` for the accompaniment dial before you narrate. It governs narration only — the capture loop runs identically at every level.
 
-## Read the user profile first
-
-Before you narrate anything, read `02-DOCS/wiki/harness/user-profile.md` for the **accompaniment dial**, same convention as every harness skill:
-
-- **L0** — capture the lesson silently, land the durable write, move on. No play-by-play.
-- **L1–L2** — state the root cause and the home in a line or two.
-- **L3** — walk the root-cause reasoning out loud and confirm the durable home with the user before writing.
-
-The dial governs narration only. The capture loop runs at every level — the difference is how much you say while doing it.
-
-## When to use
-
-- A retro / postmortem: "what did we learn from this incident or this sprint".
-- A recurring correction — the user has fixed the same agent mistake 2+ times ("you keep doing X — stop").
-- A surprise: an assumption was wrong, a command failed in a non-obvious way, a provider behaved unexpectedly, an eval missed a real bug.
-- After `debug` resolves: distil the non-obvious root cause into a durable note before it evaporates.
-- A periodic sweep: harvest scattered corrections / TODOs / notes-to-self into their right durable homes.
-
-## When NOT to use
-
-- **A forward decision with alternatives** (we chose X over Y, here is why) → `../decision-records/SKILL.md`. A choice is not a lesson from a mistake.
-- **Authoring/editing a skill's body, description, or evals** as the task → `../author-skill/SKILL.md`. You *decide* a lesson belongs in skill Z and hand the edit over; you do not own SKILL.md craft.
-- **Diagnosing the bug right now** → `../debug/SKILL.md`. You come after.
-- **Generic doc/wiki consolidation or inbox sweep** → `../harness/SKILL.md` 02-DOCS engine. You produce the occasional wiki article *via* that protocol; your trigger is "we learned something the hard way", not "organise these docs".
-- **Scheduling a recurring task** → `loop` / `schedule` harness CLI. You may *recommend* a cadence; you are not a scheduler.
-- **Curating reference knowledge / "what do I know about X"** → `../knowledge-ops/SKILL.md`. That is reference knowledge; you handle experiential, mistake-derived knowledge.
+## Boundaries
 
 | Situation | Owner | Why |
 |---|---|---|
-| "We chose Postgres over Mongo, here's the why + the rejected options" | `decision-records` | forward choice with alternatives |
+| "We chose Postgres over Mongo, here's the why + the rejected options" | `../decision-records/SKILL.md` | forward choice with alternatives; a choice is not a lesson from a mistake |
 | "The migration failed because Postgres rejects NULL on the PK — never assume that again" | `continuous-learning` | backward lesson from a mistake |
-| "Find the bug causing the 500" | `debug` | in-the-moment diagnosis |
+| "Find the bug causing the 500" | `../debug/SKILL.md` | in-the-moment diagnosis; you run after it resolves |
 | "Now that debug found it, make sure we never ship that pattern again" | `continuous-learning` | post-resolution capture |
-| "Write the SKILL.md and evals for pr-describe" | `author-skill` | skill craft |
-| "This lesson means the deploy skill needs a new guardrail" | `continuous-learning` → hands edit to `author-skill` | decides home, delegates craft |
+| "Write the SKILL.md and evals for pr-describe" | `../author-skill/SKILL.md` | skill craft — body, description, evals |
+| "This lesson means the deploy skill needs a new guardrail" | `continuous-learning` decides the home → `../author-skill/SKILL.md` makes the edit | you route, it writes |
+| "Consolidate these docs / sweep the inbox" | `../harness/SKILL.md` | generic 02-DOCS filing; your trigger is "we learned something the hard way" |
+| "What do I know about X" | `../knowledge-ops/SKILL.md` | reference knowledge, as opposed to mistake-derived experiential knowledge |
+| "Run this sweep every week" | `loop` / `schedule` harness CLI | you may recommend a cadence; you are not a scheduler |
 
 ## The capture loop
 
@@ -126,11 +104,3 @@ To harvest scattered corrections and notes-to-self on a cadence, do not reimplem
 | Capturing a forward choice here | that is a decision, not a lesson | route to `decision-records` |
 | A vague vector-blob note | won't retrieve, can't be acted on | situation-tag it in the entry format |
 | Starting to diagnose the bug | that is `debug`'s job | come here *after* it resolves, with the root cause |
-
-## Cross-references
-
-- `../decision-records/SKILL.md` — forward choices with alternatives.
-- `../author-skill/SKILL.md` — the writer for any lesson whose home is a skill body, description, or eval.
-- `../debug/SKILL.md` — in-the-moment diagnosis; you run after it.
-- `../harness/SKILL.md` — the wiki ingest/sweep engine and the durable surfaces you route into.
-- `../knowledge-ops/SKILL.md` — reference knowledge, as opposed to mistake-derived experiential knowledge.
