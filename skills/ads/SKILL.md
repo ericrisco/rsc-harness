@@ -1,6 +1,6 @@
 ---
 name: ads
-description: "Use when you need to run or fix paid acquisition on Google or Meta — structuring campaigns (Performance Max, Demand Gen, Search, Advantage+), writing platform-fit creative, allocating budget, and deciding scale-vs-kill on ROAS. Use when a campaign spends but won't convert, conversions dropped after Consent Mode v2 or iOS, or you need the break-even ROAS math. Triggers: 'set up our Google Ads', 'our Performance Max isn't converting', 'what ROAS do we need to break even', 'how much budget per campaign and how fast can we scale', 'our Meta CPA is too high', 'platform ROAS looks great but the bank account disagrees', 'configura una campaña de Google Ads', 'qué ROAS necesito para no perder dinero', 'la campanya de Meta no converteix'. NOT writing the landing page the ad clicks into (that is landing-copy), NOT designing the experiment's statistics and sample size (that is ab-testing), NOT the whole-funnel channel-mix plan (that is marketing)."
+description: "Use when running or fixing paid acquisition on Google or Meta — campaign structure (Performance Max, Demand Gen, Search, Advantage+), platform-fit creative, budget/scaling rules, break-even ROAS math, and Consent Mode v2 / CAPI tracking gaps. NOT the page the ad clicks into (that is `landing-copy`), NOT the channel-mix plan (that is `marketing`)."
 tags: [paid-ads, google-ads, meta-ads, roas, performance-max, ppc, paid-acquisition]
 recommends: [marketing, landing-copy, brand-voice, ab-testing, analytics, dashboard, forecasting, lead-gen]
 origin: risco
@@ -14,12 +14,9 @@ budget → ROAS**. Your subject is the live account and its economics — the ca
 shape, the asset sets, the bid/budget config, and the math that says *keep scaling*
 or *kill it*.
 
-You do **not** own the page the ad clicks into (that is `landing-copy`), the voice
-the copy speaks in (that is `brand-voice`), or the statistics of an experiment (that
-is `ab-testing`). The nearest miss is `marketing`: it decides *whether to run paid at
-all and the channel mix*; you execute *the Google/Meta buy inside that plan* down to
-asset groups, bids, and break-even ROAS. "Should we even do paid?" → that is
-`../marketing/SKILL.md`. "Structure and scale the account" → that is you.
+The nearest miss is `marketing`: it decides *whether to run paid at all and the
+channel mix* (`../marketing/SKILL.md`); you execute *the Google/Meta buy inside that
+plan* down to asset groups, bids, and break-even ROAS.
 
 ## ROAS first — it gates everything
 
@@ -85,16 +82,17 @@ Good: 1 prospecting campaign above the conversion-data floor, untouched 4 weeks,
       then act on the data.
 ```
 
-PMax allows max **25 asset groups** per campaign — start with **1–2**. The full
-structure detail is in `references/platform-specs.md`.
+PMax allows max **25 asset groups** per campaign — start with **1–2**. Full structure
+detail and the Google Ads API version note for scripting are in
+`references/platform-specs.md`.
 
 ## Creative
 
 Write the ad-surface copy only. It must obey the brand's voice (`../brand-voice/SKILL.md`)
 and click into a page you do not write (`../landing-copy/SKILL.md`).
 
-Per-surface caps (summary — full tables, image/video orientations and sizes in
-`references/platform-specs.md`):
+Per-surface caps (summary — full tables, image/video orientations and sizes, and the
+Low/Good/Best rotation playbook in `references/platform-specs.md`):
 
 | Surface | Headlines | Descriptions | Media |
 |---|---|---|---|
@@ -157,19 +155,6 @@ the signal; they build the read-out.
 
 ## Handoff
 
-- **Destination page** the ad clicks into → `../landing-copy/SKILL.md`.
-- **Voice/tone** the copy must obey → `../brand-voice/SKILL.md`.
 - **Real experiment design** (sample size, significance) → the `ab-testing` skill.
-- **Reporting & dashboards** of the numbers → the `analytics` / `dashboard` skills.
 - **Blended/next-quarter revenue projection** → the `forecasting` skill.
-- **"Should we run paid at all?" / channel mix** → `../marketing/SKILL.md`.
 - **Top-of-funnel B2B prospect lists** (not paid media) → the `lead-gen` skill.
-
-## References
-
-- `references/platform-specs.md` — full asset spec tables per surface, image/video
-  orientations and sizes, the Low/Good/Best rotation playbook, the 25-asset-group rule,
-  and the Google Ads API version note for scripting.
-- `references/roas-model.md` — worked break-even and target-ROAS math, the
-  platform-ROAS vs MER vs incrementality table, a geo-holdout test design, and the
-  scale/hold/kill decision rule.
