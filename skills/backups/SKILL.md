@@ -1,6 +1,6 @@
 ---
 name: backups
-description: "Use when designing or auditing a backup-and-restore program that must survive a real disaster — picking defensible RPO/RTO targets, building a 3-2-1-1-0 layout, wiring point-in-time recovery, adding offsite+immutable copies, or proving restores actually work. Triggers: 'we have no real backups, design something', 'what RPO/RTO should we target', 'set up PITR for Postgres', 'are our backups any good', the non-obvious 'our backups live on the same server as the database', and Catalan 'com provo que les còpies de seguretat funcionen de debò'. NOT tuning Postgres internals or writing the archive_command (that is postgresdb)."
+description: "Use when designing or auditing a backup-and-restore program that must survive a real disaster: setting defensible RPO/RTO targets, laying out 3-2-1-1-0 copies that are offsite and immutable, wiring point-in-time recovery, and proving restores work on a schedule. NOT tuning Postgres internals or writing the archive_command (that is `postgresdb`)."
 tags: [backups, disaster-recovery, pitr, rpo-rto, restore]
 recommends: [postgresdb, secure-coding, monitoring]
 origin: risco
@@ -127,11 +127,5 @@ The fill-in-the-blank restore runbook, the scheduled-test checklist, and the act
 | Encrypted backup, key only in the vault that's gone | Backup is recoverable but unreadable | Store the key in a separate blast radius (§3) |
 | Trusting managed snapshots without knowing the ceiling | RDS caps at 35 days; longer needs an exported copy | Know the retention ceiling, export beyond it (§3) |
 | Counting "job succeeded" as success | The job wrote a corrupt/empty archive | `check`/`verify` + a real test restore (§6–7) |
-
-## References
-
-- `references/engine-recipes.md` — copy-paste config and commands per engine: pgBackRest stanza + full/diff + PITR `--type=time`, WAL-G, RDS `restore-db-instance-to-point-in-time`, XtraBackup + binlog, Redis RDB/AOF, restic/Borg against an Object-Lock bucket.
-- `references/restore-runbook.md` — fill-in restore runbook template, the scheduled-restore-test checklist, and the actual-RTO log table.
-- Engine internals (archive_command, VACUUM, migrations): `../postgresdb/SKILL.md`. Encryption-key management as a security control: `../secure-coding/SKILL.md`.
 
 `scripts/verify.sh <path-to-policy-or-runbook>` lints a produced backup-policy/runbook artifact for the five pillars (RPO, RTO, offsite, immutability, scheduled-restore + verification). It is a completeness lint, not a backup executor.
