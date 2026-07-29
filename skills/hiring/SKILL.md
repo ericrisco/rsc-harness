@@ -1,6 +1,6 @@
 ---
 name: hiring
-description: "Use when there's an open role and you need to write the job post, screen inbound candidates, structure the interview loop, or build a scorecard to reach a fair hire decision; symptoms: gut-feel ratings, every interviewer asking the same question, a bloated requirements list, no consistent screen. Triggers: 'write a job description', 'screen these CVs', 'build an interview scorecard', 'structure the interview panel', 'redacta la oferta de empleo', 'necesito una scorecard', plus the non-obvious 'four people interviewed and we still can't decide' and 'is our AI résumé filter legal'. NOT managing the person after they're hired — onboarding, payroll, performance (that is people-ops)."
+description: "Use when a role is open and you must write the job post, screen inbound candidates, structure the interview loop, or score them to a defensible Hire / On-Hold / No-Hire — including whether an AI résumé filter is legal. NOT after the offer is accepted — onboarding, payroll, performance (that is `people-ops`), NOT offer terms (that is `contracts`)."
 tags: [hiring, recruiting, job-description, interview-scorecard, candidate-screening, structured-interview]
 recommends: [people-ops, brand-voice, contracts, compliance, cold-outreach, calendar-scheduling]
 profiles: []
@@ -17,8 +17,7 @@ No-Hire with the reason written down.
 
 Hard boundary: the moment the offer is accepted, you are done. Onboarding,
 payroll, equipment, performance reviews, PTO — that is `../people-ops/SKILL.md`.
-Hiring gets the right person in the door; people-ops takes it from day one. Do
-not draft offer-letter terms here either; that is `../contracts/SKILL.md`.
+Do not draft offer-letter terms here either; that is `../contracts/SKILL.md`.
 
 ## The funnel (the spine)
 
@@ -35,7 +34,7 @@ One rule per stage, with the why:
   named. Write the 3–6 competencies before the post, because they drive the
   post, the questions, and the scorecard.
 - **Write the post from the competencies.** A post is the competencies turned
-  outward, not a wish list. See "Write the job post".
+  outward, not a wish list.
 - **Screen against one rubric.** Same criteria, same order, every candidate, or
   the comparison is meaningless.
 - **Run a structured loop.** Same questions, same rubric, every candidate —
@@ -44,18 +43,6 @@ One rule per stage, with the why:
   re-analysis ranks them above cognitive-ability tests). Unstructured = lottery.
 - **Score independently, then calibrate.** Each interviewer submits before the
   group talks. Debrief is calibration, not a re-vote.
-
-### Screen decision table
-
-For each candidate at the screen stage:
-
-| Signal | Decision |
-|---|---|
-| Meets the must-haves on job-related evidence | Advance to loop |
-| Strong on most, one must-have unclear | Send a short work-sample / structured task to resolve it |
-| Misses a hard must-have (verified skill, legal eligibility) | Reject, with the job-related reason logged |
-| Borderline, more reqs open soon | Parking lot — note why, revisit, do not silently ghost |
-| Non-job factor (school name, age, gap, "vibe", name) | Ignore it — it is not in the rubric |
 
 ## Write the job post
 
@@ -102,7 +89,8 @@ How to apply: send a short note + anything you've shipped.
 ## Screen the pile
 
 Score every applicant against the **same job-related rubric** you derived from
-the competencies. No bespoke criteria per candidate.
+the competencies (template: `references/templates.md`). No bespoke criteria per
+candidate.
 
 - **Blind to non-job factors.** School prestige, name, age, employment gaps,
   photo — none of it is in the rubric, so it does not enter the decision.
@@ -116,8 +104,15 @@ the competencies. No bespoke criteria per candidate.
   criminal-history box on the application form. (Candidate-data retention and
   consent: `../gdpr-privacy/SKILL.md`.)
 
-Use the screen decision table above for the advance / work-sample / reject /
-parking-lot call.
+For each candidate, the call:
+
+| Signal | Decision |
+|---|---|
+| Meets the must-haves on job-related evidence | Advance to loop |
+| Strong on most, one must-have unclear | Send a short work-sample / structured task to resolve it |
+| Misses a hard must-have (verified skill, legal eligibility) | Reject, with the job-related reason logged |
+| Borderline, more reqs open soon | Parking lot — note why, revisit, do not silently ghost |
+| Non-job factor (school name, age, gap, "vibe", name) | Ignore it — it is not in the rubric |
 
 ## Structure the interview loop
 
@@ -239,10 +234,3 @@ This skill *follows* the rules; it does not run the legal program — that is
 | Screening on school / name / gap | Non-job factor, not in the rubric | Blind to it; rubric only |
 | Deleting interview notes | Breaks EEOC retention; no defense | Retain ≥1 yr (2 yr for fed contractors) |
 | Drifting into onboarding/payroll | Out of scope, wrong skill | Stop at the decision → `../people-ops/SKILL.md` |
-
-## References
-
-- `references/templates.md` — full anchored scorecard (one competency at all
-  five levels), the structured question bank by competency, a fill-in job-post
-  skeleton with the gender-coded word do/don't list, and a screening rubric
-  template.

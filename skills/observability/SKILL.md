@@ -1,6 +1,6 @@
 ---
 name: observability
-description: "Use when instrumenting a service from the inside so an incident can be explained from telemetry alone — wiring OpenTelemetry logs, metrics and traces, standing up a Collector, exporting via OTLP, and defining telemetry-driven alerts. Triggers: 'add OpenTelemetry to this service', 'we can't tell why requests are slow across services — add distributed tracing', 'replace our print/console.log with structured logs correlated to traces', 'stand up an OTel Collector and export to Grafana/Datadog/Honeycomb', 'instrument our LLM calls so each request is a span with token counts', 'define RED metrics and a burn-rate alert from the telemetry', 'instrumenta el servei amb OpenTelemetry i exporta a Grafana', 'añade trazas distribuidas y métricas'. NOT outside-in uptime probes, on-call rotation, or who-gets-paged (that is monitoring)."
+description: "Use when instrumenting a service from the inside so an incident can be explained from telemetry alone — wiring OpenTelemetry logs, metrics and traces, standing up a Collector, exporting via OTLP, and defining telemetry-driven alerts. NOT outside-in uptime probes, on-call rotation, or who-gets-paged (that is `monitoring`)."
 tags: [observability, opentelemetry, tracing, metrics, structured-logging]
 recommends: [monitoring, error-handling, performance, cost-tracking, docker]
 origin: risco
@@ -8,9 +8,7 @@ origin: risco
 
 # Observability
 
-You are wiring the *inside* view of a service: when something breaks at 3am, an engineer must be able to answer "what happened, where, and why" from telemetry alone — without adding a `console.log` and redeploying into the fire. This skill emits a concrete artifact: SDK init code, instrumentation (spans/metrics/structured logs), a Collector config, and alert rules that the instrumentation makes possible.
-
-It is the inside-out half of running in production. The outside half — is it up, who gets paged, on-call rotation — is `../monitoring/SKILL.md`. The clean test: if the deliverable is *"a human gets paged,"* that is monitoring. If it is *"the data that explains the page exists and is queryable,"* that is here.
+You are wiring the *inside* view of a service: when something breaks at 3am, an engineer must be able to answer "what happened, where, and why" from telemetry alone — without adding a `console.log` and redeploying into the fire. This skill emits a concrete artifact: SDK init code, instrumentation (spans/metrics/structured logs), a Collector config, and alert rules that the instrumentation makes possible. The outside-in half — is it up, who gets paged — is `../monitoring/SKILL.md`.
 
 ## The one rule
 

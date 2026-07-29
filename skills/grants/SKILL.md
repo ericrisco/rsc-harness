@@ -1,6 +1,6 @@
 ---
 name: grants
-description: "Use when the goal is non-dilutive public or foundation funding — money you neither repay nor give equity for — and you must find a fit call, decide go/no-go, register an eligible entity, or write the application a reviewer scores against a published rubric (needs statement, logic model, SMART objectives, impact narrative, budget justification, LOI). Symptoms: a call with an Excellence/Impact/Implementation grid, a 3/5-per-criterion threshold, an indirect-cost line, a SAM.gov/UEI or BDNS lookup, an LOI that filters you before the full proposal. Triggers: 'find grants we qualify for', 'write the impact section so it scores above threshold', 'should we even bother applying to this call', 'build the budget justification', 'write a Letter of Inquiry', 'buscar la convocatòria a la BDNS', 'redactar la solicitud de subvención'. NOT equity rounds or investor pitches (that is fundraising), NOT a paying-customer SOW (that is proposals)."
+description: "Use when pursuing non-dilutive public or foundation funding — money you neither repay nor give equity for: finding a fit call, go/no-go, registration (UEI/PIC/BDNS), or writing the rubric-scored application, logic model, budget justification, or LOI. NOT an equity round (that is `fundraising`), NOT a paying-customer SOW (that is `proposals`)."
 tags: [grants, subsidies, fundraising-nondilutive, public-funding, grant-writing]
 recommends: [fundraising, proposals, financial-model, pitch-deck, bookkeeping, contracts]
 origin: risco
@@ -12,19 +12,7 @@ origin: risco
 
 You are a **reviewer-minded application writer**. Before you write a word, reconstruct the scoring grid the evaluator will use and write backwards from the threshold they must clear to fund you. The output is never "a nice document" — it is a needs statement, a logic model, SMART objectives, an impact narrative, and a costed budget that each survive their own line of the rubric. Above-threshold is the bar; everything below it scores zero no matter how good the prose.
 
-## When to use / When NOT to use
-
-Use when:
-
-- Building a fit shortlist of grants, public subsidies, or foundation calls an org qualifies for.
-- Deciding **go/no-go** on a specific call — eligibility, fit, effort vs. expected value, deadline vs. registration lead time.
-- Writing the application against a published evaluation rubric: needs, logic model, objectives, workplan, impact, budget justification.
-- Writing a **Letter of Inquiry / concept note** to a foundation.
-- Building the **logic model / theory of change / SMART objectives**, or the impact section.
-- Writing and justifying a **budget** so it survives allowability and indirect-cost rules.
-- Registering an eligible entity: US UEI via SAM.gov, EU PIC, finding the Spanish BDNS convocatoria.
-
-Do NOT use when — route instead:
+## Route elsewhere
 
 | The ask | Owner |
 |---|---|
@@ -35,8 +23,6 @@ Do NOT use when — route instead:
 | The grant agreement's binding legal clauses (IP, liability, law) | `contracts` |
 | Post-award ledgers, fund accounting, spend tracking | `bookkeeping` |
 | Pricing, packaging, what to charge customers | `pricing` |
-
-The one-sentence boundary: `grants` owns the pursuit and writing of money scored by a **reviewer against a published rubric**; the moment it is **equity or a round** it is `fundraising`, and the moment the document persuades a **paying customer** it is `proposals`.
 
 ## The non-dilutive landscape
 
@@ -161,10 +147,6 @@ Hard caps are real and enforced: Horizon Europe Part B is **40 pages** for stand
 | Treating above-threshold as funded | ~7/10 above-threshold EU proposals go unfunded | Maximize score; pursue several fit calls |
 | Generic LOI with no fit argument | LOIs filter on alignment first | Lead with funder-fit, then credibility, then impact |
 | Indirect line guessed or padded | Breaches the 15% de minimis with no negotiated rate | Use ≤15% MTDC, or declare your negotiated rate |
-
-## Jurisdiction quick-reference
-
-EU (Funding & Tenders portal, PIC, Horizon evaluation criteria, page limits), US (Grants.gov, SAM.gov/UEI, 2 CFR 200 de minimis), and Spain (BDNS / infosubvenciones, `bases reguladoras` vs `convocatoria`, vocabulary) entry points and authoritative portals → `references/jurisdictions.md`.
 
 ## Optional self-check
 
