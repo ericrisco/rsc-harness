@@ -78,24 +78,32 @@ jobs:
             git commit -m "chore: realign version with the registry ($LOCAL -> $HIGHEST) [skip ci]"
           fi
 
+      # No tag here on purpose. The tag is created after the commit is pushed (see below), so
+      # it can only ever point at something that actually landed on main.
       - name: Bump version
+        id: bump
         run: |
-          npm version "${{ github.event.inputs.bump || 'patch' }}" -m "chore(release): %s [skip ci]"
+          npm version "${{ github.event.inputs.bump || 'patch' }}" --no-git-tag-version
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          git add package.json package-lock.json manifest.json
+          git commit -m "chore(release): $VERSION [skip ci]"
 
       # --- publish + push the bump back ----------------------------------------
       - name: Publish to npm
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      # main can advance while this job runs (a PR merging behind it), which rejects the push
-      # as non-fast-forward. `--follow-tags` still lands the tag, so a bare push leaves the tag
-      # published without its commit — the state that wedged this pipeline. Rebase and retry.
-      - name: Push version commit + tag
+      # main can advance while this job runs (a PR merging behind it), which rejects the push as
+      # non-fast-forward — so rebase and retry. Tagging is deliberately NOT part of this step:
+      # a rebase rewrites the commit's sha, and a tag made beforehand would be left pointing at
+      # an orphan. Push the commit, then tag whatever landed.
+      - name: Push version commit
         run: |
           for attempt in 1 2 3; do
             git fetch origin main
             git rebase origin/main || { git rebase --abort; exit 1; }
-            if git push --follow-tags origin HEAD:main; then
+            if git push origin HEAD:main; then
               echo "pushed on attempt $attempt"
               exit 0
             fi
@@ -104,6 +112,14 @@ jobs:
           done
           echo "::error::could not push the version commit after 3 attempts"
           exit 1
+
+      # The invariant this pipeline lost for four days: a tag never exists without its commit.
+      # Tagging only after a successful push is what guarantees it, in both directions.
+      - name: Tag the released commit
+        run: |
+          V="v${{ steps.bump.outputs.version }}"
+          git tag -a "$V" -m "chore(release): ${{ steps.bump.outputs.version }}"
+          git push origin "$V"
 
       # --- cut a GitHub Release for the new tag --------------------------------
       - name: Create GitHub Release
