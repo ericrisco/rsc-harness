@@ -4,7 +4,7 @@ should_trigger:
   - prompt: "Add a REST endpoint to create an order in our Spring Boot service."
     why: "Core controller/service work — the central job of the skill."
   - prompt: "My @Transactional method isn't rolling back when it throws, why?"
-    why: "Non-obvious proxy self-invocation + checked-exception-no-rollback rule; a defining Spring trap."
+    why: "Non-obvious proxy self-invocation + checked-exception-no-rollback trap; documented in the service/transactions section."
   - prompt: "I get LazyInitializationException when the JSON serializer reads the response."
     why: "Classic JPA fetch/session-boundary symptom; the fix is map-to-DTO-in-tx, a core rule here."
   - prompt: "Migra esta config de seguridad, usa WebSecurityConfigurerAdapter y está deprecada."
@@ -12,7 +12,7 @@ should_trigger:
   - prompt: "Set up a @WebMvcTest for the controller and mock the service."
     why: "Slice testing + @MockitoBean — non-obvious that @MockBean is the wrong (removed) idiom."
   - prompt: "Configura @ConfigurationProperties con perfiles para esta app."
-    why: "Catalan/Spanish; typed config + profiles is a named decision rule."
+    why: "Catalan/Spanish; typed @ConfigurationProperties + profiles is a documented config surface."
   - prompt: "We have N+1 selects on a lazy collection — how do I fetch-join it?"
     why: "JPA fetch strategy / @EntityGraph, a documented depth area."
 
