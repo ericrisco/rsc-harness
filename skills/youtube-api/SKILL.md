@@ -1,6 +1,6 @@
 ---
 name: youtube-api
-description: "Use when connecting a real YouTube channel to code via the Data API v3 (uploads, metadata) and Analytics API v2 (performance) — OAuth, resumable video upload, editing title/description/tags/privacy after publish, pulling views/watch time/averageViewPercentage/retention/traffic sources — and logging that performance into 02-DOCS/wiki/youtube/ as a dated feedback log. Triggers: 'upload a video to my channel via the API and set its tags', 'videos.insert returns 403 quotaExceeded / uploadLimitExceeded', 'my YouTube refresh token keeps dying after about 7 days', 'pull the audienceWatchRatio retention curve for video X', 'fetch this month's traffic sources and write them into the wiki', 'subir vídeos a YouTube por API y guardar las estadísticas del canal', 'treure les estadístiques del canal i guardar-les al wiki'. NOT what-to-publish or how-to-package it (that is youtube-strategy / youtube-packaging)."
+description: "Use when wiring code to a real YouTube channel: user OAuth 2.0, resumable videos.insert uploads, editing metadata after publish, pulling views/watch time/retention/traffic from the Analytics API v2 into a dated 02-DOCS/wiki/youtube/ feedback log. NOT what to publish or how to title and thumbnail it (that is youtube-strategy / youtube-packaging)."
 tags: [youtube, youtube-data-api, youtube-analytics-api, oauth2, resumable-upload, video-metadata, audience-retention, channel-feedback-log]
 recommends: [social-publisher, api-connector-builder, automation-flows, knowledge-ops]
 origin: risco
@@ -17,31 +17,20 @@ YouTube has **two separate APIs** and you will touch both:
 
 Auth is **user OAuth 2.0, not a service account.** A human owns the channel; you act on their behalf with a refresh token. A service account cannot own a YouTube channel — if you reach for one, stop. (Service-account Google auth for Gmail/Drive/Sheets is `google-workspace`, a different model.)
 
-## When to use / When NOT
-
-Use when:
-
-- Wiring a script or agent to upload to a channel (`videos.insert`), set metadata, schedule a publish, or set a custom thumbnail.
-- Editing an existing video's title/description/tags/privacy after publish (`videos.update`).
-- Pulling channel or per-video stats: views, `estimatedMinutesWatched`, `averageViewPercentage`, the audience-retention curve, the traffic-source breakdown.
-- Building the recurring "fetch performance → write to `02-DOCS/wiki/youtube/`" loop that turns API responses into a channel feedback log.
-- Debugging `403 quotaExceeded`, `uploadLimitExceeded` (429), `401 invalid_credentials`, scope errors, or a refresh token that dies after a week.
-
-Do NOT use when (route to the sibling that owns it):
+Route elsewhere when the job is not transport:
 
 | You actually want | Go to |
 | --- | --- |
-| What videos to make / niche / cadence / growth plan | `youtube-strategy` *(catalog id)* |
-| Video ideas, hooks, a topic backlog | `youtube-ideation` *(catalog id)* |
-| Title + thumbnail packaging, CTR copy, A/B framing | `youtube-packaging` *(catalog id)* |
+| What videos to make / niche / cadence / growth plan | `../youtube-strategy/SKILL.md` |
+| Video ideas, hooks, a topic backlog | `../youtube-ideation/SKILL.md` |
+| Title + thumbnail packaging, CTR copy, A/B framing | `../youtube-packaging/SKILL.md` |
 | The thumbnail image itself | `../youtube-thumbnails/SKILL.md` |
 | Render/produce the actual video file in code | `../remotion-video/SKILL.md` |
 | Post one asset across many networks at once | `../social-publisher/SKILL.md` |
-| Wrap an arbitrary REST provider with OAuth + retries | `api-connector-builder` *(catalog id)* |
-| Chain upload → Notion row → Slack across tools | `automation-flows` *(catalog id)* |
-| Service-account auth to Gmail/Drive/Sheets | `google-workspace` *(catalog id)* |
-
-One line: **this skill authenticates, calls, and ingests the two YouTube APIs into the wiki. What to publish and how to package it belong to the youtube-strategy / youtube-ideation / youtube-packaging siblings.**
+| Wrap an arbitrary REST provider with OAuth + retries | `../api-connector-builder/SKILL.md` |
+| Chain upload → Notion row → Slack across tools | `../automation-flows/SKILL.md` |
+| Service-account auth to Gmail/Drive/Sheets | `../google-workspace/SKILL.md` |
+| Generic wiki structure and conventions | `../knowledge-ops/SKILL.md` |
 
 ## 1. One-time setup (do this before any code)
 
@@ -151,7 +140,7 @@ video_id = resp["id"]
 data.thumbnails().set(videoId=video_id, media_body=MediaFileUpload("ep14.jpg")).execute()
 ```
 
-Two separate limits, not one — and uploads no longer come out of the 10k unit pool. As of the official quota docs (Last updated 2026-06-01 UTC, `https://developers.google.com/youtube/v3/getting-started`), a project's default allocation is *"100 search.list calls, 100 videos.insert calls, and 10,000 units per day combined for all other endpoints."* So `videos.insert` has its **own dedicated cap of ~100 uploads/day**, charged against that allocation rather than spending ~1,600 units of the 10k pool like the older model. That ~100/day call cap is exactly what trips `uploadLimitExceeded` (429) while your 10k unit pool still looks untouched. Throttle the upload **count** against the 100/day allocation, not just the unit spend — space automated uploads out and back off on 429.
+Throttle the upload **count**, not the unit spend: `videos.insert` has its own cap of ~100 uploads/day, so `uploadLimitExceeded` (429) hits while the 10k unit pool still looks untouched. Space automated uploads out and back off on 429 — figures and citation in §7.
 
 ## 4. Edit metadata after publish
 
@@ -254,7 +243,7 @@ Rule: **append, never overwrite.** The feedback log *is* the value — overwriti
 | `*.list` read | 1–5 units (from the 10k pool) |
 | Analytics `reports.query` | (separate Analytics quota) |
 
-Per the official docs (Last updated 2026-06-01 UTC, `https://developers.google.com/youtube/v3/getting-started`; per-method costs at `https://developers.google.com/youtube/v3/determine_quota_cost`), a project's default allocation is **100 `search.list` calls + 100 `videos.insert` calls + 10,000 units/day combined for all other endpoints**. Uploads and search each draw on their *own* daily call cap; everything else (writes, reads) spends the shared 10k-unit pool. All quotas reset at midnight Pacific. This is a change from the older single-pool model where `videos.insert` cost ~1,600 units — confirm the live figure on the quota-cost page before relying on it, since Google notes the allocation "is subject to change."
+Per the official docs (Last updated 2026-06-01 UTC, `https://developers.google.com/youtube/v3/getting-started`; per-method costs at `https://developers.google.com/youtube/v3/determine_quota_cost`), a project's default allocation is *"100 search.list calls, 100 videos.insert calls, and 10,000 units per day combined for all other endpoints."* All quotas reset at midnight Pacific. This is a change from the older single-pool model where `videos.insert` cost ~1,600 units — confirm the live figure on the quota-cost page before relying on it, since Google notes the allocation "is subject to change."
 
 On `403 quotaExceeded` / `rateLimitExceeded` or `429`: **exponential backoff with jitter**, then stop for the day on a hard quota cap — retrying a daily-quota 403 in a tight loop just burns the next day too.
 
@@ -281,11 +270,3 @@ Error → cause map:
 | Treat the 10k unit pool as the upload budget | Uploads use a separate ~100/day call cap, so `uploadLimitExceeded` 429 hits with the pool untouched | Throttle upload count against the ~100/day cap |
 | Overwrite yesterday's wiki snapshot | Destroys the trend the siblings read | Append a new dated entry every pull |
 | Leave the app in "Testing" | Token silently dies in 7 days | Publish to "In production" |
-
-## Cross-references
-
-- `../youtube-thumbnails/SKILL.md` — the thumbnail image this skill only *sets*.
-- `../social-publisher/SKILL.md` — when the asset goes to many networks, not just YouTube.
-- `../remotion-video/SKILL.md` — produce the video file this skill uploads.
-- `youtube-strategy`, `youtube-ideation`, `youtube-packaging` *(catalog ids)* — what the numbers *mean* and what to do next.
-- `api-connector-builder`, `automation-flows`, `knowledge-ops` *(catalog ids)* — generic connector wrapping, cross-tool chaining, and wiki conventions.
