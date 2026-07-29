@@ -1,6 +1,6 @@
 ---
 name: rag
-description: "Use when building grounded Q&A over your own documents — handbook, support tickets, PDFs, policies — and the answers must come only from the corpus with citations; when retrieval surfaces the right document but the answer is still wrong; when the model invents facts that are not in the sources; when you need to measure whether retrieval is any good; when the right document is found but the wrong passage is used. Triggers: 'build a bot that answers from our docs with citations', 'my RAG returns the right document but the answer is wrong', 'how do I stop the model hallucinating facts not in the corpus', 'context recall vs context precision', 'add contextual retrieval / prepend chunk context before embedding', 'hybrid search plus rerank pipeline', 'respuestas con citas sobre nuestros documentos', 'el bot s'inventa coses que no surten als documents'. NOT operating the vector store itself — collection schema, HNSW ef_search, quantization (that is vector-db)."
+description: "Use when building grounded Q&A over your own corpus — chunk, retrieve hybrid, rerank, ground, cite chunk ids, refuse when the sources fall short — or when the right document is retrieved but the answer is still wrong, invented, or unmeasured. NOT operating the store itself — collection schema, HNSW ef_search, quantization (that is `vector-db`)."
 tags: [rag, retrieval-augmented-generation, chunking, hybrid-search, reranking, grounding, citations, faithfulness, contextual-retrieval]
 recommends: [vector-db, embeddings-search, document-processing, chatbot, agent-eval]
 origin: risco
@@ -8,15 +8,14 @@ origin: risco
 
 # rag — own the retrieve → rerank → ground → cite → refuse pipeline
 
-You own the **pipeline** that turns a corpus plus a question into a grounded, cited answer.
-You do **not** own the store underneath it (`../vector-db/SKILL.md`) nor the embedding and
-chunk-sizing science beside it (`embeddings-search`). Your job is the glue: chunk, optionally
-contextualize, index, retrieve hybrid, rerank, assemble a grounded prompt, cite the sources,
-and **refuse** when the context does not contain the answer.
+You own the **pipeline** that turns a corpus plus a question into a grounded, cited answer: chunk,
+optionally contextualize, index, retrieve hybrid, rerank, assemble a grounded prompt, cite the
+sources, and **refuse** when the context does not contain the answer.
 
 You are judged by **retrieval quality and answer faithfulness**, not by raw vector math. If you
-find yourself tuning HNSW parameters, you wandered into `vector-db`. If you are comparing
-embedding models or chunk sizes, that is `embeddings-search`.
+find yourself tuning HNSW parameters, you wandered into the store underneath you
+(`../vector-db/SKILL.md`). If you are comparing embedding models or chunk sizes, that is the
+science beside you (`embeddings-search`).
 
 ## The pipeline, and where each stage hands off
 
@@ -25,19 +24,21 @@ delegate to a sibling skill rather than living here.
 
 | Stage | What you do | Hands off to |
 |---|---|---|
-| Ingest | Get clean text out of PDFs/DOCX/HTML/OCR | `../document-processing/SKILL.md` |
-| Chunk | Heading/semantic-aware splits with overlap, stable ids | chunk-size science → `embeddings-search` |
+| Ingest | Get clean text out of PDFs/DOCX/HTML/OCR | you assume text exists → `../document-processing/SKILL.md` |
+| Chunk | Heading/semantic-aware splits with overlap, stable ids | model, dims + chunk-size science → `embeddings-search` |
 | Contextualize | Prepend an LLM-written context blurb per chunk (optional) | stays here |
-| Index | Embed + write dense vectors and a BM25/keyword index | the store → `../vector-db/SKILL.md` |
+| Index | Embed + write dense vectors and a BM25/keyword index | you upsert, it owns the knobs → `../vector-db/SKILL.md` |
 | Retrieve | Hybrid dense + BM25, fuse with RRF, top ~150 | hybrid query mechanics → `../vector-db/SKILL.md` |
 | Rerank | Cross-encoder over the 150, keep top ~20 | stays here |
 | Ground + cite | System prompt: answer only from context, cite chunk ids | stays here |
 | Refuse | Output "I don't have enough information" on weak context | stays here |
 | Evaluate | Faithfulness, answer relevancy, context precision/recall | general harness → `agent-eval` |
 
-Surfacing this answer inside a chat product (sessions, channels, UI) is `../chatbot/SKILL.md`;
-pulling schema-constrained fields out of text is `structured-extraction`. `rag` is the
-retrieval brain those products call.
+Three neighbors are not stages at all. Surfacing this answer inside a chat product (sessions,
+channels, UI) is `../chatbot/SKILL.md` — it calls you, not the reverse. A multi-step tool loop with
+state, where retrieval is one tool among many, is `../building-agents/SKILL.md`. Pulling
+schema-constrained fields out of text instead of a grounded prose answer is
+`structured-extraction`. `rag` is the retrieval brain those products call.
 
 ## Retrieval is the bottleneck — measure recall before touching the prompt
 
@@ -87,8 +88,8 @@ def chunk_markdown(doc_id, text, target=800, overlap=120):
     return out
 ```
 
-For the deep "what window/overlap maximizes recall for *this* corpus" study, that is
-`embeddings-search`. Here you just need structurally sane chunks that keep their ids.
+The "what window/overlap maximizes recall for *this* corpus" study is `embeddings-search`; here you
+just need structurally sane chunks that keep their ids.
 
 ## Contextual retrieval — prepend context before you embed
 
@@ -107,7 +108,8 @@ document for search retrieval. Answer only with the context, nothing else.
 ```
 
 Embed `context + "\n" + chunk_text` (not the bare chunk). The full implementation — caching the
-document prompt, batching, the BM25 side — lives in `references/pipeline.md`.
+document prompt, batching, the BM25 side, and a runnable retrieve → rerank → answer skeleton —
+lives in `references/pipeline.md`.
 
 ## Hybrid retrieval + RRF + rerank
 
@@ -144,8 +146,8 @@ top = [candidates[r.index] for r in ranked.results]  # each still carries chunk_
 
 Properly grounded RAG reduces hallucination rates by up to ~71%; poorly grounded pipelines still
 hallucinate in up to ~40% of responses *even with the right doc retrieved* (Confident AI / Maxim
-2025, accessed 2026-06-02). The prompt must do three non-negotiable things: bind the answer to
-the context, force inline citations, and provide an explicit refusal path.
+2025, accessed 2026-06-02). The prompt must do three things: bind the answer to the context, force
+inline citations, and provide an explicit refusal path.
 
 ```text
 You answer ONLY using the information inside <context>. Do not use prior knowledge.
@@ -205,22 +207,3 @@ the RAG-specific metrics live here.
 | Embedding the query differently from the corpus | Query and chunks land in different spaces | Same model + same preprocessing both sides |
 | Dense-only, ignoring BM25/keyword | Misses exact codes/names/error strings | Hybrid dense + BM25 fused with RRF |
 | Tuning temperature to fix wrong answers | Generation is rarely the bottleneck | Measure context recall first |
-
-## Wiring map
-
-- **Ingestion (file → text, OCR, tables):** `../document-processing/SKILL.md` — you assume text
-  already exists; send raw PDFs/DOCX/scans there first.
-- **The store (collection, index, hybrid query, quantization):** `../vector-db/SKILL.md` — you
-  call it to upsert and query; it owns the knobs.
-- **Embedding model + chunk-size science:** `embeddings-search` — picking the model, dims,
-  cost, and the semantic-vs-fixed chunking experiments.
-- **Chat product surface (sessions, channels, UI):** `../chatbot/SKILL.md` — wraps the answer
-  you return; it calls you, not the reverse.
-- **Multi-step tool/agent loop with state:** `../building-agents/SKILL.md` — when retrieval is
-  one tool among many in a larger loop.
-- **General eval framework:** `agent-eval` — RAG-specific metrics are here; the harness is there.
-- **Schema-constrained field extraction:** `structured-extraction` — when the goal is fields,
-  not a grounded prose answer.
-
-See `references/pipeline.md` for the full runnable retrieve → rerank → answer skeleton and
-`references/evaluation.md` for the metric formulas, thresholds, and CI gate.
