@@ -1332,7 +1332,7 @@
     },
     {
       "id": "domains-dns",
-      "description": "Use when pointing a custom domain at a host, fixing broken HTTPS, choosing apex vs www, or publishing DNS rows — registering/delegating a name, writing A/AAAA/CNAME/ALIAS/MX/TXT/CAA/SRV records, standing up auto-renewing TLS, or cutting nameservers over without downtime. Triggers: 'point example.com at Vercel', 'set up DNS for the domain', 'NET::ERR_CERT_AUTHORITY_INVALID', 'CNAME flattening / ALIAS at the apex', 'dig +trace still shows the old IP', 'need a CAA record for Let's Encrypt', 'publish the SPF/DKIM/DMARC/MX rows', 'apuntar el dominio', 'el certificado caducó y no renueva', 'configurar els registres DNS'. NOT inbox placement / warmup / spam-rate tuning (that is email-deliverability), NOT what runs behind the name (that is deployment).",
+      "description": "Use when pointing a domain at a host or fixing broken HTTPS — delegating nameservers, writing A/AAAA/CNAME/ALIAS/MX/TXT/CAA rows, apex vs www, standing up auto-renewing TLS, and cutting nameservers over without downtime. NOT inbox placement or warmup (that is `email-deliverability`), NOT what runs behind the name (that is `deployment`).",
       "tags": [
         "dns",
         "tls",
@@ -1356,7 +1356,7 @@
     },
     {
       "id": "drizzle-orm",
-      "description": "Use when modeling data or querying with Drizzle ORM in TypeScript — schema declared in `.ts`, type-safe `select`/`insert`/relational queries, and `drizzle-kit` migrations, or when choosing Drizzle over Prisma for an edge/serverless runtime. Triggers: 'set up Drizzle ORM', 'drizzle-kit generate', 'write a pgTable schema', '$inferSelect type', 'drizzle push vs generate for production', 'my db.query.posts.findMany returns no author relation', 'drizzle-kit conflicting migration', 'switch off Prisma to something lighter for edge', 'definir l esquema amb Drizzle i tipus type-safe', 'migrar de Prisma a Drizzle para algo más ligero', 'migració amb drizzle-kit'. NOT Prisma Client or schema.prisma (that is prisma-orm), NOT a generic zero-downtime migration strategy (that is db-migrations), NOT Postgres engine/indexing/EXPLAIN (that is postgresdb).",
+      "description": "Use when modeling data or querying with Drizzle ORM in TypeScript — `pgTable` schema in `.ts`, type-safe select/insert/relational queries, `drizzle-kit` migrations. NOT Prisma Client or `schema.prisma` (that is `prisma-orm`), NOT ORM-agnostic migration strategy (that is `db-migrations`), NOT Postgres engine tuning or EXPLAIN (that is `postgresdb`).",
       "tags": [
         "drizzle",
         "drizzle-orm",
@@ -1382,7 +1382,7 @@
     },
     {
       "id": "duckdb",
-      "description": "Use when you need fast analytical SQL over local files (Parquet/CSV/JSON/Arrow) with no server to run, when embedding OLAP in an app or notebook, when a pandas groupby/merge on multi-GB data is too slow, or when reading data straight from S3/HTTP/a lakehouse. Triggers: 'query a folder of parquet files in place', 'aggregate a 5GB CSV on my laptop', 'replace this slow pandas groupby', 'run SQL over a dataframe in Jupyter', 'read these parquet files from S3 without downloading', 'out-of-core aggregate', 'analizar un CSV enorme sin montar un servidor', 'consultar parquet en local sense base de dades'. NOT a multi-user production analytics server (that is clickhouse-analytics), NOT your app's transactional CRUD database (that is postgresdb).",
+      "description": "Use when analytical SQL must run in-process with no server: Parquet/CSV/JSON/Arrow queried in place, OLAP embedded in an app or notebook, a slow pandas groupby on multi-GB data, or S3/lakehouse data read without downloading. NOT a multi-user analytics server (that is clickhouse-analytics), NOT an app's transactional CRUD store (that is postgresdb).",
       "tags": [
         "duckdb",
         "olap",
@@ -1404,7 +1404,7 @@
     },
     {
       "id": "dynamodb",
-      "description": "Use when designing or operating an Amazon DynamoDB table - modeling entities and relationships without joins, choosing partition/sort keys, deciding single-table vs table-per-entity, adding a GSI/LSI, picking on-demand vs provisioned capacity, or diagnosing throttling. Triggers: 'design a DynamoDB table', 'model one-to-many / many-to-many without joins', 'single-table design worth it?', 'query the same data by two different keys' (inverted GSI), 'writes throttled even though I'm under my provisioned capacity' (hot partition), 'on-demand or provisioned?', 'why does my Query only return some rows?' (1 MB page), 'diseña la tabla DynamoDB para estos patrones de acceso', 'modela aquesta relació amb clau composta a DynamoDB'. NOT relational schema / SQL / EXPLAIN / B-tree indexing (that is postgresdb), and NOT document modeling with aggregation pipelines (that is mongodb).",
+      "description": "Use when modeling or operating a DynamoDB table: deriving partition/sort keys from access patterns, single-table vs table-per-entity, adding a GSI/LSI, on-demand vs provisioned capacity, or diagnosing hot-partition throttling. NOT relational schema/SQL/EXPLAIN (that is `postgresdb`), NOT aggregation-pipeline document modeling (that is `mongodb`).",
       "tags": [
         "dynamodb",
         "nosql",
@@ -1425,7 +1425,7 @@
     },
     {
       "id": "e-signature",
-      "description": "Use when adding legally-valid electronic-signature flows to documents — sending a PDF or template for signature, embedding signing in your own app, tracking status, verifying signing webhooks, and retrieving the signed PDF plus its audit trail via DocuSign or Dropbox Sign. Triggers: 'send this contract for signature', 'create a DocuSign envelope', 'signature_request/send', 'embed signing in our app', 'notify us when it's signed', 'set up DocuSign JWT auth', 'is a typed-name signature legally binding?', 'do we need QES for EU customers?', 'enviar a firmar', 'firma electrònica amb validesa legal'. NOT drafting the contract text itself (that is contracts) and NOT OCR/parsing/extracting fields from documents (that is document-processing).",
+      "description": "Use when wiring an e-signature flow with DocuSign or Dropbox Sign — picking the SES/AES/QES legal tier, sending a PDF or template for signature, embedded signing, verifying signing webhooks, retrieving the signed PDF plus audit trail. NOT drafting contract text (that is `contracts`), NOT extracting fields from PDFs (that is `document-processing`).",
       "tags": [
         "e-signature",
         "docusign",
@@ -1467,7 +1467,7 @@
     },
     {
       "id": "electron",
-      "description": "Use when building, hardening, or shipping a cross-platform desktop app with Electron — wiring the main/renderer/preload process model, exposing OS capabilities to a web UI over typed IPC, locking down an insecure shell, or packaging with code signing and auto-update. Triggers: 'build a desktop app for Mac/Windows/Linux from my web app', 'let my renderer read a file safely', 'audit my Electron security (nodeIntegration, sandbox, CSP)', 'my preload exposes ipcRenderer and the renderer can require(\\\"fs\\\")', 'Squirrel.Mac won\\\\'t auto-update my app', 'migrate off @electron/remote and BrowserView', 'empaquetar mi app de escritorio para Windows y Mac con firma de código y auto-actualización', 'empaquetar app d\\\\'escriptori amb auto-actualització'. NOT a smaller Rust-backed shell on the OS native webview (that is tauri).",
+      "description": "Use when building, hardening, or shipping a cross-platform Electron desktop app — main/renderer/preload process model, typed contextBridge IPC, locking down nodeIntegration/contextIsolation/sandbox/CSP, or packaging with signing and auto-update. NOT a Rust-backed shell on the native webview (that is tauri), nor the web UI inside it (that is react).",
       "tags": [
         "electron",
         "desktop",
@@ -1488,7 +1488,7 @@
     },
     {
       "id": "elixir",
-      "description": "Use when writing or refactoring Elixir/OTP code — GenServers, supervision trees, processes, pattern matching, mix projects and releases — or when BEAM behaviour misbehaves (restart loops, mailbox growth, timeouts). Triggers: 'write a GenServer', 'design a supervision tree', 'restart strategy one_for_one', 'let it crash instead of try/rescue', 'mix release for production', non-obvious 'my process mailbox keeps growing', 'GenServer call timeout / restart loop', Catalan 'arbre de supervisio en Elixir / processos que peten', Spanish 'arbol de supervision / procesos en Elixir / que es let it crash'. NOT building a Phoenix web app, LiveView, Ecto schemas, controllers or channels (that is phoenix).",
+      "description": "Use when writing or refactoring Elixir/OTP on the BEAM — GenServers, supervision trees and restart strategies, pattern matching, mix projects and releases — or when processes misbehave (restart loops, mailbox growth, call timeouts). NOT a Phoenix web app, LiveView, Ecto or channels (that is `phoenix`).",
       "tags": [
         "elixir",
         "otp",
@@ -1530,7 +1530,7 @@
     },
     {
       "id": "email-deliverability",
-      "description": "Use when mail you send lands in spam, gets rejected, or fails the Gmail/Yahoo bulk-sender checks, and you must fix authentication and reputation rather than the sending code — setting SPF/DKIM/DMARC DNS records so they align, raising a cold domain through warmup, keeping the spam-complaint rate under threshold, adding one-click unsubscribe, getting the brand logo and verified checkmark to show via BIMI, and reading why 'soft' rejections and Postmaster Tools say you are throttled. Triggers: 'our emails go to spam since the Gmail update', 'DMARC fails even though SPF passes', 'how do I warm up a new sending domain', 'do I need one-click unsubscribe to send to gmail', '550 5.7.26 unauthenticated', 'how do I get our logo and the blue checkmark to show in Gmail with BIMI', 'los correos caen en spam y el SPF está bien', 'configurar BIMI i el logo verificat al correu'. NOT putting transactional/bulk email on the wire through a provider API (that is email-connector).",
+      "description": "Use when mail already sent lands in spam, is rejected, or fails the Gmail/Yahoo bulk-sender checks and the fix is authentication and reputation, not the sending code: SPF/DKIM/DMARC alignment, domain warmup, spam-complaint rate, one-click unsubscribe, BIMI. NOT putting mail on the wire through a provider API (that is `email-connector`).",
       "tags": [
         "email",
         "deliverability",
@@ -1552,7 +1552,7 @@
     },
     {
       "id": "embeddings-search",
-      "description": "Use when results from a semantic search feel irrelevant, when you don't know which embedding model or chunk size to use, when you need to add a reranker or hybrid scoring, or when you have no way to tell whether a retrieval change actually helped. Symptoms: search returns garbage, exact-match queries miss, paraphrases work but keywords don't, recall looks fine but the top result is wrong, every chunking idea is a guess. Triggers: 'which embedding model and chunk size should I use', 'my semantic search returns irrelevant results', 'how do I measure if retrieval is good — recall@k, nDCG', 'add a reranker and hybrid BM25+vector', 'exact product codes return nothing but paraphrases work fine', 'recall@k is fine but the top answer is wrong', 'quin model d'embeddings i quina mida de chunk faig servir per a aquests documents', 'la cerca semàntica retorna resultats irrellevants'. NOT operating the vector store (that is vector-db).",
+      "description": "Use when choosing an embedding model, chunk size, or query form, when semantic search returns irrelevant results, when adding hybrid BM25+vector or a reranker, or when a retrieval change needs a number (recall@k, nDCG, MRR). NOT operating the store — index tuning, quantization (that is `vector-db`) — nor the retrieve-to-answer loop (that is `rag`).",
       "tags": [
         "embeddings",
         "semantic-search",
@@ -1598,7 +1598,7 @@
     },
     {
       "id": "expo",
-      "description": "Use when building, shipping, or hot-patching a React Native app with Expo — EAS Build/Submit/Update, eas.json build profiles, config plugins, prebuild/CNG, the managed workflow, confirming you are on the New Architecture (mandatory since SDK 55). Triggers: 'eas build', 'eas.json', 'config plugin', 'expo prebuild', 'my OTA update isn't showing up on devices', 'runtime version mismatch', 'how do I add a permission without editing Xcode/Gradle', 'newArchEnabled is gone from app.json', 'com publico una actualització OTA sense passar per la store', 'subir la app a la Play Store con EAS'. NOT generic React Native components/navigation/native-module authoring (that is react-native), NOT a Dart mobile app (that is flutter).",
+      "description": "Use when shipping a React Native app with Expo — EAS Build/Submit/Update, eas.json profiles and channels, config plugins, prebuild/CNG, runtime-version policy, OTA updates that never land, SDK upgrades, the New Architecture. NOT RN UI, navigation or native-module authoring (that is `react-native`), NOT a Dart app (that is `flutter`).",
       "tags": [
         "expo",
         "eas",
@@ -1641,7 +1641,7 @@
     },
     {
       "id": "fal",
-      "description": "Use when calling a fal.ai model endpoint by id to generate an image, audio, or video from JS/Python/curl, wiring the queue (subscribe vs submit), receiving results by webhook and verifying the ED25519 signature, estimating per-call cost, or migrating off the deprecated @fal-ai/serverless-client. Use when a fal request is stuck IN_QUEUE, a webhook never arrives or its signature won't verify, or a long video gen drops mid-call. Triggers: 'generate an image with fal-ai/flux/dev', 'subscribe vs submit on fal', 'my fal webhook signature won't verify', 'fal request stuck IN_QUEUE', 'how much will 500 Seedream images cost on fal', 'migrate off @fal-ai/serverless-client', 'genera esta imagen con fal y guarda la URL', 'munta el webhook de fal i verifica la firma'. NOT picking the model or art direction (that is ai-media).",
+      "description": "Use when calling a fal.ai endpoint by id to generate image, audio, or video from JS/Python/curl: subscribe vs submit, queue states, ED25519 webhook signature verification, per-call cost, or migrating off @fal-ai/serverless-client. NOT which model or art direction (that is ai-media); NOT the same models on another platform (that is replicate).",
       "tags": [
         "fal",
         "fal-ai",
@@ -1680,7 +1680,7 @@
     },
     {
       "id": "finance-ops",
-      "description": "Use when running the money side of a small company on a cash basis — building a rolling cash-flow forecast, reconciling the bank against the books, fixing a messy expense-category map, or driving a month-end close. Triggers: 'are we going to run out of cash', 'what's our runway', '13-week cash flow forecast', 'reconcile the bank statement', 'these two numbers don't match', 'the ending balance doesn't roll into next week', 'everything landed in Other expenses', 'close the books for May', 'what's our burn this month', 'tancar el mes', 'conciliar el banc amb els llibres', 'cuánto runway nos queda al ritmo actual'. NOT recording journal entries or payroll/depreciation postings (that is bookkeeping).",
+      "description": "Use when running the money side of a small company on a cash basis: a 13-week rolling cash-flow forecast and runway, bank-vs-books reconciliation, mapping spend to tax-return expense categories, or a month-end close. NOT posting journal entries, payroll or depreciation (that is `bookkeeping`); NOT multi-year projections (that is `financial-model`).",
       "tags": [
         "cash-flow",
         "reconciliation",
@@ -1702,7 +1702,7 @@
     },
     {
       "id": "financial-model",
-      "description": "Use when a founder needs the multi-period, driver-based projection that raises a round and steers the company — build 3-year projections, model revenue + costs + headcount + runway, size the raise, or stress-test scenarios. Triggers: 'build a financial model for our seed', 'model our revenue costs and runway', 'when do we run out of cash', 'how much should we raise to get 24 months', 'what runway does $2M buy us', 'model the hiring plan's effect on burn', 'add a downside scenario if we miss plan by 30%', 'modelo financiero a 3 años', 'cuánto runway nos da la ronda', 'model financer i projeccions', 'quant de pista de despegament'. The engine is assumptions → revenue/cost/headcount builds → cash/burn/runway/scenarios, 18–36 months forward, every output a formula. NOT the next-13-weeks liquidity reconciled to the actual bank balance (that is finance-ops), NOT the isolated LTV/CAC math (that is unit-economics, which this model consumes as drivers), NOT the slide story (that is pitch-deck).",
+      "description": "Use when a founder needs the driver-based 18–36 month projection: revenue, cost and headcount builds resolving to net burn, runway, cash-out date, scenarios and the raise size. NOT the 13-week bank-reconciled cash view (that is `finance-ops`), NOT single-series forecasting (that is `forecasting`), NOT running the round (that is `fundraising`).",
       "tags": [
         "financial-model",
         "projections",
@@ -1725,7 +1725,7 @@
     },
     {
       "id": "finetuning",
-      "description": "Use when adapting an open-weight model to a target FORM or BEHAVIOR — tone, output format, domain style, a reasoning/tool-calling pattern — via LoRA/QLoRA or full fine-tuning with TRL SFTTrainer and then preference optimization (DPO/ORPO/KTO/GRPO); when choosing fine-tune vs prompt vs RAG vs longer context; when setting LoRA r/alpha/target_modules; when eval loss climbs while train loss keeps falling; when the adapter seems to have learned nothing; when inference outputs garbage after a run. Triggers: 'fine-tune Llama/Qwen on our data', 'LoRA vs QLoRA vs full fine-tune', 'SFT then DPO/ORPO/KTO/GRPO', 'set target_modules / rank / alpha', 'my fine-tune overfits', 'the model forgot everything after training', 'write a GRPO reward function', 'ajustar un modelo amb LoRA amb les nostres dades'. NOT adding facts or fresh knowledge to a model (that is rag); NOT the fast single-GPU Unsloth backend or GGUF export (that is unsloth); NOT serving the trained model (that is vllm).",
+      "description": "Use when adapting an open-weight model to a target form or behavior — tone, output format, reasoning pattern — via LoRA/QLoRA or full fine-tuning with TRL SFTTrainer, then preference optimization (DPO/ORPO/KTO/GRPO), and for fine-tune vs prompt vs RAG. NOT adding facts to a model (that is rag); NOT the single-GPU Unsloth backend or GGUF export (that is unsloth).",
       "tags": [
         "finetuning",
         "lora",
@@ -1749,7 +1749,7 @@
     },
     {
       "id": "firebase",
-      "description": "Use when building on Firebase — modeling Firestore data, writing or auditing Security Rules, wiring Auth, shipping Cloud Functions, storing files in Cloud Storage, or choosing modular Web/Admin SDK imports — and when symptoms appear like 'my database is open to the internet', 'rules reject my query', a counter stuck at 1 write/sec, custom-claim RBAC, or a callable function. Triggers: 'firestore.rules audit', 'denormalize for read paths', 'collection vs subcollection', 'my query works in the emulator but fails in prod with requires-an-index', 'set a custom admin claim', 'regles de seguretat de Firestore', 'mi base de datos está abierta a internet'. NOT managed-Postgres BaaS with SQL and RLS (that is supabase).",
+      "description": "Use when building on Firebase — Firestore data modeling, Security Rules, Auth and custom claims, Cloud Functions, Storage, modular Web/Admin SDK imports — including symptoms like a database open to the internet, a query rejected by rules, or a doc stuck at ~1 write/sec. NOT managed-Postgres BaaS with SQL and RLS (that is supabase).",
       "tags": [
         "firebase",
         "firestore",
@@ -1783,7 +1783,7 @@
     },
     {
       "id": "fly-io",
-      "description": "Use when deploying or operating an app on Fly.io — writing fly.toml, running Machines across regions near users, attaching Volumes, managing secrets, or scaling (autostop/autostart, scale count, fly-replay). Triggers: 'fly deploy', 'fly launch', 'desplega a Fly.io a prop dels usuaris', 'users in Sydney see high latency but my app only runs in iad', 'scale my Fly app to zero overnight', 'attach a persistent disk to my Fly machine', 'forward writes to the primary region'. NOT a generic git-push PaaS (that is railway), NOT frontend edge hosting (that is vercel).",
+      "description": "Use when deploying or operating an app on Fly.io — writing fly.toml, placing Machines in regions near users, attaching Volumes, managing secrets, or picking a scaling lever (autostop/autostart, scale count, fly-replay). NOT choosing which host to deploy on (that is `deployment`), NOT a git-push PaaS with no regions model (that is `railway`).",
       "tags": [
         "fly-io",
         "deployment",
@@ -1822,7 +1822,7 @@
     },
     {
       "id": "fundraising",
-      "description": "Use when planning or running an equity fundraising round and you need the STRATEGY and PROCESS, not a single document — sizing the raise to a milestone, choosing post-money SAFE vs priced round, building and tiering the investor target list around intro paths, sequencing outreach to manufacture momentum, managing the diligence pipeline, or reading a term sheet to know what to push on before you sign. Triggers: 'plan our seed raise', 'how much should we raise and on what terms', 'SAFE or priced round, what cap', 'build my investor target list', 'how many investors do I actually need to contact', 'we have meetings but no term sheet — the raise stalled', 'got a term sheet, what do I push back on', 'planifica la ronda seed', 'cuántos inversores tengo que contactar', '¿SAFE o ronda con precio?', 'planifiquem la ronda d'inversió'. NOT the slide-deck narrative (that is pitch-deck) and NOT the cap-table/valuation math (that is financial-model).",
+      "description": "Use when planning or running an equity round as a process: sizing the raise to a milestone, choosing post-money SAFE vs priced round, tiering investors by intro path, sequencing outreach for momentum, or reading a term sheet before signing. NOT the slide narrative (that is `pitch-deck`), NOT the cap-table or valuation math (that is `financial-model`).",
       "tags": [
         "fundraising",
         "seed",
@@ -1845,7 +1845,7 @@
     },
     {
       "id": "game-design",
-      "description": "Use when designing or repairing the design of a game — inventing mechanics and systems, shaping the core loop, layering moment-to-moment / session / meta loops, planning progression, economy, currencies and sinks/faucets, tuning difficulty curves and balance, killing dominant strategies, adding 'juice'/game feel as design intent, prototyping and playtesting, or controlling scope, and especially when the ask is 'why isn't my game fun'. Triggers: 'design the core loop', 'my game isn't fun / doesn't hook', 'balance the economy', 'the difficulty curve feels off', 'players found a dominant strategy', 'how do I scope this', 'reward / progression loop', 'diseñar la mecánica', 'el juego no engancha', 'com equilibro l'economia'. NOT writing engine code, scripts or shaders (route to godot/unity/unreal), NOT narrative, dialogue or story beats (route to game-storytelling), NOT level layout or encounter placement (route to level-design).",
+      "description": "Use when designing or repairing what makes a game fun — verbs and mechanics, moment-to-moment/session/meta loops, progression, economy faucets and sinks, difficulty curves, dominant strategies, juice, prototyping and scope. NOT engine code (that is `godot`), NOT story (that is `game-storytelling`), NOT level layout (that is `level-design`).",
       "tags": [
         "game-design",
         "mechanics",
