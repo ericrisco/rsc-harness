@@ -1,6 +1,6 @@
 ---
 name: llm-pipeline
-description: "Use when wiring several LLM calls into one production flow, when random 429s/timeouts/provider outages take a feature down, when adding a fallback model or a gateway in front of OpenAI/Claude, or when the bill explodes from uncached or flagship-everywhere calls. Triggers: 'chain these LLM calls', 'step 1 extracts step 2 summarizes', 'add a fallback if GPT fails use Claude', 'route easy requests to Haiku escalate to Opus', 'put a LiteLLM gateway in front', 'our bill tripled because we re-call the model on every request', 'semantic cache the responses', 'encadenar llamadas y cachear respuestas', 'cadena de crides a l'LLM amb fallback'. NOT prompt wording (that is prompt-engineering)."
+description: "Use when wiring several LLM calls into a production flow: typed contracts between steps, a router/gateway so 429s, timeouts and outages fail over instead of taking you down, and cost control via caching, model tiers and abort caps. NOT single-prompt wording (that is `prompt-engineering`), NOT a model-driven tool loop (that is `building-agents`)."
 tags: [llm-orchestration, llm-gateway, fallbacks, prompt-caching, cost-control, litellm, reliability]
 recommends: [prompt-engineering, structured-extraction, building-agents, cost-tracking, agent-eval, rag, observability, parallel]
 origin: risco
@@ -10,14 +10,7 @@ origin: risco
 
 Wire multiple LLM calls into a reliable, controllable production pipeline. You chain steps where one call's validated output feeds the next, put a router in front of providers so an outage fails over instead of taking you down, and engineer the cross-cutting concerns: timeouts, bounded retries, fallbacks, caching, and cost caps.
 
-## Core stance
-
-Treat the LLM as an unreliable network dependency, not a local function call. Everything below follows from that.
-
-- **Every call gets a hard timeout and bounded retries.** Providers have outages, rate limits, and latency tails; a naked call can hang your whole request behind one slow upstream.
-- **Steps pass validated structured objects, not free text.** The output of step N is a contract you assert on before it becomes step N+1's input — a parse failure is caught at the seam, not three steps later.
-- **A router sits in front of every provider.** One model's 429/500/timeout fails over to another; no single provider is a single point of failure.
-- **Cache and tier before you tune prompts.** The cheapest, fastest, most reliable call is the one you never made. Prompt wording is the last lever, not the first.
+Treat the LLM as an unreliable network dependency, not a local function call. Every rule below follows from that: providers have outages, rate limits, and latency tails, so no single provider is a single point of failure and no call is allowed to run unbounded.
 
 ## Do you even need a pipeline?
 
@@ -115,6 +108,8 @@ except Exception:
 ```
 
 ## Caching: two distinct layers
+
+The cheapest, fastest, most reliable call is the one you never made — so cache and tier before you tune prompts. Wording is the last lever, not the first.
 
 | Layer | What it matches | Safety | Enable when |
 | --- | --- | --- | --- |
