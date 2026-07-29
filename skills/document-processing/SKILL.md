@@ -1,6 +1,6 @@
 ---
 name: document-processing
-description: "Use when you need to get content out of a document or build a document out of data — extracting text/tables from PDFs, filling interactive PDF forms (AcroForm), generating PDF/DOCX from templates, or OCR'ing scanned/image-only files into Markdown/JSON. Triggers: 'extract the line items from this invoice PDF', 'fill this PDF form and flatten it', 'generate a contract DOCX from this template', 'this scan has no text layer', 'the PDF copies out as garbage symbols', 'merge/split/rotate these PDFs', 'OCR 300 scanned pages', 'rellena este formulario PDF y fusiónalos', 'extreu les taules d'aquesta factura escanejada'. NOT pulling schema-typed fields out of text (that is structured-extraction), NOT sending it for signature (that is e-signature), NOT reading spreadsheet cells/formulas (that is spreadsheet-ops)."
+description: "Use when the deliverable is a document's bytes or its literal content — text/tables out of PDFs, AcroForm fill and flatten, page merge/split, PDF/DOCX from templates, OCR of image-only scans. NOT schema-typed fields pulled from text (that is structured-extraction), NOT signature routing (e-signature) or spreadsheet cells/formulas (spreadsheet-ops)."
 tags: [pdf, ocr, docx, forms, extraction, document-ai]
 recommends: [structured-extraction, e-signature, spreadsheet-ops, rag, data-scraper]
 origin: risco
@@ -15,7 +15,7 @@ The boundary test, apply it first:
 - Deliverable is **raw text / Markdown / table cells / a generated file** → you are in the right place.
 - Deliverable is **a typed object matching a schema** (`{parties: [...], total: 1234.50}`) → that is `structured-extraction`. This skill stops at "clean Markdown out of the file"; the schema-constrained extraction runs on that Markdown.
 
-Everything else routes too: signing → `e-signature`, spreadsheet grids/formulas → `spreadsheet-ops`, indexing for Q&A → `rag`, downloading the files off a site → `data-scraper`.
+Everything else routes too: signing with an audit trail → `e-signature`, spreadsheet grids/formulas/XLSX-as-data → `spreadsheet-ops`, indexing for cross-document Q&A → `rag` (this skill *produces* the text `rag` ingests, it does not index it), downloading the files off a site → `data-scraper`.
 
 ## Step 0 — does the PDF have a text layer?
 
@@ -42,15 +42,13 @@ If `extract_text()` returns empty (or near-empty) across the first few pages, it
 | Goal | Use | Why |
 |---|---|---|
 | Extract text + tables with layout | **pdfplumber** | Layout-aware; `extract_tables()` returns rows/cols as Python lists → pandas/CSV. |
-| Raw text, merge, split, rotate, page ops | **pypdf** (6.12.2) | Pure-Python, no C deps, runs in Lambda/containers; the maintained core. |
+| Raw text, merge, split, rotate, page ops | **pypdf** (6.12.2) | Pure-Python, no C deps, runs in Lambda/containers; the maintained core — import `pypdf`, never the dead `PyPDF2`, which was merged back into it. |
 | Fill an interactive PDF form | **pypdf** | `update_page_form_field_values` writes AcroForm fields; can flatten. |
 | Generate a Word/DOCX from a template | **docxtpl** (0.20.x) | A real `.docx` becomes a Jinja2 template; author in Word, tag, render. |
 | Generate a PDF from scratch | **ReportLab** | Canvas / Platypus flowables for laid-out PDFs. |
 | OCR a scan, local / no API budget | **Docling** (or Marker) | Layout + reading order + table structure, fully local, wraps Tesseract/RapidOCR. |
 | OCR messy scans / handwriting / hard tables, API ok | **Mistral OCR** | `mistral-ocr-2512` (OCR 3), ~$2 / 1,000 pages, tuned for forms + handwriting. |
 | Fastest extract / easiest page→PNG raster | **PyMuPDF** ⚠️ **AGPL** | Fast, but AGPL: shipping it imposes an open-source obligation or needs a paid license. Flag this before recommending. |
-
-Rule: use the maintained **`pypdf`** import, never the dead `PyPDF2` — `PyPDF2` is unmaintained and was merged back into `pypdf`. Importing it is a signal of stale code.
 
 ## Extraction recipes
 
@@ -128,7 +126,7 @@ with open("filled.pdf", "wb") as f:
     writer.write(f)
 ```
 
-Why `auto_regenerate=False`: it defaults to `True` for legacy reasons, which marks the AcroForm dirty and triggers a "you have unsaved changes" prompt when the user opens the PDF. You almost never want that. Checkbox/radio values are the field's `/V` on-state (often `/Yes`), not `True` — read the field to find it.
+`auto_regenerate` defaults to `True` for legacy reasons, and you almost never want it. Checkbox/radio values are the field's `/V` on-state (often `/Yes`), not `True` — read the field to find it.
 
 ## Generation
 
@@ -191,15 +189,9 @@ markdown = "\n\n".join(p.markdown for p in resp.pages)
 
 **Never trust OCR output blind.** OCR confuses `0/O`, `1/l/I`, and drops or shifts decimal points — a `1.234,50` can come back as `1234,50` or `1,234.50`. Always spot-check totals, dates, and ID numbers against the rendered page before you hand the text downstream. For clean scans with no budget, plain `pytesseract` is the zero-cost baseline, but it is weak on layout/tables versus the pipelines above.
 
-## Scale and handoff
+## Scale
 
 Batch jobs: parallelize per-file, cap concurrency on the hosted API (rate limits + cost), and use Mistral's Batch API for the 50% discount on large runs. Engine install matrix, exact version pins, the full licensing table, the Docling-vs-Marker-vs-Mistral feature/cost comparison, and troubleshooting (encrypted PDFs, mangled AcroForm field names, multi-column reading order, CJK/handwriting) live in `references/engines.md` — read it before a non-trivial install.
-
-Handoffs:
-- Need typed fields (`{total, due_date, parties}`) out of the Markdown you produced → `structured-extraction`.
-- Need to route the finished PDF for signature with an audit trail → `e-signature`.
-- The grid is really a spreadsheet (cells, formulas, XLSX as data) → `spreadsheet-ops`.
-- Need to index the extracted text for cross-document Q&A → `rag`. This skill *produces* the text `rag` ingests; it does not index it.
 
 ## Anti-patterns
 
