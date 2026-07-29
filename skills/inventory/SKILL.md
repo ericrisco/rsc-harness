@@ -1,6 +1,6 @@
 ---
 name: inventory
-description: "Use when deciding how much stock to hold and when to reorder it — classifying SKUs, sizing safety stock, setting reorder points and order quantities, and tracking inventory KPIs so a business neither stocks out nor sits on dead stock. Triggers: 'what should my reorder point be', 'how much safety stock', 'run an ABC analysis', 'set up min/max levels', 'should I review weekly or continuously', 'we keep running out of X while sitting on a year of Y', 'too much cash tied up in stock', 'punt de comanda', 'stock de seguretat', 'cuánto stock de seguridad necesito si el proveedor a veces tarda el doble'. NOT raising or negotiating the purchase order itself (that is procurement)."
+description: "Use when deciding how much stock to hold and when to reorder it — classifying SKUs, sizing safety stock, setting reorder points and order quantities, and tracking the KPIs that keep a business from either stocking out or sitting on dead stock. NOT raising or negotiating the purchase order itself (that is `procurement`)."
 tags: [reorder-point, safety-stock, eoq, abc-xyz, replenishment, inventory-kpis, ddmrp, min-max]
 recommends: [procurement, logistics-ops, forecasting, dashboard, reporting, spreadsheet-ops]
 origin: risco

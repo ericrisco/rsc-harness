@@ -1,6 +1,6 @@
 ---
 name: kotlin-android
-description: "Use when building or fixing a native Android app in Kotlin + Jetpack Compose with the UDF layered architecture (ViewModel/StateFlow, Hilt, Room, Retrofit, coroutines, type-safe Navigation, Gradle/AGP setup). Triggers: a Compose screen that recomposes every frame or loses state on rotation, wiring ViewModel state into the UI, an offline-first repository, a Hilt DI graph, a Room DAO, build.gradle.kts/version-catalog and AGP/Kotlin floors, 'cómo expongo el estado del ViewModel con StateFlow', 'la pantalla Compose se recompone en cada frame', 'mi app Android pierde el estado al rotar'. NOT shared Android+iOS UI from one Kotlin codebase (that is compose-multiplatform)."
+description: "Use when building or fixing a native Android app in Kotlin and Jetpack Compose on the UDF layered architecture — ViewModel/StateFlow, Hilt, Room, Retrofit, coroutines, type-safe Navigation, and the Gradle/AGP surface. NOT shared Android and iOS UI from one Kotlin codebase (that is `compose-multiplatform`)."
 tags: [kotlin, android, jetpack-compose, hilt, room, coroutines, mvvm, clean-architecture]
 recommends: [compose-multiplatform, spring-boot, java, testing-web, github-actions]
 origin: risco

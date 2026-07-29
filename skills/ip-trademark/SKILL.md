@@ -1,6 +1,6 @@
 ---
 name: ip-trademark
-description: "Use when a non-lawyer operator needs to protect a brand or creative work — clearing and choosing a name/logo, deciding whether and where to register a trademark, using ™/® correctly, knowing what copyright they get for free, or checking whether they actually own work they paid a freelancer for. Triggers: 'can I use this name', 'is this trademark taken', 'when can I put the ® on our logo', 'we paid the freelancer so we own it, right?', 'is our AI-generated logo copyrightable', 'register the trademark in the US or the EU', 'someone copied our content, what can we do', '¿puedo registrar esta marca?', '¿de quién es el copyright del logo?'. NOT drafting the IP-assignment clause itself (that is contracts)."
+description: "Use when a non-lawyer operator needs to protect a brand or creative work — clearing and choosing a name or logo, deciding whether and where to register a trademark, using the trademark and registered symbols correctly, knowing what copyright is automatic, or checking whether they own work a freelancer was paid for. NOT drafting the IP-assignment clause itself (that is `contracts`)."
 tags: [intellectual-property, trademark, copyright, licensing, legal-compliance]
 recommends: [contracts, brand-identity, compliance, terms-conditions]
 origin: risco

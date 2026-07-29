@@ -1930,7 +1930,7 @@
     },
     {
       "id": "gamedev-physics",
-      "description": "Use when working with a game engine's physics — rigid bodies, colliders, collision layers/masks, character controllers, joints, forces vs impulses, raycasts/shapecasts, or when physics is unstable. Triggers: \\\"my character falls through the floor\\\", \\\"bullet tunnels through walls at high speed\\\", \\\"rigidbody jitters / vibrates / explodes\\\", \\\"objects that should collide pass through each other\\\", \\\"which collision layer and mask do I set\\\", \\\"kinematic vs dynamic body\\\", \\\"move_and_slide / CharacterBody\\\", \\\"AddForce vs impulse vs setting velocity\\\", \\\"physics in FixedUpdate or _physics_process\\\", \\\"slope and step detection\\\", \\\"trigger / Area overlap not firing\\\", Godot RigidBody/StaticBody/CharacterBody/Area, Unity Rigidbody/Collider/CharacterController, Unreal Chaos/collision presets. NOT rendering, materials, or visual jitter from shaders (use gamedev-shaders); NOT AI navigation, pathfinding, or navmesh (use gamedev-pathing).",
+      "description": "Use when working with a game engine's physics — rigid bodies, colliders, collision layers and masks, character controllers, joints, forces versus impulses, raycasts and shapecasts, or when a simulation is unstable (tunnelling, jitter, missed overlaps). Covers the Godot, Unity and Unreal equivalents. NOT rendering or shader-driven visual jitter (that is `gamedev-shaders`), NOT navigation, pathfinding or navmesh (that is `gamedev-pathing`).",
       "tags": [
         "physics",
         "collision",
@@ -2047,7 +2047,7 @@
     },
     {
       "id": "git-workflow",
-      "description": "Use when naming or scoping a branch, writing or fixing a commit message, untangling history (rebase vs merge vs squash), or cutting a versioned release — the portable git-convention layer that works on any repo. Triggers: 'name this branch', 'is this commit message conventional?', 'rebase or merge before the PR?', 'squash these wip commits into one', 'my git log is a mess', 'tag a release', 'write release notes', 'what version should this release be?', 'clean up history before review', 'limpia el historial antes del PR', '¿qué versión le toca a esta release?', 'deja los commits en formato convencional'. Covers Conventional Commits 1.0.0, SemVer tags, branch hygiene, force-push safety, and gh pr/release mechanics. NOT the I'm-done land-it decision and pre-ship checklist (that is ship), NOT setting up an isolated checkout before coding (that is worktrees), NOT CI/CD release automation in GitHub Actions (that is deployment).",
+      "description": "Use when naming or scoping a branch, writing or fixing a commit message, untangling history (rebase versus merge versus squash), or cutting a versioned release — the portable git-convention layer for any repo. Covers Conventional Commits, SemVer tags, branch hygiene, force-push safety and gh pr/release mechanics. NOT the land-it decision and pre-ship checklist (that is `ship`), NOT an isolated checkout before coding (that is `worktrees`), NOT CI/CD release automation (that is `deployment`).",
       "tags": [
         "git",
         "version-control",
@@ -2235,7 +2235,7 @@
     },
     {
       "id": "htmx",
-      "description": "Use when adding interactivity to a server-rendered app (FastAPI/Jinja, Django, Rails, Laravel, Go templates, Express) without adopting a JS framework, wiring hx-get/post/put/delete plus hx-target plus hx-swap plus hx-trigger, returning HTML fragments instead of JSON, doing out-of-band swaps, or building active search, infinite scroll, inline edit, click-to-load, and polling. Triggers: 'swap a server partial into a div on click', 'return an HTML fragment not JSON', 'render a fragment on HX-Request else the full page', 'update the cart count and drawer from one response', 'live search box without React', 'afegir interactivitat a la meva app Django sense muntar un SPA', 'intercambiar un fragmento HTML del servidor', 'buscador en vivo sin SPA'. NOT a client-state SPA with routing/store (that is react / nextjs).",
+      "description": "Use when adding interactivity to a server-rendered app (FastAPI/Jinja, Django, Rails, Laravel, Go templates, Express) without adopting a JS framework — hx-get/post/put/delete with hx-target, hx-swap and hx-trigger, returning HTML fragments instead of JSON, out-of-band swaps, active search, infinite scroll, inline edit and polling. NOT a client-state SPA with routing and a store (that is `react` or `nextjs`).",
       "tags": [
         "htmx",
         "hypermedia",
@@ -2253,7 +2253,7 @@
     },
     {
       "id": "huggingface",
-      "description": "Use when running open models or working on the Hugging Face platform: calling a model via the Inference Providers router or InferenceClient, downloading/uploading/versioning repos on the Hub with the hf CLI, deploying a dedicated Inference Endpoint with scale-to-zero, hosting a Gradio Space with ZeroGPU, picking an open model by task/license/size, or loading a model locally with transformers. Triggers: 'call an open model through Hugging Face', 'InferenceClient embeddings', 'hf download/upload', 'write a model card', 'router.huggingface.co', 'my hf-inference serverless call 404s on a 70B model', 'scale-to-zero endpoint', 'ZeroGPU Space', 'desplegar un modelo de Hugging Face con escalado a cero'. NOT serving a model locally on your own machine (that is ollama), NOT renting and operating your own GPU box (that is runpod), NOT generating creative images via a hosted API (that is replicate-images), NOT fine-tuning with trl/peft (that is finetuning), NOT building training datasets (that is training-data).",
+      "description": "Use when running open models or working on the Hugging Face platform — the Inference Providers router or InferenceClient, Hub repos via the hf CLI, a dedicated Inference Endpoint with scale-to-zero, a Gradio Space with ZeroGPU, picking an open model by task/license/size, or loading one locally with transformers. NOT serving locally on your own machine (that is `ollama`), NOT renting your own GPU box (that is `runpod`), NOT hosted creative image APIs (that is `replicate-images`), NOT fine-tuning with trl/peft (that is `finetuning`).",
       "tags": [
         "huggingface",
         "inference-providers",
@@ -2335,7 +2335,7 @@
     },
     {
       "id": "inventory",
-      "description": "Use when deciding how much stock to hold and when to reorder it — classifying SKUs, sizing safety stock, setting reorder points and order quantities, and tracking inventory KPIs so a business neither stocks out nor sits on dead stock. Triggers: 'what should my reorder point be', 'how much safety stock', 'run an ABC analysis', 'set up min/max levels', 'should I review weekly or continuously', 'we keep running out of X while sitting on a year of Y', 'too much cash tied up in stock', 'punt de comanda', 'stock de seguretat', 'cuánto stock de seguridad necesito si el proveedor a veces tarda el doble'. NOT raising or negotiating the purchase order itself (that is procurement).",
+      "description": "Use when deciding how much stock to hold and when to reorder it — classifying SKUs, sizing safety stock, setting reorder points and order quantities, and tracking the KPIs that keep a business from either stocking out or sitting on dead stock. NOT raising or negotiating the purchase order itself (that is `procurement`).",
       "tags": [
         "reorder-point",
         "safety-stock",
@@ -2358,7 +2358,7 @@
     },
     {
       "id": "investor-materials",
-      "description": "Use when packaging, organizing, or circulating the documents an investor reads OUTSIDE the meeting — setting up or cleaning a data room, writing the investor one-pager/teaser that earns the first meeting, or drafting the recurring monthly/quarterly investor update — symptoms include unnamed dump-folder files, no follow-on warmth, or needing the attachment a cold email carries. Triggers: 'set up our data room', 'what docs do investors expect before diligence', 'write our investor one-pager / teaser', 'draft this month's investor update', 'our data room is a mess, rename and reorganize the files', 'set up a reusable monthly update format', 'sala de datos para inversores', 'actualización mensual a inversores', 'sala de dades / resum d'una pàgina per a inversors'. NOT the slide narrative (that is pitch-deck), NOT the projection spreadsheet (that is financial-model), NOT the round strategy and investor pipeline (that is fundraising).",
+      "description": "Use when packaging or circulating the documents an investor reads outside the meeting — setting up or cleaning a data room, writing the one-pager or teaser that earns the first meeting, or drafting the recurring monthly investor update. NOT the slide narrative (that is `pitch-deck`), NOT the projection spreadsheet (that is `financial-model`), NOT round strategy and the investor pipeline (that is `fundraising`).",
       "tags": [
         "fundraising",
         "data-room",
@@ -2404,7 +2404,7 @@
     },
     {
       "id": "ip-trademark",
-      "description": "Use when a non-lawyer operator needs to protect a brand or creative work — clearing and choosing a name/logo, deciding whether and where to register a trademark, using ™/® correctly, knowing what copyright they get for free, or checking whether they actually own work they paid a freelancer for. Triggers: 'can I use this name', 'is this trademark taken', 'when can I put the ® on our logo', 'we paid the freelancer so we own it, right?', 'is our AI-generated logo copyrightable', 'register the trademark in the US or the EU', 'someone copied our content, what can we do', '¿puedo registrar esta marca?', '¿de quién es el copyright del logo?'. NOT drafting the IP-assignment clause itself (that is contracts).",
+      "description": "Use when a non-lawyer operator needs to protect a brand or creative work — clearing and choosing a name or logo, deciding whether and where to register a trademark, using the trademark and registered symbols correctly, knowing what copyright is automatic, or checking whether they own work a freelancer was paid for. NOT drafting the IP-assignment clause itself (that is `contracts`).",
       "tags": [
         "intellectual-property",
         "trademark",
@@ -2422,7 +2422,7 @@
     },
     {
       "id": "java",
-      "description": "Use when writing, reviewing, or refactoring modern Java (21+, Java 25 LTS) - records and sealed interfaces as algebraic data types, exhaustive pattern-matching switch over instanceof+cast ladders, virtual-thread (Project Loom) concurrency one-task-per-thread, structured concurrency and ScopedValue replacing ThreadLocal, Stream/Optional/Collector pipelines, compact-constructor validation, parametrized JDBC, and the Maven 3.9 / Gradle 9 build surface against a current JDK. Triggers: \\\"write a Java service\\\", \\\"is this idiomatic Java\\\", \\\"refactor this instanceof ladder\\\", \\\"fetch 500 URLs concurrently\\\", \\\"model this domain with records\\\", .java files, pom.xml, build.gradle, the non-obvious \\\"my ThreadLocal context disappears inside the tasks I submit\\\" (that is ScopedValue), \\\"modela este dominio de pagos con tipos inmutables\\\", \\\"refactoritza aquest switch\\\". NOT Spring framework wiring (that is spring-boot).",
+      "description": "Use when writing, reviewing or refactoring modern Java (21+, 25 LTS) — records and sealed interfaces as algebraic data types, exhaustive pattern-matching switch over instanceof ladders, virtual-thread concurrency, structured concurrency and ScopedValue replacing ThreadLocal, Stream and Optional pipelines, compact-constructor validation, parametrized JDBC, and the Maven/Gradle build surface. NOT Spring framework wiring (that is `spring-boot`).",
       "tags": [
         "java",
         "jvm",
@@ -2462,7 +2462,7 @@
     },
     {
       "id": "kotlin-android",
-      "description": "Use when building or fixing a native Android app in Kotlin + Jetpack Compose with the UDF layered architecture (ViewModel/StateFlow, Hilt, Room, Retrofit, coroutines, type-safe Navigation, Gradle/AGP setup). Triggers: a Compose screen that recomposes every frame or loses state on rotation, wiring ViewModel state into the UI, an offline-first repository, a Hilt DI graph, a Room DAO, build.gradle.kts/version-catalog and AGP/Kotlin floors, 'cómo expongo el estado del ViewModel con StateFlow', 'la pantalla Compose se recompone en cada frame', 'mi app Android pierde el estado al rotar'. NOT shared Android+iOS UI from one Kotlin codebase (that is compose-multiplatform).",
+      "description": "Use when building or fixing a native Android app in Kotlin and Jetpack Compose on the UDF layered architecture — ViewModel/StateFlow, Hilt, Room, Retrofit, coroutines, type-safe Navigation, and the Gradle/AGP surface. NOT shared Android and iOS UI from one Kotlin codebase (that is `compose-multiplatform`).",
       "tags": [
         "kotlin",
         "android",
@@ -2484,7 +2484,7 @@
     },
     {
       "id": "kpi-framework",
-      "description": "Use when a team must decide what to measure before building anything — picking one north-star metric, separating leading input drivers from lagging outputs, adding guardrails so a number can't be gamed, or setting a target that isn't arbitrary. Triggers: 'what should we even be measuring', 'we track 40 KPIs and nothing leads anywhere', 'is signups a leading or lagging indicator', 'set an activation target that won't get gamed', 'pick a north star for the product', 'audit our vanity metrics', 'quins KPIs triem per al producte', 'qué métrica norte elegimos'. NOT building the live dashboard that displays them (that is dashboard), NOT instrumenting the events (that is analytics), NOT the recurring board report (that is reporting).",
+      "description": "Use when a team must decide what to measure before building anything — picking one north-star metric, separating leading input drivers from lagging outputs, adding guardrails so a number cannot be gamed, and setting a target that is not arbitrary. NOT the live dashboard that displays them (that is `dashboard`), NOT instrumenting the events (that is `analytics`), NOT the recurring board report (that is `reporting`).",
       "tags": [
         "north-star-metric",
         "leading-vs-lagging",

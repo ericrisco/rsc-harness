@@ -1,6 +1,6 @@
 ---
 name: htmx
-description: "Use when adding interactivity to a server-rendered app (FastAPI/Jinja, Django, Rails, Laravel, Go templates, Express) without adopting a JS framework, wiring hx-get/post/put/delete plus hx-target plus hx-swap plus hx-trigger, returning HTML fragments instead of JSON, doing out-of-band swaps, or building active search, infinite scroll, inline edit, click-to-load, and polling. Triggers: 'swap a server partial into a div on click', 'return an HTML fragment not JSON', 'render a fragment on HX-Request else the full page', 'update the cart count and drawer from one response', 'live search box without React', 'afegir interactivitat a la meva app Django sense muntar un SPA', 'intercambiar un fragmento HTML del servidor', 'buscador en vivo sin SPA'. NOT a client-state SPA with routing/store (that is react / nextjs)."
+description: "Use when adding interactivity to a server-rendered app (FastAPI/Jinja, Django, Rails, Laravel, Go templates, Express) without adopting a JS framework — hx-get/post/put/delete with hx-target, hx-swap and hx-trigger, returning HTML fragments instead of JSON, out-of-band swaps, active search, infinite scroll, inline edit and polling. NOT a client-state SPA with routing and a store (that is `react` or `nextjs`)."
 tags: [htmx, hypermedia, frontend, server-rendered, html]
 recommends: [fastapi, django, secure-coding, accessibility]
 origin: risco
