@@ -1,6 +1,6 @@
 ---
 name: php
-description: "Use when writing, reviewing, or modernizing PHP (8.3/8.4/8.5) beyond Laravel - strict types, union/intersection types, readonly classes, backed enums, PHP 8.4 property hooks and asymmetric visibility, PHP 8.5 pipe operator and clone-with, Composer + PSR-4 autoloading, PER-CS style, PSR-3/7/11/15 interop, and the quality toolchain (PHPStan max, Pint/PHP-CS-Fixer, Rector, PHPUnit 12 / Pest 4). Triggers: \"write a PHP value object\", \"set up composer.json with PSR-4\", \"convert getters to property hooks\", \"is this idiomatic modern PHP or 2015 code\", \"configura PHPStan a nivel max\", editing .php / composer.json / phpstan.neon. NOT Eloquent/Blade/Artisan (that is laravel)."
+description: "Use when writing, reviewing or modernizing PHP (8.3-8.5) outside Laravel — strict types, union and intersection types, readonly classes, backed enums, property hooks and asymmetric visibility, the pipe operator and clone-with, Composer with PSR-4, PER-CS style, PSR interop, and the quality toolchain (PHPStan, Pint, Rector, PHPUnit/Pest). NOT Eloquent, Blade or Artisan (that is `laravel`)."
 tags: [php, php8, composer, psr, enums, types, static-analysis]
 recommends: [laravel, secure-coding, mysql]
 origin: risco
