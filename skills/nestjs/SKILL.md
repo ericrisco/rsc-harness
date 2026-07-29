@@ -1,6 +1,6 @@
 ---
 name: nestjs
-description: "Use when building or structuring a NestJS backend — feature modules, providers, controllers, DI wiring, and the cross-cutting layer (guards, interceptors, pipes, exception filters) — including binding-scope and request-lifecycle decisions and Nest-specific testing. Triggers: 'create a NestJS module', 'wire a custom provider with useFactory', 'APP_GUARD vs @UseGuards on the controller', 'my request-scoped provider is undefined in a guard', 'A circular dependency has been detected at bootstrap', 'mock a repository provider with overrideProvider', 'monta un módulo de Nest', 'guard de autenticación JWT en NestJS'. NOT a bare Express/Node service with no DI (that is nodejs)."
+description: "Use when building or structuring a NestJS backend — feature modules, providers and DI wiring, provider scopes and request-lifecycle order, where to bind guards/pipes/interceptors/filters, and testing with Test.createTestingModule. NOT a bare Express/Fastify service with no DI (that is `nodejs`), NOT framework-agnostic REST design (that is `api-design`)."
 tags: [nestjs, nodejs, backend, dependency-injection, guards, pipes, testing, typescript]
 recommends: [nodejs, typescript, api-design, prisma-orm, testing-web]
 origin: risco
@@ -10,15 +10,7 @@ origin: risco
 
 Build server-side Node apps the way NestJS intends: feature modules, providers wired through the DI container, controllers, and a cross-cutting layer bound at a deliberate scope. This skill is about Nest-specific mechanics — how DI scopes resolve, what order the request lifecycle runs in, where to bind guards/pipes/interceptors/filters, and how to test it with `Test.createTestingModule`.
 
-## Use this when
-
-- Scaffolding or extending a Nest app: new module, controller, provider, resolver.
-- Wiring DI: `useClass` / `useValue` / `useFactory` / `useExisting`, injection tokens, `forwardRef`, dynamic modules (`forRoot` / `forRootAsync`).
-- Adding cross-cutting behavior and deciding global vs controller vs route binding.
-- "Why is my request-scoped provider undefined" / "circular dependency detected at bootstrap".
-- Unit tests with mock providers and e2e tests with Supertest against the real Nest app.
-
-## Not this when
+## Not this — route instead
 
 - Bare Express/Fastify/`http` service, no `@Module`/`@Injectable` → `../nodejs/SKILL.md`. Nest starts the moment the DI container appears.
 - REST resource modeling, versioning, status codes, idempotency (framework-agnostic) → `../api-design/SKILL.md`. Nest is where you *implement* those decisions.
