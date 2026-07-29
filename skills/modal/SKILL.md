@@ -1,6 +1,6 @@
 ---
 name: modal
-description: "Use when running Python functions or GPU workloads serverlessly on Modal — defining a modal.App with inline container Images, scaling @app.function onto CPU/GPU, persisting weights or datasets in a Volume, scheduling jobs, serving an HTTP/ASGI endpoint, or choosing modal run vs serve vs deploy. Triggers: 'run my embedding job on an H100 without managing servers', 'cache HuggingFace weights across runs', 'my @app.function GPU string errors', 'gpu=modal.gpu.A100() fails', 'modal serve isn't hot-reloading my fastapi_endpoint', 'cold start too slow / keep a warm pool', 'ejecutar Python en GPU serverless', 'desplegar un model de difusió amb GPU sense servidor i exposar-lo per HTTP'. NOT managed prediction endpoints with no infra code (that is replicate) and NOT persistent SSH-able GPU pods rented by the hour (that is runpod)."
+description: "Use when running Python or GPU workloads serverlessly on Modal — modal.App, inline container Images, gpu= on @app.function, Volumes for weight caching, Cron schedules, ASGI endpoints, modal run vs serve vs deploy. NOT managed prediction APIs with no container of your own (that is replicate); NOT SSH-able GPU boxes rented by the hour (that is runpod)."
 tags: [modal, serverless, gpu, python, ai-infra, deployment, cron, web-endpoint]
 recommends: [replicate, runpod, fastapi, docker, python, llm-pipeline]
 origin: risco
@@ -19,27 +19,19 @@ Pinned stack: **modal 1.4.3** (released 2026-05-18), Python **3.10–3.14** (`>=
 Install with `pip install modal` then `modal setup` to authenticate. Everything below uses
 the Modal 1.0+ API; several pre-1.0 forms were removed and are called out as Bad→Good.
 
-## When to use
+## Not this skill
 
-- Running a Python function or batch job on remote CPU/GPU with no server to manage.
-- GPU inference, fine-tuning, or model serving (vLLM, diffusion, embeddings) on T4…B200.
-- Building a container image inline (`Image.debian_slim().uv_pip_install(...)`) for a remote job.
-- Persisting model weights or datasets across runs with a Modal `Volume`.
-- Scheduled jobs (nightly report, periodic scrape) via `modal.Cron` / `modal.Period`.
-- Exposing a function over HTTP (`fastapi_endpoint`, `asgi_app`, `wsgi_app`, `web_server`).
-- Fan-out parallelism with `.map()` / `.starmap()` / `.spawn()`.
+Modal owns the serverless-container-as-decorators surface and its CLI lifecycle; the *contents*
+of your function belong elsewhere.
 
-## When NOT to use
-
-- Calling a **managed prediction API** with no container of your own → **`replicate`** / `together-fireworks` / `fal`.
-- Renting a **persistent, SSH-able GPU box** by the hour/week → **`runpod`**.
-- Generic **FastAPI design** (routing, Pydantic, deps) independent of host → **`fastapi`**.
-- Writing a **Dockerfile** for a registry / k8s / Compose → **`docker`**.
-- General **Python language/runtime** questions → **`python`**.
-- **RAG / LLM pipeline** orchestration logic itself → **`llm-pipeline`**.
-
-Modal owns the serverless-container-as-decorators surface and its CLI lifecycle; the
-*contents* of your function (FastAPI app, RAG chain) belong to the siblings above.
+| The job | Goes to |
+|---|---|
+| Calling a **managed prediction API** with no container of your own | [`replicate`](../replicate/SKILL.md) / [`together-fireworks`](../together-fireworks/SKILL.md) / [`fal`](../fal/SKILL.md) |
+| Renting a **persistent, SSH-able GPU box** by the hour/week | [`runpod`](../runpod/SKILL.md) |
+| **FastAPI design** (routing, Pydantic, deps) independent of host | [`fastapi`](../fastapi/SKILL.md) |
+| Writing a **Dockerfile** for a registry / k8s / Compose | [`docker`](../docker/SKILL.md) |
+| General **Python language/runtime** questions | [`python`](../python/SKILL.md) |
+| **RAG / LLM pipeline** orchestration logic itself | [`llm-pipeline`](../llm-pipeline/SKILL.md) |
 
 ## Decision: which entrypoint?
 
@@ -109,8 +101,8 @@ image = (
 )
 ```
 
-`→ references/images-gpu-cookbook.md` for vLLM / torch+CUDA / diffusers recipes and the
-download-once weight-cache pattern.
+→ [`references/images-gpu-cookbook.md`](references/images-gpu-cookbook.md) for vLLM / torch+CUDA
+/ diffusers recipes and the download-once weight-cache pattern.
 
 ## GPU — it's a string now
 
@@ -193,8 +185,7 @@ def pull():
 ```
 
 Never bake a token into the image (`.run_commands("export TOKEN=...")`) — it's recorded in
-layer history. Use a Secret. `→ references/images-gpu-cookbook.md` for the weight-cache and
-HF/OpenAI secret patterns.
+layer history. Use a Secret. The cookbook above also carries the HF/OpenAI secret patterns.
 
 ## Web endpoints
 
@@ -228,8 +219,8 @@ def web():
 
 Develop with `modal serve app.py` (hot-reload); ship with `modal deploy app.py` (stable URL).
 For custom domains, proxy-auth tokens, batching (`@modal.batched`), and concurrency tuning →
-`references/web-and-scaling.md`. For the FastAPI app's *own* design (routes, Pydantic, deps),
-that's the `fastapi` sibling — this skill only mounts it.
+[`references/web-and-scaling.md`](references/web-and-scaling.md). For the FastAPI app's *own*
+design (routes, Pydantic, deps), that's [`fastapi`](../fastapi/SKILL.md) — this skill only mounts it.
 
 ## Scheduled jobs
 
@@ -268,9 +259,9 @@ def main():
 they complete (faster when latencies vary). Combine with `retries=` on the function so a
 single bad input doesn't sink the batch.
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization | Reality → STOP |
+| Anti-pattern | Do instead |
 |---|---|
 | "I'll use `gpu=modal.gpu.A100()` like the old docs" | Removed in 1.0. Use the string `gpu="A100-80GB"`. |
 | "Attach a GPU, it might speed up this CPU job" | GPU is billed per second alive. CPU-only job → no `gpu=`. |
@@ -279,30 +270,21 @@ single bad input doesn't sink the batch.
 | "`modal run` it, the endpoint/schedule will stay up" | `run` is ephemeral; it exits. Use `modal deploy` for anything persistent. |
 | "Order the decorators however — Modal figures it out" | `@app.function` outermost, web decorator innermost. Wrong order errors. |
 | "Bake the HF token into the image with `run_commands`" | Leaks into layer history. Use `modal.Secret.from_name(...)`. |
-| "Just call the model via a managed API through Modal" | If you write no container, that's a managed-API job → `replicate`. |
-| "I need a box to SSH into for a week" | That's a persistent rental → `runpod`, not Modal's scale-to-zero. |
+| "Just call the model via a managed API through Modal" | If you write no container, that's a managed-API job → [`replicate`](../replicate/SKILL.md). |
+| "I need a box to SSH into for a week" | That's a persistent rental → [`runpod`](../runpod/SKILL.md), not Modal's scale-to-zero. |
 | "Set `min_containers` high so it's always fast" | Idle warm containers cost money 24/7. Tune `scaledown_window` first. |
 
-## verify.sh
+## Verify
 
-`scripts/verify.sh [TARGET]` statically lints the nearest emitted Modal `*.py`: it requires a
-`modal.App(`, **fails** if the removed `modal.gpu.` object form appears, checks that any web
-decorator sits under an `@app.function`, and that any `Volume` uses
+[`scripts/verify.sh`](scripts/verify.sh) `[TARGET]` statically lints the nearest emitted Modal
+`*.py`: it requires a `modal.App(`, **fails** if the removed `modal.gpu.` object form appears,
+checks that any web decorator sits under an `@app.function`, and that any `Volume` uses
 `from_name(..., create_if_missing=...)`. It runs `python -c "import modal"` only if modal is
-installed (skip-pass otherwise) and needs **no Modal credentials**. On an empty/clean target it
-exits 0.
+installed (skip-pass otherwise), needs **no Modal credentials**, and exits 0 on an empty target.
 
-## Project grounding (02-DOCS + CLAUDE.md)
+## Project grounding (02-DOCS)
 
-In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) wiki), record this
-app's real Modal choices — GPU types, image base, Volume names, schedule, endpoint shape — in
-`02-DOCS/wiki/stack/modal.md` and index it in `02-DOCS/wiki/index.md` (the Knowledge map; root
-`CLAUDE.md` keeps only a short pointer to it). Read it
-first on every use; create/update it with the real decisions. No `02-DOCS/`? Skip silently.
-
-## See Also
-
-- [`fastapi`](../fastapi/SKILL.md) — the design of the FastAPI app you mount behind `@modal.asgi_app()`.
-- References: [`references/images-gpu-cookbook.md`](references/images-gpu-cookbook.md), [`references/web-and-scaling.md`](references/web-and-scaling.md).
-- Verify gate: [`scripts/verify.sh`](scripts/verify.sh).
-- Siblings (catalog): `replicate` / `together-fireworks` / `fal` (managed prediction APIs), `runpod` (persistent GPU pods), `docker` (Dockerfiles), `python` (language), `llm-pipeline` (orchestration).
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) wiki), read
+`02-DOCS/wiki/stack/modal.md` first, then record this app's real Modal choices there — GPU types,
+image base, Volume names, schedule, endpoint shape — and index it in `02-DOCS/wiki/index.md`. No
+`02-DOCS/`? Skip silently.
