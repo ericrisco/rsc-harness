@@ -1,6 +1,6 @@
 ---
 name: linkedin-outreach
-description: "Use when running LinkedIn-native social selling as a repeatable motion: building Sales Navigator saved searches and trigger alerts, fixing a low connection-acceptance rate, designing a daily social-selling routine, turning profile views / post engagers / accepted connections into warm conversations, and logging every touch so the loop is measurable. Triggers: 'set up a Sales Nav saved search and alert me on job changes', 'how many connection requests per week without getting flagged', 'my acceptance rate is in the toilet', 'someone viewed my profile, what is the play', 'turn the people who liked my post into conversations', 'munta'm una rutina de social selling a LinkedIn', '¿cuántas invitaciones puedo enviar por semana'. This owns the loop and its ledger, NOT writing the cold connection note or DM copy (that is cold-outreach)."
+description: "Use when running LinkedIn social selling as a repeatable motion — Sales Navigator saved searches and trigger alerts, weekly request budgets, fixing a low acceptance rate, turning profile views and post engagers into warm threads, logging every touch. NOT the note or DM copy (that is `cold-outreach`), NOT the deal after a reply (that is `sales-pipeline`)."
 tags: [linkedin, social-selling, sales-navigator, outreach, pipeline]
 recommends: [cold-outreach, lead-gen, sales-pipeline, linkedin-strategy, linkedin-content]
 origin: risco
@@ -8,46 +8,28 @@ origin: risco
 
 # Linkedin Outreach — The Loop and Its Ledger
 
-*You run the LinkedIn social-selling motion and keep its score. You decide **who** to touch, **when**, through **what** warm-up, and **how** the whole loop is run and logged. You do not write the cold message (`cold-outreach`), source the raw list (`lead-gen`), or run the deal after the reply (`sales-pipeline`). The thesis is warm-first: engagement before connection, signal before send, ledger before "I'll remember it."*
+*You run the LinkedIn social-selling motion and keep its score: **who** to touch, **when**, through **what** warm-up, and **how** the loop is run and logged. The thesis is warm-first — engagement before connection, signal before send, ledger before "I'll remember it." The output is a running system plus a touch ledger under `02-DOCS/`, never a finished line of copy: when prose is needed you write the brief and hand it off, then stay in the loop.*
 
-This skill is a *motion*, not a message. Its output is a running system plus a touch ledger under `02-DOCS/`, not a finished line of copy. When prose is genuinely needed, you write the brief and hand it off — you stay in the loop.
+## Boundary
 
-## When to use
+The sharpest line is against `../cold-outreach/SKILL.md`, and it splits on message-vs-system:
 
-- "Set up a Sales Navigator saved search / lead list for [ICP] and the trigger alerts."
-- "How many connection requests can I send this week without getting my account flagged?"
-- "Build me a 30-min-a-day social-selling routine that turns LinkedIn into pipeline."
-- "My acceptance rate is ~15% — how do I run requests so people actually accept?"
-- "Turn everyone who engaged with my last post into a conversation."
-- "Someone viewed my profile / liked my post — what's the play?"
-- "Log my LinkedIn touches and show me what's converting."
-- "munta'm una rutina de social selling a LinkedIn", "¿cuántas invitaciones puedo enviar por semana?"
+- **A single message** — the connection note (≤300 chars), the DM bump, its wording and per-inbox send cadence → cold-outreach. If the ask is "write this" or "fix this template," it is not yours.
+- **The system** — who to touch, when, the warm-up, the budget, the ledger → here. When both are in play, this skill drives and delegates the copy.
 
-## When NOT — the boundary that gets fought over
-
-The sharpest line is against **cold-outreach**. Hold it:
-
-- **A single message** — the connection note (≤300 chars), the DM bump, its wording and per-inbox send cadence → `../cold-outreach/SKILL.md`. If the ask is "write this" or "fix this template," it is not yours.
-- **The system** — who to touch, when, the warm-up, the budget, the ledger → here. When both are in play, **this skill drives and delegates the copy.**
-
-Other routes:
-
-- Sourcing / scoring the raw prospect list, ICP definition, dedupe → `../lead-gen/SKILL.md`.
-- Running the deal after a reply (stages, forecast, CRM tasks) → `../sales-pipeline/SKILL.md`.
-- Writing/scheduling LinkedIn *posts* → `../linkedin-content/SKILL.md`.
-- Brand growth/positioning strategy → `../linkedin-strategy/SKILL.md`.
+Also not yours: sourcing / scoring the raw prospect list and ICP definition → `../lead-gen/SKILL.md`; the deal after a reply, i.e. stages, forecast, CRM tasks → `../sales-pipeline/SKILL.md`; writing or scheduling LinkedIn *posts* → `../linkedin-content/SKILL.md`; brand growth and positioning → `../linkedin-strategy/SKILL.md`.
 
 ## The loop
 
 Five phases, in order. Each has a *why* and yields one artifact; the artifact gates the next phase. Skipping a phase is how acceptance collapses.
 
 1. **Target** — *why:* outreach timed to a reason beats outreach timed to a calendar. → Yields a Sales Nav saved search + trigger alerts (job change, funding, recent post).
-2. **Warm** — *why:* a cold context-free request accepts ~20–30%; engaging first lifts it past ~60%. → Yields a logged pre-touch (profile view + one genuine comment/like 1–2 days prior).
+2. **Warm** — *why:* a cold, context-free request is the worst-accepting move you can make; engaging first is what fixes it. → Yields a logged pre-touch (profile view + one genuine comment/like 1–2 days prior).
 3. **Connect** — *why:* the request is the smallest, most rate-limited move; spend it deliberately. → Yields a sent request inside the weekly budget, note-or-no-note chosen by goal.
 4. **Convert** — *why:* an accept is not a conversation; the choreography turns a signal into a warm 1:1. → Yields a thread with a real reply, copy delegated to cold-outreach when needed.
 5. **Log** — *why:* a motion you can't measure you can't repeat or fix. → Yields a row in the `02-DOCS/` ledger with the outcome.
 
-Each phase has its own section below. Run them as a daily checklist (last section).
+Each phase gets a section below; the last one compresses all five into a day.
 
 ## Target with Sales Navigator
 
@@ -88,7 +70,7 @@ When you do send a note, you do **not** write it here — hand the brief (the ho
 | Free | ~100/wk | ~20/weekday, stay under ~80/wk | Pause and warm more if acceptance drops below ~30%. |
 | Premium / Sales Nav | up to ~200/wk | up to ~40/day | Only with strong SSI and acceptance >40%; otherwise treat as free. |
 
-Health rules: requests over the cap get throttled or flagged; acceptance below ~30% means you are spraying — go back to phase 2, don't push volume. Withdraw stale pending requests before they pile up.
+Over the cap, requests get throttled or the account flagged. Below ~30% acceptance you are spraying — go back to phase 2 instead of pushing volume, and withdraw stale pending requests before they pile up.
 
 ## Engagement → conversation
 
@@ -123,9 +105,7 @@ Buying-signal tells in a thread: they ask about price/timeline, mention an activ
 
 1. Book the call or send the warm intro.
 2. Log the outcome (`call_booked`) in the ledger.
-3. Hand the thread + context to `../sales-pipeline/SKILL.md`.
-
-**Explicit stop:** this skill never sets deal stages, forecasts, or runs follow-up CRM tasks. The moment a deal exists, it is sales-pipeline's.
+3. Hand the thread + context to `../sales-pipeline/SKILL.md` — the moment a deal exists it is theirs, and you set no stages or forecasts.
 
 ## The ledger (02-DOCS)
 

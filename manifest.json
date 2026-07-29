@@ -2654,7 +2654,7 @@
     },
     {
       "id": "linkedin-outreach",
-      "description": "Use when running LinkedIn-native social selling as a repeatable motion: building Sales Navigator saved searches and trigger alerts, fixing a low connection-acceptance rate, designing a daily social-selling routine, turning profile views / post engagers / accepted connections into warm conversations, and logging every touch so the loop is measurable. Triggers: 'set up a Sales Nav saved search and alert me on job changes', 'how many connection requests per week without getting flagged', 'my acceptance rate is in the toilet', 'someone viewed my profile, what is the play', 'turn the people who liked my post into conversations', 'munta'm una rutina de social selling a LinkedIn', '¿cuántas invitaciones puedo enviar por semana'. This owns the loop and its ledger, NOT writing the cold connection note or DM copy (that is cold-outreach).",
+      "description": "Use when running LinkedIn social selling as a repeatable motion — Sales Navigator saved searches and trigger alerts, weekly request budgets, fixing a low acceptance rate, turning profile views and post engagers into warm threads, logging every touch. NOT the note or DM copy (that is `cold-outreach`), NOT the deal after a reply (that is `sales-pipeline`).",
       "tags": [
         "linkedin",
         "social-selling",
@@ -2888,7 +2888,7 @@
     },
     {
       "id": "meeting-notes",
-      "description": "Use when a meeting, standup, or call just ended and you have a transcript or rough notes to turn into a durable record — extract the decisions with their why, assign action items with an owner and a real due date, flag open questions, and ship a one-screen recap within 24–48h. Also when an AI-notetaker transcript hallucinated tasks or mixed up speakers and you must clean it before sending. Triggers: 'pull the action items out of this transcript and tell me who owns what by when', 'the Otter transcript mixed up who said what, clean it up so I can send it', 'resume la reunión de hoy y saca los próximos pasos con responsable y fecha límite', 'fes una acta de la reunió'. NOT the durable decision record with full alternatives and review cadence (that is decision-records).",
+      "description": "Use when a meeting just ended and a transcript or rough notes must become a record the absent can act on — decisions with their why, actions with an owner and a real date, open questions, a recap inside 24–48h — or to clean an AI-notetaker draft that invented tasks or swapped speakers. NOT the durable ADR with alternatives weighed (that is decision-records).",
       "tags": [
         "meeting-notes",
         "action-items",
@@ -3459,7 +3459,7 @@
     },
     {
       "id": "power-automate",
-      "description": "Use when operating Microsoft Power Automate cloud flows programmatically — creating, enabling, updating, listing or deleting flows through the Dataverse Web API (the workflow table, category 5) with Entra ID / OAuth2 auth, or reading action-level run history via the third-party FlowStudio MCP. Triggers: 'create a Power Automate cloud flow with the Dataverse API', 'enable my flow by code / set statecode to 1', 'why can't I create or edit a My Flow programmatically', 'PATCH the workflow clientdata', 'automatizar el despliegue de un flujo de Power Automate desde código'. NOT designing the flow or authoring its definition (automation-flows), NOT choosing a platform by billing model (automation-strategy), NOT a generic typed REST client with auth/pagination/backoff (api-connector-builder), NOT the endpoint receiving an HTTP-trigger POST in your app (webhooks), NOT scripting Microsoft 365 / Graph mail & calendar directly (no first-party skill — api-connector-builder, or google-workspace).",
+      "description": "Use when operating Microsoft Power Automate cloud flows from code — create, enable, update, list or delete via the Dataverse Web API (`workflow` table, category 5) with Entra ID OAuth2, plus run-history debugging. NOT designing the flow definition (that is `automation-flows`), NOT picking a platform by billing model (that is `automation-strategy`).",
       "tags": [
         "power-automate",
         "dataverse",
@@ -3750,7 +3750,7 @@
     },
     {
       "id": "react-native",
-      "description": "Use when writing the JS/TS code inside a React Native or Expo app — screens, navigation, lists, animation, platform-conditional UI, data/offline state, and native-module authoring — and when killing runtime jank or render bugs. Triggers: 'scaffold an Expo Router app', 'FlashList vs FlatList', 'auth-gated route groups', 'gesture reattaches every render', 're-render storm on every keystroke', 'deep link lands on the wrong screen', 'write an Expo Module wrapping a native SDK', 'la llista pateix lag quan faig scroll', 'mi app va fluida en iOS pero a tirones en Android'. NOT eas build/submit/OTA update/prebuild/config-plugin (that is expo), NOT a Dart app (that is flutter), NOT web React/DOM (that is react or nextjs).",
+      "description": "Use when writing the JS/TS inside a React Native or Expo app — screens, Expo Router navigation, lists, Reanimated gestures, platform forks, offline state, native modules — or killing jank and render storms. NOT eas build/submit/OTA/config-plugin (that is `expo`), NOT a Dart app (that is `flutter`), NOT web React/DOM (that is `react` or `nextjs`).",
       "tags": [
         "react-native",
         "expo",
@@ -3994,7 +3994,7 @@
     },
     {
       "id": "roast-me",
-      "description": "Use when you want honest, comedic feedback on how you prompt — analyzing your own past sessions to score prompt quality and compute efficiency, surface your worst habits, and generate a model-selection cheat sheet. Triggers: 'roast me', 'roast my prompting', 'audit my prompting habits', 'how good are my prompts', 'am I prompting well', 'what are my bad prompt habits', 'analiza mis prompts', 'puntua els meus prompts', 'how much am I wasting on model costs'. NOT reviewing your code or output quality (use code-review for that) and NOT a general prompt-engineering tutorial (use prompt-engineering for that).",
+      "description": "Use when someone wants an honest, comedic audit of their own prompting — reads their past agent transcripts, scores prompt quality and compute efficiency, names their worst habits, builds a model-selection cheat sheet. NOT reviewing code an agent produced (that is `code-review`), NOT prompting technique in general (that is `prompt-engineering`).",
       "tags": [
         "prompting",
         "self-audit",
@@ -4322,7 +4322,7 @@
     },
     {
       "id": "shortform-strategy",
-      "description": "Use when running the durable strategy layer of a TikTok and/or Instagram Reels account — positioning, posting cadence, format mix, which trends and sounds to ride, recurring series, and the what-worked learning loop — not making one video. Use for standing up a new account before posting; diagnosing a flat or declining account (positioning, cadence, or format?); deciding whether to ride a trend or sound now; designing a recurring series; the monthly strategy review; or choosing the Reels-vs-carousel mix. Triggers: 'starting a new TikTok account, what and how often should we post', 'we post every single day and our reach is going down' (cadence-dilution symptom, no strategy word), 'should we jump on this sound or is it dead', 'we want a weekly recurring series on Reels', 'muntar l''estratègia del compte de Reels: posicionament i cadència', '¿nos subimos a esta tendencia o ya pasó?'. NOT writing the single short script or hook variants (that is video-shorts).",
+      "description": "Use when the unit of work is a TikTok/Reels account, not one clip: positioning, sustainable cadence and format mix, ride-or-skip on a trend or sound, recurring series, diagnosing a flat account, and the dated learning loop. NOT the single script or hook variants (that is `video-shorts`), NOT the idea backlog (that is `shortform-ideation`).",
       "tags": [
         "short-form-video",
         "tiktok",

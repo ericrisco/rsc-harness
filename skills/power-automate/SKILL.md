@@ -1,6 +1,6 @@
 ---
 name: power-automate
-description: "Use when operating Microsoft Power Automate cloud flows programmatically — creating, enabling, updating, listing or deleting flows through the Dataverse Web API (the workflow table, category 5) with Entra ID / OAuth2 auth, or reading action-level run history via the third-party FlowStudio MCP. Triggers: 'create a Power Automate cloud flow with the Dataverse API', 'enable my flow by code / set statecode to 1', 'why can't I create or edit a My Flow programmatically', 'PATCH the workflow clientdata', 'automatizar el despliegue de un flujo de Power Automate desde código'. NOT designing the flow or authoring its definition (automation-flows), NOT choosing a platform by billing model (automation-strategy), NOT a generic typed REST client with auth/pagination/backoff (api-connector-builder), NOT the endpoint receiving an HTTP-trigger POST in your app (webhooks), NOT scripting Microsoft 365 / Graph mail & calendar directly (no first-party skill — api-connector-builder, or google-workspace)."
+description: "Use when operating Microsoft Power Automate cloud flows from code — create, enable, update, list or delete via the Dataverse Web API (`workflow` table, category 5) with Entra ID OAuth2, plus run-history debugging. NOT designing the flow definition (that is `automation-flows`), NOT picking a platform by billing model (that is `automation-strategy`)."
 tags: [power-automate, dataverse, microsoft, flows, entra, oauth, mcp, m365, automation]
 recommends: [automation-flows, automation-strategy, api-connector-builder, webhooks]
 profiles: [full]
@@ -80,7 +80,7 @@ Two load-bearing parts:
 - **`definition`** — a Logic Apps workflow definition: `triggers` (exactly one) then `actions`. This is the *design* artifact. Do not invent it from scratch here — get the trigger→actions→branch→error shape from `../automation-flows/SKILL.md`, then drop it into `definition`. Fastest reliable way to get a real one: build the flow once in the maker portal, export the solution, and copy its `clientdata`.
 - **`connectionReferences`** — the map from the definition's connectors to actual connections. **A flow whose connection references are not authorized will not turn on.** In a solution these are connection-reference records the target environment must resolve; unresolved references are the #1 reason a `PATCH statecode=1` "succeeds" but the flow never runs.
 
-**The trap:** `clientdata` must be *escaped into a string* before it goes in the request body — a nested object is rejected. In a script, `JSON.stringify(clientDataObject)` and assign the result; do not paste the object raw. Full annotated example in `references/dataverse-web-api.md`.
+**The trap:** `clientdata` must be *escaped into a string* before it goes in the request body — a nested object is rejected. In a script, `JSON.stringify(clientDataObject)` and assign the result; do not paste the object raw. Full annotated example — plus the endpoint cheat-sheet (token, list/filter, create, enable, update, delete, ExportSolution, share), OData headers and error handling — in `references/dataverse-web-api.md`.
 
 ## Dynamic lifecycle — token → create → validate → enable → manage → delete
 
@@ -128,13 +128,17 @@ curl -s -X DELETE "$PA_DATAVERSE_URL/api/data/v9.2/workflows(<workflowid>)" \
 
 **Debug a run** — Dataverse's `flowrun` table lists run records but not per-action I/O. To see *which action failed and with what payload*, use FlowStudio MCP: `list_live_flows` → `get_live_flow_runs` → `get_live_flow_run_action_outputs`. See `references/flowstudio-mcp-and-limits.md`.
 
-## Microsoft 365 ecosystem fit
+## Boundaries — when it is not a flow you operate here
 
-Power Automate is Microsoft's iPaaS across M365 and Dynamics; flows live in **Dataverse** and glue Outlook, Teams, SharePoint, Dynamics, and hundreds of connectors. That means the boundary is sharp: if the ask is *"send this email / read this calendar via Microsoft Graph from my own backend code,"* that is not a flow at all — build a typed Graph client with `../api-connector-builder/SKILL.md` (there is no first-party MS-Graph skill). If the equivalent is on Google, that is `../google-workspace/SKILL.md`. This skill is for when the automation genuinely *is* a Power Automate flow you must operate by code.
+Power Automate is Microsoft's iPaaS across M365 and Dynamics; flows live in **Dataverse** and glue Outlook, Teams, SharePoint, Dynamics, and hundreds of connectors. This skill is for when the automation genuinely *is* a Power Automate flow you must operate by code. When it isn't:
 
-## Honesty / gotchas
+- *"Send this email / read this calendar via Microsoft Graph from my own backend code"* — not a flow at all; build a typed Graph client with `../api-connector-builder/SKILL.md` (there is no first-party MS-Graph skill), or `../google-workspace/SKILL.md` for the Google equivalent. Same route for a general typed client with auth/pagination/backoff — this skill uses the Dataverse endpoints surgically, it does not build a client.
+- *"Power Automate or n8n/Make/Zapier?"* — billing model and constraints decide that: `../automation-strategy/SKILL.md`, before you commit to operating here.
+- *"Receive my flow's HTTP-trigger POST in my app"* — that inbound endpoint is `../webhooks/SKILL.md`; this skill triggers and operates flows, it does not build the receiver.
 
-| Trap | Why it bites | Do instead |
+## Anti-patterns
+
+| Anti-pattern | Why it bites | Do instead |
 |---|---|---|
 | Trying to CRUD a **My Flow** by code | Unsupported — silently impossible, not a bug you can fix | Move it into a Dataverse solution, or drive it by hand |
 | `clientdata` sent as a nested object | Request rejected; the column expects an escaped **string** | Serialize (`JSON.stringify`) the definition+connectionReferences before sending |
@@ -143,13 +147,6 @@ Power Automate is Microsoft's iPaaS across M365 and Dynamics; flows live in **Da
 | `DELETE` with no export | No undo; the flow and its history are gone | `ExportSolution` first, save the zip, then delete |
 | Hardcoding the Dataverse URL / secret | Env-specific, leaks in source | `.env`: `PA_DATAVERSE_URL`, `PA_TENANT_ID`, `PA_CLIENT_ID`, `PA_CLIENT_SECRET` |
 | Assuming the Dataverse path is permanent | Power Platform API is superseding surfaces piecemeal | Re-check `api.powerplatform.com` coverage at author time; the split is fast-moving |
-
-## Related skills
-
-- **`../automation-flows/SKILL.md`** — design side: what the trigger→actions→branch→error should be, the importable definition. This skill *consumes* that shape as `clientdata.definition`. Design there, operate here.
-- **`../automation-strategy/SKILL.md`** — choosing Power Automate vs n8n/Make/Zapier by billing and constraints. Decide there before you commit to operating here.
-- **`../api-connector-builder/SKILL.md`** — a generic typed REST client with auth/pagination/backoff (including a Dataverse or MS Graph client). This skill uses the Dataverse API surgically; it does not build a general client.
-- **`../webhooks/SKILL.md`** — building the inbound endpoint in *your* app that receives a flow's HTTP-trigger POST. This skill triggers/operates flows; it does not build the receiver.
 
 ## Checklist
 
@@ -161,9 +158,3 @@ Power Automate is Microsoft's iPaaS across M365 and Dynamics; flows live in **Da
 - [ ] Flow enabled via `PATCH statecode=1` and verified on read-back.
 - [ ] Solution **exported** before any `DELETE`.
 - [ ] No secrets or org URLs hardcoded; FlowStudio MCP (if used) flagged as third-party.
-
-## References
-
-- `references/dataverse-web-api.md` — endpoint cheat-sheet (token, list/filter, create, enable, update, delete, ExportSolution, share), the full annotated `clientdata`, OData headers, and error handling.
-- `references/entra-auth-setup.md` — app registration, service principal vs delegated user, the Dataverse application user + security role, `.default` vs `user_impersonation`, and common 401/403 causes.
-- `references/flowstudio-mcp-and-limits.md` — FlowStudio MCP tools and auth (third-party), what it exposes that Dataverse doesn't, and the platform limits (My Flows, `api.flow.microsoft.com`, Power Platform API evolution).

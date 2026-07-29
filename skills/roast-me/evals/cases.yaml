@@ -9,7 +9,7 @@ skill: roast-me
 
 should_trigger:
   - prompt: "Roast me."
-    why: "Canonical verbatim invocation — the skill's own trigger phrase. Must fire immediately and run the five-phase pipeline."
+    why: "Canonical invocation — the shortest possible ask for exactly this skill's job. Must fire immediately and run the five-phase pipeline."
 
   - prompt: "Audit my prompting habits over the last two weeks."
     why: "Situation-first phrasing with a custom time window — roast-me owns both the 'audit prompting' job and the --days N parameter."
@@ -18,10 +18,10 @@ should_trigger:
     why: "Dual concern (prompt quality + cost) phrased as a question — maps directly to the two scores roast-me produces. No mention of 'roast' keyword."
 
   - prompt: "Analiza mis prompts de la última semana y dime dónde soy malo."
-    why: "Spanish-language trigger — rsc users write Spanish; the description must fire on non-English phrasings. Tests the non-English trigger."
+    why: "Spanish-language request — rsc users write Spanish; routing must survive translation on meaning alone."
 
   - prompt: "Puntua els meus prompts i digue'm quins hàbits hauria de canviar."
-    why: "Catalan-language trigger — a non-obvious language variant. The description lists this phrasing explicitly."
+    why: "Catalan-language request — a non-obvious language variant that must route on meaning, with no keyword resembling the skill id."
 
   - prompt: "How much am I burning on model costs? Show me where I overspend."
     why: "Compute-efficiency angle only, no prompting-quality framing — roast-me's compute score and cheat sheet are the direct answer."
