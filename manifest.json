@@ -1136,7 +1136,7 @@
     },
     {
       "id": "db-migrations",
-      "description": "Use when planning a schema change that must ship without downtime — adding a NOT NULL column, renaming/splitting/merging a column or table, changing a type, or backfilling millions of rows on a live table — and you need the expand-contract sequence plus the lock/timeout/batching discipline that keeps each step from freezing prod. Triggers: 'zero-downtime migration', 'add NOT NULL column to a huge table', 'rename a column safely', 'our deploy keeps deadlocking when we add an index', 'backfill 80M rows without replication lag', 'expand contract', 'gh-ost vs pt-osc', 'migración sin downtime', 'migració sense tallar el servei'. NOT Postgres lock internals/EXPLAIN/RLS (that is postgresdb), NOT drizzle-kit runner mechanics (that is drizzle-orm), NOT restore drills/PITR (that is backups).",
+      "description": "Use when a schema change must ship without downtime — NOT NULL, rename, type change, or backfilling millions of live rows — for the expand-contract sequence and the lock/batching discipline that keeps each step from freezing prod. NOT lock internals or EXPLAIN (that is `postgresdb`), NOT drizzle-kit mechanics (that is `drizzle-orm`), NOT PITR (that is `backups`).",
       "tags": [
         "migrations",
         "zero-downtime",
@@ -1170,7 +1170,7 @@
     },
     {
       "id": "decision-records",
-      "description": "Use when a consequential, hard-to-reverse choice was just made or is about to be — database, framework, auth model, vendor, API style, deployment target — and future-you will ask why, with the answer buried in chat; capture it as a numbered, immutable ADR with the context that forced the choice, the real options weighed with their trade-offs, the decision, and consequences both ways. Also when a prior decision is being reversed and must be superseded without erasing history, or when onboarding keeps re-litigating a settled choice. Triggers: 'write up why we picked Postgres over DynamoDB so we stop arguing', 'record the switch to tRPC but keep the old REST decision in history', 'documenta por qué elegimos Hetzner y qué alternativas descartamos con pros y contras', 'registra la decisió i les alternatives que vam descartar'. NOT the meeting recap with action items and owners (that is meeting-notes), NOT the project-wide standing principles and stack canon (that is constitution).",
+      "description": "Use when a hard-to-reverse choice (database, framework, vendor, auth model) must be frozen as an immutable numbered ADR — the context that forced it, the options weighed, the decision, consequences both ways — or superseded without erasing history. NOT a meeting recap (that is meeting-notes), NOT standing project principles (that is constitution).",
       "tags": [
         "decision-records",
         "adr",
@@ -1193,7 +1193,7 @@
     },
     {
       "id": "deep-learning",
-      "description": "Use when training or debugging a neural network in PyTorch — writing the training loop, chasing loss that won't drop or goes NaN, adding mixed precision (AMP), scaling across GPUs, or making a run reproducible. Covers tensors/autograd/nn.Module, torch.compile, the forward→loss→backward→step→zero_grad loop and its silent bugs, AdamW + cosine/warmup schedulers, DDP vs FSDP vs DeepSpeed ZeRO, checkpointing and seeds. PyTorch-first (JAX/TF exist). Triggers: 'my training loss isn't decreasing', 'loss becomes NaN after a few steps', 'how do I use torch.autocast and GradScaler', 'train this model across 4 GPUs', 'val accuracy is worse than train and I forgot model.eval()', 'gradients seem to add up across batches', 'build a CNN from scratch and train it', 'entrenar una xarxa neuronal des de zero amb PyTorch'. NOT adapting a pretrained LLM with LoRA/QLoRA (that is finetuning); NOT classic/tabular models like XGBoost or sklearn (that is machine-learning); NOT tokenization or NLP task metrics (that is nlp).",
+      "description": "Use when training or debugging a neural net in PyTorch — the forward/loss/backward/step loop and its silent bugs, mixed precision (AMP), AdamW/LR schedules, DDP/FSDP/ZeRO, checkpoints and seeds. NOT LoRA/QLoRA on a pretrained LLM (that is `finetuning`), NOT tabular sklearn/XGBoost (that is `machine-learning`), NOT tokenization or NLP metrics (that is `nlp`).",
       "tags": [
         "pytorch",
         "deep-learning",
@@ -1250,7 +1250,7 @@
     },
     {
       "id": "digitalocean",
-      "description": "Use when deploying or operating a workload on DigitalOcean and you must decide where it runs and how to ship it — Droplet (raw VPS) vs App Platform (managed PaaS) vs Functions, wiring a Managed Database (Postgres/MySQL/Valkey), Spaces object storage + CDN, doctl auth, App Platform app spec YAML, cloud firewalls, VPC private networking, reserved IPs, snapshots/backups, app logs, scaling. Triggers: 'deploy to DigitalOcean', 'DigitalOcean App Platform app spec', 'DO managed postgres with connection pooling', 'doctl apps create', 'reserved IP failover', 'I need an S3-compatible bucket with a CDN' (that is Spaces — non-obvious), 'subir mi web a DigitalOcean con doctl', 'Droplet o App Platform, qué sale más barato'. NOT host-agnostic CI/CD or rollback strategy (that is deployment), NOT a Hetzner bare VPS (that is hetzner).",
+      "description": "Use when deploying or operating a workload on DigitalOcean — Droplet vs App Platform vs Functions, doctl, app spec YAML, Managed Postgres/MySQL/Valkey on the VPC, S3-compatible Spaces + CDN. NOT host-agnostic CI/CD or rollback strategy (that is `deployment`), NOT a bare Hetzner VPS (that is `hetzner`), NOT another managed PaaS (that is `railway`).",
       "tags": [
         "digitalocean",
         "doctl",
@@ -1274,7 +1274,7 @@
     },
     {
       "id": "django",
-      "description": "Use when building, reviewing, securing, testing or shipping a Django web app — models, migrations, QuerySets, managers, FBV/CBV views, forms, the admin, settings split, and Django REST Framework (serializers, ModelViewSet, routers, permissions, throttling). Triggers: 'add a filter and fix the N+1 in this ListView', 'build a DRF ModelViewSet with owner-only permission', 'this template loops over books and queries book.author each iteration' (N+1 without the word Django), 'why does manage.py check --deploy warn about SECURE_HSTS_SECONDS', 'revisa este modelo y añade un UniqueConstraint en (tenant, slug)', 'el queryset hace N+1', any file with manage.py, settings.py, models.py, serializers.py or a 0001_initial migration. NOT async-first FastAPI services (that is fastapi).",
+      "description": "Use when building, reviewing, securing, testing or shipping a Django app — models, migrations, QuerySets/managers, FBV/CBV views, forms, the admin, settings split, and Django REST Framework (serializers, ModelViewSet, permissions). NOT async FastAPI/Pydantic services (that is `fastapi`), NOT Postgres schema/index work (that is `postgresdb`).",
       "tags": [
         "python",
         "django",
@@ -1294,7 +1294,7 @@
     },
     {
       "id": "docker",
-      "description": "Use when authoring or auditing a Dockerfile/Containerfile, shrinking a bloated image, hardening a container that runs as root, choosing a base image, or wiring a Compose dev loop with hot reload. Triggers: 'dockerize this app', 'my node image is 1.2GB make it smaller', 'the build cache keeps busting', 'harden this Dockerfile, trivy flags it', 'docker compose watch for local dev', 'distroless vs alpine vs slim', 'la imagen pesa demasiado', 'el build de docker tarda siglos'. NOT the CI/CD pipeline or deploy-to-host (that is deployment), NOT k8s autoscaling/HPA (that is scaling), NOT app-level SQL injection or secrets-in-code (that is secure-coding).",
+      "description": "Use when authoring or auditing a Dockerfile, shrinking a bloated image, hardening a container that runs as root, picking a base image, or wiring a Compose dev loop with hot reload. NOT CI builds or deploy-to-host (that is `deployment`), NOT k8s autoscaling (that is `scaling`), NOT app-level injection or secrets-in-code (that is `secure-coding`).",
       "tags": [
         "docker",
         "containers",
@@ -1312,7 +1312,7 @@
     },
     {
       "id": "document-processing",
-      "description": "Use when you need to get content out of a document or build a document out of data — extracting text/tables from PDFs, filling interactive PDF forms (AcroForm), generating PDF/DOCX from templates, or OCR'ing scanned/image-only files into Markdown/JSON. Triggers: 'extract the line items from this invoice PDF', 'fill this PDF form and flatten it', 'generate a contract DOCX from this template', 'this scan has no text layer', 'the PDF copies out as garbage symbols', 'merge/split/rotate these PDFs', 'OCR 300 scanned pages', 'rellena este formulario PDF y fusiónalos', 'extreu les taules d'aquesta factura escanejada'. NOT pulling schema-typed fields out of text (that is structured-extraction), NOT sending it for signature (that is e-signature), NOT reading spreadsheet cells/formulas (that is spreadsheet-ops).",
+      "description": "Use when the deliverable is a document's bytes or its literal content — text/tables out of PDFs, AcroForm fill and flatten, page merge/split, PDF/DOCX from templates, OCR of image-only scans. NOT schema-typed fields pulled from text (that is structured-extraction), NOT signature routing (e-signature) or spreadsheet cells/formulas (spreadsheet-ops).",
       "tags": [
         "pdf",
         "ocr",
@@ -1448,7 +1448,7 @@
     },
     {
       "id": "e2e-testing",
-      "description": "Use when writing or stabilizing browser end-to-end tests with Playwright — driving real navigation, forms, logins, and multi-step user journeys through an actual browser, picking durable locators, or killing tests that pass locally but flake in CI. Covers getByRole/getByTestId locator choice, web-first assertions, storageState auth via setup projects, retries/trace config, sharding, and the 2026 flakiness playbook. Triggers: 'write a Playwright test', 'my e2e tests flake in CI but pass locally', 'set up storageState so I don't log in every test', 'getByRole vs CSS selector', 'shard Playwright across machines', 'trace on retry', 'strict mode resolved to 2 elements', 'els tests d'extrem a extrem fallen aleatòriament al pipeline', 'los tests e2e fallan a veces'. NOT in-process component/unit web tests (that is testing-web), NOT pytest suites (that is testing-py), NOT a11y audits as the goal (that is accessibility), NOT building the CI pipeline itself (that is github-actions).",
+      "description": "Use when writing or stabilizing Playwright tests that drive a real browser through multi-step journeys — durable locators, web-first assertions, storageState auth, trace/retries, and flakes that only bite in CI. NOT in-process component tests (that is testing-web), NOT WCAG auditing (that is accessibility), NOT the pre-merge gate (that is verify).",
       "tags": [
         "playwright",
         "e2e",
@@ -1508,7 +1508,7 @@
     },
     {
       "id": "email-connector",
-      "description": "Use when wiring an app to send transactional or bulk email through an HTTP provider (Resend, Twilio SendGrid, Postmark) from server code: welcome/reset/receipt sends, a provider-agnostic sendEmail() seam, React Email or dynamic templates, idempotent retries, 100-cap batch with partial-failure handling, transactional-vs-broadcast stream split, and the bounce/complaint webhook feeding a suppression list. Triggers: 'send a password-reset email with Resend', 'emails double-send when the queue retries', 'switch us off SendGrid onto Postmark without rewriting every call site', 'send a digest to 4000 users and handle the ones that fail', 'el webhook de bounces no actualiza la lista de supresión', 'montar el envío de correos con Resend'. NOT writing the subject line or the open/click growth system (that is newsletter).",
+      "description": "Use when wiring server code to send transactional or bulk email via Resend, SendGrid, or Postmark: a provider-agnostic sendEmail() seam, idempotent retries, 100-cap batches with partial failures, transactional-vs-broadcast streams, bounce webhooks feeding a suppression list. NOT SPF/DKIM/DMARC inbox reputation (that is `email-deliverability`).",
       "tags": [
         "email",
         "transactional-email",
@@ -1575,7 +1575,7 @@
     },
     {
       "id": "error-handling",
-      "description": "Use when designing how code recognizes, recovers from, and reports failure — typed error taxonomies, retry/backoff/timeout policy, circuit breakers, React/Next error boundaries, and the user message + operator log line. Triggers: 'add retries with backoff', 'set up an error boundary', 'standardize our error types', 'stop swallowing exceptions', 'this catch block hides the real error', 'degrade gracefully when the payment provider is down', 'why does our retry storm take the database down', 'maneja los errores sin tragarte la excepción', 'afegeix reintents amb backoff i tallacircuits'. NOT finding why one specific thing broke (that is debug), NOT wiring logs/metrics/traces (that is observability), NOT the on-the-wire error envelope contract (that is api-design).",
+      "description": "Use when designing the reaction to a class of failures — typed error taxonomies, retry/backoff/timeout policy, circuit breakers, React/Next error boundaries, and the user-message vs operator-log split. NOT diagnosing one specific crash (that is debug), NOT logs/metrics/traces (that is observability), NOT the wire error envelope (that is api-design).",
       "tags": [
         "error-handling",
         "resilience",
