@@ -1,6 +1,6 @@
 ---
 name: youtube-thumbnails
-description: "Use when designing or fixing a YouTube thumbnail, making variants for a thumbnail A/B test, or figuring out which thumbnail style wins on a channel. Triggers: 'design a thumbnail', 'make 3 thumbnail variants to A/B test', 'set up Test & Compare on this upload', 'why is my CTR low', the non-obvious 'CTR is fine but the test keeps picking the boring thumbnail' (the watch-time-share trap), 'which thumbnail style actually wins on my channel', and Catalan/Spanish 'fes la miniatura del vídeo' / 'diseña la portada del vídeo'. NOT pairing the title with the thumbnail as one click-promise (that is youtube-packaging), NOT channel positioning or niche (youtube-strategy), NOT setting a thumbnail through the Data API (youtube-api)."
+description: "Use when designing or fixing a YouTube thumbnail, making variants for an A/B test, or working out which thumbnail style wins on a channel — including the trap where CTR looks fine but the test keeps selecting the duller image on watch-time share. NOT pairing the title with the thumbnail as one click-promise (that is `youtube-packaging`), NOT channel positioning or niche (that is `youtube-strategy`), NOT setting a thumbnail through the Data API (that is `youtube-api`)."
 tags: [youtube, thumbnails, ctr, ab-testing, design]
 recommends: [youtube-packaging, youtube-strategy, ab-testing, design]
 profiles: []

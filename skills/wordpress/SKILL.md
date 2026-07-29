@@ -1,6 +1,6 @@
 ---
 name: wordpress
-description: "Use when building or hardening WordPress sites or WooCommerce stores — block themes with theme.json v3, plugins with block.json and proper hooks, wp-config security hardening, performance (object cache, asset loading, speculative loading), and WP-CLI operations — and you are treating WordPress as the product, not just writing PHP. Triggers: 'build a WordPress block theme', 'write a WP plugin', 'harden my WordPress install', 'enable HPOS in WooCommerce', 'wp search-replace migration', 'why is my wp-admin slow', 'autoloaded options are huge', 'endurece mi WordPress', 'crea un tema de bloques'. NOT a Laravel app (that is laravel)."
+description: "Use when building or hardening WordPress sites or WooCommerce stores and treating WordPress as the product rather than just writing PHP — block themes with theme.json, plugins with block.json and proper hooks, wp-config security hardening, performance (object cache, asset loading, autoloaded options), and WP-CLI operations. NOT a Laravel app (that is `laravel`)."
 tags: [wordpress, woocommerce, block-themes, wp-cli, php, security-hardening, performance]
 recommends: [php, secure-coding, performance, mysql, shopify]
 origin: risco

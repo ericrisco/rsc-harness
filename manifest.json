@@ -5186,7 +5186,7 @@
     },
     {
       "id": "whatsapp-telegram",
-      "description": "Use when wiring an app or agent to send messages to customers over the WhatsApp Cloud API or a Telegram bot — order updates, OTP codes, reminders, alerts, broadcasts — or when debugging not-delivered messages, 24-hour-window errors, rejected templates, or 429 rate limits. Triggers: 'send a WhatsApp template message', 'error 131047 re-engage outside the 24h window', 'verify X-Hub-Signature-256 on the WhatsApp webhook', 'setWebhook vs getUpdates for my Telegram bot', 'honor retry_after on a Telegram 429', 'enviar plantilla de WhatsApp d'avis al client', 'bot de Telegram para avisos'. NOT the reply content you send (that is customer-support).",
+      "description": "Use when wiring an app or agent to message customers over the WhatsApp Cloud API or a Telegram bot — order updates, OTP codes, reminders, alerts and broadcasts — or when debugging undelivered messages, 24-hour-window errors, rejected templates, webhook signature verification, or rate limits and their retry headers. NOT the reply content you send (that is `customer-support`).",
       "tags": [
         "whatsapp",
         "telegram",
@@ -5205,7 +5205,7 @@
     },
     {
       "id": "wordpress",
-      "description": "Use when building or hardening WordPress sites or WooCommerce stores — block themes with theme.json v3, plugins with block.json and proper hooks, wp-config security hardening, performance (object cache, asset loading, speculative loading), and WP-CLI operations — and you are treating WordPress as the product, not just writing PHP. Triggers: 'build a WordPress block theme', 'write a WP plugin', 'harden my WordPress install', 'enable HPOS in WooCommerce', 'wp search-replace migration', 'why is my wp-admin slow', 'autoloaded options are huge', 'endurece mi WordPress', 'crea un tema de bloques'. NOT a Laravel app (that is laravel).",
+      "description": "Use when building or hardening WordPress sites or WooCommerce stores and treating WordPress as the product rather than just writing PHP — block themes with theme.json, plugins with block.json and proper hooks, wp-config security hardening, performance (object cache, asset loading, autoloaded options), and WP-CLI operations. NOT a Laravel app (that is `laravel`).",
       "tags": [
         "wordpress",
         "woocommerce",
@@ -5261,7 +5261,7 @@
     },
     {
       "id": "youtube-ideation",
-      "description": "Use when deciding which videos a YouTube channel should make next and tracking whether each bet beat baseline — generates, scores, and prioritizes candidate ideas from the channel's own performance log plus outlier/search-trend research, then records each promoted idea as a dated hypothesis with its measured outcome. Use when asked to rank the next 5 videos, score a batch of ideas down to what's worth producing, find 3x+ outliers and content gaps in a niche, or validate demand before committing a week of editing. Triggers: 'what should my next videos be', 'score these ideas and tell me which to make', 'find content gaps and outliers in my niche', 'my last video flopped, log it and adjust what we pick next', 'which of our past bets actually beat baseline and what's the pattern', 'qué vídeo grabo ahora', 'dame ideas priorizadas para mi canal', 'valida esta idea antes de grabar', 'registra que este vídeo funcionó'. NOT writing the title/thumbnail-text for a chosen idea (that is youtube-packaging).",
+      "description": "Use when deciding which videos a channel should make next and tracking whether each bet beat baseline — generating, scoring and prioritising candidate ideas from the channel's own performance log plus outlier and search-trend research, then recording each promoted idea as a dated hypothesis with its measured outcome. NOT writing the title or thumbnail text for a chosen idea (that is `youtube-packaging`).",
       "tags": [
         "youtube",
         "video-ideas",
@@ -5286,7 +5286,7 @@
     },
     {
       "id": "youtube-packaging",
-      "description": "Use when writing or fixing the text that ships with a YouTube upload — title, description, tags, hashtags, chapters — or when click-through is weak and the words are the suspect, or when closing the loop on what last performed. Triggers: 'write the title and description for this video', 'give me 3 titles to A/B test', 'add chapters to my description', 'what tags and hashtags should I use', the non-obvious 'my CTR is terrible and the title isn't landing, fix it' and 'log how the last upload performed and apply it to the next package', plus Spanish/Catalan 'escríbeme el título y la descripción del vídeo' / 'afegeix capítols a la descripció i dona'm 3 títols per testejar'. NOT designing the thumbnail image (that is youtube-thumbnails), NOT inventing the idea/angle (youtube-ideation), NOT the channel growth plan (youtube-strategy), NOT pushing the fields via the Data API (youtube-api).",
+      "description": "Use when writing or fixing the text that ships with a YouTube upload — title, description, tags, hashtags and chapters — when click-through is weak and the words are the suspect, or when closing the loop on what last performed. NOT designing the thumbnail image (that is `youtube-thumbnails`), NOT inventing the idea or angle (that is `youtube-ideation`), NOT the channel growth plan (that is `youtube-strategy`), NOT pushing the fields via the Data API (that is `youtube-api`).",
       "tags": [
         "youtube",
         "video-seo",
@@ -5307,7 +5307,7 @@
     },
     {
       "id": "youtube-strategy",
-      "description": "Use when a YouTube channel needs a SYSTEM-level decision — positioning/niche, upload cadence, how videos chain into playlists and series, end-screen routing, or a 'what's working, what to do more of' review — read from and written back to the channel's own learning wiki, not one video's choices. Triggers: 'what should my channel be about', 'who is my channel for', 'how often should I post', 'should I niche down or stay broad', 'organize my videos so people binge several in a row', 'my end screens aren't keeping people watching', 'quarterly channel review what's working', 'qué temática para mi canal de YouTube', 'cada cuánto subo vídeos'. NOT generating next-video topics/hooks (that is youtube-ideation), NOT per-video titles/thumbnail-text (that is youtube-packaging), NOT designing the thumbnail image (that is youtube-thumbnails), NOT fetching metrics from the Data API (that is youtube-api).",
+      "description": "Use when a YouTube channel needs a system-level decision — positioning and niche, upload cadence, how videos chain into playlists and series, end-screen routing, or a what-is-working review — read from and written back to the channel's own learning wiki rather than one video's choices. NOT generating next-video topics (that is `youtube-ideation`), NOT per-video titles or thumbnail text (that is `youtube-packaging`), NOT designing the thumbnail image (that is `youtube-thumbnails`), NOT fetching metrics from the Data API (that is `youtube-api`).",
       "tags": [
         "youtube",
         "channel-strategy",
@@ -5327,7 +5327,7 @@
     },
     {
       "id": "youtube-thumbnails",
-      "description": "Use when designing or fixing a YouTube thumbnail, making variants for a thumbnail A/B test, or figuring out which thumbnail style wins on a channel. Triggers: 'design a thumbnail', 'make 3 thumbnail variants to A/B test', 'set up Test & Compare on this upload', 'why is my CTR low', the non-obvious 'CTR is fine but the test keeps picking the boring thumbnail' (the watch-time-share trap), 'which thumbnail style actually wins on my channel', and Catalan/Spanish 'fes la miniatura del vídeo' / 'diseña la portada del vídeo'. NOT pairing the title with the thumbnail as one click-promise (that is youtube-packaging), NOT channel positioning or niche (youtube-strategy), NOT setting a thumbnail through the Data API (youtube-api).",
+      "description": "Use when designing or fixing a YouTube thumbnail, making variants for an A/B test, or working out which thumbnail style wins on a channel — including the trap where CTR looks fine but the test keeps selecting the duller image on watch-time share. NOT pairing the title with the thumbnail as one click-promise (that is `youtube-packaging`), NOT channel positioning or niche (that is `youtube-strategy`), NOT setting a thumbnail through the Data API (that is `youtube-api`).",
       "tags": [
         "youtube",
         "thumbnails",
@@ -5345,7 +5345,7 @@
     },
     {
       "id": "zapier",
-      "description": "Use when operating Zapier from an agent through the official hosted Zapier MCP server — Bearer-key connect, then discover an app's actions, enable one, and invoke a read or write action (or fire a Zap Catch Hook trigger) across 9,000+ apps like Slack, Gmail, Notion, HubSpot by natural language. Triggers: 'connect Zapier MCP to Claude/Cursor', 'run a Zapier action to post to Slack / create a HubSpot contact', 'let my agent search my Gmail through Zapier', 'invoke Zapier actions from my tool', 'how many tasks does a Zapier MCP call cost', 'ejecuta una acción de Zapier desde el agente', 'connecta Zapier MCP al meu agent'. NOT programmatically creating/reading/updating/deleting your own Zaps — Zapier has NO public API for that on a normal account, so say so and route to n8n or make, which have full workflow CRUD APIs. NOT deciding what a flow should be or its error/dedup design (that is automation-flows). NOT a SaaS vendor embedding Zapier via the Partner/Workflow API (rare; see references).",
+      "description": "Use when operating Zapier from an agent through the official hosted Zapier MCP server — connecting with a bearer key, discovering an app's actions, enabling one, and invoking a read or write action or firing a Catch Hook trigger across thousands of apps by natural language. Note there is no public API for creating or updating your own Zaps on a normal account, so say so and route onward. NOT deciding what a flow should be or its error and dedup design (that is `automation-flows`), NOT workflow CRUD, which `n8n` and `make` do support.",
       "tags": [
         "zapier",
         "mcp",
