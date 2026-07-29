@@ -1,6 +1,6 @@
 ---
 name: secure-coding
-description: "Use when threat-modeling a feature, reviewing code or a diff for security, hardening authentication/authorization, handling secrets, configuring CORS/CSP/security headers, or fixing OWASP-class vulnerabilities (broken access control, injection, SSRF, auth failures, supply-chain) in FastAPI/Python, Go, Next.js, or Flutter. Triggers: 'security review', 'threat model this', 'is this safe', 'harden auth', 'rotate secrets', 'fix this vuln', 'OWASP', 'why is this endpoint exposed', before merging an endpoint that touches auth/payments/PII/uploads."
+description: "Use when securing application code: threat-modeling a feature, security-reviewing a diff, hardening auth/authz, secrets, CORS/CSP, or fixing OWASP-class bugs (access control, injection, SSRF, supply chain) in FastAPI, Next.js, Go or Flutter. NOT running the scanners (that is security-scan), NOT agent prompt-injection guardrails (that is agent-safety)."
 tags: [security, owasp, stride, auth, review]
 recommends: [deployment]
 origin: risco
@@ -22,23 +22,15 @@ Operating posture:
 - **Every finding ships a fix.** Never "consider sanitizing" — show the
   corrected code for *this* stack.
 
-## When to use / When NOT to use
-
-**Use when:** adding/reviewing an endpoint touching auth, money, PII, file
-uploads, or external URLs; a diff needs a security pass before merge; designing
-a feature (threat-model before code); hardening cookies/tokens/CORS/CSP/TLS/
-rate limits/password hashing/MFA; handling secrets, dependency CVEs, lockfile
-integrity, or CI security gates.
-
-**Do NOT use for:**
-
-- **Agent / Claude-Code config security** (`.claude/`, hooks, MCP, prompt
-  injection, sandboxing) — a *different* concern. This skill is about the
-  **application code the user ships**. Point there (See Also) and stay in lane.
-- Pure infra/network firewalling with no code change — defer.
-- Pentest/bounty PoC against a third party — out of scope (legal); this skill
-  defends code, it does not attack external targets.
-- Trivial non-security refactors — don't gate them through `verify.sh`.
+Stay in lane — this is about **the application code the user ships**. Agent /
+Claude-Code config security (`.claude/`, hooks, MCP, prompt injection,
+sandboxing) is a *different* concern: [`agent-safety`](../agent-safety/SKILL.md),
+[`building-agents`](../building-agents/SKILL.md). Running the scanners and
+triaging their raw output: [`security-scan`](../security-scan/SKILL.md).
+Infra/network firewalling with no code change: [`deployment`](../deployment/SKILL.md).
+A pentest/bounty PoC against a third party is out of scope (legal) — this skill
+defends code, it does not attack external targets. Don't gate trivial
+non-security refactors through `verify.sh`.
 
 ## The 30-second model: lethal trifecta + trust boundaries
 
@@ -48,15 +40,21 @@ integrity, or CI security gates.
 - **Trust-boundary rule:** every untrusted→trusted crossing is a checkpoint with
   one owning defense: HTTP body→SQL, user string→shell/URL/HTML, JWT claim→authz
   decision, filename→fs path, upload→disk/exec.
+- **Least privilege / least agency** for tokens, DB roles, CORS origins and file
+  perms. It is the one control that still caps blast radius *after* one of the
+  defenses below fails, so it is never optional.
 
-| Untrusted source | Dangerous sink | Defense | Reference |
+| Untrusted source | Dangerous sink | Defense | Ref |
 |---|---|---|---|
-| Request body | SQL query | Parameterize (bound params / ORM) | `references/owasp-by-stack.md` A03 |
-| User URL | Outbound fetch | https-only + IP allowlist, block private ranges | `references/owasp-by-stack.md` A10 |
-| User HTML | DOM render | Encode by context / DOMPurify allowlist | `references/owasp-by-stack.md` A03 |
-| Filename | Filesystem path | Canonicalize + base-dir containment | `references/owasp-by-stack.md` A03 |
+| Request body | SQL query | Parameterize (bound params / ORM) | A03 |
+| User URL | Outbound fetch | https-only + IP allowlist, block private ranges | A10 |
+| User HTML | DOM render | Encode by context / DOMPurify allowlist | A03 |
+| Filename | Filesystem path | Canonicalize + base-dir containment | A03 |
 | JWT / claim | Authz decision | Verify signature + pinned alg + `aud`/`iss`/`exp` | `references/authn-authz.md` |
-| Upload | Disk / exec | Type+size, sniff magic bytes, store outside web root | `references/owasp-by-stack.md` A01 |
+| Upload | Disk / exec | Type+size, sniff magic bytes, store outside web root | A01 |
+
+A-numbers index `references/owasp-by-stack.md`: same section, vulnerable→fixed
+code in all three stacks.
 
 ## Review workflow (PR-sized)
 
@@ -65,35 +63,27 @@ integrity, or CI security gates.
 3. **Map sinks to OWASP.** Match each changed sink to a category → `references/owasp-by-stack.md`.
 4. **Rank by exploitability.** Reachable? User-controlled? Meaningful sink? Report the highest-impact reachable findings first, not a checklist.
 5. **Propose fixes as diffs** in the repo's actual stack (Good/Bad, copy-pasteable).
-6. **Run `scripts/verify.sh`** in the repo root; resolve every high/critical before merge.
-
-## Core principles (non-negotiable)
-
-1. Validate at the boundary with a schema (Pydantic v2 / Zod `.strict()` / Go struct+validator) — never trust shape.
-2. Parameterize every query; ORM or driver bind params, never string-built SQL.
-3. Authorize on the **server**, per-object, on **every** request; deny by default.
-4. Encode on output by context (HTML / attribute / JS / URL); never build HTML from user strings.
-5. Secrets only from env/secret-manager — never in repo, logs, or client bundles.
-6. Fail closed: generic errors to the client, detail to logs (no stack traces, no PII).
-7. Pin + lock dependencies; a reachable CVE is a release blocker.
-8. Least privilege / least agency for tokens, DB roles, CORS origins, file perms.
+6. **Run `scripts/verify.sh`** in the repo root; resolve every high/critical before merge — a reachable CVE is a release blocker, not a follow-up ticket.
 
 ## OWASP Top 10 — fastest fix per category
 
-| OWASP 2021 | The mistake you'll actually see | Stack-correct fix in one phrase | Deep ref |
-|---|---|---|---|
-| A01 Broken Access Control | `db.get(id)` returned to any authed user | Ownership-scoped query; 404 (not 403) on miss | `references/owasp-by-stack.md` A01 |
-| A02 Cryptographic Failures | SHA-256 password hash; `random` token | Argon2id + CSPRNG (`secrets`/`crypto/rand`) | `references/owasp-by-stack.md` A02 |
-| A03 Injection | f-string SQL / `shell=True` | Bound params / arg-list, no shell / canonicalize path | `references/owasp-by-stack.md` A03 |
-| A04 Insecure Design | No rate limit, replayable payment | Lockout + idempotency-key `UNIQUE` constraint | `references/owasp-by-stack.md` A04 |
-| A05 Security Misconfiguration | `debug=True`, `*`+credentials CORS | `debug=False`, explicit origin allowlist, headers | `references/owasp-by-stack.md` A05 |
-| A06 Vulnerable Components | Ignored transitive CVE | Audit + upgrade/override/replace | `references/owasp-by-stack.md` A06 |
-| A07 Auth Failures | Reusable session id, user enumeration | Lockout + rotate session id + generic error | `references/owasp-by-stack.md` A07 |
-| A08 Data Integrity | `curl \| bash`, unpinned CDN script | `npm ci`/`go mod verify` + SRI | `references/owasp-by-stack.md` A08 |
-| A09 Logging Failures | No authz-fail log; PII in logs | Structured log on `user_id`, redact secrets | `references/owasp-by-stack.md` A09 |
-| A10 SSRF | Fetch user-supplied URL directly | https-only + IP allowlist + pin dialed IP | `references/owasp-by-stack.md` A10 |
+| OWASP 2021 | The mistake you'll actually see | Stack-correct fix in one phrase |
+|---|---|---|
+| A01 Broken Access Control | `db.get(id)` returned to any authed user | Ownership-scoped query; 404 (not 403) on miss |
+| A02 Cryptographic Failures | SHA-256 password hash; `random` token | Argon2id + CSPRNG (`secrets`/`crypto/rand`) |
+| A03 Injection | f-string SQL / `shell=True` | Bound params / arg-list, no shell / canonicalize path |
+| A04 Insecure Design | No rate limit, replayable payment | Lockout + idempotency-key `UNIQUE` constraint |
+| A05 Security Misconfiguration | `debug=True`, `*`+credentials CORS | `debug=False`, explicit origin allowlist, headers |
+| A06 Vulnerable Components | Ignored transitive CVE | Audit + upgrade/override/replace |
+| A07 Auth Failures | Reusable session id, user enumeration | Lockout + rotate session id + generic error |
+| A08 Data Integrity | `curl \| bash`, unpinned CDN script | `npm ci`/`go mod verify` + SRI |
+| A09 Logging Failures | No authz-fail log; PII in logs | Structured log on `user_id`, redact secrets |
+| A10 SSRF | Fetch user-supplied URL directly | https-only + IP allowlist + pin dialed IP |
 
-Flagship: **A01 Broken Access Control / IDOR** (the #1, stack-agnostic in shape).
+Flagship: **A01 Broken Access Control / IDOR** (the #1, stack-agnostic in
+shape). Authorize on the **server**, per object, on **every** request, deny by
+default: the id in the URL is attacker-controlled, so the ownership predicate in
+the query is the only thing standing between a stranger and the row.
 
 ```python
 # Python — FastAPI 3.12 + SQLAlchemy 2.0
@@ -162,6 +152,9 @@ in `references/owasp-by-stack.md`.
 
 ## Input validation & output encoding
 
+Validate at the boundary with a schema and never trust the shape that arrived —
+an unbounded or extra field is how the next sink gets its payload.
+
 ```python
 # BAD — raw body, unbounded, unknown fields silently accepted.
 data = await request.json()
@@ -181,7 +174,9 @@ const data = Schema.parse(await req.json());   // BAD: `body as any`
 
 **XSS:** React auto-escapes — the bug is `dangerouslySetInnerHTML`. **Stored**
 (persisted then served), **reflected** (echoed from the request), and **DOM**
-(client writes user data into the DOM) XSS all need encoding/sanitizing.
+(client writes user data into the DOM) XSS all need encoding/sanitizing. Encode
+on output *by context* (HTML / attribute / JS / URL); never build HTML by
+concatenating user strings.
 
 ```tsx
 // BAD — raw user HTML into the DOM.
@@ -272,6 +267,8 @@ export default { async headers() { return [{ source: "/:path*", headers }]; } };
 
 - **Rate limiting:** per-IP **and** per-identity, stricter on auth/OTP/search.
   In-memory limiters are **not** multi-instance safe — use Redis behind >1 replica.
+- **Fail closed:** generic error to the client, detail to the logs. A stack
+  trace or DB message in a response is free reconnaissance for the attacker.
 - **Logging without PII:** redact tokens/passwords/PAN/email; log `user_id`,
   not email; structured (`slog`/`structlog`); never log auth-route bodies.
 
@@ -279,18 +276,24 @@ export default { async headers() { return [{ source: "/:path*", headers }]; } };
 
 - Env/secret-manager, never repo; `.env` gitignored. Only `NEXT_PUBLIC_*` is
   public — **BAD: a secret read in a Client Component ships to the browser.**
+  In a [`harness`](../harness/SKILL.md) project they live in
+  `01-TOOLS/<PROVIDER>/.env` (gitignored) — same rule, never in the repo.
 - Pin + commit the lockfile; install with `npm ci` / `pnpm i --frozen-lockfile`
   / `go mod verify` / `pip install --require-hashes`.
-- Audit per stack: `pip-audit`, `npm audit --omit=dev` / `osv-scanner`,
-  `govulncheck`, `dart pub outdated`.
-- On exposure: **rotate the credential first, then scrub history** (`gitleaks`
-  to confirm). SBOM via `syft`; provenance via `cosign`/SLSA.
+- Audit per stack: `pip-audit`, `npm audit --omit=dev --audit-level=high` or
+  `osv-scanner scan source -L pnpm-lock.yaml` (lockfile-aware, multi-ecosystem,
+  v2 CLI), `govulncheck ./...` (reachability-aware — only vulns you call),
+  `dart pub outdated`. Fix by upgrading to the fixed version; constrain or
+  override transitive pins.
+- On exposure: **rotate the credential first, then scrub history** (`gitleaks
+  dir . --redact` for the working tree, `gitleaks git .` for history, to
+  confirm). SBOM via `syft`; provenance via `cosign`/SLSA.
 
 Full runbook: `references/secrets-and-supply-chain.md`.
 
-## Anti-patterns / rationalizations → STOP
+## Anti-patterns
 
-| Rationalization | Reality |
+| What gets said | Reality |
 |---|---|
 | "It's behind auth, so IDOR doesn't matter." | Authenticated ≠ authorized. Check object ownership on every request. |
 | "The frontend already validates / hides the button." | Client checks are UX. Re-authorize and re-validate on the server. Server Actions and API routes are public. |
@@ -300,66 +303,34 @@ Full runbook: `references/secrets-and-supply-chain.md`.
 | "npm audit shows criticals but they're transitive." | Transitive is still in your bundle. Pin/override or replace. |
 | "I'll log the payload to debug, remove it later." | "Later" never comes; PII/secrets leak to logs. Redact now. |
 | "We'll add rate limiting after launch." | Auth/OTP endpoints get brute-forced on day one. |
-| "It's an internal URL fetch, SSRF isn't a risk." | Internal is exactly the SSRF target (metadata, RDS). Allowlist hosts, block private IPs. |
+| "It's an internal URL fetch, SSRF isn't a risk." | Internal is exactly the SSRF target (metadata, RDS). Allowlist hosts and block `169.254.169.254`, `10/8`, `172.16/12`, `192.168/16`, `127/8`, `::1`, `fc00::/7`, `fe80::/10`. |
 | "Error stack to the client speeds debugging." | It leaks internals to attackers. Generic to client, detail to logs. |
 | "Secrets in `.env.example` are placeholders; real ones in CI YAML are fine." | Use the secret store; never inline real secrets in CI files. |
 | "Argon2 is overkill, SHA-256 is fast." | Fast = brute-forceable. Use Argon2id (or bcrypt cost≥12). |
 
 ## verify.sh — the gate
 
-`scripts/verify.sh` runs gitleaks + semgrep + the per-stack CVE audit
+`scripts/verify.sh` runs gitleaks + semgrep (`--config=auto --severity ERROR`
+gates; WARNING is informational) + the per-stack CVE audit
 (pip-audit/osv-scanner/govulncheck). It is **the user's to run in their own repo
 root** — it auto-detects the stack, skips (does not fail) when a tool is
 missing, and exits non-zero **only** on real high/critical findings. The CI
 equivalent is in `references/secrets-and-supply-chain.md`.
 
-## Quick reference
+## Project grounding
 
-| Concern | Tool / flag | One-liner |
-|---|---|---|
-| Secret scan | `gitleaks dir . --redact` | Working tree; add `gitleaks git .` for history; rotate-then-scrub on a hit |
-| SAST | `semgrep --config=auto --severity ERROR` | ERROR gates; WARNING informational |
-| Python CVEs | `pip-audit` | Upgrade to fix version; constraints for transitive |
-| Node CVEs | `npm audit --omit=dev --audit-level=high` | Or `osv-scanner scan source -L …` (multi-ecosystem) |
-| Node CVEs (lockfile) | `osv-scanner scan source -L pnpm-lock.yaml` | Lockfile-aware, broad ecosystem coverage (v2 CLI) |
-| Go CVEs | `govulncheck ./...` | Reachability-aware (only vulns you call) |
-| Password hash | Argon2id | `time_cost=3, memory_cost=65536, parallelism=4` |
-| Cookie flags | `Set-Cookie` | `__Host-name; HttpOnly; Secure; SameSite=Lax; Path=/` |
-| CSP starter | header | `default-src 'self'; object-src 'none'; frame-ancestors 'none'` |
-| CORS rule | allowlist | Explicit origins; never `*` with credentials |
-| SSRF blocklist | IP ranges | `169.254.169.254`, `10/8`, `172.16/12`, `192.168/16`, `127/8`, `::1`, `fc00::/7`, `fe80::/10` |
+In a project with a `02-DOCS/` layer ([`harness`](../harness/SKILL.md)), this
+project's security decisions live in `02-DOCS/wiki/stack/security.md`, indexed
+from `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a
+pointer to it). Read it first and stay consistent; if it is missing or stale,
+create/update it with the real choices — threat model, auth model, secrets
+backend, CI security gates, accepted risks — index it, and bump its `Updated`
+date in the same change. No `02-DOCS/` layer? Skip silently (optionally suggest
+`harness`): technical conventions are *recorded, not gated* — never block the
+task on this.
 
-## Project grounding (02-DOCS + CLAUDE.md)
-
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this
-project's security decisions there and index them from the root `CLAUDE.md`, so the next
-agent inherits the conventions instead of re-deriving them.
-
-1. **Find the article** `02-DOCS/wiki/stack/security.md`, indexed in `02-DOCS/wiki/index.md` (the
-   Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, create/update it with the project's real choices — the threat model, the auth model, the secrets backend, the CI security gates, and any accepted risks —
-   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a
-   short pointer to it).
-3. **Read it first on every use** and stay consistent; when a convention changes, update the
-   article (bump its `Updated` date) in the same change.
-
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the
-brand study, technical conventions are *recorded, not gated* — never block the task on this.
-
-## See Also
-
-- **Stack skills** — `../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`,
-  `../flutter/SKILL.md`, `../postgresdb/SKILL.md` (and `../design/SKILL.md`,
-  `../deployment/SKILL.md`): they defer security to this skill. If a stack skill
-  doesn't exist yet, treat this as the canonical security reference it points to.
-- **Agent / Claude-Code config security** — a separate concern (`.claude/`,
-  hooks, MCP, prompt injection, sandboxing). Covered by `../building-agents/SKILL.md`
-  and agent-config-security tooling; explicitly **out of scope** here.
-- **`../harness/SKILL.md`** — secrets land in
-  `01-TOOLS/<PROVIDER>/.env` (gitignored); reinforces never-in-repo.
-- **References** — go to `references/threat-modeling.md` to model a feature before
-  coding; `references/owasp-by-stack.md` for vulnerable→fixed code in any of the
-  three stacks; `references/authn-authz.md` to design login/sessions/tokens/MFA;
-  `references/secrets-and-supply-chain.md` for secret handling, dependency
-  pinning, and the CI gate.
+Stack skills ([`fastapi`](../fastapi/SKILL.md), [`nextjs`](../nextjs/SKILL.md),
+[`go`](../go/SKILL.md), [`flutter`](../flutter/SKILL.md),
+[`postgresdb`](../postgresdb/SKILL.md), [`deployment`](../deployment/SKILL.md))
+defer security to this skill; where one doesn't exist yet, this is the canonical
+reference it would point to.
