@@ -1,6 +1,6 @@
 ---
 name: google-workspace
-description: "Use when building server-side automation that reads or writes Gmail, Drive, Calendar, or Sheets against a real Google Workspace account via the official client libraries and a GCP service account — picking the auth mode, scoping OAuth scopes, building the authed client, and debugging 403/429/unauthorized_client errors. Triggers: 'send mail from a service account in a cron', 'unauthorized_client when impersonating a user', 'which Drive scope to upload to a shared drive', 'set up domain-wide delegation client ID', 'getting 403 insufficient permissions from the Sheets API', 'automatizar Gmail con cuenta de servicio sin login del usuario', 'enviar correos desde un script sense login d'usuari'. NOT generic SMTP/marketing/deliverability email (that is email-connector)."
+description: "Use when server-side code reads or writes Gmail, Drive, Calendar, or Sheets with a GCP service account and no human in the OAuth loop: picking the auth mode (app-owned vs domain-wide delegation vs keyless), scoping to least privilege, building the authed Node/Python client, staying under per-user quota, and debugging unauthorized_client / 403 / 429. NOT SMTP providers or deliverability (that is `email-connector`), NOT slot-finding and booking UX (that is `calendar-scheduling`)."
 tags: [google-workspace, gmail-api, drive-api, calendar-api, sheets-api, service-account, domain-wide-delegation, oauth-scopes]
 recommends: [email-connector, calendar-scheduling, spreadsheet-ops, document-processing, automation-flows, secure-coding, webhooks]
 origin: risco
@@ -9,52 +9,22 @@ origin: risco
 # Google Workspace — auth + calling Gmail/Drive/Calendar/Sheets
 
 This skill owns one layer: **authenticating to and calling the four Google
-Workspace REST APIs from server-side code.** You pick the auth mode, scope the
-OAuth scopes to least privilege, build the authed client in Node or Python, and
-call Gmail / Drive / Calendar / Sheets with quota-safe patterns. It turns "I
-have a GCP project and a Workspace domain" into code that sends mail, moves
-files, books events, and reads/writes spreadsheets without a human in the OAuth
-loop.
+Workspace REST APIs from server-side code.** Everything here is service-account
+/ machine auth — if a real user must click "Allow", that is interactive OAuth and
+out of scope.
 
-It does NOT own email-as-a-product, scheduling-as-a-product, or
-spreadsheet-as-data. See the boundaries below before you start.
+Where the neighbouring layers live:
 
-Operating posture:
-
-- **No human in the loop.** Everything here is service-account / machine auth.
-  If a real user must click "Allow", that is interactive OAuth — out of scope.
-- **Least scope, keyless first.** Default to the narrowest scope and to
-  Application Default Credentials / Workload Identity Federation over a
-  downloaded JSON key. A leaked key is the single most common Workspace
-  credential compromise.
-- **Quota is a real constraint, not a footnote.** The per-user limits are tight
-  (6k units/min Gmail, 60 req/min Sheets). Build backoff in from line one.
-
-## When to use / When NOT to use
-
-**Use when:** a cron, webhook handler, or agent tool reads/writes Gmail, Drive,
-Calendar, or Sheets without an interactive login; you must decide between
-app-owned resources and impersonating each Workspace user; you hit
-`403 insufficient permissions`, `403 rateLimitExceeded`, `429`, or
-`unauthorized_client` and need the scope/delegation/quota fix; you are wiring
-`googleapis` (Node) or `google-api-python-client` + `google-auth` (Python);
-you are migrating off downloaded JSON keys toward keyless auth.
-
-**Do NOT use for:**
-
-- **Generic transactional/marketing email, SMTP, providers, deliverability,
-  SPF/DKIM** → `email-connector` and `email-deliverability`. This skill covers
-  Gmail-the-API inside a Workspace mailbox, not provider choice or inbox
-  placement.
-- **Scheduling logic, availability, booking-link UX, timezone-as-a-feature** →
-  `calendar-scheduling`. This skill covers the raw Calendar event CRUD it sits
-  on top of.
-- **Spreadsheet data modeling, formulas, pivots, transforms as the deliverable**
-  → `spreadsheet-ops`. This skill covers the Sheets API read/write transport.
-- **Doc/PDF parsing, extraction, OCR** → `document-processing`. Drive here is
-  storage transport (upload/download/move/permissions), not content extraction.
-- **Multi-step orchestration across connectors** → `automation-flows`. **Notion**
-  → `notion-connector`. **Generic REST wrapping** → `api-connector-builder`.
+| Not this skill | Goes to | This skill's slice |
+|---|---|---|
+| SMTP/provider choice, transactional/marketing sends | `email-connector` | Gmail-the-API inside a Workspace mailbox |
+| SPF/DKIM, inbox placement | `email-deliverability` | — |
+| Availability search, booking-link UX, timezone-as-a-feature | `calendar-scheduling` | Raw Calendar event CRUD underneath |
+| Sheet data modeling, formulas, pivots | `spreadsheet-ops` | Sheets API read/write transport |
+| Doc/PDF parsing, extraction, OCR | `document-processing` | Drive as storage transport (upload/download/move/permissions) |
+| Chaining several connectors into one flow | `automation-flows` | The individual Google calls |
+| Notion as the backend / generic REST wrapping | `notion-connector`, `api-connector-builder` | — |
+| Receiving Gmail/Drive push notifications | `webhooks` | — |
 
 ## Pick your auth mode
 
@@ -72,7 +42,9 @@ large blast radius. Use it only when you genuinely must act as the user.
 
 ## Setup checklist
 
-Do these in order. The full click-path is in `references/auth-setup.md`.
+Do these in order. `references/auth-setup.md` has the full Cloud + Admin
+click-path, the scope catalog, DWD authorization, keyless WIF/ADC, and a longer
+troubleshooting matrix.
 
 1. **Enable the APIs** you will call in the Cloud console (Gmail, Drive,
    Calendar, Sheets) for the project. A disabled API returns `403` regardless of
@@ -242,8 +214,9 @@ def with_backoff(call, max_retries=6, max_backoff=64):
 - **Never commit the SA key JSON.** It is a long-lived bearer credential — a
   committed `service_account.json` is game over. Add `*.json` SA patterns to
   `.gitignore`; the `verify.sh` here flags tracked keys.
-- **Prefer keyless.** On GCP/CI use ADC or Workload Identity Federation so there
-  is no file to leak. If you must use a key, store it in a secret manager
+- **Prefer keyless.** A leaked key is the single most common Workspace credential
+  compromise. On GCP/CI use ADC or Workload Identity Federation so there is no
+  file to leak. If you must use a key, store it in a secret manager
   (env-injected, not a file beside the code) and rotate it.
 - **Least scope.** A leaked `drive.file` key sees app files; a leaked full
   `drive` key sees everything. The scope IS the blast radius.
@@ -268,20 +241,6 @@ def with_backoff(call, max_retries=6, max_backoff=64):
 | Reading whole resources without `fields` | Bigger payloads, higher quota cost, slower | Request only the fields you use (`fields: 'id'`) |
 | Hardcoding the private key inline in source | Can't rotate, leaks via logs/screenshots/history | Inject from env/secret manager; `\n`-unescape at load |
 | Pasting raw text into Gmail `raw` | API needs base64url RFC 822, not plain text → 400 | Build a MIME message, `base64url`-encode it |
-| Setting `subject` but skipping the Admin DWD step | `unauthorized_client` — the SA was never allowed to impersonate | Authorize client ID + exact scopes in Manage DWD first |
 
-## See also
-
-- `../secure-coding/SKILL.md` — secret handling, key rotation, and the security
-  pass before this connector ships.
-
-Recommended companions (siblings; create/link when present): `email-connector`
-for SMTP/provider/deliverability email, `calendar-scheduling` for slot-finding
-and booking UX, `spreadsheet-ops` for sheet data modeling and formulas,
-`document-processing` for parsing files you pull from Drive, `automation-flows`
-for chaining this across multiple connectors, and `webhooks` for receiving
-Gmail/Drive push notifications.
-
-Deep dives: `references/auth-setup.md` (full Cloud + Admin walkthrough, scope
-catalog, DWD authorization, keyless WIF/ADC, troubleshooting matrix) and
-`references/api-recipes.md` (extended Node + Python recipes).
+Before this connector ships, run the secret-handling and key-rotation pass in
+`../secure-coding/SKILL.md`.
