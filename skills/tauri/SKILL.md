@@ -1,6 +1,6 @@
 ---
 name: tauri
-description: "Use when building a lightweight cross-platform desktop (or v2 mobile) app with Tauri — a Rust core plus the OS-native WebView — wiring Rust commands and IPC, streaming data to the frontend, locking down the capabilities/permissions security model, or bundling and auto-updating tiny signed binaries. Triggers: 'build a Tauri app', 'expose a Rust command to my frontend', 'invoke from JS', 'tauri.conf.json', 'capabilities and permissions', 'stream download progress to the WebView', 'my command froze the UI', 'shrink my desktop binary vs Electron', 'set up the Tauri updater', 'crear una app d'escriptori lleugera amb Rust en lloc d'Electron', 'reducir el tamaño del binario de escritorio'. NOT a Chromium+Node desktop app that needs Node APIs in a main process (that is electron)."
+description: "Use when building a lightweight cross-platform desktop (or v2 mobile) app with Tauri — a Rust core plus the OS-native WebView: Rust commands and IPC, streaming to the frontend, the default-deny capabilities/permissions ACL, bundling and signed auto-updates. NOT a Chromium+Node shell needing Node APIs in a main process (that is electron)."
 tags: [tauri, desktop, rust, cross-platform, ipc, webview]
 recommends: [rust, electron, react, secure-coding, github-actions]
 origin: risco
@@ -22,7 +22,8 @@ so the same Rust core can ship to mobile.
 
 This skill owns the **shell**: commands, IPC, the security ACL, the bundler, the updater.
 It does **not** own the Rust language itself (that is the `rust` skill), the web UI inside
-the window (the `react`/`nextjs` skills), or a Chromium+Node shell (`../electron/SKILL.md`).
+the window (the `react`/`nextjs` skills), a Chromium+Node shell (`../electron/SKILL.md`), or
+app-code hardening beyond the IPC boundary (`../secure-coding/SKILL.md`).
 
 ## Pick your starting shape
 
@@ -213,12 +214,6 @@ across three OSes is the `github-actions` skill's job; this skill defines what t
 | Copying a v1 `tauri.conf.json > allowlist` | That key does not exist in v2 | Use `capabilities/*.json` (ACL) |
 | Assuming bundled Chromium | It's the **OS** WebView (WebKit/WebView2) | Test rendering on each OS's engine; avoid Chromium-only CSS/JS |
 
-## Pointers
-
-- `references/security.md` — capabilities/permissions/scope JSON, CSP recipes, isolation setup.
-- `references/bundling-distribution.md` — per-OS signing, updater keypair, sidecar, CI matrix.
-- Siblings: `../electron/SKILL.md` (the Chromium+Node alternative when you need a Node main
-  process), `../secure-coding/SKILL.md` (app-code hardening). The `rust` skill owns the
-  language; `react`/`nextjs` own the frontend UI; `github-actions` owns the release CI matrix.
-- `scripts/verify.sh` — advisory static lint over `src-tauri/` (capabilities present, registered
-  commands exist, no v1 `allowlist`, fallible-looking commands return `Result`).
+`scripts/verify.sh` is an advisory static lint over an `src-tauri/` tree that catches several of
+these: capabilities present, registered commands exist, no v1 `allowlist`, fallible-looking
+commands return `Result`.
