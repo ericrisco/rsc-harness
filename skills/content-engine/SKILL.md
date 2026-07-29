@@ -1,6 +1,6 @@
 ---
 name: content-engine
-description: "Use when a content operation needs a SYSTEM — a dated editorial calendar built top-down from pillars and a production pipeline that moves every slot through stages — not when writing one piece. Use for building/refreshing an editorial calendar, defining pillars/clusters/cadence/mix, standing up stage gates and a brief template, planning the 1:10 atomization of a flagship into derivatives, or setting WIP limits and the calendar of record. Triggers: 'build a content calendar', 'set up a content pipeline', 'what should we post and when', 'turn this pillar post into everything', 'our content is chaos, nobody knows what to post' (symptom, no calendar word), 'móntame un calendario de contenidos', 'atomiza este artículo en piezas'. NOT writing the pieces (that is article-writing), NOT distributing them (that is social-publisher), NOT keyword/cluster research (that is seo-geo), NOT codifying tone (that is brand-voice)."
+description: "Use when a content operation needs a SYSTEM: a dated editorial calendar built top-down from pillars, plus the stage gates, briefs, WIP limits and 1:10 atomization plan that move each slot to publish-ready. NOT writing the pieces (that is `article-writing`), NOT publishing them (that is `social-publisher`), NOT keyword research (that is `seo-geo`)."
 tags: [content, editorial-calendar, content-pipeline, repurposing, marketing-ops]
 recommends: [brand-voice, seo-geo, social-publisher, article-writing, video-shorts, newsletter, automation-flows]
 origin: risco
@@ -8,16 +8,9 @@ origin: risco
 
 # Content Engine — The Calendar and the Pipeline That Feeds It
 
-*The factory floor and the production schedule, not the words off any single station.* You own two machines: the **calendar** (what gets made and when) and the **pipeline** (how each slot moves from idea to publish-ready). You do not write the pieces and you do not publish them — you decide what gets made, you spec the brief, and you route each station to a specialist.
+*The factory floor and the production schedule, not the words off any single station.* You own two machines: the **calendar** (what gets made and when — a dated, slotted plan anchored to pillars, so "what do we post Thursday?" is a lookup, not a weekly panic) and the **pipeline** (how each slot moves from idea to publish-ready through stage gates, so output is consistent regardless of who writes). You do not write the pieces and you do not publish them — you decide what gets made, you spec the brief, and you route each station to a specialist.
 
 Content fails not from one bad post but from **no system**: no documented cadence, no brief, no stage gate, pillars that never get atomized. ~78% of high-performing content teams run a documented strategy and see ~3x the engagement of teams without one (InfluenceFlow, 2026). This skill is that system.
-
-## The two machines
-
-- **Calendar = what + when.** A dated, slotted plan anchored to pillars. "What do we post Thursday?" becomes a lookup, not a weekly panic.
-- **Pipeline = how it moves.** Every slot travels `idea → brief → draft → edit → atomize → publish-ready` through stage gates, so output is consistent regardless of who writes.
-
-**Hard rule: build top-down, slot last.** Personas → Pillars → Clusters → Assets, in that order. The calendar is derived from this architecture; it is never a bottom-up pile of "post ideas." Bottom-up calendars are the #1 failure mode — they have no theme, no leverage, and no reason any given post exists. *Why: structure makes topic choice a lookup, not a creative emergency every Monday.*
 
 ## Ground first (STOP gate)
 
@@ -30,6 +23,8 @@ You plan content for a real brand; you do not invent its strategy. Before buildi
 5. Cite what you grounded in (e.g. "pillars from `02-DOCS/wiki/brand-study.md`"). If you grounded in nothing, say so and stop.
 
 ## Build the calendar
+
+**Build top-down, slot last.** Personas → Pillars → Clusters → Assets, in that order. The calendar is derived from this architecture; it is never a bottom-up pile of "post ideas." Bottom-up calendars are the #1 failure mode — they have no theme, no leverage, and no reason any given post exists. *Why this one is absolute: structure makes topic choice a lookup, not a creative emergency every Monday.*
 
 **Four-layer architecture (counts are defaults, state them):**
 
@@ -104,13 +99,6 @@ Full template with a filled example → `references/brief-and-pipeline.md`. *Why
 - **atomize → publish-ready:** derivatives are planned and routed. Exit: every asset has an owner and a destination.
 
 **WIP limits matter more than throughput.** Cap in-flight slots per the team-size table; pulling a new idea before finishing the last one is how the calendar becomes a graveyard.
-
-**Who fills each station — route, do not write:**
-
-- Draft/edit of a long-form article → `../article-writing/SKILL.md`.
-- Newsletter issue copy → `newsletter`.
-- Short-form video script/storyboard → `video-shorts`.
-- Landing/launch page copy → `../marketing/SKILL.md`.
 
 **AI is a station, not the author.** Use AI for research, outlines, drafts, repurposing, and angle-testing. Humans decide which pillars matter, which stories to tell, and what "good" is. Voice is grounded via `brand-voice`, never invented (Entasher 2025-11-29).
 
