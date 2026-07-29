@@ -4705,7 +4705,7 @@
     },
     {
       "id": "terms-conditions",
-      "description": "Use when drafting the one-to-many legal documents a product publishes to its users — Terms of Service / Terms of Use, an Acceptable Use Policy, a EULA for installed software, and the standing legal notices a site must display (copyright, DMCA agent, governing law, auto-renewal); also when adding AI-feature terms (output ownership + accuracy disclaimers), wiring auto-renew disclosure, or fixing acceptance so it actually binds. Triggers: 'draft Terms of Service for our SaaS', 'write an Acceptable Use Policy', 'add a limitation-of-liability and arbitration clause', 'our terms are just a footer link, make them binding', 'what does our footer need to say legally', 'we auto-renew subscriptions, what must the terms say', 'redactar los términos y condiciones de la plataforma', 'termes i condicions del marketplace'. NOT a negotiated two-party agreement you sign with another business (that is contracts) and NOT the privacy policy or how personal data is handled (that is gdpr-privacy).",
+      "description": "Use when drafting the one-to-many legal documents a product publishes to its users — Terms of Service, an Acceptable Use Policy, a EULA for installed software, and the standing notices a site must display — plus AI-feature terms covering output ownership and accuracy, auto-renewal disclosure, and making acceptance actually binding. NOT a negotiated two-party agreement you sign with another business (that is `contracts`), NOT the privacy policy or how personal data is handled (that is `gdpr-privacy`).",
       "tags": [
         "legal",
         "terms-of-service",
@@ -4728,7 +4728,7 @@
     },
     {
       "id": "testing-go",
-      "description": "Use when writing or running Go tests — table-driven cases, named subtests, parallel isolation, fakes instead of mock frameworks, coverage profiles, benchmarks, and fuzzing. Triggers: 'write Go tests', 'table-driven test', 'go test -cover', 'benchmark this function', 'testing.B.Loop', 'test concurrent goroutines deterministically', flaky parallel subtest uses wrong case data, golden files, 'mockear una interfaz en Go', 'cobertura de tests en Go', 'testar goroutines sense esperar 5 segons'. NOT general Go code or modules (that is go), NOT pytest fixtures (that is testing-py), NOT browser user flows (that is e2e-testing).",
+      "description": "Use when writing or running Go tests — table-driven cases, named subtests, parallel isolation, fakes instead of mock frameworks, coverage profiles, benchmarks, fuzzing, golden files, and testing concurrent goroutines deterministically. NOT general Go code or modules (that is `go`), NOT pytest fixtures (that is `testing-py`), NOT browser user flows (that is `e2e-testing`).",
       "tags": [
         "go",
         "testing",
@@ -4749,7 +4749,7 @@
     },
     {
       "id": "testing-py",
-      "description": "Use when writing or fixing Python tests with pytest and the suite is green but bugs still ship, when you must mock an external dependency and aren't sure where to patch, when coverage looks high but catches nothing, or when adding property-based tests for parsers/encoders/invariants. Triggers: 'write pytest tests', 'how do I mock this call', 'why does my mock pass when the code is broken', 'coverage is high but useless', 'patch where it's used', 'add Hypothesis property tests', 'fixture scope leaking state between tests', 'tests en Python', 'cómo mockeo esta llamada', 'la cobertura no detecta nada', 'tests de propietats'. NOT browser end-to-end flows (that is e2e-testing), NOT JS/TS unit tests (that is testing-web), NOT Go tests (that is testing-go).",
+      "description": "Use when writing or fixing Python tests with pytest — especially when the suite is green but bugs still ship, when you must decide where to patch a mocked dependency, when coverage is high but catches nothing, when fixture scope leaks state, or when adding property-based tests for parsers and invariants. NOT browser end-to-end flows (that is `e2e-testing`), NOT JS/TS unit tests (that is `testing-web`), NOT Go tests (that is `testing-go`).",
       "tags": [
         "pytest",
         "python",
@@ -4770,7 +4770,7 @@
     },
     {
       "id": "testing-web",
-      "description": "Use when writing or fixing frontend unit, component, or custom-hook tests with Vitest or Jest plus Testing Library — rendering a React/Vue/Svelte component in jsdom, testing a hook in isolation, killing 'not wrapped in act' warnings, or migrating a Jest suite to Vitest. Triggers: 'test this component', 'renderHook for my useCountdown', 'getBy vs findBy, my query is flaky', 'An update to X was not wrapped in act warning', 'mock fetch in a Vitest test', 'set up Vitest with React Testing Library', 'test mi componente de carrito', 'provar un hook amb renderHook'. NOT real-browser multi-page journeys (that is e2e-testing), NOT pytest suites (that is testing-py), NOT axe/contrast/keyboard auditing (that is accessibility).",
+      "description": "Use when writing or fixing frontend unit, component or custom-hook tests with Vitest or Jest plus Testing Library — rendering a component in jsdom, testing a hook in isolation, choosing between sync and async queries, silencing act warnings, mocking fetch, or migrating a Jest suite to Vitest. NOT real-browser multi-page journeys (that is `e2e-testing`), NOT pytest suites (that is `testing-py`), NOT accessibility auditing (that is `accessibility`).",
       "tags": [
         "testing",
         "frontend",
@@ -4794,7 +4794,7 @@
     },
     {
       "id": "tiktok-api",
-      "description": "Use when connecting a real TikTok account to code via the Content Posting API + Display API + Business Account API — OAuth v2 (Login Kit), chunked video publish (FILE_UPLOAD / PULL_FROM_URL with init → PUT → status poll), and pulling views / watch time / full_video_watched_rate / impression sources — then logging that performance into 02-DOCS/wiki/shortform/ as a dated feedback log. Triggers: 'publish a video to my TikTok account via the API and poll until it's live', 'my TikTok access token dies after 24 hours so the cron breaks', 'the Display API won't give me watch time / full_video_watched_rate', 'publish init returns url_ownership_unverified for my PULL_FROM_URL', 'rate_limit_exceeded — 6 requests per minute', 'append this week's FYP vs profile impression sources to the wiki', 'subir vídeos a TikTok por API y guardar las métricas del canal en el wiki', 'treure la retenció i el watch time de TikTok cap al wiki'. NOT what-to-post or how-to-package it (that is shortform-strategy / shortform-packaging).",
+      "description": "Use when connecting a real TikTok account to code via the Content Posting, Display and Business Account APIs — OAuth, chunked video publish with status polling, and pulling views, watch time and impression sources, then logging that performance into the wiki as a dated feedback record. Covers short-lived tokens breaking a cron, unverified pull-from-URL ownership, and rate limits. NOT what to post or how to package it (that is `shortform-strategy` and `shortform-packaging`).",
       "tags": [
         "tiktok",
         "content-posting-api",
@@ -4849,7 +4849,7 @@
     },
     {
       "id": "training-data",
-      "description": "Use when assembling or curating the corpus a fine-tune trains on: turning raw examples into JSONL in the format a trainer expects (Alpaca instruction, conversational messages, DPO preference pairs, KTO binary-label), matching your data to the model's chat template, generating synthetic or distilled examples, deduplicating and decontaminating against eval sets, or quality-filtering. Triggers: 'what format should my fine-tuning dataset be in', 'build a DPO preference dataset', 'convert my Q&A into the messages/chat format', 'my chat template does not match my training data', 'generate synthetic instruction data with distilabel', 'dedup and decontaminate my training set', 'quants exemples necessito i com filtro la qualitat del dataset abans d'entrenar'. NOT cleaning tabular rows/nulls/dtypes (that is data-cleaning), NOT building a retrieval corpus of chunks+embeddings (that is embeddings-search), NOT running the trainer or picking LoRA hyperparameters (that is finetuning/unsloth).",
+      "description": "Use when assembling or curating the corpus a fine-tune trains on — turning raw examples into the JSONL shape a trainer expects (instruction, conversational, preference-pair or binary-label), matching the data to the model's chat template, generating synthetic or distilled examples, deduplicating and decontaminating against eval sets, and quality-filtering. NOT cleaning tabular rows, nulls and dtypes (that is `data-cleaning`), NOT building a retrieval corpus of chunks and embeddings (that is `embeddings-search`), NOT running the trainer or picking hyperparameters (that is `finetuning`).",
       "tags": [
         "training-data",
         "fine-tuning-dataset",
@@ -4872,7 +4872,7 @@
     },
     {
       "id": "translation-l10n",
-      "description": "Use when adding a second or Nth language to a web/app product, wiring i18n plumbing (extract strings, ICU messages, locale routing), fixing broken plurals or dates, or making a UI survive other languages (RTL, text expansion). Triggers: 'ship the app in French and Arabic', 'set up next-intl routing with generateStaticParams', 'our Russian plurals always show the singular', 'German text overflows the buttons', 'dates still show American format for Spanish users', 'the Arabic layout is mirrored wrong', 'traducir la app al árabe y montar el glosario', 'necessito localitzar el producte'. NOT defining the brand's tone in one language (that is brand-voice).",
+      "description": "Use when adding a second or Nth language to a web or app product — i18n plumbing (string extraction, ICU messages, locale routing), fixing broken plurals or date formats, and making a UI survive other languages through right-to-left layout and text expansion. NOT defining the brand's tone in one language (that is `brand-voice`).",
       "tags": [
         "i18n",
         "l10n",
@@ -4910,7 +4910,7 @@
     },
     {
       "id": "unit-economics",
-      "description": "Use when computing or improving the per-customer economics of a business — CAC, LTV, CAC payback period, contribution margin — or judging whether LTV:CAC and payback are healthy against 2025-2026 norms, and naming the one lever that fixes the worst number. Triggers: 'what's our CAC / LTV / payback', 'is our LTV:CAC ratio healthy', 'our payback period feels too long', 'is a 5:1 LTV:CAC actually good', 'our blended CAC looks fine but I think paid is bleeding money', 'the model says we're profitable but each customer feels like a loss — what's the contribution margin per customer', 'calcula'm el CAC i quant trigo a recuperar el cost d'un client', 'el ratio LTV:CAC és sa?', 'margen de contribución por cliente'. NOT the multi-year P&L / scenario projection (that is financial-model).",
+      "description": "Use when computing or improving the per-customer economics of a business — CAC, LTV, CAC payback period and contribution margin — judging whether the ratios are healthy against current norms, and naming the one lever that fixes the worst number. Covers a blended CAC that hides a bleeding channel, and a model that shows profit while each customer loses money. NOT the multi-year P&L or scenario projection (that is `financial-model`).",
       "tags": [
         "cac",
         "ltv",

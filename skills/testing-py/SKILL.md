@@ -1,6 +1,6 @@
 ---
 name: testing-py
-description: "Use when writing or fixing Python tests with pytest and the suite is green but bugs still ship, when you must mock an external dependency and aren't sure where to patch, when coverage looks high but catches nothing, or when adding property-based tests for parsers/encoders/invariants. Triggers: 'write pytest tests', 'how do I mock this call', 'why does my mock pass when the code is broken', 'coverage is high but useless', 'patch where it's used', 'add Hypothesis property tests', 'fixture scope leaking state between tests', 'tests en Python', 'cómo mockeo esta llamada', 'la cobertura no detecta nada', 'tests de propietats'. NOT browser end-to-end flows (that is e2e-testing), NOT JS/TS unit tests (that is testing-web), NOT Go tests (that is testing-go)."
+description: "Use when writing or fixing Python tests with pytest — especially when the suite is green but bugs still ship, when you must decide where to patch a mocked dependency, when coverage is high but catches nothing, when fixture scope leaks state, or when adding property-based tests for parsers and invariants. NOT browser end-to-end flows (that is `e2e-testing`), NOT JS/TS unit tests (that is `testing-web`), NOT Go tests (that is `testing-go`)."
 tags: [pytest, python, testing, coverage, hypothesis, mocking, fixtures, property-based]
 recommends: [python, code-review, github-actions, e2e-testing]
 origin: risco
