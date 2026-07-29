@@ -1,6 +1,6 @@
 ---
 name: security-scan
-description: "Use when running automated security scanners over a repo or app and turning the raw output into a triaged, ranked, gate-able report: scan for vulnerabilities before shipping, audit dependencies/lockfiles for known CVEs, find secrets committed to the tree or git history, run SAST, or wire scanners into CI. Triggers: 'scan this repo for vulnerabilities', 'check my package-lock for CVEs', 'did anyone commit AWS keys', 'scan git history for leaked keys', 'my lockfile has a transitive CVE', 'is aquasecurity/trivy-action@latest safe', 'set up Semgrep/gitleaks to fail CI', 'escanea el repo en busca de vulnerabilidades', 'audita las dependencias', 'analitza les dependències'. NOT threat-modeling, OWASP design reasoning, or authoring the fix (that is secure-coding)."
+description: "Use when automated scanners drive a security sweep of a repo or app — SAST, dependency/lockfile CVEs, secrets in the tree or git history, IaC misconfig — and the raw output has to become one deduped, exploitability-ranked report CI can gate on. NOT threat-modeling, OWASP design reasoning, or hand-authoring the fix (that is `secure-coding`)."
 tags: [security, sast, sca, secrets, scanning, owasp]
 recommends: [secure-coding, github-actions, verify]
 origin: risco
@@ -15,40 +15,28 @@ finding comes from a **tool run**, not a hunch — if you are reasoning about a
 design or hand-writing a fix, that is [`secure-coding`](../secure-coding/SKILL.md),
 not this skill.
 
-Your job is orchestration + triage. Not eyeballing code, not authoring patches.
+Your job is orchestration + triage: every finding traces to a scanner run with a
+`ruleId` and a source location, so the output is reproducible. Not eyeballing
+code, not authoring patches.
 
-## Operating posture
+**Read-only by default.** Scan, triage, report. Apply fixes (version bumps,
+rotation, `.gitignore` edits) only when the user asks — a security sweep that
+silently mutates the tree destroys the evidence and the trust.
 
-- **Read-only by default.** Scan, triage, report. Apply fixes (version bumps,
-  rotation, `.gitignore` edits) only when the user asks. *Why:* a security sweep
-  that silently mutates the tree destroys the evidence and the trust.
-- **Machine-first.** Every finding must trace to a scanner run with a `ruleId`
-  and a source location. *Why:* "I think this looks injectable" is design
-  reasoning — route it to `secure-coding`. This skill ships reproducible output.
-- **Pin and verify your scanners.** Pin exact versions, verify checksums/SHAs,
-  never pull `@latest` GitHub Actions. *Why:* in **March 2026 Trivy was
-  supply-chain compromised** — malicious releases `v0.69.4/0.69.5/0.69.6` and a
-  hijacked `aquasecurity/trivy-action` exfiltrated CI secrets. Your scanner runs
-  with repo + CI-secret access; an unpinned scanner is itself the attack surface.
-- **SARIF everything.** Make every tool emit SARIF (or JSON you normalize to it).
-  *Why:* a common schema is what lets you merge four tools, dedupe, and feed one
-  artifact into CI instead of four incompatible logs.
-- **Triage before you report.** Raw scanner output is high-noise. Rank by
-  exploitability and dedupe overlap; never dump 400 raw findings on the user.
+**Pin and verify your scanners.** Exact versions, verified checksums/SHAs, never
+`@latest` GitHub Actions. In **March 2026 Trivy was supply-chain compromised** —
+malicious releases `v0.69.4/0.69.5/0.69.6` and a hijacked
+`aquasecurity/trivy-action` exfiltrated CI secrets. Your scanner runs with repo +
+CI-secret access; an unpinned scanner is itself the attack surface.
 
-## The four scan classes
+## Scan classes and tool selection
 
-| Class | What it catches | Primary tool | Backup / fast pass |
-|---|---|---|---|
-| **SAST** | injection, XSS, path traversal in *first-party* code | Semgrep | — |
-| **SCA / deps** | known CVEs in dependency manifests + lockfiles | osv-scanner | `npm audit`, `pip-audit` |
-| **Secrets** | credentials in the tree **or git history** | gitleaks (speed) | TruffleHog (depth + live verification) |
-| **Misconfig / IaC** | Dockerfile, k8s, Terraform, exposed config | Trivy `config` | Semgrep rulesets |
-
-### Tool selection by ecosystem
-
-Pick by what is in the repo. This is the real branch point — match the tool to
-the manifest, do not run everything everywhere.
+Four classes: **SAST** (injection, XSS, path traversal in *first-party* code),
+**SCA / deps** (known CVEs in dependency manifests + lockfiles), **Secrets**
+(credentials in the tree **or git history**), **Misconfig / IaC** (Dockerfile,
+k8s, Terraform, exposed config). Pick tools by what is in the repo. This is the
+real branch point — match the tool to the manifest, do not run everything
+everywhere.
 
 | Repo contains | SAST | SCA | Secrets | Misconfig |
 |---|---|---|---|---|
@@ -56,15 +44,17 @@ the manifest, do not run everything everywhere.
 | Python (`poetry.lock`/`requirements.txt`) | Semgrep | osv-scanner + `pip-audit` (fast) | gitleaks → TruffleHog | Trivy |
 | Go (`go.mod`/`go.sum`) | Semgrep | osv-scanner (+ `govulncheck` for reachability) | gitleaks | Trivy |
 | Containers (`Dockerfile`, images) | — | Trivy `fs`/`image` | Trivy `--scanners secret` | Trivy `config` |
-| IaC (Terraform/k8s/Helm) | Semgrep (IaC rules) | — | gitleaks | Trivy `config` |
+| IaC (Terraform/k8s/Helm) | Semgrep (IaC rules) | — | gitleaks | Trivy `config`, Semgrep rulesets |
 | Monorepo (mixed) | Semgrep `auto` | osv-scanner (multi-ecosystem) | gitleaks → TruffleHog | Trivy |
 
 Full install (pinned), flag matrix, and suppression syntax: `references/tools.md`.
 
 ## Run recipes
 
-All recipes emit SARIF or JSON so they merge into one report. **Pin the version
-shown** — the placeholders below mark where to lock an exact tag/digest.
+All recipes emit SARIF (or JSON you normalize to it) — a common schema is what
+lets you merge four tools, dedupe, and feed one artifact into CI instead of four
+incompatible logs. **Pin the version shown**; the placeholders below mark where
+to lock an exact tag/digest.
 
 ### SAST — Semgrep
 
@@ -107,10 +97,10 @@ gitleaks detect --redact --report-format sarif --report-path secrets.sarif
 trufflehog git file://. --only-verified --json > trufflehog.json
 ```
 
-### Misconfig / IaC — Trivy (PINNED — see the caveat)
+### Misconfig / IaC — Trivy (PINNED — see the caveat above)
 
 Trivy scans filesystems, images, and IaC and finds transitive CVEs `npm audit`
-misses. After the March 2026 compromise, **never** run an unpinned Trivy.
+misses.
 
 ```bash
 # Pin the EXACT version (NOT v0.69.4/.5/.6 — those were the malicious releases).
@@ -200,17 +190,17 @@ Emit one `security-scan-report.json` — the machine-checkable contract CI gates
 
 ## Anti-patterns
 
-| Rationalization | Reality |
+| Anti-pattern | Do instead |
 |---|---|
-| "Pull `aquasecurity/trivy-action@latest`, it's official." | March 2026: a hijacked tag stole CI secrets. Pin a full SHA, verify provenance. |
-| "Every scanner finding is a bug to fix." | Most are noise. Rank by reachable + exposed + sensitive sink; report the few that matter. |
-| "Scanned the working tree, no secrets." | History holds the deleted keys. Scan git history; a removed-in-HEAD key is still leaked and live. |
-| "`npm audit` is clean, deps are fine." | Native auditors miss transitive CVEs. Run osv-scanner/Trivy too; native is the fast pass, not the only pass. |
-| "Commit a blanket `.semgrepignore` to quiet CI." | A blanket ignore hides the next real bug. Suppress per-finding with a written justification + expiry. |
-| "We found a verified key, I deleted it from the file." | Deleting ≠ safe. Rotate the credential first, then scrub history. The committed value is already compromised. |
-| "Trust the SARIF `level`, that's the severity." | Tools disagree. Normalize to one scale before you rank or gate. |
-| "Dump all four tool outputs in the PR, let the reviewer sort it." | The reviewer won't. Merge, dedupe, rank, and emit one report. |
-| "Run the scan; it'll auto-fix the deps." | Read-only by default. Propose bumps; apply only when asked — never mutate during a sweep. |
+| Pulling `aquasecurity/trivy-action@latest` because it is the official action | March 2026: a hijacked tag stole CI secrets. Pin a full SHA, verify provenance. |
+| Treating every scanner finding as a bug to fix | Most are noise. Rank by reachable + exposed + sensitive sink; report the few that matter. |
+| Calling the repo clean after scanning only the working tree | History holds the deleted keys. Scan git history; a removed-in-HEAD key is still leaked and live. |
+| Declaring deps fine because `npm audit` is clean | Native auditors miss transitive CVEs. Run osv-scanner/Trivy too; native is the fast pass, not the only pass. |
+| Committing a blanket `.semgrepignore` to quiet CI | A blanket ignore hides the next real bug. Suppress per-finding with a written justification + expiry. |
+| Deleting a verified key from the file and moving on | Deleting ≠ safe. Rotate the credential first, then scrub history. The committed value is already compromised. |
+| Taking the SARIF `level` as the severity | Tools disagree. Normalize to one scale before you rank or gate. |
+| Dumping all four tool outputs in the PR for the reviewer to sort | The reviewer won't. Merge, dedupe, rank, and emit one report. |
+| Letting the scan auto-fix the deps it finds | Read-only by default. Propose bumps; apply only when asked — never mutate during a sweep. |
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
@@ -218,23 +208,12 @@ In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md)
 Karpathy wiki), record the scanner choices, pinned versions, gate thresholds, and
 any accepted-risk suppressions in `02-DOCS/wiki/stack/security-scan.md`, and index
 it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short
-pointer to it). Read it first on every run so the
-next agent inherits the pinned tools and thresholds instead of re-deriving them.
-No `02-DOCS/`? Skip silently. Conventions are recorded, not gated — never block
-the scan on this.
+pointer to it). Read it first on every run so the next agent inherits the pinned
+tools and thresholds instead of re-deriving them. No `02-DOCS/`? Skip silently.
+Conventions are recorded, not gated — never block the scan on this.
 
 ## See Also
 
-- [`secure-coding`](../secure-coding/SKILL.md) — the human-reasoning sibling:
-  threat-model a feature, hand-write the vulnerable→fixed diff. *If the answer
-  comes from a tool run it's this skill; if it comes from reasoning about the
-  design it's secure-coding.*
-- [`review`](../review/SKILL.md) — adversarial review of a diff against a spec.
-- [`code-review`](../code-review/SKILL.md) — general correctness/quality review.
-- [`verify`](../verify/SKILL.md) — the broader lint/type/test green gate this
-  feeds into.
-- **References** — `references/tools.md` (pinned installs, flag matrix,
-  suppression syntax); `references/triage.md` (ranking rubric, dedupe keying,
-  severity map, full report schema).
-</content>
-</invoke>
+Reviewing a diff rather than scanning a repo: [`code-review`](../code-review/SKILL.md)
+for correctness and quality, [`review`](../review/SKILL.md) for adversarial review
+against a spec.
