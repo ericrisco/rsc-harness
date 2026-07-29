@@ -1,6 +1,6 @@
 ---
 name: gamedev-shaders
-description: "Use when writing shaders, materials, VFX, or post-processing for a game engine, or asking \"how do I make this effect\" — covers the vertex→fragment pipeline, UVs / normals / coordinate spaces, and per-engine authoring in Godot 4.x (shader_type spatial/canvas_item/particles, source_color, hint_screen_texture, ShaderMaterial), Unity 6 (Shader Graph vs HLSL, URP/HDRP, ShaderLab), and Unreal 5.x (Material graph, material domains, Custom HLSL node). Includes recipes for dissolve, rim/outline, toon/cel, water/flow, force field, hologram; full-screen post-process; and shader performance (overdraw, texture-sample cost, branching, mobile). Triggers: \"write a dissolve shader\", \"rim light\", \"toon shading\", \"screen-space effect\", \"my shader is slow on mobile\", \"cómo hago un shader de agua\". NOT gameplay or engine-API code (→ godot / unity / unreal) and NOT physics simulation, collision, or rigid bodies (→ gamedev-physics)."
+description: "Use when authoring or debugging a shader, material, VFX, or full-screen post-process in a game engine — Godot 4.x `.gdshader`, Unity 6 URP/HDRP, Unreal 5.x Materials, effect recipes, shader performance. NOT gameplay or engine-API code (that is `godot`/`unity`/`unreal`), NOT physics (`gamedev-physics`), NOT build variant stripping (`gamedev-shipping`)."
 tags: [shaders, vfx, materials, post-processing, shadergraph]
 recommends: [godot, unity, unreal, gamedev-shipping]
 profiles: [full]
@@ -11,8 +11,7 @@ origin: risco
 
 Author shaders, materials, and full-screen effects across Godot, Unity, and Unreal. One
 mental model — the GPU pipeline — mapped onto each engine's authoring surface, plus recipes
-for the effects people actually ask for. Fires on writing/debugging a shader or material,
-building a VFX/post-process effect, or "how do I make X look like Y".
+for the effects people actually ask for.
 
 ## Version contract — read first
 
@@ -27,22 +26,6 @@ symbol is current, say so rather than guess.
 
 `shader_type` tokens in Godot 4 are exact: `spatial`, `canvas_item` (underscore), `particles`
 (plural), `sky`, `fog`.
-
-## When to use / When NOT to use
-
-**Use when:** writing or debugging a `.gdshader`/`ShaderMaterial`, a `.shader`/Shader Graph, or
-a UE Material; building a VFX look (dissolve, rim, toon, water, shield, hologram, trails);
-authoring post-processing / screen-space effects; a shader is slow, flickers, or looks wrong;
-choosing per-vertex vs per-pixel; converting an effect between engines.
-
-**When NOT to use (delegate):**
-
-- Gameplay logic, nodes/components, input, engine APIs, scene setup → [`godot`](../godot/SKILL.md) /
-  [`unity`](../unity/SKILL.md) / [`unreal`](../unreal/SKILL.md). This skill owns the *shading*, not the C#/GDScript/Blueprint around it.
-- Physics simulation, collisions, rigid bodies, character controllers → [`gamedev-physics`](../gamedev-physics/SKILL.md).
-  (A shader that *fakes* refraction is here; simulating fluid dynamics is not.)
-- Shipping, platform export, shader-variant stripping in the build pipeline → [`gamedev-shipping`](../gamedev-shipping/SKILL.md)
-  (this skill keeps the per-shader performance work).
 
 ## Shader fundamentals (the pipeline)
 
@@ -131,10 +114,10 @@ for high-end):
   blocks; the program goes in an `HLSLPROGRAM … ENDHLSL` block that `#include`s URP's `Core.hlsl`
   / `Lighting.hlsl`. Use for full control, custom lighting, or compute-driven effects.
 
-**Surface shaders are Built-in-RP only** — under URP/HDRP write a lit HLSL pass or a Shader Graph;
-use `TransformObjectToHClip` for the clip transform, not the retired `UnityObjectToClipPos`. Set
-parameters at runtime through a `MaterialPropertyBlock` or `Material.SetFloat/SetColor/SetTexture`.
-Full URP unlit + lit HLSL pass and a Shader Graph mapping → `references/unity-and-unreal-shaders.md`.
+Surface shaders are not an option under URP/HDRP (see the Version contract) — a lit look is an
+HLSL pass or a Shader Graph. Set parameters at runtime through a `MaterialPropertyBlock` or
+`Material.SetFloat/SetColor/SetTexture`. Full URP unlit + lit HLSL pass and a Shader Graph
+mapping → `references/unity-and-unreal-shaders.md`.
 
 ### Unreal 5.x
 
@@ -216,24 +199,27 @@ per engine → `references/effect-recipes.md`.
 - **Mobile / tile GPUs**: bandwidth-bound — keep render targets small, avoid mid-pass framebuffer
   reads, and note that `discard` and large full-screen passes break tile hidden-surface removal.
 
-## Guardrails / gotchas
+## Anti-patterns
 
-- Godot 4: the `SCREEN_TEXTURE`/`DEPTH_TEXTURE` built-ins are gone — declare `hint_screen_texture`
-  / `hint_depth_texture` uniforms. `hint_color` → `source_color`. Author colors as `source_color`
-  so sRGB→linear conversion is correct.
-- Unity: don't write a surface shader or include `UnityCG.cginc` for a URP/HDRP project.
-- Unreal: `SceneTexture` post-process nodes only work in the Post Process domain; match Opacity to
-  the blend mode.
-- Normalize interpolated normals per pixel; unpack normal maps (`×2−1`) and mind tangent handedness.
-- Watch color space (linear vs sRGB) at every texture read and color output — the #1 "looks washed
-  out / too dark" bug.
+| Anti-pattern | Do instead |
+| --- | --- |
+| Porting a tutorial verbatim from Godot 3, Built-in RP, or pre-5.0 UE | Translate it through the Version contract table first — retired symbols still compile in old guides, not in your project. |
+| Reading a texture or writing a color without minding linear vs sRGB | Author color uniforms as `source_color` (Godot) / sRGB-marked properties and check the space at every read and output — the #1 "looks washed out / too dark" bug. |
+| Using interpolated normals raw, or a normal map straight from the sample | Re-normalize per pixel; unpack with `×2−1` and mind tangent handedness. |
+| Writing the shader before choosing the target surface | Pick `shader_type` / render pipeline / material domain first (2D vs 3D, URP vs HDRP, Surface vs Post Process) — it decides which built-ins and blend modes exist. |
+| Fresnel, normalization, or lighting math in the vertex stage | Only linearly-interpolating work goes per-vertex; exact math stays per-pixel. |
+| `discard`/`clip` as a cheap "make it invisible" | Cull it or scale to zero — `discard` disables early-Z and breaks tile hidden-surface removal on mobile. |
+| Stacking additive/translucent layers until the look works | Count the overdraw: each layer re-shades the same pixels. Prefer opaque, minimize overlap, keep particle fill low. |
+| Full-screen effects via `OnRenderImage`/`Graphics.Blit`, or `SceneTexture` outside the Post Process domain | Use the engine's supported path — URP Renderer Feature / Fullscreen Shader Graph, UE Post Process material, Godot `ColorRect` + `hint_screen_texture` or `CompositorEffect`. |
 
 ## Related skills
 
-- [`godot`](../godot/SKILL.md) / [`unity`](../unity/SKILL.md) / [`unreal`](../unreal/SKILL.md) — the
-  engine skills own gameplay code, nodes/components, and scene wiring; this skill owns the shaders/materials.
-- [`gamedev-physics`](../gamedev-physics/SKILL.md) — simulation, collision, rigid bodies (a shader that *fakes* an effect stays here).
-- [`gamedev-shipping`](../gamedev-shipping/SKILL.md) — platform export and shader-variant stripping in the build.
+- [`godot`](../godot/SKILL.md) / [`unity`](../unity/SKILL.md) / [`unreal`](../unreal/SKILL.md) — gameplay
+  code, nodes/components, input, scene wiring; this skill owns the *shading*, not the C#/GDScript/Blueprint around it.
+- [`gamedev-physics`](../gamedev-physics/SKILL.md) — simulation, collision, rigid bodies, character
+  controllers (a shader that *fakes* refraction is here; simulating fluid dynamics is not).
+- [`gamedev-shipping`](../gamedev-shipping/SKILL.md) — platform export and shader-variant stripping in
+  the build (this skill keeps the per-shader performance work).
 
 ## Checklist
 
@@ -244,9 +230,3 @@ per engine → `references/effect-recipes.md`.
 - [ ] Uniforms/parameters exposed and driven from code or an animation track — not hard-coded.
 - [ ] Performance sanity: overdraw, sample count, and branching considered; mobile precision set if targeted.
 - [ ] Post-process uses the engine's supported full-screen path (not a retired Built-in-RP mechanism).
-
-## References
-
-- `references/godot-shading-language.md` — shader types, built-ins per type, render_modes, `varying`, screen/depth reads, ShaderMaterial from code.
-- `references/unity-and-unreal-shaders.md` — Unity URP HLSL pass + Shader Graph mapping; Unreal domains, Custom node HLSL, Material Instances.
-- `references/effect-recipes.md` — dissolve, rim/outline, toon/cel, water/flow, force field, hologram — full code per engine.
