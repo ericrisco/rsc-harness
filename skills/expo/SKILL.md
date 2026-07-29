@@ -1,6 +1,6 @@
 ---
 name: expo
-description: "Use when building, shipping, or hot-patching a React Native app with Expo — EAS Build/Submit/Update, eas.json build profiles, config plugins, prebuild/CNG, the managed workflow, confirming you are on the New Architecture (mandatory since SDK 55). Triggers: 'eas build', 'eas.json', 'config plugin', 'expo prebuild', 'my OTA update isn't showing up on devices', 'runtime version mismatch', 'how do I add a permission without editing Xcode/Gradle', 'newArchEnabled is gone from app.json', 'com publico una actualització OTA sense passar per la store', 'subir la app a la Play Store con EAS'. NOT generic React Native components/navigation/native-module authoring (that is react-native), NOT a Dart mobile app (that is flutter)."
+description: "Use when shipping a React Native app with Expo — EAS Build/Submit/Update, eas.json profiles and channels, config plugins, prebuild/CNG, runtime-version policy, OTA updates that never land, SDK upgrades, the New Architecture. NOT RN UI, navigation or native-module authoring (that is `react-native`), NOT a Dart app (that is `flutter`)."
 tags: [expo, eas, react-native, mobile, ota-updates, app-store]
 recommends: [react-native, github-actions, ship, deployment, secure-coding]
 origin: risco
@@ -13,29 +13,19 @@ origin: risco
 Expo is the toolchain and **EAS cloud platform** layered on React Native: cloud
 builds, store submission, over-the-air JS updates, and **native configuration
 declared in JavaScript** instead of hand-edited Xcode/Gradle projects. This skill
-owns the *shipping pipeline* and *native-config-via-JS*. It does **not** own RN UI,
-navigation, animation, or native-module authoring — that is `react-native`.
+owns the *shipping pipeline* and *native-config-via-JS*.
 
 The verb rule of thumb: if the verb is **build / submit / update / prebuild /
 plugin / EAS / channel / runtime-version**, you are in `expo`. If it is **render /
-navigate / animate / bridge / write a native module**, route to react-native.
-(Current stable as of 2026-06-02: **Expo SDK 55** — React Native 0.83.1, React
+navigate / animate / bridge / write a native module**, route to `react-native`.
+Other exits: web React/hooks/state → `react`, a Dart app → `flutter`, native-only
+Swift/Kotlin → `swift-ios`/`kotlin-android`, a desktop wrapper → `tauri`/`electron`,
+CI unrelated to EAS → `github-actions`.
+
+Current stable as of 2026-06-02: **Expo SDK 55** — React Native 0.83.1, React
 19.2.0, shipped 2026-02-25. **SDK 56 is in beta** (beta opened 2026-05-06, ~2-week
 window; RN 0.85.2, React 19.2.3) — upcoming, not yet shipped stable. Both run
-exclusively on the New Architecture; the Legacy Architecture was removed in SDK 55.)
-
-## When to use / when NOT to use
-
-**Use when:** wiring `eas.json` profiles or channels; cloud-building `.ipa`/`.aab`/
-`.apk` and debugging EAS Build/credentials/queues; shipping EAS Update OTA JS
-(runtime policy, branches, channels, rollouts/rollbacks); submitting with EAS
-Submit; writing/debugging config plugins or `app.config.{js,ts}`/prebuild; building
-a dev client; EAS Workflows YAML; migrating to the New Architecture or upgrading SDK.
-
-**Do NOT use when** the work is pure RN code with no Expo/EAS angle (route to
-react-native), web React/hooks/state (`react`), a Dart app (`flutter`), native-only
-Swift/Kotlin (`swift-ios`/`kotlin-android`), a desktop wrapper (`tauri`/`electron`),
-or generic CI unrelated to EAS (`github-actions`).
+exclusively on the New Architecture; the Legacy Architecture was removed in SDK 55.
 
 ## Decision rules
 
@@ -90,6 +80,9 @@ stamped with a `channel`; a channel maps to a same-named EAS Update branch by de
   }
 }
 ```
+
+Run `scripts/verify.sh` inside an Expo project to gate `eas.json`, the runtime
+policy, committed secrets, and New-Arch readiness.
 
 ## EAS Update mental model
 
@@ -220,34 +213,26 @@ $50/concurrency/month, up to 5 extra. If a user complains about build queue wait
 the fix is usually the plan, not the config. (Pricing per expo.dev/pricing, verified
 2026-06-02; re-check before quoting — Expo adjusts tiers and dollar figures.)
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization | Reality |
+| Anti-pattern | Do instead |
 |---|---|
-| "I'll just edit `ios/Info.plist` directly" | `prebuild --clean` overwrites it; write a config plugin / `withInfoPlist`. |
-| "Hardcode `runtimeVersion: '1.0.0'`, simpler" | it drifts from the binary; updates silently stop matching. Use the `fingerprint` policy. |
-| "I bumped a native dep, the OTA update will deliver it" | EAS Update is JS-only; native changes need a new `eas build`. |
-| "Published the update, devices just need to refresh" | check the channel→branch and exact runtime match first — wrong channel = no delivery. |
-| "Test this custom native module in Expo Go" | Expo Go can't load arbitrary native code; build a dev client. |
-| "Upgrade the SDK, then build straight to production" | run `expo-doctor` + a preview build first; there is no Legacy-Arch fallback to catch a New-Arch-incompatible dep. |
-| "Set `newArchEnabled: false` to dodge the broken native dep" | the flag was removed in SDK 55 and the Legacy Architecture is gone; fix or replace the dep. |
-| "Commit the keystore so CI can sign" | never; let EAS manage credentials or use EAS secrets. |
-| "Put the API key in `app.config` extra" | app config ships in the public bundle; use EAS env vars / a backend. |
-| "Use GitHub Actions to call `eas build`" | EAS Workflows is the native CI; only reach for github-actions if explicitly required. |
+| Editing `ios/Info.plist` directly | `prebuild --clean` overwrites it; write a config plugin / `withInfoPlist`. |
+| Hardcoding `runtimeVersion: '1.0.0'` because it is simpler | it drifts from the binary; updates silently stop matching. Use the `fingerprint` policy. |
+| Expecting an OTA update to deliver a bumped native dep | EAS Update is JS-only; native changes need a new `eas build`. |
+| Telling users to "just refresh" when a published update does not land | check the channel→branch and exact runtime match first — wrong channel = no delivery. |
+| Testing a custom native module in Expo Go | Expo Go can't load arbitrary native code; build a dev client. |
+| Upgrading the SDK and building straight to production | run `expo-doctor` + a preview build first; there is no Legacy-Arch fallback to catch a New-Arch-incompatible dep. |
+| Setting `newArchEnabled: false` to dodge a broken native dep | the flag was removed in SDK 55 and the Legacy Architecture is gone; fix or replace the dep. |
+| Committing the keystore so CI can sign | never; let EAS manage credentials or use EAS secrets. |
+| Putting the API key in `app.config` extra | app config ships in the public bundle; use EAS env vars / a backend. |
+| Reaching for GitHub Actions to call `eas build` | EAS Workflows is the native CI; only reach for github-actions if explicitly required. |
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) wiki), record this app's shipping decisions —
-managed-vs-bare, the runtime-version policy, channel/branch map, and the SDK/New-Arch
-status — in `02-DOCS/wiki/stack/expo.md` and link it from the root `CLAUDE.md`
-`## Knowledge map`. Read it first on every use; bump its `Updated` date when a
-convention changes. No `02-DOCS/`? Skip silently. Conventions are *recorded, not
-gated* — never block the task on this.
-
-## See also
-
-- `references/eas-update.md` — runtime version policies, channel↔branch ops, rollouts/rollbacks, republish, "update not applying" debug flow.
-- `references/config-plugins.md` — plugin anatomy, mods/dangerous-mods/ordering, common community plugins, prebuild troubleshooting, dynamic `app.config.ts`.
-- `scripts/verify.sh` — run in your Expo project to gate `eas.json`, runtime policy, committed-secret, and New-Arch readiness.
-- Sibling skills: `react-native` (RN UI/navigation/native modules — the other half of every Expo app), `secure-coding` (credential & secret handling), `ship`/`deployment` (release process), `github-actions` (only if you want non-Expo CI).
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) wiki),
+read `02-DOCS/wiki/stack/expo.md` first and record this app's shipping decisions
+there — managed-vs-bare, runtime-version policy, channel/branch map, SDK/New-Arch
+status — linked from the root `CLAUDE.md` `## Knowledge map`, bumping its `Updated`
+date when a convention changes. No `02-DOCS/`? Skip silently. Conventions are
+*recorded, not gated* — never block the task on this.
