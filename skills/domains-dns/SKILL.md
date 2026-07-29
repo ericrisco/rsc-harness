@@ -1,6 +1,6 @@
 ---
 name: domains-dns
-description: "Use when pointing a custom domain at a host, fixing broken HTTPS, choosing apex vs www, or publishing DNS rows — registering/delegating a name, writing A/AAAA/CNAME/ALIAS/MX/TXT/CAA/SRV records, standing up auto-renewing TLS, or cutting nameservers over without downtime. Triggers: 'point example.com at Vercel', 'set up DNS for the domain', 'NET::ERR_CERT_AUTHORITY_INVALID', 'CNAME flattening / ALIAS at the apex', 'dig +trace still shows the old IP', 'need a CAA record for Let's Encrypt', 'publish the SPF/DKIM/DMARC/MX rows', 'apuntar el dominio', 'el certificado caducó y no renueva', 'configurar els registres DNS'. NOT inbox placement / warmup / spam-rate tuning (that is email-deliverability), NOT what runs behind the name (that is deployment)."
+description: "Use when pointing a domain at a host or fixing broken HTTPS — delegating nameservers, writing A/AAAA/CNAME/ALIAS/MX/TXT/CAA rows, apex vs www, standing up auto-renewing TLS, and cutting nameservers over without downtime. NOT inbox placement or warmup (that is `email-deliverability`), NOT what runs behind the name (that is `deployment`)."
 tags: [dns, tls, ssl, domains, https, acme, certbot, dig, caa, nameservers]
 recommends: [email-deliverability, deployment, monitoring, cloudflare, vercel]
 origin: risco
@@ -104,13 +104,7 @@ curl -vI https://example.com 2>&1 | grep -Ei 'HTTP/|location|SSL certificate'  #
 
 Propagation is governed by **TTL, not a fixed 48 hours** (RFC 2181). To make a change land fast, lower the record's TTL (e.g. to 300s) *before* you change it, so resolvers re-query sooner. NS/registrar delegation changes can still lag because of registry/TLD TTLs.
 
-Verification checklist before you call it done:
-
-- [ ] `dig +short` returns the intended IP/host from a public resolver (`@1.1.1.1`).
-- [ ] Apex resolves via A/AAAA or ALIAS, **never** a CNAME.
-- [ ] `dig CAA` lists the CA that issued (or is empty — open policy).
-- [ ] `openssl s_client` shows the right subject, a complete chain, and `notAfter` comfortably ahead.
-- [ ] `curl -vI` returns 2xx/3xx with no cert warning; www and apex land on the one canonical host.
+`scripts/verify.sh <domain>` runs the whole done-check read-only: apex-CNAME check, CAA sanity, chain completeness + expiry, HTTPS reachability, www↔apex canonical. The full dig/openssl/curl playbook and an error → cause → fix table are in `references/verify-and-debug.md`.
 
 ## Nameserver cutover (no downtime)
 
@@ -135,12 +129,3 @@ Order matters; each step has a reason.
 | Splitting one zone across two providers | Resolvers answer from whichever NS won; records vanish intermittently | One authoritative provider per zone |
 | TTL left at 86400 during migration | Old answer cached for a day after you flip | Drop to 300s a day ahead |
 | Testing certs against ACME production | Burns the 50-cert/7-day limit; week-long lockout | Use the staging endpoint first |
-
-## References & siblings
-
-- `references/record-cookbook.md` — every record type with edge cases (TXT chunking, MX priority, SPF lookup limit, SRV, DNSSEC).
-- `references/tls-and-acme.md` — certbot/acme.sh, HTTP-01 vs DNS-01, wildcards, platform cert quirks, 2026 lifetimes + ARI.
-- `references/verify-and-debug.md` — full dig/openssl/curl playbook and error → cause → fix.
-- `scripts/verify.sh <domain>` — read-only audit: apex-CNAME check, CAA sanity, chain completeness + expiry, HTTPS reachability, www↔apex canonical.
-
-Route out when the ask isn't the records: inbox placement → ../email-deliverability/SKILL.md; what runs behind the name and how it's released → ../deployment/SKILL.md; platform-specific edge/build config → ../cloudflare/SKILL.md or ../vercel/SKILL.md.
