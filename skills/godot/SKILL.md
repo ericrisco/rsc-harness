@@ -1,6 +1,6 @@
 ---
 name: godot
-description: "Use when writing, reviewing, or debugging Godot 4.x games in GDScript (typed) or C# — nodes/scenes/custom Resources, autoload singletons and an EventBus, signals via Callable, @onready/@export/@tool, static typing, CharacterBody2D/3D + velocity + move_and_slide(), _process vs _physics_process, .tscn/.tres text formats, and headless GUT/gdUnit4 tests. Enforces Godot 4 APIs and rejects Godot 3 leftovers: yield→await, onready→@onready, .instance()→.instantiate(), KinematicBody→CharacterBody, Spatial→Node3D, string connect(\"sig\",obj,\"m\")→Callable. Triggers: 'write a Godot player controller', 'my move_and_slide does nothing', 'port this Godot 3 script to 4', 'connect a signal in Godot', 'GDScript won't type-check', 'CharacterBody2D won't move', 'add an autoload', 'escribe un script de Godot', 'por qué no se mueve mi personaje'. NOT Unity MonoBehaviour or Unreal (route to unity/unreal); NOT pure C++/CMake tooling unrelated to GDExtension (that is cpp); NOT shader code in .gdshader (that is gamedev-shaders)."
+description: "Use when writing, reviewing, or debugging Godot 4.x games in GDScript or C# — scenes, nodes, custom Resources, autoload/EventBus signals, typed GDScript, CharacterBody2D/3D movement, GUT/gdUnit4 — or porting Godot 3 APIs to 4. NOT Unity/Unreal (that is `unity`/`unreal`), NOT `.gdshader` code (`gamedev-shaders`), NOT GDExtension C++ tooling (`cpp`)."
 tags: [godot, gdscript, game-dev, csharp, godot4]
 recommends: [gamedev-shaders, gamedev-multiplayer, gamedev-physics, gamedev-pathing, gamedev-shipping, game-design, cpp]
 profiles: [full]
@@ -9,9 +9,9 @@ origin: risco
 
 # Godot 4.x (GDScript + C#)
 
-Write, review, and debug Godot **4.x** games — 2D and 3D — the way the engine is designed:
-scenes as reusable units, composition over deep node trees, signals for decoupling, static
-typing for speed and safety. GDScript (typed) is primary; C# parity snippets sit beside it.
+Build 2D and 3D the way the engine is designed: scenes as reusable units, composition over deep node
+trees, signals for decoupling, static typing for speed and safety. GDScript (typed) is primary; C#
+parity snippets sit beside it.
 
 ## Version contract — read first
 
@@ -111,8 +111,11 @@ Keep gameplay logic in nodes; let the bus carry the *notification*, not the beha
   children in `_init`.
 - **Prefer unique names**: mark a node **Unique Name in Owner** (`%`) and access `%HealthBar`
   instead of the fragile, refactor-breaking `get_node("../../UI/HealthBar")`. `$Foo` is fine for a
-  direct child.
+  direct child — `get_node`/`$` on a missing path returns `null` and errors.
 - Cache node lookups in `@onready` vars; don't call `get_node` every frame.
+- **Freeing**: call `queue_free()` (safe, end of frame), not `free()` mid-signal. Guard reused refs
+  with `is_instance_valid(node)`.
+- Never busy-wait; `await get_tree().create_timer(1.0).timeout` or `await` a signal.
 
 ```gdscript
 extends CharacterBody2D
@@ -286,34 +289,12 @@ like any other library. That is native-tooling territory → pair with `cpp`.
 - Validate a project before shipping: open in the editor once (catches broken `.tscn`/`.tres`),
   then export-check per platform. Details → `references/export-and-testing.md`.
 
-## Guardrails / gotchas
+## Hand off to
 
-- Freeing: call `queue_free()` (safe, end of frame), not `free()` mid-signal. Guard reused refs with
-  `is_instance_valid(node)`.
-- Never busy-wait; `await get_tree().create_timer(1.0).timeout` or a signal.
-- `get_node`/`$` on a missing path returns `null` and errors — prefer `%UniqueName` and typed `@onready`.
-- Don't multiply by `delta` twice (see `move_and_slide`). Don't put physics in `_process`.
-- One `TileMapLayer` per layer; `TileMap` is deprecated.
-- Editor-touching code must guard on `Engine.is_editor_hint()` under `@tool`.
-
-## Related skills
-
-- [`game-design`](../game-design/SKILL.md) — mechanics, loops, and feel *before* you script them.
-- [`gamedev-shaders`](../gamedev-shaders/SKILL.md) — `.gdshader` / visual shaders (out of scope here).
-- [`gamedev-physics`](../gamedev-physics/SKILL.md) — joints, RigidBody tuning, deep collision layers.
-- [`gamedev-pathing`](../gamedev-pathing/SKILL.md) — NavigationAgent, A*, steering beyond the basics.
-- [`gamedev-multiplayer`](../gamedev-multiplayer/SKILL.md) — `MultiplayerSynchronizer`/RPC/netcode.
-- [`gamedev-shipping`](../gamedev-shipping/SKILL.md) — store builds, signing, platform export at scale.
-- [`cpp`](../cpp/SKILL.md) — the GDExtension / `godot-cpp` native side and its CMake/build tooling.
-
-## Checklist
-
-- [ ] Zero Godot 3 APIs — checked every line against the ban-list (`yield`/`onready`/`instance()`/`KinematicBody`/`Spatial`/string `connect`/`File`).
-- [ ] `move_and_slide()` called with **no args**; `velocity` set as a property; not multiplied by `delta` twice.
-- [ ] Overridden lifecycle methods call `super()` where a base defines them.
-- [ ] Signals connected via Callable (`x.sig.connect(_on_x)`), named past-tense, disconnected/one-shot where needed.
-- [ ] Everything typed (`:` / `:=`, typed params/returns, typed Arrays); no stray `Variant`.
-- [ ] Physics in `_physics_process`, visuals in `_process`; rate-based values scaled by `delta`.
-- [ ] Node access via `@onready` + `%UniqueName`, not deep `get_node("../..")` chains.
-- [ ] `.tscn`/`.tres` not hand-corrupted; project opens in-editor before export.
-- [ ] C# snippets use `partial`, `[Export]`/`[Signal]`, `base._Ready()`, PascalCase (if C# requested).
+Mechanics, loops, and feel *before* you script them → [`game-design`](../game-design/SKILL.md).
+`.gdshader` / visual shaders → [`gamedev-shaders`](../gamedev-shaders/SKILL.md). Joints, RigidBody
+tuning, deep collision layers → [`gamedev-physics`](../gamedev-physics/SKILL.md). NavigationAgent,
+A*, steering → [`gamedev-pathing`](../gamedev-pathing/SKILL.md). `MultiplayerSynchronizer`/RPC/netcode
+→ [`gamedev-multiplayer`](../gamedev-multiplayer/SKILL.md). Store builds, signing, platform export at
+scale → [`gamedev-shipping`](../gamedev-shipping/SKILL.md). The GDExtension / `godot-cpp` native side
+and its CMake/build tooling → [`cpp`](../cpp/SKILL.md).
