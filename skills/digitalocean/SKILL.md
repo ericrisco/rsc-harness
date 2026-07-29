@@ -1,6 +1,6 @@
 ---
 name: digitalocean
-description: "Use when deploying or operating a workload on DigitalOcean and you must decide where it runs and how to ship it — Droplet (raw VPS) vs App Platform (managed PaaS) vs Functions, wiring a Managed Database (Postgres/MySQL/Valkey), Spaces object storage + CDN, doctl auth, App Platform app spec YAML, cloud firewalls, VPC private networking, reserved IPs, snapshots/backups, app logs, scaling. Triggers: 'deploy to DigitalOcean', 'DigitalOcean App Platform app spec', 'DO managed postgres with connection pooling', 'doctl apps create', 'reserved IP failover', 'I need an S3-compatible bucket with a CDN' (that is Spaces — non-obvious), 'subir mi web a DigitalOcean con doctl', 'Droplet o App Platform, qué sale más barato'. NOT host-agnostic CI/CD or rollback strategy (that is deployment), NOT a Hetzner bare VPS (that is hetzner)."
+description: "Use when deploying or operating a workload on DigitalOcean — Droplet vs App Platform vs Functions, doctl, app spec YAML, Managed Postgres/MySQL/Valkey on the VPC, S3-compatible Spaces + CDN. NOT host-agnostic CI/CD or rollback strategy (that is `deployment`), NOT a bare Hetzner VPS (that is `hetzner`), NOT another managed PaaS (that is `railway`)."
 tags: [digitalocean, doctl, app-platform, droplets, spaces, deployment, paas, vps]
 recommends: [deployment, postgresdb, docker, domains-dns, monitoring, scaling, hetzner]
 origin: risco
@@ -8,10 +8,11 @@ origin: risco
 
 # DigitalOcean — Droplet vs App Platform, doctl, Managed DBs, Spaces
 
-You own one decision: **where on DO does this run, and how do I ship it.** Everything
-else (CI/CD shape, Dockerfile, DB schema, DNS) belongs to a sibling — see the boundary at
-the bottom. Pick the compute model first, then wire data and storage, then the ops that
-bite in production.
+You own one decision: **where on DO does this run, and how do I ship it.** Host-agnostic
+CI/CD, release gating and rollback strategy are `../deployment/SKILL.md`; authoring the
+Dockerfile is `docker`; DNS records and the registrar are `domains-dns`; a bare Hetzner box
+and its economics are `hetzner`. Pick the compute model first, then wire data and storage,
+then the ops that bite in production.
 
 ```text
 workload → [Droplet | App Platform | Functions] → Managed DB (VPC private host) → Spaces (S3 + CDN)
@@ -34,11 +35,9 @@ Droplet only when you need the box itself.
 Rules of thumb:
 
 - **Stateless web service or API from a Git repo → App Platform.** It builds, deploys, gives
-  you TLS and a URL, and re-deploys on push. No box to patch.
+  you TLS and a URL, and re-deploys on push. No box to patch. **Static frontend → App
+  Platform static site (free, up to 3)**; don't run a Droplet to serve HTML.
 - **You need root, a long-lived stateful daemon, custom ports, or a cron host → Droplet.**
-  App Platform components are not meant to be a persistent pet process.
-- **Static frontend → App Platform static site (free, up to 3).** Don't run a Droplet to
-  serve HTML.
 - **A managed Postgres/MySQL/Valkey → always the Managed Database product**, never a DB you
   hand-install on a Droplet, unless you have a hard reason.
 
@@ -156,8 +155,8 @@ doctl compute droplet create web-1 \
   to spin up and destroy, but a powered-off Droplet still bills for storage — destroy, don't
   just power off, to stop charges.
 
-Cloud-init recipes, firewall inbound/outbound rule sets, snapshot cadence, and reserved-IP
-failover live in `references/droplet-ops.md`.
+Cloud-init recipes, firewall inbound/outbound rule sets, snapshot cadence + restore,
+reserved-IP failover, and the VPC + private-DB layout live in `references/droplet-ops.md`.
 
 ## Managed Databases
 
@@ -206,11 +205,6 @@ browser fetches it cross-origin, and a **lifecycle** rule to expire/transition o
 
 ## Basic ops + cost gotchas
 
-```bash
-doctl apps logs <app-id> --type run --follow   # app logs
-doctl apps update <app-id> --spec .do/app.yaml # change instance_count/size by editing the spec
-```
-
 - Set **alerts** on the app/DB (deploy failures, CPU, restart count) so you hear about
   trouble before users do. App-level dashboards/alerting *strategy* is `../monitoring`.
 - **Scale** by editing `instance_count`/`instance_size_slug` in the spec and re-applying;
@@ -231,21 +225,3 @@ doctl apps update <app-id> --spec .do/app.yaml # change instance_count/size by e
 | Hand-installing Postgres on a Droplet "to save money" | You now own patching, backups, failover | Managed Database unless you have a hard reason |
 | Powering off a Droplet to stop billing | Powered-off Droplets still bill for storage | Snapshot then destroy |
 | Leaving a reserved IP unassigned | It's billed when not attached | Release it |
-
-## References
-
-- `references/app-spec.md` — full multi-component app spec (web + worker + static_site + job
-  + database), health checks, ingress routes, instance-size slug table, env/SECRET scoping,
-  autoscaling and alerts.
-- `references/droplet-ops.md` — cloud-init examples, cloud firewall inbound/outbound rule
-  recipes, snapshot/backup cadence + restore, reserved IP failover, VPC + private DB layout.
-
-## Boundary
-
-This skill is DigitalOcean-specific deployment. For neighbors:
-
-- Host-agnostic CI/CD pipelines, release gating, rollback strategy → `../deployment/SKILL.md`.
-- Postgres schema/query/index work (not "provision a DO cluster") → `../postgresdb/SKILL.md`.
-- Authoring the Dockerfile itself → `docker`. DNS records/registrar → `domains-dns`.
-- Uptime/metrics dashboards + alerting strategy → `monitoring`. Host-agnostic capacity →
-  `scaling`. A Hetzner bare VPS and its economics → `hetzner`.
