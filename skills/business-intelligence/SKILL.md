@@ -1,6 +1,6 @@
 ---
 name: business-intelligence
-description: "Use when someone wants to ask business questions over the org's data in plain language and get consistent, trustworthy numbers, when a metric (revenue, MRR, active users, gross margin) must be defined once so every dashboard/report/agent computes it identically, when wiring an LLM or agent to query data without hallucinating SQL, or when two teams report different numbers for the same thing. Triggers: 'semantic layer', 'metrics layer', 'define MRR once', 'self-serve analytics in plain English', 'text-to-SQL but trustworthy', 'sales and finance disagree on revenue', 'the agent keeps hallucinating SQL', 'dbt Semantic Layer', 'MetricFlow', 'Cube', 'capa semántica', 'consultar dades en llenguatge natural'. NOT designing chart layout or panels (that is dashboard), NOT choosing which KPIs to track (that is kpi-framework), NOT writing the raw query by hand (that is sql)."
+description: "Use when a metric (revenue, MRR, margin) needs defining once in a governed semantic layer so every dashboard, report and agent returns the same number, or when an LLM must answer data questions in plain language without hallucinating SQL. NOT chart layout (that is `dashboard`), NOT which KPIs to track (that is `kpi-framework`), NOT a hand-written query (that is `sql`)."
 tags: [business-intelligence, semantic-layer, metrics-layer, text-to-sql, natural-language-query, dbt, cube]
 recommends: [sql, dashboard, kpi-framework, reporting, analytics, forecasting, clickhouse-analytics, duckdb]
 origin: risco
@@ -119,15 +119,6 @@ Question: "MRR by plan, monthly, last 2 quarters, EU customers only"
   filter      -> region = 'EU'
 ```
 
-```text
-Pregunta (ES/CA): "ingresos por región, mensual, últimos 2 trimestres, solo UE"
-  metric      -> gross_revenue
-  group by    -> region
-  time grain  -> month
-  date filter -> last 2 quarters
-  filter      -> region = 'EU'
-```
-
 You hand the layer that spec; it generates the governed SQL. You then explain the answer back in business terms ("EU MRR grew 8% QoQ, driven by the Pro plan"), not as a table dump.
 
 ## Wire the agent
@@ -155,22 +146,17 @@ Author toward the **Open Semantic Interchange** standard so definitions survive 
 
 ## Anti-patterns
 
-| Rationalization | Reality | STOP |
+| Anti-pattern | Why it bites | Instead |
 |---|---|---|
-| "Just free-hand the SQL this once, it's faster" | "Once" becomes the fourth conflicting revenue figure; it's unauditable | Add/query a metric |
-| "Each dashboard can define revenue itself" | That is exactly how you get three numbers and a fire drill | One metric, all consumers query it |
-| "The time dimension grain is obvious, skip declaring it" | Undeclared grain → silent daily-vs-monthly mismatches | Declare `time_granularity`/`grain` |
-| "Give the agent warehouse creds, it'll figure out the joins" | Raw text-to-SQL is 84-90% (33% in 2023); unauditable | Expose metrics via MCP/API |
-| "Stand up a semantic layer for this 200-row CSV" | Pure overhead for one analyst | `../sql/SKILL.md` / `../duckdb/SKILL.md` |
-| "The LLM is smart enough to write correct SQL" | The dbt 2026 benchmark says the layer is +8-14pts more accurate | Ground it in the layer |
-| "Hard-code the EU filter into the metric" | Now you need a second metric for every region | Pass filters at query time |
+| Free-handing the SQL "just this once" because it's faster | "Once" becomes the fourth conflicting revenue figure; it's unauditable | Add/query a metric |
+| Letting each dashboard define revenue itself | That is exactly how you get three numbers and a fire drill | One metric, all consumers query it |
+| Skipping the time dimension's grain because it's "obvious" | Undeclared grain → silent daily-vs-monthly mismatches | Declare `time_granularity`/`grain` |
+| Handing the agent warehouse creds to figure out the joins | Raw text-to-SQL is 84-90% (33% in 2023) and unauditable; the dbt 2026 benchmark puts the layer +8-14pts ahead | Expose metrics via MCP/API |
+| Standing up a semantic layer for a 200-row CSV | Pure overhead for one analyst | `../sql/SKILL.md` / `../duckdb/SKILL.md` |
+| Hard-coding the EU filter into the metric | Now you need a second metric for every region | Pass filters at query time |
 
 ## Verify
 
 Run `scripts/verify.sh [path]` on your semantic-model directory. It is read-only, never touches a warehouse, and discovers candidate YAML, then warns (advisory) on: a metric with no underlying measure, a measure with no declared `agg`, a time dimension with no grain, duplicate metric names, and a `.sql` beside the model hand-rolling an aggregate the layer should own. It exits non-zero only on unparseable YAML; an empty or clean target passes clean.
 
-## See also
-
-- `references/authoring-semantic-models.md` — multi-entity models, metric types, semi-additive measures, time spines, fan-out traps.
-- `references/wiring-agents-and-apis.md` — MCP metrics-tool pattern, dbt SL / Cube query shapes, agent guardrails.
-- Siblings: `../sql/SKILL.md` · `../dashboard/SKILL.md` · `../kpi-framework/SKILL.md` · `../reporting/SKILL.md` · `../analytics/SKILL.md` · `../forecasting/SKILL.md`
+Siblings: `../sql/SKILL.md` · `../dashboard/SKILL.md` · `../kpi-framework/SKILL.md` · `../reporting/SKILL.md` · `../analytics/SKILL.md` · `../forecasting/SKILL.md`
