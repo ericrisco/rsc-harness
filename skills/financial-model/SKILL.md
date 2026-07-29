@@ -1,6 +1,6 @@
 ---
 name: financial-model
-description: "Use when a founder needs the multi-period, driver-based projection that raises a round and steers the company — build 3-year projections, model revenue + costs + headcount + runway, size the raise, or stress-test scenarios. Triggers: 'build a financial model for our seed', 'model our revenue costs and runway', 'when do we run out of cash', 'how much should we raise to get 24 months', 'what runway does $2M buy us', 'model the hiring plan's effect on burn', 'add a downside scenario if we miss plan by 30%', 'modelo financiero a 3 años', 'cuánto runway nos da la ronda', 'model financer i projeccions', 'quant de pista de despegament'. The engine is assumptions → revenue/cost/headcount builds → cash/burn/runway/scenarios, 18–36 months forward, every output a formula. NOT the next-13-weeks liquidity reconciled to the actual bank balance (that is finance-ops), NOT the isolated LTV/CAC math (that is unit-economics, which this model consumes as drivers), NOT the slide story (that is pitch-deck)."
+description: "Use when a founder needs the driver-based 18–36 month projection: revenue, cost and headcount builds resolving to net burn, runway, cash-out date, scenarios and the raise size. NOT the 13-week bank-reconciled cash view (that is `finance-ops`), NOT single-series forecasting (that is `forecasting`), NOT running the round (that is `fundraising`)."
 tags: [financial-model, projections, runway, burn-rate, fundraising, fp-and-a, forecast]
 recommends: [finance-ops, unit-economics, pricing, forecasting, pitch-deck, investor-materials, fundraising]
 origin: risco
@@ -8,7 +8,7 @@ origin: risco
 
 # Financial model — the projection engine that raises and steers
 
-You are a startup FP&A analyst building the **projection engine**: an assumptions layer that feeds a monthly revenue build, a cost build (COGS + OpEx by function + a headcount plan), and a cash projection that resolves to **net burn, runway, and the cash-out date** — plus a scenario switch (base / downside / upside). It is forward-looking and assumption-driven, 18–36 months out. It is not the controller's short-horizon liquidity tool, not the deck narrative, not the LTV/CAC deep dive. It produces the numbers the fundraising siblings present.
+You are a startup FP&A analyst building the **projection engine**: an assumptions layer that feeds a monthly revenue build, a cost build (COGS + OpEx by function + a headcount plan), and a cash projection that resolves to **net burn, runway, and the cash-out date** — plus a scenario switch (base / downside / upside). It is forward-looking and assumption-driven, 18–36 months out. It produces the numbers the fundraising siblings present.
 
 The test of a model is not "does it look right" but **"does it re-flow when I change three input cells."** A spreadsheet of typed-in numbers is a picture, not a model.
 
@@ -20,18 +20,21 @@ Three connected artifacts, every output traced to an input:
 2. **A monthly projection grid** (CSV/spreadsheet, 18–36 columns) — month index, revenue, COGS, gross margin, OpEx by function, headcount, net burn, starting/ending cash, runway-months. This is what `scripts/verify.sh` checks for shape and internal consistency.
 3. **A scenario + runway summary** — one screen: ending-cash trajectory and runway under base/downside/upside, the raise number, and the burn-multiple / Rule-of-40 cross-check.
 
-## What it does NOT do — route out first
+## Route out first
 
-This skill answers **"how much / what runway / does the plan tie out."** The moment the real ask is something else, stop and route:
+This skill answers **"how much / what runway / does the plan tie out."** The moment the real ask is something else, stop and route — at the intake gate or mid-build:
 
-- Next-13-weeks liquidity reconciled to the **actual bank balance**, this-month burn, are-we-solvent-now → `finance-ops`.
-- Recording actual ledger entries, journals, double-entry, payroll postings → `bookkeeping`.
-- The isolated **LTV / CAC / payback / contribution-margin** math → `unit-economics` (the model imports these as drivers, it does not derive them).
-- Setting the **price / packaging / tier / margin floor** itself → `pricing` (the model takes price as input).
-- Statistical / time-series **forecasting** of a single series (churn, demand, ARR) from history → `forecasting`.
-- The slide **story** and decision-grade headline numbers → `pitch-deck`. Packaging the model into the data room / sending it → `investor-materials`.
-- Round **strategy**, investor pipeline, SAFE-vs-priced, term-sheet mechanics → `fundraising`.
-- Per-unit COGS / infra / AI spend as actuals → `cost-tracking`.
+| The real ask | Route to |
+| --- | --- |
+| Next-13-weeks liquidity reconciled to the **actual bank balance**, this-month burn, are-we-solvent-now | `finance-ops` |
+| Recording actual ledger entries, journals, double-entry, payroll postings | `bookkeeping` |
+| The isolated **LTV / CAC / payback / contribution-margin** math — the model imports these as drivers, it does not derive them | `unit-economics` |
+| Setting the **price / packaging / tier / margin floor** itself — the model takes price as input | `pricing` |
+| Statistical / time-series **forecast** of a single series (churn, demand, ARR) from history | `forecasting` |
+| The slide **story** and decision-grade headline numbers | `pitch-deck` |
+| Packaging the model into the data room / sending it | `investor-materials` |
+| Round **strategy**, investor pipeline, SAFE-vs-priced, term-sheet mechanics | `fundraising` |
+| Per-unit COGS / infra / AI spend as actuals | `cost-tracking` |
 
 ## The intake gate
 
@@ -43,12 +46,6 @@ Pin four inputs before you build a single cell. Without them the model is fictio
 | **Current cash** | the numerator of runway; the model is meaningless without it |
 | **Current revenue / MRR + recent growth** | the base the revenue build grows from, not a fresh hockey stick |
 | **Target raise & horizon** (or "size it for me") | the model either takes the raise as input or solves for it from a runway target |
-
-STOP-and-route at the gate:
-
-- If the ask is "what does next quarter's cash look like against the bank" → that is the 13-week tool, route to `finance-ops`.
-- If the ask is "what's our LTV and CAC" with no projection attached → route to `unit-economics`; come back when you need them as drivers.
-- If the ask is "what should we charge" → route to `pricing`; the model takes the price it sets.
 
 ## Rule 1 — three layers, no hardcoded outputs
 
@@ -131,7 +128,7 @@ Most companies miss Rule of 40 — McKinsey's run of 200+ software firms (2011�
 
 ## Anti-patterns
 
-| Bad | Good | Why |
+| Anti-pattern | Do instead | Why |
 | --- | --- | --- |
 | Hockey-stick revenue, one line, no downside | base / downside / upside off toggled drivers | investors stress-test the downside first; no downside reads as naive |
 | Runway computed from net income / P&L | runway from cash balance ÷ net cash burn | depreciation, prepaids, AR make profit ≠ cash; cash is the survival line |
@@ -152,19 +149,4 @@ The model emits a checkable artifact, so `scripts/verify.sh` runs against your g
 ./scripts/verify.sh --strict             # treat warnings as failures (CI gate)
 ```
 
-It checks: required columns present (month, revenue, cogs, gross_margin, opex, net_burn, ending_cash, runway_months); **cash continuity** (ending_cash[m] == starting_cash[m+1]); **gross_margin == (revenue − COGS)/revenue** recomputes; **net_burn == gross_burn − revenue** ties; runway_months ties to cash ÷ net_burn; ≥1 scenario present; and a defect lint for placeholders (`TBD`, `XX`, `#REF`, `[assumption]`) and impossible values (gross margin >100%/<−100%, negative headcount). It exits 0 on a clean or empty target — a missing file is a skip, never a false failure. The schema it enforces is documented in `references/model-structure.md`.
-
-## Hand-offs
-
-- Need the LTV/CAC/payback that feed the drivers → `unit-economics`.
-- Price/packaging the model assumes → `pricing`.
-- Single-series statistical forecast of churn/ARR → `forecasting`.
-- The near-term bank-reconciled cash view → `finance-ops`.
-- Turn the numbers into the slide story → `pitch-deck`; into the data room → `investor-materials`.
-- Run the actual round off the raise number → `fundraising`.
-
-## references/
-
-- `references/revenue-build.md` — bottom-up funnel template, the MRR new/expansion/contraction/churn waterfall, the top-down TAM cross-check, and a worked monthly build.
-- `references/benchmarks-and-scenarios.md` — the 2025/26 benchmark sanity-table, the base/downside/upside driver-toggle recipe, and a worked runway-under-scenarios example.
-- `references/model-structure.md` — the assumptions/projection row+column contract `verify.sh` enforces, the cash-continuity rule, and the `model.csv` schema with a filled mini-example.
+It checks: required columns present (month, revenue, cogs, gross_margin, opex, net_burn, ending_cash, runway_months); **cash continuity** (ending_cash[m] == starting_cash[m+1]); **gross_margin == (revenue − COGS)/revenue** recomputes; **net_burn == gross_burn − revenue** ties; runway_months ties to cash ÷ net_burn; ≥1 scenario present; and a defect lint for placeholders (`TBD`, `XX`, `#REF`, `[assumption]`) and impossible values (gross margin >100%/<−100%, negative headcount). It exits 0 on a clean or empty target — a missing file is a skip, never a false failure. The row+column contract it enforces, the cash-continuity rule, and the `model.csv` schema with a filled mini-example are in `references/model-structure.md`.
