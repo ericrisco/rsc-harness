@@ -1,6 +1,6 @@
 ---
 name: email-connector
-description: "Use when wiring an app to send transactional or bulk email through an HTTP provider (Resend, Twilio SendGrid, Postmark) from server code: welcome/reset/receipt sends, a provider-agnostic sendEmail() seam, React Email or dynamic templates, idempotent retries, 100-cap batch with partial-failure handling, transactional-vs-broadcast stream split, and the bounce/complaint webhook feeding a suppression list. Triggers: 'send a password-reset email with Resend', 'emails double-send when the queue retries', 'switch us off SendGrid onto Postmark without rewriting every call site', 'send a digest to 4000 users and handle the ones that fail', 'el webhook de bounces no actualiza la lista de supresión', 'montar el envío de correos con Resend'. NOT writing the subject line or the open/click growth system (that is newsletter)."
+description: "Use when wiring server code to send transactional or bulk email via Resend, SendGrid, or Postmark: a provider-agnostic sendEmail() seam, idempotent retries, 100-cap batches with partial failures, transactional-vs-broadcast streams, bounce webhooks feeding a suppression list. NOT SPF/DKIM/DMARC inbox reputation (that is `email-deliverability`)."
 tags: [email, transactional-email, resend, sendgrid, postmark, webhooks, idempotency]
 recommends: [email-deliverability, newsletter, webhooks, secure-coding, api-connector-builder, automation-flows]
 origin: risco
@@ -13,30 +13,16 @@ digest — your job is the server code that hands it to a provider, makes it saf
 to retry, and keeps the suppression list honest. You do **not** own the inbox
 (SPF/DKIM/DMARC/reputation is `../email-deliverability/SKILL.md`) and you do
 **not** own the words (subject lines and growth are `../newsletter/SKILL.md`,
-launch copy is `../marketing/SKILL.md`). The deliverable is idempotent,
-secret-safe, stream-correct server code — not subject lines, DNS records, or
-audience strategy.
+launch copy is `../marketing/SKILL.md`). Generic typed clients for *any* REST API
+are `../api-connector-builder/SKILL.md`; deciding *when* a multi-step sequence
+fires is `../automation-flows/SKILL.md`.
 
 Stack as of June 2026: `resend` 6.12.4, `@sendgrid/mail` 8.1.6, Postmark via its
 HTTP API, React Email 5.0 (React 19.2 / Next.js 16, Tailwind 4), Node 20+ / TS.
 
-## The four non-negotiables
-
-Every email integration you produce must satisfy these. `scripts/verify.sh`
-greps for the first three; the fourth is the design constraint behind them.
-
-1. **API key from env, never a literal.** `process.env.RESEND_API_KEY`, not
-   `re_xxx` / `SG.xxx` / a server token in source. *Why:* a committed key is a
-   send-as-you credential — instant abuse and reputation burn.
-2. **Idempotency key on every transactional send.** *Why:* queues retry,
-   serverless functions re-fire, users double-click. Without a stable key one
-   password reset becomes three.
-3. **Send on the correct stream.** Transactional and broadcast traffic go on
-   distinct From + subdomain + stream. *Why:* a marketing reputation hit must
-   never push password resets to spam.
-4. **Verify the inbound webhook signature against the raw body.** *Why:* the
-   bounce/complaint hook mutates your suppression list; an unverified hook lets
-   anyone suppress (or un-suppress) your users.
+`scripts/verify.sh` is read-only and greps a target for the four invariants this
+skill exists to hold: env-sourced key, idempotency, a single `sendEmail()` seam,
+and a webhook signature checked on the raw body.
 
 ## Step 1 — pick a provider
 
@@ -47,14 +33,18 @@ greps for the first three; the fourth is the design constraint behind them.
 | **Postmark** | Pure transactional, deliverability-first | No — self-dedupe via your key + webhooks | Postmark server templates | per-stream | Receipts/resets must never queue behind marketing |
 
 Idempotency support changes your strategy, not just your config — see Step 4.
-Full per-provider matrix (auth headers, exact signatures, webhook event names,
-rate limits) is in `references/providers.md`.
+Full per-provider matrix (auth header, SDK + version, single/batch signatures,
+idempotency model, stream/subdomain model, dynamic-template syntax, webhook event
+names, rate limits, when to pick each) plus a suppression-webhook handler skeleton
+per provider is in `references/providers.md`.
 
 ## Step 2 — the `sendEmail()` seam
 
 One provider-agnostic function. The rest of the app calls `sendEmail(...)` and
 never imports a provider SDK. *Why:* swapping SendGrid→Postmark is then one file,
-not a grep across every call site.
+not a grep across every call site. That one file reads the key from
+`process.env` — never a `re_…` / `SG.…` / server-token literal, because a
+committed key is a send-as-you credential and burns your reputation with it.
 
 ```ts
 // lib/email/index.ts — the only place a provider SDK is imported
@@ -174,7 +164,9 @@ const html = '<h1>Hi ' + req.body.name + '</h1>'; // XSS + broken layout risk
 
 ## Step 4 — idempotency & retries
 
-Derive a deterministic key from the *event*, not the clock. Same event → same
+Every transactional send carries a key, because queues retry, serverless
+functions re-fire, and users double-click — without a stable key one password
+reset becomes three. Derive it from the *event*, not the clock. Same event → same
 key → provider (or your table) collapses the duplicate.
 
 ```ts
@@ -245,7 +237,9 @@ down with it. The DNS/auth setup for those subdomains is
 
 The provider POSTs bounce and complaint events. Verify the signature on the
 **raw** body (parse after verifying), then write the address to a suppression
-list and check that list before every future send.
+list and check that list before every future send. The verification is absolute
+because this hook mutates the suppression list: unverified, anyone can suppress
+— or un-suppress — your users.
 
 ```ts
 // app/api/email/webhook/route.ts (Next.js 16) — verify BEFORE parsing
@@ -281,14 +275,3 @@ before I ever send) is `../lead-gen/SKILL.md` / `../email-deliverability/SKILL.m
 | Trusting the webhook without signature check | Anyone can poison your suppression list | Verify signature on raw body, then parse |
 | Sending to a bounced/complained address | Reputation damage, ISP penalties | Filter against suppression list before send |
 | Calling the provider SDK at scattered call sites | Provider swap = grep across the app | One `sendEmail()` seam (Step 2) |
-
-## Reference
-
-`references/providers.md` — full side-by-side matrix (auth header, SDK +
-version, single/batch signatures, idempotency model, stream/subdomain model,
-dynamic-template syntax, webhook event names, rate limits, when to pick each)
-plus a suppression-webhook handler skeleton per provider.
-
-Generic typed HTTP-client wrappers for *any* REST API →
-`../api-connector-builder/SKILL.md`. The orchestration that decides *when* to
-fire a multi-step sequence → `../automation-flows/SKILL.md`.
