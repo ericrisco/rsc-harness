@@ -1,6 +1,6 @@
 ---
 name: monitoring
-description: "Use when setting up uptime/health monitoring, alerts, or on-call basics for a service already in production and you need to know it's down before customers do. Triggers: 'set up uptime monitoring', 'alert me if the site goes down', 'add /healthz and /readyz and probe them', 'we get paged at 3am for CPU spikes that self-resolve — fix alert fatigue', 'alert on our SLO error-budget burn rate not raw error count', 'an untested alert isn't an alert', 'create an on-call rotation with escalation and a status page', 'monta monitorització d'uptime i avísa'm si l'API torna 5xx', 'avísame si la web se cae'. NOT instrumenting logs/metrics/traces or wiring OpenTelemetry (that is observability)."
+description: "Use when setting up uptime and health monitoring, alerts, or on-call basics for a service already in production, so you learn it is down before customers do — health and readiness probes, alerting on SLO error-budget burn rather than raw counts, curing alert fatigue, on-call rotation with escalation, and a status page. NOT instrumenting logs, metrics or traces, or wiring OpenTelemetry (that is `observability`)."
 tags: [monitoring, uptime, alerting, on-call, sre]
 recommends: [observability, deployment, error-handling, domains-dns, scaling]
 origin: risco

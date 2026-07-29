@@ -1,6 +1,6 @@
 ---
 name: ollama
-description: "Use when running open-weight LLMs locally with Ollama — pulling/tagging models, calling the local API, picking a quant/GGUF, writing Modelfiles, or sizing VRAM/RAM for the box you're on. Triggers: 'run Llama/Qwen/gpt-oss/Gemma locally', 'self-host an LLM, no API keys, offline', 'model requires more memory than is available', 'why does my 70B OOM at long context', 'point the OpenAI SDK at localhost:11434', 'ollama ps / pull / create', 'ejecutar un LLM en local sin API key', 'quin model i quina quantització caben a la meva GPU de 12GB'. NOT remote/managed GPU serving or autoscaling (that is runpod), NOT downloading raw weights/datasets (that is huggingface), NOT retrieval pipeline design (that is rag)."
+description: "Use when running open-weight LLMs locally with Ollama — pulling and tagging models, calling the local API, picking a quantization or GGUF, writing Modelfiles, and sizing VRAM and RAM for the machine at hand. NOT remote or managed GPU serving and autoscaling (that is `runpod`), NOT downloading raw weights or datasets (that is `huggingface`), NOT retrieval pipeline design (that is `rag`)."
 tags: [ollama, local-llm, gguf, quantization, self-hosted-inference]
 recommends: [huggingface, runpod, modal, llm-pipeline, rag]
 origin: risco
