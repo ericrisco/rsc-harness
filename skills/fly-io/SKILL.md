@@ -1,6 +1,6 @@
 ---
 name: fly-io
-description: "Use when deploying or operating an app on Fly.io — writing fly.toml, running Machines across regions near users, attaching Volumes, managing secrets, or scaling (autostop/autostart, scale count, fly-replay). Triggers: 'fly deploy', 'fly launch', 'desplega a Fly.io a prop dels usuaris', 'users in Sydney see high latency but my app only runs in iad', 'scale my Fly app to zero overnight', 'attach a persistent disk to my Fly machine', 'forward writes to the primary region'. NOT a generic git-push PaaS (that is railway), NOT frontend edge hosting (that is vercel)."
+description: "Use when deploying or operating an app on Fly.io — writing fly.toml, placing Machines in regions near users, attaching Volumes, managing secrets, or picking a scaling lever (autostop/autostart, scale count, fly-replay). NOT choosing which host to deploy on (that is `deployment`), NOT a git-push PaaS with no regions model (that is `railway`)."
 tags: [fly-io, deployment, machines, regions, scaling]
 recommends: [docker, scaling, postgresdb, railway, domains-dns]
 origin: risco
@@ -8,7 +8,7 @@ origin: risco
 
 # Deploy on Fly.io
 
-You are deploying an app to Fly.io: a `fly.toml`, Machines (Firecracker microVMs) placed in regions close to users, optional region-pinned Volumes, secrets, and the right scaling lever. Get the mental model right first, then the config follows.
+You are deploying an app to Fly.io: a `fly.toml`, Machines (Firecracker microVMs) placed in regions close to users, optional region-pinned Volumes, secrets, and the right scaling lever. Get the mental model right first, then the config follows. If none of that placement control matters, ../railway/SKILL.md is the git-push PaaS with no Machines/regions model.
 
 ## Mental model
 
@@ -72,7 +72,7 @@ primary_region = "iad"            # 3-letter region code: iad, ord, ams, syd, gr
   initial_size = "1gb"
 ```
 
-Full field surface (`[[services]]` vs `[http_service]`, health checks, `[[statics]]`, `[[files]]`, all VM sizes, `[restart]`, `[metrics]`) lives in `references/fly-toml.md` — read it when you need a key that is not above.
+Full field surface (`[[services]]` vs `[http_service]`, health checks, `[[statics]]`, `[[files]]`, all VM sizes, `[restart]`, `[metrics]`) lives in `references/fly-toml.md` — read it when you need a key that is not above. Custom domains, certs and registrar-level DNS are ../domains-dns/SKILL.md.
 
 ## Regions: place Machines near users
 
@@ -162,7 +162,7 @@ Treat secret hygiene as non-negotiable — see ../secure-coding/SKILL.md.
 
 Key distinction: **autostop ≠ autoscaler.** Autostop only toggles Machines that already exist; it never changes the count. The metrics autoscaler is what actually adds/removes Machines. Set `auto_stop_machines` and `auto_start_machines` **together** — configuring one without the other is undefined behavior.
 
-`fly-replay` is the multi-region write-forwarding pattern: read-replicas serve local reads, a write replies with `fly-replay: region=<primary>` and the Proxy re-runs the request there. Full header forms and the primary/replica split are in `references/multi-region.md`.
+`fly-replay` is the multi-region write-forwarding pattern: read-replicas serve local reads, a write replies with `fly-replay: region=<primary>` and the Proxy re-runs the request there. Full header forms and the primary/replica split are in `references/multi-region.md`. These are the Fly levers only; platform-agnostic scaling theory (queues, sharding, load shedding) is ../scaling/SKILL.md.
 
 ## Cost & HA
 
@@ -195,12 +195,3 @@ It prefers `fly config validate` when flyctl is on PATH, else does structural ch
 | Treating Fly Postgres as managed | Fly Postgres is unmanaged; you operate it | Route to it here; operate it via ../postgresdb/SKILL.md |
 | `min_machines_running` in a non-primary region | Ignored outside primary | Keep warm capacity via `scale count` there |
 | `fly deploy` with no `release_command` for a schema change | New code hits an old schema mid-rollout | `release_command` runs the migration first |
-
-## Related skills
-
-- ../docker/SKILL.md — the Dockerfile/image build Fly consumes.
-- ../scaling/SKILL.md — generic horizontal-scaling theory (queues, sharding, load shedding).
-- ../postgresdb/SKILL.md — operating the Postgres engine itself; Fly Postgres is unmanaged.
-- ../railway/SKILL.md — git-push PaaS with no Machines/regions model.
-- ../domains-dns/SKILL.md — custom domains, certs, registrar-level DNS.
-- ../secure-coding/SKILL.md — secret handling beyond `fly secrets`.

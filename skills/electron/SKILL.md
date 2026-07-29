@@ -1,6 +1,6 @@
 ---
 name: electron
-description: "Use when building, hardening, or shipping a cross-platform desktop app with Electron — wiring the main/renderer/preload process model, exposing OS capabilities to a web UI over typed IPC, locking down an insecure shell, or packaging with code signing and auto-update. Triggers: 'build a desktop app for Mac/Windows/Linux from my web app', 'let my renderer read a file safely', 'audit my Electron security (nodeIntegration, sandbox, CSP)', 'my preload exposes ipcRenderer and the renderer can require(\"fs\")', 'Squirrel.Mac won\\'t auto-update my app', 'migrate off @electron/remote and BrowserView', 'empaquetar mi app de escritorio para Windows y Mac con firma de código y auto-actualización', 'empaquetar app d\\'escriptori amb auto-actualització'. NOT a smaller Rust-backed shell on the OS native webview (that is tauri)."
+description: "Use when building, hardening, or shipping a cross-platform Electron desktop app — main/renderer/preload process model, typed contextBridge IPC, locking down nodeIntegration/contextIsolation/sandbox/CSP, or packaging with signing and auto-update. NOT a Rust-backed shell on the native webview (that is tauri), nor the web UI inside it (that is react)."
 tags: [electron, desktop, ipc, security, packaging, auto-update, code-signing]
 recommends: [tauri, react, nodejs, github-actions, secure-coding]
 origin: risco
@@ -8,13 +8,9 @@ origin: risco
 
 # Electron — desktop shell, typed IPC, hardening, signing
 
-> Build, harden, and ship cross-platform desktop apps. Treat the renderer as hostile
-> territory and the IPC channel as an attack surface — that is the dominant failure mode
-> in real Electron apps, so the whole skill is organized around it.
-
 This skill owns the **desktop shell**: process model, IPC, security, packaging, signing,
-auto-update. It does **not** own the web UI inside the window (`../react/SKILL.md` if it
-existed), the Node backend logic, or the CI runner matrix.
+auto-update. It does **not** own the web UI inside the window (`../react/SKILL.md`), the
+Node backend logic, or the CI runner matrix.
 
 ## The mental model — three processes, one rule
 
@@ -28,7 +24,8 @@ wrong one is the root cause of most security holes.
 | preload  | isolated world, runs before page JS | semi-trusted | window | the **only** bridge: `contextBridge` exposes a tiny API |
 
 **The governing rule: the renderer is untrusted, the main process holds all privilege, and
-the preload is the only sanctioned bridge between them.** Everything below is a corollary.
+the preload is the only sanctioned bridge between them.** Renderer-to-OS escalation is the
+dominant failure mode in real Electron apps, so everything below is a corollary.
 
 ## Start right
 
@@ -55,7 +52,7 @@ src/
   ipc/types.ts  # IPC contract shared by main + preload
 ```
 
-## The security baseline — non-negotiable
+## The security baseline
 
 Modern Electron defaults are already secure (`nodeIntegration:false`,
 `contextIsolation:true`, `sandbox:true` since Electron 20). **Assert them explicitly anyway**
@@ -185,32 +182,23 @@ Authenticode, and `electron-updater` + GitHub Releases wiring: `references/packa
 The CI matrix that *runs* these builds across three OSes is `github-actions`' job; this skill
 defines *what* to build and sign.
 
-## Migration smells — and the fix
-
-| Smell in the code                          | Why it's dangerous                          | Fix                                              |
-|--------------------------------------------|---------------------------------------------|--------------------------------------------------|
-| `nodeIntegration: true`                    | Page JS gets `require('fs')`, full Node     | Set `false`; move the capability behind IPC      |
-| `contextIsolation: false`                  | Page can rewrite the preload's globals      | Set `true` (default)                             |
-| `@electron/remote` import                  | Sync main-object access = renderer→main RCE | Replace with explicit `ipcMain.handle` channels  |
-| `new BrowserView(...)`                     | Deprecated since 30, will be removed        | `new WebContentsView(...)`                        |
-| `exposeInMainWorld('api', ipcRenderer)`    | Universal IPC weapon (empty object now)     | One function per channel                          |
-
-## Anti-patterns
+## Anti-patterns and migration smells
 
 | Anti-pattern                                          | Why it's wrong                                              | Do instead                                            |
 |-------------------------------------------------------|------------------------------------------------------------|-------------------------------------------------------|
-| `nodeIntegration: true`                               | Any XSS in the renderer becomes OS-level RCE               | `false` + IPC for every privileged op                 |
-| `contextIsolation: false`                             | Renderer can tamper with preload internals                 | `true` (the default)                                  |
+| `nodeIntegration: true`                               | Page JS gets `require('fs')`; any XSS becomes OS-level RCE | `false`; move the capability behind IPC               |
+| `contextIsolation: false`                             | Page can rewrite the preload's globals                     | `true` (the default)                                  |
 | `sandbox: false` without a reason                     | Drops the OS sandbox around the renderer                   | `true`; only relax for a measured, isolated need      |
-| Exposing `ipcRenderer`/its methods over the bridge    | Page can call any channel with any payload                 | One typed function per channel                        |
+| `exposeInMainWorld('api', ipcRenderer)` or its methods | Universal IPC weapon — any channel, any payload (and an empty object now) | One typed function per channel        |
 | No arg validation in `ipcMain.handle`                 | Renderer is an untrusted client; you trust its input       | Type-check + bound every arg before acting            |
 | `webSecurity: false` to "fix CORS"                    | Disables same-origin policy app-wide                       | Keep `true`; proxy/handle CORS in main                |
 | CSP only in a `<meta>` tag                            | Doesn't cover the initial document; bypassable             | Set CSP in `onHeadersReceived`                         |
 | Loading a remote URL into a Node-enabled window       | Remote site runs with your app's privilege                 | Bundle UI locally; sandbox + nav lockdown for remote  |
+| `@electron/remote` import                             | Sync main-object access = renderer→main RCE                | Replace with explicit `ipcMain.handle` channels       |
+| `new BrowserView(...)`                                | Deprecated since Electron 30, will be removed              | `new WebContentsView(...)`                            |
 | Auto-update with an unsigned/un-notarized build       | Squirrel.Mac silently refuses; no updates ship             | Sign + notarize (mac), Authenticode (win) first       |
 | Shipping on an EOL Electron major                     | Unpatched Chromium CVEs in your users' hands               | Stay within the latest 3 majors                       |
 | Heavy CPU work in the main process                    | Blocks the event loop → the whole UI freezes               | `utilityProcess`/worker, or do it in the renderer     |
-| Keeping `@electron/remote`                             | A known renderer→main escalation path                      | Migrate to explicit IPC                               |
 
 ## Verify
 

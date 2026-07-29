@@ -1,6 +1,6 @@
 ---
 name: drizzle-orm
-description: "Use when modeling data or querying with Drizzle ORM in TypeScript — schema declared in `.ts`, type-safe `select`/`insert`/relational queries, and `drizzle-kit` migrations, or when choosing Drizzle over Prisma for an edge/serverless runtime. Triggers: 'set up Drizzle ORM', 'drizzle-kit generate', 'write a pgTable schema', '$inferSelect type', 'drizzle push vs generate for production', 'my db.query.posts.findMany returns no author relation', 'drizzle-kit conflicting migration', 'switch off Prisma to something lighter for edge', 'definir l esquema amb Drizzle i tipus type-safe', 'migrar de Prisma a Drizzle para algo más ligero', 'migració amb drizzle-kit'. NOT Prisma Client or schema.prisma (that is prisma-orm), NOT a generic zero-downtime migration strategy (that is db-migrations), NOT Postgres engine/indexing/EXPLAIN (that is postgresdb)."
+description: "Use when modeling data or querying with Drizzle ORM in TypeScript — `pgTable` schema in `.ts`, type-safe select/insert/relational queries, `drizzle-kit` migrations. NOT Prisma Client or `schema.prisma` (that is `prisma-orm`), NOT ORM-agnostic migration strategy (that is `db-migrations`), NOT Postgres engine tuning or EXPLAIN (that is `postgresdb`)."
 tags: [drizzle, drizzle-orm, typescript-orm, drizzle-kit, sql, migrations, database, schema]
 recommends: [prisma-orm, postgresdb, db-migrations, neon, sqlite-turso, planetscale, supabase, typescript, sql]
 origin: risco
@@ -229,6 +229,3 @@ It checks a `drizzle()` call exists, the table helper matches the configured `di
 carries `dialect`/`schema`/`out`, that any `db.query` usage has `{ schema }`/`{ relations }` passed
 to `drizzle()`, and bans Prisma-isms (`schema.prisma`, `PrismaClient`, `prisma generate`) that mean
 the wrong ORM leaked in.
-
-For the full driver matrix and the v1↔v2 relations migration, see
-`references/relations-and-drivers.md`.

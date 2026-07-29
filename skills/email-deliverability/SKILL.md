@@ -1,6 +1,6 @@
 ---
 name: email-deliverability
-description: "Use when mail you send lands in spam, gets rejected, or fails the Gmail/Yahoo bulk-sender checks, and you must fix authentication and reputation rather than the sending code — setting SPF/DKIM/DMARC DNS records so they align, raising a cold domain through warmup, keeping the spam-complaint rate under threshold, adding one-click unsubscribe, getting the brand logo and verified checkmark to show via BIMI, and reading why 'soft' rejections and Postmaster Tools say you are throttled. Triggers: 'our emails go to spam since the Gmail update', 'DMARC fails even though SPF passes', 'how do I warm up a new sending domain', 'do I need one-click unsubscribe to send to gmail', '550 5.7.26 unauthenticated', 'how do I get our logo and the blue checkmark to show in Gmail with BIMI', 'los correos caen en spam y el SPF está bien', 'configurar BIMI i el logo verificat al correu'. NOT putting transactional/bulk email on the wire through a provider API (that is email-connector)."
+description: "Use when mail already sent lands in spam, is rejected, or fails the Gmail/Yahoo bulk-sender checks and the fix is authentication and reputation, not the sending code: SPF/DKIM/DMARC alignment, domain warmup, spam-complaint rate, one-click unsubscribe, BIMI. NOT putting mail on the wire through a provider API (that is `email-connector`)."
 tags: [email, deliverability, spf, dkim, dmarc, bimi, sender-reputation, bulk-sender]
 recommends: [email-connector, newsletter, cold-outreach, gdpr-privacy, data-policy]
 origin: risco
@@ -9,34 +9,26 @@ origin: risco
 # email-deliverability — make mail authenticate and land in the inbox
 
 This skill owns one layer: **why mail you already send gets filtered, deferred,
-or rejected, and the DNS + reputation work that fixes it.** It does not put mail
-on the wire — that is `email-connector`. It starts where the send technically
-succeeds but the message never reaches the inbox.
+or rejected, and the DNS + reputation work that fixes it.** It starts where the
+send technically succeeds but the message never reaches the inbox.
 
 The lever is almost never the sending code. It is three DNS records that must
 *align*, a complaint rate you must hold down, and a reputation you build slowly
 and lose fast. Treat this as ops on a domain, not a code change.
 
-## When to use / When NOT to use
-
-**Use when:** mail lands in spam or Promotions and you suspect auth/reputation,
-not copy; a receiver returns `550 5.7.26` (unauthenticated), `421`/`451`
-deferrals, or `dmarc=fail`; you must meet the Gmail/Yahoo bulk-sender rules
-before a launch; you are standing up a brand-new sending domain and need a
-warmup plan; Google Postmaster Tools shows a rising spam rate or "Bad" domain
-reputation; you want the brand logo and a verified checkmark to show in Gmail
-(BIMI + VMC/CMC).
-
-**Do NOT use for:**
+## Not this skill
 
 - **Sending the mail at all** — provider SDK, `sendEmail()` seam, templates,
-  retries, batch caps, bounce/complaint webhooks → `email-connector`. That skill
-  feeds the suppression list; this one explains the reputation it protects.
+  retries, batch caps, bounce/complaint webhooks → `../email-connector/SKILL.md`.
+  That skill feeds the suppression list; this one explains the reputation it
+  protects.
 - **Subject lines, open/click optimization, list growth** → `newsletter`.
 - **Outbound prospecting sequences, lead lists** → `cold-outreach` (deliverability
   is a *constraint* on it, not the same job).
 - **Consent, lawful basis, retention of the address list** → `gdpr-privacy` and
   `data-policy`. Unsubscribe *mechanics* live here; consent *law* does not.
+- **Handling the DKIM private key and provider API secrets** →
+  `../secure-coding/SKILL.md`.
 
 ## The three records that must align
 
@@ -154,15 +146,3 @@ low-complaint sending.
 | Faking transactional headers to dodge Promotions | Violates bulk rules; risks rejection, not just foldering | Accept Promotions placement; earn Primary via engagement |
 | Routing the unsubscribe to a form that takes a week | Breaks the 2-day one-click honor rule; raises complaints | Honor `List-Unsubscribe-Post` one-click within 2 days, automatically |
 | Adding BIMI to fix spam-foldering | BIMI needs DMARC enforcement you do not have yet, and it changes logo display, not placement | Fix auth + reputation first; add BIMI last as a branding layer |
-
-## See also
-
-- `../email-connector/SKILL.md` — the provider/SDK send path, suppression list,
-  and bounce/complaint webhook that this skill's reputation rules sit on top of.
-- `../secure-coding/SKILL.md` — handling the DKIM private key and provider API
-  secrets without leaking them.
-
-Recommended companions (siblings): `email-connector` for the actual send,
-`newsletter` for the copy/engagement side that drives complaint rate down,
-`cold-outreach` (deliverability gates it), and `gdpr-privacy` / `data-policy`
-for the consent and retention behind a clean list.

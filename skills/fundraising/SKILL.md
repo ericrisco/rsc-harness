@@ -1,6 +1,6 @@
 ---
 name: fundraising
-description: "Use when planning or running an equity fundraising round and you need the STRATEGY and PROCESS, not a single document — sizing the raise to a milestone, choosing post-money SAFE vs priced round, building and tiering the investor target list around intro paths, sequencing outreach to manufacture momentum, managing the diligence pipeline, or reading a term sheet to know what to push on before you sign. Triggers: 'plan our seed raise', 'how much should we raise and on what terms', 'SAFE or priced round, what cap', 'build my investor target list', 'how many investors do I actually need to contact', 'we have meetings but no term sheet — the raise stalled', 'got a term sheet, what do I push back on', 'planifica la ronda seed', 'cuántos inversores tengo que contactar', '¿SAFE o ronda con precio?', 'planifiquem la ronda d'inversió'. NOT the slide-deck narrative (that is pitch-deck) and NOT the cap-table/valuation math (that is financial-model)."
+description: "Use when planning or running an equity round as a process: sizing the raise to a milestone, choosing post-money SAFE vs priced round, tiering investors by intro path, sequencing outreach for momentum, or reading a term sheet before signing. NOT the slide narrative (that is `pitch-deck`), NOT the cap-table or valuation math (that is `financial-model`)."
 tags: [fundraising, seed, safe, term-sheet, investor-pipeline, venture-capital, round-strategy]
 recommends: [pitch-deck, financial-model, investor-materials, cold-outreach, contracts, grants, unit-economics]
 origin: risco
@@ -8,7 +8,7 @@ origin: risco
 
 # Fundraising — The Operating System for an Equity Round
 
-*Own the round as a PROCESS: size it, pick the instrument, build a tiered list around intro paths, run a concentrated sprint, read the term sheet. You do NOT write the deck, build the model, or package the data room — you decide the strategy and drive the sequence.*
+*Own the round as a PROCESS: size it, pick the instrument, build a tiered list around intro paths, run a concentrated sprint, read the term sheet.*
 
 This skill thinks in **funnels** (how many investors at the top to land N term sheets), in **instruments** (post-money SAFE vs priced Series Seed), and in **leverage** (warm intros, parallel meetings, a first term sheet that creates real urgency). It consumes the deck, the model, and the collateral that siblings produce, and orchestrates them into a closed round. Scope: pre-seed through Series A priced rounds and SAFE rounds, founder-side.
 
@@ -119,9 +119,7 @@ Sprint shape
   Close         first term sheet → use it to compress the rest → sign
 ```
 
-**The first term sheet changes everything** — it converts soft interest into urgency across the whole pipeline. Use it. But the honesty rule is absolute:
-
-> **Manufacture FOMO from a visibly busy calendar and a real first term sheet — never from fabricated competing offers or invented deadlines.** Lying about a term sheet you don't have is how a raise dies when one investor calls another; the cost of getting caught is the round.
+**The first term sheet changes everything** — it converts soft interest into urgency across the whole pipeline. Use it. But the honesty rule is absolute, because it is the one mistake with no recovery: **manufacture FOMO from a visibly busy calendar and a real first term sheet — never from fabricated competing offers or invented deadlines.** Lying about a term sheet you don't have is how a raise dies when one investor calls another; the cost of getting caught is the round.
 
 Track **count-in-pipeline and stage conversion, not activity**. Benchmarks to instrument the funnel: outreach→meeting ~15%, first→second ~50%. Pipeline stages: `Sourced → Intro requested → First meeting → Partner/2nd → Diligence → Term sheet → Closed`. Week-by-week playbook and the honest-momentum mechanics → `references/process-playbook.md`.
 
@@ -140,9 +138,9 @@ A founder negotiates the few terms that **compound** — not the headline valuat
 
 Median seed lead ownership runs ~12.6%. **Don't sign the first term sheet without a comparison** — a single offer with no comp gives away your only leverage. And the hard handoff: the term sheet is mostly non-binding, but **the binding SAFE / SPA / side letter is a legal document → `../contracts/SKILL.md` and a real lawyer.** You read the term sheet to negotiate; you do not draft the binding instrument here. Full term-by-term cheat sheet with bands and push-on guidance → `references/process-playbook.md`.
 
-## Anti-patterns / rationalizations → STOP
+## Anti-patterns
 
-| Rationalization | Reality / Fix |
+| Anti-pattern | Do instead |
 | --- | --- |
 | "Raise the max — more runway is always better." | More dilution for proof you don't have. Size to the next milestone (Step 1). |
 | "I'll send a few emails and see who bites." | A serial trickle kills momentum. Concentrate 30–50 meetings in 2 weeks, parallel. |
@@ -153,10 +151,3 @@ Median seed lead ownership runs ~12.6%. **Don't sign the first term sheet withou
 | "Cold outreach is the main channel." | Cold replies ~1–3%; warm converts ~30–50%. Build around intro paths, cold last. |
 | "Tell investors we have a competing term sheet." | If untrue, the raise dies when they call each other. FOMO from real signals only. |
 | "Push the valuation up, that's the win." | The terms that compound are pref, pool, board, dilution — not headline price alone. |
-
-## Handoffs + references
-
-- Story / slides → `../pitch-deck/SKILL.md` · numbers, cap-table, valuation → `../financial-model/SKILL.md` · one-pager, data room, updates → `../investor-materials/SKILL.md`.
-- Cold message copy → `../cold-outreach/SKILL.md` · binding legal doc → `../contracts/SKILL.md` · non-dilutive → `../grants/SKILL.md` · LTV/CAC probe → `../unit-economics/SKILL.md`.
-- `references/funnel-math.md` — work-backward funnel arithmetic, warm-intro priority ladder with per-path conversion bands, A/B/C tiering rubric, pipeline stage schema, worked $3M-seed top-of-funnel.
-- `references/process-playbook.md` — 6–8 week sprint week-by-week, honest momentum/FOMO mechanics, SAFE-vs-priced decision table (cost/speed/dilution), post-money SAFE pile-up worked example, term-sheet-basics cheat sheet with 2025 bands.

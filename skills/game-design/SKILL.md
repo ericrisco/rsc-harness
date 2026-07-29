@@ -1,6 +1,6 @@
 ---
 name: game-design
-description: "Use when designing or repairing the design of a game — inventing mechanics and systems, shaping the core loop, layering moment-to-moment / session / meta loops, planning progression, economy, currencies and sinks/faucets, tuning difficulty curves and balance, killing dominant strategies, adding 'juice'/game feel as design intent, prototyping and playtesting, or controlling scope, and especially when the ask is 'why isn't my game fun'. Triggers: 'design the core loop', 'my game isn't fun / doesn't hook', 'balance the economy', 'the difficulty curve feels off', 'players found a dominant strategy', 'how do I scope this', 'reward / progression loop', 'diseñar la mecánica', 'el juego no engancha', 'com equilibro l'economia'. NOT writing engine code, scripts or shaders (route to godot/unity/unreal), NOT narrative, dialogue or story beats (route to game-storytelling), NOT level layout or encounter placement (route to level-design)."
+description: "Use when designing or repairing what makes a game fun — verbs and mechanics, moment-to-moment/session/meta loops, progression, economy faucets and sinks, difficulty curves, dominant strategies, juice, prototyping and scope. NOT engine code (that is `godot`), NOT story (that is `game-storytelling`), NOT level layout (that is `level-design`)."
 tags: [game-design, mechanics, core-loop, balancing, progression, playtesting, scope, fun]
 recommends: [level-design, game-storytelling, godot, unity, unreal]
 profiles: [full]
@@ -9,36 +9,19 @@ origin: risco
 
 # Design games that are fun on purpose
 
-Engine-agnostic game design: mechanics, loops, progression, economy, balance, feel, and the discipline of prototyping and scope. No engine APIs live here — when the design is settled, the implementation belongs to `godot`, `unity`, or `unreal`.
+Engine-agnostic game design: mechanics, loops, progression, economy, balance, feel, and the discipline of prototyping and scope. No engine APIs live here — when the design is settled, the implementation belongs to [`godot`](../godot/SKILL.md), [`unity`](../unity/SKILL.md), or [`unreal`](../unreal/SKILL.md).
 
-## The one rule
+Two premises govern everything below. **Fun is discovered, not designed** — you cannot reason your way to a fun game on paper, you find it by building the smallest playable version and playing it, so every hour spent planning a mechanic you have not prototyped is an hour spent guessing. And **a game is the set of verbs it gives the player plus the loops those verbs live in** — art, story, and levels dress that skeleton; if the skeleton is not fun in greybox, nothing dresses it into fun.
 
-> Fun is discovered, not designed. You cannot reason your way to a fun game on paper; you find it by building the smallest playable version and playing it. Every hour spent planning a mechanic you have not prototyped is an hour spent guessing. Prototype the riskiest assumption first, play it, then decide.
-
-> The design of a game is the set of **verbs** it gives the player plus the **loops** those verbs live in. Everything else — art, story, levels — dresses that skeleton. If the skeleton is not fun in greybox, nothing dresses it into fun.
-
-## When to use / When NOT
-
-**Use when:**
-- Inventing or reworking mechanics and systems, or defining the player's verb set.
-- Shaping the core loop, or layering moment-to-moment → session → meta.
-- Planning progression, unlocks, pacing, or an in-game economy.
-- Tuning a difficulty curve, hunting a dominant strategy, or setting up data-driven balance.
-- Adding "juice" / game feel **as a design concept** (what feedback, why).
-- Prototyping, planning a playtest, deciding what to measure, or cutting scope.
-- The vague-but-critical ask: "why isn't my game fun / why doesn't it hook?"
-
-**Do NOT use — route instead:**
+Route elsewhere when the ask is not design:
 
 | The ask | Route to | Why not here |
 | --- | --- | --- |
-| Write the movement/AI/shader/save code | `godot` / `unity` / `unreal` | This skill decides *what* to build; the engine skill builds it. |
-| Author the story, dialogue, characters, lore | `game-storytelling` | Narrative design is its own craft; this skill owns systems and verbs. |
-| Lay out a level, encounter, or world map | `level-design` | Spatial/encounter design applies the mechanics this skill defines. |
-| Netcode, prediction, lag compensation | `gamedev-multiplayer` | A technical domain, not core design intent. |
-| Ship / store page / build pipeline | `gamedev-shipping` | Release logistics, not design. |
-
-(`godot`, `unity`, `unreal`, `game-storytelling`, `level-design` are linkable siblings; the rest are known ids you name but cannot link yet.)
+| Write the movement/AI/shader/save code | [`godot`](../godot/SKILL.md) / [`unity`](../unity/SKILL.md) / [`unreal`](../unreal/SKILL.md) | This skill decides *what* to build; the engine skill builds it. |
+| Author the story, dialogue, characters, lore | [`game-storytelling`](../game-storytelling/SKILL.md) | Narrative design is its own craft; this skill owns systems and verbs. |
+| Lay out a level, encounter, or world map | [`level-design`](../level-design/SKILL.md) | Spatial/encounter design applies the mechanics this skill defines. |
+| Netcode, prediction, lag compensation | [`gamedev-multiplayer`](../gamedev-multiplayer/SKILL.md) | A technical domain, not core design intent. |
+| Ship / store page / build pipeline | [`gamedev-shipping`](../gamedev-shipping/SKILL.md) | Release logistics, not design. |
 
 ## Loops: moment-to-moment → session → meta
 
@@ -148,13 +131,6 @@ Playtest protocols, metrics/retention definitions, the prototyping ladder, and c
 ## Project grounding
 
 If the workspace has a `02-DOCS/` harness, record the design in `02-DOCS/wiki/design/` — a `game-design.md` one-pager (hook, core loop, verbs, pillars, MVP scope, what's out) plus an `economy.md` if there is a currency system. Write each as an OKF v0.1 wiki article per the harness [`wiki-article-template.md`](../harness/references/wiki-article-template.md): YAML frontmatter with a non-empty `type:` (use `type: design`), a `timestamp` in ISO 8601, and standard markdown links — never wikilinks. Index it in `02-DOCS/wiki/index.md`. This is **recorded, not gated** — skip silently if there is no harness.
-
-## Related skills
-
-- `../level-design/SKILL.md` — applies these mechanics in space: layout, pacing beats, encounter design.
-- `../game-storytelling/SKILL.md` — narrative, dialogue, and how story wraps the systems you define here.
-- `../godot/SKILL.md`, `../unity/SKILL.md`, `../unreal/SKILL.md` — implement the settled design; all engine APIs, feel/juice code, and data-driven tuning loaders live there.
-- Known siblings to name but not yet link: `gamedev-multiplayer`, `gamedev-physics`, `gamedev-pathing`, `gamedev-shaders`, `gamedev-shipping`.
 
 ## Checklist
 

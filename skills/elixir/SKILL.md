@@ -1,6 +1,6 @@
 ---
 name: elixir
-description: "Use when writing or refactoring Elixir/OTP code — GenServers, supervision trees, processes, pattern matching, mix projects and releases — or when BEAM behaviour misbehaves (restart loops, mailbox growth, timeouts). Triggers: 'write a GenServer', 'design a supervision tree', 'restart strategy one_for_one', 'let it crash instead of try/rescue', 'mix release for production', non-obvious 'my process mailbox keeps growing', 'GenServer call timeout / restart loop', Catalan 'arbre de supervisio en Elixir / processos que peten', Spanish 'arbol de supervision / procesos en Elixir / que es let it crash'. NOT building a Phoenix web app, LiveView, Ecto schemas, controllers or channels (that is phoenix)."
+description: "Use when writing or refactoring Elixir/OTP on the BEAM — GenServers, supervision trees and restart strategies, pattern matching, mix projects and releases — or when processes misbehave (restart loops, mailbox growth, call timeouts). NOT a Phoenix web app, LiveView, Ecto or channels (that is `phoenix`)."
 tags: [elixir, otp, genserver, supervision, beam, mix, concurrency, functional]
 recommends: [phoenix, postgresdb, docker]
 origin: risco
@@ -14,7 +14,7 @@ Default to **pure functions**. Most of your code is data transformation and need
 
 ## Decision: do you even need a process?
 
-A process is not "an object". Spawning one to hold a value you could pass as an argument is the most common beginner mistake — it adds a serialization bottleneck and a failure mode for nothing.
+A process is not "an object": spawning one to hold a value you could pass as an argument is the most common beginner mistake, and it adds a serialization bottleneck and a failure mode for nothing.
 
 | Situation | Use | Why |
 |---|---|---|
@@ -27,8 +27,6 @@ A process is not "an object". Spawning one to hold a value you could pass as an 
 Rule: if two pieces of code never run at the same time and share no mutable state, they are functions, not processes.
 
 ## The functional core
-
-Each rule below earns its place; the why is one line.
 
 **Match in function heads, not with `if`** — branches become exhaustive and self-documenting, and a non-match crashes loudly instead of silently falling through.
 
@@ -80,12 +78,10 @@ end
 
 ## Processes and message passing
 
-Raw `spawn`/`send`/`receive` exists, but in production you almost always want an OTP behaviour (GenServer/Task/Agent) so you get `child_spec`, supervision, and shutdown handling for free.
+Raw `spawn`/`send`/`receive` exists and is fine for a throwaway fire-and-forget where supervision genuinely does not matter, but in production you almost always want an OTP behaviour (GenServer/Task/Agent) so you get `child_spec`, supervision, and shutdown handling for free.
 
 - **Link** (`spawn_link`) couples lifetimes: if one dies abnormally, the other gets an exit signal. This is how supervision works.
 - **Monitor** (`Process.monitor/1`) is one-directional and non-fatal: you get a `{:DOWN, ...}` message but you do not die. Use it when you care *that* something died but should survive it.
-
-Drop to raw processes only for a throwaway fire-and-forget where supervision genuinely does not matter; otherwise reach for OTP.
 
 ## GenServer
 
@@ -124,11 +120,9 @@ defmodule Counter do
 end
 ```
 
-Rules, each with its why:
-
 - **Never block in `init/1`.** `start_link` blocks until `init` returns, so a slow `init` stalls the whole supervision tree boot. Return `{:ok, state, {:continue, term}}` and do the work in `handle_continue/2`.
 - **`use GenServer` auto-defines `child_spec/1`** — you rarely write one by hand; override only to change `:restart` or `:shutdown`.
-- **`call` is synchronous (with a 5s default timeout), `cast` is fire-and-forget.** Use `call` when the caller needs the result or backpressure; `cast` when it does not. A flood of `cast`s with no backpressure is the classic mailbox-growth bug — see references/otp-patterns.md.
+- **`call` is synchronous (with a 5s default timeout), `cast` is fire-and-forget.** Use `call` when the caller needs the result or backpressure; `cast` when it does not. A flood of `cast`s with no backpressure is the classic mailbox-growth bug — timeouts and backpressure recipes in `references/otp-patterns.md`.
 - **Name via `Registry`, not a global atom**, when you have many dynamic instances — atoms are never garbage-collected (see anti-patterns).
 
 ## Supervision trees
@@ -164,7 +158,7 @@ end
 
 **Let it crash**: do not wrap business logic in `try/rescue` to keep a process alive. Validate inputs at the boundary, then trust the happy path; if an invariant breaks, crashing and restarting from a known-good `init` state is the recovery mechanism. Reserve `rescue` for boundaries where you must convert an exception into a tagged tuple for a caller.
 
-For runtime-spawned children (a worker per connection/job) use `DynamicSupervisor` + `Registry` for lookup. Full recipe in references/otp-patterns.md.
+For runtime-spawned children (a worker per connection/job) use `DynamicSupervisor` + `Registry` for lookup. Full recipe — plus `Task`, `Agent`, `:ets` and how to choose an OTP behaviour — in `references/otp-patterns.md`.
 
 ## mix project
 
@@ -189,7 +183,7 @@ MIX_ENV=prod mix release
 _build/prod/rel/my_app/bin/my_app start
 ```
 
-Deps anatomy, environments, env vars, and the umbrella decision live in references/mix-and-releases.md.
+`mix.exs` anatomy, deps, environments, env vars, releases and the umbrella decision live in `references/mix-and-releases.md`.
 
 ## Types and modern stdlib
 
@@ -213,5 +207,3 @@ Deps anatomy, environments, env vars, and the umbrella decision live in referenc
 ## Verify
 
 Run `scripts/verify.sh` from your mix project root (the directory containing `mix.exs`). It checks `mix format --check-formatted` and `mix compile --warnings-as-errors`, and skips cleanly with exit 0 when Elixir/mix is not installed so it never blocks a toolchain-free CI.
-
-See references/otp-patterns.md (DynamicSupervisor+Registry, Task, Agent, ETS, timeouts/backpressure, choosing an OTP behaviour) and references/mix-and-releases.md (mix.exs anatomy, config vs runtime, releases, umbrellas).

@@ -1,6 +1,6 @@
 ---
 name: embeddings-search
-description: "Use when results from a semantic search feel irrelevant, when you don't know which embedding model or chunk size to use, when you need to add a reranker or hybrid scoring, or when you have no way to tell whether a retrieval change actually helped. Symptoms: search returns garbage, exact-match queries miss, paraphrases work but keywords don't, recall looks fine but the top result is wrong, every chunking idea is a guess. Triggers: 'which embedding model and chunk size should I use', 'my semantic search returns irrelevant results', 'how do I measure if retrieval is good — recall@k, nDCG', 'add a reranker and hybrid BM25+vector', 'exact product codes return nothing but paraphrases work fine', 'recall@k is fine but the top answer is wrong', 'quin model d'embeddings i quina mida de chunk faig servir per a aquests documents', 'la cerca semàntica retorna resultats irrellevants'. NOT operating the vector store (that is vector-db)."
+description: "Use when choosing an embedding model, chunk size, or query form, when semantic search returns irrelevant results, when adding hybrid BM25+vector or a reranker, or when a retrieval change needs a number (recall@k, nDCG, MRR). NOT operating the store — index tuning, quantization (that is `vector-db`) — nor the retrieve-to-answer loop (that is `rag`)."
 tags: [embeddings, semantic-search, chunking, hybrid-search, reranking, rrf, retrieval-eval, mteb, matryoshka]
 recommends: [vector-db, rag, structured-extraction, prompt-engineering, postgresdb]
 origin: risco
@@ -9,10 +9,9 @@ origin: risco
 # embeddings-search — make and judge the vectors
 
 You own the **embedding technique layer**: turn a corpus into searchable vectors, turn a
-question into a good retrieval, and **measure whether that retrieval is any good**. When the
-symptom is "results are irrelevant," "I don't know which model or chunk size," or "how do I
-even tell if search improved," this is the skill. You stop the moment the right chunks come
-back, measured by a number. You do not assemble a prompt or generate an answer.
+question into a good retrieval, and **measure whether that retrieval is any good**. You stop the
+moment the right chunks come back, measured by a number. You do not assemble a prompt or
+generate an answer.
 
 Route the adjacent surfaces away:
 
@@ -41,7 +40,9 @@ cost — where cost is set by **dimensions**, because dims set storage and memor
 
 Quality anchor (mid-2026 MTEB English retrieval): Gemini ~68.3, Cohere `embed-v4` ~65.2,
 OpenAI `3-large` ~64.6, `BGE-M3` ~63.0. MTEB is the standard comparison, not a verdict on
-*your* domain (see `references/models.md` for the over-trust caveat).
+*your* domain — [`references/models.md`](references/models.md) carries the full model matrix
+(dims, max tokens, price, `input_type` convention, Matryoshka support) and how to read MTEB
+without over-trusting it.
 
 Two hard rules — each is a **silent** failure, no error, just worse results:
 
@@ -153,7 +154,9 @@ This is the rigor of the skill. "Search is bad" is not actionable; "recall@10 is
 
 1. **Build a golden query set** — 30–50+ labeled `query → relevant doc ids` pairs drawn from
    real questions. This is the asset; everything else is reproducible from it.
-2. **Pick metrics** (definitions + runnable skeleton in `references/evaluation.md`):
+2. **Pick metrics** — definitions, a runnable Python eval skeleton, golden-set construction and
+   the A/B-one-change methodology are in
+   [`references/evaluation.md`](references/evaluation.md):
    - **recall@k** — of the truly relevant docs, how many landed in the top-k. Catches "the
      right chunk never came back."
    - **nDCG@k** — rewards relevant docs ranked higher. Catches "right docs, wrong order."
@@ -179,15 +182,3 @@ flags hybrid/rerank artifacts that mention no recall/nDCG/MRR for exactly this r
 | Over-large dims "for safety" | Doubles storage/RAM, little recall gain | Right-size; truncate via Matryoshka |
 | Re-embedding the corpus to change dims | Wasteful when the model is Matryoshka-trained | Truncate dims, don't re-embed |
 | Embedding raw HTML/boilerplate | Match signal drowns in markup | Embed clean text; keep the rest as metadata |
-
-## References & siblings
-
-- `references/models.md` — current model matrix (dims, max tokens, price, `input_type`
-  convention, Matryoshka support) and how to read MTEB without over-trusting it.
-- `references/evaluation.md` — golden-set construction, recall@k / nDCG@k / MRR definitions, a
-  runnable Python eval skeleton, and the A/B-one-change methodology.
-
-Siblings: store ops → [`../vector-db/SKILL.md`](../vector-db/SKILL.md) · full answer loop →
-[`../rag/SKILL.md`](../rag/SKILL.md) · typed extraction →
-[`../structured-extraction/SKILL.md`](../structured-extraction/SKILL.md) · prompt design →
-[`../prompt-engineering/SKILL.md`](../prompt-engineering/SKILL.md).

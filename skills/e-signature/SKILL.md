@@ -1,6 +1,6 @@
 ---
 name: e-signature
-description: "Use when adding legally-valid electronic-signature flows to documents — sending a PDF or template for signature, embedding signing in your own app, tracking status, verifying signing webhooks, and retrieving the signed PDF plus its audit trail via DocuSign or Dropbox Sign. Triggers: 'send this contract for signature', 'create a DocuSign envelope', 'signature_request/send', 'embed signing in our app', 'notify us when it's signed', 'set up DocuSign JWT auth', 'is a typed-name signature legally binding?', 'do we need QES for EU customers?', 'enviar a firmar', 'firma electrònica amb validesa legal'. NOT drafting the contract text itself (that is contracts) and NOT OCR/parsing/extracting fields from documents (that is document-processing)."
+description: "Use when wiring an e-signature flow with DocuSign or Dropbox Sign — picking the SES/AES/QES legal tier, sending a PDF or template for signature, embedded signing, verifying signing webhooks, retrieving the signed PDF plus audit trail. NOT drafting contract text (that is `contracts`), NOT extracting fields from PDFs (that is `document-processing`)."
 tags: [e-signature, docusign, dropbox-sign, esignature-api, webhooks, eidas, esign-act, audit-trail]
 recommends: [contracts, document-processing, webhooks, api-connector-builder, gdpr-privacy, automation-flows]
 origin: risco
@@ -10,17 +10,13 @@ origin: risco
 
 You are wiring a third-party signing API (DocuSign eSignature or Dropbox Sign, ex-HelloSign) into someone's app or backend. You take a PDF or template, define signers and fields, send it for signature, track status, react to completion via a verified webhook, and retrieve the signed PDF plus its audit trail.
 
-You are NOT writing the contract language — clauses, indemnity, liability go to `../contracts/SKILL.md`. You are NOT doing OCR, field extraction, or PDF splitting with no signing involved — that is `../document-processing/SKILL.md`. You only build the signing flow.
-
-## Three rules
-
-1. **Pick the legal tier deliberately, before you write code.** A typed name (SES) is binding for most B2B in the US and EU, but a high-stakes EU document may need AES or QES. Choosing the tier decides which provider features you enable (ID Verification, SMS/access code, qualified signature). Get this wrong and the signature is hard to defend in court.
-2. **Sandbox / `test_mode` before prod, always.** A live send is billable and emails a real human. DocuSign demo env is `https://demo.docusign.net`; Dropbox Sign uses `test_mode: 1`. Only non-test sends count against quota and reach signers.
-3. **The deliverable is the signed PDF + audit trail, retrieved and stored.** A send is not done when status is `sent` — it is done when the signer completes and you have pulled the signed document AND its evidence (DocuSign Certificate of Completion, Dropbox Sign audit-trail PDF). Fire-and-forget is the most common bug here.
+Contract language — clauses, indemnity, liability — goes to `../contracts/SKILL.md`; OCR, field extraction, or PDF splitting with no signing involved is `../document-processing/SKILL.md`.
 
 ## Decision: which legal tier do you need?
 
-US law (ESIGN Act + UETA) has **no tiers** — e-signatures equal wet ink. The EU (eIDAS, and eIDAS 2.0 / Reg (EU) 2024/1183 in force since May 2024) defines three. Map the document's stakes to a tier, then to a provider feature.
+Pick the tier deliberately, **before you write code**: it decides which provider features you enable (ID Verification, SMS/access code, qualified signature), and getting it wrong leaves a signature that is hard to defend in court.
+
+US law (ESIGN Act + UETA) has **no tiers** — e-signatures equal wet ink. The EU (eIDAS, and eIDAS 2.0 / Reg (EU) 2024/1183 in force since May 2024) defines three. A typed name (SES) is binding for most B2B in the US and EU, but a high-stakes EU document may need AES or QES. Map the document's stakes to a tier, then to a provider feature.
 
 | Tier | What it is | When you need it | Provider feature to enable |
 |------|-----------|------------------|----------------------------|
@@ -46,6 +42,8 @@ Either is fine. Pick one and stay on it so you keep **one** consistent audit tra
 ## Auth & setup
 
 Never commit keys. Read everything from env; the RSA private key lives in a secret store or a file path, never inline in source.
+
+Point at the sandbox before prod, always — a live send is billable and emails a real human. DocuSign demo env is `https://demo.docusign.net`; Dropbox Sign uses `test_mode: 1`. Only non-test sends count against quota and reach signers.
 
 | Env var | Provider | Holds |
 |---------|----------|-------|
@@ -134,6 +132,8 @@ const res = await api.signatureRequestSend({
 - **Embedded** (signer signs inside your own UI): DocuSign requires a `clientUserId` on the recipient, then you request a recipient view URL and iframe/redirect to it. Dropbox Sign uses `signature_request/create_embedded` + the embedded sign URL. Embedded signing is included from the Dropbox Sign Essentials API plan up (it is not a Standard-only feature) — but it still requires a paid API plan, not `test_mode` alone.
 
 ## Webhooks / completion
+
+A send is not done when status is `sent` — it is done when the signer completes and you have pulled the signed document AND its evidence (DocuSign Certificate of Completion, Dropbox Sign audit-trail PDF), retrieved and stored. Fire-and-forget is the most common bug here.
 
 **Verify the signature before you trust anything in the payload.** The body is attacker-controllable until you have verified it.
 
