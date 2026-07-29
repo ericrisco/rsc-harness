@@ -1,6 +1,6 @@
 ---
 name: data-policy
-description: "Use when an operator needs the internal data-governance machinery a business runs on — a retention schedule (how long each data category is kept and what happens at expiry), the lawful basis per activity, a Record of Processing Activities (ROPA), or a consent capture/withdrawal model; symptoms include 'how long can we keep this', a paper policy that never runs in systems, or data still in backups past its retention. Triggers: 'write our data retention policy', 'how long can we keep customer/HR/support/log data', 'set up a ROPA', 'lawful basis consent or legitimate interest', 'design our consent capture and withdrawal flow', 'auto-deletion with legal-hold exceptions', 'we delete from prod but backups still have it', 'política de conservación de datos', 'cuánto tiempo guardamos los datos'. NOT the public-facing privacy notice or DSAR handling (that is gdpr-privacy), NOT SOC 2 audit posture (that is compliance), and NOT the database TTL/partition-drop mechanics (that is db-migrations)."
+description: "Use when building internal data-governance machinery: a retention schedule (period, lawful basis, expiry action, system where deletion runs), an Art. 6 lawful-basis register, an Art. 30 ROPA, or a consent capture/withdrawal model. NOT the public privacy notice or DSAR handling (that is `gdpr-privacy`), NOT SOC 2 posture (that is `compliance`)."
 tags: [data-governance, retention, gdpr, ropa, consent, lawful-basis, privacy, data-minimization]
 recommends: [gdpr-privacy, compliance, contracts, secure-coding, db-migrations, postgresdb]
 origin: risco
@@ -8,9 +8,7 @@ origin: risco
 
 # Data policy
 
-You build the **internal governance machinery** a business runs on: a retention schedule, a lawful-basis register, a Record of Processing Activities (ROPA), and a consent model. You produce structured artifacts that engineering and ops can implement — not the public-facing privacy notice users read (that is `../gdpr-privacy/SKILL.md`). You are not a DPO and you never claim to be one.
-
-One rule sits above everything else.
+You produce the structured governance artifacts engineering and ops implement — a retention schedule, a lawful-basis register, a Record of Processing Activities (ROPA), a consent model — not the public-facing notice users read (that is `../gdpr-privacy/SKILL.md`). You are not a DPO and you never claim to be one.
 
 **A retention rule is only real when it has all four parts: a concrete period, the lawful basis, the expiry action, and the system where deletion actually runs.** A policy that names a period but never deletes anything is a paper policy — and a paper policy is precisely what regulators fine. Cumulative GDPR fines hit ~EUR 5.65B across ~2,245 actions by March 2025, and the two failures that recur are *no systematic data classification* and *no automated deletion capability* (Secure Privacy / CMS Enforcement Tracker, 2025). Every schedule you emit ends with the DPO/counsel sign-off boundary below.
 
@@ -26,7 +24,7 @@ Map the request to one artifact before writing anything. Each routes to a sectio
 | "Design consent capture / withdrawal" | Consent matrix | Consent model |
 | "Auto-delete but keep legal holds / backups still have data" | Deletion workflow | Make it real in systems |
 
-If the operator wants the public privacy notice, the DPA contract clauses, or SOC 2 readiness, stop and route them — see the boundary section. Those are different skills.
+If they want the public privacy notice, DPA clauses, or SOC 2 readiness instead, stop and route them — see the boundary below.
 
 ## Build the retention schedule
 
@@ -88,7 +86,7 @@ Security:    RBAC, encryption at rest, access logging
 Lawful basis: Art. 6(1)(b) contract  ← log it even though Art. 30 doesn't demand it
 ```
 
-The full template with a second worked row is in `references/consent-and-ropa.md`.
+The full ROPA template with a second worked row — plus the consent-matrix template and the withdrawal/refresh workflow — is in `references/consent-and-ropa.md`.
 
 ## Consent model
 
@@ -109,7 +107,7 @@ One note so you don't over-promise on cookies: the **ePrivacy Regulation was for
 
 ## Make it real in systems
 
-This is the section that earns the skill. The policy is worthless until deletion runs in the systems that actually hold the data — *including backups and archives*, which is exactly where regulators find data that should be gone.
+The policy is worthless until deletion runs in the systems that actually hold the data — *including backups and archives*, which is exactly where regulators find data that should be gone.
 
 Checklist:
 
@@ -134,17 +132,11 @@ State explicitly in the policy whether production data may be reused for **AI/mo
 
 For cross-border transfers, name the mechanism in the ROPA row (e.g. SCCs) and point to `../gdpr-privacy/SKILL.md` for the SCC/notice depth — that is its territory, not yours.
 
-## The boundary (non-negotiable)
+## The boundary
 
-Retention periods are jurisdiction- and sector-specific. **You produce governance drafts, not legal sign-off.** Every policy you emit ends with a line stating a qualified DPO or privacy counsel must validate the schedule and lawful-basis register before adoption, and that this is not legal advice. You never assert a period is universally lawful.
+Retention periods are jurisdiction- and sector-specific, so a period you assert as final is legal advice you are not qualified to give — that is why this line has no exceptions. **You produce governance drafts, not legal sign-off.** Every policy you emit ends with a statement that a qualified DPO or privacy counsel must validate the schedule and lawful-basis register before adoption, and that this is not legal advice. You never assert a period is universally lawful.
 
-Hand off the edges:
-
-- Public-facing privacy notice + data-subject access/erasure (DSAR) handling -> `../gdpr-privacy/SKILL.md`.
-- Audit posture, SOC 2 / ISO 27001, control mapping -> `../compliance/SKILL.md`.
-- A negotiated DPA's contractual clauses or a two-party data contract -> `../contracts/SKILL.md`.
-- Encryption, access hardening, threat controls on the systems -> `../secure-coding/SKILL.md`.
-- The actual deletion mechanics in the database -> `../db-migrations/SKILL.md` / `../postgresdb/SKILL.md`.
+Hand off the edges: public-facing privacy notice + data-subject access/erasure (DSAR) handling -> `../gdpr-privacy/SKILL.md`; audit posture, SOC 2 / ISO 27001, control mapping -> `../compliance/SKILL.md`; a negotiated DPA's contractual clauses or a two-party data contract -> `../contracts/SKILL.md`; encryption, access hardening, threat controls on the systems -> `../secure-coding/SKILL.md`; the actual deletion mechanics in the database -> `../db-migrations/SKILL.md` / `../postgresdb/SKILL.md`.
 
 ## Anti-patterns
 
@@ -156,8 +148,3 @@ Hand off the edges:
 | No legal-hold exception in the auto-deletion job | The job destroys data under litigation hold — spoliation | Flag held rows; skip them; document the hold basis |
 | Copy a generic retention template unchanged | Periods are jurisdiction/sector-specific; a copied period can be unlawful | Tag every period "validate vs local + sector law"; adjust |
 | Emit the policy as final / "compliant" | Crosses into legal advice you can't give | End with DPO/counsel sign-off + not-legal-advice line |
-
-## References
-
-- `references/retention-schedule.md` — fillable schedule template (data category, purpose, lawful basis, period, expiry action, system of record, legal-hold flag, review date) + a populated example across HR, finance/tax, CRM, marketing, support, logs, with the delete-vs-anonymize-vs-archive note and the local + sector law validation checklist.
-- `references/consent-and-ropa.md` — consent matrix template + worked example, the Art. 30 ROPA template + worked rows, the legitimate-interest balancing-test worksheet, and the consent withdrawal/refresh workflow.
