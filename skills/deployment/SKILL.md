@@ -1,6 +1,6 @@
 ---
 name: deployment
-description: "Use when containerizing an app, writing a Dockerfile, setting up GitHub Actions CI/CD, choosing a deploy target, or deploying to Coolify, Vercel, or a Hetzner VPS — multi-stage builds (FastAPI/uv, Go/distroless, Next.js standalone, Flutter web, Postgres), BuildKit build secrets, image scanning (trivy/hadolint), OIDC to registries (no long-lived secrets), least-privilege GITHUB_TOKEN, zero-downtime/rolling deploys, env/secrets flow GitHub→Coolify, healthchecks, rollback, and a hosting decision matrix (Vercel vs Hetzner+Coolify vs a third option). Trigger phrases: 'dockerize', 'write a Dockerfile', 'CI pipeline', 'GitHub Actions', 'deploy', 'ship it', 'where should I host this', 'Coolify', 'Vercel', 'Hetzner', 'VPS', 'docker-compose for local dev'."
+description: "Use when taking an app from source to live: choosing the deploy target from requirements (Hetzner+Coolify vs Vercel vs a third), then wiring container → CI → registry → host with build secrets, healthchecks and rollback. NOT one platform's mechanics (that is `coolify`, `vercel`, `railway`, `render`), NOT the Dockerfile alone (that is `docker`)."
 tags: [deploy, docker, ci, github-actions, coolify]
 recommends: [secure-coding]
 origin: risco
@@ -10,10 +10,6 @@ origin: risco
 
 Take any app in this repo from source → hardened container → green CI/CD → live on the right
 host, with secrets that never leak into image layers or logs, and a defined rollback path.
-The default self-hosted target is **Coolify** (covered in depth); for the *where to host*
-question, this skill also covers **Vercel** (zero-ops serverless/edge, ideal Next.js) and
-**Hetzner** (cheapest control; run Coolify on it for a self-hosted PaaS), plus a decision
-matrix and an "always 3 options" framework — see `references/hosting-targets.md`.
 
 ```text
 source → Dockerfile (multi-stage) → CI (lint·test·build·scan) → registry (ghcr) → target (Coolify·Vercel·Hetzner, rolling) → live + rollback
@@ -21,22 +17,10 @@ source → Dockerfile (multi-stage) → CI (lint·test·build·scan) → registr
                                                               choose via references/hosting-targets.md
 ```
 
-## When to use / When NOT to use
-
-**When to use:**
-
-- Authoring or auditing a `Dockerfile`, `.dockerignore`, or `compose.yaml`.
-- Writing or hardening `.github/workflows/*.yml` (build, test, scan, release, deploy).
-- Wiring a service onto Coolify: build-pack choice, env/secrets, domains, healthcheck, auto-deploy, previews, rollback.
-- Designing the secrets flow GitHub → registry → Coolify, or choosing rolling vs blue-green.
-- **Choosing where to host** (Vercel vs Hetzner+Coolify vs a third option) from real requirements — see `references/hosting-targets.md`.
-
-**When NOT to use:**
-
-- Kubernetes / Helm / ECS / Nomad orchestration → out of scope (this skill targets Docker + GHA, and hosting on Coolify/Vercel/Hetzner-class targets). Say so and stop.
-- Application runtime code, DB schema/migration logic, or business logic → wrong skill (see the per-stack skills below).
-- Cloud IaC (Terraform, Pulumi, CloudFormation) → out of scope; only the GHA↔cloud **OIDC handshake** is covered, not provisioning.
-- Pure local dev with no container ambition → likely overkill; mention the `compose.yaml` option and defer.
+**Out of scope — say so and stop:** Kubernetes / Helm / ECS / Nomad orchestration; cloud IaC
+(Terraform, Pulumi, CloudFormation — only the GHA↔cloud **OIDC handshake** is covered, not
+provisioning); application runtime code and DB schema/migration logic (the per-stack skills at the
+bottom own what runs *inside* the container).
 
 ## Decision rules
 
@@ -81,20 +65,9 @@ Consult these first. They settle 90% of choices before you write a line.
 | Runtime secret | Coolify env (Is Secret) / GHA `secrets` |
 | Cloud auth | OIDC — never a stored key |
 
-## Core principles
-
-1. Multi-stage always: a fat builder, a minimal runtime — never ship the toolchain.
-2. Pin digests (`FROM img@sha256:…`) on prod base images so a moved tag can't change your runtime.
-3. Non-root + read-only rootfs + `cap_drop: ALL`; add back only `NET_BIND_SERVICE` if you must bind <1024.
-4. One process per container. No supervisord-managed bundles; let the orchestrator scale.
-5. Write `.dockerignore` before the first build — it shrinks context, speeds builds, and keeps secrets out.
-6. Secrets never in layers, logs, or `ARG`; use BuildKit `--mount=type=secret` at build, env injection at runtime.
-7. Copy the lockfile and install deps **before** copying source, so source edits don't bust the dependency cache.
-8. `HEALTHCHECK` hits a real readiness path (`/healthz`), not `/` — it gates the rolling swap.
-9. 12-factor config: env only, validated at boot, fail-fast. No `.env` baked into images.
-10. Least-privilege `GITHUB_TOKEN` (`permissions:` default-deny, escalate per job) and every pipeline runs `scripts/verify.sh`.
-
 ## Docker — the canonical multi-stage shape
+
+One process per container: no supervisord-managed bundles, let the orchestrator scale.
 
 ```dockerfile
 # syntax=docker/dockerfile:1
@@ -146,7 +119,8 @@ README.md
 DOCKER_BUILDKIT=1 docker build --secret id=npm_token,env=NPM_TOKEN -t app:dev .
 ```
 
-→ full per-stack Dockerfiles: `references/dockerfiles-by-stack.md`
+→ full per-stack Dockerfiles: `references/dockerfiles-by-stack.md` · image-authoring depth
+(shrinking, base-image choice, cache busting): `../docker/SKILL.md`
 
 ## docker-compose for local dev + Postgres
 
@@ -258,7 +232,8 @@ jobs:
 - BAD: blanket `permissions: write-all` — any compromised step can push images or mint tokens.
 - GOOD: third-party actions pinned to a full commit SHA with a version comment (`@<sha> # v0.35.0`). In the March 2026 `trivy-action` supply-chain incident ([GHSA-69fq-xp46-6x23](https://github.com/aquasecurity/trivy/security/advisories/GHSA-69fq-xp46-6x23) / CVE-2026-33634), 76 of 77 tags were force-pushed to credential-stealing malware; the advisory's named known-safe ref is `v0.35.0` (commit `57a97c7e7821a5776cebc9bb87c984fa69cba8f1`), the one clean tag still pointing at the real `master` HEAD. A moving tag would have pulled the malware; this SHA pin does not. Let Dependabot bump the SHA once upstream re-tags cleanly.
 
-→ matrix, reusable workflows, OIDC-to-cloud, environments/approvals, releases: `references/github-actions.md`
+→ matrix, reusable workflows, OIDC-to-cloud, environments/approvals, releases: `references/github-actions.md` ·
+workflow-syntax depth: `../github-actions/SKILL.md`
 
 ## Choosing a deploy target (3 options)
 
@@ -282,17 +257,15 @@ escape hatch — start on Vercel, move to Hetzner+Coolify when the bill grows, s
 
 → deep coverage (limits, regions, pricing, decision matrix, worked examples): `references/hosting-targets.md`
 
-## Coolify — deploy target
+## Coolify — wiring the chosen target
+
+Only the parts that touch the pipeline; the platform walkthrough lives elsewhere.
 
 - Pick the **Dockerfile** build pack when a Dockerfile exists — same artifact CI builds, full control, prod/CI parity.
 - Set **Ports Exposes** to the container port your app listens on (e.g. `8000`); Traefik routes the domain to it.
-- Mark sensitive env vars **Is Secret** — encrypted at rest, masked in logs and UI.
 - Set the **Health Check** path/port → this is what gates the rolling swap to the new container.
-- Attach **persistent storage** (volume/bind/file mount) for any stateful path; container FS is ephemeral.
-- Bind a **custom domain** → automatic Let's Encrypt cert + **Force HTTPS**; point DNS A/AAAA at the server.
+- Mark sensitive env vars **Is Secret** — encrypted at rest, masked in logs and UI.
 - Enable **GitHub App auto-deploy** on push, OR call the deploy webhook from CI (one or the other, not both).
-- Turn on **preview deployments** per PR (`{{pr_id}}.{{domain}}`) with non-prod secrets; auto-teardown on PR close.
-- Set **CPU/memory limits + reservations** per resource to prevent noisy-neighbor OOM.
 - **Rollback** = redeploy a previously stored image in one click; pair with backward-compatible migrations.
 
 ```bash
@@ -301,7 +274,8 @@ curl --fail -X POST \
   "https://coolify.example.com/api/v1/deploy?uuid=$APP_UUID&force=false"
 ```
 
-→ full Coolify walkthrough: `references/coolify.md`
+→ persistent storage, custom domains + Let's Encrypt, per-PR previews, CPU/memory limits, blue-green:
+`references/coolify.md` and `../coolify/SKILL.md`
 
 ## Secrets flow (GitHub → registry → Coolify)
 
@@ -321,35 +295,12 @@ GitHub secrets / OIDC ──mint short-lived creds──▶ build pushes to ghcr
 
 ## 12-factor config & observability
 
-Config from env, validated at boot, fail-fast — a bad config crashes on startup, never at request time.
+Config from env, validated at boot, fail-fast — a bad config crashes on startup, never at request
+time. Idiom per stack: pydantic-settings `BaseSettings` (raises at import), zod `envSchema.parse(process.env)`
+(throws at boot), `env.Must(env.ParseAs[Config]())` for Go (exits at boot).
 
-```python
-from pydantic import PostgresDsn
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-class Settings(BaseSettings):
-    database_url: PostgresDsn
-    model_config = SettingsConfigDict(env_file=".env")
-
-settings = Settings()  # raises at import → fail-fast
-```
-
-```typescript
-import { z } from "zod";
-const envSchema = z.object({ DATABASE_URL: z.string().url(), PORT: z.coerce.number().default(3000) });
-export const env = envSchema.parse(process.env); // throws at boot → fail-fast
-```
-
-```go
-import "github.com/caarlos0/env/v11"
-type Config struct {
-	DatabaseURL string `env:"DATABASE_URL,required"`
-	Port        int    `env:"PORT" envDefault:"8080"`
-}
-cfg := env.Must(env.ParseAs[Config]()) // exits at boot if invalid → fail-fast
-```
-
-- Log JSON to stdout (slog for Go, structlog/uvicorn JSON for FastAPI, pino for Next.js); never log secrets; expose `/healthz` (liveness, no deps) + `/readyz` (checks deps).
+Log JSON to stdout (slog for Go, structlog/uvicorn JSON for FastAPI, pino for Next.js); never log
+secrets; expose `/healthz` (liveness, no deps) + `/readyz` (checks deps).
 
 ```python
 # FastAPI: liveness is dependency-free; readiness probes the DB so a node that
@@ -368,11 +319,11 @@ async def readyz() -> dict[str, str]:
 
 | Rationalization | STOP — do this instead |
 | --- | --- |
-| `:latest` is fine for now | Pin tag+digest; `:latest` breaks reproducibility and rollback |
+| `:latest` is fine for now | Pin tag+digest (`FROM img@sha256:…`); `:latest` breaks reproducibility and rollback |
 | I'll pass the token as `ARG` | BuildKit `--mount=type=secret`; `ARG` persists in `docker history` |
 | `permissions: write-all` is simpler | Default-deny; grant per job (`packages: write`, `id-token: write`) |
 | Store a registry password in GHA secrets | Use OIDC / `GITHUB_TOKEN`; no long-lived key |
-| Run as root, it's just a container | Non-root UID + read-only rootfs + `cap_drop: ALL` |
+| Run as root, it's just a container | Non-root UID + read-only rootfs + `cap_drop: ALL` (add back only `NET_BIND_SERVICE` to bind <1024) |
 | Skip the healthcheck, the app boots fast | No healthcheck = no rolling gate = downtime / bad version live |
 | Copy the whole repo then `RUN install` | Copy the lockfile first; cache the deps layer |
 | Nixpacks is easier than my Dockerfile | If a Dockerfile exists, use it — CI/prod parity |
@@ -389,7 +340,7 @@ async def readyz() -> dict[str, str]:
 | Scan image | `trivy image --severity HIGH,CRITICAL --exit-code 1 IMG` |
 | Lint Dockerfile | `hadolint Dockerfile` |
 | Lint workflows | `actionlint` |
-| Run verify gate | `bash scripts/verify.sh` |
+| Run verify gate | `bash scripts/verify.sh` (hadolint+actionlint+trivy+build smoke, local and CI) |
 | Local up | `docker compose up --watch` |
 | Trigger Coolify deploy | `curl --fail -X POST …/api/v1/deploy?uuid=…&force=false` |
 | Roll back | Coolify → redeploy prior image |
@@ -405,33 +356,19 @@ async def readyz() -> dict[str, str]:
 - [ ] trivy clean (no HIGH/CRITICAL)
 - [ ] Rollback path known
 
-## Project grounding (02-DOCS + CLAUDE.md)
+## Project grounding (02-DOCS)
 
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this
-project's deploy decisions there and index them in `02-DOCS/wiki/index.md`, so the next
-agent inherits the conventions instead of re-deriving them.
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) Karpathy wiki), read
+`02-DOCS/wiki/stack/deployment.md` first and stay consistent with it. Create or update it with this
+project's real choices — base-image/container choices, the CI pipeline, the target config, the
+secrets flow, the rollback strategy — index it in `02-DOCS/wiki/index.md` (the Knowledge map root
+`CLAUDE.md` points to), and bump its `Updated` date in the same change. No `02-DOCS/` layer? Skip
+silently (optionally suggest `harness`) — technical conventions are *recorded, not gated*; never
+block the task on this.
 
-1. **Find the article** `02-DOCS/wiki/stack/deployment.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, create/update it with the project's real choices — the base-image/container choices, the CI pipeline, the Coolify/target config, the secrets flow, and the rollback strategy —
-   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
-3. **Read it first on every use** and stay consistent; when a convention changes, update the
-   article (bump its `Updated` date) in the same change.
+## Hand off
 
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the
-brand study, technical conventions are *recorded, not gated* — never block the task on this.
-
-## See Also
-
-- `../harness/SKILL.md` — 01-TOOLS provider creds (Stripe, Postgres, OAuth…) that become Coolify runtime env.
-- `../secure-coding/SKILL.md` — input validation, authn/z, and secret-handling that this skill assumes the app already does.
-- `../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`, `../flutter/SKILL.md`, `../postgresdb/SKILL.md` — runtime code for the stacks you containerize here. This skill stops at the container boundary; those skills own the application code that runs inside it.
-- `references/dockerfiles-by-stack.md`, `references/github-actions.md`, `references/coolify.md`, `references/hosting-targets.md`, and `scripts/verify.sh`.
-
-## References
-
-- `references/dockerfiles-by-stack.md` — complete runnable Dockerfile + .dockerignore per stack.
-- `references/github-actions.md` — least-privilege workflows, OIDC, matrix, releases, deploy.
-- `references/coolify.md` — build packs, secrets, volumes, SSL, previews, rolling, blue-green, rollback.
-- `references/hosting-targets.md` — Vercel, Hetzner (+Coolify), Fly.io/Railway/managed-cloud; decision matrix and the "always 3 options" framework with worked examples.
-- `scripts/verify.sh` — the hadolint+actionlint+trivy+build-smoke gate (runs locally and in CI).
+- Platform mechanics once the target is chosen: `../coolify/SKILL.md`, `../vercel/SKILL.md`, `../railway/SKILL.md`, `../render/SKILL.md`, `../fly-io/SKILL.md`, `../hetzner/SKILL.md`.
+- `../secure-coding/SKILL.md` — input validation, authn/z, and secret-handling this skill assumes the app already does.
+- `../harness/SKILL.md` — 01-TOOLS provider creds (Stripe, Postgres, OAuth…) that become runtime env on the target.
+- `../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`, `../flutter/SKILL.md`, `../postgresdb/SKILL.md` — the application code that runs inside the container; this skill stops at that boundary.
