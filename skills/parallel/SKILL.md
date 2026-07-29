@@ -1,6 +1,6 @@
 ---
 name: parallel
-description: "Use when you have two or more genuinely independent pieces of work and want to fan them out across subagents instead of doing them one after another — disjoint scope, no shared files or state, no ordering dependency, then gather and reconcile the results. Triggers: 'do these in parallel', 'fan this out', 'split this across subagents', 'run these at the same time', 'these tasks are independent, parallelize them', 'dispatch agents for each module', 'hazlo en paralelo', 'reparte esto en subagentes', 'a la vez'. The on-demand SDD helper that implement calls when its task list has disjoint clusters; it owns the partition→dispatch→gather→reconcile discipline. NOT for sequential or data-dependent steps (serialize those), NOT the TDD loop itself (that stays inside implement), NOT git isolation (that's worktrees)."
+description: "Use when two or more pieces of work are genuinely independent — disjoint files, no shared state, no ordering edge — and should fan out across subagents, then be gathered and reconciled under a combined test suite. Decides WHAT can run concurrently; NOT the isolation it runs in (that is `worktrees`), NOT the per-unit TDD loop (that is `implement`)."
 tags: [parallel, subagents, fanout]
 recommends: []
 profiles: [core, full]
@@ -11,7 +11,7 @@ origin: risco
 
 *Parallelism is a property of the work, not a wish. Prove the pieces are disjoint, dispatch one subagent per piece with a self-contained brief, then gather and reconcile before anyone calls it done.*
 
-This is an **on-demand process skill** in the SDD chain. You reach it from `implement` (or any phase) when the work in front of you splits into pieces that could each be handed to a different person who never talks to the others. It owns one discipline: **partition → dispatch → gather → reconcile**. It does *not* own the work inside each piece — a subagent building a module still runs its own red → green → refactor loop from `implement`; this skill only orchestrates the fan-out.
+This is an **on-demand process skill** in the SDD chain. You reach it from `implement` (or any phase) when the work in front of you splits into pieces that could each be handed to a different person who never talks to the others. It owns one discipline: **partition → dispatch → gather → reconcile**. It does *not* own the work inside each piece — a subagent building a module still runs its own red → green → refactor loop from `implement`; this skill only orchestrates the fan-out. It also does not own the *place* the work runs: a clean branch or checkout to work in is `worktrees`. `parallel` decides **what can run at the same time**; `worktrees` provides **the isolation it runs in**.
 
 The whole value is in the gate at the front. Run work in parallel only when it is *actually* independent. Forcing parallelism onto coupled work does not make it faster — it makes it a merge disaster, and the time you save dispatching you lose tenfold reconciling. Most of this skill is about earning the right to parallelize.
 
@@ -75,12 +75,7 @@ Each subagent still owns its own discipline inside its scope — TDD via `implem
 
 **Per-unit model tier (when routing is enabled).** `parallel` has *no fixed tier* — this is the most concrete place per-phase model routing pays off. When `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`, give each unit the tier of the *kind of work it does*, not one tier for the whole fan-out: an implement-type unit → `balanced`, a scan/research/boilerplate unit → `light`, a unit doing genuine design or root-cause reasoning → `heavy`. Resolve the tier to a concrete model via `models.tiers` and **dispatch that subagent on that model** (e.g. Claude Code's `model` field on the Task/subagent) — real routing, independent of the session model. If routing is off or no profile exists, dispatch on the session model and say nothing. Full protocol: `../sdd/references/model-routing.md`.
 
-**The `developer` agent is the default worker.** rsc installs a `developer` subagent pinned to the **balanced** tier (Sonnet by default; the user's onboarding choice in `.rsc/developer.json`, never `light`). For implement-type units, **dispatch to the `developer` agent** (e.g. Claude Code `subagent_type: developer`) — that's the deliberate cost cap the user asked for. Only escalate a genuinely heavy unit (real design / root-cause) to a heavy model, and only when routing is enabled; otherwise the `developer` agent's balanced model is the floor and the ceiling.
-
-**Model is REQUIRED on every dispatch.** Set each subagent's model explicitly. An omitted model
-silently inherits the session's model — usually the most expensive one — and that is how a fan-out's
-cost quietly explodes. The `developer` agent already pins balanced; if you dispatch a raw subagent,
-name its tier.
+**Set the model on every dispatch — an omitted model silently inherits the session's, usually the most expensive one, and that is how a fan-out's cost quietly explodes.** rsc installs a `developer` subagent pinned to the **balanced** tier (Sonnet by default; the user's onboarding choice in `.rsc/developer.json`, never `light`). For implement-type units, **dispatch to the `developer` agent** (e.g. Claude Code `subagent_type: developer`) — that's the deliberate cost cap the user asked for. Only escalate a genuinely heavy unit (real design / root-cause) to a heavy model, and only when routing is enabled; otherwise balanced is the floor and the ceiling. If you dispatch a raw subagent instead, name its tier explicitly.
 
 ### The unit report contract (statuses & escalation)
 
@@ -96,9 +91,7 @@ change something first: add the missing interface/constraint, fix the dependency
 tier for a genuinely hard unit. An identical re-run burns budget without progress. A `BLOCKED` unit
 is a partition signal too: if it blocked on another unit, the two were not independent — re-partition.
 
-### Skill resolution feedback
-
-Every subagent result must report:
+Every subagent result must also report:
 
 ```yaml
 skill_resolution:
@@ -114,15 +107,7 @@ The orchestrator folds these into the final parallel result. If a unit claims it
 
 Wait for **all** units to report. Collect each one's diff, test output, and any decisions. Do not start merging the fast ones while slow ones are still running — partial merges create the exact shared-state races you partitioned to avoid. Check each result against its brief's done-check *before* it touches the integration branch: a unit that came back not-actually-done gets sent back, not merged hopefully.
 
-**Per-unit review gate (before merge).** For each non-trivial unit, run a fresh-eyes review of *that
-unit's diff alone* before it joins the integration branch — the same gate `implement` runs per task
-(full brief: `../implement/references/per-task-review.md`). Package the unit's diff as a file
-(`../implement/scripts/review-package <BASE> <HEAD>`), dispatch a fresh reviewer (NOT the unit's own
-implementer) with the diff path + the unit's done-check + its frozen interface, and fold
-`Critical`/`Important` findings back before merging. **Anti-pre-judging:** never tell the reviewer
-what not to flag or pre-rate severity. This is the cheap per-unit pass; the *combined* adversarial
-review over the whole merged diff is still `review`'s job at the end (RECONCILE only proves the seam
-compiles and tests green).
+**Per-unit review gate (before merge).** For each non-trivial unit, run the same fresh-eyes review `implement` runs per task, over *that unit's diff alone* — package it with `../implement/scripts/review-package <BASE> <HEAD>` and dispatch a reviewer that is **not** the unit's own implementer, given the diff path, the unit's done-check, and its frozen interface; never pre-rate severity or tell it what to skip. Fold `Critical`/`Important` findings back before merging. Full protocol: `../implement/references/per-task-review.md`. This is the cheap per-unit pass; the *combined* adversarial review over the whole merged diff is still `review`'s job at the end (RECONCILE only proves the seam compiles and tests green).
 
 ### 4. RECONCILE — merge, then prove the seam holds
 
@@ -135,28 +120,7 @@ This is where parallel work is actually finished. In order:
 
 Only after the combined suite is green is the parallel batch done. Hand the merged, green result back to the phase that called you (usually `implement`, heading for `verify`).
 
-## The accompaniment dial — how loud while fanning out
-
-Read the level from `02-DOCS/wiki/harness/user-profile.md` and match it. The dial changes how much you narrate the orchestration; it never changes the independence test or the reconcile gate.
-
-| Level | While dispatching/reconciling you show… | Questions you ask |
-| --- | --- | --- |
-| **L0** terse | the partition (batches + spine) in one block, then "merged, combined suite green" | none unless a unit fails its done-check or a contract needs freezing |
-| **L1** brief | the partition + one line of *why these are independent* | confirm the partition only where independence is borderline |
-| **L2** decisions | the partition, the frozen contracts, and each reconcile conflict with its fix | confirm before freezing a contract that constrains multiple units |
-| **L3** full | the full independence reasoning per pair, the briefs, the gather, the seam check, narrated | ask to validate the partition before dispatch; teach why the seam is the risk |
-
-L0 still runs the independence test and the combined-suite gate — silently, but completely. Terse is about words, not about skipping the gate.
-
-## When parallel is the wrong tool
-
-Be honest about this — most task lists are *mostly* serial with a few disjoint pockets, not the other way around.
-
-- **The pieces share a file or a contract.** Serialize, or freeze the contract first then fan out the rest. Do not parallelize across a live shared edit.
-- **One piece needs another's output.** That is a dependency edge, by definition sequential. Order them.
-- **There are only two tiny tasks.** Orchestration overhead (writing briefs, gathering, reconciling) can cost more than just doing them in a row. Parallelize when the units are substantial and many, not to look busy.
-- **You can't write a self-contained brief for a unit.** If you cannot describe it without referring to a sibling unit, it is not independent yet. Fix the partition or serialize.
-- **You only need isolation, not concurrency.** Wanting a clean branch/worktree to work in is `worktrees`, not this. This skill is about doing several things *at once*; isolation is about doing one thing *cleanly*.
+**How loud.** Match the accompaniment level in `02-DOCS/wiki/harness/user-profile.md`: it sets how much of the independence reasoning, the frozen contracts, the briefs and the seam check you narrate, and nothing else. At the tersest level you still run the independence test and the combined-suite gate in full — silently, but completely.
 
 ## Anti-patterns → STOP
 
@@ -169,32 +133,9 @@ Be honest about this — most task lists are *mostly* serial with a few disjoint
 | "I'll merge the fast unit now and the slow one when it lands." | Partial merges reintroduce the races you partitioned away. Gather all, then reconcile once. |
 | "It's only two small tasks, but parallel sounds efficient." | Orchestration overhead > the work. Just do them in a row. |
 | "The brief says 'see the other agent's output' — close enough." | That's a dependency, not independence. Serialize, or freeze the output first. |
-| "Combined suite is red, probably the slower unit — I'll tweak it." | Don't guess at the seam. Reproduce and isolate with debug. |
-| "I just want an isolated branch, so I'll use parallel." | That's isolation, not concurrency. Use worktrees. |
+| "Combined suite is red, probably the slower unit — I'll tweak it." | Don't guess at the seam. Reproduce and isolate with `debug`. |
+| "I just want an isolated branch, so I'll use parallel." | That's isolation, not concurrency. Use `worktrees`. |
 | "Routing's on, so I'll run the whole fan-out on one tier." | `parallel` has no fixed tier — give each unit the tier of its own work (scan→light, build→balanced, design→heavy). |
-
-## Red flags — stop and re-plan the partition
-
-- A subagent brief can't be written without referencing another unit → not independent; re-partition.
-- Two units both need to edit the same file / migration / barrel / type → collapse them into one serial unit.
-- Subagents are asking to "sync up" mid-run → the contract wasn't frozen; stop, freeze it, re-dispatch.
-- The combined suite is red after merge → the seam leaked; `debug` before continuing, don't checkpoint as done.
-- More open subagents than you can actually review → over-fanned; reduce the degree of parallelism.
-
-## Checklist (copy per fan-out)
-
-```text
-- [ ] PARTITION: independence test passed for every pair; batches + serial spine written down
-- [ ] Shared contracts/types/schemas FROZEN in the serial spine before dispatch
-- [ ] DISPATCH: one self-contained brief per unit (scope, goal, done-check, constraints, report-back)
-- [ ] Each brief includes selected skills, compact rules, and fallback behavior from registry
-- [ ] Each unit honors the constitution + its stack skill; TDD stays inside the unit
-- [ ] GATHER: all units reported; each checked against its done-check BEFORE merge
-- [ ] GATHER: each unit returned skill_resolution (used/missing/fallback/compact_rules)
-- [ ] RECONCILE: merged, conflicts resolved by hand, decision logs folded into 02-DOCS
-- [ ] Combined suite run across the merged result and GREEN (not just green-in-isolation)
-- [ ] Result handed back to the calling phase (usually implement → verify)
-```
 
 ## Result envelope
 
@@ -218,17 +159,10 @@ End with:
 }
 ```
 
-## What this skill is NOT
-
-- **Not the TDD loop.** Each unit's red → green → refactor stays inside `implement`. This skill runs several of those at once; it does not replace the discipline within one.
-- **Not git isolation.** Creating a branch or worktree to work cleanly is `worktrees`. This skill is concurrency across disjoint work, not a clean room for one stream.
-- **Not the task breakdown.** Producing the ordered task list with done-checks is `tasks`; `parallel` consumes that list and decides which pieces can run together.
-- **Not the debugger.** When the combined suite goes red at the seam, switch to `debug` — don't guess which unit to blame.
-
 ## Where you are in the chain
 
 `parallel` is on-demand, callable from any phase but most often from `implement`:
 
 `constitution` → `specify` → `clarify` → `plan` → `tasks` → `analyze` → **implement** → `verify` → `review` → `ship`, with `debug` · `worktrees` · **parallel** callable on demand.
 
-**Next:** when the fan-out is reconciled and the combined suite is green, return to the phase that called you — usually `../implement/SKILL.md`, continuing the task list toward `../verify/SKILL.md`. If the seam is red, go to `debug` first. If you discover you actually needed an isolated branch rather than concurrency, that's `worktrees`.
+**Next:** when the fan-out is reconciled and the combined suite is green, return to the phase that called you — usually `../implement/SKILL.md`, continuing the task list toward `../verify/SKILL.md`. If the seam is red, go to `debug` first. If the ordered task list with done-checks does not exist yet, that is `tasks`, not this. If what you actually needed was an isolated branch rather than concurrency, that's `worktrees`.
