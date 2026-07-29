@@ -1,6 +1,6 @@
 ---
 name: redis
-description: "Use when using Redis (or Valkey/ElastiCache/Upstash/Dragonfly/Memorystore — any Redis-protocol store) as a cache, queue, rate limiter, or distributed lock and you need it CORRECT, not just connected: stampede-proof caching, locks that don't release someone else's hold, race-free rate limits, jobs that survive a worker crash. Triggers: 'cache stampede', 'thundering herd', 'distributed lock', 'SET NX PX', 'Redlock', 'fencing token', 'rate limiter race', 'INCR then EXPIRE', 'BullMQ stalled jobs', 'XREADGROUP / XAUTOCLAIM', 'maxmemory-policy', 'KEYS * in prod', 'lock released by the wrong owner', 'limitador de peticiones', 'bloqueig distribuït', 'la cau s'invalida malament'. NOT durable SQL queues with SELECT FOR UPDATE SKIP LOCKED (that is postgresdb), NOT vector similarity search over embeddings (that is vector-db)."
+description: "Use when using Redis or any Redis-protocol store (Valkey, ElastiCache, Upstash, Dragonfly, Memorystore) as a cache, queue, rate limiter or distributed lock and it has to be CORRECT rather than merely connected — stampede-proof caching, locks that cannot release someone else's hold, race-free rate limits, and jobs that survive a worker crash. NOT durable SQL queues with SELECT FOR UPDATE SKIP LOCKED (that is `postgresdb`), NOT vector similarity search over embeddings (that is `vector-db`)."
 tags: [redis, valkey, cache, rate-limiting, distributed-locks, queues, bullmq, streams, lua, data-infra]
 recommends: [postgresdb, vector-db, clickhouse-analytics, scaling, nodejs, fly-io]
 profiles: []

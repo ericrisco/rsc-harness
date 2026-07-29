@@ -3592,7 +3592,7 @@
     },
     {
       "id": "project-ops",
-      "description": "Use when an operator wants to run a small or mid project from a flat file — dated milestones each with one named owner and a binary done-test, RAG status driven by rules, a RAID log, slippage detection, and a 2-minute weekly status report — instead of standing up Jira/Asana. Triggers: 'set up milestones with owners and due dates', 'write this week's status report', 'who do I chase if the launch slips', 'everything is green and I don't trust it — what should be amber', 'which milestones are trending late before they miss', 'start a RAID log', 'munta'm un seguiment de projecte amb fites i estat RAG', 'informe d'estat setmanal', 'qui és l'owner de cada fita', 'estado del proyecto en rojo/ámbar/verde'. NOT sequencing the engineering work inside one approved plan (that is tasks).",
+      "description": "Use when an operator wants to run a small or mid-sized project from a flat file instead of standing up Jira or Asana — dated milestones each with one named owner and a binary done-test, rule-driven RAG status, a RAID log, slippage detection, and a two-minute weekly status report. NOT sequencing the engineering work inside one approved plan (that is `tasks`).",
       "tags": [
         "project-management",
         "milestones",
@@ -3626,7 +3626,7 @@
     },
     {
       "id": "proposals",
-      "description": "Use when writing the document a buyer reads to say yes — a commercial proposal or Statement of Work (SOW), turning discovery notes into a scoped priced doc, adding Good/Better/Best tiers, or fixing a proposal that won't close. Triggers: 'write a proposal for this client', 'draft a SOW / scope of work', 'turn this discovery call into a proposal', 'add pricing tiers so the middle one wins', 'why isn't this proposal closing', 'scope this so the client can't keep adding free work', 'propuesta comercial / propuesta de servicios', 'proposta comercial / abast del projecte'. NOT the binding legal agreement, MSA, liability/IP clauses (that is contracts), NOT deciding what number to charge or the margin (that is pricing), NOT the slide deck that pitches the vision to a room (that is pitch-deck).",
+      "description": "Use when writing the document a buyer reads to say yes — a commercial proposal or Statement of Work, turning discovery notes into a scoped and priced document, adding tiers so the middle one wins, or diagnosing a proposal that will not close. NOT the binding legal agreement with its liability and IP clauses (that is `contracts`), NOT deciding the number or the margin (that is `pricing`), NOT the deck that pitches the vision to a room (that is `pitch-deck`).",
       "tags": [
         "proposals",
         "sow",
@@ -3685,7 +3685,7 @@
     },
     {
       "id": "rails",
-      "description": "Use when building or maintaining a Ruby on Rails app — generating or editing app/ models, controllers, views, config/routes.rb, db/migrate; writing ActiveRecord associations/scopes/queries; building Hotwire (Turbo + Stimulus) UI; Active Job / Solid Queue jobs; or Rails tests. Triggers: 'rails generate', 'fix this N+1', 'add a Turbo Stream', 'belongs_to / has_many', 'is this migration safe on a live table?', 'my system test went flaky after I added a Turbo Frame', 'should this be Sidekiq or Solid Queue?', 'scaffold un CRUD en Rails', 'arreglar una consulta ActiveRecord', 'aquesta migració és segura en producció?'. NOT plain Ruby scripts/gems/CLIs with no Rails loaded (that is ruby).",
+      "description": "Use when building or maintaining a Ruby on Rails app — models, controllers, views, routes and migrations; ActiveRecord associations, scopes and query performance; Hotwire (Turbo and Stimulus) UI; Active Job or Solid Queue background work; and Rails tests. Covers N+1 queries, migration safety on live tables, and flaky system tests around Turbo Frames. NOT plain Ruby scripts, gems or CLIs with no Rails loaded (that is `ruby`).",
       "tags": [
         "rails",
         "activerecord",
@@ -3706,7 +3706,7 @@
     },
     {
       "id": "railway",
-      "description": "Use when deploying an app to Railway — pushing a repo or running railway up, provisioning a managed database, wiring env and reference variables, attaching a volume, or fixing a Railway deploy that builds but won't serve. Triggers: 'deploy this on Railway', 'railway up', 'add Postgres to Railway', 'railway.json healthcheck path', 'my Railway service binds localhost and 502s', 'reference DATABASE_URL across two services', 'two Railway services need to talk privately', 'desplegar en Railway', 'mi servicio de Railway no arranca'. NOT Render (that is render), NOT Fly machines (that is fly-io), NOT self-hosted PaaS on your own box (that is coolify).",
+      "description": "Use when deploying an app to Railway — pushing a repo or running railway up, provisioning a managed database, wiring env and reference variables across services, attaching a volume, or fixing a deploy that builds but will not serve. NOT Render (that is `render`), NOT Fly machines (that is `fly-io`), NOT a self-hosted PaaS on your own box (that is `coolify`).",
       "tags": [
         "railway",
         "paas",
@@ -3772,7 +3772,7 @@
     },
     {
       "id": "redis",
-      "description": "Use when using Redis (or Valkey/ElastiCache/Upstash/Dragonfly/Memorystore — any Redis-protocol store) as a cache, queue, rate limiter, or distributed lock and you need it CORRECT, not just connected: stampede-proof caching, locks that don't release someone else's hold, race-free rate limits, jobs that survive a worker crash. Triggers: 'cache stampede', 'thundering herd', 'distributed lock', 'SET NX PX', 'Redlock', 'fencing token', 'rate limiter race', 'INCR then EXPIRE', 'BullMQ stalled jobs', 'XREADGROUP / XAUTOCLAIM', 'maxmemory-policy', 'KEYS * in prod', 'lock released by the wrong owner', 'limitador de peticiones', 'bloqueig distribuït', 'la cau s'invalida malament'. NOT durable SQL queues with SELECT FOR UPDATE SKIP LOCKED (that is postgresdb), NOT vector similarity search over embeddings (that is vector-db).",
+      "description": "Use when using Redis or any Redis-protocol store (Valkey, ElastiCache, Upstash, Dragonfly, Memorystore) as a cache, queue, rate limiter or distributed lock and it has to be CORRECT rather than merely connected — stampede-proof caching, locks that cannot release someone else's hold, race-free rate limits, and jobs that survive a worker crash. NOT durable SQL queues with SELECT FOR UPDATE SKIP LOCKED (that is `postgresdb`), NOT vector similarity search over embeddings (that is `vector-db`).",
       "tags": [
         "redis",
         "valkey",
@@ -3797,7 +3797,7 @@
     },
     {
       "id": "remotion-video",
-      "description": "Use when you need to render an actual video file with Remotion — React compositions, slide/fade transitions, burned-in word-by-word captions from a transcript, automatic silence removal, b-roll overlays, and a final MP4/MOV out of `npx remotion render`. Covers project scaffold, the Composition/Sequence/TransitionSeries graph, the Whisper.cpp → toCaptions → createTikTokStyleCaptions pipeline, and headless CI renders. Triggers: 'render my script and voiceover into an MP4 with Remotion', 'burn TikTok-style word-by-word captions from a Whisper transcript', 'add slide and fade transitions between scenes programmatically', 'genera el vídeo final con subtítulos quemados', 'quita los silencios del recording automáticamente', 'renderitza la composició a MP4 amb Remotion'. NOT writing the script, hook, beats, or caption text (that is video-shorts), NOT mastering audio to LUFS or building an RSS feed (that is podcast), NOT structuring the narrative arc (that is course-storytelling).",
+      "description": "Use when you need to render an actual video file with Remotion — React compositions, the Composition/Sequence/TransitionSeries graph, transitions, burned-in word-by-word captions from a transcript, automatic silence removal, b-roll overlays, headless CI renders, and a final MP4 or MOV. NOT writing the script, hook, beats or caption text (that is `video-shorts`), NOT mastering audio to LUFS or building an RSS feed (that is `podcast`), NOT structuring the narrative arc (that is `course-storytelling`).",
       "tags": [
         "remotion",
         "video-rendering",
@@ -3818,7 +3818,7 @@
     },
     {
       "id": "render",
-      "description": "Use when deploying or fixing an app on Render (render.com) — web services, background workers, cron jobs, private services, managed Postgres/Key-Value, and especially the render.yaml Blueprint. Use when a deploy fails with 'no open ports detected' or returns 502 on first deploy, a free service cold-starts after going idle, or a free Postgres is about to expire and take its data. Triggers: 'deploy to Render', 'write a render.yaml', 'render blueprint', 'Render background worker', 'Render cron job', 'no open ports detected', 'wire DATABASE_URL between Render services', 'why does my free Render service take 30 seconds to wake', 'desplegar en Render', 'configurar render.yaml', 'mi servicio en Render da 502'. NOT generic ship/release flow (that is deployment) and NOT another PaaS like railway or fly-io.",
+      "description": "Use when deploying or fixing an app on Render — web services, background workers, cron jobs, private services, managed Postgres and Key-Value, and especially the render.yaml Blueprint. Covers deploys that fail with no open ports detected, 502s on first deploy, free-tier cold starts, and a free Postgres about to expire with its data. NOT the generic ship and release flow (that is `deployment`), NOT another PaaS such as `railway` or `fly-io`.",
       "tags": [
         "render",
         "paas",
@@ -3840,7 +3840,7 @@
     },
     {
       "id": "replicate",
-      "description": "Use when running, packaging, deploying or scaling a model on the Replicate platform from code — choosing blocking run vs async predictions, handling FileOutput, wiring deployments with warm/private endpoints and autoscaling, packaging with Cog, verifying webhooks, or cutting GPU spend. Triggers: 'run flux on Replicate from Python', 'my prediction takes 8 minutes and my request times out', 'keep an instance warm so users don't hit cold starts', 'cog push fails', 'verify the webhook came from Replicate', 'desplegar mi modelo en Replicate con endpoint privado', 'empaquetar mi modelo con Cog'. NOT crafting image prompts/params or picking image model families (that is replicate-images).",
+      "description": "Use when running, packaging, deploying or scaling a model on the Replicate platform from code — blocking run versus async predictions, handling FileOutput, deployments with warm private endpoints and autoscaling, packaging with Cog, verifying webhook signatures, and cutting GPU spend. NOT crafting image prompts and parameters or picking image model families (that is `replicate-images`).",
       "tags": [
         "replicate",
         "cog",

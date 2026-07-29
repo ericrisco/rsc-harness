@@ -1,6 +1,6 @@
 ---
 name: rails
-description: "Use when building or maintaining a Ruby on Rails app — generating or editing app/ models, controllers, views, config/routes.rb, db/migrate; writing ActiveRecord associations/scopes/queries; building Hotwire (Turbo + Stimulus) UI; Active Job / Solid Queue jobs; or Rails tests. Triggers: 'rails generate', 'fix this N+1', 'add a Turbo Stream', 'belongs_to / has_many', 'is this migration safe on a live table?', 'my system test went flaky after I added a Turbo Frame', 'should this be Sidekiq or Solid Queue?', 'scaffold un CRUD en Rails', 'arreglar una consulta ActiveRecord', 'aquesta migració és segura en producció?'. NOT plain Ruby scripts/gems/CLIs with no Rails loaded (that is ruby)."
+description: "Use when building or maintaining a Ruby on Rails app — models, controllers, views, routes and migrations; ActiveRecord associations, scopes and query performance; Hotwire (Turbo and Stimulus) UI; Active Job or Solid Queue background work; and Rails tests. Covers N+1 queries, migration safety on live tables, and flaky system tests around Turbo Frames. NOT plain Ruby scripts, gems or CLIs with no Rails loaded (that is `ruby`)."
 tags: [rails, activerecord, hotwire, turbo, stimulus, solid-queue, minitest]
 recommends: [ruby, postgresdb, testing-web, deployment, db-migrations]
 profiles: []

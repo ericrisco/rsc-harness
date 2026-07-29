@@ -1,6 +1,6 @@
 ---
 name: project-ops
-description: "Use when an operator wants to run a small or mid project from a flat file — dated milestones each with one named owner and a binary done-test, RAG status driven by rules, a RAID log, slippage detection, and a 2-minute weekly status report — instead of standing up Jira/Asana. Triggers: 'set up milestones with owners and due dates', 'write this week's status report', 'who do I chase if the launch slips', 'everything is green and I don't trust it — what should be amber', 'which milestones are trending late before they miss', 'start a RAID log', 'munta'm un seguiment de projecte amb fites i estat RAG', 'informe d'estat setmanal', 'qui és l'owner de cada fita', 'estado del proyecto en rojo/ámbar/verde'. NOT sequencing the engineering work inside one approved plan (that is tasks)."
+description: "Use when an operator wants to run a small or mid-sized project from a flat file instead of standing up Jira or Asana — dated milestones each with one named owner and a binary done-test, rule-driven RAG status, a RAID log, slippage detection, and a two-minute weekly status report. NOT sequencing the engineering work inside one approved plan (that is `tasks`)."
 tags: [project-management, milestones, status-tracking]
 recommends: [tasks, decision-records, meeting-notes, sop-builder, dashboard]
 origin: risco
