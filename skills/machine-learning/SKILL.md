@@ -1,6 +1,6 @@
 ---
 name: machine-learning
-description: "Use when the task is a classic/tabular machine-learning problem — predict a column from rows of features with trees and scikit-learn: fit a RandomForest / XGBoost / LightGBM classifier or regressor, build a leak-proof Pipeline + ColumnTransformer, choose a cross-validation scheme (stratified / k-fold / time-series / grouped), pick the right metric on imbalanced classes (precision/recall/F1/ROC-AUC/PR-AUC, not accuracy), or debug a model that aced CV then collapsed in production. Triggers: 'train a model to predict churn/fraud/price', 'my ROC-AUC is 0.99 — is that leakage', 'which metric for imbalanced classes', 'cross-validation without leaking', 'XGBoost vs LightGBM', 'add a DummyClassifier baseline', 'entrena un modelo de clasificación tabular con scikit-learn'. NOT neural-net / PyTorch training (that is deep-learning), NOT cleaning the raw dirty table first (that is data-cleaning), NOT BI dashboards or forecasting a dated series (that is analytics/forecasting), NOT text/token modeling (that is nlp)."
+description: "Use when predicting a column from rows of tabular features with classic models — scikit-learn pipelines, RandomForest, XGBoost/LightGBM, leak-free cross-validation, metrics for imbalanced classes, or a model that aced CV then collapsed in production. NOT PyTorch neural nets (that is `deep-learning`), NOT cleaning the dirty table first (that is `data-cleaning`), NOT forecasting a dated series (that is `forecasting`), NOT text/token modeling (that is `nlp`)."
 tags: [machine-learning, scikit-learn, sklearn, xgboost, lightgbm, tabular, gbdt, cross-validation, data-leakage, classification, regression, pipeline]
 recommends: [deep-learning, data-cleaning, python, training-data]
 origin: risco
@@ -21,9 +21,9 @@ once isn't a result — it's a leak you haven't found yet.
 | Rows of features, predict a column, with trees / linear models / sklearn | **machine-learning** (this skill) |
 | Images, audio, long text, sequences, or you need a neural net / PyTorch | [`deep-learning`](../deep-learning/SKILL.md) |
 | The table is still dirty (nulls, dupes, mixed types, bad dates) | [`data-cleaning`](../data-cleaning/SKILL.md) **first** — it hands you a validated table |
-| Text/token classification, NER, tokenization, LLM-adjacent NLP metrics | [`nlp`](../nlp/SKILL.md) |
-| KPIs, dashboards, "explain the business" | `analytics` / `business-intelligence` |
-| Forecast a dated series forward (revenue next quarter) | `forecasting` |
+| Text/token classification, NER, tokenization, LLM-adjacent NLP metrics | [`nlp`](../nlp/SKILL.md) (a TF-IDF + linear/GBDT baseline still lives happily in this skill's pipeline) |
+| KPIs, dashboards, "explain the business" | [`analytics`](../analytics/SKILL.md) / [`business-intelligence`](../business-intelligence/SKILL.md) |
+| Forecast a dated series forward (revenue next quarter) | [`forecasting`](../forecasting/SKILL.md) |
 | Building a training corpus of JSONL messages / preference pairs for an LLM | [`training-data`](../training-data/SKILL.md) |
 
 This skill **starts** at a clean, validated table (rows × features + a target) and **ends** at a fitted,
@@ -36,8 +36,9 @@ Verified 2026-07: **scikit-learn current major ~1.9** (1.9.0 shipped 2026-06-02,
 NOT pin from memory; check the current stable at scikit-learn.org, the 1.x line ships every few months.
 GBDTs: **XGBoost 3.x** and **LightGBM 4.x** (`xgboost` 3.3, `lightgbm` 4.6 current), plus sklearn's own
 **`HistGradientBoostingClassifier`/`...Regressor`** — a fast native GBDT that eats NaN and (with
-`categorical_features="from_dtype"`) categoricals with **no** preprocessing. Pin what you ship; state
-versions as "~X (verify)", never as frozen fact.
+`categorical_features="from_dtype"`) categoricals with **no** preprocessing. Pin what you ship
+([`python`](../python/SKILL.md) owns the environment and the pinning); state versions as "~X (verify)",
+never as frozen fact.
 
 ## The one rule everything else serves: fit on train only
 
@@ -107,7 +108,7 @@ functions**. Start with a GBDT; reach for `deep-learning` on tabular only with a
 All three expose the sklearn estimator API, so they drop into the pipeline and CV below unchanged. Don't
 agonize over XGBoost-vs-LightGBM before you have a baseline and a leak-free CV — split discipline dwarfs the
 library choice. Tuning knobs (`learning_rate`, `num_leaves`/`max_depth`, early stopping, `monotonic_cst`)
-→ [references/gbdt-and-tuning.md](references/gbdt-and-tuning.md).
+and importance/SHAP → [references/gbdt-and-tuning.md](references/gbdt-and-tuning.md).
 
 ## Leakage-safe feature engineering
 
@@ -174,19 +175,21 @@ The default 0.5 threshold is a *choice*: tune it on validation to hit your preci
 Regression uses `root_mean_squared_error` now (`mean_squared_error(squared=False)` is gone). Threshold
 tuning, calibration, `class_weight`/resampling → [references/metrics-and-imbalance.md](references/metrics-and-imbalance.md).
 
-## Cardinal sins (the anti-pattern table)
+## Anti-patterns — the cardinal sins
 
-| Rationalization | Reality → STOP |
+| Anti-pattern | Do instead |
 | --- | --- |
-| "I scaled/encoded/selected features, then split." | **Leakage (#1 sin).** Test statistics are now in train. Split first; put every learned transform *inside* the `Pipeline` so CV re-fits per fold. |
-| "This feature is amazingly predictive." | Suspect **target leakage** — a column derived from the label or unavailable at prediction time. Audit provenance before you celebrate. |
-| "99% accuracy!" (on 1% positives) | The **accuracy trap**. A constant predictor matches it. Report PR-AUC / precision / recall / F1 and a `confusion_matrix`. |
-| "The classes are imbalanced, so I `SMOTE`'d the whole dataset." | Resampling *before* the split, or on the test fold, leaks and evaluates on synthetic rows. Resample **inside CV, on the train fold only** (imblearn `Pipeline`), or just use `class_weight="balanced"`. |
-| "CV score is 0.95, ship it." | You never touched a **held-out test set**, or you peeked at it while tuning. One final, untouched test number — or the estimate is optimistic. |
-| "Random `KFold` on my time-series / multi-user data." | Future or same-group rows leak into train. Use `TimeSeriesSplit` / `GroupKFold`. |
-| "Big train/test gap? It'll generalize." | **Overfitting.** Regularize, reduce capacity (`max_depth`, `min_samples_leaf`), get more data, or use early stopping. Watch `return_train_score`. |
-| "Straight to XGBoost, no baseline." | Without a **`DummyClassifier(strategy="most_frequent")`** / `DummyRegressor` floor (and a simple linear model), you can't tell if the fancy model adds anything. |
-| "I'll grid-search 10k combos on all the data." | Tuning against the test set *is* fitting to it. Tune with CV on train, confirm once on test; consider nested CV. |
+| Modeling straight off the raw, dirty table | This skill starts at a **clean, validated frame**. Run [`data-cleaning`](../data-cleaning/SKILL.md) first — nulls, dupes and mixed dtypes are its job, not a modeling problem. |
+| Scaling / encoding / selecting features, *then* splitting | **Leakage (#1 sin).** Test statistics are now in train. Split first; put every learned transform *inside* the `Pipeline` so CV re-fits per fold. |
+| Celebrating an amazingly predictive feature | Suspect **target leakage** — a column derived from the label or unavailable at prediction time. Audit provenance before you celebrate. |
+| Reporting 99% accuracy on 1% positives | The **accuracy trap**. A constant predictor matches it. Report PR-AUC / precision / recall / F1 and a `confusion_matrix`. |
+| `SMOTE`-ing the whole dataset because the classes are imbalanced | Resampling *before* the split, or on the test fold, leaks and evaluates on synthetic rows. Resample **inside CV, on the train fold only** (imblearn `Pipeline`), or just use `class_weight="balanced"`. |
+| Shipping on the CV score alone | You never touched a **held-out test set**, or you peeked at it while tuning. One final, untouched test number — or the estimate is optimistic. |
+| Random `KFold` on time-series / multi-user data | Future or same-group rows leak into train. Use `TimeSeriesSplit` / `GroupKFold`. |
+| Waving off a big train/test gap | **Overfitting.** Regularize, reduce capacity (`max_depth`, `min_samples_leaf`), get more data, or use early stopping. Watch `return_train_score`. |
+| Going straight to XGBoost with no baseline | Without a **`DummyClassifier(strategy="most_frequent")`** / `DummyRegressor` floor (and a simple linear model), you can't tell if the fancy model adds anything. |
+| Grid-searching 10k combos over all the data | Tuning against the test set *is* fitting to it. Tune with CV on train, confirm once on test; consider nested CV. |
+| Unset `random_state`, unpinned versions | Folds and fits stop being reproducible and re-trains stop being comparable. Set an integer `random_state` on splitters *and* estimators; pin the versions you ship. |
 
 ## Worked lifecycle (end to end)
 
@@ -215,41 +218,6 @@ proba = clf.predict_proba(X_test)[:, 1]
 print("TEST PR-AUC:", round(average_precision_score(y_test, proba), 3))
 print(classification_report(y_test, (proba >= 0.5).astype(int)))   # threshold is a choice — tune it
 ```
-
-## Related skills
-
-- [`deep-learning`](../deep-learning/SKILL.md) — PyTorch neural nets. Cross the boundary for images, audio,
-  long text, sequences; on *tabular* data, stay here (Grinsztajn: trees win).
-- [`data-cleaning`](../data-cleaning/SKILL.md) — upstream; produces the validated table this skill trains
-  on. Don't re-teach nulls/dupes/dtypes here.
-- [`nlp`](../nlp/SKILL.md) — text/token modeling, NER, tokenization, task metrics (a TF-IDF + linear/GBDT
-  baseline still lives happily in this skill's pipeline).
-- [`python`](../python/SKILL.md) — environment, packaging, pinning the versions you ship.
-- [`training-data`](../training-data/SKILL.md) — if the goal is an LLM corpus (JSONL messages / preference
-  pairs), not a tabular predictor. BI/forecasting products → `analytics` / `business-intelligence` / `forecasting`.
-
-## Checklist
-
-- [ ] Input is a clean, validated table (from `data-cleaning`), not raw dirty rows.
-- [ ] A **test set** was held out **once, up front**, stratified, and left untouched until the final score.
-- [ ] Every learned transform (impute/scale/encode/select/target-encode) lives **inside** the `Pipeline`.
-- [ ] CV runs on the training portion only, via `cross_validate`/`GridSearchCV` over the *pipeline*.
-- [ ] Splitter matches the data: `StratifiedKFold` (imbalanced), `TimeSeriesSplit` (time), `GroupKFold` (clustered).
-- [ ] A `DummyClassifier`/`DummyRegressor` baseline (and a simple linear model) is beaten, not skipped.
-- [ ] Metric fits the task — **not accuracy on imbalanced data**; PR-AUC/precision/recall/F1 as appropriate.
-- [ ] Target-leakage audit done: no label-derived / future / not-at-prediction-time features.
-- [ ] `random_state` set on splitters and estimators; versions pinned for what ships.
-- [ ] Train-vs-test gap inspected; overfitting addressed before shipping.
-
-## References
-
-- [references/pipelines-and-cv.md](references/pipelines-and-cv.md) — `Pipeline`/`ColumnTransformer` patterns,
-  `FunctionTransformer`, `TargetEncoder` cross-fitting, `GridSearchCV`/`RandomizedSearchCV`/`HalvingRandomSearchCV`,
-  nested CV, `TimeSeriesSplit`/`GroupKFold` recipes.
-- [references/metrics-and-imbalance.md](references/metrics-and-imbalance.md) — metric selection, threshold
-  tuning, probability calibration, `class_weight`/`sample_weight`, leak-free resampling (imbalanced-learn `Pipeline`).
-- [references/gbdt-and-tuning.md](references/gbdt-and-tuning.md) — HistGBDT vs XGBoost vs LightGBM parameter
-  maps, early stopping, native categoricals, monotonic constraints, permutation importance vs SHAP.
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
