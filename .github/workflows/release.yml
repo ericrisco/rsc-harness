@@ -61,6 +61,23 @@ jobs:
         run: |
           git config user.name "Eric Risco"
           git config user.email "erisco@icloud.com"
+      # The registry is the source of truth for "what is already released". If a previous run
+      # published and tagged but failed to push the bump commit back (main advanced under it),
+      # package.json is left behind and every later run recomputes the SAME version, hits
+      # "tag already exists" and dies — wedging releases permanently. Reconciling first makes
+      # the pipeline self-healing instead.
+      - name: Reconcile version with the registry
+        run: |
+          PUBLISHED="$(npm view @ericrisco/rsc version 2>/dev/null || echo 0.0.0)"
+          LOCAL="$(node -p "require('./package.json').version")"
+          HIGHEST="$(printf '%s\n%s\n' "$PUBLISHED" "$LOCAL" | sort -V | tail -1)"
+          echo "published=$PUBLISHED local=$LOCAL highest=$HIGHEST"
+          if [ "$HIGHEST" != "$LOCAL" ]; then
+            npm version "$HIGHEST" --no-git-tag-version --allow-same-version
+            git add package.json package-lock.json manifest.json
+            git commit -m "chore: realign version with the registry ($LOCAL -> $HIGHEST) [skip ci]"
+          fi
+
       - name: Bump version
         run: |
           npm version "${{ github.event.inputs.bump || 'patch' }}" -m "chore(release): %s [skip ci]"
@@ -70,8 +87,23 @@ jobs:
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # main can advance while this job runs (a PR merging behind it), which rejects the push
+      # as non-fast-forward. `--follow-tags` still lands the tag, so a bare push leaves the tag
+      # published without its commit — the state that wedged this pipeline. Rebase and retry.
       - name: Push version commit + tag
-        run: git push --follow-tags origin main
+        run: |
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort; exit 1; }
+            if git push --follow-tags origin HEAD:main; then
+              echo "pushed on attempt $attempt"
+              exit 0
+            fi
+            echo "push rejected, retrying ($attempt/3)"
+            sleep 5
+          done
+          echo "::error::could not push the version commit after 3 attempts"
+          exit 1
 
       # --- cut a GitHub Release for the new tag --------------------------------
       - name: Create GitHub Release
