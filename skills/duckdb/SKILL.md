@@ -1,6 +1,6 @@
 ---
 name: duckdb
-description: "Use when you need fast analytical SQL over local files (Parquet/CSV/JSON/Arrow) with no server to run, when embedding OLAP in an app or notebook, when a pandas groupby/merge on multi-GB data is too slow, or when reading data straight from S3/HTTP/a lakehouse. Triggers: 'query a folder of parquet files in place', 'aggregate a 5GB CSV on my laptop', 'replace this slow pandas groupby', 'run SQL over a dataframe in Jupyter', 'read these parquet files from S3 without downloading', 'out-of-core aggregate', 'analizar un CSV enorme sin montar un servidor', 'consultar parquet en local sense base de dades'. NOT a multi-user production analytics server (that is clickhouse-analytics), NOT your app's transactional CRUD database (that is postgresdb)."
+description: "Use when analytical SQL must run in-process with no server: Parquet/CSV/JSON/Arrow queried in place, OLAP embedded in an app or notebook, a slow pandas groupby on multi-GB data, or S3/lakehouse data read without downloading. NOT a multi-user analytics server (that is clickhouse-analytics), NOT an app's transactional CRUD store (that is postgresdb)."
 tags: [duckdb, olap, analytics, parquet, embedded-database, sql, columnar]
 recommends: [clickhouse-analytics, postgresdb, sql, sqlite-turso, data-cleaning, business-intelligence]
 origin: risco
@@ -34,8 +34,7 @@ for greenfield exploration.
 The two you will confuse most: DuckDB vs ClickHouse is **embedded-single-node vs server-distributed** —
 under ~10GB on one box DuckDB usually wins; pick ClickHouse when many people query concurrently. DuckDB vs
 SQLite is **same niche, opposite workload** — both embedded single-file, but SQLite is row-store OLTP and
-DuckDB is column-store OLAP. Don't run your app's writes through DuckDB. (Some recommended siblings above
-may not be built in this collection yet; the routing decision still holds.)
+DuckDB is column-store OLAP. Don't run your app's writes through DuckDB.
 
 ## Install & version
 
@@ -175,22 +174,17 @@ escape hatch, not the default.
 
 ## Anti-patterns
 
-| Rationalization | Reality → STOP |
+| Anti-pattern | Do instead |
 | --- | --- |
-| "Load the file into pandas, then query it" | You just paged the whole file through RAM. `FROM 'file.parquet' SELECT ...` scans only needed columns. |
-| "DuckDB can be our app's database" | One writer, single process — concurrent CRUD writers corrupt the workflow. App OLTP is `postgresdb`. |
-| "Spin up DuckDB behind our dashboard API for 200 users" | It's embedded, not a server; concurrent users serialize on the writer. That's `clickhouse-analytics`. |
-| "Just use the latest version in prod" | Pin the **LTS** (1.4.x; v1.4.4 shipped 2026-01-26) so a future upgrade doesn't break the on-disk format / extension ABI. |
-| "Download the S3 files, then read them" | `INSTALL httpfs` + `CREATE SECRET` reads `s3://...` in place with row-group pushdown. No download. |
-| "`SELECT *` over this 200-column Parquet" | Columnar engine — list the columns you need so it skips the rest. `SELECT *` reads everything. |
-| "GROUP BY a, b, c (restate every column)" | Drift bait. `GROUP BY ALL` tracks the SELECT automatically. |
-| "It's embedded so I don't need to think about RAM" | Set `memory_limit` / `threads`; without a cap a runaway aggregate can thrash before it spills. |
-| "Use DuckDB as our embeddings/vector store" | VSS exists but vector search is `vector-db`'s workflow, not DuckDB's home turf. |
-
-## References
-
-- [references/python-and-interop.md](references/python-and-interop.md) — full Python client: connect/cursor, `?`/`$name` parameters, relational operators, register/unregister frames, pandas/Polars/Arrow/NumPy round-trips, transactions, threading caveat.
-- [references/remote-and-lakehouse.md](references/remote-and-lakehouse.md) — httpfs, `CREATE SECRET` for S3/GCS/Azure, hive globs, Iceberg/Delta/DuckLake reads, partitioned writes, MotherDuck `ATTACH 'md:'`.
+| Loading a file into pandas, then querying the frame | Pages the whole file through RAM. `FROM 'file.parquet' SELECT ...` scans only needed columns. |
+| Making DuckDB the app's database | One writer, single process — concurrent CRUD writers corrupt the workflow. App OLTP is `postgresdb`. |
+| Serving a dashboard API for 200 users from DuckDB | It's embedded, not a server; concurrent users serialize on the writer. That's `clickhouse-analytics`. |
+| Running the latest version in prod | Pin the **LTS** (1.4.x; v1.4.4 shipped 2026-01-26) so a future upgrade doesn't break the on-disk format / extension ABI. |
+| Downloading the S3 files, then reading them | `INSTALL httpfs` + `CREATE SECRET` reads `s3://...` in place with row-group pushdown. No download. |
+| `SELECT *` over a 200-column Parquet | Columnar engine — list the columns you need so it skips the rest. `SELECT *` reads everything. |
+| `GROUP BY a, b, c` — restating every column | Drift bait. `GROUP BY ALL` tracks the SELECT automatically. |
+| Treating "embedded" as "no need to think about RAM" | Set `memory_limit` / `threads`; without a cap a runaway aggregate can thrash before it spills. |
+| Using DuckDB as the embeddings/vector store | VSS exists but vector search is `vector-db`'s workflow, not DuckDB's home turf. |
 
 ## Verify
 
