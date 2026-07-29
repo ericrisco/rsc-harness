@@ -1,6 +1,6 @@
 ---
 name: finetuning
-description: "Use when adapting an open-weight model to a target FORM or BEHAVIOR — tone, output format, domain style, a reasoning/tool-calling pattern — via LoRA/QLoRA or full fine-tuning with TRL SFTTrainer and then preference optimization (DPO/ORPO/KTO/GRPO); when choosing fine-tune vs prompt vs RAG vs longer context; when setting LoRA r/alpha/target_modules; when eval loss climbs while train loss keeps falling; when the adapter seems to have learned nothing; when inference outputs garbage after a run. Triggers: 'fine-tune Llama/Qwen on our data', 'LoRA vs QLoRA vs full fine-tune', 'SFT then DPO/ORPO/KTO/GRPO', 'set target_modules / rank / alpha', 'my fine-tune overfits', 'the model forgot everything after training', 'write a GRPO reward function', 'ajustar un modelo amb LoRA amb les nostres dades'. NOT adding facts or fresh knowledge to a model (that is rag); NOT the fast single-GPU Unsloth backend or GGUF export (that is unsloth); NOT serving the trained model (that is vllm)."
+description: "Use when adapting an open-weight model to a target form or behavior — tone, output format, reasoning pattern — via LoRA/QLoRA or full fine-tuning with TRL SFTTrainer, then preference optimization (DPO/ORPO/KTO/GRPO), and for fine-tune vs prompt vs RAG. NOT adding facts to a model (that is rag); NOT the single-GPU Unsloth backend or GGUF export (that is unsloth)."
 tags: [finetuning, lora, qlora, sft, dpo, grpo, peft, trl, preference-optimization]
 recommends: [training-data, unsloth, open-weights, huggingface, vllm, rag]
 origin: risco
@@ -33,8 +33,10 @@ row below is a real off-ramp.
 
 Route out explicitly. Facts / freshness / citations → `../rag/SKILL.md`. Squeezing a prompt before
 spending money → `prompt-engineering`. Picking *which* base model (size/license/task) → `open-weights`.
-Building the JSONL/preference corpus → `training-data`. A fast single-GPU run + GGUF export →
-`../unsloth/SKILL.md`. Serving the result → `../vllm/SKILL.md`.
+Building the JSONL/preference corpus → `training-data` (LLM corpora, NOT tabular cleaning — that is
+`data-cleaning`). A fast single-GPU run + GGUF export → `../unsloth/SKILL.md` (same LoRA/QLoRA
+concepts, one optimized implementation; this skill stays backend-agnostic). Downloading the base or
+pushing the adapter/merged model → `huggingface`. Serving the result → `../vllm/SKILL.md`.
 
 > The cheapest fine-tune is the one you didn't need. Prompt + RAG solves most "make it behave"
 > asks at zero training cost and updates instantly. Fine-tune when that ceiling is real, measured,
@@ -201,6 +203,8 @@ score). Judge the run on that, plus **eval loss**.
   eval; keep the held-out set quarantined. (Corpus-side hygiene is `training-data`.)
 - General LLM/agent eval harness and judging → `agent-eval`. Bring your task metric here.
 
+The full tuning + forgetting + evaluation playbook is in `references/hyperparameters-and-eval.md`.
+
 ## When NOT to fine-tune (anti-patterns)
 
 | Anti-pattern | Why it breaks | Do instead |
@@ -214,19 +218,6 @@ score). Judge the run on that, plus **eval loss**.
 | A few dozen examples for full FT | Not enough signal; unstable | Curate ~hundreds–thousands (LIMA) or use LoRA |
 | Fine-tune a model you can't legally deploy | License blocks your use case | Check the model card first → `open-weights` |
 
-## Related skills
-
-- **`../rag/SKILL.md`** — the fork of the decision gate: facts/freshness/citations live there;
-  form/behavior lives here. Most "make it behave" asks are RAG or prompting, not training.
-- **`prompt-engineering`** — the cheaper lever to exhaust before spending a GPU.
-- **`training-data`** — builds/validates the JSONL `messages` and preference-pair corpus you feed
-  here (LLM corpora, NOT tabular cleaning — that is `data-cleaning`).
-- **`open-weights`** — chooses *which* base model by task/size/license; you consume that choice.
-- **`../unsloth/SKILL.md`** — a fast single-GPU training backend + GGUF export; same LoRA/QLoRA
-  concepts, one optimized implementation. This skill stays backend-agnostic.
-- **`huggingface`** — download the base, push the adapter/merged model, host inference (NOT training).
-- **`../vllm/SKILL.md`** — serves the trained/merged model (adapter hot-swap, throughput flags).
-
 ## Checklist
 
 - [ ] Ran the decision gate: confirmed this is a form/behavior need, not a facts need (else → rag).
@@ -239,6 +230,3 @@ score). Judge the run on that, plus **eval loss**.
 - [ ] Trained 1–3 epochs; watched **eval** loss (not train) for the overfitting turn.
 - [ ] Preference stage only if needed; correct method for the data (pairs→DPO/ORPO, votes→KTO, verifier→GRPO); tiny LR.
 - [ ] Verified `trl`/`peft`/`transformers` current majors and import paths at author time.
-
-See `references/methods.md` for full SFT→DPO/GRPO/ORPO/KTO scripts, dataset schemas, and adapter
-merging; `references/hyperparameters-and-eval.md` for the tuning + forgetting + evaluation playbook.
