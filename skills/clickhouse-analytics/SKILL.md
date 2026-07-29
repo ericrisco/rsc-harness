@@ -1,6 +1,6 @@
 ---
 name: clickhouse-analytics
-description: "Use when standing up a ClickHouse server for high-volume OLAP analytics, picking a MergeTree engine plus ORDER BY/PARTITION BY keys, ingesting billions of event/log/metric rows (async inserts, batch sizing, dedup), building materialized-view pre-aggregations, or optimizing a slow ClickHouse query. Triggers: 'design a ClickHouse table for 2B events/day', 'which MergeTree engine and ORDER BY', 'queries scan the whole table, the primary key isn't pruning', 'parts keep piling up and merges can't keep up', 'pre-aggregate at insert time so dashboards stay sub-second', 'AggregatingMergeTree materialized view for uniq users per hour', 'montar ClickHouse para analítica de eventos a gran escala', 'consultes lentes a ClickHouse, l'índex no poda particions'. NOT local file analytics with no server (that is duckdb), NOT app transactional CRUD/OLTP indexing (that is postgresdb)."
+description: "Use when running a ClickHouse server for high-volume OLAP: choosing a MergeTree engine and ORDER BY/PARTITION BY keys, ingesting billions of event/log/metric rows, pre-aggregating with materialized views, or fixing a query that scans instead of pruning. NOT in-process file analytics (that is `duckdb`), NOT OLTP CRUD indexing (that is `postgresdb`)."
 tags: [clickhouse, olap, columnar, mergetree, analytics, materialized-views, data-ingestion, sql]
 recommends: [duckdb, postgresdb, dashboard, kpi-framework, reporting, business-intelligence]
 origin: risco
@@ -10,11 +10,7 @@ origin: risco
 
 ClickHouse is a multi-user, always-on, replicated columnar server built to ingest continuous high-volume writes and answer aggregation queries over billions of rows in milliseconds. You reach for it when the workload is "append a firehose of events/logs/metrics, then GROUP BY them for dashboards." Target **26.3 LTS** (v26.3.12.3, 2026-05-22) — several defaults below changed in the 26.x line, so version matters.
 
-The one-line fork before you write any DDL:
-
-- Files on a laptop, in-process, no server, no concurrent writers → that is **duckdb**, not this skill.
-- App CRUD, point updates, foreign keys, row locks, RLS, migrations → that is **postgresdb**.
-- `clickhouse-server`, replication, concurrent writers, 100M+ rows/s ingest → **this skill**.
+The fork before you write any DDL: files on a laptop, in-process, no server, no concurrent writers → `../duckdb/SKILL.md`; app CRUD, point updates, foreign keys, row locks, RLS, migrations → `../postgresdb/SKILL.md`; `clickhouse-server`, replication, concurrent writers, 100M+ rows/s ingest → this skill.
 
 Instrumenting capture (GA4/PostHog) is `../analytics/SKILL.md`; charting the result for humans is `../dashboard/SKILL.md`; deciding which metrics matter is `../kpi-framework/SKILL.md`. ClickHouse is the engine underneath all three.
 
@@ -33,8 +29,6 @@ The engine decides dedup and merge behavior, and you cannot change `ORDER BY`/`P
 Default to `MergeTree`. Move to `AggregatingMergeTree` only when you are pre-aggregating through a materialized view. Full matrix and reasoning: `references/schema-and-engines.md`.
 
 ## Schema rules
-
-Each rule, then the one-line reason.
 
 1. **`ORDER BY` is your single biggest perf lever — a good one cuts query time ~100x.** It defines the sparse primary index that prunes which granules get read. Get this right above everything else.
 2. **Order the key low-cardinality → high-cardinality, left to right, driven by `WHERE`/`GROUP BY` — never by join keys.** 3–5 columns. The leftmost column should be the one you filter on most; cardinality rises as you go right. Timeseries: put the raw timestamp last, often `(tenant_id, toStartOfDay(ts), event_type, ts)`.
