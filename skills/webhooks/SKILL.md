@@ -1,6 +1,6 @@
 ---
 name: webhooks
-description: "Use when building the inbound side of a webhook — the HTTP endpoint that receives events a system pushes you, proves they are authentic, refuses to process the same one twice, and acks fast. Covers the mechanics every source shares: raw-body HMAC verification, ~5-min timestamp/replay window, idempotency on a stable event id, fast-ack-then-queue, retry/poison handling. Triggers: 'receive webhooks and process them safely', 'verify an incoming webhook signature', 'my signature verification fails even though the secret is correct', 'provider keeps retrying and we process the same event twice', 'handler times out under load, ack fast and queue', 'recibir webhooks entrantes', 'verificar la firma del webhook entrante', 'evitar procesar el mismo evento dos veces'. NOT the Stripe-Signature scheme (that is stripe), NOT email bounce/suppression hooks (that is email-connector), NOT outbound clients calling a third-party API (that is api-connector-builder), NOT what runs after the event lands (that is automation-flows)."
+description: "Use when building the receiving end of a webhook — a provider-agnostic endpoint that proves pushed events are authentic and never processes one twice: raw-body HMAC, ~5-min replay window, idempotency on the event id, fast-ack-then-queue. NOT the Stripe-Signature scheme (that is stripe), NOT outbound clients you call (that is api-connector-builder)."
 tags: [webhooks, inbound-webhooks, hmac-verification, idempotency, signature-verification, queue, connectors]
 recommends: [stripe, email-connector, api-connector-builder, automation-flows, redis, secure-coding]
 profiles: []
@@ -13,14 +13,9 @@ You are building the side of a webhook that *receives*. Some external system
 pushes an HTTP POST at your endpoint; your job is to prove it is real, refuse to
 act on it twice, and answer fast. That is the whole mandate.
 
-This skill is provider-agnostic. It teaches the mechanics every webhook source
-shares, not any one vendor's event catalog. The deliverable is secret-safe
-server code plus minimal config: a handler that reads the **raw** request body
-for HMAC verification, compares signatures in **constant time**, rejects events
-outside a **timestamp tolerance**, **dedupes** on a stable event id, then
-**persists-or-enqueues before returning `2xx`**.
-
-It ends at "enqueued." What happens to the event afterward is a different job:
+This skill is provider-agnostic — it teaches the mechanics every webhook source
+shares, not any one vendor's event catalog — and it ends at "enqueued." What
+happens to the event afterward is a different job:
 
 - The Stripe-specific scheme (`Stripe-Signature`, `t=,v1=`, `stripe listen`,
   the event model) → `../stripe/SKILL.md`.
@@ -29,8 +24,10 @@ It ends at "enqueued." What happens to the event afterward is a different job:
 - The *outbound* client that calls someone else's API → `api-connector-builder`.
 - Multi-step orchestration after the event lands → `automation-flows`.
 - Broker/queue tuning (BullMQ concurrency, DLQ ops) → `redis`.
+- Constant-time compare, secret handling, supply-chain hygiene →
+  `../secure-coding/SKILL.md`.
 
-## The pipeline — non-negotiable order
+## The pipeline
 
 These five stages run in exactly this order. Each one exists to protect the one
 after it; reorder them and you either trust forged data or waste work.
@@ -43,13 +40,9 @@ after it; reorder them and you either trust forged data or waste work.
 | 4 | **Dedupe** on the event id | At-least-once delivery means duplicates are normal. Mark it seen before doing work, not after. |
 | 5 | **Persist/enqueue → `2xx`** | Hand the event to durable storage, then ack. The ack means "I own this now." |
 
-Two facts make this order non-negotiable:
-
-- **Delivery is at-least-once, never exactly-once.** Every major provider
-  retries on non-2xx or timeout, so duplicate deliveries are normal traffic.
-  Idempotency is required, not a nice-to-have.
-- **The handler must be fast.** Heavy synchronous work inside it causes provider
-  timeouts and a storm of retries. Verify, dedupe, enqueue, ack — then work.
+**Delivery is at-least-once, never exactly-once.** Every major provider retries
+on non-2xx or timeout, so duplicate deliveries are normal traffic and idempotency
+is required, not a nice-to-have.
 
 ## Verify the signature
 
@@ -180,8 +173,10 @@ it?" check and both run. Let the UNIQUE constraint (or `NX`) be the lock.
 
 ## Fast-ack & queue
 
-Return `2xx` as soon as the event is durably stored or enqueued, then do the
-real work in a background worker. The status code is a contract with the sender:
+Heavy synchronous work inside the handler causes provider timeouts and a storm
+of retries. Return `2xx` as soon as the event is durably stored or enqueued,
+then do the real work in a background worker. The status code is a contract with
+the sender:
 
 | You return | Meaning to the provider | Use it when |
 |------------|-------------------------|-------------|
@@ -229,18 +224,6 @@ Capturing the raw body is framework-specific and is the usual culprit behind
 
 `scripts/verify.sh` is a read-only heuristic linter. Run it from the root of the
 project that contains your handler; it scans candidate files and prints
-PASS/WARN/FAIL for each invariant (raw-body verify, constant-time compare,
-timestamp check, secret-from-env, dedupe-on-event-id). It is advisory, not a
-compiler — a WARN means "I could not find evidence," which on a clean/empty tree
-is expected and exits `0`.
-
-## Cross-references
-
-- Stripe's exact scheme and event model → `../stripe/SKILL.md`
-- Email bounce/complaint suppression webhooks → `../email-connector/SKILL.md`
-- The outbound API client (auth, pagination, retries you initiate) →
-  `api-connector-builder`
-- Orchestrating what happens after the event lands → `automation-flows`
-- Queue/broker concurrency and DLQ operations → `redis`
-- Constant-time compare, secret handling, supply-chain hygiene →
-  `../secure-coding/SKILL.md`
+PASS/WARN/FAIL per invariant (raw-body verify, constant-time compare, timestamp
+check, secret-from-env, dedupe-on-event-id). A WARN means "I could not find
+evidence," which on a clean tree is expected and exits `0`.
