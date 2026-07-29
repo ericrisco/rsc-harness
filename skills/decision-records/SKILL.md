@@ -1,6 +1,6 @@
 ---
 name: decision-records
-description: "Use when a consequential, hard-to-reverse choice was just made or is about to be — database, framework, auth model, vendor, API style, deployment target — and future-you will ask why, with the answer buried in chat; capture it as a numbered, immutable ADR with the context that forced the choice, the real options weighed with their trade-offs, the decision, and consequences both ways. Also when a prior decision is being reversed and must be superseded without erasing history, or when onboarding keeps re-litigating a settled choice. Triggers: 'write up why we picked Postgres over DynamoDB so we stop arguing', 'record the switch to tRPC but keep the old REST decision in history', 'documenta por qué elegimos Hetzner y qué alternativas descartamos con pros y contras', 'registra la decisió i les alternatives que vam descartar'. NOT the meeting recap with action items and owners (that is meeting-notes), NOT the project-wide standing principles and stack canon (that is constitution)."
+description: "Use when a hard-to-reverse choice (database, framework, vendor, auth model) must be frozen as an immutable numbered ADR — the context that forced it, the options weighed, the decision, consequences both ways — or superseded without erasing history. NOT a meeting recap (that is meeting-notes), NOT standing project principles (that is constitution)."
 tags: [decision-records, adr, architecture-decisions, rationale, decision-log, madr, knowledge-ops]
 recommends: [meeting-notes, constitution, sop-builder, knowledge-ops, codebase-onboarding, plan, specify]
 origin: risco
@@ -182,7 +182,7 @@ A decision log is only useful if it stays navigable.
 - **Index every ADR at creation.** One row: `| 0007 | Choose Postgres | accepted | 2026-06-02 |`. No orphans.
 - **Keep supersession links live** in both directions.
 - **Review cadence.** Periodically sweep `accepted` ADRs — anything reality has overtaken gets a superseding record, not a silent edit.
-- **Index the log from the entry point** — `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) — so onboarding finds it. The broader wiki and onboarding doc are owned by `knowledge-ops` and `codebase-onboarding`; this skill owns only the ADRs the wiki links to. The meeting that spawned a decision routes to [`meeting-notes`](../meeting-notes/SKILL.md); the repeatable how-to it implies routes to [`sop-builder`](../sop-builder/SKILL.md).
+- **Index the log from the entry point** — `02-DOCS/wiki/index.md` — so onboarding finds it. The broader wiki and onboarding doc belong to [`knowledge-ops`](../knowledge-ops/SKILL.md) and [`codebase-onboarding`](../codebase-onboarding/SKILL.md); this skill owns only the ADRs the wiki links to. The meeting that spawned a decision routes to [`meeting-notes`](../meeting-notes/SKILL.md); the repeatable how-to it implies routes to [`sop-builder`](../sop-builder/SKILL.md).
 
 ## Anti-patterns
 
@@ -199,4 +199,4 @@ A decision log is only useful if it stays navigable.
 
 ## Verify
 
-Lint a produced ADR (or a whole decisions dir) with `scripts/verify.sh <path>`: it checks for a recognized status, a date, the required sections, ≥2 options, and a valid filename — read-only, no network. See [`references/templates.md`](references/templates.md) for the skeletons it expects.
+Lint a produced ADR (or a whole decisions dir) with `scripts/verify.sh <path>`: it checks for a recognized status, a date, the required sections, ≥2 options, and a valid filename — read-only, no network. It expects the skeletons above.
