@@ -1,6 +1,6 @@
 ---
 name: vue-nuxt
-description: "Use when building, reviewing, or optimizing a Vue 3 + Nuxt 4 app — Composition API/`<script setup>`, SSR/SSG/hybrid rendering, the `app/`+`server/` structure, SSR-safe data fetching and shared state, Nitro server routes, reactivity/hydration discipline. Triggers: `.vue` SFCs, `useFetch`/`useAsyncData`/`$fetch`, `useState`/Pinia, `defineModel`/`useTemplateRef`, hydration node mismatch, double-fetch on SSR, `server/api` handlers, `routeRules`, Nuxt 3→4 migration, `nuxt.config.ts`, 'app SSR no hidrata', 'per què es fa doble fetch'. NOT React/RSC (that is nextjs), NOT a static multi-framework site (that is astro)."
+description: "Use when building or reviewing a Vue 3 + Nuxt 4 app — `<script setup>` reactivity, SSR/SSG/hybrid `routeRules`, the `app/`+`server/` layout, SSR-safe fetching (`useFetch`/`useAsyncData`) and state (`useState`/Pinia), Nitro routes, hydration mismatches, Nuxt 3→4 migration. NOT React/RSC (that is nextjs), NOT a static islands site (that is astro)."
 tags: [vue, nuxt, frontend, web, ssr]
 recommends: [design, deployment, secure-coding]
 origin: risco
@@ -11,35 +11,19 @@ origin: risco
 Build and review Vue 3 (`<script setup>` + Composition API) on the Nuxt 4 meta-framework:
 SSR/SSG/hybrid rendering, the `app/` + `server/` layout, SSR-safe fetching and state, Nitro
 server routes, and the reactivity discipline that keeps hydration correct. Nuxt's render model
-is **whole-component render-then-hydrate** — there is no React-style "server component" boundary.
+is **whole-component render-then-hydrate** — there is no React-style "server component" boundary,
+so never import RSC mental models here.
 
-## When to use
-
-- Editing/creating `.vue` SFCs, `composables/`, `app/pages/`, `app/layouts/`, `server/api/`.
-- Choosing `useFetch` vs `useAsyncData` vs raw `$fetch`; fixing a double-fetch on SSR or a
-  hydration mismatch ("Hydration node mismatch", "text content did not match").
-- SSR-safe shared state: `useState` vs Pinia; stopping cross-request state leakage on the server.
-- Reactivity: `ref`/`reactive`/`computed`, `watch` vs `watchEffect`, reactive props destructure,
-  `defineModel`, `useTemplateRef`, lost reactivity after destructuring.
-- Nitro server routes, `useRuntimeConfig`, private vs `public` runtime config.
-- Nuxt 3 → Nuxt 4 migration (the `app/` srcDir move, shared-key data, shallowRef payload).
-- Rendering strategy: `routeRules` for per-route SSR/SSG/ISR/SWR/SPA.
-
-## When NOT to use
-
-- React / Next.js, App Router, RSC, server actions → `../nextjs/SKILL.md` or `../react/SKILL.md`.
-  Do not import RSC mental models here — Vue has no server-component boundary.
-- Content-first static site mixing frameworks/islands → `../astro/SKILL.md`. Fine-grained signals
-  framework → `../solid-js/SKILL.md`. Compiler-first no-VDOM peer → `../svelte/SKILL.md`.
-  Angular → `../angular/SKILL.md`.
-- Backend not in Nitro/JS (Python/Go/PHP) → `../fastapi/SKILL.md`, `../go/SKILL.md`,
-  `../laravel/SKILL.md`.
-- E2E or component-test *strategy* depth → `../e2e-testing/SKILL.md` / `../testing-web/SKILL.md`
-  (this skill states the Vitest + `@vue/test-utils` + `@nuxt/test-utils` setup, defers strategy).
-- Deploy-platform specifics (the Vercel/Netlify/Cloudflare adapters) → `../deployment/SKILL.md`,
-  `../vercel/SKILL.md`, `../netlify/SKILL.md`, `../cloudflare/SKILL.md`. This skill picks the
-  Nitro preset; those own the platform.
-- Generic security review → `../secure-coding/SKILL.md`; SEO/content strategy → `../marketing/SKILL.md`.
+Not this skill: React / Next App Router / server actions → [`nextjs`](../nextjs/SKILL.md) or
+[`react`](../react/SKILL.md). Content-first site mixing frameworks/islands →
+[`astro`](../astro/SKILL.md); fine-grained signals → [`solid-js`](../solid-js/SKILL.md);
+compiler-first no-VDOM peer → [`svelte`](../svelte/SKILL.md); [`angular`](../angular/SKILL.md).
+Backend not in Nitro/JS → [`fastapi`](../fastapi/SKILL.md), [`go`](../go/SKILL.md),
+[`laravel`](../laravel/SKILL.md). Test *strategy* beyond the Vitest + `@vue/test-utils` +
+`@nuxt/test-utils` setup named here → [`e2e-testing`](../e2e-testing/SKILL.md) /
+[`testing-web`](../testing-web/SKILL.md). Generic security review →
+[`secure-coding`](../secure-coding/SKILL.md); SEO/content strategy →
+[`marketing`](../marketing/SKILL.md); component visual language → [`design`](../design/SKILL.md).
 
 ## First: detect Nuxt vs plain Vue, and the version
 
@@ -49,7 +33,7 @@ before you write a line.
 | Signal in the repo | Verdict | What is available |
 |---|---|---|
 | `nuxt.config.{ts,js,mjs}` + `app/` dir holding `pages/`,`components/` | **Nuxt 4** (current) | full auto-imports, `useFetch`/`useState`, `server/`, `routeRules` |
-| `nuxt.config.*` + root `pages/`,`components/` (no `app/`) | **Nuxt 3 layout** | same APIs; flag the migration (see `references/migration-nuxt4.md`) |
+| `nuxt.config.*` + root `pages/`,`components/` (no `app/`) | **Nuxt 3 layout** | same APIs; flag the migration (see [`references/migration-nuxt4.md`](references/migration-nuxt4.md)) |
 | `vite.config.*` + `createApp(...).mount(...)`, no `nuxt.config` | **plain Vue 3 SPA** | Vue reactivity only — NO `useFetch`/`useState`/Nitro/auto-imports |
 
 Rule: in a plain-Vue SPA, fetch with the browser `fetch`/a client library inside `onMounted` or a
@@ -121,7 +105,7 @@ const { name: nameRef } = toRefs(state)   // nameRef.value stays linked
 ```
 
 Deep reactivity, effect scope, advanced `provide/inject`, and render-function/JSX notes live in
-`references/reactivity.md`.
+[`references/reactivity.md`](references/reactivity.md).
 
 ## Components & composables
 
@@ -172,13 +156,14 @@ const { data: product, status, error, refresh } = await useAsyncData(
 Key options: `key` (shared/deduped result — same key returns the same `data`/`error`/`status` ref,
 auto-cleaned on last unmount), `lazy: true` (don't block navigation), `server: false` (client-only
 fetch), `transform` (reshape before storing), `pick` (keep only listed fields — shrinks payload),
-`watch`/reactive keys (a `ref`/`computed`/getter key refetches when it changes). In **Nuxt 4 the
-returned `data` is a `shallowRef`** — replace the whole value, don't deep-mutate, to trigger
-updates. Nuxt 4.2 adds `AbortController` signal support for request cancellation. Re-run with the
-returned `refresh()`, or invalidate broadly with `refreshNuxtData(key)`.
+`watch`/reactive keys (a `ref`/`computed`/getter key refetches when it changes). Type the result
+with `useFetch<T>()` / `useAsyncData<T>()`. In **Nuxt 4 the returned `data` is a `shallowRef`** —
+replace the whole value, don't deep-mutate, to trigger updates. Nuxt 4.2 adds `AbortController`
+signal support for request cancellation. Re-run with the returned `refresh()`, or invalidate
+broadly with `refreshNuxtData(key)`.
 
 Full option matrix, custom `$api` factory, optimistic UI, and error/pending patterns are in
-`references/data-and-state.md`.
+[`references/data-and-state.md`](references/data-and-state.md).
 
 ## SSR-safe state
 
@@ -259,7 +244,8 @@ export default defineEventHandler(async (event) => {
 the browser bundle. Rule: a secret in `runtimeConfig.public` (or any `NUXT_PUBLIC_*` env) ships to
 every client — keep API keys, DB URLs, and tokens at the top level, never under `public`. Type
 calls to your own API with `$fetch<ProductDto>('/api/...')`. Handlers, route-rule recipes,
-middleware, and `defineCachedEventHandler` caching live in `references/nitro-and-rendering.md`.
+middleware, and `defineCachedEventHandler` caching live in
+[`references/nitro-and-rendering.md`](references/nitro-and-rendering.md).
 
 ## Rendering strategy
 
@@ -281,8 +267,9 @@ export default defineNuxtConfig({
 
 `nuxt build` produces an SSR server; `nuxt generate` prerenders a fully static site. The **Nitro
 preset** chooses the deploy target (node-server, vercel, netlify, cloudflare-pages, …) — pick the
-preset here, then hand platform specifics to `../deployment/SKILL.md` / `../vercel/SKILL.md` /
-`../netlify/SKILL.md` / `../cloudflare/SKILL.md`.
+preset here, then hand platform specifics to [`deployment`](../deployment/SKILL.md),
+[`vercel`](../vercel/SKILL.md), [`netlify`](../netlify/SKILL.md), or
+[`cloudflare`](../cloudflare/SKILL.md).
 
 ## Performance
 
@@ -295,12 +282,6 @@ preset here, then hand platform specifics to `../deployment/SKILL.md` / `../verc
 - Vue 3.6 **Vapor Mode** (compile-time, no-VDOM, opt-in per component via `<script setup vapor>`) is
   a 2026 preview targeting mid-2026 stable — treat as opt-in, not the default.
 - Targets: LCP < 2.5s, CLS < 0.1, INP < 200ms.
-
-## TypeScript discipline
-
-Generic `defineProps<{...}>()` / `defineEmits<{...}>()`; typed `useFetch<T>()` /
-`useAsyncData<T>()`; typed `$fetch<T>()` to your own API; `strict: true`. Gate with
-`nuxi typecheck` (Nuxt) or `vue-tsc --noEmit` (plain Vue) — see Verify.
 
 ## Anti-patterns → STOP
 
@@ -317,68 +298,26 @@ Generic `defineProps<{...}>()` / `defineEmits<{...}>()`; typed `useFetch<T>()` /
 | Same fetch in two components without a shared `key` | duplicate requests, divergent refs | one stable `key` → shared deduped result |
 | `ref(hugeArray)` / deep `reactive` on big lists | per-element proxy overhead | `shallowRef`/`shallowReactive`, replace whole value |
 
-## Quick reference
-
-| Task | API / file |
-|---|---|
-| Page data, once on SSR | `useFetch(url, { key })` / `useAsyncData(key, fn)` |
-| Request in a handler / after mount | `$fetch(url)` |
-| Shared SSR-safe value | `useState(key, init)` |
-| Structured store | Pinia setup store in `app/stores/` |
-| Two-way binding | `defineModel<T>()` |
-| Template DOM ref | `useTemplateRef('name')` |
-| Server endpoint | `server/api/x.get.ts` + `defineEventHandler` |
-| HTTP error | `throw createError({ statusCode })` |
-| Private vs public config | `useRuntimeConfig()` vs `config.public` |
-| Per-route rendering | `routeRules` in `nuxt.config.ts` |
-| Static build | `nuxt generate`; SSR build `nuxt build` |
-| Typecheck | `nuxi typecheck` / `vue-tsc --noEmit` |
-
 ## Verify
 
-`scripts/verify.sh` runs from the project root. It detects Nuxt via `nuxt.config.{ts,js,mjs}`; for
-a Nuxt repo it runs `nuxi typecheck` (fallback `vue-tsc --noEmit`), the package `lint` script if
-present, `vitest run` if Vitest is present, then `nuxi build`. With no Nuxt config it runs
-`vue-tsc --noEmit`, lint, vitest, then `vite build`. Every missing tool is a yellow SKIP, never a
-failure; everything is read-only except the final build, which writes `.nuxt/`/`.output/` (or
-`dist/`). No installs, no network mutations, safe to re-run, exits 0 on a clean/empty target.
+`scripts/verify.sh` runs from the project root. With a `nuxt.config.{ts,js,mjs}` it runs `nuxi
+typecheck` (fallback `vue-tsc --noEmit`), the package `lint` script if present, `vitest run` if
+Vitest is present, then `nuxi build`; with no Nuxt config, `vue-tsc --noEmit`, lint, vitest, then
+`vite build`. Keep `strict: true` in tsconfig so the typecheck is worth running. Every missing tool
+is a yellow SKIP, never a failure; everything is read-only except the final build, which writes
+`.nuxt/`/`.output/` (or `dist/`). No installs, no network mutations, safe to re-run, exits 0 on a
+clean/empty target.
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
-When this skill runs in a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md)
-Karpathy wiki), record this app's decisions there and index them from the root `CLAUDE.md`, so the
-next agent inherits the conventions instead of re-deriving them.
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) Karpathy wiki), read
+`02-DOCS/wiki/stack/vue-nuxt.md` first and stay consistent with it. If it is missing or stale,
+create/update it with this app's real choices — rendering mode per route (`routeRules`), the
+`useFetch`/`useAsyncData` conventions, `useState` vs Pinia, the Nitro preset/deploy target, the
+design-system hookup — bump its `Updated` date, and link it from a `## Knowledge map` section in
+the root `CLAUDE.md` (creating that section, and `CLAUDE.md` itself, if absent). No `02-DOCS/`
+layer? Skip silently. Technical conventions are *recorded, not gated* — never block the task.
 
-1. **Find the article** `02-DOCS/wiki/stack/vue-nuxt.md`, linked from a `## Knowledge map` section
-   in the root `CLAUDE.md`.
-2. **If missing or stale**, create/update it with the project's real choices — rendering mode per
-   route (`routeRules`), the `useFetch`/`useAsyncData` conventions, the state choice (`useState`
-   vs Pinia), the Nitro preset/deploy target, and the design-system hookup — then add/refresh the
-   `CLAUDE.md` link (creating the `## Knowledge map` section, and `CLAUDE.md` itself, if absent).
-3. **Read it first on every use** and stay consistent; when a convention changes, update the
-   article (bump its `Updated` date) in the same change.
-
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Technical conventions are
-*recorded, not gated* — never block the task on this.
-
-## References
-
-- `references/reactivity.md` — reactivity caveats, effect scope, watcher cleanup, composable
-  patterns, typed `provide/inject`, advanced `defineModel`, render-fn/JSX.
-- `references/data-and-state.md` — full `useFetch`/`useAsyncData` option matrix, custom `$api`,
-  Pinia setup stores + SSR hydration + Pinia Colada, `useState` patterns, optimistic UI.
-- `references/nitro-and-rendering.md` — Nitro handlers, route-rule recipes (ISR/SWR/SPA/prerender),
-  server middleware, runtime config, `defineCachedEventHandler`, preset selection.
-- `references/migration-nuxt4.md` — Nuxt 3 → 4 (`app/` move, `compatibilityVersion`, shared-key
-  data, shallowRef payload, renamed APIs) and Vue 3.4 → 3.5 deltas.
-
-## See Also
-
-- `../nextjs/SKILL.md` — the React/Next analogue; cross over only when the project is React.
-- `../design/SKILL.md` — design system and component visual language this skill consumes.
-- `../deployment/SKILL.md`, `../vercel/SKILL.md`, `../netlify/SKILL.md`, `../cloudflare/SKILL.md`
-  — platform deploy once the Nitro preset is chosen.
-- `../secure-coding/SKILL.md` — generic security; complements the runtime-config secret rules here.
-- `../e2e-testing/SKILL.md` / `../testing-web/SKILL.md` — test strategy beyond the setup stated here.
-- `../marketing/SKILL.md` — SEO/GEO content strategy this skill renders but does not decide.
-- `../harness/SKILL.md` — workspace conventions (`02-DOCS/`).
+Nuxt 3 → 4 deltas (`app/` move, `compatibilityVersion`, shared-key data, shallowRef payload,
+renamed APIs) and Vue 3.4 → 3.5 changes are in
+[`references/migration-nuxt4.md`](references/migration-nuxt4.md).
