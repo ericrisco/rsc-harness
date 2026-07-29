@@ -1,6 +1,6 @@
 ---
 name: sql
-description: "Use when writing or reviewing advanced SQL query logic independent of any one engine — multi-table joins, window functions, CTEs (incl. recursive), GROUP BY/GROUPING SETS aggregation, or UNION/INTERSECT/EXCEPT set ops — or when a query returns too many rows, too few rows, or wrong totals. Triggers: 'top N per group', 'running total', 'period over period', 'gaps and islands', 'recursive CTE', 'why is my SUM doubled', 'NOT IN returns nothing', 'dedup keep latest', 'consulta SQL avanzada', 'función de ventana', 'per què el JOIN duplica files'. NOT engine internals/indexes/EXPLAIN (that is postgresdb), NOT MySQL config (that is mysql), NOT OLAP columnar specifics (that is duckdb)."
+description: "Use when writing or reviewing advanced SQL query logic independent of any one engine — multi-table joins, window functions, CTEs including recursive ones, GROUP BY and GROUPING SETS aggregation, and set operations — or when a query returns too many rows, too few, or wrong totals. NOT engine internals, indexes or EXPLAIN (that is `postgresdb`), NOT MySQL config (that is `mysql`), NOT OLAP columnar specifics (that is `duckdb`)."
 tags: [sql, query, joins, window-functions, cte]
 recommends: [postgresdb, mysql, duckdb, drizzle-orm]
 origin: risco

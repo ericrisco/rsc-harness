@@ -1,6 +1,6 @@
 ---
 name: stripe
-description: "Use when wiring an app to Stripe for payments, subscriptions, Checkout, webhooks, or the billing portal — adding a paywall or Pro plan, charging recurring fees, or debugging why checkout.session.completed never fires or signature verification fails. Triggers: 'add Stripe Checkout', 'handle Stripe webhooks', 'let users cancel their subscription', 'No signatures found matching the expected signature', 'the webhook fires twice and duplicates the order', 'integrar pagos con Stripe', 'configurar el webhook de Stripe', 'portal de facturación del cliente'. NOT a generic non-Stripe inbound event receiver (that is webhooks), NOT the invoice document's legal form (that is invoicing), NOT deciding what to charge (that is pricing)."
+description: "Use when wiring an app to Stripe for payments, subscriptions, Checkout, webhooks or the billing portal — adding a paywall or paid plan, charging recurring fees, and debugging why a completion event never fires, why signature verification fails, or why a webhook fires twice and duplicates the order. NOT a generic non-Stripe inbound event receiver (that is `webhooks`), NOT the invoice document's legal form (that is `invoicing`), NOT deciding what to charge (that is `pricing`)."
 tags: [stripe, payments, subscriptions, checkout, webhooks, billing, saas]
 recommends: [webhooks, invoicing, pricing, secure-coding, nodejs]
 profiles: []

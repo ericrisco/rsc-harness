@@ -1,6 +1,6 @@
 ---
 name: sqlite-turso
-description: "Use when deciding whether plain SQLite is enough or wiring SQLite/Turso/libSQL for local-first, edge, or embedded-replica apps — a local file DB, a remote Turso URL, or a local replica synced to a remote primary — plus WAL mode and SQLite's single-writer model. Triggers: 'is SQLite enough', 'database is locked'/SQLITE_BUSY, 'embedded replica', 'edge database', 'createClient @libsql/client', 'database per user', 'sync local file to the cloud', 'base de datos local-first', 'base de dades a l'edge', 'rèplica incrustada'. NOT Drizzle schema/queries on libSQL (that is drizzle-orm), NOT versioned up/down migrations (that is db-migrations), NOT serverless Postgres with branching (that is neon)."
+description: "Use when deciding whether plain SQLite is enough, or wiring SQLite, Turso or libSQL for local-first, edge and embedded-replica apps — a local file DB, a remote Turso URL, or a local replica synced to a remote primary — plus WAL mode and SQLite's single-writer model and its lock errors. NOT Drizzle schema or queries on libSQL (that is `drizzle-orm`), NOT versioned up/down migrations (that is `db-migrations`), NOT serverless Postgres with branching (that is `neon`)."
 tags: [sqlite, turso, libsql, edge, embedded-replica, local-first, wal]
 recommends: [drizzle-orm, db-migrations, postgresdb, neon, backups, sql]
 origin: risco
