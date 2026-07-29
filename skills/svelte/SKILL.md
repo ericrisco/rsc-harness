@@ -1,6 +1,6 @@
 ---
 name: svelte
-description: "Use when building, reviewing, or fixing Svelte 5 (runes) and SvelteKit code — components with $state/$derived/$effect/$props/$bindable, .svelte.js rune modules vs stores, file routing (+page/+layout/+server/+error), universal vs server load functions, form actions with use:enhance, remote functions, SSR/CSR/prerender, adapters. Triggers: '$state vs $derived', 'migrate Svelte 4 $: to runes', '+page.server.ts load', 'use:enhance form action', 'shared state across .svelte.js modules', 'hydration mismatch in SvelteKit', 'componente Svelte con runes', 'per què no es reactiu el meu $state'. NOT Next.js/RSC (that is nextjs)."
+description: "Use when building, reviewing or fixing Svelte 5 (runes) and SvelteKit code — components with the rune primitives, rune modules versus stores, file routing, universal versus server load functions, form actions with progressive enhancement, remote functions, SSR/CSR/prerender choices, and adapters. Covers migrating Svelte 4 reactive statements to runes and hydration mismatches. NOT Next.js or RSC (that is `nextjs`)."
 tags: [svelte, sveltekit, runes, frontend, ssr, web]
 recommends: [typescript, vercel, design]
 origin: risco

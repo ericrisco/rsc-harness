@@ -1,6 +1,6 @@
 ---
 name: supabase
-description: "Use when building on Supabase as a backend over managed Postgres — wiring the supabase-js or @supabase/ssr client, writing or debugging Row Level Security, cookie-based Auth, Storage buckets, Realtime, or Edge Functions. Triggers: 'my RLS policy returns no rows', 'cookie auth in Next.js with Supabase', 'getClaims vs getUser', 'should I verify the JWT locally or hit the Auth server', 'asymmetric signing keys', 'Broadcast vs Postgres Changes', 'service_role key', 'data API not exposing my table', 'configura Supabase con Next.js', 'mis políticas RLS no devuelven filas'. NOT raw Postgres tuning (that is postgresdb)."
+description: "Use when building on Supabase as a backend over managed Postgres — wiring the supabase-js or SSR client, writing or debugging Row Level Security, cookie-based Auth, Storage buckets, Realtime, and Edge Functions, including local versus server JWT verification and the service-role key. NOT raw Postgres tuning (that is `postgresdb`)."
 tags: [supabase, postgres, rls, auth, edge-functions, realtime, storage, baas]
 recommends: [postgresdb, nextjs, db-migrations, secure-coding, drizzle-orm]
 origin: risco
