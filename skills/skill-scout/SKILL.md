@@ -1,6 +1,6 @@
 ---
 name: skill-scout
-description: "Use when about to do a task and a specialized skill probably exists but is not loaded, when a task feels harder than it should because generic reasoning is doing a domain skill's job, or when auditing a workspace's skill coverage for holes. Triggers: 'is there a skill for this?', 'what skill am I missing?', 'should I install a skill before doing this?', 'audit my .claude/skills against what this repo does', 'this feels like reinventing something we already have a skill for', 'qué skill me falta', 'quina skill em falta'. Names the absent skill and emits an install command, or routes to author-skill when none exists. NOT routing among skills you already have (that is suggest), and NOT writing the skill when none exists (that is author-skill)."
+description: "Use when a specialized skill probably exists but is not loaded, when a task feels harder than it should because generic reasoning is doing a domain skill's job, or when auditing a workspace's skill coverage for holes. Names the absent skill and emits an install command, or routes onward when none exists. NOT routing among skills you already have (that is `suggest`), NOT writing the skill when none exists (that is `author-skill`)."
 tags: [skill-discovery, capability-gap, meta, recommendations, coverage-audit]
 recommends: [suggest, author-skill, context-budget, continuous-learning, knowledge-ops]
 origin: risco
