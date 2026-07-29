@@ -1,6 +1,6 @@
 ---
 name: aws-essentials
-description: "Use when standing up the core AWS surface a small product needs — create a private S3 bucket for uploads, provision an encrypted RDS Postgres, choose ECS Fargate vs EC2 for a container, put CloudFront in front of S3, write or tighten an IAM policy, or harden a fresh account (root MFA, no long-lived keys). Triggers: 'set up an S3 bucket for user uploads', 'this role has AdministratorAccess, scope it down', 'spin up Multi-AZ Postgres on RDS', 'my bucket is public and I don't know why', 'this role can do everything', 'I can't encrypt RDS now', 'Fargate or EC2 for a low-traffic app', 'monta un bucket S3 privado', 'permisos mínims a IAM', 'posa CloudFront davant del bucket'. NOT the CI pipeline that ships your container (that is deployment), NOT app-code access-control review (that is secure-coding)."
+description: "Use when standing up the core AWS surface a small product needs: hardening a fresh account, a private S3 bucket, encrypted RDS Postgres, ECS Fargate vs EC2, CloudFront + OAC, or scoping an IAM policy to least privilege. NOT the CI pipeline that ships the container (that is `deployment`), NOT app-code access-control review (that is `secure-coding`)."
 tags: [aws, cloud, iam, s3, infrastructure]
 recommends: [deployment, secure-coding, dynamodb, postgresdb]
 origin: risco
@@ -16,19 +16,6 @@ god-mode app roles, long-lived keys, unencrypted databases). Pick the right tier
 ```text
 account hardening → IAM (roles + scoped policies) → S3 (private) / RDS (encrypted) / ECS Fargate → CloudFront (OAC) → infra exists, wired, least-privilege
 ```
-
-## Operating posture — three rules
-
-- **Secure by default: keep the defaults AWS already hardened.** New S3 buckets are private
-  since April 2023 (Block Public Access on, ACLs disabled, SSE-S3 encryption). Do not undo them.
-- **Least privilege: scope every policy, never `"*"` on `"*"`.** A role that can do everything
-  is a breach waiting for one leaked credential. Start from a managed policy, then tighten.
-- **Roles, not keys.** Temporary credentials from a role beat a long-lived `AKIA…` access key
-  that lives forever in a `.env` and ends up on GitHub. Apps get task roles; CI gets OIDC.
-
-Boundary in one sentence: **this skill provisions and secures the AWS account and its core
-services; `../deployment/SKILL.md` puts your container on it; `../secure-coding/SKILL.md` audits
-the code inside it.**
 
 ## Service decision table
 
@@ -61,7 +48,9 @@ Do this once, before anything else. Each line has a reason; skip none.
 
 Two principal types. **IAM users** = long-lived humans/keys; avoid them for workloads. **Roles**
 = an identity something *assumes* to get temporary credentials — this is what ECS tasks, Lambda,
-CI, and federated humans use. Default to roles.
+CI, and federated humans use. Default to roles: a temporary credential beats a long-lived `AKIA…`
+key that lives forever in a `.env`. (IAM governs who may call AWS APIs; access control *inside*
+your app code is `../secure-coding/SKILL.md`.)
 
 A policy is a JSON document. The four parts that matter:
 
@@ -181,7 +170,8 @@ Two more non-negotiables: the DB security group **references the app's security 
 `0.0.0.0/0` (a DB open to the internet is a breach, not a convenience); credentials live in
 **Secrets Manager** with managed rotation (`--manage-master-user-password` above), never in task
 env vars. Use `--multi-az` for production HA. Full recipe (SG wiring, Secrets Manager rotation,
-connecting from ECS) → `references/rds-cloudfront-recipes.md`.
+connecting from ECS) → `references/rds-cloudfront-recipes.md`. Schema, indexes and query tuning
+once the instance exists → `../postgresdb/SKILL.md`.
 
 ## CloudFront + OAC — public web content, private bucket
 
@@ -214,10 +204,3 @@ Full CLI: create OAC → distribution → S3 bucket policy JSON → invalidation
 | Root user for daily ops | Highest blast radius, no per-action attribution | Root only for root-only tasks; admin via Identity Center |
 | No MFA on root | One phished password = total account loss | Passkey/security-key MFA on root and every human |
 | Confusing task role and execution role | App gets 403 at runtime, or ECS can't pull the image | Execution = pull image/logs; task = app's runtime perms |
-
-## Cross-links
-
-- `../deployment/SKILL.md` — Dockerfile, CI/CD, OIDC to ECR, the actual ship-the-container step.
-- `../secure-coding/SKILL.md` — app-code access control / OWASP (vs cloud IAM here).
-- `../postgresdb/SKILL.md` — schema, indexes, query tuning once the RDS instance exists.
-- For key-value / single-table serverless data instead of RDS, reach for the `dynamodb` skill.
