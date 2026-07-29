@@ -1,6 +1,6 @@
 ---
 name: spring-boot
-description: "Use when building, reviewing, testing, securing, or configuring a Spring Boot 4 / Spring Framework 7 backend — controllers, services, Spring Data JPA, application.yml, SecurityFilterChain, slice tests. Triggers: 'add a REST endpoint', 'wire up @Service and @Repository', 'my @Transactional isn't rolling back', 'LazyInitializationException after the session closed', 'N+1 select on a lazy collection', '@WebMvcTest + mock the service', 'migrate WebSecurityConfigurerAdapter', 'monta la seguridad con SecurityFilterChain', 'per què surt LazyInitializationException', a file importing org.springframework.boot.*, a pom.xml with spring-boot-starter-web, or an application.yml. NOT plain modern-Java language work like records/streams/virtual threads (that is java); NOT engine-level SQL schema/index/EXPLAIN (that is postgresdb); NOT container/CI mechanics (that is deployment)."
+description: "Use when building, reviewing, testing, securing or configuring a Spring Boot 4 / Framework 7 backend — controllers, services, Spring Data JPA, application.yml, SecurityFilterChain, slice tests. NOT plain modern-Java language work like records or virtual threads (that is `java`); NOT engine-level SQL schema/index/EXPLAIN (that is `postgresdb`)."
 tags: [java, spring, jpa, security, backend]
 recommends: [java, postgresdb, secure-coding, deployment]
 origin: risco
@@ -23,47 +23,18 @@ If you are typing `WebSecurityConfigurerAdapter`, `@MockBean`, field `@Autowired
 `authorizeRequests`, or `javax.persistence` — **stop**. Those are the previous generation.
 The modern idioms below replace every one of them.
 
-## When to use
-
-- Writing or reviewing any `@RestController`, `@Service`, `@Repository`, `@Component`,
-  `@Configuration`, Spring Data JPA `@Entity`, or repository interface.
-- JPA persistence: entity mapping, `JpaRepository`, derived queries, `@Query`,
-  `@Transactional` boundaries, fetch strategy / N+1, pagination.
-- Spring Security: `SecurityFilterChain`, method security, JWT resource server, OAuth2
-  client, password encoding, CORS.
-- Configuration & profiles: `application.yml`, `@ConfigurationProperties`, `@Profile`,
-  externalized secrets, `spring.config.import`.
-- Testing: `@SpringBootTest` vs slices (`@WebMvcTest`, `@DataJpaTest`), `@MockitoBean`,
-  `MockMvc`, Testcontainers + `@ServiceConnection`.
-
-## When NOT to use
+## Boundaries
 
 - Plain Java language work (records, sealed types, virtual threads, streams, pattern
-  matching) with no Spring -> **`../java/SKILL.md`**.
-- Async Python FastAPI -> **`../fastapi/SKILL.md`**. NestJS/Node -> **`../nestjs/SKILL.md`**. Django -> `django`.
+  matching) with no Spring -> [`../java/SKILL.md`](../java/SKILL.md).
+- Async Python FastAPI -> [`../fastapi/SKILL.md`](../fastapi/SKILL.md). NestJS/Node ->
+  [`../nestjs/SKILL.md`](../nestjs/SKILL.md). Django -> [`../django/SKILL.md`](../django/SKILL.md).
 - Engine-level SQL: schema/index design, `EXPLAIN`, partitioning, zero-downtime DDL ->
-  **`../postgresdb/SKILL.md`** (this skill drives the JPA layer above it).
-- Language-agnostic injection/authz/secret theory -> **`../secure-coding/SKILL.md`**.
-- Dockerfile/Compose/CI/CD mechanics -> **`../deployment/SKILL.md`** (keep only a build note here).
-
-## Decision rules
-
-1. **Constructor injection only — final fields, no `@Autowired` on fields.** A class whose
-   collaborators are constructor args is testable with `new` and fails fast on a missing bean.
-2. **Controller stays thin: parse, validate, delegate, map.** Any branch with business
-   meaning belongs in the service, where it is transactional and unit-testable without MVC.
-3. **`@Transactional` lives on service methods, never on a controller or repository.** The
-   transaction must wrap the unit of work, not the HTTP request or a single query.
-4. **Expose DTO records in and out — never the `@Entity`.** Returning an entity leaks columns
-   and triggers lazy loads inside the JSON serializer (the classic `LazyInitializationException`).
-5. **Typed `@ConfigurationProperties` record over scattered `@Value`.** One validated binding
-   beats string keys sprinkled across the codebase and gives you a fail-fast startup.
-6. **Security is a `SecurityFilterChain` bean with the lambda DSL** — `authorizeHttpRequests`
-   + `requestMatchers`. `WebSecurityConfigurerAdapter`, `authorizeRequests`, `antMatchers` are gone.
-7. **Reach for the narrowest test slice first.** `@WebMvcTest` for a controller,
-   `@DataJpaTest` for a repository; `@SpringBootTest` only when you genuinely need the full context.
-8. **Validate at the edge with `@Valid` + Bean Validation (`jakarta.validation`).** Reject
-   bad input before it reaches the service so business code assumes valid data.
+  [`../postgresdb/SKILL.md`](../postgresdb/SKILL.md) (this skill drives the JPA layer above it).
+- Language-agnostic injection/authz/secret theory ->
+  [`../secure-coding/SKILL.md`](../secure-coding/SKILL.md).
+- Dockerfile/Compose/CI/CD mechanics -> [`../deployment/SKILL.md`](../deployment/SKILL.md)
+  (keep only a build note here).
 
 ## Project layout
 
@@ -84,9 +55,12 @@ com.acme.shop
 
 ## Controllers
 
-`@RestController` + DTO records, `@Valid` on the body, `ResponseEntity` for 201/`Location`,
-a `@RestControllerAdvice` for one error envelope. Boot 4 adds first-class versioning via a
-`version` attribute on the mapping — one controller serves many versions, no path duplication.
+`@RestController` + DTO records, `@Valid` on the body (Bean Validation, `jakarta.validation`)
+so business code can assume valid data, `ResponseEntity` for 201/`Location`, a
+`@RestControllerAdvice` for one error envelope. The controller parses, validates, delegates
+and maps — any branch with business meaning belongs in the service, where it is transactional
+and unit-testable without MVC. Boot 4 adds first-class versioning via a `version` attribute
+on the mapping — one controller serves many versions, no path duplication.
 
 ```java
 @RestController
@@ -120,7 +94,7 @@ class ApiExceptionHandler {
 record ApiError(String code, String message, List<String> details) {}
 ```
 
-**Bad -> Good** — never return the entity:
+**Bad -> Good** — never return the entity; it leaks columns and lazy-loads in the serializer:
 
 ```java
 // Bad: leaks columns; lazy fields blow up in the serializer after the tx closes.
@@ -132,7 +106,9 @@ record ApiError(String code, String message, List<String> details) {}
 ## Service + transactions
 
 Constructor-injected, `final` fields, `@Transactional` on the write path, `readOnly = true`
-on queries (lets Hibernate skip dirty checking).
+on queries (lets Hibernate skip dirty checking). `@Transactional` belongs on service methods,
+never on a controller or repository: the transaction must wrap the unit of work, not the HTTP
+request or a single query.
 
 ```java
 @Service
@@ -233,11 +209,13 @@ record AppProperties(Duration inviteTtl, int maxOrdersPerDay) {}   // typed, val
 ```
 
 **Bad -> Good** — scattered `@Value("${app.max-orders-per-day}")` strings vs one injected
-`AppProperties` record. Typed binding fails fast on a missing/mistyped key instead of NPE-ing later.
+`AppProperties` record. One typed binding beats string keys sprinkled across the codebase and
+fails fast on a missing/mistyped key instead of NPE-ing later.
 
 ## Security
 
-A single `SecurityFilterChain` bean, stateless for token APIs, JWT via the resource server.
+A single `SecurityFilterChain` bean with the lambda DSL, stateless for token APIs, JWT via the
+resource server.
 
 ```java
 @Configuration
@@ -264,11 +242,12 @@ Order `requestMatchers` from most specific to least — the first match wins, so
 `permitAll` placed early opens routes you meant to lock. Full JWT/OAuth2 client, method
 security, CORS, and CSRF posture (token vs cookie apps) live in
 [`references/security.md`](references/security.md). For the language-agnostic authz/secret
-principles behind these rules, see `../secure-coding/SKILL.md`.
+principles behind these rules, see [`../secure-coding/SKILL.md`](../secure-coding/SKILL.md).
 
 ## Testing
 
-Pick the narrowest slice that exercises what you changed:
+Pick the narrowest slice that exercises what you changed — `@SpringBootTest` only when you
+genuinely need the full context:
 
 | Slice | Loads | Use for | Collaborators |
 |---|---|---|---|
@@ -324,14 +303,17 @@ interface BillingClient {
 `@Retryable` and `@ConcurrencyLimit` are core in Framework 7 — no extra Spring Retry
 dependency for the basics.
 
-## Anti-patterns / rationalizations -> STOP
+## Anti-patterns
 
-| You are about to... | Why it's wrong | Do instead |
+| Anti-pattern | Why it's wrong | Do instead |
 |---|---|---|
 | Extend `WebSecurityConfigurerAdapter` | Removed in Security 6/7 | `SecurityFilterChain` bean + lambda DSL |
 | `@Autowired` on a field | Untestable, hides missing beans till runtime | constructor injection, `final` fields |
 | `@Transactional` on a `@RestController` | Tx must wrap the unit of work, not the request | put it on the service method |
+| Business branching in the controller | Not transactional, needs MVC to test | move the decision into the `@Service` |
 | Return the `@Entity` from a controller | Leaks columns, lazy-loads in serializer (LIE) | map to a DTO record inside the tx |
+| Request body reaching the service unvalidated | Business code can no longer assume valid data | `@Valid` + `jakarta.validation` at the edge |
+| Scattered `@Value("${...}")` config keys | String keys, no validation, fails late | one typed `@ConfigurationProperties` record |
 | Use `@MockBean` / `@SpyBean` | Replaced in Boot 4 | `@MockitoBean` / `@MockitoSpyBean` |
 | `import javax.persistence` / `javax.validation` | Jakarta EE 11 baseline | `jakarta.*` |
 | `authorizeRequests` / `antMatchers` | Gone in Security 6/7 | `authorizeHttpRequests` + `requestMatchers` |
@@ -340,6 +322,8 @@ dependency for the basics.
 | One 800-line `@Service` | Untestable, tangled transactions | split per use case / aggregate |
 | `catch (Exception e)` and echo `e.getMessage()` | Leaks internals, swallows bugs | `@RestControllerAdvice` + typed error envelope |
 | Serialize a lazy collection after the tx closes | `LazyInitializationException` / N+1 | fetch join or `@EntityGraph`, map in-tx |
+
+`scripts/verify.sh` greps a project for the legacy idioms above (read-only, best effort).
 
 ## Quick reference
 
@@ -364,12 +348,3 @@ If the repo has a `02-DOCS/` wiki, record stack decisions (Boot version, securit
 test strategy, migration tool) in `02-DOCS/wiki/stack/spring-boot.md` and link it from the
 `CLAUDE.md` Knowledge map. This is recorded, not gated — if there is no `02-DOCS/`, skip
 silently; you may suggest the project harness if the user wants persistent docs.
-
-## See also
-
-- `../java/SKILL.md` — the language underneath (records, virtual threads, streams).
-- `../postgresdb/SKILL.md` — the engine under JPA (schema, indexes, `EXPLAIN`).
-- `../secure-coding/SKILL.md` — the authz/injection/secret principles behind the security rules.
-- `../deployment/SKILL.md` — packaging the jar, container, CI.
-- [`references/jpa.md`](references/jpa.md) · [`references/security.md`](references/security.md) · [`references/testing.md`](references/testing.md)
-- `scripts/verify.sh` — best-effort static reviewer for legacy Spring idioms.

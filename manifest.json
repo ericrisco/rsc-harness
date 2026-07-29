@@ -2126,7 +2126,7 @@
     },
     {
       "id": "google-workspace",
-      "description": "Use when building server-side automation that reads or writes Gmail, Drive, Calendar, or Sheets against a real Google Workspace account via the official client libraries and a GCP service account — picking the auth mode, scoping OAuth scopes, building the authed client, and debugging 403/429/unauthorized_client errors. Triggers: 'send mail from a service account in a cron', 'unauthorized_client when impersonating a user', 'which Drive scope to upload to a shared drive', 'set up domain-wide delegation client ID', 'getting 403 insufficient permissions from the Sheets API', 'automatizar Gmail con cuenta de servicio sin login del usuario', 'enviar correos desde un script sense login d'usuari'. NOT generic SMTP/marketing/deliverability email (that is email-connector).",
+      "description": "Use when server-side code reads or writes Gmail, Drive, Calendar, or Sheets with a GCP service account and no human in the OAuth loop: picking the auth mode (app-owned vs domain-wide delegation vs keyless), scoping to least privilege, building the authed Node/Python client, staying under per-user quota, and debugging unauthorized_client / 403 / 429. NOT SMTP providers or deliverability (that is `email-connector`), NOT slot-finding and booking UX (that is `calendar-scheduling`).",
       "tags": [
         "google-workspace",
         "gmail-api",
@@ -2570,7 +2570,7 @@
     },
     {
       "id": "level-design",
-      "description": "Use when designing a game level, map, arena, or encounter — laying out a blockout/greybox, fixing pacing that drags or spikes, guiding players without hand-holding, placing secrets and rewards, or diagnosing a level that plays as boring, confusing, or where players get lost or stuck. Engine-agnostic craft: the blockout->greybox->playtest->art pipeline, sightlines and landmarks, tension/release rhythm, the introduce->develop->twist->combine encounter progression, readability via light/color/composition, and traversal heatmaps. Triggers: 'design this level', 'my level is boring/confusing', 'players keep getting lost', 'how do I pace this', 'blockout', 'greybox', 'encounter design', 'where do I put the secret'. NOT systemic mechanics or economy tuning (that's game-design), NOT narrative or story beats (that's game-storytelling), and NOT engine-specific level tooling — nav meshes, occlusion, tilemap editors, lightmap baking (that's the godot/unity/unreal skill).",
+      "description": "Use when designing a game level's space — blockout/greybox layout, pacing that drags or spikes, guiding lost players without waypoints, encounter and arena progression, or secret placement. NOT mechanics or economy (that is `game-design`), NOT story beats (that is `game-storytelling`), NOT engine tooling like nav meshes or lightmaps (that is `godot`/`unity`/`unreal`).",
       "tags": [
         "level-design",
         "blockout",
@@ -4466,7 +4466,7 @@
     },
     {
       "id": "spring-boot",
-      "description": "Use when building, reviewing, testing, securing, or configuring a Spring Boot 4 / Spring Framework 7 backend — controllers, services, Spring Data JPA, application.yml, SecurityFilterChain, slice tests. Triggers: 'add a REST endpoint', 'wire up @Service and @Repository', 'my @Transactional isn't rolling back', 'LazyInitializationException after the session closed', 'N+1 select on a lazy collection', '@WebMvcTest + mock the service', 'migrate WebSecurityConfigurerAdapter', 'monta la seguridad con SecurityFilterChain', 'per què surt LazyInitializationException', a file importing org.springframework.boot.*, a pom.xml with spring-boot-starter-web, or an application.yml. NOT plain modern-Java language work like records/streams/virtual threads (that is java); NOT engine-level SQL schema/index/EXPLAIN (that is postgresdb); NOT container/CI mechanics (that is deployment).",
+      "description": "Use when building, reviewing, testing, securing or configuring a Spring Boot 4 / Framework 7 backend — controllers, services, Spring Data JPA, application.yml, SecurityFilterChain, slice tests. NOT plain modern-Java language work like records or virtual threads (that is `java`); NOT engine-level SQL schema/index/EXPLAIN (that is `postgresdb`).",
       "tags": [
         "java",
         "spring",
@@ -4823,7 +4823,7 @@
     },
     {
       "id": "together-fireworks",
-      "description": "Use when calling hosted open-model inference on Together AI or Fireworks AI — pointing the OpenAI SDK at api.together.ai or api.fireworks.ai, picking an open model (Llama, DeepSeek, Qwen, GPT-OSS) and what it costs, or cutting the bill with batch inference. Triggers: 'call DeepSeek/Llama on Together', 'wire the OpenAI SDK to Fireworks', 'why is my model name 404ing', 'which open-source model and how much per million tokens', 'halve my LLM bill with batch', 'move off GPT-4 to a cheaper open-weights endpoint', 'serverless vs dedicated for sustained QPS', '¿qué modelo open source uso y cuánto cuesta?', 'abaratar la factura de inferència'. NOT renting raw GPUs to self-host weights (that is runpod), NOT running a model locally with zero marginal cost (that is ollama).",
+      "description": "Use when calling open-weight LLMs on Together AI or Fireworks AI's OpenAI-compatible endpoints — `base_url` plus namespaced model id, the cheapest model that clears the bar, per-1M-token cost math, serverless vs batch vs dedicated. NOT renting GPUs to self-host weights (that is `runpod`), NOT running a model locally for free (that is `ollama`).",
       "tags": [
         "llm",
         "inference",
@@ -5240,7 +5240,7 @@
     },
     {
       "id": "youtube-api",
-      "description": "Use when connecting a real YouTube channel to code via the Data API v3 (uploads, metadata) and Analytics API v2 (performance) — OAuth, resumable video upload, editing title/description/tags/privacy after publish, pulling views/watch time/averageViewPercentage/retention/traffic sources — and logging that performance into 02-DOCS/wiki/youtube/ as a dated feedback log. Triggers: 'upload a video to my channel via the API and set its tags', 'videos.insert returns 403 quotaExceeded / uploadLimitExceeded', 'my YouTube refresh token keeps dying after about 7 days', 'pull the audienceWatchRatio retention curve for video X', 'fetch this month's traffic sources and write them into the wiki', 'subir vídeos a YouTube por API y guardar las estadísticas del canal', 'treure les estadístiques del canal i guardar-les al wiki'. NOT what-to-publish or how-to-package it (that is youtube-strategy / youtube-packaging).",
+      "description": "Use when wiring code to a real YouTube channel: user OAuth 2.0, resumable videos.insert uploads, editing metadata after publish, pulling views/watch time/retention/traffic from the Analytics API v2 into a dated 02-DOCS/wiki/youtube/ feedback log. NOT what to publish or how to title and thumbnail it (that is youtube-strategy / youtube-packaging).",
       "tags": [
         "youtube",
         "youtube-data-api",

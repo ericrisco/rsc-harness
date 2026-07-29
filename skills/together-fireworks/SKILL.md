@@ -1,6 +1,6 @@
 ---
 name: together-fireworks
-description: "Use when calling hosted open-model inference on Together AI or Fireworks AI — pointing the OpenAI SDK at api.together.ai or api.fireworks.ai, picking an open model (Llama, DeepSeek, Qwen, GPT-OSS) and what it costs, or cutting the bill with batch inference. Triggers: 'call DeepSeek/Llama on Together', 'wire the OpenAI SDK to Fireworks', 'why is my model name 404ing', 'which open-source model and how much per million tokens', 'halve my LLM bill with batch', 'move off GPT-4 to a cheaper open-weights endpoint', 'serverless vs dedicated for sustained QPS', '¿qué modelo open source uso y cuánto cuesta?', 'abaratar la factura de inferència'. NOT renting raw GPUs to self-host weights (that is runpod), NOT running a model locally with zero marginal cost (that is ollama)."
+description: "Use when calling open-weight LLMs on Together AI or Fireworks AI's OpenAI-compatible endpoints — `base_url` plus namespaced model id, the cheapest model that clears the bar, per-1M-token cost math, serverless vs batch vs dedicated. NOT renting GPUs to self-host weights (that is `runpod`), NOT running a model locally for free (that is `ollama`)."
 tags: [llm, inference, together-ai, fireworks-ai, openai-compatible, open-models, batch, cost]
 recommends: [runpod, modal, ollama, huggingface, fal, cost-tracking, llm-pipeline, prompt-engineering, embeddings-search]
 origin: risco
@@ -107,7 +107,7 @@ Fuller catalog and embedding/fine-tuning numbers: `references/models-and-pricing
 
 Decision: **real-time → serverless. Big offline job (eval, synthetic data, bulk classify) → batch. Sustained heavy traffic with an SLA → dedicated.**
 
-> **Gotcha — Together batch is NOT the OpenAI Batch endpoint.** Together's OpenAI-compat layer does **not** expose `/v1/batches`. Use Together's **native Batch API**: upload a JSONL file, default **24h** window, up to **50,000 requests/file**, up to **50% off**, separate rate-limit pool. Pointing the OpenAI Batch client at Together fails. Fireworks instead exposes Batch as a serving *path* through the one API (Serverless 2.0: Standard / Priority / Batch), batch = 50% of serverless. See `references/batch-and-tuning.md`.
+> **Gotcha — Together batch is NOT the OpenAI Batch endpoint.** Together's OpenAI-compat layer does **not** expose `/v1/batches`. Use Together's **native Batch API**: upload a JSONL file, default **24h** window, up to **50,000 requests/file**, up to **50% off**, separate rate-limit pool. Pointing the OpenAI Batch client at Together fails. Fireworks instead exposes Batch as a serving *path* through the one API (Serverless 2.0: Standard / Priority / Batch), batch = 50% of serverless. JSONL shape, the upload/poll/download flow, limits, and dedicated-deployment notes: `references/batch-and-tuning.md`.
 
 Two more Fireworks multipliers worth knowing:
 - **Cached input tokens default to 50%** of input price (text/vision models) — repeated prefixes get cheaper automatically.
@@ -172,10 +172,5 @@ Keep the id mapping in config, not in `if provider == ...` branches scattered th
 | Quoting a price/id from an aggregator | Trackers lag and mis-list — e.g. DeepSeek-V3.1 shown as live on Together when it is not on the serverless catalog | Cite together.ai/pricing or docs.fireworks.ai; confirm the id on the serverless catalog before quoting |
 | Treating these like free/local | They bill per token; ollama is the zero-marginal-cost path | If cost must be zero and weights run on your box → `../ollama/SKILL.md` |
 | Renting GPUs to "save money" then idling them | A serverless token endpoint has no idle cost | Self-host only at sustained scale → `../runpod/SKILL.md` |
-
-## References
-
-- `references/models-and-pricing.md` — fuller per-provider model + pricing tables, embeddings, fine-tuning costs, with a re-check note.
-- `references/batch-and-tuning.md` — Together native Batch API JSONL shape + upload/poll/download flow and limits; Fireworks batch path; dedicated deployment notes.
 
 Validate any inference snippet/config with `scripts/verify.sh <file-or-dir>` — a static, no-network lint for the right base URLs, namespaced model ids, and env-var keys.
