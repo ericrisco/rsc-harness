@@ -1,6 +1,6 @@
 ---
 name: java
-description: "Use when writing, reviewing, or refactoring modern Java (21+, Java 25 LTS) - records and sealed interfaces as algebraic data types, exhaustive pattern-matching switch over instanceof+cast ladders, virtual-thread (Project Loom) concurrency one-task-per-thread, structured concurrency and ScopedValue replacing ThreadLocal, Stream/Optional/Collector pipelines, compact-constructor validation, parametrized JDBC, and the Maven 3.9 / Gradle 9 build surface against a current JDK. Triggers: \"write a Java service\", \"is this idiomatic Java\", \"refactor this instanceof ladder\", \"fetch 500 URLs concurrently\", \"model this domain with records\", .java files, pom.xml, build.gradle, the non-obvious \"my ThreadLocal context disappears inside the tasks I submit\" (that is ScopedValue), \"modela este dominio de pagos con tipos inmutables\", \"refactoritza aquest switch\". NOT Spring framework wiring (that is spring-boot)."
+description: "Use when writing, reviewing or refactoring modern Java (21+, 25 LTS) — records and sealed interfaces as algebraic data types, exhaustive pattern-matching switch over instanceof ladders, virtual-thread concurrency, structured concurrency and ScopedValue replacing ThreadLocal, Stream and Optional pipelines, compact-constructor validation, parametrized JDBC, and the Maven/Gradle build surface. NOT Spring framework wiring (that is `spring-boot`)."
 tags: [java, jvm, records, virtual-threads, sealed-types]
 recommends: [spring-boot, secure-coding, deployment]
 origin: risco

@@ -1,6 +1,6 @@
 ---
 name: kpi-framework
-description: "Use when a team must decide what to measure before building anything — picking one north-star metric, separating leading input drivers from lagging outputs, adding guardrails so a number can't be gamed, or setting a target that isn't arbitrary. Triggers: 'what should we even be measuring', 'we track 40 KPIs and nothing leads anywhere', 'is signups a leading or lagging indicator', 'set an activation target that won't get gamed', 'pick a north star for the product', 'audit our vanity metrics', 'quins KPIs triem per al producte', 'qué métrica norte elegimos'. NOT building the live dashboard that displays them (that is dashboard), NOT instrumenting the events (that is analytics), NOT the recurring board report (that is reporting)."
+description: "Use when a team must decide what to measure before building anything — picking one north-star metric, separating leading input drivers from lagging outputs, adding guardrails so a number cannot be gamed, and setting a target that is not arbitrary. NOT the live dashboard that displays them (that is `dashboard`), NOT instrumenting the events (that is `analytics`), NOT the recurring board report (that is `reporting`)."
 tags: [north-star-metric, leading-vs-lagging, input-metrics, guardrail-metrics, target-setting, vanity-metrics, kpi-tree]
 recommends: [analytics, dashboard, reporting, ab-testing, forecasting, business-intelligence, unit-economics, project-ops]
 origin: risco
