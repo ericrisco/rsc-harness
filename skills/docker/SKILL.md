@@ -1,6 +1,6 @@
 ---
 name: docker
-description: "Use when authoring or auditing a Dockerfile/Containerfile, shrinking a bloated image, hardening a container that runs as root, choosing a base image, or wiring a Compose dev loop with hot reload. Triggers: 'dockerize this app', 'my node image is 1.2GB make it smaller', 'the build cache keeps busting', 'harden this Dockerfile, trivy flags it', 'docker compose watch for local dev', 'distroless vs alpine vs slim', 'la imagen pesa demasiado', 'el build de docker tarda siglos'. NOT the CI/CD pipeline or deploy-to-host (that is deployment), NOT k8s autoscaling/HPA (that is scaling), NOT app-level SQL injection or secrets-in-code (that is secure-coding)."
+description: "Use when authoring or auditing a Dockerfile, shrinking a bloated image, hardening a container that runs as root, picking a base image, or wiring a Compose dev loop with hot reload. NOT CI builds or deploy-to-host (that is `deployment`), NOT k8s autoscaling (that is `scaling`), NOT app-level injection or secrets-in-code (that is `secure-coding`)."
 tags: [docker, containers, dockerfile, compose, image-security]
 recommends: [deployment, secure-coding, scaling, github-actions]
 origin: risco
@@ -20,17 +20,8 @@ source  →  Dockerfile (multi-stage, cache mounts)  →  small + scanned image 
 ```
 
 The hand-off is sharp: **the moment you have a green, scanned image and a working
-`compose.yaml`, you are done.** Pushing to a registry, building in CI, deploying to a host,
-rollback — that is `../deployment/SKILL.md`. It already references Dockerfiles; you are the
-image-internals specialist it leans on.
-
-## When to use
-
-- Authoring or auditing a `Dockerfile` for any stack (Node, Python, Go, Rust, JVM, static SPA).
-- An image is too big (800 MB+ Node image), builds too slowly, or fails `trivy`/`hadolint`.
-- A container runs as root and you need least privilege.
-- Standing up local dev with `compose.yaml` + `docker compose watch` (sync / rebuild / sync+restart).
-- Choosing a base image and getting multi-stage + BuildKit cache mounts right.
+`compose.yaml`, you are done.** Everything downstream is `../deployment/SKILL.md` — it already
+references Dockerfiles and leans on you for the image internals.
 
 ## When NOT to use — and who owns it instead
 
@@ -41,24 +32,6 @@ image-internals specialist it leans on.
 | App SQL injection, secrets in source, dep CVE triage | `../secure-coding/SKILL.md` | You cover only *image/container* hardening |
 | Install/operate a self-hosted PaaS | `../coolify/SKILL.md` | Host operation, not the image |
 | Containerless PaaS deploy mechanics | `../railway/SKILL.md`, `../fly-io/SKILL.md` | Platform deploy, not the Dockerfile |
-
-## The five rules
-
-1. **Multi-stage, always.** Build deps (compilers, dev packages, the full SDK) must never reach
-   the runtime image. Multiple `FROM` stages; copy only the built artifact into a minimal final
-   stage. *Why: a Go binary needs ~10 MB, not a 900 MB toolchain — and every extra package is CVE
-   surface.*
-2. **Choose the base deliberately and pin it — never `:latest`.** Pin a tag (ideally a digest)
-   so a rebuild is reproducible. *Why: `:latest` silently changes under you, breaking builds and
-   busting the scan you just passed.*
-3. **Install deps before copying source.** Order layers so the lockfile install is cached and use
-   BuildKit cache mounts. *Why: copying everything first invalidates the dependency layer on every
-   one-character source edit.*
-4. **Run as a non-root `USER`.** Default PID 1 is root (UID 0); a container escape from root is a
-   host compromise. *Why: least privilege is the cheapest blast-radius reduction you can ship.*
-5. **One concern per container; EXEC-form `CMD`; add a `HEALTHCHECK`.** *Why: shell-form `CMD foo`
-   wraps your process in `/bin/sh -c`, which swallows `SIGTERM` so the container ignores graceful
-   shutdown; a healthcheck lets Compose/orchestrators gate on readiness.*
 
 ## Pick a base image (2026 reality)
 
@@ -72,7 +45,8 @@ image-internals specialist it leans on.
 
 Rule of thumb: glibc app with native deps → `*-slim` or Wolfi. Static Go binary → `scratch` or
 `distroless/static`. Security mandate → Chainguard. Reach for `alpine` only when you've confirmed
-your wheels/native libs build against musl. Per-language tag maps live in
+your wheels/native libs build against musl. Per-language tag maps, multi-stage templates for the
+stacks not shown below (Rust, JVM `jlink`, static SPA → nginx) and multi-arch buildx live in
 [references/base-images-and-stages.md](references/base-images-and-stages.md).
 
 ## Multi-stage skeletons
@@ -204,8 +178,9 @@ docker build --secret id=npm_token,env=NPM_TOKEN .
 ## Compose for dev
 
 Canonical filename is `compose.yaml`; **omit the obsolete `version:` key**; use `docker compose`
-(v2 subcommand), never the standalone `docker-compose` v1. `develop.watch` is GA since Compose
-2.22.0 and gives you a tight dev loop.
+(v2 subcommand), never the standalone `docker-compose` v1. One concern per container — the app, the
+database and the seed job are separate services. `develop.watch` is GA since Compose 2.22.0 and
+gives you a tight dev loop.
 
 ```yaml
 services:
@@ -264,20 +239,13 @@ These are exactly what `scripts/verify.sh` automates (it skips a tool gracefully
 
 | Bad | Good | Why |
 |---|---|---|
-| `FROM node:latest` | `FROM node:24-bookworm-slim` (pin/digest) | `:latest` drifts; builds + scans become non-reproducible |
-| runs as root (no `USER`) | `USER nonroot` / `USER 10001` | root escape == host compromise |
+| `FROM node:latest` | `FROM node:24-bookworm-slim`, or pin a digest | `:latest` drifts under you; builds + scans become non-reproducible |
+| runs as root (no `USER`) | `USER nonroot` / `USER 10001` | PID 1 defaults to root (UID 0), so a container escape == host compromise |
 | `ARG TOKEN` / `ENV SECRET=` | `RUN --mount=type=secret,...` | ARG/ENV persist in image history & layers |
 | `COPY . .` then `RUN npm ci` | copy lockfile → install → copy source | source edits bust the dep cache layer every build |
 | single `FROM`, ship the SDK | multi-stage, copy only the artifact | runtime carries compilers & dev CVE surface |
 | `apt-get install x` | `apt-get install --no-install-recommends x && rm -rf /var/lib/apt/lists/*` | recommends + apt lists bloat the layer |
 | no `.dockerignore` | mirror `.gitignore` + build outputs | whole context ships; `.env`/`.git` can leak |
 | `version: "3.8"` / `docker-compose` v1 | omit `version:`; `docker compose` v2 | the key is obsolete; v1 is EOL |
-| `CMD npm start` (shell form) | `CMD ["node", "server.js"]` (exec) | shell form swallows `SIGTERM`; no graceful shutdown |
-
-## References & siblings
-
-- [references/base-images-and-stages.md](references/base-images-and-stages.md) — per-language
-  multi-stage templates (Rust, JVM jlink, static SPA → nginx), tag maps, multi-arch buildx.
-- [references/compose-recipes.md](references/compose-recipes.md) — fuller Compose patterns.
-- Once the image is green and scanned: `../deployment/SKILL.md`. Image/container hardening pairs
-  with `../secure-coding/SKILL.md`. Self-hosted host ops: `../coolify/SKILL.md`.
+| `CMD npm start` (shell form) | `CMD ["node", "server.js"]` (exec) | shell form wraps the process in `/bin/sh -c`, which swallows `SIGTERM` — no graceful shutdown |
+| no `HEALTHCHECK` | `HEALTHCHECK CMD [...]` | nothing for Compose/orchestrators to gate readiness on (`condition: service_healthy`) |
