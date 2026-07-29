@@ -1,6 +1,6 @@
 ---
 name: gamedev-shipping
-description: "Use when exporting, building, packaging, or publishing a game — per engine (Godot export templates, Unity Build Profiles, Unreal Shipping vs Development) and per platform: desktop (Windows/macOS/Linux; macOS codesign + notarytool notarization), web (the COOP same-origin + COEP require-corp headers threaded SharedArrayBuffer WebAssembly builds need, and that Godot's C#/.NET edition can't export to web), mobile (Android JDK 17 build template, AAB vs APK, release keystore; iOS provisioning). Also store prep (icons/splash, metadata, age ratings, AAB for Play, Mac App Store, Steamworks/SteamPipe, itch.io butler), headless-export CI/CD, build/version numbers, and ship-time size/startup optimization. Triggers: 'export my game', 'build for Steam', 'ship to web/mobile', 'publish to the Play Store', 'notarize my Mac build', 'itch.io upload', 'SharedArrayBuffer is not defined'. NOT for writing gameplay/runtime code (that's the engine skill — godot/unity/unreal) or hosting a normal web app/API/container (→ deployment)."
+description: "Use when exporting, packaging, signing, or publishing a game — export presets per engine, macOS notarization, cross-origin isolation for threaded web builds, Android AAB/keystore, iOS provisioning, store submission (Steam, Play, App Store, itch.io), headless build CI. NOT gameplay code inside the artifact (that is `godot`, `unity`, `unreal`), NOT hosting a web app or container (that is `deployment`)."
 tags: [export, build, release, packaging, store, steam, itch, notarization, webassembly, aab]
 recommends: [godot, unity, unreal, deployment]
 profiles: [full]
@@ -29,21 +29,14 @@ Godot templates·Unity Build Profiles·Unreal Shipping    desktop·web·mobile  
 | Android | JDK **17**, target a recent API level | AAB required for Google Play (new apps + updates). APK only for sideload/itch/direct. |
 | iOS/macOS | Xcode 16+, `notarytool` | `altool` notarization is dead — use `xcrun notarytool`. |
 
-## When to use / When NOT to use
+## When NOT to use — and who owns it instead
 
-**Use when:**
-- Configuring export templates / build presets / packaging settings for any target.
-- Signing & notarizing a desktop build, or debugging Gatekeeper/SmartScreen rejections.
-- Fixing a web build that boots to `SharedArrayBuffer is not defined` or a blank canvas.
-- Producing an AAB/APK or an iOS archive; wiring keystores/provisioning.
-- Store submission prep (icons, metadata, ratings) or uploading to Steam/itch/Play/App Store.
-- Automating headless exports in CI, or setting version/build numbers.
-- Shrinking build size / startup time before release.
-
-**NOT for (route elsewhere, say so, stop):**
-- Writing gameplay, shaders, netcode, or any runtime logic → the **engine** skill (`godot`/`unity`/`unreal`) or `gamedev-shaders`/`gamedev-multiplayer`. This skill packages code; it does not write it.
-- Hosting a normal web app, API, or container (Dockerfile, Coolify, Vercel, VPS) → **`deployment`**. A WebAssembly game is *static files*; only its **headers** are special (below).
-- Designing game feel, economy, or narrative → `game-design` / `game-storytelling`.
+| Ask | Owner | Why the line is there |
+| --- | --- | --- |
+| Gameplay, shaders, netcode, physics — any runtime logic | `../godot/SKILL.md`, `../unity/SKILL.md`, `../unreal/SKILL.md`, `../gamedev-shaders/SKILL.md`, `../gamedev-multiplayer/SKILL.md`, `../gamedev-physics/SKILL.md` | This skill packages code, it does not write it. The boundary is the export button. |
+| Hosting a normal web app, API or container (Dockerfile, Coolify, Vercel, VPS) | `../deployment/SKILL.md` | A WebAssembly game is *static files*; only its **headers** are special (below). Borrow its Actions + header-setting patterns. |
+| Game feel, economy, narrative | `../game-design/SKILL.md`, `../game-storytelling/SKILL.md` | Design intent, not packaging. |
+| Signing-key and CI secret handling in general | `../secure-coding/SKILL.md` | The practice this skill assumes for keystores/certs. |
 
 ## Decision rules (settle these before touching a build)
 
@@ -96,7 +89,8 @@ RunUAT BuildCookRun -project="Game.uproject" -platform=Win64 \
 Android adds `-distribution` for an AAB; iOS requires a Mac + provisioning. Run the platform
 **Turnkey**/SDK setup once (Android Studio + NDK, or Xcode) or the cook fails.
 
-→ full per-engine preset/flag tables: `references/mobile-and-desktop.md` and `references/stores-and-ci.md`.
+→ full per-engine preset/flag tables: [references/mobile-and-desktop.md](references/mobile-and-desktop.md)
+and [references/stores-and-ci.md](references/stores-and-ci.md).
 
 ## Per-platform
 
@@ -141,7 +135,8 @@ files are fine. Where to set them:
 `COEP: require-corp` also means every cross-origin subresource (fonts, analytics, embeds) must
 send CORP/CORS or it's blocked. **Godot C#/.NET has no web export at all** — use GDScript.
 
-→ hosts, exact configs, the service-worker shim, self-test: `references/web-export-headers.md`.
+→ per-host configs, the service-worker shim, COEP subresource fallout, a self-test snippet and the
+Godot vs Unity web specifics: [references/web-export-headers.md](references/web-export-headers.md).
 
 ### Mobile
 
@@ -162,7 +157,8 @@ Keep the keystore + passwords out of git (CI secret). `versionCode` must increas
 then upload to App Store Connect / TestFlight via Xcode Organizer or **Transporter**. `CFBundleVersion`
 must increase per upload.
 
-→ full keystore, Play App Signing, provisioning, TestFlight walkthrough: `references/mobile-and-desktop.md`.
+→ full keystore + Play App Signing, provisioning/TestFlight, Windows Authenticode and Linux
+AppImage/Flatpak walkthroughs: [references/mobile-and-desktop.md](references/mobile-and-desktop.md).
 
 ## Store prep
 
@@ -174,7 +170,8 @@ must increase per upload.
 - **itch.io**: `butler push build/ user/game:channel --userversion 1.2.3` — channel name (e.g. `windows`, `html5`) picks the platform.
 - **Mac App Store**: Apple Distribution cert + App Sandbox entitlements (not Developer ID); notarization is handled by App Store submission.
 
-→ Steamworks/SteamPipe VDF, butler channels, Play/App Store checklists: `references/stores-and-ci.md`.
+→ Steamworks/SteamPipe VDF, butler channels, Play/App Store submission checklists:
+[references/stores-and-ci.md](references/stores-and-ci.md).
 
 ## CI/CD for builds
 
@@ -186,7 +183,7 @@ Headless export in GitHub Actions; version from the run/commit so every artifact
 - **Signing in CI**: import the keystore/cert from an encrypted secret at runtime, never commit it. macOS notarization runs on a `macos-latest` runner with `notarytool` + an App Store Connect API key.
 - **Versioning**: semver tag for releases; a monotonic build number from `github.run_number` or the git commit count feeds `versionCode`/`CFBundleVersion`/Steam build description.
 
-→ ready workflows per engine: `references/stores-and-ci.md`.
+→ ready per-engine workflows with signing: [references/stores-and-ci.md](references/stores-and-ci.md).
 
 ## Ship-time optimization
 
@@ -195,26 +192,19 @@ Headless export in GitHub Actions; version from the run/commit so every artifact
 - **Startup**: small boot scene, stream/preload heavy assets, compress the `.pck`/data, use Ogg Vorbis over WAV. Web: enable gzip/brotli on `.wasm`/`.pck`.
 - **Budgets**: set a per-platform size budget (web especially — every MB is download latency) and check the final artifact against it before submitting.
 
-## Anti-patterns — rationalization → STOP
+## Anti-patterns
 
-| Rationalization | STOP — do this instead |
+| Anti-pattern | Do instead |
 | --- | --- |
-| "Web build works locally, host later" | Set COOP/COEP now; `file://`/simple servers hide the `SharedArrayBuffer` failure. |
-| "I'll add C# web export for Godot" | It doesn't exist in 4.x. GDScript for web, or no web. |
-| "Notarization is optional" | On macOS, no notarize+staple = Gatekeeper blocks the app for every user. |
-| "Ship an APK to the Play Store" | Play requires **AAB** for new apps and updates. |
-| "Commit the keystore so CI can sign" | Keystore/cert live in encrypted CI secrets, never in git. |
-| "Ship the Development/Debug config" | Ship Godot release / Unity IL2CPP release / Unreal **Shipping** — debug leaks console + is slow. |
-| "Templates are close enough (4.5 vs 4.5.1)" | Godot templates must match the editor build exactly or export breaks. |
-| "Uncompressed textures are fine" | Per-platform compression (ASTC/BCn/ETC2) — raw textures blow memory + size. |
-| "Reuse an old versionCode/CFBundleVersion" | Both must strictly increase or the store rejects the upload. |
-
-## Related skills
-
-- `godot`, `unity`, `unreal` — write the game; this skill exports/ships what they build. Draw the line at the export button.
-- `deployment` — Docker/CI/hosting for **web apps & APIs**; borrow its GitHub Actions + header-setting patterns, but a WebAssembly game is static files, not a container.
-- `gamedev-shaders`, `gamedev-multiplayer`, `gamedev-physics` — runtime subsystems packaged into the ship artifact, not configured here.
-- `secure-coding` — signing-key and secret handling this skill assumes for keystores/certs in CI.
+| Web build works locally, host it later | Set COOP/COEP now; `file://` and simple servers hide the `SharedArrayBuffer` failure. |
+| Planning a Godot C# web export | It doesn't exist in 4.x. GDScript for web, or no web. |
+| Treating notarization as optional | On macOS, no notarize + staple = Gatekeeper blocks the app for every user. |
+| Shipping an APK to the Play Store | Play requires **AAB** for new apps and updates. |
+| Committing the keystore so CI can sign | Keystore/cert live in encrypted CI secrets, never in git. |
+| Shipping the Development/Debug config | Ship Godot release / Unity IL2CPP release / Unreal **Shipping** — debug leaks console + is slow. |
+| Export templates "close enough" (4.5 vs 4.5.1) | Godot templates must match the editor build exactly or export breaks. |
+| Uncompressed textures | Per-platform compression (ASTC/BCn/ETC2) — raw textures blow memory + size. |
+| Reusing an old versionCode/CFBundleVersion | Both must strictly increase or the store rejects the upload. |
 
 ## Checklist
 
@@ -228,9 +218,3 @@ Headless export in GitHub Actions; version from the run/commit so every artifact
 - [ ] Store assets: icons, splash, screenshots, metadata, age rating done.
 - [ ] Version/build number set from CI and traceable.
 - [ ] Textures compressed per platform; build size within budget.
-
-## References
-
-- `references/web-export-headers.md` — cross-origin isolation deep dive: COOP/COEP per host (Netlify/Vercel/nginx/itch/GitHub Pages), the `coi-serviceworker` shim, COEP subresource fallout, self-test snippet, Godot vs Unity web specifics.
-- `references/mobile-and-desktop.md` — Android keystore + Gradle template + Play App Signing; iOS provisioning/TestFlight; full macOS codesign→notarytool→staple; Windows Authenticode; Linux AppImage/Flatpak.
-- `references/stores-and-ci.md` — Steamworks/SteamPipe VDF upload, itch.io butler channels, Play/App Store submission checklists, and per-engine GitHub Actions headless-build workflows with signing.
