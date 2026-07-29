@@ -4231,7 +4231,7 @@
     },
     {
       "id": "shopify",
-      "description": "Use when building or customizing a Shopify store across its three code surfaces — themes (Liquid + Online Store 2.0 sections/blocks/JSON templates), apps (Remix + versioned GraphQL Admin API), and checkout (UI extensions, Functions, Web Pixels). Triggers: writing/reviewing any .liquid section/snippet/template or {% schema %}, scaffolding a Shopify app with @shopify/shopify-app-remix + Polaris, Admin GraphQL queries and the query-cost/throttle model, shopify CLI flow (theme dev/push, app dev/deploy), 'merchant must edit content in the theme editor without a deploy', 'our checkout customizations broke after the August upgrade', 'add an @app block to the product section', 'migrar el checkout.liquid a checkout extensibility', 'afegir un bloc d'app a la secció de producte'. NOT WooCommerce/PHP stores (that is wordpress), NOT the React/RSC layer of a headless storefront (that is nextjs), NOT non-Shopify payment integrations (that is stripe).",
+      "description": "Use when building or customizing a Shopify store across its three code surfaces — themes (Liquid, Online Store 2.0 sections, blocks and JSON templates), apps (Remix with the versioned GraphQL Admin API and its query-cost model), and checkout (UI extensions, Functions, Web Pixels), plus the CLI flow and checkout-extensibility migration. NOT WooCommerce or PHP stores (that is `wordpress`), NOT the React layer of a headless storefront (that is `nextjs`), NOT non-Shopify payment integrations (that is `stripe`).",
       "tags": [
         "shopify",
         "liquid",
@@ -4252,7 +4252,7 @@
     },
     {
       "id": "shortform-editing",
-      "description": "Use when you have raw 9:16 footage and need it cut into a posted-ready vertical short — dead air removed, fast jump cuts, karaoke word-by-word burned-in captions from a transcript, cuts and zooms snapped to the music beat, and a platform-correct MP4 export. Use to remove silences, generate or fix burned captions, sync cuts to a beat grid, or encode to TikTok/Reels/Shorts specs. Triggers: 'remove the dead air from this talking-head clip', 'burn TikTok-style word-by-word captions onto this short', 'cut this footage to the beat of the song', 'export this Reel with the right specs', 'my captions are out of sync and getting hidden behind the TikTok buttons', 'quítale los silencios y ponle subtítulos quemados estilo TikTok', 'munta'm aquest clip vertical amb talls sincronitzats amb la música'. NOT writing the script, hook, beats, or caption text (that is video-shorts), NOT building a Remotion React composition codebase (that is remotion-video), NOT deciding when/where to post (that is social-publisher).",
+      "description": "Use when you have raw 9:16 footage and need it cut into a post-ready vertical short — dead air removed, fast jump cuts, karaoke word-by-word burned-in captions from a transcript, cuts and zooms snapped to the music beat, safe-area placement so captions clear the platform UI, and a platform-correct MP4 export. NOT writing the script, hook, beats or caption text (that is `video-shorts`), NOT building a Remotion React composition codebase (that is `remotion-video`), NOT deciding when or where to post (that is `social-publisher`).",
       "tags": [
         "video-editing",
         "shortform",
@@ -4294,7 +4294,7 @@
     },
     {
       "id": "shortform-packaging",
-      "description": "Use when a vertical short (TikTok/Reels/YouTube Shorts) is shot or scripted and you need the upload-form copy and cover that win the feed: the hook line, the first-frame on-screen text, the search-led caption, a tight 3-5 hashtag set, and the cover frame; it learns from what performed via the 02-DOCS log. Triggers: 'write the hook and caption for this Reel', 'pick the cover frame and its text', 'what hashtags for this TikTok', the non-obvious 'is 20 hashtags too many' and 'my shorts get views but nobody shares them, fix the packaging', 'rewrite the caption to rank in TikTok search', 'log how the last 5 shorts performed and apply it', plus Spanish/Catalan 'escríbeme el gancho y el pie de foto para este Reel' / 'ningú comparteix els meus vídeos, arregla'm el packaging i dona'm els hashtags'. NOT inventing the idea (that is shortform-ideation), NOT scripting or directing the cuts (that is video-shorts), NOT executing the edit (that is shortform-editing), NOT scheduling the post (that is social-publisher).",
+      "description": "Use when a vertical short is shot or scripted and you need the upload-form copy and cover that win the feed — the hook line, the first-frame on-screen text, the search-led caption, a tight hashtag set, and the cover frame; it learns from what performed via the 02-DOCS log. NOT inventing the idea (that is `shortform-ideation`), NOT scripting or directing the cuts (that is `video-shorts`), NOT executing the edit (that is `shortform-editing`), NOT scheduling the post (that is `social-publisher`).",
       "tags": [
         "shortform",
         "packaging",
@@ -4348,7 +4348,7 @@
     },
     {
       "id": "skill-scout",
-      "description": "Use when about to do a task and a specialized skill probably exists but is not loaded, when a task feels harder than it should because generic reasoning is doing a domain skill's job, or when auditing a workspace's skill coverage for holes. Triggers: 'is there a skill for this?', 'what skill am I missing?', 'should I install a skill before doing this?', 'audit my .claude/skills against what this repo does', 'this feels like reinventing something we already have a skill for', 'qué skill me falta', 'quina skill em falta'. Names the absent skill and emits an install command, or routes to author-skill when none exists. NOT routing among skills you already have (that is suggest), and NOT writing the skill when none exists (that is author-skill).",
+      "description": "Use when a specialized skill probably exists but is not loaded, when a task feels harder than it should because generic reasoning is doing a domain skill's job, or when auditing a workspace's skill coverage for holes. Names the absent skill and emits an install command, or routes onward when none exists. NOT routing among skills you already have (that is `suggest`), NOT writing the skill when none exists (that is `author-skill`).",
       "tags": [
         "skill-discovery",
         "capability-gap",
@@ -4367,7 +4367,7 @@
     },
     {
       "id": "social-publisher",
-      "description": "Use when planning a posting schedule, building a multi-platform content calendar, or reshaping one source asset into channel-native posts across X, LinkedIn, Instagram, Threads, Bluesky, TikTok, Facebook, or YouTube — deciding cadence, best-time slots, per-platform char/format limits, and producing a dated CSV/JSON calendar a scheduler can import. Use when the same caption flopped after being cross-posted everywhere, when reach drops after a posting gap, or when checking API publish caps before programmatic posting. Triggers: 'build me a posting schedule for next week', 'turn this blog into a week of posts', 'give me a CSV calendar I can import into Buffer', 'how often and what time should we post Reels vs LinkedIn', 'I posted the same text on every platform and it tanked', 'planificar el calendario de publicaciones', 'reaprovechar aquest post a tots els canals'. NOT the brand voice the posts speak in (that is brand-voice) and NOT the editorial strategy of what to make (that is content-engine).",
+      "description": "Use when planning a posting schedule, building a multi-platform content calendar, or reshaping one source asset into channel-native posts across X, LinkedIn, Instagram, Threads, Bluesky, TikTok, Facebook or YouTube — cadence, best-time slots, per-platform format limits, API publish caps, and a dated CSV or JSON calendar a scheduler can import. NOT the brand voice the posts speak in (that is `brand-voice`), NOT the editorial strategy of what to make (that is `content-engine`).",
       "tags": [
         "social-media",
         "scheduling",
@@ -4386,7 +4386,7 @@
     },
     {
       "id": "solid-js",
-      "description": "Use when building, reviewing, or debugging a SolidJS app — signals, stores, effects, memos, resources, and JSX that compiles to real DOM with no virtual DOM (solid-js 1.9.x stable, Solid 2.0 beta, @solidjs/router). Triggers: \\\"signal isn't updating the UI\\\", \\\"<For> vs <Index>\\\", \\\"createStore for a form\\\", \\\"createEffect infinite loop\\\", \\\"why does my component only run once\\\", \\\"el prop no es reactiu quan el desestructuro\\\", \\\"mi prop no se actualiza al desestructurar\\\". NOT React's re-render model (that is react).",
+      "description": "Use when building, reviewing or debugging a SolidJS app — signals, stores, effects, memos and resources, and JSX that compiles to real DOM with no virtual DOM. Covers the classic traps: a signal that does not update the UI, For versus Index, effect loops, components that run once, and props losing reactivity when destructured. NOT React's re-render model (that is `react`).",
       "tags": [
         "solidjs",
         "signals",
@@ -4404,7 +4404,7 @@
     },
     {
       "id": "sop-builder",
-      "description": "Use when a repeated process lives in one person's head, breaks when they're out, gets re-explained to every new hire, or produces inconsistent results because everyone does it differently — and needs to be written down once so anyone (or an agent) can run it the same way. Also when an existing SOP is stale, ignored, or missing its branches and needs an audit + rewrite. Triggers: 'write an SOP for how we publish the weekly newsletter', 'document this process step by step', 'turn this Loom/recording into a written procedure', 'it breaks every time Maria is on holiday because nobody else knows how she does it', 'our client handoff is different every time, standardize it', 'documenta este proceso paso a paso', 'crea un procedimiento para que cualquiera lo pueda hacer'. NOT capturing a meeting's decisions and action items (that is meeting-notes), NOT running a one-time project plan with milestones (that is project-ops).",
+      "description": "Use when a repeated process lives in one person's head, breaks when they are away, gets re-explained to every new hire, or produces inconsistent results — and needs writing down once so anyone or any agent can run it the same way. Also for auditing and rewriting an SOP that is stale, ignored or missing its branches. NOT capturing a meeting's decisions and action items (that is `meeting-notes`), NOT running a one-time project plan with milestones (that is `project-ops`).",
       "tags": [
         "sop",
         "process-documentation",
@@ -4442,7 +4442,7 @@
     },
     {
       "id": "spreadsheet-ops",
-      "description": "Use when you must work a spreadsheet programmatically: write or repair a formula, generate an .xlsx file with Python (charts, conditional formats, append a sheet), drive Google Sheets from a script, build a read→transform→write-to-sheet pipeline, or write an in-sheet macro/trigger. Symptoms: a formula returns #VALUE!/#REF!/#SPILL!, a nightly job hits 429 quota on the Sheets API, or openpyxl 'wrote' a formula but the cell reads back blank. Triggers: 'export this DataFrame to Excel with a chart', 'my SUMIFS returns #VALUE!', 'append rows to a Google Sheet every night', 'openpyxl formula shows blank until I open in Excel', 'service account can't see my sheet / PermissionError', 'build an XLOOKUP across sheets', 'automatitza un full de càlcul', 'haz una macro de Google Sheets que coloree filas'. NOT pure dedupe/normalize with no sheet output (that is data-cleaning), NOT scraping a web table into rows (that is data-scraper), NOT multi-app event wiring (that is automation-flows).",
+      "description": "Use when working a spreadsheet programmatically — writing or repairing a formula, generating an .xlsx with Python including charts and conditional formats, driving Google Sheets from a script, building a read-transform-write pipeline, or writing an in-sheet macro or trigger. Covers formula errors, Sheets API quota, service-account permissions, and formulas that read back blank. NOT pure dedupe or normalisation with no sheet output (that is `data-cleaning`), NOT scraping a web table into rows (that is `data-scraper`), NOT multi-app event wiring (that is `automation-flows`).",
       "tags": [
         "spreadsheet",
         "excel",

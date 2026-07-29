@@ -1,6 +1,6 @@
 ---
 name: solid-js
-description: "Use when building, reviewing, or debugging a SolidJS app — signals, stores, effects, memos, resources, and JSX that compiles to real DOM with no virtual DOM (solid-js 1.9.x stable, Solid 2.0 beta, @solidjs/router). Triggers: \"signal isn't updating the UI\", \"<For> vs <Index>\", \"createStore for a form\", \"createEffect infinite loop\", \"why does my component only run once\", \"el prop no es reactiu quan el desestructuro\", \"mi prop no se actualiza al desestructurar\". NOT React's re-render model (that is react)."
+description: "Use when building, reviewing or debugging a SolidJS app — signals, stores, effects, memos and resources, and JSX that compiles to real DOM with no virtual DOM. Covers the classic traps: a signal that does not update the UI, For versus Index, effect loops, components that run once, and props losing reactivity when destructured. NOT React's re-render model (that is `react`)."
 tags: [solidjs, signals, reactivity, frontend, jsx, web]
 recommends: [vercel, testing-web, design]
 origin: risco

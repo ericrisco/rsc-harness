@@ -1,6 +1,6 @@
 ---
 name: sop-builder
-description: "Use when a repeated process lives in one person's head, breaks when they're out, gets re-explained to every new hire, or produces inconsistent results because everyone does it differently — and needs to be written down once so anyone (or an agent) can run it the same way. Also when an existing SOP is stale, ignored, or missing its branches and needs an audit + rewrite. Triggers: 'write an SOP for how we publish the weekly newsletter', 'document this process step by step', 'turn this Loom/recording into a written procedure', 'it breaks every time Maria is on holiday because nobody else knows how she does it', 'our client handoff is different every time, standardize it', 'documenta este proceso paso a paso', 'crea un procedimiento para que cualquiera lo pueda hacer'. NOT capturing a meeting's decisions and action items (that is meeting-notes), NOT running a one-time project plan with milestones (that is project-ops)."
+description: "Use when a repeated process lives in one person's head, breaks when they are away, gets re-explained to every new hire, or produces inconsistent results — and needs writing down once so anyone or any agent can run it the same way. Also for auditing and rewriting an SOP that is stale, ignored or missing its branches. NOT capturing a meeting's decisions and action items (that is `meeting-notes`), NOT running a one-time project plan with milestones (that is `project-ops`)."
 tags:
   - sop
   - process-documentation
