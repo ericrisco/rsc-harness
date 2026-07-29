@@ -1,6 +1,6 @@
 ---
 name: instagram-api
-description: "Use when wiring an agent into Instagram's Graph API to publish a Reel from a video URL, pull per-media insights (reach, views, watch-time, saves, shares, total_interactions), check the 24-hour publish cap, or ingest Reel performance into 02-DOCS/wiki/shortform. Triggers: 'publish this Reel via the API', 'pull reach and average watch time for these media IDs', 'why does /insights?metric=plays return an error', 'my container is stuck IN_PROGRESS', 'how many posts left in the 24h publish window', 'publica este Reel por la API', 'ingesta el rendimiento dels Reels al wiki'. NOT TikTok publishing (that is tiktok-api), NOT a posting calendar/cadence (that is social-publisher), NOT YouTube uploads/stats (that is youtube-api)."
+description: "Use when wiring an agent into Instagram's Graph API: publishing a Reel through the create/poll/publish container dance, reading per-media insights, checking the 24h publish cap, or ingesting Reel metrics into 02-DOCS/wiki/shortform. NOT TikTok (that is `tiktok-api`), NOT YouTube (that is `youtube-api`), NOT cross-platform cadence (that is `social-publisher`)."
 tags: [instagram, graph-api, content-publishing, reels, insights, shortform]
 recommends: [tiktok-api, youtube-api, social-publisher, shortform-strategy, api-connector-builder]
 origin: risco
@@ -12,15 +12,10 @@ The wire between an agent and Instagram's Graph API: publish Reels, pull the met
 
 All facts below are pinned to **Graph API v25.0** (current as of 2026-06-02). When you generate code, pin the version explicitly; Meta breaks metrics on version boundaries.
 
-## When to use / when NOT
+## Route out
 
-| The ask | Route |
+| The ask | Skill |
 |---|---|
-| Publish a Reel from a public `video_url` to an IG professional account | **here** |
-| Pull reach / views / watch-time / saves / shares for media IDs | **here** |
-| `/insights?metric=plays` (or `impressions`) suddenly errors | **here** (deprecation trap) |
-| Check the 24h publish cap before a batch | **here** |
-| Long-lived token exchange / refresh, scope wiring | **here** |
 | Post the same clip to **TikTok** | `tiktok-api` |
 | Upload to **YouTube** / pull YouTube stats | [`youtube-api`](../youtube-api/SKILL.md) |
 | Cadence, best-time, multi-platform calendar | [`social-publisher`](../social-publisher/SKILL.md) |
@@ -125,6 +120,8 @@ Bad:  video_url behind auth or a 30s signed URL -> container stalls in ERROR.
 Good: a plain public MP4 that stays reachable for the full ~5 min window.
 ```
 
+Full container field reference (reels / carousel / story), cover & thumb handling, error codes, retry/backoff, and batch publish with cap check → `references/publish-reel.md`.
+
 ## Status polling rules
 
 `status_code` is the only honest signal. Branch on it, do not guess from timing.
@@ -180,6 +177,8 @@ Requesting any retired metric does not return null — it **400s the entire insi
 
 If a previously-working call started erroring, this table is almost certainly why: a metric you used to request was retired on a version boundary. Swap to `views` and drop the dead names.
 
+Complete current metric tables per media type, the full deprecated→replacement map with dates, version-gated 2025–2026 additions, and the `02-DOCS/wiki/shortform/` ingest schema spec → `references/insights-metrics.md`.
+
 ## Ingest into 02-DOCS/wiki/shortform/
 
 This is the checkable deliverable. One file per media id, idempotent overwrite (re-running a pull refreshes `pulled_at` and metrics, never duplicates).
@@ -222,14 +221,6 @@ current valid Reels set; no deprecated names requested.
 
 `type` is the only required OKF v0.1 field; `title`/`description`/`tags`/`timestamp` are the recommended OKF surface (`timestamp` mirrors the pull instant). The DOMAIN keys below are mandatory and stay byte-for-byte — `verify.sh` requires a pinned `graph_version` and greps the `metrics` block for deprecated names; `pulled_at` is the API-pull instant verify/diff rely on. Keep both `pulled_at` and `timestamp`. Why front-matter + media-id filename: the wiki is queried by key, and re-pulls must be diffable, not additive (the idempotent overwrite re-stamps `timestamp` and `pulled_at` together).
 
-## Migration & gotchas
-
-- **Scopes:** replace `instagram_basic` → `instagram_business_basic`, `instagram_content_publish` → `instagram_business_content_publish`. Old names grant nothing post-2025-01-27.
-- **Host:** chosen by login path, not per call. Do not send a `graph.instagram.com` token to `graph.facebook.com`.
-- **Token:** refresh the 60-day long-lived token before expiry; expired tokens fail every call with an auth error, not a 404.
-- **Reel eligibility:** 9:16, 5–90s, H.264/HEVC. A non-conforming source surfaces as container `ERROR`, not a clean validation message.
-- **New 2025–2026 metrics** (Reels skip rate, repost counts, crossposted views): optional and version-gated. Confirm they exist on `GRAPH_VERSION` before requesting, or they trip the same 400 trap.
-
 ## Anti-patterns
 
 | Anti-pattern | Why it bites | Do instead |
@@ -239,10 +230,9 @@ current valid Reels set; no deprecated names requested.
 | Leaving `GRAPH_VERSION` blank / using default | Metric set silently shifts on Meta's rollout | Pin `v25.0` in every call |
 | Signed/auth-gated `video_url` | Container stalls in `ERROR` | Plain public MP4 for the full window |
 | Batch publishing without cap check | Hit #51 mid-run, half-published queue | `content_publishing_limit` before the loop |
-| Old scopes (`instagram_basic`) | Grant nothing since 2025-01-27 | `instagram_business_*` scopes |
+| Old scopes (`instagram_basic`, `instagram_content_publish`) | Grant nothing since 2025-01-27 | `instagram_business_basic` / `instagram_business_content_publish` |
 | Storing the container id as "the post" | It's not the published media id | Persist the `media_publish` id |
-
-## References
-
-- `references/publish-reel.md` — full container field reference (reels / carousel / story), cover & thumb handling, error codes, retry/backoff, batch publish with cap check.
-- `references/insights-metrics.md` — complete current metric tables per media type, the full deprecated→replacement map with dates, version-gated 2025–2026 additions, and the `02-DOCS/wiki/shortform/` ingest schema spec.
+| Sending a `graph.instagram.com` token to `graph.facebook.com` | Host is fixed by the login path, not chosen per call | Pick the host with the auth path and stay on it |
+| Letting the 60-day long-lived token lapse | Every call fails with an auth error, not a 404 | Refresh before expiry |
+| A source video outside Reel eligibility | Surfaces as container `ERROR`, not a clean validation message | 9:16, 5–90s, H.264/HEVC |
+| Requesting the 2025–2026 additions (Reels skip rate, repost counts, crossposted views) blind | Version-gated — trips the same 400 trap as a deprecated name | Confirm they exist on `GRAPH_VERSION` first |
