@@ -2549,7 +2549,7 @@
     },
     {
       "id": "lead-gen",
-      "description": "Use when you need to find and qualify prospects, build a target list, or score and prioritize leads before anyone reaches out — defining an ICP, sourcing named accounts/contacts from Apollo/ZoomInfo/Clay, deduping against the CRM, and ranking with a fit+intent+engagement model. Triggers: 'build me a prospect list', 'who should we sell to', 'score these leads', 'which accounts do we call first', 'tighten our ICP', 'is this cold list GDPR-safe', 'necesito una lista de clientes potenciales', 'califica estos leads', 'a qui truquem primer'. NOT writing or sending the outreach (that is cold-outreach), NOT tracking the deal after first contact (that is sales-pipeline).",
+      "description": "Use when building and qualifying a prospect list before anyone reaches out — a falsifiable ICP, named accounts/contacts from Apollo/ZoomInfo/Clay, deduped against the CRM, tiered by fit+intent+engagement. NOT writing or sending the outreach (that is cold-outreach), NOT tracking the deal after first contact (that is sales-pipeline).",
       "tags": [
         "lead-generation",
         "prospecting",
@@ -2609,7 +2609,7 @@
     },
     {
       "id": "linkedin-carousels",
-      "description": "Use when designing a LinkedIn carousel / document post — the swipeable multi-page PDF that is currently the highest-reach native LinkedIn format — and you need the slide-by-slide build: a scroll-stopping cover hook, a narrative arc that pulls swipe-to-swipe, one focused idea per slide with real visual hierarchy, a payoff + CTA closer, and a PDF export spec. Triggers: 'turn this into a LinkedIn carousel', 'design a swipeable PDF document post', 'my carousel cover gets no swipes fix the hook', 'how many slides and what goes on each', 'restructure one-idea-per-slide', 'what size to export so it isnt cropped on mobile', 'convierte este post en un carrusel de LinkedIn', 'dissenya'm un carrusel de LinkedIn amb portada i CTA'. NOT the account/format plan (that is linkedin-strategy), NOT a text or single-image feed post (that is linkedin-content), NOT a spoken-to talk deck (that is presentations).",
+      "description": "Use when building a LinkedIn carousel / document post — the swipeable multi-page PDF — slide by slide: cover hook, narrative arc, one idea per slide, CTA closer, PDF export spec. NOT the account/format plan (that is `linkedin-strategy`), NOT a text or single-image feed post (that is `linkedin-content`), NOT a 16:9 talk deck (that is `presentations`).",
       "tags": [
         "linkedin",
         "carousel",
@@ -2694,7 +2694,7 @@
     },
     {
       "id": "llm-pipeline",
-      "description": "Use when wiring several LLM calls into one production flow, when random 429s/timeouts/provider outages take a feature down, when adding a fallback model or a gateway in front of OpenAI/Claude, or when the bill explodes from uncached or flagship-everywhere calls. Triggers: 'chain these LLM calls', 'step 1 extracts step 2 summarizes', 'add a fallback if GPT fails use Claude', 'route easy requests to Haiku escalate to Opus', 'put a LiteLLM gateway in front', 'our bill tripled because we re-call the model on every request', 'semantic cache the responses', 'encadenar llamadas y cachear respuestas', 'cadena de crides a l'LLM amb fallback'. NOT prompt wording (that is prompt-engineering).",
+      "description": "Use when wiring several LLM calls into a production flow: typed contracts between steps, a router/gateway so 429s, timeouts and outages fail over instead of taking you down, and cost control via caching, model tiers and abort caps. NOT single-prompt wording (that is `prompt-engineering`), NOT a model-driven tool loop (that is `building-agents`).",
       "tags": [
         "llm-orchestration",
         "llm-gateway",
@@ -2912,7 +2912,7 @@
     },
     {
       "id": "modal",
-      "description": "Use when running Python functions or GPU workloads serverlessly on Modal — defining a modal.App with inline container Images, scaling @app.function onto CPU/GPU, persisting weights or datasets in a Volume, scheduling jobs, serving an HTTP/ASGI endpoint, or choosing modal run vs serve vs deploy. Triggers: 'run my embedding job on an H100 without managing servers', 'cache HuggingFace weights across runs', 'my @app.function GPU string errors', 'gpu=modal.gpu.A100() fails', 'modal serve isn't hot-reloading my fastapi_endpoint', 'cold start too slow / keep a warm pool', 'ejecutar Python en GPU serverless', 'desplegar un model de difusió amb GPU sense servidor i exposar-lo per HTTP'. NOT managed prediction endpoints with no infra code (that is replicate) and NOT persistent SSH-able GPU pods rented by the hour (that is runpod).",
+      "description": "Use when running Python or GPU workloads serverlessly on Modal — modal.App, inline container Images, gpu= on @app.function, Volumes for weight caching, Cron schedules, ASGI endpoints, modal run vs serve vs deploy. NOT managed prediction APIs with no container of your own (that is replicate); NOT SSH-able GPU boxes rented by the hour (that is runpod).",
       "tags": [
         "modal",
         "serverless",
@@ -3075,7 +3075,7 @@
     },
     {
       "id": "newsletter",
-      "description": "Use when running an email newsletter as a recurring publication — writing the subject line + preview text, structuring an issue so opens turn into clicks, the welcome/onboarding sequence, send cadence and engagement segmentation, growth loops (referral, signup incentive, double opt-in), and a metric scorecard that survives Apple Mail Privacy Protection. Triggers: 'write the newsletter subject line', 'my newsletter gets opened but nobody clicks', 'set up a welcome sequence', 'grow my newsletter list', 'newsletter referral program', 'how often should I send', 'what metrics matter now that opens are fake', 'click-to-open rate', 'escriu la newsletter d'aquesta setmana', 'campaña de newsletter que convierta'. NOT the one-off product launch or nurture campaign (that is marketing), NOT the SPF/DKIM/DMARC plumbing under the send (that is email-deliverability).",
+      "description": "Use when running an email newsletter as a recurring publication — subject + preview pair, issues that turn opens into clicks, the welcome sequence, cadence and engagement tiering, growth loops, and a post-Apple-MPP click scorecard. NOT one-off launch or nurture sends (that is `marketing`), NOT SPF/DKIM/DMARC (that is `email-deliverability`).",
       "tags": [
         "newsletter",
         "email",
@@ -3609,7 +3609,7 @@
     },
     {
       "id": "prompt-engineering",
-      "description": "Use when one prompt has to give the same right answer across reruns, models, and hostile inputs — a prompt that works sometimes, forcing valid JSON or a fixed schema out of a model, choosing how many few-shot examples and which ones, hardening a prompt against injected instructions, writing a tiny eval set before changing a prompt, or porting a prompt to a new model without behavior drift. Triggers: 'the prompt works sometimes', 'force valid JSON from the model', 'how many few-shot examples', 'outputs drift between reruns', 'the model ignores my instructions on long inputs', 'users can paste instructions into my input field', 'el prompt a veces falla', 'forzar JSON válido del modelo', 'el model no segueix les instruccions'. NOT the agent loop, tool wiring, or RAG retrieval (that is building-agents).",
+      "description": "Use when one prompt must give the same right answer across reruns, models, and pasted-in hostile input: forcing a fixed schema, picking the few-shot set, ordering the prompt blocks, or the inline cases you run while tuning. NOT the agent loop, tools, or retrieval (that is `building-agents`), NOT a standing CI eval harness (that is `agent-eval`).",
       "tags": [
         "prompts",
         "llm",
