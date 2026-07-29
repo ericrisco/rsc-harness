@@ -1,6 +1,6 @@
 ---
 name: db-migrations
-description: "Use when planning a schema change that must ship without downtime — adding a NOT NULL column, renaming/splitting/merging a column or table, changing a type, or backfilling millions of rows on a live table — and you need the expand-contract sequence plus the lock/timeout/batching discipline that keeps each step from freezing prod. Triggers: 'zero-downtime migration', 'add NOT NULL column to a huge table', 'rename a column safely', 'our deploy keeps deadlocking when we add an index', 'backfill 80M rows without replication lag', 'expand contract', 'gh-ost vs pt-osc', 'migración sin downtime', 'migració sense tallar el servei'. NOT Postgres lock internals/EXPLAIN/RLS (that is postgresdb), NOT drizzle-kit runner mechanics (that is drizzle-orm), NOT restore drills/PITR (that is backups)."
+description: "Use when a schema change must ship without downtime — NOT NULL, rename, type change, or backfilling millions of live rows — for the expand-contract sequence and the lock/batching discipline that keeps each step from freezing prod. NOT lock internals or EXPLAIN (that is `postgresdb`), NOT drizzle-kit mechanics (that is `drizzle-orm`), NOT PITR (that is `backups`)."
 tags: [migrations, zero-downtime, expand-contract, schema, backfill, ddl]
 recommends: [postgresdb, drizzle-orm, backups, sql, planetscale]
 origin: risco
@@ -17,20 +17,9 @@ point without an outage.
 
 This skill is engine-neutral. It owns the *choreography* — what order to run things in and how to keep each
 DDL from freezing the table — across Postgres, MySQL, and serverless variants, whatever runner you use
-(Flyway, Alembic, golang-migrate, drizzle-kit, raw SQL). It does not teach one ORM's CLI and it is not a
-Postgres tuning manual.
+(Flyway, Alembic, golang-migrate, drizzle-kit, raw SQL).
 
-## When to use / When NOT to use
-
-**Use when:**
-
-- Sequencing a multi-step zero-downtime change: NOT NULL, rename, split/merge, type change, drop, add FK.
-- Backfilling a new column/table over millions of rows without blocking writes or blowing up replica lag.
-- Making one DDL statement safe: `lock_timeout`, `CONCURRENTLY`, running outside a transaction.
-- Coordinating deploy order so app version N and N+1 are both schema-compatible at every step.
-- Deciding rollback strategy (forward-fix vs reversible) and choosing an OSC tool for a big MySQL ALTER.
-
-**Route elsewhere:**
+## Route elsewhere
 
 - Postgres lock internals, EXPLAIN/ANALYZE, indexing strategy, RLS, PgBouncer → `../postgresdb/SKILL.md`.
 - Writing schema and running drizzle-kit specifically → `../drizzle-orm/SKILL.md`.
@@ -246,9 +235,3 @@ the same static checks against the example migrations shipped in `references/`.
 | Contracting before the cooling period | Kills your no-schema-change rollback path | wait until the new app has run clean; then drop |
 | Relying on `down()` in prod | Data already changed; rollback is unsafe or wrong | forward-only; expand-contract IS the rollback (Step 6) |
 | Coupling app + schema in one deploy | Breaks N/N-1; an instant where some app can't run | separate deploys; schema is a superset of both (Step 3) |
-
-## References
-
-- `references/expand-contract-playbook.md` — ordered deploy/migrate checklists per change (NOT NULL, rename, split, type change, drop, add FK).
-- `references/backfill-and-batching.md` — batched backfill scripts (Postgres + MySQL), replica-lag throttle, checksum verification, snapshot+CDC for huge tables.
-- `references/tools-and-runners.md` — 2026 tool matrix, gh-ost vs pt-osc, per-runner transaction opt-out, Squawk CI config.
