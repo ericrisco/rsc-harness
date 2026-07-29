@@ -1,6 +1,6 @@
 ---
 name: forecasting
-description: "Use when you need to project sales, demand, units, revenue, signups or traffic forward from historical data and report a defensible number with an error band. Triggers: 'forecast next quarter's sales', 'how many units of SKU X next month', 'project revenue 12 months with a confidence band', 'is our forecast actually better than just repeating last quarter', lumpy/intermittent demand with lots of zero-sales weeks, 'prevé las ventas del próximo trimestre', 'prediu la demanda del proper mes per producte'. NOT building an assumption-driven P&L (that is financial-model), NOT sizing reorder points or safety stock (that is inventory)."
+description: "Use when projecting history forward — sales, demand, units, revenue, signups, traffic — into a defensible number with an error band: method by data shape, rolling-origin backtest, MASE vs the naive baseline. NOT an assumption-driven P&L or runway model (that is `financial-model`), NOT sizing reorder points or safety stock (that is `inventory`)."
 tags: [forecasting, demand-planning, time-series, sales-forecast, statsforecast]
 recommends: [inventory, financial-model, unit-economics, data-cleaning, analyze, duckdb]
 origin: risco
@@ -51,13 +51,13 @@ When in doubt between two, fit both plus the baseline in one `StatsForecast` run
 
 The metrics are not decoration — they decide what you ship.
 
-- **WAPE, not MAPE.** MAPE divides by the actual, so it explodes and misleads whenever actuals approach zero (constant in SKU and intermittent data). WAPE = total absolute error / total actual volume — it weights error by volume and stays stable. Use WAPE as the default magnitude metric.
-- **Pair WAPE with bias.** WAPE tells you *how big* the error is; bias tells you the *direction* — whether you systematically over- or under-forecast. A 10% WAPE with +9% bias means you are almost always forecasting high; that is an actionable, different problem than random error.
-- **MASE < 1.0 is the pass/fail line.** MASE is scale-free and compares your error to the naive forecast's error. < 1.0 = you beat naive (good). ≥ 1.0 = the naive forecast was better — ship the naive one and stop pretending. This is the single most important number in the readout.
-- **Rolling-origin, never a single holdout.** Time-series CV repeats the train/test split across multiple cutoffs (expanding window), giving a far more reliable estimate than one lucky/unlucky split. Use `cross_validation(h=…, n_windows=…)`.
-- **Always emit an interval.** A point forecast cannot express uncertainty, and point metrics cannot evaluate a distribution. Report `level=[80]` or `[95]`. The interval is not optional polish — it is half the deliverable.
+- **WAPE, not MAPE.** MAPE divides by the actual, so it explodes and misleads whenever actuals approach zero (constant in SKU and intermittent data). WAPE = total absolute error / total actual volume — volume-weighted and stable. It is the default magnitude metric.
+- **Pair WAPE with bias.** WAPE is *how big* the error is; bias is the *direction* — whether you systematically over- or under-forecast. A 10% WAPE with +9% bias means you are almost always forecasting high, an actionable problem quite different from random error.
+- **MASE < 1.0 is the pass/fail line.** MASE is scale-free: your error over the naive forecast's error. Below 1.0 you beat naive; at or above it, ship the naive forecast instead. The single most important number in the readout.
+- **Rolling-origin, never a single holdout.** Time-series CV repeats the train/test split across multiple cutoffs (expanding window), a far more reliable estimate than one lucky/unlucky split. Use `cross_validation(h=…, n_windows=…)`.
+- **Always emit an interval.** A point forecast cannot express uncertainty, and point metrics cannot evaluate a distribution. Report `level=[80]` or `[95]`. The interval is half the deliverable, not optional polish.
 
-Formulas (WAPE, MASE, bias, pinball, coverage), rolling-origin mechanics, and how to read a backtest table are in `references/accuracy-and-backtesting.md`. Per-method when-to-use and the exact statsforecast one-liner for each are in `references/methods-cheatsheet.md`.
+Formulas (WAPE, MASE, bias, pinball, coverage), rolling-origin mechanics, and how to read a backtest table are in [`references/accuracy-and-backtesting.md`](references/accuracy-and-backtesting.md). Per-method when-to-use and the exact statsforecast one-liner for each are in [`references/methods-cheatsheet.md`](references/methods-cheatsheet.md).
 
 ## Minimal pipeline
 
@@ -116,24 +116,24 @@ out.to_csv("forecast.csv", index=False)
 - **Structural breaks.** A pricing change, a relaunch, a regime shift. Do not train across the break — train on the post-break segment, even if it is short, or the model averages two different worlds.
 - **Promotions and outliers.** A promo spike is not baseline demand. Mark promo periods and either model them as a regressor or exclude them from the level estimate; otherwise the forecast inherits a spike that will not recur.
 - **Granularity.** Forecast at the level you act on. If you must report higher, aggregate the forecasts — and check the aggregate is plausible (this often catches per-SKU nonsense).
-- **Hierarchy reconciliation.** When SKU forecasts must sum to a category total, reconcile (bottom-up or MinT). Brief note here; the mechanics belong in `references/methods-cheatsheet.md`.
+- **Hierarchy reconciliation.** When SKU forecasts must sum to a category total, reconcile (bottom-up or MinT). Brief note here; the mechanics belong in [`references/methods-cheatsheet.md`](references/methods-cheatsheet.md).
 
 ## Anti-patterns
 
-| Bad | Good | Why |
+| Anti-pattern | Why it bites | Do instead |
 |---|---|---|
-| Report a single point number | Report point + 80/95% interval | A point hides uncertainty the reader needs to plan around. |
-| Tune ARIMA orders before any baseline | Compute naive/seasonal-naive first | If you cannot beat the free baseline, the tuning was wasted. |
-| Score with MAPE on intermittent demand | Use WAPE + bias | MAPE explodes near zero actuals and lies about accuracy. |
-| Single train/test holdout | Rolling-origin CV (`n_windows≥3`) | One split is one sample; CV estimates real out-of-sample error. |
-| Fit a model on 8 months of monthly data | SeasonalNaive only under 2 cycles | Too few points; the model overfits and underreports its own error. |
-| "The model picked it, so it's right" | State method + MASE vs naive | A forecast you cannot defend is worse than no forecast. |
-| Trust SKU forecasts without checking the sum | Sanity-check vs the aggregate | Per-SKU errors compound; the total exposes nonsense fast. |
+| Report a single point number | A point hides uncertainty the reader needs to plan around. | Report point + 80/95% interval |
+| Tune ARIMA orders before any baseline | If you cannot beat the free baseline, the tuning was wasted. | Compute naive/seasonal-naive first |
+| Score with MAPE on intermittent demand | MAPE explodes near zero actuals and lies about accuracy. | Use WAPE + bias |
+| Single train/test holdout | One split is one sample; CV estimates real out-of-sample error. | Rolling-origin CV (`n_windows≥3`) |
+| Fit a model on 8 months of monthly data | Too few points; the model overfits and underreports its own error. | SeasonalNaive only under 2 cycles |
+| "The model picked it, so it's right" | A forecast you cannot defend is worse than no forecast. | State method + MASE vs naive |
+| Trust SKU forecasts without checking the sum | Per-SKU errors compound; the total exposes nonsense fast. | Sanity-check vs the aggregate |
 
 ## Handoffs
 
 - **`../inventory/SKILL.md`** — feed it the demand number; it sizes reorder points and safety stock. Forecasting produces the demand; it does not size the stock.
 - **`../financial-model/SKILL.md`** — when the projection is driven by *assumptions and drivers* (pricing, hiring), not history, that is a model, not a forecast.
 - **`../unit-economics/SKILL.md`** — contribution margin, CAC/LTV, payback. No time series, route there.
-- **`data-cleaning`** — dirty input (dupes, missing rows, mixed units) goes here *before* you model.
+- **`../data-cleaning/SKILL.md`** — dirty input (dupes, missing rows, mixed units) goes here *before* you model.
 - **`../analyze/SKILL.md`** — when the question is "why" or a backward-looking metric/aggregation rather than forward extrapolation.
