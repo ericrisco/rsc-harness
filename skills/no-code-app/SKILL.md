@@ -1,6 +1,6 @@
 ---
 name: no-code-app
-description: "Use when building an app on a no-code/low-code platform (Bubble, Softr, Glide, with Airtable/Xano backends) — picking the tool, modeling the data, taming usage/cost metering, or planning the exit before lock-in. Triggers: 'build a CRM without code', 'Bubble or Glide for my MVP', 'monta una app sin codi per reserves', 'my Bubble bill suddenly exploded' (workload-unit metering), 'Glide updates overage', 'how do I avoid getting locked into a no-code tool', 'when should I stop and write real code'. NOT a coded web app (that is nextjs)."
+description: "Use when building an app on a no-code/low-code platform (Bubble, Softr, Glide over Airtable or Xano) — picking the platform, modeling the data, keeping usage-metered cost predictable, and planning the exit before lock-in. NOT a hand-written coded app (that is `nextjs`), NOT wiring SaaS tools together with no app UI (that is `automation-flows`)."
 tags: [no-code, low-code, bubble, glide, softr, app-builder, mvp]
 recommends: [nextjs, shopify, wordpress, automation-flows, spreadsheet-ops, notion-connector, stripe]
 origin: risco
@@ -10,13 +10,9 @@ origin: risco
 
 You are deciding whether to build an app on a visual platform, which platform, how to model it, and where the wall is. No-code is not "the easy way" — it is a trade: you buy speed-to-first-user and pay it back in logic ceilings and metered cost. Your job is to make that trade with eyes open.
 
-## The one rule
+**Decide the exit before you build the entrance.** If you cannot describe how you would leave, you are not building an MVP — you are building a hostage.
 
-Decide the exit before you build the entrance.
-
-- No-code wins on **speed-to-first-user** — a working app in days, no deploy pipeline. That is the only thing it reliably wins.
-- It dies on **deep conditional logic** and on **scale economics** — many-branch workflows get unmaintainable, and metering turns a $29 bill into a $400 one without warning.
-- ~25-30% of no-code projects get rewritten when they outgrow the tool, at $50K-$250K. ~68% of platforms offer no code export. If you cannot describe how you would leave, you are not building an MVP — you are building a hostage.
+No-code wins on **speed-to-first-user** — a working app in days, no deploy pipeline. That is the only thing it reliably wins. It dies on **deep conditional logic** and on **scale economics**: many-branch workflows get unmaintainable, and metering turns a $29 bill into a $400 one without warning.
 
 ## Step 0: is no-code even the right tool?
 
@@ -24,9 +20,9 @@ Run this gate before touching any builder. If any line is a clear yes, route out
 
 | If the user really wants... | Stop and go to |
 | --- | --- |
-| A hand-written app, full control over code | [../nextjs/SKILL.md](../nextjs/SKILL.md) (or react) |
-| A commerce storefront, products + checkout | `shopify` |
-| A content site / blog / CMS | `wordpress` |
+| A hand-written app, full control over code | [../nextjs/SKILL.md](../nextjs/SKILL.md) (or [../react/SKILL.md](../react/SKILL.md)) |
+| A commerce storefront, products + checkout | [../shopify/SKILL.md](../shopify/SKILL.md) |
+| A content site / blog / CMS | [../wordpress/SKILL.md](../wordpress/SKILL.md) |
 | To wire SaaS tools together, no app UI | [../automation-flows/SKILL.md](../automation-flows/SKILL.md) |
 | A spreadsheet as the deliverable itself | [../spreadsheet-ops/SKILL.md](../spreadsheet-ops/SKILL.md) |
 | A Notion workspace, not a published app | [../notion-connector/SKILL.md](../notion-connector/SKILL.md) |
@@ -89,6 +85,8 @@ bookings:  { id, customer: ->customers, class: ->classes, status: [pending|paid|
 payments:  { id, booking: ->bookings, amount, provider_ref }   # via stripe
 ```
 
+Payments in any of these flows: see [../stripe/SKILL.md](../stripe/SKILL.md).
+
 ## Build logic without footguns
 
 The metering model punishes the obvious-but-wrong way of doing things. Build defensively.
@@ -127,7 +125,7 @@ This is the section everyone skips and everyone regrets. Do it on day 1.
    - Logic outgrows the canvas — many-branch conditionals, custom algorithms.
    - Performance — it crawls at real row counts (the 10K-row test).
    - Cost — the metered bill crosses what a real backend + hosting would cost.
-4. **Price the rewrite honestly.** Outgrowing the tool means a $50K-$250K rebuild. Knowing that number is what lets you decide *now* whether to start in code via [../nextjs/SKILL.md](../nextjs/SKILL.md) instead.
+4. **Price the rewrite honestly.** ~25-30% of no-code projects get rewritten when they outgrow the tool, at $50K-$250K. Knowing that number is what lets you decide *now* whether to start in code via [../nextjs/SKILL.md](../nextjs/SKILL.md) instead.
 
 When two of those triggers fire, stop adding features and start the migration plan — do not keep pouring work into a runtime you are about to leave.
 
@@ -145,9 +143,3 @@ When two of those triggers fire, stop adding features and start the migration pl
 | Testing only at demo scale (100 rows) | Load-test at 10x expected rows early | Snappy at 100 can crawl at 10,000 |
 | No export plan, hope you never leave | Export day 1, keep model portable | 68% offer no code export; rewrite is $50K-$250K |
 | Picking Bubble for a simple internal portal | Softr (flat-rate) for portals over data | Predictable cost, no per-write surprise |
-
-## References
-
-- [references/platform-limits.md](references/platform-limits.md) — 2026 pricing/metering/record-cap cheatsheet (Bubble WU tiers, Glide updates, Softr flat tiers), backend comparison (native/Airtable/Xano), cost-estimation worked examples, and the migrate-off trigger list, with sources and access dates.
-
-Payments in any of these flows: see [../stripe/SKILL.md](../stripe/SKILL.md).

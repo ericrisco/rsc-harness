@@ -2020,7 +2020,7 @@
     },
     {
       "id": "gdpr-privacy",
-      "description": "Use when getting a product or website into practical GDPR shape: a privacy policy that matches what the product actually does, a cookie/consent banner, a defensible lawful basis per processing activity, a Record of Processing Activities, an Article 28 data-processing agreement with a vendor, an international-transfer mechanism (SCCs), or a working data-subject-rights flow. Triggers: 'write a GDPR privacy policy', 'is our cookie banner compliant', 'consent or legitimate interest for product emails', 'write the LIA', 'review this vendor DPA', 'we send data to a US sub-processor what mechanism', 'build our ROPA', 'how do we handle a DSAR / right to erasure', 'do we need a DPIA', 'redacta nuestra política de privacidad RGPD', 'revisa el banner de cookies perquè el rebuig sigui tan fàcil com acceptar'. NOT internal data retention/classification rules (that is data-policy) and NOT the consumer Terms of Service contract (that is terms-conditions).",
+      "description": "Use when producing the GDPR artifacts a product publishes or hands over: a privacy policy true to what it processes, a cookie/consent banner, a lawful basis per purpose, an Art. 28 DPA, an SCC transfer mechanism, or a DSAR flow. Drafts for counsel review. NOT internal retention rules (that is `data-policy`), NOT consumer ToS (that is `terms-conditions`).",
       "tags": [
         "gdpr",
         "privacy",
@@ -2379,7 +2379,7 @@
     },
     {
       "id": "invoicing",
-      "description": "Use when someone needs to cut a legally-valid bill or quote, move it through its get-paid lifecycle, or chase money that hasn't arrived — billing completed work, drafting a quote before a job, an invoice weeks overdue, what must legally be on the page, or readiness for a structured e-invoicing mandate. Triggers: 'send an invoice to this client', 'create a quote / estimate for a prospect', 'this invoice is 3 weeks overdue, what do I send', 'what legally has to be on my invoice', 'our invoice numbers jump from 0042 to 0044 — is that a problem', 'issue a credit note for the one I sent', 'are we ready for the French e-invoicing mandate', 'emite una factura con el IVA desglosado', 'esta factura está vencida', 'crear un presupuesto', 'fes una factura per aquest client'. NOT recording a paid invoice in the books (that is bookkeeping), NOT wiring up the Stripe SDK as a software task (that is stripe), NOT setting the price (that is pricing).",
+      "description": "Use when issuing an invoice, quote, or credit note and moving it draft-to-paid — the legally required VAT fields, gap-free numbering, per-country e-invoicing mandates, dunning overdue ones. NOT recording a paid invoice in the books (that is `bookkeeping`), NOT Stripe SDK plumbing (that is `stripe`), NOT setting the price (that is `pricing`).",
       "tags": [
         "invoicing",
         "billing",
@@ -3135,7 +3135,7 @@
     },
     {
       "id": "no-code-app",
-      "description": "Use when building an app on a no-code/low-code platform (Bubble, Softr, Glide, with Airtable/Xano backends) — picking the tool, modeling the data, taming usage/cost metering, or planning the exit before lock-in. Triggers: 'build a CRM without code', 'Bubble or Glide for my MVP', 'monta una app sin codi per reserves', 'my Bubble bill suddenly exploded' (workload-unit metering), 'Glide updates overage', 'how do I avoid getting locked into a no-code tool', 'when should I stop and write real code'. NOT a coded web app (that is nextjs).",
+      "description": "Use when building an app on a no-code/low-code platform (Bubble, Softr, Glide over Airtable or Xano) — picking the platform, modeling the data, keeping usage-metered cost predictable, and planning the exit before lock-in. NOT a hand-written coded app (that is `nextjs`), NOT wiring SaaS tools together with no app UI (that is `automation-flows`).",
       "tags": [
         "no-code",
         "low-code",
@@ -3307,7 +3307,7 @@
     },
     {
       "id": "performance",
-      "description": "Use when one page or route is slow for a single user and the fix has to start with a measurement — failing Core Web Vitals (LCP, INP, CLS), a bloated JS bundle, too many re-renders, slow hydration, or a profiler showing where the time actually goes. Triggers: 'my LCP is 4 seconds', 'the page feels janky, typing lags', 'First Load JS is huge', 'INP is failing in Search Console', the non-obvious 'we import the whole library for one function' and 'a use client boundary is shipping the server tree to the browser', and Catalan/Spanish 'la pàgina carrega lenta i no passa els Core Web Vitals' / 'el bundle pesa demasiado, hay que analizarlo antes de tocar nada'. NOT surviving a concurrent traffic spike with caches, replicas and load tests (that is scaling), NOT fixing the slow SQL query or N+1 itself (that is postgresdb).",
+      "description": "Use when a page or interaction is slow for one user and the fix starts from a measurement — a failing Core Web Vital (LCP, INP, CLS), a heavy JS bundle, wasted re-renders, an over-broad client boundary: profile, attribute the cost to one phase, fix it, re-measure. NOT surviving concurrent load (that is `scaling`), NOT the slow query (that is `postgresdb`).",
       "tags": [
         "performance",
         "core-web-vitals",

@@ -1,6 +1,6 @@
 ---
 name: gdpr-privacy
-description: "Use when getting a product or website into practical GDPR shape: a privacy policy that matches what the product actually does, a cookie/consent banner, a defensible lawful basis per processing activity, a Record of Processing Activities, an Article 28 data-processing agreement with a vendor, an international-transfer mechanism (SCCs), or a working data-subject-rights flow. Triggers: 'write a GDPR privacy policy', 'is our cookie banner compliant', 'consent or legitimate interest for product emails', 'write the LIA', 'review this vendor DPA', 'we send data to a US sub-processor what mechanism', 'build our ROPA', 'how do we handle a DSAR / right to erasure', 'do we need a DPIA', 'redacta nuestra política de privacidad RGPD', 'revisa el banner de cookies perquè el rebuig sigui tan fàcil com acceptar'. NOT internal data retention/classification rules (that is data-policy) and NOT the consumer Terms of Service contract (that is terms-conditions)."
+description: "Use when producing the GDPR artifacts a product publishes or hands over: a privacy policy true to what it processes, a cookie/consent banner, a lawful basis per purpose, an Art. 28 DPA, an SCC transfer mechanism, or a DSAR flow. Drafts for counsel review. NOT internal retention rules (that is `data-policy`), NOT consumer ToS (that is `terms-conditions`)."
 tags: [gdpr, privacy, data-protection, cookies, consent, lawful-basis, dpa, scc, dsar, ropa, dpia, rgpd]
 recommends: [data-policy, terms-conditions, contracts, compliance, secure-coding, email-deliverability]
 origin: risco
@@ -128,9 +128,7 @@ Per-right runbook: `references/dsar-and-consent.md`.
 - **DPIA (Art. 35):** mandatory *before* any processing "likely to result in a high risk." Trigger checklist — do a DPIA if any apply: large-scale processing of special categories (Art. 9 data), systematic monitoring of a public area, or novel/high-risk technology (e.g. new biometric or AI-driven profiling). When in doubt, do it.
 - **Breach (Art. 33/34):** notify the supervisory authority **within 72 hours** of becoming aware, unless the breach is unlikely to result in risk; notify affected individuals when the risk to them is high. Have the contact and the template ready *before* a breach, not during.
 
-## The legal boundary (non-negotiable)
-
-This skill drafts artifacts and flags issues. It is **not legal advice**. Emit the counsel/DPO-review line before anything is published or relied on — every time, no exceptions.
+## Stakes, and what isn't yours
 
 The fines make the stakes concrete: up to **€20M or 4% of global annual turnover** (whichever is higher) for the most serious infringements, €10M / 2% for the lesser tier; cumulative GDPR fines already exceed €7.1B. This is not a Big-Tech-only risk.
 
@@ -158,10 +156,4 @@ Hand off what isn't yours:
 | "Industry-standard security" with no Art. 32 reference | Cite Article 32 and describe the actual measures |
 | Says it's giving legal advice / the policy is safe to publish unreviewed | Flag for qualified privacy counsel / DPO every time |
 
-## References
-
-- `references/privacy-policy-blueprint.md` — Art. 13/14 mandatory-disclosure sections as `[BRACKET]` fill-ins, each with a "why required" line.
-- `references/dpa-and-transfers.md` — Art. 28 demand/offer clause table, 2021 SCC module picker, TIA skeleton, DPF note, sub-processor change-notice clause.
-- `references/dsar-and-consent.md` — data-subject-rights runbook, the LIA three-part template, a compliant cookie-banner config shape, and the `verify.sh` banlist rationale.
-
-Run `scripts/verify.sh <artifact-file>` over any policy/banner/DPA you emit to catch missing Art. 13/14 tokens, placeholder leftovers, boilerplate-lies, and a banner missing its reject control.
+Run `scripts/verify.sh <artifact-file>` over any policy/banner/DPA you emit to catch missing Art. 13/14 tokens, placeholder leftovers, boilerplate-lies, and a banner missing its reject control (banlist rationale in `references/dsar-and-consent.md`).

@@ -14,9 +14,9 @@ should_trigger:
   - prompt: "Someone emailed asking us to delete all their data — what's our deadline and process?"
     why: DSAR/erasure flow and the one-month statutory clock with exceptions.
   - prompt: "Redacta nuestra política de privacidad conforme al RGPD."
-    why: Spanish trigger — drafting the privacy policy under GDPR.
+    why: Drafting the privacy policy under GDPR, asked in Spanish — matched by meaning, not keyword.
   - prompt: "Revisa el banner de cookies del web perquè el rebuig sigui tan fàcil com acceptar."
-    why: Catalan trigger — cookie-banner review with the reject-parity rule.
+    why: Cookie-banner review against the reject-parity rule, asked in Catalan.
 
 should_not_trigger:
   - prompt: "Define our internal data retention schedule and data-classification tiers."

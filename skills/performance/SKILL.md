@@ -1,6 +1,6 @@
 ---
 name: performance
-description: "Use when one page or route is slow for a single user and the fix has to start with a measurement — failing Core Web Vitals (LCP, INP, CLS), a bloated JS bundle, too many re-renders, slow hydration, or a profiler showing where the time actually goes. Triggers: 'my LCP is 4 seconds', 'the page feels janky, typing lags', 'First Load JS is huge', 'INP is failing in Search Console', the non-obvious 'we import the whole library for one function' and 'a use client boundary is shipping the server tree to the browser', and Catalan/Spanish 'la pàgina carrega lenta i no passa els Core Web Vitals' / 'el bundle pesa demasiado, hay que analizarlo antes de tocar nada'. NOT surviving a concurrent traffic spike with caches, replicas and load tests (that is scaling), NOT fixing the slow SQL query or N+1 itself (that is postgresdb)."
+description: "Use when a page or interaction is slow for one user and the fix starts from a measurement — a failing Core Web Vital (LCP, INP, CLS), a heavy JS bundle, wasted re-renders, an over-broad client boundary: profile, attribute the cost to one phase, fix it, re-measure. NOT surviving concurrent load (that is `scaling`), NOT the slow query (that is `postgresdb`)."
 tags: [performance, core-web-vitals, lcp, inp, cls, bundle-size, profiling, react, web-vitals]
 recommends: [scaling, postgresdb, redis, nextjs, react, observability, monitoring]
 profiles: []
@@ -15,12 +15,7 @@ The whole job in one line: **measure with a profiler → attribute the cost to o
 
 **Prime directive: no fix without a profile first.** A waterfall, a flame chart, a bundle treemap, or a field CWV number comes before you touch code. The fix you guess is almost never the fix the measurement points at, and a "fast" change that moves a phase nobody was waiting on is wasted work that you then have to maintain.
 
-Where the deep fix lives elsewhere — cross-reference, don't duplicate:
-
-- TTFB is the bottleneck because of a slow query or an N+1 → name it here, fix it in `../postgresdb/SKILL.md`.
-- You decided *what* to cache to cut a phase, now make the cache race-free → `../redis/SKILL.md`.
-- The problem only appears under concurrent load → `../scaling/SKILL.md`.
-- You need the canonical App-Router / component data pattern, not the perf loop → `../nextjs/SKILL.md`, `../react/SKILL.md`.
+Cross-reference, don't duplicate: the last column of the table below names where each deep fix lives. The one case it has no row for — you decided *what* to cache to cut a phase and now need that cache race-free — is `../redis/SKILL.md`.
 
 ## Decision table — symptom to first move
 
