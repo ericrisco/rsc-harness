@@ -1,6 +1,6 @@
 ---
 name: calendar-scheduling
-description: "Use when adding booking/scheduling to a product — a 'pick a slot' page, an embedded Cal.com/Calendly widget, or a flow that shows real availability and writes the confirmed meeting to Google/Outlook/Apple — and when fixing the three classic bugs: double-booking, wrong-time-after-DST, and orphaned events on reschedule. Triggers: 'add a book-a-call page', 'embed Cal.com and white-label it', 'show my real availability and create the calendar event', 'we keep getting double-booked when two people pick the same slot', 'bookings show the wrong time after the clocks changed', 'fire a webhook on each booking', 'añade reservas de citas a la web y evita solapamientos con mi calendario de Outlook', 'evita que se reserve dos veces el mismo hueco'. NOT raw calendar CRUD, free/busy plumbing, or watch channels for an internal app with no booking surface (that is google-workspace), NOT a generic non-booking inbound event receiver (that is webhooks), NOT charging for a paid appointment (that is stripe)."
+description: "Use when a product needs a booking surface — a pick-a-slot page, a Cal.com/Calendly embed, or real availability plus the confirmed meeting written to Google/Outlook — or when fixing double-booking, DST drift, or orphaned reschedule events. NOT calendar CRUD with no booking surface (that is `google-workspace`), NOT the payment (that is `stripe`)."
 tags: [scheduling, booking, calendar, calcom, calendly, google-calendar, availability, webhooks]
 recommends: [google-workspace, webhooks, automation-flows, email-connector, stripe, sales-pipeline]
 profiles: []
@@ -12,17 +12,9 @@ origin: risco
 Scheduling is always two halves bolted together: a **booking surface** (an
 external person reserves a slot — embed, atom, or API call) and **calendar
 sync** (you read free/busy to compute availability and write the confirmed
-event back). Ship one without the other and you get the three bugs this skill
-exists to prevent:
-
-- **Double-booking** — two people grab the same slot because availability was
-  computed in the browser or written before a re-check.
-- **Timezone drift** — a meeting shows the wrong hour after a DST change because
-  a wall-clock time was stored instead of an instant + IANA zone.
-- **Orphaned events** — a reschedule creates a *second* calendar event instead
-  of moving the first, so the calendar fills with phantoms.
-
-Everything below is in service of not shipping those.
+event back). Ship one without the other and you get the three bugs the rest of
+this skill exists to prevent: **double-booking**, **timezone drift** after a DST
+change, and **orphaned events** on reschedule.
 
 ## Decide the altitude first
 
@@ -38,7 +30,9 @@ Pick the lowest-code option that still owns the data model you actually need.
 Why per row: the embed is zero-maintenance but a black box; the atom/API buys
 your own UI without owning sync; raw provider is full control and full
 liability; a unified API trades a vendor for not maintaining three calendar
-integrations. Full comparison in `references/provider-matrix.md`.
+integrations. Hosting, auth/scopes, webhook events, cross-domain support and
+when each wins, per provider:
+[`references/provider-matrix.md`](references/provider-matrix.md).
 
 - **Cal.com** is open-source and self-hostable. Self-hosted instances get
   **unlimited API access** (no cloud rate limit) and full white-label by
@@ -78,9 +72,6 @@ Scope ladder, narrowest first:
 - `calendar` / `calendar.events` — restricted; request only if you genuinely
   manage arbitrary events the app didn't create.
 
-**Calendly:** OAuth 2.1 or a personal access token. **Cal.com self-host:** no
-rate-limit anxiety, so no token-bucket gymnastics needed in your client.
-
 ## Availability without double-booking — the core flow
 
 Both classic races (computing slots in the browser, and writing the event
@@ -107,8 +98,10 @@ Decision — do you need a hold step?
 | Multi-step booking form, payment, or high contention | Yes — a TTL lock so the slot survives the form and releases if abandoned |
 
 Google's availability primitive is `freebusy.query` (POST, returns busy blocks
-per calendar); the write is `events.insert`. Payloads in
-`references/google-calendar-sync.md`.
+per calendar); the write is `events.insert`. Both payloads (with
+`conferenceData` for Meet), `watch` channels + sync tokens, recurring-event edge
+cases and refresh-token handling:
+[`references/google-calendar-sync.md`](references/google-calendar-sync.md).
 
 ## Timezone correctness
 
@@ -179,15 +172,6 @@ that orchestration is **automation-flows**, not here.
 | Cache a single-use scheduling link forever | Calendly links expire after 90 days | Generate on demand; treat expiry as expected |
 | Poll the calendar for changes | Slow, rate-limited, misses edits | `watch` push channels + incremental sync tokens |
 | Write new code against Calendly v1 | v1 API + webhooks dead since May 2025 | Calendly v2 (OAuth 2.1 / PAT) |
-
-## References
-
-- `references/provider-matrix.md` — Cal.com vs Calendly vs Google direct vs
-  Nylas v3 vs Cronofy: hosting, auth/scopes, webhook events, cross-domain,
-  when each wins.
-- `references/google-calendar-sync.md` — `freebusy.query` and `events.insert`
-  (with `conferenceData` for Meet) payloads, `watch` channels + sync tokens,
-  recurring-event edge cases, refresh-token handling.
 
 Adjacent skills: raw calendar CRUD / watch channels with no booking →
 [`../google-workspace/SKILL.md`](../google-workspace/SKILL.md); charging for a
