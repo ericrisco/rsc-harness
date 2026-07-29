@@ -1,6 +1,6 @@
 ---
 name: newsletter
-description: "Use when running an email newsletter as a recurring publication — writing the subject line + preview text, structuring an issue so opens turn into clicks, the welcome/onboarding sequence, send cadence and engagement segmentation, growth loops (referral, signup incentive, double opt-in), and a metric scorecard that survives Apple Mail Privacy Protection. Triggers: 'write the newsletter subject line', 'my newsletter gets opened but nobody clicks', 'set up a welcome sequence', 'grow my newsletter list', 'newsletter referral program', 'how often should I send', 'what metrics matter now that opens are fake', 'click-to-open rate', 'escriu la newsletter d'aquesta setmana', 'campaña de newsletter que convierta'. NOT the one-off product launch or nurture campaign (that is marketing), NOT the SPF/DKIM/DMARC plumbing under the send (that is email-deliverability)."
+description: "Use when running an email newsletter as a recurring publication — subject + preview pair, issues that turn opens into clicks, the welcome sequence, cadence and engagement tiering, growth loops, and a post-Apple-MPP click scorecard. NOT one-off launch or nurture sends (that is `marketing`), NOT SPF/DKIM/DMARC (that is `email-deliverability`)."
 tags: [newsletter, email, growth, copywriting, retention-metrics]
 recommends: [marketing, email-deliverability, brand-voice, landing-copy, ab-testing]
 profiles: []
@@ -11,29 +11,19 @@ origin: risco
 
 Run the newsletter as a **product you ship on a cadence**, not a one-off send. The job is the system around the recurring issue: the subject + preview that earns the open, the issue body that earns the click, the welcome sequence that activates a new subscriber, the cadence and segmentation that keep the list healthy, the growth loops that compound it, and a scorecard that still tells the truth after Apple broke open rates. Every send is one episode of an ongoing show — design the show, not the episode.
 
-## When to use
-
-- Writing the subject line + preview text for an issue and fitting them to inbox truncation.
-- Structuring a recurring issue so opens convert: hook on the first screen, scannable body, one CTA.
-- Writing the welcome / onboarding sequence a confirmed subscriber gets.
-- Planning send cadence, frequency, and engagement-based segmentation.
-- Designing a growth loop: referral program, signup incentive / lead magnet, double opt-in.
-- Choosing which metrics to trust now that Apple MPP inflates opens; building the scorecard.
-- Rescuing a newsletter with high opens but no clicks, or a quietly decaying engaged-reader count.
-
 ## When NOT to use — route instead
 
 | The ask | Route to |
 |---|---|
 | One-off product launch announcement or campaign drip nurture | `../marketing/SKILL.md` |
-| Mail lands in spam; set up SPF / DKIM / DMARC, tracking domain, reputation | `email-deliverability` |
+| Mail lands in spam; set up SPF / DKIM / DMARC, tracking domain, reputation | `../email-deliverability/SKILL.md` |
 | Write the subscribe / opt-in landing page copy | `../landing-copy/SKILL.md` |
 | Define the house voice, tone, and vocabulary the newsletter speaks in | `../brand-voice/SKILL.md` |
-| Win back / reactivate lapsed *paying customers* (lifecycle, not readers) | `retention` |
+| Win back / reactivate lapsed *paying customers* (lifecycle, not readers) | `../retention/SKILL.md` |
 | Produce the underlying long-form articles the issue links out to | `../content-engine/SKILL.md` |
-| Sample size / significance / MDE math for the test itself | `ab-testing` |
-| Source or scrape new contacts; prospect an un-opted-in list | `lead-gen`, `../cold-outreach/SKILL.md` |
-| Actually wire the send through an ESP / Gmail API and schedule it | `email-connector`, `google-workspace` |
+| Sample size / significance / MDE math for the test itself | `../ab-testing/SKILL.md` |
+| Source or scrape new contacts; prospect an un-opted-in list | `../lead-gen/SKILL.md`, `../cold-outreach/SKILL.md` |
+| Actually wire the send through an ESP / Gmail API and schedule it | `../email-connector/SKILL.md`, `../google-workspace/SKILL.md` |
 
 You own the *recurring opted-in publication and its open/click/growth system*. The plumbing under every send and the page that captures the signup are someone else's.
 
@@ -81,7 +71,7 @@ The subject and the preview (preheader) ship together and are tested together �
 - **Payload in the first ~33 characters**; keep the whole subject ~30–50 chars (≈7–9 words) so it survives mobile truncation.
 - **The preview extends the subject, it never repeats it.** Its first ~35–50 chars are prime real estate; waste them on a duplicate and you've burned the line.
 - **≤2 emojis, at the end, never an all-emoji subject** — an all-emoji subject is the one case that actually trips filters.
-- **The "spam trigger words" list is a myth.** "Free", "guarantee", a normal emoji — these do not sink you; authentication and sender reputation dominate deliverability. Police reputation, not vocabulary; the reputation/auth layer lives in `email-deliverability`.
+- **The "spam trigger words" list is a myth.** "Free", "guarantee", a normal emoji — these do not sink you; authentication and sender reputation dominate deliverability. Police reputation, not vocabulary; the reputation/auth layer lives in `../email-deliverability/SKILL.md`.
 
 ```text
 Bad (payload past char 33, preview repeats subject):
@@ -134,13 +124,13 @@ A newsletter is the canonical bulk marketing message, so the Gmail/Yahoo bulk-se
 - **RFC 8058 one-click unsubscribe** (`List-Unsubscribe` + `List-Unsubscribe-Post` headers) on every send, plus a **visible footer unsubscribe link.** Both, always.
 - **Keep the spam-complaint rate under 0.1%** and never let it reach 0.3%. This is why you sunset, not why you mail harder.
 
-The DNS / authentication side of those rules — SPF, DKIM, DMARC, the sending domain — is **not this skill**; that is `email-deliverability`. This skill applies the rules to the issue and the cadence.
+The DNS / authentication side of those rules — SPF, DKIM, DMARC, the sending domain — is **not this skill**; that is `../email-deliverability/SKILL.md`. This skill applies the rules to the issue and the cadence.
 
 ## A/B testing the right way
 
 - **Test exactly one element at a time** — subject vs subject, or preview vs preview. Change two and the winner is uninterpretable.
 - **Put preview text in the rotation**, not just the subject; it's half the inbox row and usually under-tested.
-- The statistical design — sample size, significance, minimum detectable effect — is `ab-testing`. This skill tells you *what* to test; that one tells you whether the result is real.
+- The statistical design — sample size, significance, minimum detectable effect — is `../ab-testing/SKILL.md`. This skill tells you *what* to test; that one tells you whether the result is real.
 
 ## Anti-patterns
 
@@ -151,7 +141,7 @@ The DNS / authentication side of those rules — SPF, DKIM, DMARC, the sending d
 | Preview text repeats the subject | Burns half the inbox row on a duplicate | Preview extends the subject with new info |
 | Mailing a decaying list harder | Complaints climb; reputation and inbox placement collapse | Sunset / re-permission the dormant tier |
 | All-emoji subject line | The one emoji case that actually trips filters | ≤2 emojis, at the end, around real words |
-| Policing "spam trigger words" | A myth; reputation/auth decide deliverability | Fix auth + reputation in `email-deliverability` |
+| Policing "spam trigger words" | A myth; reputation/auth decide deliverability | Fix auth + reputation in `../email-deliverability/SKILL.md` |
 | Buying a list / no double opt-in | Spam traps and complaints gate the whole sender | Double opt-in; grow with referral + lead magnet |
 | Testing two variables at once | Winner is uninterpretable | One variable; preview in the rotation |
 | Referral ask bolted on months later | Misses peak engagement | Put the ask inside the welcome sequence |

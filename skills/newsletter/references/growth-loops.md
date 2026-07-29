@@ -23,7 +23,7 @@ tiering. Numbers below are dated; treat them as calibration, not promises.
   generic "join our newsletter."
 - The asset doubles as shareable bait for the referral loop — make it good
   enough to forward.
-- The opt-in *page* and its copy are `../landing-copy/SKILL.md`; this skill owns
+- The opt-in *page* and its copy are `../../landing-copy/SKILL.md`; this skill owns
   what the incentive is and how it ties into the welcome + referral flow.
 
 ## Opt-in: single vs double
@@ -64,10 +64,10 @@ this? click to stay") and, if no click, a **sunset** off the active list.
   is the lever that protects it. (Yahoo Sender Hub best practices; Google
   Workspace sender guidelines — accessed 2026-06-02.)
 - Re-permission is a newsletter-list hygiene step. Lifecycle reactivation of
-  lapsed *paying customers* is a different job — that is `retention`.
+  lapsed *paying customers* is a different job — that is `../../retention/SKILL.md`.
 
 ## Send-time hypothesis
 
 Tuesday/Thursday ~10am or 1–3pm is the cross-industry baseline starting point.
 It is a hypothesis to test against your own list's click data, never a fixed law.
-The test design (sample size, significance) is `ab-testing`.
+The test design (sample size, significance) is `../../ab-testing/SKILL.md`.
