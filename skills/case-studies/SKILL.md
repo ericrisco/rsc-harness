@@ -1,6 +1,6 @@
 ---
 name: case-studies
-description: "Use when turning a real customer win into a case study or testimonial — a metrics-anchored success story or an attributed quote a prospect can act on, including when a great result reads like a brochure and needs to convert. Triggers: 'turn this customer win into a case study', 'we cut their churn 40% — write it up', 'draft a testimonial quote from this customer-interview transcript', 'we have a 40% drop but the write-up sounds like marketing fluff — make it convert', 'build a reusable customer-story template plus an intake/consent form', 'escríbeme un caso de éxito de este cliente con métricas y una cita', 'redacta un cas d'èxit amb mètriques'. NOT the deck that pitches the vision to a room (that is pitch-deck), NOT a long thought-leadership article with no single named customer (that is article-writing)."
+description: "Use when turning one named customer's measured win into a case study, or the attributed testimonial quote that travels with it — consent-cleared, metrics-anchored proof for the next skeptical buyer. NOT the deck that sells the vision to a room (that is `pitch-deck`), NOT thought-leadership with no single named customer (that is `article-writing`)."
 tags: [case-study, testimonial, social-proof, customer-story, conversion]
 recommends: [pitch-deck, article-writing, retention, review-management, brand-voice, landing-copy]
 origin: risco
@@ -29,7 +29,7 @@ If the request is not a single customer's measured outcome, hand it off before y
 | Drop the proven quote into a converting page | `../landing-copy/SKILL.md` |
 | Price the offer this win justifies | `pricing` |
 
-The one-sentence call: it is a case study if a real, named customer already got a measured result and consented to be quoted. Vision-to-a-room is `pitch-deck`; no-single-customer is `article-writing`.
+The one-sentence call: it is a case study if a real, named customer already got a measured result and consented to be quoted.
 
 ## The intake gate — STOP if any of these is missing
 
@@ -61,7 +61,7 @@ quote_source: "interview-2026-05-20.txt"
 ---
 ```
 
-`consent: pending` means draft-only. `consent: anonymized` means no name/logo/identifying detail ships. Only `consent: signed` may publish a named, quoted, imaged customer. Full intake form, approval-email wording, and substantiation notes live in `references/consent-and-substantiation.md`.
+`consent: pending` means draft-only. `consent: anonymized` means no name/logo/identifying detail ships. Only `consent: signed` may publish a named, quoted, imaged customer. Full intake form, consent/release checklist, approval-email wording, substantiation and insider-disclosure notes, and the anonymization fallback rules live in `references/consent-and-substantiation.md`.
 
 ## Case-study anatomy
 
@@ -140,8 +140,3 @@ Write the prose so these fall out cleanly; do not produce a separate brochure fo
 `scripts/verify.sh <case-study.md>` is a read-only structural and legal lint. It checks for a quantified hero metric, the required Challenge/Solution/Result sections and snapshot box, an attributed quote, a before→after signal, a CTA, and the `consent:` / `approved:` marker — and it warns on the superlative banlist. It **fails hard** when the hero has no metric, a core section is missing, or consent is unmarked, because shipping an un-consented named quote is the legal risk. It is structural lint only; persuasion quality is the capability eval's job and yours.
 
 Hand off when the piece is done: the proven quote → `../landing-copy/SKILL.md`, the broader narrative → `../article-writing/SKILL.md`, the slide version → `../pitch-deck/SKILL.md`, the public-review angle → `../review-management/SKILL.md`.
-
-## References
-
-- `references/case-study-skeleton.md` — the full ordered template (results headline, snapshot box, C-S-R sections with Context-Achievement-Relevance metric lines, attributed quote block, CTA) plus a filled mini-example with consent front-matter.
-- `references/consent-and-substantiation.md` — intake-form fields, consent/release checklist, exact-quote-approval email wording, FTC substantiation and insider-disclosure notes, anonymization fallback rules.
