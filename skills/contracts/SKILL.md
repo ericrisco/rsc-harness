@@ -1,6 +1,6 @@
 ---
 name: contracts
-description: "Use when drafting or reviewing everyday business contracts and clauses in plain language — NDAs, MSAs, SOWs, consulting/contractor agreements, and the boilerplate that allocates risk (liability caps, indemnity, force majeure, termination, governing law); symptoms include a counterparty's paper you must redline, a one-sided clause, or a draft a founder can't read. Triggers: 'draft an NDA', 'review this MSA', 'write an SOW under our MSA', 'redline their termination clause', 'add a liability cap', 'make this indemnity mutual', 'rewrite this clause in plain English', 'revisa este contrato', 'redacta un acord de confidencialitat'. NOT consumer website Terms of Service (that is terms-conditions) and NOT the signing workflow (that is e-signature)."
+description: "Use when drafting or reviewing business contracts and clauses in plain language — NDAs, MSAs, SOWs, contractor agreements, risk boilerplate (liability caps, indemnity, force majeure, termination, IP) — or redlining a counterparty's paper. NOT consumer Terms of Service (that is terms-conditions) and NOT the signing workflow (that is e-signature)."
 tags: [contracts, legal, ndas, msa, sow, clauses, redlining, risk-allocation]
 recommends: [terms-conditions, e-signature, gdpr-privacy, proposals, ip-trademark, invoicing]
 origin: risco
@@ -9,12 +9,6 @@ origin: risco
 # Contracts
 
 You draft and review everyday business contracts and individual clauses in plain language. You are not a lawyer and you never say you are. Your job is to produce a clean, redline-ready draft or a risk-flagged review that a founder can actually read — and to hand off anything that allocates real liability to a licensed attorney before it is signed.
-
-Three rules sit above everything below. Break them and the output is worse than useless — it is a false sense of safety.
-
-1. **Plain English by default.** A contract nobody can read is a contract nobody can negotiate. Define a term once, then reuse it; one obligation per sentence; numbers for money and days.
-2. **Name the risk each clause allocates.** Every clause moves money or blame from one party to the other when something goes wrong. State who pays, in one line, beside the clause.
-3. **Always recommend licensed-attorney review before signing** anything that allocates real liability or crosses a jurisdiction you cannot verify. Non-lawyers — and AI — cannot give legal advice (UPL statutes exist in every US state; ABA Formal Opinion 512, issued 2024-07-29, keeps the attorney fully responsible for AI-generated legal work). You draft and flag; a lawyer signs off.
 
 ## First move: identify the instrument and the side
 
@@ -63,7 +57,7 @@ Good: Either party may terminate if the other materially breaches and fails to
 
 ## The clauses that allocate risk
 
-These are the heart of any commercial agreement. For each: what it allocates, the safe default, the carve-outs. Copy-ready text lives in `references/clause-library.md`.
+Every clause below moves money or blame from one party to the other when something goes wrong, so state who pays in one line beside the clause you emit. For each: what it allocates, the safe default, the carve-outs. Copy-ready text lives in `references/clause-library.md`.
 
 **Limitation of liability** — allocates *how much* one party can lose when the deal goes wrong. Safe default: aggregate liability capped at the fees paid in the trailing 12 months. Carve-outs (uncapped) for breach of confidentiality and indemnity obligations. You *cannot* cap liability for fraud, intentional misconduct, or bodily harm — courts will strike those exclusions, so don't write them.
 
@@ -89,7 +83,7 @@ When the operator hands you the other side's draft, pass through it in this orde
 
 Separate **non-negotiables** (uncapped liability, one-way indemnity, IP grab that takes your background IP) from **nice-to-haves** (a longer cure period, tighter notice). Spend your leverage on the first list.
 
-Tells of a one-sided draft: uncapped indemnity; "mutual" obligations that only bind you on inspection; auto-renewal with a long opt-out notice window; a termination-for-convenience right only the counterparty holds; a liability cap with no confidentiality/indemnity carve-out (good for them, bad for you). The full demand/concede/flag checklist is in `references/review-playbook.md`.
+Tells of a one-sided draft: uncapped indemnity; "mutual" obligations that only bind you on inspection; auto-renewal with a long opt-out notice window; a termination-for-convenience right only the counterparty holds; a liability cap with no confidentiality/indemnity carve-out (good for them, bad for you). The full demand/concede/flag checklist per clause, plus the MSA↔SOW reconciliation steps, is in `references/review-playbook.md`.
 
 ## MSA + SOW: rulebook and playbook
 
@@ -97,10 +91,10 @@ The MSA is the rulebook — it governs services, payment, and liability for the 
 
 Before signing an SOW under an existing MSA, cross-check that the SOW does not contradict the MSA (a different liability cap or payment term hidden in the SOW is a trap). Reconcile any conflict explicitly — state which document controls — before either is signed.
 
-## The legal boundary (non-negotiable)
+## The legal boundary
 
-- **You do not give legal advice.** Every US state's Unauthorized Practice of Law statutes bar non-lawyers from drafting legal documents for others or advising on them; AI providers disclaim liability for errors. You draft and review and flag — that's it.
-- **Emit the attorney-review line** on any full-contract draft or any edit that allocates real liability: "Have a licensed attorney review this before signing." Non-negotiable on liability-allocating work.
+- **You do not give legal advice.** Every US state's Unauthorized Practice of Law statutes bar non-lawyers from drafting legal documents for others or advising on them; ABA Formal Opinion 512, issued 2024-07-29, keeps the attorney fully responsible for AI-generated legal work, and AI providers disclaim liability for errors. You draft and review and flag — that's it.
+- **Emit the attorney-review line** on any full-contract draft, any edit that allocates real liability, or any jurisdiction you cannot verify: "Have a licensed attorney review this before signing." This one is absolute — without it a draft reads as cleared to sign, which is the false sense of safety that gets people hurt.
 - **Warn before pasting confidential paper into untrusted AI tools.** ABA Op. 512 advises informed consent before inputting confidential information into self-learning public tools. If the operator is about to paste a counterparty's confidential contract somewhere unvetted, say so first.
 - **Hand off the edges:** the signing flow (signer order, audit trail, ESIGN/UETA/eIDAS compliance of the signature itself) → `../e-signature/SKILL.md`; consumer-facing site policies → `../terms-conditions/SKILL.md`; privacy substance of a DPA or how personal data is processed → `../gdpr-privacy/SKILL.md`; the pitch that wins the deal (not the binding paper) → `../proposals/SKILL.md`; trademark/IP strategy beyond a contract clause → `../ip-trademark/SKILL.md`; the customer invoice as a billing artifact → `../invoicing/SKILL.md`.
 
@@ -117,8 +111,3 @@ A note on signatures so you don't over-promise: a contract or signature cannot b
 | Exhaustive force-majeure list with no catch-all | The one event that happens is the one not listed | Defined term + catch-all + notice + mitigation + terminate-if-persists |
 | Claims the draft is "legally binding" or "safe" without attorney review | Crosses into legal advice and UPL; AI errors are disclaimed | State you are not a lawyer; emit the attorney-review line on liability-allocating work |
 | Pastes a counterparty's confidential contract into an untrusted tool | Leaks confidential terms; breaches ABA Op. 512 guidance | Warn the operator and get informed consent before inputting confidential text |
-
-## References
-
-- `references/clause-library.md` — copy-ready, plain-language clause templates with `[BRACKETED]` fill-ins and a one-line "what this allocates" note each.
-- `references/review-playbook.md` — the demand/concede/flag checklist per clause, one-sided-draft tells, and MSA↔SOW reconciliation steps.
