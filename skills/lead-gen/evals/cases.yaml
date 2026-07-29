@@ -10,9 +10,9 @@ should_trigger:
   - prompt: "Is this cold prospect list legal to email under GDPR before we send?"
     why: "The compliance gate (GDPR LIA, no scraped basis) is part of making a list ship-ready — non-obvious that lead-gen owns it, not a generic legal skill."
   - prompt: "Necesito una lista de clientes potenciales para nuestro SaaS de logística."
-    why: "Spanish core trigger — build a target list of prospects."
+    why: "Spanish-language phrasing of the core case — build a target list of prospects."
   - prompt: "A qui de la nostra base truquem primer, tenim 300 comptes sense prioritzar?"
-    why: "Catalan trigger — scoring/tiering an unprioritized account list."
+    why: "Catalan-language phrasing — scoring/tiering an unprioritized account list."
 
 should_not_trigger:
   - prompt: "Write the cold email sequence for these prospects."
