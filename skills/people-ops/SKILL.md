@@ -1,6 +1,6 @@
 ---
 name: people-ops
-description: "Use when the offer is signed and you now run the person — building an onboarding plan (preboarding → Day 1 → 30/60/90 ramp), drafting or auditing an internal policy or employee-handbook section (PTO, remote/hybrid, conduct, leave, expenses), standing up the recurring people rhythm (weekly 1:1s, review/goal cycle, headcount), or offboarding a leaver. Triggers: 'build an onboarding plan with a 30/60/90', 'draft a remote-work policy', 'the offer's signed, now what do I need ready before day one?', 'this handbook reads like a contract', 'set up our 1:1 and review cadence', 'someone's leaving — offboarding checklist', 'what HR do we even need?', 'plan de onboarding para el nuevo fichaje', 'redacta la política de teletreball'. NOT sourcing/interviewing/the offer itself (that is hiring)."
+description: "Use when the offer is signed and you now have to run the person — an onboarding plan from preboarding through the 30/60/90 ramp, drafting or auditing an internal policy or handbook section, standing up the recurring people rhythm (1:1s, review and goal cycles, headcount), or offboarding a leaver. NOT sourcing, interviewing or the offer itself (that is `hiring`)."
 tags: [people-ops, hr, onboarding, employee-handbook, policy, offboarding, one-on-ones, retention]
 recommends: [hiring, contracts, gdpr-privacy, sop-builder, project-ops, e-signature]
 origin: risco

@@ -3234,7 +3234,7 @@
     },
     {
       "id": "open-weights",
-      "description": "Use when choosing an open-weight LLM and clearing it for use — which family and size fit a task, hardware and budget, and above all whether the license lets you ship (Llama, Qwen, Mistral/Mixtral, Gemma, DeepSeek, Phi, gpt-oss, and others). Owns the license-CLASS map (OSI-open Apache/MIT vs custom-community like Llama/Gemma vs non-commercial/restricted like the original Codestral) and the always-verify-the-model-card rule, plus size-to-VRAM budgeting and quant formats (GGUF/AWQ/GPTQ, what Q4_K_M means). Triggers: 'which open model should I use', 'can I use Llama/Gemma commercially', 'is Qwen Apache-2.0', 'what open LLM fits a 24GB GPU', 'is this license safe to ship in a product', 'quin model obert puc fer servir legalment'. NOT how to download or host on HF (that is huggingface), NOT running it locally (that is ollama), NOT serving at throughput (that is vllm), NOT fine-tuning it (that is finetuning) — this layer only tells you WHICH model and whether the license permits it, then hands off.",
+      "description": "Use when choosing an open-weight LLM and clearing it for use — which family and size fit the task, the hardware and the budget, and above all whether the license permits shipping. Owns the license-class map (OSI-open versus custom-community versus non-commercial), the always-verify-the-model-card rule, size-to-VRAM budgeting and the quant formats. This layer decides WHICH model and whether the license allows it, then hands off. NOT downloading or hosting on the Hub (that is `huggingface`), NOT running it locally (that is `ollama`), NOT serving at throughput (that is `vllm`), NOT fine-tuning it (that is `finetuning`).",
       "tags": [
         "open-weights",
         "open-source-llm",
@@ -3284,7 +3284,7 @@
     },
     {
       "id": "people-ops",
-      "description": "Use when the offer is signed and you now run the person — building an onboarding plan (preboarding → Day 1 → 30/60/90 ramp), drafting or auditing an internal policy or employee-handbook section (PTO, remote/hybrid, conduct, leave, expenses), standing up the recurring people rhythm (weekly 1:1s, review/goal cycle, headcount), or offboarding a leaver. Triggers: 'build an onboarding plan with a 30/60/90', 'draft a remote-work policy', 'the offer's signed, now what do I need ready before day one?', 'this handbook reads like a contract', 'set up our 1:1 and review cadence', 'someone's leaving — offboarding checklist', 'what HR do we even need?', 'plan de onboarding para el nuevo fichaje', 'redacta la política de teletreball'. NOT sourcing/interviewing/the offer itself (that is hiring).",
+      "description": "Use when the offer is signed and you now have to run the person — an onboarding plan from preboarding through the 30/60/90 ramp, drafting or auditing an internal policy or handbook section, standing up the recurring people rhythm (1:1s, review and goal cycles, headcount), or offboarding a leaver. NOT sourcing, interviewing or the offer itself (that is `hiring`).",
       "tags": [
         "people-ops",
         "hr",
@@ -3332,7 +3332,7 @@
     },
     {
       "id": "phoenix",
-      "description": "Use when building an Elixir web app with Phoenix — contexts, Ecto schemas/changesets/migrations, LiveView, channels, generators and Phoenix-flavored tests — or wiring up the boundary between domain logic and the web layer. Triggers: 'mix phx.new', 'phx.gen.live', 'phx.gen.auth', 'build a LiveView CRUD', 'Ecto changeset', 'Phoenix channel / PubSub', 'how do I structure a context', non-obvious 'my LiveView re-renders the whole list every time one row is added', 'every post fires a separate query for its author' (N+1), Catalan 'crea un context Comandes i un LiveView per gestionar-les amb acces per usuari', Spanish 'autenticacion sin contrasena con phx.gen.auth / como separo el contexto del controlador'. NOT pure OTP — GenServers, supervision trees, releases with no web/Ecto layer (that is elixir).",
+      "description": "Use when building an Elixir web app with Phoenix — contexts, Ecto schemas, changesets and migrations, LiveView, channels and PubSub, the generators, and the boundary between domain logic and the web layer. Covers the classic LiveView over-rendering and Ecto N+1 traps. NOT pure OTP work with no web or Ecto layer — GenServers, supervision trees, releases (that is `elixir`).",
       "tags": [
         "phoenix",
         "elixir",
@@ -3352,7 +3352,7 @@
     },
     {
       "id": "php",
-      "description": "Use when writing, reviewing, or modernizing PHP (8.3/8.4/8.5) beyond Laravel - strict types, union/intersection types, readonly classes, backed enums, PHP 8.4 property hooks and asymmetric visibility, PHP 8.5 pipe operator and clone-with, Composer + PSR-4 autoloading, PER-CS style, PSR-3/7/11/15 interop, and the quality toolchain (PHPStan max, Pint/PHP-CS-Fixer, Rector, PHPUnit 12 / Pest 4). Triggers: \\\"write a PHP value object\\\", \\\"set up composer.json with PSR-4\\\", \\\"convert getters to property hooks\\\", \\\"is this idiomatic modern PHP or 2015 code\\\", \\\"configura PHPStan a nivel max\\\", editing .php / composer.json / phpstan.neon. NOT Eloquent/Blade/Artisan (that is laravel).",
+      "description": "Use when writing, reviewing or modernizing PHP (8.3-8.5) outside Laravel — strict types, union and intersection types, readonly classes, backed enums, property hooks and asymmetric visibility, the pipe operator and clone-with, Composer with PSR-4, PER-CS style, PSR interop, and the quality toolchain (PHPStan, Pint, Rector, PHPUnit/Pest). NOT Eloquent, Blade or Artisan (that is `laravel`).",
       "tags": [
         "php",
         "php8",
@@ -3371,7 +3371,7 @@
     },
     {
       "id": "pitch-deck",
-      "description": "Use when building or fixing an investor fundraising deck — the narrative arc, the slide-by-slide story, and the small set of numbers that actually move an investment decision, for a pre-seed, seed, or Series A raise (and the close cousin, a YC/accelerator application deck). Decides WHAT goes on each slide, in what order, and with which metric; sequences the story the way a VC evaluates risk (problem → solution → why-now → market → traction → team → ask). Triggers: 'build our seed pitch deck', 'what slides do I need to raise pre-seed', 'write the traction slide and the ask slide', 'investors lose interest after slide 3', 'tighten the fundraising story before demo day', 'monta el pitch deck para inversores', 'prepara la ronda seed', 'el deck per a la presentació a inversors'. NOT rendering/exporting/theming the slides into a designed PDF or PPTX (that is presentations), NOT the projection spreadsheet behind the numbers (that is financial-model).",
+      "description": "Use when building or fixing an investor fundraising deck — the narrative arc, the slide-by-slide story, and the few numbers that actually move an investment decision, for a pre-seed, seed or Series A raise (or an accelerator application deck). Decides what goes on each slide, in what order, with which metric, sequenced the way an investor evaluates risk. NOT rendering, theming or exporting the slides into a designed PDF or PPTX (that is `presentations`), NOT the projection spreadsheet behind the numbers (that is `financial-model`).",
       "tags": [
         "pitch-deck",
         "fundraising",
@@ -3426,7 +3426,7 @@
     },
     {
       "id": "podcast",
-      "description": "Use when planning, recording, editing, or publishing one podcast episode end to end — the run-of-show and guest brief, recording settings (double-ender, 48 kHz WAV multitrack), the loudness master, the Podcasting 2.0 sidecars (chapters.json, transcript.vtt), the RSS <item>, and timestamped SEO show notes. Use when audio sounds quiet on Spotify but loud on Apple, a feed is rejected for bad artwork, or chapters and transcripts will not show in the app. Triggers: 'plan the run-of-show for a 40-minute interview', 'what LUFS for Apple and Spotify', 'master once to -16 LUFS', 'wire the transcript tag', 'valid RSS item with chapters and transcript for episode 14', 'generate a chapters.json from the double-ender locals', 'write timestamped SEO show notes', 'masteritzar l'àudio del podcast', 'escribe las show notes con timestamps'. NOT clipping the episode into social posts (that is social-publisher) and NOT cutting the vertical short (that is video-shorts).",
+      "description": "Use when planning, recording, editing or publishing one podcast episode end to end — the run-of-show and guest brief, recording settings, the loudness master, the Podcasting 2.0 sidecars for chapters and transcripts, the RSS item, and timestamped SEO show notes. Covers audio that is quiet on one platform and loud on another, feeds rejected for bad artwork, and chapters that will not appear in the app. NOT clipping the episode into social posts (that is `social-publisher`), NOT cutting the vertical short (that is `video-shorts`).",
       "tags": [
         "podcast",
         "audio",
@@ -3497,7 +3497,7 @@
     },
     {
       "id": "press-kit",
-      "description": "Use when writing a press release or assembling a media kit a journalist can lift — launches, funding rounds, exec hires, partnerships, milestones, awards, or building an online newsroom; symptoms include 'reads like an ad', no pickup, a buried lede, no quotable line, or a missing dateline/boilerplate/asset. Triggers: 'write a press release', 'put together a press kit / media kit', 'write our boilerplate', 'draft a fact sheet', 'set an embargo on this announcement', the non-obvious 'our release got no coverage / journalists ignored it' and 'make this announcement quotable', and 'redacta una nota de prensa' / 'munta un dossier de premsa per als periodistes'. NOT finding the reporter list to send to (that is lead-gen), NOT the multi-touch pitch cadence (that is cold-outreach), NOT the brand tone-of-voice spec (that is brand-voice), and NOT the owned launch campaign (that is marketing).",
+      "description": "Use when writing a press release or assembling a media kit a journalist can lift from — launches, funding, exec hires, partnerships, milestones, awards, or an online newsroom. Symptoms include a release that reads like an ad, a buried lede, no quotable line, or a missing dateline, boilerplate or asset. NOT finding the reporter list (that is `lead-gen`), NOT the multi-touch pitch cadence (that is `cold-outreach`), NOT the brand tone-of-voice spec (that is `brand-voice`), NOT the owned launch campaign (that is `marketing`).",
       "tags": [
         "press-release",
         "media-kit",
@@ -3523,7 +3523,7 @@
     },
     {
       "id": "pricing",
-      "description": "Use when setting or resetting what a product or service charges and how it is packaged — choosing list price, margin floor, tiers, value metric, pricing model (flat/seat/usage/outcome/hybrid) and discount rules. Triggers: 'what should I charge', 'cómo pongo precio a esto', 'quin preu poso', 'design my pricing tiers', 'good better best packaging', 'we keep discounting away our margin', 'reprice because our AI compute costs jumped', 'localize price for other countries (PPP)', 'per-seat pricing is killing us', 'set a discount floor'. NOT issuing the actual bill (that is invoicing) and NOT implementing prices in a billing system (that is stripe).",
+      "description": "Use when setting or resetting what a product or service charges and how it is packaged — list price, margin floor, tiers, the value metric, the pricing model (flat, seat, usage, outcome or hybrid), discount rules and purchasing-power localisation. NOT issuing the actual bill (that is `invoicing`), NOT implementing prices in a billing system (that is `stripe`).",
       "tags": [
         "pricing",
         "packaging",

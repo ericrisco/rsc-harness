@@ -1,6 +1,6 @@
 ---
 name: pricing
-description: "Use when setting or resetting what a product or service charges and how it is packaged — choosing list price, margin floor, tiers, value metric, pricing model (flat/seat/usage/outcome/hybrid) and discount rules. Triggers: 'what should I charge', 'cómo pongo precio a esto', 'quin preu poso', 'design my pricing tiers', 'good better best packaging', 'we keep discounting away our margin', 'reprice because our AI compute costs jumped', 'localize price for other countries (PPP)', 'per-seat pricing is killing us', 'set a discount floor'. NOT issuing the actual bill (that is invoicing) and NOT implementing prices in a billing system (that is stripe)."
+description: "Use when setting or resetting what a product or service charges and how it is packaged — list price, margin floor, tiers, the value metric, the pricing model (flat, seat, usage, outcome or hybrid), discount rules and purchasing-power localisation. NOT issuing the actual bill (that is `invoicing`), NOT implementing prices in a billing system (that is `stripe`)."
 tags: [pricing, packaging, margin, tiers, discounting, value-metric, willingness-to-pay, ppp]
 recommends: [invoicing, stripe, unit-economics, proposals, forecasting, sales-pipeline]
 origin: risco

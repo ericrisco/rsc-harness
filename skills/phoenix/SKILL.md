@@ -1,6 +1,6 @@
 ---
 name: phoenix
-description: "Use when building an Elixir web app with Phoenix — contexts, Ecto schemas/changesets/migrations, LiveView, channels, generators and Phoenix-flavored tests — or wiring up the boundary between domain logic and the web layer. Triggers: 'mix phx.new', 'phx.gen.live', 'phx.gen.auth', 'build a LiveView CRUD', 'Ecto changeset', 'Phoenix channel / PubSub', 'how do I structure a context', non-obvious 'my LiveView re-renders the whole list every time one row is added', 'every post fires a separate query for its author' (N+1), Catalan 'crea un context Comandes i un LiveView per gestionar-les amb acces per usuari', Spanish 'autenticacion sin contrasena con phx.gen.auth / como separo el contexto del controlador'. NOT pure OTP — GenServers, supervision trees, releases with no web/Ecto layer (that is elixir)."
+description: "Use when building an Elixir web app with Phoenix — contexts, Ecto schemas, changesets and migrations, LiveView, channels and PubSub, the generators, and the boundary between domain logic and the web layer. Covers the classic LiveView over-rendering and Ecto N+1 traps. NOT pure OTP work with no web or Ecto layer — GenServers, supervision trees, releases (that is `elixir`)."
 tags: [phoenix, elixir, liveview, ecto, channels, contexts, web, beam]
 recommends: [elixir, postgresdb, docker]
 origin: risco
