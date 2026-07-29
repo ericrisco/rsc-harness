@@ -1,6 +1,6 @@
 ---
 name: context-budget
-description: "Use when a long-horizon task is filling the context window and you must decide what to keep, offload, drop, or hand off — large refactors and migrations that won't fit one window, multi-hour research/agent runs, planning a harness that survives across fresh sessions, or deciding when to compact and whether to spawn a subagent. Triggers: 'we're 80% through context, compact before it breaks', 'context is 80% full', 'make this survive a fresh window', 'this conversation is getting huge', 'should I spawn a subagent for this huge log read or just inline it', 'the agent keeps re-reading the same files and forgetting decisions it made earlier', 'se está llenando el contexto, ¿qué guardo y qué tiro?', 'compacta abans que peti'. NOT dollar spend or budget caps (that is cost-tracking), NOT fetching context via embeddings (that is rag)."
+description: "Use when a long-horizon task is filling the context window and you must decide what to keep, offload, drop, or hand off to a fresh window — when to compact, what the summary must preserve, and whether to isolate a read-heavy subtask in a subagent. NOT dollar spend or caps (that is cost-tracking), NOT finding context via embeddings (that is rag)."
 tags: ["context-window", "token-budget", "compaction", "context-rot", "long-running-agents", "handoff", "subagents"]
 recommends: ["cost-tracking", "rag", "parallel", "building-agents", "harness"]
 origin: risco
@@ -12,21 +12,7 @@ The context window is RAM, not a hard drive. Full ≠ free: a window stuffed to 
 
 > **The one rule:** if you can reconstruct a thing from a file or from git, it does not belong resident in the window. Keep load-bearing-right-now; evict the rest. The cost of forgetting is one re-read; the cost of hoarding is silent quality rot on every turn that follows.
 
-## When to use this
-
-- A task is plainly bigger than one window: a large refactor, a multi-file migration, "build the whole app", a multi-hour research or agent run.
-- You feel degradation before the gauge confirms it: repeating yourself, re-reading files you already read, drifting from the plan, contradicting an earlier decision.
-- You are setting up a harness that must survive across many sessions and fresh windows.
-- You are deciding *when* to compact, *what* to preserve, or *whether* to spawn a subagent vs. inline a big read.
-
-## When NOT to use (and where to go)
-
-- Pricing tokens, ledgering spend, firing a budget alert or a hard `$` cap → `../cost-tracking/SKILL.md`. That skill owns *money*; this one owns *working-memory quality*. Same words ("token budget"), different unit: dollars vs. attention.
-- Finding the *right* context to inject via embeddings/chunking → `../rag/SKILL.md`. RAG is *how you find* context; this is *how much* you let live and *when to evict*.
-- Crafting the prompt text, few-shot, or output format → `../prompt-engineering/SKILL.md`.
-- Designing the agent loop, tool schemas, or provider adapter → `../building-agents/SKILL.md`.
-- Fanning out genuinely independent work → `../parallel/SKILL.md`. This skill *uses* subagents as a context-isolation tactic and points there, but does not own the partition-then-gather discipline.
-- The 01-TOOLS / 02-DOCS control plane of a whole workspace → `../harness/SKILL.md`.
+Neighbours, so you don't do their job here: pricing tokens, spend ledgers and hard `$` caps are `../cost-tracking/SKILL.md` — same words ("token budget"), different unit, dollars vs. attention. Finding the *right* context via embeddings/chunking is `../rag/SKILL.md`; RAG is *how you find* context, this is *how much* you let live and *when to evict*. Prompt text, few-shot and output format are `../prompt-engineering/SKILL.md`; the agent loop, tool schemas and provider adapters are `../building-agents/SKILL.md`; partition-then-gather fan-out of independent work is `../parallel/SKILL.md` (this skill *uses* subagents as a context-isolation tactic but does not own that discipline); the 01-TOOLS / 02-DOCS control plane is `../harness/SKILL.md`.
 
 ## Read the gauge first
 
@@ -102,7 +88,7 @@ drop: the exploratory diffs and the debugging transcript.
 
 When the task is bigger than one window, the win is making a *fresh* window resume the work in a single read. The long-running harness pattern (Anthropic, "Effective harnesses for long-running agents", published 2025-11-26, accessed 2026-06-02) is: an initializer session sets up the work, then each coding session works **one unit at a time** and leaves a structured update — a progress log (e.g. `claude-progress.txt`) plus git history plus a structured feature list — so the next window reconstructs state without you re-explaining it.
 
-Write the handoff *before* you run out of room, not after quality already cratered. The template (Goal / Done / In-progress / Next / Gotchas / Key paths) is in `references/handoff-and-compaction.md`.
+Write the handoff *before* you run out of room, not after quality already cratered. The template (Goal / Done / In-progress / Next / Gotchas / Key paths) and a good-vs-bad summary checklist are in `references/handoff-and-compaction.md`.
 
 ## Budget allocation heuristic
 
@@ -126,7 +112,3 @@ A starting split for a production agent's window — a **heuristic, not a law** 
 | Paste a subagent's full transcript back into the parent | Defeats the entire point of isolation — the child's bloat lands in the parent | Take back only the answer/artifact, never the transcript |
 | Treat the window as infinite because the model "has 1M" | Context rot scales with tokens regardless of the limit | Budget against attention, not the advertised ceiling |
 | Carry dead-end exploration forward | The journey isn't the decision; it's pure noise | Reduce to the conclusion + the commit that proves it |
-
-## Reference
-
-`references/handoff-and-compaction.md` — the server-side compaction API contract (exact header, edit type, trigger defaults/min, `pause_after_compaction`, the append-the-block rule, default summary prompt), a copy-paste progress-file template, and a good-vs-bad summary checklist. Offloaded here because it's API-version-specific and rots fastest.
