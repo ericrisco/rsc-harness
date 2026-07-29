@@ -1,6 +1,6 @@
 ---
 name: nodejs
-description: "Use when building or structuring a plain Node.js / Express backend service — project layout, async correctness, central error handling, config validation, and graceful shutdown — the runtime and HTTP service, not a DI framework. Triggers: 'set up an Express 5 service', 'my async route error returns 200 with an empty body', 'where do controllers vs services go', 'centralize error handling middleware', 'shut down cleanly on SIGTERM without dropping requests', 'why does one unhandled promise rejection crash my server', 'monta un backend con Express y manejo de errores', 'apaga el servidor sin perder peticiones en vuelo'. NOT NestJS DI/modules/guards (that is nestjs); NOT the TS type system/tsconfig (that is typescript); NOT REST contract/versioning (that is api-design)."
+description: "Use when building or operating a plain Node.js / Express 5 backend service: project layout, async correctness, central error middleware, fail-fast config, graceful shutdown on SIGTERM. NOT DI modules/providers/guards (that is `nestjs`), NOT the type system or tsconfig (that is `typescript`), NOT REST contract design (that is `api-design`)."
 tags: [nodejs, express, backend, async, error-handling]
 recommends: [nestjs, typescript, api-design, error-handling, postgresdb]
 origin: risco
@@ -8,24 +8,15 @@ origin: risco
 
 # Node.js backend services
 
-Stand up a plain Node.js HTTP/JSON service — `node:http` or Express 5 — that a person can read, test, and operate without a DI framework. This skill is about the runtime and the request lifecycle: how to lay out the code, how to keep async correct, how errors become status codes, how config fails fast, and how the process dies cleanly. The contract shape, the type system, and the data layer live elsewhere (see the boundaries below).
+Stand up a plain Node.js HTTP/JSON service — `node:http` or Express 5 — that a person can read, test, and operate without a DI framework. This skill is about the runtime and the request lifecycle: how to lay out the code, how to keep async correct, how errors become status codes, how config fails fast, and how the process dies cleanly. The contract shape, the type system, and the data layer live elsewhere (see the boundary below).
 
-## Use this when
+## Boundary
 
-- Standing up a new HTTP/JSON service on Node with Express 5 (or bare `node:http`).
-- Structuring routes / controllers / services / repositories in a non-DI app.
-- Fixing async bugs: floating promises, swallowed errors, callbacks not awaited.
-- Centralizing error handling and the 404/500 contract in one place.
-- Graceful shutdown on SIGTERM, env validation at boot, the request lifecycle.
-- Choosing CommonJS vs ESM and pinning a runtime.
-
-## Not this when
-
-- The app is built around `@Module` / `@Injectable` / DI providers, guards, interceptors, pipes, exception filters → `../nestjs/SKILL.md`. Nest starts the moment the DI container appears; route away then, do not half-build it here.
-- Pure TypeScript type system, generics, `tsconfig` → `../typescript/SKILL.md`. This skill uses TS but does not teach types.
-- REST resource modeling, versioning, pagination, status-code semantics (framework-agnostic) → api-design. This skill *wires* the handlers; api-design decides the contract.
-- Schema, queries, connection pool, migrations → `../postgresdb/SKILL.md` / prisma-orm / drizzle-orm. *Calling* a repository stays here; designing the table does not.
-- Containerizing / shipping → docker / deployment. Choosing the logging/metrics/tracing stack → observability. This skill emits structured logs and a shutdown hook; it does not own the pipeline.
+- The app is built around `@Module` / `@Injectable` / DI providers, guards, interceptors, pipes, exception filters → [`nestjs`](../nestjs/SKILL.md). Nest starts the moment the DI container appears; route away then, do not half-build it here.
+- Pure TypeScript type system, generics, `tsconfig` → [`typescript`](../typescript/SKILL.md). This skill uses TS but does not teach types.
+- REST resource modeling, versioning, pagination, status-code semantics (framework-agnostic) → [`api-design`](../api-design/SKILL.md). This skill *wires* the handlers; api-design decides the contract. Cross-cutting error taxonomy → [`error-handling`](../error-handling/SKILL.md).
+- Schema, queries, connection pool, migrations → [`postgresdb`](../postgresdb/SKILL.md) / [`prisma-orm`](../prisma-orm/SKILL.md) / [`drizzle-orm`](../drizzle-orm/SKILL.md). *Calling* a repository stays here; designing the table does not.
+- Containerizing / shipping → [`docker`](../docker/SKILL.md) / [`deployment`](../deployment/SKILL.md). Choosing the logging/metrics/tracing stack → [`observability`](../observability/SKILL.md). This skill emits structured logs and a shutdown hook; it does not own the pipeline.
 
 ## Decide first
 
@@ -33,7 +24,7 @@ Pick the runtime shape before writing code — the wrong choice is expensive to 
 
 | Situation | Choice | Why |
 | --- | --- | --- |
-| Needs DI/modules, large team, heavy cross-cutting | route to `../nestjs/SKILL.md` | Don't reinvent a DI container by hand |
+| Needs DI/modules, large team, heavy cross-cutting | route to [`nestjs`](../nestjs/SKILL.md) | Don't reinvent a DI container by hand |
 | Small/medium JSON API, want middleware + routing | Express 5 | Mature, async errors auto-forward (v5) |
 | One tiny endpoint, zero deps, a healthcheck | `node:http` | No dependency surface to maintain |
 | A library, not a server | not this skill | No request lifecycle to manage |
@@ -158,7 +149,7 @@ app.get("/users/:id", async (req, res) => {
 });
 ```
 
-The error handler placed before the route never sees the throw, so the response is whatever was half-written. Put it last. See `references/express5-migration.md` for the full v4→5 breaking-change checklist and the legacy v4 `asyncHandler` wrapper.
+The error handler placed before the route never sees the throw, so the response is whatever was half-written. Put it last. See [`references/express5-migration.md`](references/express5-migration.md) for the full v4→5 breaking-change checklist, the middleware-order diagram, and the legacy v4 `asyncHandler` wrapper.
 
 ## Config & secrets
 
@@ -185,7 +176,7 @@ On SIGTERM the orchestrator gives you a brief window to finish. Drop nothing.
 4. Close the DB pool and other resources.
 5. `process.exit(0)`, with a force-exit timer as a backstop if drain stalls.
 
-Expose `/healthz` (liveness — is the process up) separately from `/readyz` (readiness — should it receive traffic). They answer different questions; conflating them causes both false restarts and dropped requests during deploys. The full copy-pasteable `server.ts` lives in `references/graceful-shutdown.md`.
+Expose `/healthz` (liveness — is the process up) separately from `/readyz` (readiness — should it receive traffic). They answer different questions; conflating them causes both false restarts and dropped requests during deploys. The complete copy-pasteable `server.ts` — signal handlers, `AbortController`, readiness gate, force-exit backstop — lives in [`references/graceful-shutdown.md`](references/graceful-shutdown.md).
 
 ```ts
 // server.ts (sketch — full version in references/)
@@ -230,13 +221,9 @@ test("404 returns the error contract", async () => {
 | `catch (e) {}` then continue | Swallows the failure, masks the bug | Re-throw, or map to an `AppError` |
 | `process.exit()` without draining | Drops in-flight requests on deploy | SIGTERM → `server.close()` → abort → exit |
 | Global `unhandledRejection` as control flow | Hides bugs, leaves process in a bad state | Log + exit there; fix the floating promise |
-| Assuming Express 4 defaults | v5: `urlencoded` `extended:false`, `static` `dotfiles:"ignore"` | Read `references/express5-migration.md` |
+| Assuming Express 4 defaults | v5: `urlencoded` `extended:false`, `static` `dotfiles:"ignore"` | Read [`references/express5-migration.md`](references/express5-migration.md) |
 | Leaking stack/message in prod | Information disclosure | Stack only when `NODE_ENV !== "production"` |
 
-## References & siblings
-
-- `references/express5-migration.md` — full Express 4→5 breaking changes, middleware-order diagram, the legacy v4 `asyncHandler` wrapper.
-- `references/graceful-shutdown.md` — complete `server.ts`: signal handlers, `AbortController`, readiness gate, force-exit backstop.
-- DI/modules/guards → `../nestjs/SKILL.md`. Type system/tsconfig → `../typescript/SKILL.md`. Data layer → `../postgresdb/SKILL.md`. Contract design → api-design. Cross-cutting error taxonomy → error-handling.
+## Verify
 
 `scripts/verify.sh` statically lints a produced repo for these rules (4-arg error handler last, no `listen()` in `app.ts`, `engines.node` supported, floating-promise heuristic). Advisory; hard-fails only on `listen()` in `app.ts` or a missing error handler.
