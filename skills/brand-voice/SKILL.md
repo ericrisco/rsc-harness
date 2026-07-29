@@ -1,6 +1,6 @@
 ---
 name: brand-voice
-description: "Use when defining or documenting how a brand SOUNDS — turning fuzzy adjectives ('professional but approachable') into voice rules a writer or LLM can actually apply, building a use/avoid word bank, plotting tone on the four dimensions, or producing an AI voice-DNA block so generated copy stays on-brand. Also when content drifts: blog, emails, and support replies read like five different people wrote them. Triggers: 'define our tone of voice', 'we have no brand voice guide', 'turn these adjectives into rules', 'word bank / banned words', 'make ChatGPT write like us', 'our content sounds like AI', 'everything sounds off-brand', 'define el tono de voz de la marca', 'la nostra veu de marca'. NOT writing the actual landing copy (that is landing-copy), the launch email (that is marketing), or the logo/colors (that is brand-identity)."
+description: "Use when defining how a brand SOUNDS as a reusable system: adjectives turned into linguistic rules, four tone dimensions as ratios, a use/avoid word bank, an AI voice-DNA block — so content stops sounding like five different writers. NOT the finished copy written against it (that is `landing-copy` / `marketing`), NOT the brand's look (`brand-identity`)."
 tags: [brand-voice, tone-of-voice, messaging, brand, voice-guide]
 recommends: [landing-copy, brand-identity, marketing, content-engine, customer-support]
 origin: risco
@@ -8,32 +8,9 @@ origin: risco
 
 # Brand Voice — How the Brand Sounds
 
-*The durable definition of how a brand sounds. You write it once; everything downstream writes against it. This skill produces the guide, never the finished piece of copy.*
+You own the **reusable voice-and-tone system**: 3–5 personality traits → concrete linguistic rules → a position on the four tone dimensions → a use/avoid word bank → a tone-by-context matrix → a paste-into-the-prompt voice-DNA block. The output is a persisted document, never a finished piece of copy.
 
-You own the **reusable voice-and-tone system**: 3–5 personality traits → concrete linguistic rules → a position on the four tone dimensions → a use/avoid word bank → a tone-by-context matrix → a paste-into-the-prompt voice-DNA block. The output is a persisted document, not a landing page, email, or article. Those are downstream consumers that *read* this guide.
-
-## When to use / When NOT
-
-Use when:
-
-- A brand has no voice guide, or has one that is just a list of adjectives nobody can apply.
-- Fuzzy adjectives ("bold, warm, expert") must become rules a writer or LLM can follow.
-- Building the word bank: power words to lean on, words/phrases to ban.
-- Specifying how tone shifts by context (error vs. celebration vs. legal) while voice stays constant.
-- Producing the AI voice-DNA block to paste into a system prompt so generated copy stays on-brand.
-- Auditing existing copy for off-brand drift against a defined voice.
-- The drift symptom: "our blog, emails, and support replies all sound like different people."
-
-Do NOT use when (route to the sibling that owns it):
-
-- Writing the hero / value prop / CTA / section copy of a page → `landing-copy`.
-- Writing launch emails, channel posts, or finished marketing pieces → [`../marketing/SKILL.md`](../marketing/SKILL.md), and for blog/article systems → `content-engine`, `article-writing`, `newsletter`, `social-publisher`.
-- Logo, color, type, visual identity, design tokens → `brand-identity`.
-- Visual/UX layout, motion, component look → [`../design/SKILL.md`](../design/SKILL.md).
-- An investor narrative or sales deck → [`../pitch-deck/SKILL.md`](../pitch-deck/SKILL.md).
-- Replying to a live customer ticket in-tone → `customer-support` (it consumes this guide; it does not author it).
-
-The line: **brand-voice owns the reusable definition of how the brand sounds.** The moment you write one finished piece against it, that is a copywriting skill. The way the brand *looks* is `brand-identity`.
+The line: **brand-voice owns the reusable definition of how the brand sounds.** The moment you write one finished piece against it, that is a copywriting skill — page hero/value prop/CTA is `landing-copy`; launch emails and channel posts are [`../marketing/SKILL.md`](../marketing/SKILL.md); blog and article systems are `content-engine`, `article-writing`, `newsletter`, `social-publisher`; an investor narrative is [`../pitch-deck/SKILL.md`](../pitch-deck/SKILL.md); a live customer ticket is `customer-support` (it consumes this guide, it does not author it). The way the brand *looks* — logo, color, type, design tokens — is `brand-identity`, and layout/motion is [`../design/SKILL.md`](../design/SKILL.md).
 
 ## Voice vs. tone (the load-bearing distinction)
 
@@ -150,7 +127,7 @@ Tone by context: onboarding=warm; error=plain+reassuring, no humor;
   success=light warmth, no hype; billing=precise+calm; legal=formal+exact.
 ```
 
-**Persist it.** Write the compiled guide under `02-DOCS/wiki/brand/voice-guide.md` and the voice-DNA block beside it, per the `harness` Karpathy-wiki convention (compiled brand articles under `02-DOCS/wiki/brand/`, raw user inputs under `02-DOCS/raw/brand/`). The persisted file is an OKF v0.1 wiki article: open it with YAML frontmatter carrying a non-empty `type:` (use `type: brand-voice`) — see the frontmatter block in [`references/voice-guide-template.md`](references/voice-guide-template.md). This is the exact study `marketing`, `landing-copy`, and `content-engine` read to ground their copy. A guide in a slide deck is invisible to them.
+**Persist it.** Write the compiled guide under `02-DOCS/wiki/brand/voice-guide.md` and the voice-DNA block beside it, per the `harness` Karpathy-wiki convention (compiled brand articles under `02-DOCS/wiki/brand/`, raw user inputs under `02-DOCS/raw/brand/`). The persisted file is an OKF v0.1 wiki article: open it with YAML frontmatter carrying a non-empty `type:` (use `type: brand-voice`) — see the frontmatter block in [`references/voice-guide-template.md`](references/voice-guide-template.md), which is also the fill-in-the-blanks skeleton for the whole guide (traits → rules → 4-D ratios → word bank → context matrix → voice-DNA block) with one fully worked mini-example brand. This is the exact study `marketing`, `landing-copy`, and `content-engine` read to ground their copy. A guide in a slide deck is invisible to them.
 
 ## Auditing for drift
 
@@ -173,10 +150,6 @@ Off-brand reads like everyone else: abstract nouns, hedged claims, AI tells, ene
 | No ban list | Drift and AI tells creep in unchecked | The ban list is the drift killer — ship it first |
 | Guide lives in a deck or someone's head | Downstream skills and LLMs can't read it | Persist machine-readable under `02-DOCS/wiki/brand/` |
 | Writing the actual landing/email/article | That is a finished piece, not the definition | Stop; hand to `landing-copy` / `marketing` / `content-engine` |
-
-## Templates
-
-A fill-in-the-blanks guide (traits → rules → 4-D ratios → word bank → context matrix → voice-DNA block) with one fully worked mini-example brand lives in [`references/voice-guide-template.md`](references/voice-guide-template.md). The universal ban list and power-word derivation method are in [`references/word-bank.md`](references/word-bank.md).
 
 ## Verify
 
