@@ -1,6 +1,6 @@
 ---
 name: prisma-orm
-description: "Use when modeling data or writing type-safe queries with Prisma ORM in TypeScript and hitting its classic problems: N+1 on relations, over-fetching with fat include, an unbounded findMany scanning the whole table, the v7 'requires either adapter or accelerateUrl' error, or a Prisma 6 to 7 upgrade. Owns schema.prisma, the prisma-client generator, prisma.config.ts, the Prisma Client query API, and Prisma Migrate. Triggers: 'PrismaClient requires either adapter or accelerateUrl', 'client is not in node_modules anymore', 'relationLoadStrategy join vs query', 'migrate dev vs migrate deploy in CI', 'findMany returns the whole table', 'modela el esquema de usuarios y pedidos con Prisma', 'migració de Prisma a la versió 7'. NOT the schema-as-TS SQL-builder ORM (that is drizzle-orm), NOT cross-cutting zero-downtime migration strategy (that is db-migrations), NOT Postgres server tuning and EXPLAIN (that is postgresdb)."
+description: "Use when modeling data or writing type-safe queries with Prisma ORM in TypeScript — `schema.prisma`, `prisma.config.ts`, the generated Prisma Client, and Prisma Migrate, including the v6 to v7 upgrade. NOT schema-as-TS with a SQL builder (that is `drizzle-orm`), NOT ORM-agnostic zero-downtime migration (that is `db-migrations`), NOT Postgres engine tuning (that is `postgresdb`)."
 tags:
   - prisma
   - prisma-orm
@@ -286,8 +286,8 @@ Rules with teeth:
 
 Failed-migration recovery, baselining an existing database, and the full Prisma 6 to 7
 upgrade are in `references/migrations-and-v7-upgrade.md`. For ORM-independent evolution
-strategy (expand/contract, dual-write, zero-downtime backfills) that is the `db-migrations`
-skill.
+strategy (expand/contract, dual-write, zero-downtime backfills) that is
+`../db-migrations/SKILL.md`.
 
 ## Anti-patterns
 
@@ -311,10 +311,3 @@ Run `scripts/verify.sh <path>` to statically check emitted artifacts: it confirm
 `prisma-client` generator + `output`, an adapter on the constructor, and flags
 `$queryRawUnsafe` injection, `binaryTargets`, unbounded `findMany`, and wrong-ORM
 contamination. Read-only; no database connection.
-
-## References
-
-- `references/queries-and-performance.md` — query cookbook, `relationLoadStrategy` matrix,
-  transactions, generated types, the perf checklist, and the raw-SQL safety matrix.
-- `references/migrations-and-v7-upgrade.md` — migrate workflow detail, failed-migration
-  recovery, baselining, and the full Prisma 6 to 7 upgrade.

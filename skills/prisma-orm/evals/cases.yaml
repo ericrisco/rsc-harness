@@ -21,8 +21,8 @@ should_trigger:
     why: Non-obvious v7 change — generated output path replaces the node_modules import.
   - prompt: "Necessito fer la migració de Prisma a la versió 7, què he de canviar a schema.prisma i al client?"
     why: >
-      Catalan phrasing matching the description's stated coverage — the v6 to 7 upgrade
-      (generator rename, output, adapter, prisma.config.ts) is explicitly owned here.
+      Catalan phrasing of the v6 to 7 upgrade (generator rename, output, adapter,
+      prisma.config.ts), which this skill owns.
 
 should_not_trigger:
   - prompt: "Set up the same schema using Drizzle's pgTable and drizzle-kit"
