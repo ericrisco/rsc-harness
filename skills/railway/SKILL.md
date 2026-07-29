@@ -1,6 +1,6 @@
 ---
 name: railway
-description: "Use when deploying an app to Railway — pushing a repo or running railway up, provisioning a managed database, wiring env and reference variables, attaching a volume, or fixing a Railway deploy that builds but won't serve. Triggers: 'deploy this on Railway', 'railway up', 'add Postgres to Railway', 'railway.json healthcheck path', 'my Railway service binds localhost and 502s', 'reference DATABASE_URL across two services', 'two Railway services need to talk privately', 'desplegar en Railway', 'mi servicio de Railway no arranca'. NOT Render (that is render), NOT Fly machines (that is fly-io), NOT self-hosted PaaS on your own box (that is coolify)."
+description: "Use when deploying an app to Railway — pushing a repo or running railway up, provisioning a managed database, wiring env and reference variables across services, attaching a volume, or fixing a deploy that builds but will not serve. NOT Render (that is `render`), NOT Fly machines (that is `fly-io`), NOT a self-hosted PaaS on your own box (that is `coolify`)."
 tags: [railway, paas, deploy, services, env-vars, volumes, databases, private-networking, railway-json]
 recommends: [render, fly-io, coolify, postgresdb, db-migrations, domains-dns, deployment, docker]
 origin: risco

@@ -1,6 +1,6 @@
 ---
 name: proposals
-description: "Use when writing the document a buyer reads to say yes — a commercial proposal or Statement of Work (SOW), turning discovery notes into a scoped priced doc, adding Good/Better/Best tiers, or fixing a proposal that won't close. Triggers: 'write a proposal for this client', 'draft a SOW / scope of work', 'turn this discovery call into a proposal', 'add pricing tiers so the middle one wins', 'why isn't this proposal closing', 'scope this so the client can't keep adding free work', 'propuesta comercial / propuesta de servicios', 'proposta comercial / abast del projecte'. NOT the binding legal agreement, MSA, liability/IP clauses (that is contracts), NOT deciding what number to charge or the margin (that is pricing), NOT the slide deck that pitches the vision to a room (that is pitch-deck)."
+description: "Use when writing the document a buyer reads to say yes — a commercial proposal or Statement of Work, turning discovery notes into a scoped and priced document, adding tiers so the middle one wins, or diagnosing a proposal that will not close. NOT the binding legal agreement with its liability and IP clauses (that is `contracts`), NOT deciding the number or the margin (that is `pricing`), NOT the deck that pitches the vision to a room (that is `pitch-deck`)."
 tags: [proposals, sow, sales, scope]
 recommends: [contracts, pricing, invoicing, sales-pipeline, pitch-deck, brand-voice]
 origin: risco

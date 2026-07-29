@@ -1,6 +1,6 @@
 ---
 name: render
-description: "Use when deploying or fixing an app on Render (render.com) — web services, background workers, cron jobs, private services, managed Postgres/Key-Value, and especially the render.yaml Blueprint. Use when a deploy fails with 'no open ports detected' or returns 502 on first deploy, a free service cold-starts after going idle, or a free Postgres is about to expire and take its data. Triggers: 'deploy to Render', 'write a render.yaml', 'render blueprint', 'Render background worker', 'Render cron job', 'no open ports detected', 'wire DATABASE_URL between Render services', 'why does my free Render service take 30 seconds to wake', 'desplegar en Render', 'configurar render.yaml', 'mi servicio en Render da 502'. NOT generic ship/release flow (that is deployment) and NOT another PaaS like railway or fly-io."
+description: "Use when deploying or fixing an app on Render — web services, background workers, cron jobs, private services, managed Postgres and Key-Value, and especially the render.yaml Blueprint. Covers deploys that fail with no open ports detected, 502s on first deploy, free-tier cold starts, and a free Postgres about to expire with its data. NOT the generic ship and release flow (that is `deployment`), NOT another PaaS such as `railway` or `fly-io`."
 tags: [render, paas, deployment, render-yaml, cron, background-worker, infrastructure-as-code]
 recommends: [deployment, postgresdb, docker, domains-dns, github-actions, scaling]
 origin: risco

@@ -1,6 +1,6 @@
 ---
 name: replicate
-description: "Use when running, packaging, deploying or scaling a model on the Replicate platform from code — choosing blocking run vs async predictions, handling FileOutput, wiring deployments with warm/private endpoints and autoscaling, packaging with Cog, verifying webhooks, or cutting GPU spend. Triggers: 'run flux on Replicate from Python', 'my prediction takes 8 minutes and my request times out', 'keep an instance warm so users don't hit cold starts', 'cog push fails', 'verify the webhook came from Replicate', 'desplegar mi modelo en Replicate con endpoint privado', 'empaquetar mi modelo con Cog'. NOT crafting image prompts/params or picking image model families (that is replicate-images)."
+description: "Use when running, packaging, deploying or scaling a model on the Replicate platform from code — blocking run versus async predictions, handling FileOutput, deployments with warm private endpoints and autoscaling, packaging with Cog, verifying webhook signatures, and cutting GPU spend. NOT crafting image prompts and parameters or picking image model families (that is `replicate-images`)."
 tags: [replicate, cog, deployments, webhooks, model-serving, gpu, ai-infra]
 recommends: [replicate-images, modal, runpod, huggingface, webhooks, cost-tracking, docker]
 origin: risco
