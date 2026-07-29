@@ -1,6 +1,6 @@
 ---
 name: gcp-essentials
-description: "Use when running a small product on the core of Google Cloud with the gcloud CLI: creating a project, deploying a container to Cloud Run, standing up a Cloud Storage bucket, a managed Cloud SQL Postgres/MySQL, and wiring them together with least-privilege IAM. Triggers: 'deploy to Cloud Run', 'gcloud run deploy', 'set up a GCP project', 'crear bucket en GCP', 'desplegar a Cloud Run', 'service account sin claves JSON', 'why is my Cloud Run running as the default service account', 'connect Cloud Run to Cloud SQL', 'turn off the bucket public access'. NOT AWS (that is aws-essentials)."
+description: "Use when running a small product on core Google Cloud via the gcloud CLI: a project, Cloud Run deploys, a locked-down Cloud Storage bucket, managed Cloud SQL, and least-privilege IAM wiring them together. NOT AWS (that is `aws-essentials`), NOT the CI pipeline that ships the image (that is `deployment`), NOT Postgres schema/query tuning (that is `postgresdb`)."
 tags: [gcp, cloud-run, cloud-sql, cloud-storage, iam, gcloud, serverless, devops]
 recommends: [aws-essentials, docker, github-actions, secure-coding, postgresdb, deployment, monitoring, backups]
 origin: risco
@@ -20,12 +20,14 @@ Four primitives carry most products, plus the project/billing scaffold under the
 - **Cloud Storage** — object storage (buckets).
 - **Cloud SQL** — managed Postgres/MySQL.
 
-Out of scope, route elsewhere: AWS -> `aws-essentials`. Building/shipping the image
-itself -> `docker` / `github-actions` / [`../deployment/SKILL.md`](../deployment/SKILL.md).
+Out of scope, route elsewhere: AWS -> [`../aws-essentials/SKILL.md`](../aws-essentials/SKILL.md).
+Building/shipping the image itself -> [`../docker/SKILL.md`](../docker/SKILL.md)
+/ [`../github-actions/SKILL.md`](../github-actions/SKILL.md) / [`../deployment/SKILL.md`](../deployment/SKILL.md).
 Postgres schema/index/query tuning -> [`../postgresdb/SKILL.md`](../postgresdb/SKILL.md).
 App-level injection/secret-handling review -> [`../secure-coding/SKILL.md`](../secure-coding/SKILL.md).
-Logging/alerting/SLOs as a practice -> `monitoring`. Backup strategy as a discipline
--> `backups`. One-click PaaS where you never touch IAM/VPC -> [`../vercel/SKILL.md`](../vercel/SKILL.md)
+Logging/alerting/SLOs as a practice -> [`../monitoring/SKILL.md`](../monitoring/SKILL.md).
+Backup strategy as a discipline -> [`../backups/SKILL.md`](../backups/SKILL.md).
+One-click PaaS where you never touch IAM/VPC -> [`../vercel/SKILL.md`](../vercel/SKILL.md)
 / [`../railway/SKILL.md`](../railway/SKILL.md) / [`../render/SKILL.md`](../render/SKILL.md)
 / [`../fly-io/SKILL.md`](../fly-io/SKILL.md).
 
@@ -96,8 +98,8 @@ Two hard rules, each with teeth:
    Identity Federation for external/CI auth (GitHub Actions). If `... keys create` is
    in your runbook, the runbook is wrong.
 
-WIF for keyless CI, SA impersonation, IAM Recommender and Conditions live in
-[`references/iam-and-auth.md`](references/iam-and-auth.md).
+The predefined-role catalog, WIF for keyless CI, SA impersonation, IAM Recommender and
+Conditions live in [`references/iam-and-auth.md`](references/iam-and-auth.md).
 
 ## 2. Cloud Run
 
@@ -233,8 +235,9 @@ gcloud run deploy api --region=europe-west1 \
 ```
 
 The Cloud SQL **Auth Proxy** (short-lived certs, TLS 1.3) is for connecting from
-*outside* — local dev or a non-serverless host — not for Cloud Run. Private IP, PSC
-and proxy invocation are in [`references/networking-and-sql.md`](references/networking-and-sql.md).
+*outside* — local dev or a non-serverless host — not for Cloud Run. Direct VPC egress vs
+legacy connectors, private IP / PSC, proxy invocation and pooling are in
+[`references/networking-and-sql.md`](references/networking-and-sql.md).
 
 ## 5. Wire it together
 
@@ -266,6 +269,10 @@ gcloud run deploy api --region=europe-west1 \
 Note the scoping: `cloudsql.client` is project-wide (the role needs it), but the
 storage and secret grants are bound to the *specific* bucket and secret, not the
 project. Grant narrow.
+
+Copy-paste runbooks for each piece — image build and push, private container deploy,
+attach SQL, mount a secret, full teardown — are in
+[`references/deploy-recipes.md`](references/deploy-recipes.md).
 
 ## 6. Cost & teardown
 
@@ -315,13 +322,3 @@ bash scripts/verify.sh path/to/dir/              # recurse a directory
 
 It prints `PASS`/`FAIL` per check and exits nonzero on any FAIL. An empty or
 clean target passes (exit 0).
-
-## References
-
-- [`references/iam-and-auth.md`](references/iam-and-auth.md) — predefined-role catalog,
-  Workload Identity Federation for GitHub Actions, SA impersonation, IAM Recommender,
-  Conditions.
-- [`references/networking-and-sql.md`](references/networking-and-sql.md) — Direct VPC
-  egress vs legacy connectors, Cloud SQL private IP / PSC, Auth Proxy, pooling.
-- [`references/deploy-recipes.md`](references/deploy-recipes.md) — copy-paste runbooks:
-  container deploy, attach SQL, mount a secret, budget alert, full teardown.
