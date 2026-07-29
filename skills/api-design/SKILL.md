@@ -1,6 +1,6 @@
 ---
 name: api-design
-description: "Use when designing the contract of a network API before/independent of implementation — modeling resources and URLs, choosing REST vs GraphQL, picking a versioning strategy, defining one consistent error envelope, and settling pagination/filtering/idempotency conventions. Triggers: 'design the REST API for X', 'what should the endpoints be', 'how do I version this without breaking clients', 'should this be REST or GraphQL', 'cursor vs offset pagination', 'standard error format for my API', 'RFC 9457 problem details', 'idempotency key on POST', '200 with error body', 'diseña la API REST de esto', 'cómo verziono la API sin romper clientes'. NOT implementing endpoints in a framework (that is fastapi/nestjs/go/nodejs), NOT security/auth hardening (that is secure-coding), NOT receiving inbound webhooks (that is webhooks), NOT building an outbound client to a third-party API (that is api-connector-builder)."
+description: "Use when settling the contract of an API you expose, before implementation: resources/URLs, REST vs GraphQL, versioning, one RFC 9457 error envelope, pagination, idempotency — emitted as OpenAPI 3.1. NOT implementing the endpoints (that is `fastapi`/`nestjs`/`go`/`nodejs`), NOT auth hardening (that is `secure-coding`), NOT consuming a third-party API (that is `api-connector-builder`)."
 tags: [api-design, rest, graphql, openapi, versioning, pagination, http, rfc9457, contract-design]
 recommends: [fastapi, nestjs, go, nodejs, secure-coding, webhooks, api-connector-builder, code-review]
 origin: risco
@@ -24,7 +24,7 @@ Pick on traffic shape, not fashion. Decide once, write it down.
 | Many client shapes, deep nested graphs, mobile over-fetch is real | **GraphQL** | one round-trip, client picks fields; no N endpoints per screen |
 | Stable resource API + one rich read surface for a client app | **Hybrid** | REST for the system of record, a GraphQL read layer on top |
 
-Operational gotcha that decides monitoring: **GraphQL returns HTTP 200 even when a field errored** — failures live in an `errors[]` array next to partial `data`. Your dashboards cannot alert on 5xx; you must alert on the `errors[]` payload. REST signals failure with the HTTP status itself. If your ops team lives on status-code SLOs, that is a point for REST. Details in `references/graphql-design.md`.
+Operational gotcha that decides monitoring: **GraphQL returns HTTP 200 even when a field errored** — failures live in an `errors[]` array next to partial `data`. Your dashboards cannot alert on 5xx; you must alert on the `errors[]` payload. REST signals failure with the HTTP status itself. If your ops team lives on status-code SLOs, that is a point for REST. Schema/nullability design, mutation and error-union conventions, and this error model in full: [`references/graphql-design.md`](references/graphql-design.md).
 
 ## Resource & URL modeling
 
@@ -44,7 +44,7 @@ Rules, each with its reason:
 | `GET /projects/active` | `GET /projects?status=active` | filter is a query param |
 | `POST /projects/{id}/delete` | `DELETE /projects/{id}` | method, not path segment |
 
-Full query grammar (filter operators, sparse fieldsets, sort syntax) is in `references/rest-conventions.md`.
+Full query grammar (filter operators, sparse fieldsets, sort syntax), content negotiation, rate-limit headers and a HATEOAS note: [`references/rest-conventions.md`](references/rest-conventions.md).
 
 ## Status codes that matter
 
@@ -67,7 +67,7 @@ You need a small map, used consistently. Don't overload 200.
 
 Two distinctions agents get wrong:
 - **401 vs 403** — 401 means *unauthenticated* (no/invalid credentials); 403 means *authenticated but unauthorized*. Returning 401 on a permission failure leaks that re-auth might help when it won't.
-- **409 vs 422** — 409 is a *state* conflict (the request fights the current server state: dup key, stale version). 422 is a *content* problem (the body parses but fails business rules). Full table with when-each in `references/rest-conventions.md`.
+- **409 vs 422** — 409 is a *state* conflict (the request fights the current server state: dup key, stale version). 422 is a *content* problem (the body parses but fails business rules). Full status-code table with when-each in [`references/rest-conventions.md`](references/rest-conventions.md).
 
 ## Error envelope: RFC 9457
 
@@ -116,7 +116,7 @@ REST cursor envelope — same keys on every list endpoint:
 
 The next page is `GET /projects?cursor=eyJpZCI6MTI4N30&limit=50`. The cursor is opaque — clients must not parse or construct it.
 
-GraphQL has its own de-facto standard: **Relay Connections** — `edges { node, cursor }`, `pageInfo { hasNextPage, endCursor }`, args `first` / `after`. Use it; don't invent a bespoke GraphQL pagination shape. See `references/graphql-design.md`.
+GraphQL has its own de-facto standard: **Relay Connections** — `edges { node, cursor }`, `pageInfo { hasNextPage, endCursor }`, args `first` / `after`. Use it; don't invent a bespoke GraphQL pagination shape. See [`references/graphql-design.md`](references/graphql-design.md).
 
 ## Versioning & evolution
 
@@ -135,7 +135,7 @@ Sunset: Sat, 31 Oct 2026 23:59:59 GMT
 Link: <https://api.acme.com/v2/projects>; rel="successor-version"
 ```
 
-Full breaking-vs-non-breaking matrix and the deprecation workflow live in `references/versioning-and-evolution.md`.
+Full breaking-vs-non-breaking matrix, the three versioning mechanisms and the deprecation/sunset workflow: [`references/versioning-and-evolution.md`](references/versioning-and-evolution.md).
 
 ## Idempotency & concurrency
 
@@ -167,7 +167,7 @@ Idempotency-Key: 9b1f7c2e-...
 
 ## Handoff
 
-The contract is the artifact. Emit it as an **OpenAPI 3.1** document (see `references/openapi-contract.md`) — that is the checkable deliverable a framework skill generates code from.
+The contract is the artifact. Emit it as an **OpenAPI 3.1** document — the checkable deliverable a framework skill generates code from. How to shape it, and what `scripts/verify.sh` checks: [`references/openapi-contract.md`](references/openapi-contract.md).
 
 Hand off to the builder:
 - Python/async → [`../fastapi/SKILL.md`](../fastapi/SKILL.md)
@@ -180,10 +180,3 @@ Adjacent concerns you do **not** own:
 - Receiving inbound webhooks (HMAC verify, replay, dedupe) → [`../webhooks/SKILL.md`](../webhooks/SKILL.md)
 - Building an outbound client to a third-party API → [`../api-connector-builder/SKILL.md`](../api-connector-builder/SKILL.md)
 - Reviewing handler code (not the design) → [`../code-review/SKILL.md`](../code-review/SKILL.md)
-
-## References
-
-- `references/rest-conventions.md` — full status-code table, filter/sort/sparse-fieldset grammar, content negotiation, rate-limit headers, HATEOAS note.
-- `references/versioning-and-evolution.md` — breaking-vs-non-breaking matrix, three versioning mechanisms, deprecation/sunset workflow.
-- `references/graphql-design.md` — schema/nullability design, Relay Connections, mutation + error-union conventions, the HTTP-200 error model and its monitoring impact.
-- `references/openapi-contract.md` — capture the contract as OpenAPI 3.1 so frameworks generate from it; what `scripts/verify.sh` checks.
