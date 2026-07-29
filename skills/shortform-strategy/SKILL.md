@@ -1,6 +1,6 @@
 ---
 name: shortform-strategy
-description: "Use when running the durable strategy layer of a TikTok and/or Instagram Reels account — positioning, posting cadence, format mix, which trends and sounds to ride, recurring series, and the what-worked learning loop — not making one video. Use for standing up a new account before posting; diagnosing a flat or declining account (positioning, cadence, or format?); deciding whether to ride a trend or sound now; designing a recurring series; the monthly strategy review; or choosing the Reels-vs-carousel mix. Triggers: 'starting a new TikTok account, what and how often should we post', 'we post every single day and our reach is going down' (cadence-dilution symptom, no strategy word), 'should we jump on this sound or is it dead', 'we want a weekly recurring series on Reels', 'muntar l''estratègia del compte de Reels: posicionament i cadència', '¿nos subimos a esta tendencia o ya pasó?'. NOT writing the single short script or hook variants (that is video-shorts)."
+description: "Use when the unit of work is a TikTok/Reels account, not one clip: positioning, sustainable cadence and format mix, ride-or-skip on a trend or sound, recurring series, diagnosing a flat account, and the dated learning loop. NOT the single script or hook variants (that is `video-shorts`), NOT the idea backlog (that is `shortform-ideation`)."
 tags: [short-form-video, tiktok, instagram-reels, account-growth, positioning, posting-cadence, trends, series, algorithm-2026]
 recommends: [video-shorts, shortform-ideation, shortform-packaging, shortform-editing, social-publisher, content-engine, brand-voice, analytics]
 origin: risco
@@ -12,9 +12,9 @@ origin: risco
 
 Hand off downstream the moment the deliverable becomes *one video*:
 - The 15–60s script and hook variants → `../video-shorts/SKILL.md`.
-- The topic/angle backlog feeding the account → **shortform-ideation**.
-- The cover frame / on-screen title / first-frame packaging → **shortform-packaging**.
-- The cut, caption burn-in, sound sync → **shortform-editing**.
+- The topic/angle backlog feeding the account → `../shortform-ideation/SKILL.md`.
+- The cover frame / on-screen title / first-frame packaging → `../shortform-packaging/SKILL.md`.
+- The cut, caption burn-in, sound sync → `../shortform-editing/SKILL.md`.
 - Cross-platform calendar/scheduler across X/LinkedIn/Threads → `../social-publisher/SKILL.md`.
 - The top-down editorial system across all content types → `../content-engine/SKILL.md`.
 - The durable tone the account speaks in → `../brand-voice/SKILL.md`.
@@ -101,7 +101,7 @@ Design it as a *contract with the viewer*:
 - **Fix a cadence** — same slot, same rhythm (e.g. every Tuesday). A series with no schedule is just a hashtag.
 - **Pilot before committing.** Use **Trial Reels** (public IG accounts, 1,000+ followers, available since July 2025) to publish the pilot to non-followers first and read the signal before showing your existing audience — a built-in A/B surface for a format bet (later.com; socialpilot.co — accessed 2026-06-02).
 
-The hand-off: you define the series *concept, cadence, and numbering*. The episodes get ideated (shortform-ideation), scripted (`../video-shorts/SKILL.md`), and packaged (shortform-packaging) elsewhere.
+The hand-off: you define the series *concept, cadence, and numbering*. The episodes get ideated (`../shortform-ideation/SKILL.md`), scripted (`../video-shorts/SKILL.md`), and packaged (`../shortform-packaging/SKILL.md`) elsewhere.
 
 ## The learning loop — log, review, write back
 
@@ -152,21 +152,9 @@ timestamp: 2026-06-02T10:00:00Z
 
 ## Persist it
 
-Write the account's brain back so it compounds (mirrors the harness Karpathy-wiki convention). The `shortform/` wiki tree is an **OKF v0.1 bundle** shared with the `tiktok-api` and `shortform-packaging` siblings: every `.md` written here carries YAML frontmatter with a non-empty `type`, cross-references are standard markdown links (never `[[wikilinks]]`), and `decisions.md` follows the OKF newest-first append-log rule.
+Write the account's brain back so it compounds (mirrors the harness Karpathy-wiki convention). The `shortform/` wiki tree is an **OKF v0.1 bundle** shared with the `../tiktok-api/SKILL.md` and `../shortform-packaging/SKILL.md` siblings: every `.md` written here carries YAML frontmatter with a non-empty `type`, cross-references are standard markdown links (never `[[wikilinks]]`), and `decisions.md` follows the OKF newest-first append-log rule.
 
-- `02-DOCS/wiki/shortform/strategy.md` — positioning, cadence/mix, KPI, length bands, current series. Lead with frontmatter; the body keeps the H1 + sections the linter checks:
-
-  ```markdown
-  ---
-  type: shortform-strategy
-  title: Shortform account strategy
-  tags: [shortform, strategy, positioning, cadence]
-  timestamp: 2026-06-02T10:00:00Z
-  ---
-  # Shortform account strategy
-  ...
-  ```
-
+- `02-DOCS/wiki/shortform/strategy.md` — positioning, cadence/mix, KPI, length bands, current series. Same frontmatter shape as above with `type: shortform-strategy`, then the H1 (`# Shortform account strategy`) and the sections the linter checks.
 - `02-DOCS/wiki/shortform/decisions.md` — the dated decision log, OKF append-log (`type: shortform-decision-log`, newest block on top; format above).
 - `02-DOCS/raw/shortform/metrics.csv` — the per-post ledger (schema in `references/learning-loop-template.md`). This is `raw/`, not `wiki/` — a CSV, no frontmatter.
 
