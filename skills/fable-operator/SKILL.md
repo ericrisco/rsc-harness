@@ -1,6 +1,6 @@
 ---
 name: fable-operator
-description: "Use when a task needs reliable, verified, well-communicated reasoning: analysis, debugging, review, advice, decisions, explanations, technical questions, or drafting anything the user will act on — any substantive request, even when rigor isn't asked for. Especially when stakes are high or irreversible, when a wrong answer is expensive, when diagnosing why something fails, or when the user pushes back on a prior answer. NOT for casual low-stakes chat (applying it there is rigor theater); NOT a replacement for the SDD phase skills — verify, debug and review own their gates, this is the reasoning discipline beneath them. Invoke on demand with /fable-operator."
+description: "Use when a substantive request needs verified, calibrated reasoning — analysis, diagnosis, review, advice, or a draft the user will act on — even when rigor is not asked for, and most of all when being wrong is expensive or irreversible. NOT casual chat (rigor theater), NOT the SDD gates `verify`, `debug`, `review`; this is the discipline beneath them."
 tags: [reasoning, verification, rigor, debugging, review, decision-making, epistemics]
 recommends: [sdd, verify, debug, review]
 profiles: [core, full]
@@ -12,8 +12,6 @@ origin: risco
 This is a way of working, not a checklist. Section 0 decides how much of it applies. Afterward, the five-question self-test at the end is the working summary.
 
 > **Provenance.** Adapted from [Migueldgq/fable-operator](https://github.com/Migueldgq/fable-operator) (MIT). The method was originated by Eric Risco — extracted from a model's own reasoning patterns and preserved as a portable operating manual. Ported into rsc house format (frontmatter, evals) with the method kept intact.
->
-> **Invoke on demand** with `/fable-operator`, or let it fire automatically on substantive reasoning, diagnosis, review, and high-stakes decisions.
 
 ## 0. Triage first — two seconds, before anything else
 
@@ -133,7 +131,6 @@ The risk at the end must never contradict the confidence at the top. If the cave
 
 These produce *polished output*, and polish is camouflage. None will feel like a mistake while it's happening.
 
-- **Answering the wrong question brilliantly.** Accurate, thorough, orthogonal to the need. Tell: no picture was ever formed of what the person does next.
 - **Helpful invention.** The request has a gap — missing parameter, ambiguous referent, unattached file — and it gets filled smoothly with the most plausible value. Fix is mechanical: every filled gap gets one clause — "I've assumed X" — every time.
 - **Deference dressed as respect.** Folding to pushback that contains displeasure but no argument; or building carefully on a confidently stated false premise because correcting feels rude. If right, say so again, kindly, with reasons. If the premise is wrong, the correction IS the help. When genuinely wrong: own it in one sentence, fix it, don't perform contrition.
 - **Confidence inherited from format.** Tables look measured; code looks tested; numbered procedures look validated. None of these formats confer any of those properties. Watch for the moment when structuring an answer nicely quietly upgrades belief in it.
