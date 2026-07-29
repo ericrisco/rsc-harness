@@ -1,6 +1,6 @@
 ---
 name: bash-scripting
-description: "Use when writing or hardening a shell script that has to survive another machine — a CI step, install script, build glue, cron job, git hook, or devcontainer entrypoint — and it 'works on my machine' but fails in CI/Docker/macOS, mangles filenames with spaces, leaks temp files when interrupted, or trips ShellCheck. Triggers: 'works locally but breaks in CI', 'filenames with spaces break my loop', 'set -e didn't catch the error', 'unquoted variable ate my path', 'trap fires twice', 'fix these SC2086 warnings', 'make this run on macOS and Linux', 'should this be #!/bin/bash or #!/bin/sh', 'script que peta en CI però funciona al portàtil', 'fes el script portable / hazlo robusto'. NOT CI workflow structure, runners, caching, matrix (that is github-actions)."
+description: "Use when writing or hardening a shell script that must survive another machine — a CI step, install script, cron job, git hook, devcontainer entrypoint: strict-mode leaks, quoting/word-splitting, arrays, trap cleanup, bash-vs-POSIX portability, ShellCheck findings. NOT CI workflow structure, runners, caching or matrix (that is `github-actions`)."
 tags: [bash, shell, shellcheck, posix, scripting]
 recommends: [github-actions, error-handling, docker, secure-coding]
 origin: risco
@@ -47,7 +47,10 @@ is `#!/bin/sh` you may not get bash — on Debian/Alpine `sh` is `dash`/busybox.
 Two traps to internalize: macOS `/bin/bash` is **3.2** (no `declare -A`,
 no `${var,,}`, no `mapfile`); and bash **5.3** added `${ cmd; }` /
 `GLOBSORT` / `read -E` that will not run on either of the above. Pick a floor
-and stay above it. Deep matrix and workarounds: `references/portability.md`.
+and stay above it — the full bash-vs-POSIX feature matrix, `bash 3.2`
+workarounds, dash/busybox gotchas, the 5.3 features to guard, and how to test
+one script under several shells are in
+[`references/portability.md`](references/portability.md).
 
 ## Strict mode, honestly
 
@@ -222,10 +225,3 @@ belongs to `../github-actions/SKILL.md`, the shell inside the step belongs here.
 | `[ a == b ]` under `#!/bin/sh` | `==` is a bashism; dash errors | POSIX uses `[ a = b ]` |
 | Fixed temp path `/tmp/build` | race + collision + no cleanup | `tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT` |
 | `pipefail` in a `#!/bin/sh` script | not POSIX; dash ignores or errors | use bash, or check pipeline status another way |
-
-## References
-
-- `references/portability.md` — the full bash-vs-POSIX feature matrix, macOS
-  `bash 3.2` workarounds (no `declare -A` / `${var,,}` / `mapfile` — portable
-  equivalents), dash/busybox gotchas, the bash 5.3 feature list to guard or
-  avoid, and how to test the same script under multiple shells.

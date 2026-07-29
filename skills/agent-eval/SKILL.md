@@ -1,6 +1,6 @@
 ---
 name: agent-eval
-description: "Use when you need to measure whether an LLM or agent system actually got better and gate merges on it — before/after a prompt or model change, building a golden set, fixing a noisy or inflated LLM-as-judge, scoring a RAG pipeline (faithfulness, contextual recall) or an agent trajectory (tool-correctness, task-completion), or choosing between DeepEval / Inspect AI / promptfoo / Braintrust. Triggers: 'is the new prompt actually better', 'build a golden set / regression suite', 'our judge gives everything a 9/10', 'fail the PR when answer quality drops', 'score the tool path not just the final answer', 'medir si el agente mejoró', 'tenim un eval que dona puntuacions inflades', 'montar un golden set'. NOT building the agent loop/tools/RAG plumbing (that is building-agents)."
+description: "Use when measuring whether an LLM or agent system actually got better and gating merges on it: golden sets, fixing an inflated LLM-as-judge, scoring RAG (faithfulness, contextual recall) or agent trajectories (tool correctness, completion), or picking an eval framework. NOT building the agent loop, tools or RAG plumbing (that is `building-agents`)."
 tags: [evals, llm, agents, llm-as-judge, regression-gate, ai]
 recommends: [building-agents, prompt-engineering, observability]
 origin: risco
@@ -10,24 +10,7 @@ origin: risco
 
 Turn "the agent feels better" into a number you can put in a PR check. You own the eval dataset, the scorer mix, the LLM-as-judge calibration, and the block-on-regression CI gate — framework-neutral, provider-neutral.
 
-## The one rule
-
-> A score you do not trust is worse than no score. Calibrate the scorer against human labels and report the agreement **before** you gate anything on it. An uncalibrated judge gives false confidence, which is more dangerous than admitted ignorance.
-
-> Build your own golden set. A public leaderboard number is not your number — identical model weights swing SWE-Bench Verified by 10–20 points just by changing the harness. Measure *your* task on *your* data.
-
-## When to use / When NOT
-
-**Use when:**
-- "Is the new prompt/model actually better?" — before/after on a fixed dataset.
-- "Build a golden set / regression suite for this agent."
-- "Our judge gives everything 9/10 / the scores are inflated" — judge calibration.
-- "Fail the PR when answer quality / faithfulness / tool-call accuracy drops" — CI gate.
-- Scoring a RAG pipeline (faithfulness, answer relevancy, contextual recall/precision).
-- Scoring an agent's *trajectory* — tool calls, task completion — not just the final string.
-- Picking between DeepEval / Inspect AI / promptfoo / Braintrust.
-
-**Do NOT use — route instead:**
+## Do NOT use — route instead
 
 | The ask | Route to | Why it is not this skill |
 | --- | --- | --- |
@@ -38,8 +21,6 @@ Turn "the agent feels better" into a number you can put in a PR check. You own t
 | Red-team, jailbreak, prompt injection | `agent-safety` | Adversarial coverage, not quality measurement. |
 | Per-token cost budgets and accounting | `cost-tracking` | You report cost-per-task as one metric; the discipline lives there. |
 | A/B stats on product/funnel metrics | `ab-testing` | Web experiments, not offline model comparison on a fixed set. |
-
-(`building-agents`, `ab-testing`, `chatbot` are linkable siblings here; the rest are KNOWN ids you name but cannot link yet.)
 
 ## The eval anatomy
 
@@ -56,7 +37,7 @@ DeepEval, Inspect AI, and promptfoo are all just opinionated wrappers around thi
 
 ## Build the dataset first
 
-The dataset is the asset. Everything else is replaceable. Rules:
+Build your own golden set — a public leaderboard number is not your number, because identical model weights swing SWE-Bench Verified by 10–20 points just by changing the harness. Measure *your* task on *your* data. The dataset is the asset; everything else is replaceable. Rules:
 
 - **50–200 hand-labeled cases per failure mode**, not per total. Coverage of how the system fails beats raw volume. 80 real failure cases > 1000 generic ones.
 - **Never synthetic-only.** A set the model wrote will not surface the model's blind spots. Mine real traffic / tickets / transcripts and hand-label.
@@ -112,13 +93,13 @@ class FaithfulnessJudge:
 
 ## LLM-as-judge you can trust
 
-A judge is a scorer, so the one rule applies hardest here. Each rule, with its why:
+A score you do not trust is worse than no score: an uncalibrated judge gives false confidence, which is more dangerous than admitted ignorance. Each rule, with its why:
 
 - **Judge model ≥ system under test.** A weaker judge cannot reliably rank a stronger system — it scores noise.
 - **The rubric must force a written rationale before the score.** Rationale-first judging is what pushes judge–human agreement to ~85% — higher than two humans agree with each other. A bare number is a vibe with a decimal point.
 - **Pairwise beats pointwise for stability.** "Is A or B better?" is more reproducible than "rate A from 1–10," which inflates and clusters at 8–9.
 - **Swap positions and average.** Judges favor whichever answer came first; run A-then-B and B-then-A to cancel position bias.
-- **Calibrate against human gold and report agreement** before you trust a single judge score.
+- **Calibrate against human gold and report the agreement before you gate anything on the judge.** Not a formality — this is the step that makes every number downstream defensible.
 
 > Bad judge prompt: "Rate this answer 1–10." → everything lands 8–9, useless.
 > Good: "Compare answer A and answer B against the reference. First write one sentence on each per the rubric, then output the better label." → forces reasoning, gives a stable signal.
@@ -139,7 +120,7 @@ Score the path, not only the destination. Beyond exact/judge:
 - **Task completion / goal accuracy** — did it finish the job, not just produce plausible text.
 - **Trajectory scoring** — grade the sequence of steps. A correct final answer from a wrong path will fail differently next time; only trajectory scoring catches it.
 
-The system side of these (how the loop and tools are built) is `../building-agents/SKILL.md`.
+The system side of these (how the loop and tools are built) is `../building-agents/SKILL.md`; a common system-under-test is `../chatbot/SKILL.md`.
 
 ## The regression gate
 
@@ -199,15 +180,8 @@ Pick by where the eval runs and what it must do. Versions as of 2026-06 — re-v
 
 ## Project grounding
 
-If the workspace has a `02-DOCS/` harness, record the eval policy in `02-DOCS/wiki/stack/evals.md`: dataset location, scorer mix, gate baseline file, judge model, and the failure modes covered. Write it as an OKF v0.1 wiki article per the harness [`wiki-article-template.md`](../harness/references/wiki-article-template.md): open with YAML frontmatter carrying a non-empty `type:` (use `type: stack`), `timestamp` in ISO 8601, and standard markdown links — never wikilinks. Index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer). This is **recorded, not gated** — skip silently if there is no harness.
+If the workspace has a `02-DOCS/` harness, record the eval policy in `02-DOCS/wiki/stack/evals.md`: dataset location, scorer mix, gate baseline file, judge model, and the failure modes covered. Follow the harness [`wiki-article-template.md`](../harness/references/wiki-article-template.md) (`type: stack`) and index it in `02-DOCS/wiki/index.md`. This is **recorded, not gated** — skip silently if there is no harness.
 
 ## verify.sh
 
 `scripts/verify.sh` is read-only and tool-detecting. It validates that every `*.jsonl` golden set in the project parses and that each line carries the required `id`, `input`, `expected` keys; checks the shape of any `eval-report.json`; and runs `ruff` / `mypy` on example Python and `markdownlint` on docs when those tools are installed. Every missing tool prints a yellow WARN and is skipped — never a failure. An empty or clean target exits 0.
-
-## See also
-
-- `../building-agents/SKILL.md` — builds the agent/RAG/tool system you score here.
-- `../chatbot/SKILL.md` — a common system-under-test for these evals.
-- KNOWN siblings to route to (not yet linkable): `prompt-engineering`, `observability`, `agent-safety`, `cost-tracking`, `testing-py`, `ab-testing`.
-- External (no link): RAGAS, DeepEval, Inspect AI, promptfoo, Braintrust.

@@ -1,6 +1,6 @@
 ---
 name: codebase-onboarding
-description: "Use when you land in an unfamiliar or inherited codebase and must get productive fast — map the entry points, the request/data flow, who owns the business logic, the hidden side effects (cron, webhooks, workers, listeners) and the hotspot files, before you touch anything. Triggers: 'I just cloned this repo and don't know where anything is', 'I inherited this project, map it before I change something', 'where does the business logic actually live', 'what happens behind the scenes when a request hits /checkout', 'which files are the dangerous ones nobody understands', 'acabo de heredar este repo y no sé por dónde empezar, mápamelo', 'mapea este codebase'. NOT a deep correctness/security audit of one module (that is analyze)."
+description: "Use when you land in an unfamiliar or inherited codebase and must get productive fast: a breadth-first map of entry points, request flow, module ownership, hidden side effects (cron, webhooks, workers) and churn hotspots, committed as CODEBASE-MAP.md. NOT a deep audit of one module (that is `analyze`) or chasing one failure (that is `debug`)."
 tags: [onboarding, codebase, code-mapping, legacy-code, architecture, reverse-engineering, hotspots]
 recommends: [analyze, debug, decision-records, harness, init, knowledge-ops]
 origin: risco
@@ -68,7 +68,7 @@ git log --format=format: --name-only --since=12.month \
   | grep -v '^$' | sort | uniq -c | sort -nr | head -50
 ```
 
-The richer move is **churn × complexity**: the top-right quadrant (changes constantly *and* is hard to read) is your real danger zone (understandlegacycode.com Hotspots, accessed 2026-06-02). Escalate to that — or to a tree-sitter dependency graph — only when grep + churn is not enough; see the playbook.
+The richer move is **churn × complexity**: the top-right quadrant (changes constantly *and* is hard to read) is your real danger zone (understandlegacycode.com Hotspots, accessed 2026-06-02). Escalate to that — or to a tree-sitter dependency graph — only when grep + churn is not enough: `references/recon-playbook.md` has the churn×complexity recipe (code-maat) and when codegraph PageRank / FileScopeMCP earn their setup cost.
 
 **g. Confirm hands-on.**
 Run the app, walk one end-user journey, send a real request, watch the logs. Reading alone leaves the map unverified; a single real request validates the whole trace in step c.
@@ -106,9 +106,6 @@ rg -n "queue|worker|bull|sidekiq|celery|sqs|rabbitmq|kafka|@task" -i
 
 # Env-driven branches (hidden config-conditional behavior)
 rg -n "process\.env\.|os\.environ|ENV\[|getenv" 
-
-# Hotspots: churn over the last year
-git log --format=format: --name-only --since=12.month | grep -v '^$' | sort | uniq -c | sort -nr | head -50
 ```
 
 ## Writing & maintaining the map
@@ -129,5 +126,3 @@ git log --format=format: --name-only --since=12.month | grep -v '^$' | sort | un
 | Map lives only in chat | Dies with the session; next agent redoes it | Write & commit `CODEBASE-MAP.md` |
 | Guess instead of grep | Confident-wrong is worse than slow-right | Form the hypothesis, then `rg` to confirm or kill it |
 | Stand up a tree-sitter MCP graph on a 5-file repo | Setup costs more than the whole recon | Reserve graph tools for large monorepos; grep + churn first |
-
-See `references/recon-playbook.md` for per-ecosystem entry points and side-effect patterns, the churn×complexity recipe (code-maat), and when a tree-sitter graph (codegraph PageRank, FileScopeMCP) earns its setup cost.

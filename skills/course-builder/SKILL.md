@@ -1,6 +1,6 @@
 ---
 name: course-builder
-description: "Use when you must turn a vague \"I want to teach X\" into a defensible course/curriculum skeleton — writing measurable learning outcomes, designing assessment that proves them, sequencing modules, scoping a workshop/bootcamp/cohort/onboarding track, or building an outcome×module×assessment alignment matrix. Triggers: 'structure my course', 'turn these topics into a curriculum', 'write learning outcomes / objectives', 'design the final project and quizzes', 'map my modules to outcomes', 'is my course actually aligned?', 'my course just ends with no real endpoint — what should they be able to DO?', 'estructura el temario de mi curso', 'define los resultados de aprendizaje', 'dissenya el pla docent', 'quina avaluació demostra cada objectiu'. NOT making a concept land emotionally (that is course-storytelling)."
+description: "Use when turning \"I want to teach X\" into a defensible course skeleton — measurable outcomes (Bloom + ABCD), assessment that proves each one, sequenced modules, and an outcome×module×assessment matrix — for a workshop, bootcamp, cohort or onboarding track. NOT making one concept land emotionally with story or analogy (that is course-storytelling)."
 tags: [course, curriculum, instructional-design, learning-outcomes, assessment]
 recommends: [course-storytelling, presentations, sop-builder]
 origin: risco
@@ -12,20 +12,9 @@ origin: risco
 
 This skill owns the **skeleton**: the measurable outcomes, the assessment that certifies each one, the module sequence that builds toward them, and the alignment matrix tying it all together. It does not own the *teaching* of any one concept.
 
-## What this skill owns / does NOT own
-
-**Owns:** desired results (outcomes), acceptable evidence (assessment), build order (module sequence), and the outcome×module×assessment matrix that proves nothing is orphaned or unproven.
-
-**Does NOT own:**
-
-- Making a single concept *click and stick* emotionally — epiphany, sticky names, grounded analogies. That is `../course-storytelling/SKILL.md`. Build the skeleton HERE first, then hand each module there to make it land.
-- Auditing a *finished* course for gaps, redundancy, anachronisms with a written report → `../review/SKILL.md`.
-- Turning a designed module into slides/decks → `../presentations/SKILL.md` (+ `../design/SKILL.md` for the visual system).
-- Sales/landing copy and launch emails → `../marketing/SKILL.md`. You design the learning contract, never the pitch.
-- Fact-checking or sourcing the subject matter → `../research-ops/SKILL.md`. You structure what the user already knows.
-- A repeatable internal procedure with steps but no outcomes/assessment → `../sop-builder/SKILL.md`. An SOP tells someone the steps; a course changes what they can DO and proves it.
-
 **The litmus.** If the question is *"what must the learner be able to DO, how do we prove it, and in what order do we build it?"* → here. If it's *"how do I make THIS concept click and stick?"* → `../course-storytelling/SKILL.md`.
+
+Route elsewhere when: auditing a *finished* course for gaps, redundancy, anachronisms with a written report → `../review/SKILL.md`; turning a designed module into slides/decks → `../presentations/SKILL.md` (+ `../design/SKILL.md` for the visual system); sales/landing copy and launch emails → `../marketing/SKILL.md` (you design the learning contract, never the pitch); fact-checking or sourcing the subject matter → `../research-ops/SKILL.md` (you structure what the user already knows); a repeatable internal procedure with steps but no outcomes/assessment → `../sop-builder/SKILL.md` (an SOP tells someone the steps; a course changes what they can DO and proves it).
 
 ## The grounding gate (read first — STOP if unmet)
 
@@ -37,24 +26,9 @@ You cannot design a course backward without knowing the destination. Do not writ
 
 If a `02-DOCS/wiki/teaching/` profile exists (the convention shared with `../course-storytelling/SKILL.md`), read it first and reuse it. Otherwise interview in ONE batch — ask all three at once, do not dribble questions. **Incomplete grounding = STOP and ask.** Depth, the interview script, and scope right-sizing by format → `references/grounding-and-scoping.md`.
 
-## The non-negotiables
-
-Each rule carries its one-line reason. Break one and the skeleton is not defensible.
-
-1. **Design backward: outcomes first, then assessment, then content.** UbD has exactly three stages in order — desired results → acceptable evidence → learning experiences (Wiggins & McTighe, *Understanding by Design*). Content designed first is a dump with no destination.
-2. **Every outcome uses a measurable Bloom verb.** The revised taxonomy (Anderson & Krathwohl, 2001) is six ascending levels of *verbs* — Remember → Understand → Apply → Analyze → Evaluate → Create — each supplying observable action verbs. A verb you can't observe, you can't assess.
-3. **Banlist: never "understand", "know", "learn about", "appreciate", "be aware", "be familiar".** They name a private mental state, not an observable behavior. Replace with what the learner *does*: list, explain, build, debug, evaluate, design.
-4. **Each outcome is ABCD-complete.** Audience + Behavior (verb + object) + Condition (situation/tools) + Degree (success criterion). A bare verb without a condition and a degree is not yet assessable — "write code" vs "given a failing test, write code that makes it pass".
-5. **Every outcome is proven by ≥1 assessment.** No unproven outcomes. An outcome with no evidence is a promise you never keep.
-6. **Every module ties to ≥1 outcome.** No orphan modules. If a module maps to no outcome, it's content the contract never asked for — cut it or write the outcome it serves.
-7. **The verb in the outcome = the verb activated in teaching = the verb verified in assessment** (constructive alignment, Biggs). If the outcome says "design" and the quiz tests "recall", the assessment proves the wrong thing.
-8. **Place BOTH formative and summative assessment.** Formative runs *during* learning (low/no stakes — quizzes, checklists, drafts) to give feedback; summative runs *at the end* (the project, the exam) to certify mastery. A course with only the final exam gives the learner no feedback loop.
-9. **No content-first design.** "I already have these slides, build a course around them" inverts the contract. Outcomes decide what content survives.
-10. **Right-size scope to format.** A 90-minute workshop earns ~1–2 outcomes; a 12-week cohort earns 5–8. Cramming a bootcamp's outcomes into a workshop guarantees none are actually achieved.
-
 ## The build workflow (one backward pass)
 
-Run it in order. Do not jump to modules.
+Run it in order. Do not jump to modules. UbD has exactly three stages in order — desired results → acceptable evidence → learning experiences (Wiggins & McTighe, *Understanding by Design*). Content designed first is a dump with no destination, and "I already have these slides, build a course around them" inverts the contract: outcomes decide what content survives.
 
 ```text
 Stage 0  Grounding gate         WHO + WHAT transformation + FORMAT. Incomplete → STOP.
@@ -70,9 +44,9 @@ Stage 5  QA gate                Run scripts/verify.sh over the curriculum doc. F
                                 or justify them. Then hand modules to course-storytelling.
 ```
 
-## Writing measurable outcomes
+## Stage 1 — Writing measurable outcomes
 
-Pick the verb at the level the learner must actually operate. Recall ≠ build.
+Pick the verb at the level the learner must actually operate. Recall ≠ build. The revised taxonomy (Anderson & Krathwohl, 2001) is six ascending levels of *verbs*, each supplying observable action verbs — a verb you can't observe, you can't assess.
 
 ```text
 Level         What the learner does          Sample verbs
@@ -84,7 +58,9 @@ Evaluate      judge against criteria         evaluate, critique, justify, priori
 Create        produce something new          design, build, compose, construct, ship
 ```
 
-The **ABCD template** for one outcome:
+**Banlist — never "understand", "know", "learn about", "appreciate", "be aware", "be familiar".** They name a private mental state, not an observable behavior. Replace with what the learner *does*: list, explain, build, debug, evaluate, design.
+
+Every outcome is **ABCD-complete** — a bare verb without a condition and a degree is not yet assessable ("write code" vs "given a failing test, write code that makes it pass"):
 
 ```text
 [Audience]   the learner
@@ -111,9 +87,9 @@ Good: Given a 20-line module, the learner writes 3 tests that cover the happy pa
 
 Full per-level verb tables, the banlist, more worked ABCD examples, and course-level vs module-level granularity → `references/outcomes-and-blooms.md`.
 
-## Designing aligned assessment
+## Stage 2 — Designing aligned assessment
 
-Assessment is the proof, not an afterthought. For every outcome, ask: *what would I have to SEE the learner do to believe they achieved it?* — and make that the assessment.
+Assessment is the proof, not an afterthought. For every outcome, ask: *what would I have to SEE the learner do to believe they achieved it?* — and make that the assessment. Place **both** kinds: an outcome with no evidence is a promise you never keep, and a course with only the final exam gives the learner no feedback loop.
 
 ```text
                  Formative (during)              Summative (at the end)
@@ -127,12 +103,12 @@ Bloom fit        Remember/Understand/Apply        Apply/Analyze/Evaluate/Create
 
 Two hard checks:
 
-- **Verb match.** The assessment must require the *same* verb as the outcome. Outcome "build" → assessment is a build, not a multiple-choice quiz. Outcome "evaluate" → assessment asks for a judgement with justification, not recall.
+- **Verb match** (constructive alignment, Biggs). The assessment must require the *same* verb as the outcome. Outcome "build" → assessment is a build, not a multiple-choice quiz. Outcome "evaluate" → assessment asks for a judgement with justification, not recall. If the outcome says "design" and the quiz tests "recall", the assessment proves the wrong thing.
 - **Content validity.** The set of assessments must cover the *breadth* of the outcomes — every outcome touched, none over-weighted into a vanity exam. Competency-based design maps this via the matrix and certifies demonstrated mastery, not seat time.
 
 The full formative↔summative menu mapped to Bloom levels, the content-validity / blueprint checklist, and the verb-match rule worked end-to-end → `references/assessment-design.md`.
 
-## Sequencing modules + the alignment matrix
+## Stages 3–4 — Sequencing modules + the alignment matrix
 
 Order modules by **prerequisite** (you can't build before you can run), give each **one focus**, and map each to ≥1 outcome. Then emit the matrix — this is the artifact `scripts/verify.sh` checks.
 
@@ -144,7 +120,7 @@ Order modules by **prerequisite** (you can't build before you can run), give eac
 | O3 evaluate an API's error model | M5               | F: M5 peer review · S: capstone rubric|
 ```
 
-Read the matrix two ways: down a column finds **orphan modules** (a module in no row → cut or justify); across the outcome list finds **unproven outcomes** (an outcome with an empty assessment cell → design evidence). A complete matrix has no empty cells.
+Read the matrix two ways: down a column finds **orphan modules** (a module in no row → content the contract never asked for, so cut it or write the outcome it serves); across the outcome list finds **unproven outcomes** (an outcome with an empty assessment cell → design evidence). A complete matrix has no empty cells.
 
 ## Decision table (branch only where the flow actually splits)
 
@@ -175,12 +151,8 @@ Attitude/disposition outcome      Assess with reflection + observed behavior; ha
 | Summative-only: just a final exam | No feedback loop during learning | Place formative checkpoints throughout |
 | Scope creep: bootcamp outcomes in a workshop | None are actually achievable in the time | Right-size outcome count to the format |
 
-## Hand-off
+## Stage 5 — QA gate and hand-off
 
-The skeleton is the start, not the finish.
+`scripts/verify.sh` checks your curriculum's STRUCTURE and ALIGNMENT (measurable verbs, the matrix, proven outcomes, formative + summative). Fix its warnings or justify them.
 
-- Skeleton + matrix pass QA → hand **each module** to `../course-storytelling/SKILL.md` to make the teaching land (epiphany, named models, grounded analogies). You built *what* and *in what order*; that skill makes it stick.
-- Need decks → `../presentations/SKILL.md` for slides, `../design/SKILL.md` for the visual system.
-- A repeatable team procedure surfaced that isn't a course → `../sop-builder/SKILL.md`.
-
-The boundary is executable: `scripts/verify.sh` checks your curriculum's STRUCTURE and ALIGNMENT (measurable verbs, the matrix, proven outcomes, formative + summative). It does not judge whether the teaching lands — that is `course-storytelling`'s job, and its verify.sh checks narrative, not structure.
+Then hand **each module** to `../course-storytelling/SKILL.md` to make the teaching land (epiphany, named models, grounded analogies). You built *what* and *in what order*; that skill makes it stick. The boundary is executable: this skill's verify.sh does not judge whether the teaching lands, and `course-storytelling`'s checks narrative, not structure.

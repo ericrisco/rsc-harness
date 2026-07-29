@@ -1,67 +1,66 @@
 # The description recipe
 
-The description is the only line the router reads on every turn to decide whether to load the skill. It is a *retrieval problem*, not a marketing problem. Write it to be matched, not admired.
+The description is the only line the router reads on every turn to decide whether to load the skill — and it sits in context on every turn the skill is installed, invoked or not. It is a *retrieval problem*, not a marketing problem. Write it to be matched, not admired, and keep it short: length here is a cost, never a credit.
 
 ## The shape
 
 ```text
 "Use when <SITUATION / SYMPTOM> — <verb phrase>, <verb phrase>, <verb phrase>.
- Triggers: '<phrase>', '<frase en español>', '<non-obvious phrase>', ….
- [Optional one clause naming what it KNOWS / owns.]
- NOT <out-of-scope thing> (that is `sibling`) and NOT <other> (that is `sibling`)."
+ NOT <out-of-scope thing> (that is `sibling`) [and NOT <other> (that is `sibling`)]."
 ```
 
-Four moves, in order:
+Three moves, in order:
 
-1. **Lead with the situation.** The first clause is a `Use when …` that names *when in the user's day* this fires — the moment, the symptom, the pain. The router matches situations better than nouns. "Use when a skill mis-triggers" beats "skill quality tool".
-2. **List concrete verb phrases.** Right after the lead, name the 3–6 things the skill actually does, as verbs ("writing a description", "splitting the body", "repairing cases.yaml"). These are dense match surface.
-3. **Add a `Triggers:` phrase list.** Real phrasings a user types — quoted. Include:
-   - at least one **non-obvious** phrasing (a symptom, not the skill's name): e.g. "my skill never triggers".
-   - at least one **non-English** phrasing (rsc users write Spanish/Catalan): e.g. "escribe una skill".
-   - the slash-command form if relevant.
-4. **Close with the boundary.** One or two `NOT … (that is `sibling`)` clauses. This is not optional decoration — negative space is what stops the skill from hijacking adjacent turns. Name the *real* sibling that owns the excluded job.
+1. **Lead with the situation.** The first clause is a `Use when …` that names *when in the user's day* this fires — the moment, the symptom, the pain. The model matches situations better than nouns. "Use when a skill mis-triggers" beats "skill quality tool".
+2. **Name only the discriminating capabilities.** Right after the lead, name the few things the skill does that its neighbours do not, as verbs ("writing a description", "splitting the body", "repairing cases.yaml"). Stop there. Do **not** append a `Triggers: '…', '…'` phrase list: the model matches on meaning, so a keyword bank — especially one repeated in three languages — buys no routing accuracy and is charged on every turn.
+3. **Close with the boundary.** One or two `NOT … (that is `sibling`)` clauses. This is not optional decoration — negative space is what stops the skill from hijacking adjacent turns. Name the *real* sibling that owns the excluded job, and verify it exists under `skills/`.
+
+## The test: discrimination, not coverage
+
+Do not ask "does this cover every way someone might phrase it?" — ask **"could a reader pick this skill over its nearest sibling from this line alone?"** Coverage is what tempts you to pad; discrimination is what actually routes. If two versions route the same, the shorter one is better.
 
 ## The hard constraints
 
-- **≤ 1024 characters.** Count them. Over budget = trim verb phrases and trigger duplicates first, never the boundary.
+- **Aim ≤ 350 characters; 1024 is the schema-enforced hard limit.** Over budget = trim verb phrases first, never the boundary.
 - **Valid single-line quoted YAML.** The description is one physical line wrapped in double quotes. No raw newlines inside the value. Avoid characters that break YAML in double quotes; if you need an apostrophe inside, it is fine (single quotes are literal inside double-quoted YAML). Never put an unescaped `"` inside.
 - **Third person, present tense.** The agent reads *about* the skill. "Use when…", "Triggers on…", "Knows…". Never "I", never "you should".
-- **State triggers and boundary — never the workflow.** The description says *when* to fire and *what it is not*. It must **not** summarize the procedure the body owns (the steps, the phase count, "does X then Y then Z"). This is not a style nit — it changes behavior. A description that pre-summarizes the steps becomes a *substitute* for reading the body: the agent acts on the summary and skips the real instructions. (Observed in the wild: a skill whose description said it runs *two* reviews made the agent run only *one*, because the summary was treated as the spec; deleting the workflow summary made the agent read the body and do both.) The verb phrases in move #2 name *capabilities* ("repairing cases.yaml"), not an ordered recipe ("first lint, then split, then validate"). If your description tells the reader how the skill works step by step, cut it down to triggers + boundary.
+- **State when it fires and where the boundary is — never the workflow.** The description says *when* to fire and *what it is not*. It must **not** summarize the procedure the body owns (the steps, the phase count, "does X then Y then Z"). This is not a style nit — it changes behavior. A description that pre-summarizes the steps becomes a *substitute* for reading the body: the agent acts on the summary and skips the real instructions. (Observed in the wild: a skill whose description said it runs *two* reviews made the agent run only *one*, because the summary was treated as the spec; deleting the workflow summary made the agent read the body and do both.) The verb phrases in move #2 name *capabilities* ("repairing cases.yaml"), not an ordered recipe ("first lint, then split, then validate"). If your description tells the reader how the skill works step by step, cut it back to situation + boundary.
 
-## Budget tactics when you blow 1024
+## Budget tactics when you are over
 
 In priority order, cut:
 
-1. Duplicate triggers that match the same situation ("write a skill" + "create a skill" — keep one).
-2. Verb phrases already implied by a trigger phrase.
-3. The optional "Knows…" clause.
+1. Verb phrases that name a capability the nearest sibling shares — they add no discrimination.
+2. Verb phrases already implied by the `Use when` lead.
+3. Any "Knows…" / "Understands…" clause.
 4. Shorten the boundary to one `NOT` clause naming the single most-confused sibling.
 
-Never cut: the `Use when` lead, at least 3 distinct triggers, one non-English trigger, one `NOT` boundary.
+Never cut: the `Use when` lead, or the last `NOT` boundary.
 
 ## Worked before → after
 
-**Before** (first person, no triggers, no boundary — 71 chars, would route badly):
+**Before** (first person, no situation, no boundary — 71 chars, would route badly):
 
 ```yaml
 description: "I help you write and improve skills so they work well."
 ```
 
-Problems: first person; no `Use when`; zero concrete phrasings for the router; no boundary, so it competes with `building-agents`, `specify`, and `init` on every "make a thing" turn.
+Problems: first person; no `Use when`; nothing that says *when* this fires; no boundary, so it competes with `building-agents`, `specify`, and `init` on every "make a thing" turn.
 
-**After** (third person, situation + verbs + phrasings + boundary, valid YAML, well under 1024):
+**After** (third person, situation + discriminating verbs + boundary, valid YAML, ~300 chars):
 
 ```yaml
-description: "Use when authoring a NEW skill or editing an existing one — writing a trigger-rich description, splitting a long body into references/, repairing evals/cases.yaml, or fixing a skill that never fires. Triggers: 'write a skill', 'escribe una skill', 'my skill never triggers', 'the description is too broad', 'audit this skill'. NOT building a product feature (that is `specify`) and NOT designing an agent loop (that is `building-agents`)."
+description: "Use when authoring a NEW skill or editing an existing one — writing the description that decides whether it loads, splitting a long body into references/, repairing evals/cases.yaml, or fixing a skill that never fires. NOT building a product feature (that is `specify`) and NOT designing an agent loop (that is `building-agents`)."
 ```
 
 ## Quick test
 
 Before committing a description, ask:
 
-- Could the router tell from this line alone *when* to fire it? (situation present)
-- Are there phrasings a real user would type, in their language? (triggers present)
-- Does it say what it is **not**, naming the sibling? (boundary present)
+- Could the reader tell from this line alone *when* to fire it? (situation present)
+- Could the reader pick it over its nearest sibling from this line alone? (discriminates)
+- Does it say what it is **not**, naming a sibling that exists? (boundary present)
+- Is anything in it there for coverage rather than discrimination? (cut it)
 - Does it describe *when/what-not*, and **never** the step-by-step procedure? (no workflow summary — if a reader could skip the body and act on the description alone, it leaks the workflow)
 - Does it parse as YAML and fit 1024? (run the check)
 

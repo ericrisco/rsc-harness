@@ -1,6 +1,6 @@
 ---
 name: astro
-description: "Use when building a content-driven or marketing site with Astro 6 — static-first pages, islands, content collections, partial hydration, server islands, per-route on-demand rendering, and deploy adapters. Triggers: 'Astro blog with content collections', 'make this widget interactive only when it scrolls into view', 'server island to personalize a static page', 'migrate Astro 5 to 6', the non-obvious 'ship zero JS but keep one form interactive', and Catalan/Spanish 'web de marketing rápida con Astro' / 'una web de contingut amb Astro'. NOT app-router React or server actions (that is nextjs)."
+description: "Use when building a content-driven or marketing site with Astro 6: static-first pages, islands and partial hydration, content collections, server islands, per-route on-demand rendering, deploy adapters, and Astro 5→6 migration. NOT app-router React with server actions and heavy client interactivity (that is `nextjs`)."
 tags: [astro, ssg, islands, content-collections, partial-hydration, marketing-site, frameworks]
 recommends: [landing-copy, seo-geo, vercel, cloudflare, netlify]
 origin: risco
@@ -8,41 +8,31 @@ origin: risco
 
 # Astro 6 — static-first sites, islands, content collections
 
-> Build fast content and marketing sites with Astro 6: ship zero client JS by default, hydrate the
-> smallest possible surface, model content with type-safe collections, deploy static or hybrid.
-
 ## The prime directive
 
 **Ship zero client JavaScript by default. Hydrate the smallest possible surface, as late as you can
-get away with.** Every island is a JS bundle the visitor downloads, parses, and executes — marketing
-and content sites win on TTFB/LCP and Lighthouse, not on React-everywhere. An `.astro` component
-renders to HTML at build time and ships *no* runtime. Only reach for an interactive island when a
-piece of UI genuinely needs client state, effects, or event handlers.
-
-If you find yourself adding `client:load` to make a page "work," stop — the page already works; you
-are adding interactivity, and interactivity is the expensive exception, not the default.
+get away with.** An `.astro` component renders to HTML at build time and ships *no* runtime; every
+island is a bundle the visitor downloads, parses, and executes. Content and marketing sites win on
+TTFB/LCP and Lighthouse, not on React-everywhere. If you find yourself adding `client:load` to make
+a page "work," stop — the page already works; you are adding interactivity, and interactivity is the
+expensive exception, not the default.
 
 ## First: detect the project version
 
-Astro 6.0 is stable (released 2026-03-10); the Astro 5 line is still production-ready. Do not mix
-advice across majors. Every v6-only claim below is sourced to the official release post or the
-upgrade guide — cited inline so you can re-check before acting.
+Astro 6.0 is stable ([released 2026-03-10](https://astro.build/blog/astro-6/)); the Astro 5 line is
+still production-ready. Do not mix advice across majors — read `package.json` → the `astro` version
+before advising. What v6 changes, per the
+[upgrade-to-v6 guide](https://docs.astro.build/en/guides/upgrade-to/v6/):
 
-1. Read `package.json` → the `astro` version.
-2. Astro 6 **requires Node `22.12.0` or higher** (Node 18 and 20 are dropped) — verbatim floor from
-   the [upgrade-to-v6 guide](https://docs.astro.build/en/guides/upgrade-to/v6/). Check the runtime.
-3. v6 content config lives at `src/content.config.ts`. The legacy `src/content/config.ts` path is
-   **removed**, not merely discouraged: the v6 upgrade guide instructs you to "Rename and move this
-   file to `src/content.config.ts`," and the old auto-detection (with the `legacy.collections` flag)
-   is gone. A temporary `legacy.collectionsBackwardsCompat` escape hatch exists but is a migration
-   crutch, not a supported layout.
-4. v6 ships **Vite 7** (Vite v7.0), **Zod 4** for content schemas (imported from `astro/zod`, **not**
-   `astro:content` — see Content collections below), and makes **Live Content Collections**, the
-   **Fonts API**, and the **CSP API** stable. Sources: [Astro 6.0 release post,
-   2026-03-10](https://astro.build/blog/astro-6/) and the
-   [upgrade-to-v6 guide](https://docs.astro.build/en/guides/upgrade-to/v6/). (v6 also ships an
-   *experimental* Rust compiler succeeding the Go one — experimental, so do not rely on or configure
-   it in production advice.)
+- **Node `22.12.0` or higher is required** (18 and 20 are dropped) — check the actual runtime.
+- Content config lives at `src/content.config.ts`. The legacy `src/content/config.ts` path is
+  **removed**, not merely discouraged, and the old auto-detection (`legacy.collections`) is gone.
+  The `legacy.collectionsBackwardsCompat` escape hatch is a migration crutch, not a supported layout.
+- **Vite 7** and **Zod 4** for content schemas — `z` is imported from `astro/zod`, **not**
+  `astro:content` (see Content collections below).
+- **Live Content Collections**, the **Fonts API** and the **CSP API** are stable.
+- The Rust compiler succeeding the Go one is *experimental* — do not rely on or configure it in
+  production advice.
 
 ## Decision table — what kind of thing is this?
 
@@ -160,8 +150,8 @@ const { Content } = await render(post);
 ```
 
 Built-in loaders are `glob()` (many files) and `file()` (one JSON/YAML array). Custom and CMS
-loaders, collection references, Live Content Collections (real-time data with no rebuild, stable in
-v6), and MDX details → `references/content-layer.md`.
+loaders, Zod 4 schema patterns, collection references, Live Content Collections (real-time data with
+no rebuild, stable in v6), querying and MDX details → `references/content-layer.md`.
 
 ## Server islands
 
@@ -202,14 +192,13 @@ npx astro add react mdx sitemap
 
 - **Tailwind 4** wires through the official **Vite plugin** (`@tailwindcss/vite`), not the legacy
   `@astrojs/tailwind` integration (that path was for Tailwind 3).
-- **Fonts API** (stable in v6 per the [Astro 6.0 release post,
-  2026-03-10](https://astro.build/blog/astro-6/)) self-hosts and optimizes fonts from
-  `astro.config.mjs` — no manual `@font-face`.
-- **CSP API** (stable in v6, same release) emits a Content-Security-Policy with hashes for your
-  inline scripts/styles.
+- **Fonts API** (stable in v6) self-hosts and optimizes fonts from `astro.config.mjs` — no manual
+  `@font-face`.
+- **CSP API** (stable in v6) emits a Content-Security-Policy with hashes for your inline
+  scripts/styles.
 
-Adapter recipes, env handling, and SSR endpoints (`src/pages/api/*.ts`) →
-`references/deploy-and-integrations.md`.
+Adapter recipes per platform, hybrid rendering, env handling, SSR endpoints (`src/pages/api/*.ts`)
+and the Fonts/CSP config → `references/deploy-and-integrations.md`.
 
 ## Performance rules
 
@@ -235,9 +224,9 @@ npx @astrojs/upgrade
       legacy path is removed, not just deprecated).
 - [ ] Full guide (dated 2026): `docs.astro.build/en/guides/upgrade-to/v6`.
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization                                          | Reality / STOP                                                              |
+| Anti-pattern                                             | Reality                                                                     |
 | -------------------------------------------------------- | --------------------------------------------------------------------------- |
 | "Add `client:load` so the page works"                    | An `.astro` page already works statically; you're shipping JS for nothing   |
 | "`client:load` everywhere, simplest"                     | Pick `client:visible`/`idle`/`media`; first-paint JS is the LCP killer       |
@@ -251,19 +240,12 @@ npx @astrojs/upgrade
 
 ## Verify
 
-Run `bash scripts/verify.sh` from the Astro project root. It is grep-based and needs no install: it
-**FAILS** if a v6 project still has `src/content/config.ts` instead of `src/content.config.ts`,
-**WARNS** on over-hydration smells (many `client:load`, or `client:only` with no framework string),
-**CHECKS** that content schemas import from `astro:content`, and — only if the `astro` binary
-resolves — optionally runs `npx astro check`. On an empty or clean tree it prints OK and exits 0;
-warnings are advisory and never fail the run.
-
-## References
-
-- `references/content-layer.md` — loaders (`glob`/`file`/custom/CMS), Zod 4 schema patterns,
-  collection references, Live Content Collections, querying & rendering, MDX.
-- `references/deploy-and-integrations.md` — adapter table per platform, hybrid rendering, SSR
-  endpoints, env handling, `astro add` recipes, Fonts API & CSP API config.
+`bash scripts/verify.sh` from the Astro project root — grep-based, needs no install. It **FAILS** if
+a v6 project still has `src/content/config.ts` instead of `src/content.config.ts`, **WARNS** on
+over-hydration smells (many `client:load`, or `client:only` with no framework string), **CHECKS**
+that content schemas import from `astro:content`, and — only if the `astro` binary resolves —
+optionally runs `npx astro check`. On an empty or clean tree it prints OK and exits 0; warnings are
+advisory and never fail the run.
 
 ## See Also
 

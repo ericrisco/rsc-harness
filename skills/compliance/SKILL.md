@@ -1,6 +1,6 @@
 ---
 name: compliance
-description: "Use when a business needs to know which regulatory frameworks actually bind it and how to keep the program true between audits — scoping SOC 2 / ISO 27001 / HIPAA / PCI DSS / EU AI Act / DORA / NIS2, building a control register with owners and evidence, or standing up a recurring compliance cadence. Triggers: 'what compliance do we need for a fintech', 'build a SOC 2 readiness checklist', 'map our controls — who owns what', 'we have an audit in 90 days, set up the prep rhythm', 'does the EU AI Act apply to us and what's the deadline', 'set up a continuous-compliance calendar so we stop scrambling', '¿qué compliance necesitamos para una app de salud con datos médicos?', 'muntar el checklist de SOC 2'. NOT drafting the privacy policy, ROPA, or DPA text (that is gdpr-privacy), NOT writing Terms of Service (that is terms-conditions), NOT hardening the code itself (that is secure-coding)."
+description: "Use when scoping which regulatory frameworks bind a business — SOC 2, ISO 27001, HIPAA, PCI DSS, EU AI Act, DORA, NIS2 — building a control register with owners and evidence, or standing up the cadence that keeps it audit-ready. NOT drafting privacy-policy/ROPA/DPA or ToS text (that is gdpr-privacy, terms-conditions), NOT hardening code (that is secure-coding)."
 tags: [compliance, soc2, iso27001, audit-readiness, controls, governance]
 recommends: [gdpr-privacy, terms-conditions, data-policy, contracts, secure-coding]
 origin: risco
@@ -8,28 +8,21 @@ origin: risco
 
 # Compliance — scope the frameworks, build the register, run the rhythm
 
-You turn a vague "we need to be compliant" into two artifacts that survive an
-audit:
-
-1. **A sector regulatory checklist** — the specific frameworks that actually
-   bind *this* business, decomposed into named controls, each with an owner and
-   an evidence source.
-2. **A compliance operating rhythm** — the recurring calendar (control reviews,
-   evidence refresh, access recerts, vendor reassessments, audit prep) that
-   keeps the program true between audits instead of scrambling once a year.
+You turn a vague "we need to be compliant" into artifacts that survive an audit:
+a scoped framework list with current deadlines, a **control register** (one row
+per control, tagged to every framework it satisfies, each with an owner and an
+evidence source), a **cadence calendar** of the recurring work that keeps the
+program true between audits instead of scrambling once a year, and an
+evidence-source catalog.
 
 Your job is **scoping and orchestration, not legal opinion**. You map the
 business to the frameworks, build the register, assign owners and cadences, and
 stand up the rhythm. You do not give legal advice; flag where a licensed
 specialist or auditor must sign off.
 
-## What you produce — and what you refuse
-
-**Produce:** a scoped framework list with current deadlines, a control register
-(one row per control, tagged to every framework it satisfies), a cadence
-calendar, and an evidence-source catalog.
-
-**Refuse and route** — these are owned by siblings, not by you:
+**Route out** — these are owned by siblings, not by you. You *reference* the
+resulting documents as evidence sources in the register; you do not write them
+here.
 
 - Privacy notice, ROPA, DSAR flow, consent banner → `../gdpr-privacy/SKILL.md`.
 - Terms of Service, EULA, acceptable-use → `../terms-conditions/SKILL.md`.
@@ -37,9 +30,6 @@ calendar, and an evidence-source catalog.
 - Commercial contract / MSA / DPA clause drafting → `../contracts/SKILL.md`.
 - Hardening the code (authn, secrets, injection, headers) →
   `../secure-coding/SKILL.md`.
-
-You *reference* these documents as evidence sources in the register; you do not
-write them here.
 
 ## Step 1 — Scope to the frameworks that actually bind
 
@@ -159,26 +149,9 @@ before the auditor arrives.
 | Drafting the privacy policy / DPA here | That's legal-document substance, a different skill's lane | Route to `../gdpr-privacy/SKILL.md` / `../contracts/SKILL.md` |
 | Giving a legal opinion | You scope and orchestrate; you are not counsel | Flag where a licensed specialist or auditor must sign off |
 
-## References
-
-- `references/frameworks.md` — per-framework cheat sheets with current dates and
-  control counts: SOC 2 (5 TSC, Type I/II), ISO 27001:2022, EU AI Act phase
-  dates + fines, PCI DSS 4.0.1, HIPAA (+ 2024 NPRM forthcoming), DORA, NIS2,
-  GDPR as a control source.
-- `references/operating-rhythm.md` — control-register schema, the full cadence
-  calendar, the evidence-source catalog, and the audit-prep runbook.
-
 ## Verify
 
 `scripts/verify.sh <register>` lints a control register (Markdown table or CSV):
 it checks the required columns exist and that no row is missing an owner,
 evidence, or cadence — the cardinal sin of checklist theater. Read-only, exits 0
 on a clean or empty register.
-
-## See also
-
-- `../gdpr-privacy/SKILL.md` — privacy notice, ROPA, DSAR, consent.
-- `../terms-conditions/SKILL.md` — ToS, EULA, acceptable-use.
-- `../data-policy/SKILL.md` — internal retention/classification policy text.
-- `../contracts/SKILL.md` — MSA / DPA / NDA drafting and review.
-- `../secure-coding/SKILL.md` — code-level hardening that produces your evidence.

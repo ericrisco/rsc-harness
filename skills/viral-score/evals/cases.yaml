@@ -1,0 +1,50 @@
+skill: viral-score
+
+should_trigger:
+  - prompt: "Score this reel — is it worth publishing?"
+    why: Core ask — a single clip judged against the rubric, verdict required.
+  - prompt: "I cut 20 clips from yesterday's episode. Rank them and tell me which ones to post."
+    why: Batch mode — ranking plus the cut-off line, which only this skill produces.
+  - prompt: "Order these shorts from best to worst."
+    why: Comparison with no scoring keyword; ordering clips requires a shared instrument.
+  - prompt: "Here's the transcript of a 2h podcast. Which passages would make good shorts?"
+    why: The pre-render case the skill exists for — score candidates before anything is edited.
+  - prompt: "Valora este reel y dime si lo publico o lo descarto."
+    why: Spanish — same core ask, publish/discard verdict.
+  - prompt: "This clip feels flat to me but I can't say why. Is it me?"
+    why: Non-obvious — a vague quality doubt resolves into criterion scores and named weaknesses.
+  - prompt: "Why did this short underperform? It seemed strong when I made it."
+    why: Non-obvious — retrospective diagnosis against the same criteria, especially hook and context independence.
+
+should_not_trigger:
+  - prompt: "Write the caption and hashtags for this Reel."
+    route_to: shortform-packaging
+    why: Upload-form copy for a clip already chosen, not the decision to choose it.
+  - prompt: "Give me ten ideas for shorts about discipline."
+    route_to: shortform-ideation
+    why: Inventing angles, upstream of anything that can be scored.
+  - prompt: "Burn in the subtitles and add B-roll to this clip."
+    route_to: shortform-editing
+    why: Executing the edit; scoring is what decides whether the edit is worth doing.
+  - prompt: "How often should I post on this channel, and at what times?"
+    route_to: shortform-strategy
+    why: Channel cadence over time, not the merit of one artifact.
+  - prompt: "Design a thumbnail for my YouTube video."
+    route_to: youtube-thumbnails
+    why: A different surface and a different artifact; this rubric scores the clip itself.
+
+capability:
+  - prompt: "Score this 18s clip: it opens mid-sentence with 'o sea, entonces lo que pasa es que…', has a 4s pause in the middle, and ends without resolving the point."
+    must_include:
+      - "a score for all ten criteria"
+      - "the weak-hook penalty applied for opening mid-sentence"
+      - "the long-pause penalty"
+      - "the unsatisfying-ending penalty"
+      - "a final score clamped to 0-100 after penalties"
+      - "a Publish / Review / Discard verdict"
+  - prompt: "Here are 6 clips from one episode with their transcripts. Rank them."
+    must_include:
+      - "a Viral Score for every clip"
+      - "a ranking from highest to lowest"
+      - "an explicit cut-off point below which publishing is not worth it"
+      - "strengths and weaknesses per clip, tied to what happens in it"

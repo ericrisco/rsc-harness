@@ -1,6 +1,6 @@
 ---
 name: nextjs
-description: "Use when building, reviewing, testing, securing, or optimizing a Next.js App Router app (Next.js 15/16, React Server Components, \"use client\"/\"use server\", server actions, route handlers, layouts, streaming/Suspense, the App Router caching model, TypeScript, Auth.js, Vitest/Playwright, CSP/security headers). Triggers on `app/` directory work, `next.config.ts`, `proxy.ts`/`middleware.ts`, server actions, route handlers, `use cache`, `useActionState`, RSC boundary questions, hydration errors, and Next.js perf/Core Web Vitals."
+description: "Use when building, reviewing, testing, securing, or optimizing a Next.js App Router app: Server vs Client boundaries, `use server` actions, route handlers, the v15 vs v16 `use cache` caching model, metadata/SEO, auth, and Core Web Vitals. NOT framework-agnostic React or a Vite SPA (that is `react`), and NOT visual/UI design (that is `design`)."
 tags: [nextjs, react, frontend, web, seo, ssr]
 recommends: [design, secure-coding, deployment]
 origin: risco
@@ -8,28 +8,19 @@ origin: risco
 
 # Next.js App Router — RSC, Server Actions, React 19, TypeScript
 
-> Build, review, test, secure, and optimize Next.js App Router apps with correct handling of
-> both the Next.js 15 (uncached-by-default) and Next.js 16 (`use cache`) caching models.
+> Build, review, test, secure and optimize App Router apps, handling both the Next.js 15 (uncached-by-default) and Next.js 16 (`use cache`) caching models correctly.
 
-## When to use / When NOT to use
+> **SDD gate — read before writing code.** If this fired on a **new, non-trivial feature or
+> behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP and
+> hand off to `../specify/SKILL.md` (brainstorm → spec → plan → tasks); it routes back here once the
+> plan is approved. Build directly only for a genuinely one-line / low-risk change. Method:
+> `../sdd/SKILL.md`.
 
-> **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
-
-**Use when:**
-
-- Editing or creating files under `app/` (pages, layouts, `route.ts`, server actions).
-- Deciding Server vs Client Component, or fixing an RSC boundary / hydration mismatch.
-- Writing server actions or route handlers; wiring `useActionState` + zod forms.
-- Configuring caching/revalidation (either model), auth, middleware/`proxy.ts`, or CSP.
-- Diagnosing waterfalls, bundle bloat, or Core Web Vitals regressions.
-- Writing Vitest/Playwright tests for Next.js code.
-
-**Do NOT use when (redirect target each):**
-
-- Pages Router (`pages/`) work → note the difference, defer to the Next.js Pages docs.
-- Pure React SPA (Vite/CRA) or React Native / Expo → use a generic React skill; out of scope here.
-- Non-Next backend (FastAPI/Go) → see `../fastapi/SKILL.md`, `../go/SKILL.md`.
-- Generic React-shape questions with no Next/RSC dimension → keep brief, point to `references/react.md`.
+**Not this skill:** Pages Router (`pages/`) — note the difference, defer to the Next.js Pages docs.
+A pure React SPA (Vite/CRA) → `../react/SKILL.md`; React Native / Expo → `../react-native/SKILL.md`;
+a generic React question with no Next/RSC dimension → keep it brief, from `references/react.md`.
+Non-Next backends → `../fastapi/SKILL.md`, `../go/SKILL.md`; the data layer behind the DAL →
+`../postgresdb/SKILL.md`; framework-agnostic security → `../secure-coding/SKILL.md`, complemented here, never duplicated.
 
 ## First: detect the project's version & caching model
 
@@ -120,17 +111,15 @@ export async function renameProject(_prev: RenameResult | null, formData: FormDa
 }
 ```
 
-Two invocation modes:
-
-- `<form action={renameProject}>` — progressive enhancement, works without JS.
-- Imperative from a client handler wrapped in `startTransition(() => renameProject(null, fd))`.
-
-Deep dives: `references/security.md` (auth/CSRF) and `references/data-and-caching.md` (mutations).
+Two invocation modes: `<form action={renameProject}>` — progressive enhancement, works without JS —
+or imperative from a client handler wrapped in `startTransition(() => renameProject(null, fd))`.
 
 ## Route Handlers (`route.ts`)
 
 Use a Route Handler for: webhooks, a public JSON API, OAuth callbacks, streaming responses, and
-non-form clients. Use a **Server Action instead** for internal form mutations.
+non-form clients. Use a **Server Action instead** for internal form mutations. GET handlers are
+uncached by default on v15 (control with `export const dynamic` / `runtime`), and every handler —
+GET included — runs its own `auth()` check and scopes reads to the session user.
 
 ```ts
 // app/api/projects/route.ts
@@ -138,14 +127,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-
-// GET handlers are uncached by default on v15. Control with: export const dynamic / runtime.
-export async function GET(_req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const projects = await db.project.findMany({ where: { ownerId: session.user.id } });
-  return NextResponse.json({ projects });
-}
 
 const CreateSchema = z.object({ name: z.string().min(1).max(120) });
 
@@ -170,19 +151,8 @@ export async function POST(req: NextRequest) {
 | `not-found.tsx`    | Rendered by `notFound()` and unmatched routes                 |
 | `global-error.tsx` | Replaces the root layout when the root throws                 |
 
-```tsx
-// app/projects/error.tsx — Good: error boundaries are Client Components
-"use client";
-export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  return (
-    <div role="alert">
-      <h2>Could not load projects</h2>
-      <p>{error.message}</p>
-      <button onClick={() => reset()}>Try again</button>
-    </div>
-  );
-}
-```
+An `error.tsx` is always `"use client"`, receives `{ error: Error & { digest?: string }, reset }`,
+and should render `role="alert"` plus a button calling `reset()`.
 
 ```tsx
 // app/dashboard/page.tsx — Good: stream the shell, Suspense the slow part
@@ -203,11 +173,10 @@ export default function Page() {
 
 ## Routing: groups, parallel, intercepting, dynamic, metadata
 
-- Route groups `(marketing)/` — organize without affecting the URL.
-- Dynamic `[id]`, catch-all `[...slug]`, optional `[[...slug]]`.
+- Route groups `(marketing)/` organize without affecting the URL; dynamic `[id]`, catch-all
+  `[...slug]`, optional `[[...slug]]`.
 - **`params` and `searchParams` are Promises on v15+ — `await` them.**
-- Parallel routes `@modal` + `default.tsx`.
-- Intercepting `(.)photo` — modal-on-navigation.
+- Parallel routes `@modal` + `default.tsx`; intercepting `(.)photo` — modal-on-navigation.
 - `generateMetadata` (async) + `generateStaticParams`.
 
 ```tsx
@@ -225,8 +194,9 @@ async function PageGood({ params }: { params: Promise<{ id: string }> }) {
 ## Metadata & SEO
 
 The App Router emits `<title>`, `<meta>`, OpenGraph/Twitter tags, `sitemap.xml`, and `robots.txt`
-from code (identical API on v15/v16). Build-side patterns → `references/metadata.md`; the
-strategy/content side — JSON-LD, GEO, keyword research → `../marketing/references/seo-geo.md`.
+from code (identical API on v15/v16). Build-side patterns → `references/metadata.md`; the strategy
+side — JSON-LD, GEO, keyword research — is `../marketing/SKILL.md`'s
+(`../marketing/references/seo-geo.md`): this skill emits the tags, that one picks the content.
 
 - `metadata`/`generateMetadata` are **Server-Component-only** — one or the other per file (static
   object when known at build; async `generateMetadata` when it depends on `params`/data, wrapped in
@@ -261,8 +231,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 ## Caching & data fetching (both models)
 
-Which block applies is decided by the detection gate above. Deep dive →
-`references/data-and-caching.md`.
+Which block applies is decided by the detection gate above. Optimistic UI, `useActionState` + zod
+forms and the full mutation patterns are in `references/data-and-caching.md`.
 
 **v15 model** — `fetch` is uncached by default; opt in explicitly.
 
@@ -275,7 +245,7 @@ const products = await fetch("https://api.example.com/products", {
   next: { revalidate: 3600, tags: ["products"] },
 }).then((r) => r.json());
 
-// from a Server Action: invalidate the tag
+// from a Server Action: invalidate the tag (or a route with revalidatePath)
 import { revalidateTag } from "next/cache";
 revalidateTag("products");
 
@@ -318,9 +288,6 @@ export async function getCart(cartId: string) {
   return db.cart.find(cartId);
 }
 ```
-
-For optimistic UI, `useActionState` + zod forms, and full mutation patterns →
-`references/data-and-caching.md`.
 
 ## React 19 in the App Router (essentials)
 
@@ -380,9 +347,10 @@ on every review:
 - Secure cookies: `httpOnly`, `secure`, `sameSite: "lax"`; rotate the session on any privilege change.
 - CSRF: Server Actions verify `Origin`/`Host`; never expose a mutation as an unauthenticated GET;
   set `serverActions.allowedOrigins` in `next.config.ts`.
-- **Never put secrets in `NEXT_PUBLIC_*`** — they ship to the browser; proxy via a Route Handler.
+- **Never put secrets in `NEXT_PUBLIC_*`** — they ship to the browser; proxy via a Route Handler and
+  mark server-only modules with `import 'server-only'`.
 - SSRF: allowlist host/scheme before `fetch` in Route Handlers; block internal/metadata ranges.
-- CSP with a nonce via `proxy.ts`/headers. See also `secure-coding`.
+- CSP with a nonce via `proxy.ts`/headers. See also `../secure-coding/SKILL.md`.
 
 ## Performance (deep dive → references/performance.md)
 
@@ -393,9 +361,9 @@ on every review:
 - Long lists: `content-visibility: auto` + virtualize (`@tanstack/react-virtual`) past ~50 rows; warm assets with `react-dom` `preload`/`preconnect`; narrow store selectors (Zustand) cut re-renders. Full lever→metric map in `references/performance.md`.
 - Core Web Vitals targets: **LCP < 2.5s, CLS < 0.1, INP < 200ms** (INP replaced FID).
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization                                            | Reality / STOP                                                             |
+| Common belief                                               | Reality / STOP                                                             |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------- |
 | "The client already checks the user, the action is safe"   | Server Actions are public POST endpoints — authenticate inside the action  |
 | "`fetch` caches by default, skip `revalidate`"             | v15: `fetch` is uncached by default; that's the v13/14 mental model        |
@@ -408,27 +376,6 @@ on every review:
 | "Middleware protects my dashboard, the data fetch is safe" | Middleware is not a security boundary; check in the DAL                    |
 | "Snapshot-test the RSC page"                               | Async Server Components aren't jsdom-renderable; test data fns + Playwright |
 
-## Quick reference
-
-| Task                      | API / file                                       | Note                           |
-| ------------------------- | ------------------------------------------------ | ------------------------------ |
-| New mutation              | Server Action (`"use server"`)                   | auth + zod inside              |
-| Public JSON / webhook     | Route Handler (`route.ts`)                       | uncached GET on v15            |
-| Per-request dedupe        | `React.cache(fn)`                                | one query per render           |
-| Cache cross-request (v15) | `fetch tags` / `unstable_cache`                  | opt-in                         |
-| Cache (v16)               | `"use cache"` + `cacheTag`                       | opt-in, `cacheLife()`          |
-| Invalidate                | `revalidateTag` / `updateTag` / `revalidatePath` | from an action                 |
-| Loading UI                | `loading.tsx` / `<Suspense>`                     | stream the shell               |
-| Error UI                  | `error.tsx`                                      | `"use client"`, gets `reset()` |
-| Form                      | `useActionState` + zod                           | `isPending`, `role="alert"`    |
-| Optimistic UI             | `useOptimistic`                                  | auto-revert on error           |
-| Client island             | `"use client"` leaf                              | keep small, push down          |
-| Secrets                   | server-only env (`import 'server-only'`)         | never `NEXT_PUBLIC_*`          |
-| Image                     | `next/image` + `priority`                        | LCP image                      |
-| Page metadata             | `generateMetadata` / static `metadata`           | server-only; set `metadataBase`|
-| Sitemap / robots          | `app/sitemap.ts` / `app/robots.ts`               | `MetadataRoute.*`              |
-| Protect route             | middleware redirect + DAL `auth()`               | DAL is the real boundary       |
-
 ## Verify
 
 Run `bash scripts/verify.sh` from the Next.js project root. It runs ESLint, `tsc --noEmit`,
@@ -438,37 +385,16 @@ a failure). It reads the installed Next.js major version and only falls back to 
 never a false failure. The lint/type/test steps are read-only; the final `next build` writes the
 `.next/` output directory. No installs, no network mutations. Safe to re-run.
 
-## References
-
-- `references/react.md` — React 19 discipline for the App Router (hooks, boundaries, forms, state).
-- `references/data-and-caching.md` — both caching models, mutations, end-to-end zod forms.
-- `references/metadata.md` — `generateMetadata`, `sitemap.ts`, `robots.ts`, OpenGraph + `next/og`.
-- `references/testing.md` — Vitest 3 + RTL + MSW 2 + Playwright; RSC testing reality.
-- `references/performance.md` — Core Web Vitals, images, fonts, bundles, streaming.
-- `references/security.md` — auth, CSRF, XSS, CSP, env leakage, SSRF.
+Test strategy — Vitest 3 + RTL + MSW 2 for units, Playwright for pages, and the RSC testing reality
+behind that last anti-pattern row: `references/testing.md`.
 
 ## Project grounding (02-DOCS + CLAUDE.md)
 
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this
-project's app decisions there and index them from the root `CLAUDE.md`, so the next
-agent inherits the conventions instead of re-deriving them.
-
-1. **Find the article** `02-DOCS/wiki/stack/nextjs.md`, indexed in `02-DOCS/wiki/index.md` (the
-   Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, create/update it with the project's real choices — the caching model in use (v15 fetch-cache vs v16 `use cache`), the auth approach, server-action and data-fetching conventions, runtime choices (edge/node), and the design-system hookup —
-   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a
-   short pointer to it).
-3. **Read it first on every use** and stay consistent; when a convention changes, update the
-   article (bump its `Updated` date) in the same change.
-
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) Karpathy wiki), this
+project's app decisions live in `02-DOCS/wiki/stack/nextjs.md`, indexed from `02-DOCS/wiki/index.md`
+(the Knowledge map; root `CLAUDE.md` keeps only a pointer). Read it first on every use and stay
+consistent. Missing or stale → write the project's real choices there — caching model in use (v15
+fetch-cache vs v16 `use cache`), auth approach, server-action and data-fetching conventions, runtime
+(edge/node), design-system hookup — index it, and bump its `Updated` date in the same change as any
+convention change. No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the
 brand study, technical conventions are *recorded, not gated* — never block the task on this.
-
-## See Also
-
-- `../secure-coding/SKILL.md` — generic security; this skill complements, does not duplicate it.
-- `../fastapi/SKILL.md` and `../go/SKILL.md` — the backend APIs the frontend calls.
-- `../postgresdb/SKILL.md` — the data layer behind the DAL.
-- `../marketing/SKILL.md` — SEO/GEO strategy, JSON-LD, AI-engine citation (`../marketing/references/seo-geo.md`); this skill emits the tags, that one decides the content.
-- `../harness/SKILL.md` — workspace conventions.

@@ -1,6 +1,6 @@
 ---
 name: csharp-dotnet
-description: "Use when writing, reviewing, testing, or shipping C# / .NET code, ASP.NET Core APIs, or EF Core data access — editing .cs/.csproj/.sln files, designing minimal APIs vs controllers, fixing async correctness, or structuring a dotnet solution. Triggers: 'build a .NET API', 'is this idiomatic C#', 'should this DTO be a record', 'my endpoint hangs/deadlocks under load' (sync-over-async), 'EF query hits the DB once per row' (N+1), 'set up xUnit + WebApplicationFactory', 'crea una API en .NET', 'revisa este código C# antes de hacer deploy'. NOT a Java/Spring backend (that is spring-boot), NOT a Node/TypeScript backend (that is nestjs)."
+description: "Use when writing, reviewing, testing, or shipping C# / .NET code — ASP.NET Core APIs (minimal APIs vs controllers), EF Core data access, async correctness, solution layout in .cs/.csproj/.sln. NOT a Java/Spring backend (that is spring-boot), NOT a Node/TypeScript backend (that is nestjs), NOT framework-neutral REST naming (that is api-design)."
 tags: [csharp, dotnet, aspnetcore, efcore, async]
 recommends: [postgresdb, secure-coding, deployment]
 origin: risco
@@ -20,17 +20,6 @@ support but shorter-lived. Features gate on the target framework moniker (TFM): 
 use a C# 14 feature (`field`, extension members, null-conditional assignment), say
 which TFM it requires.
 
-## When to use
-
-- Authoring/reviewing/refactoring any `.cs`, `.csproj`, or `.sln`.
-- ASP.NET Core: minimal APIs vs controllers, route groups, endpoint filters,
-  validation, ProblemDetails, OpenAPI.
-- EF Core: `DbContext` design, LINQ queries, migrations, tracking, N+1.
-- async/await correctness: `CancellationToken` plumbing, `async void`, deadlocks,
-  `IAsyncEnumerable`, `ValueTask`.
-- `dotnet` CLI workflow, solution layout, NuGet, central package management.
-- Idiom review: records, pattern matching, nullable reference types (NRT).
-
 ## When NOT to use — delegate
 
 | Situation | Route to |
@@ -45,29 +34,7 @@ which TFM it requires.
 
 The .NET *expression* of an API contract and async correctness live HERE. Resource
 naming theory lives in `api-design`; the JVM and Node counterparts are `spring-boot`
-and `nestjs`. Only `secure-coding`, `postgresdb`, `deployment`, and `harness` exist on
-disk as siblings, so only those are linked as `../<id>/SKILL.md`.
-
-## Decision rules — apply on every C# edit
-
-1. **NRT on.** `<Nullable>enable</Nullable>` in the csproj. Why: the compiler turns
-   whole classes of `NullReferenceException` into build-time warnings. Never disable it
-   to silence a warning — fix the nullability.
-2. **Async all the way, flow the token.** I/O methods are `async Task`, every call is
-   `await`ed, and a `CancellationToken` threads from the endpoint down to
-   `SaveChangesAsync`/queries/HTTP calls. Why: a dropped token means requests keep
-   running after the client gives up.
-3. **Records for DTOs and immutable data.** `public record ProductDto(int Id, string Name);`.
-   Why: value equality + `with` expressions + concise; never reuse an EF entity as the
-   wire DTO (see anti-patterns).
-4. **Parameterize every query.** EF LINQ and `FromSql` interpolation parameterize for
-   you; never string-concatenate SQL. Why: SQL injection.
-5. **Deterministic disposal.** `using`/`await using` (or `using` declarations) for
-   anything `IDisposable`/`IAsyncDisposable`. Why: leaked connections/handles.
-6. **One `DbContext` per request (scoped).** Why: `DbContext` is not thread-safe;
-   sharing across requests corrupts change tracking.
-7. **Minimal APIs for new services** unless you need MVC features (views, model
-   binders, action filters at scale). Why: less ceremony, first-class in .NET 10.
+and `nestjs`.
 
 ## Project & solution layout + dotnet CLI
 
@@ -101,6 +68,10 @@ Central package management: turn it on with `<ManagePackageVersionsCentrally>tru
 and list versions once in `Directory.Packages.props`. Why: one source of truth, no
 version drift across projects.
 
+NRT on for every project — `<Nullable>enable</Nullable>` in `Directory.Build.props`.
+Why: the compiler turns whole classes of `NullReferenceException` into build-time
+warnings. Never disable it to silence a warning — fix the nullability.
+
 ## Modern C# idioms (C# 14 / .NET 10)
 
 DTO as a record, not a class:
@@ -112,6 +83,9 @@ public class ProductDto { public int Id { get; set; } public string Name { get; 
 // Good: immutable record DTO
 public record ProductDto(int Id, string Name, decimal Price);
 ```
+
+Why: value equality, `with` expressions, no boilerplate — and never reuse an EF entity
+as the wire DTO (see anti-patterns).
 
 Pattern matching over if-chains:
 
@@ -154,6 +128,9 @@ Prefer NRT annotations over defensive null checks: declare `string? note` when n
 valid and let the compiler force callers to handle it, instead of `if (x == null)`
 guards scattered everywhere.
 
+Dispose deterministically: `using` / `await using` (or `using` declarations) for
+anything `IDisposable`/`IAsyncDisposable`. Why: leaked connections and handles.
+
 ## async/await correctness
 
 This is the highest-leverage area to get right. Core rules in body; the full catalog
@@ -173,7 +150,9 @@ public IActionResult Get() => Ok(_svc.LoadAsync().Result);
 public async Task<IActionResult> Get(CancellationToken ct) => Ok(await _svc.LoadAsync(ct));
 ```
 
-- **Flow `CancellationToken`** from the endpoint into every async call.
+- **Flow `CancellationToken`** from the endpoint down into every async call —
+  `SaveChangesAsync`, queries, outbound HTTP. Why: a dropped token means the request
+  keeps running after the client gives up.
 - **`ValueTask` only for hot paths** that usually complete synchronously; default to
   `Task`. Never `await` a `ValueTask` twice.
 - **`IAsyncEnumerable<T>` for streaming** results instead of materializing a huge list.
@@ -182,6 +161,7 @@ public async Task<IActionResult> Get(CancellationToken ct) => Ok(await _svc.Load
 
 Decision: **minimal API** for new services; **controllers** only when you need MVC
 machinery (model binding conventions, action filters at scale, views). Both can coexist.
+Why minimal by default: less ceremony, first-class in .NET 10.
 
 Production minimal API shape — route group + DataAnnotations validation (built in for
 minimal API parameters in .NET 10) + ProblemDetails + OpenAPI 3.1:
@@ -215,7 +195,8 @@ app.Run();
 ```
 
 DI lifetimes: `Singleton` (one for the app), `Scoped` (one per request — `DbContext`
-lives here), `Transient` (new each resolve). Never inject a `Scoped` service into a
+lives here; it is not thread-safe, so sharing one across requests corrupts change
+tracking), `Transient` (new each resolve). Never inject a `Scoped` service into a
 `Singleton` (captive dependency — see anti-patterns). Middleware ordering, endpoint
 filters, the options pattern, and auth defaults are in **references/aspnetcore.md**.
 
@@ -252,7 +233,7 @@ Keep only the .NET-specific controls here; threat modeling and OWASP review go t
 `../secure-coding/SKILL.md`.
 
 - **Parameterized data access** — EF LINQ / parameterized `FromSql` / ADO.NET
-  `SqlParameter`. Never concatenate user input into SQL.
+  `SqlParameter`. Never concatenate user input into SQL. Why: SQL injection.
 - **Secrets** — `dotnet user-secrets` in dev, Key Vault / environment in prod. Never in
   `appsettings.json` or source.
 - **Antiforgery** for cookie-auth browser POSTs; **Data Protection** for cookies/tokens

@@ -1,6 +1,6 @@
 ---
 name: fastapi
-description: "Use when building, reviewing, testing, securing or deploying a FastAPI / async Python service. Triggers: creating endpoints/routers, Pydantic v2 models (Create/Update/Response), dependency injection, async SQLAlchemy 2.0 + Alembic, OAuth2/JWT auth + RBAC, pytest + httpx ASGITransport tests, CORS / rate limiting / secret handling, uvicorn/gunicorn + structured logging + healthchecks + graceful shutdown, pyproject + ruff + mypy strict + uv. Any .py file importing fastapi, pydantic, sqlalchemy, starlette, or a pyproject.toml declaring those."
+description: "Use when building, reviewing, testing, securing or shipping a FastAPI / async Python service — routers, Pydantic v2 schemas, dependency injection, async SQLAlchemy 2.0, OAuth2/JWT, ASGITransport tests, production wiring. NOT language-level Python or packaging (that is `python`), NOT engine-level SQL (that is `postgresdb`), NOT framework-agnostic REST contracts (that is `api-design`)."
 tags: [python, api, async, backend, rest]
 recommends: [postgresdb, secure-coding, deployment]
 origin: risco
@@ -20,25 +20,16 @@ pytest 8 + pytest-asyncio 1.0+ (`asyncio_mode=auto`), ruff 0.7+, mypy 1.13+ stri
 uv 0.5+, uvicorn 0.32+ / gunicorn 23+ + uvicorn-worker 0.3+, PyJWT 2.10+, argon2-cffi 23+,
 pip-audit 2.7+, PostgreSQL 16. (All lower bounds; install the latest in each line.)
 
-## When to use
-
 > **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
 
-- Writing or reviewing any FastAPI route, router, dependency, schema, or app factory.
-- Designing async DB access (SQLAlchemy 2.0), migrations (Alembic), or eager-loading.
-- Adding auth (OAuth2 password flow + JWT), RBAC, password hashing.
-- Writing pytest suites for an async API (ASGITransport, `dependency_overrides`, transactional DB).
-- Hardening (CORS, rate limit, secrets, log redaction, dependency audit) or productionizing.
-- Setting up `pyproject.toml`, ruff + mypy strict, uv/pip-tools dependency management.
-
-## When NOT to use
-
-- Django / Flask / DRF apps → not this skill.
-- Sync WSGI services, data-science notebooks, CLI-only scripts with no HTTP surface.
-- Pure REST contract questions (status codes, URL naming, versioning, cursor vs offset) → general REST-design territory (this skill covers the FastAPI *implementation* of those contracts).
-- Frontend/Next.js, Go, Flutter work → their own skills.
-- Generic secure-coding rules not specific to Python/FastAPI → **See Also `secure-coding`**.
-- Container/Compose/CI deploy mechanics → **See Also `deployment`** (this skill keeps only a Docker *note*).
+Out of scope, and where it goes instead: [`django`](../django/SKILL.md) for Django; Flask / sync WSGI,
+notebooks and CLI-only scripts (no skill); language-level Python, typing and packaging →
+[`python`](../python/SKILL.md); framework-agnostic REST contracts — status codes, URL naming, versioning,
+cursor vs offset → [`api-design`](../api-design/SKILL.md) (this skill covers their FastAPI *implementation*);
+engine-level schema, indexing, EXPLAIN, zero-downtime migrations, PgBouncer →
+[`postgresdb`](../postgresdb/SKILL.md); language-agnostic injection / secret / authz theory →
+[`secure-coding`](../secure-coding/SKILL.md); Dockerfile, Compose and CI/CD mechanics →
+[`deployment`](../deployment/SKILL.md) (this skill keeps only a Docker *note*).
 
 ## Decision rules
 
@@ -140,11 +131,11 @@ app = create_app()
 Accepting an optional `settings` argument lets tests build the app with overridden config
 without touching the `get_settings` cache. **Bad** = `allow_origins=["*"]` with
 `allow_credentials=True` — browsers reject it and Starlette refuses to echo `*` for
-credentialed requests. `→ references/production.md` for proxy headers / logging wiring at
+credentialed requests. → [`references/production.md`](references/production.md) for proxy headers / logging wiring at
 startup.
 
 To inject servers / security schemes / a logo into the generated OpenAPI doc, assign a
-custom builder to `app.openapi` inside `create_app()`. `→ references/production.md`
+custom builder to `app.openapi` inside `create_app()`. → [`references/production.md`](references/production.md)
 (Customizing the OpenAPI schema).
 
 ## Configuration (pydantic-settings)
@@ -229,7 +220,7 @@ v2 migration cheats: use `.model_dump()` not `.dict()`; `.model_validate(obj)` n
 `field_validator`/`model_validator` not `@validator`/`@root_validator`.
 
 **Bad** = a response model with `hashed_password: str` (leaks the hash). **Good** = the
-`UserResponse` above (no secret fields). `→ references/security.md`.
+`UserResponse` above (no secret fields). → [`references/security.md`](references/security.md).
 
 ## Dependency injection
 
@@ -275,7 +266,7 @@ def get_pagination(
 PageParams = Annotated[Pagination, Depends(get_pagination)]
 ```
 
-`→ references/database.md` for `async_session_factory` wiring; `→ references/security.md`
+→ [`references/database.md`](references/database.md) for `async_session_factory` wiring; → [`references/security.md`](references/security.md)
 for `get_current_user` and `require_roles`.
 
 ## Routers & endpoints
@@ -361,8 +352,9 @@ def register_exception_handlers(app: FastAPI) -> None:
 Keep this envelope identical across every handler — one `code`/`message`/`details` shape so
 clients parse errors once. Subclass `AppError` per failure (each fixes a `code` + status):
 `NotFoundError` (404), `ConflictError` (409), `Unauthorized` (401), `Forbidden` (403) — full
-hierarchy in `→ references/production.md` (AppError subclasses). **See Also `secure-coding`**
-for why error responses must never leak internals (stack traces, SQL, secrets).
+hierarchy in → [`references/production.md`](references/production.md) (AppError subclasses).
+[`secure-coding`](../secure-coding/SKILL.md) has the why: error responses must never leak internals
+(stack traces, SQL, secrets).
 
 ## Async SQLAlchemy 2.0 (essentials)
 
@@ -401,7 +393,9 @@ async def list_users(db: AsyncSession, limit: int, offset: int) -> list[User]:
     return list(result.scalars().all())
 ```
 
-`→ references/database.md` for relationships, N+1 / eager loading, repository, Alembic, pooling.
+Fetch by PK with `await db.get(Model, pk)`, by unique key with `.scalar_one_or_none()`; eager-load with
+`selectinload` (collections) / `joinedload` (many-to-one).
+→ [`references/database.md`](references/database.md) for relationships, N+1 / eager loading, repository, Alembic, pooling.
 
 ## Background tasks vs real queues
 
@@ -428,74 +422,48 @@ a transactional fixture — so every test rolls back. Use `pytest-asyncio` with
 `asyncio_mode = "auto"` (no `@pytest.mark.asyncio`), and assert secrets never serialize (e.g.
 `assert "hashed_password" not in resp.json()`). TDD red→green→refactor. Full fixtures
 (transactional `begin_nested`, auth overrides, respx, coverage gate) in
-`→ references/testing.md`.
+→ [`references/testing.md`](references/testing.md).
 
 ## Security
 
 Full hardening playbook — argon2 hashing, OAuth2 + JWT (claims validated, `algorithms`
 pinned), `get_current_user`/`require_roles` RBAC, CORS, shared-store rate limiting, injection,
 `SecretStr` + log redaction, security headers, `pip-audit` — lives in
-`→ references/security.md`. The non-negotiables also appear in the anti-patterns table below.
-**See Also `secure-coding`** for the language-agnostic theory.
+→ [`references/security.md`](references/security.md) — including the exact `argon2.PasswordHasher().hash(pw)` and
+`jwt.decode(t, key, algorithms=[...], audience=..., issuer=...)` calls. See
+[`secure-coding`](../secure-coding/SKILL.md) for the language-agnostic theory.
 
 ## Production
 
 ASGI/worker math, structured JSON logging + request-id, liveness vs readiness probes, graceful
 shutdown, keyset pagination, caching, `ORJSONResponse` and proxy headers all live in
-`→ references/production.md`. **See Also `deployment`** for the Dockerfile and CI/CD pipeline.
+→ [`references/production.md`](references/production.md). See [`deployment`](../deployment/SKILL.md) for the
+Dockerfile and CI/CD pipeline.
 
-## Anti-patterns / rationalizations → STOP
+## Anti-patterns
 
-| Rationalization | Reality → STOP |
+| Anti-pattern | Why it breaks → do this |
 |---|---|
-| "I'll just call `requests` in this async route, it's one call" | Blocks the event loop → use `httpx.AsyncClient`. |
-| "`.dict()` still works" | Pydantic v2: use `.model_dump()`; `.dict()`/`from_orm` are deprecated. |
-| "Return the ORM object directly, FastAPI will handle it" | Leaks columns + lazy-loads in serializer → declare `response_model`. |
-| "`allow_origins=['*']` + credentials is fine for now" | Browser rejects it; Starlette blocks it. Pin origins. |
-| "I'll decode the JWT without checking `exp`/`aud`" | Forged/replayed tokens. Validate exp/iss/aud + pin alg. |
-| "Build the WHERE with an f-string, it's internal" | SQLi. Bound params / SQLAlchemy expressions only. |
-| "One global session for the whole app is simpler" | Cross-request data bleed + concurrency bugs. One session per request. |
-| "Catch `Exception` and return the message to the client" | Leaks internals. Log it, return generic 500. |
-| "`BackgroundTasks` is good enough for the payment webhook retry" | No durability/retry. Use a real broker. |
-| "mypy strict is too noisy, I'll skip it" | Strict catches the bugs FastAPI's runtime won't. Keep it. |
-| "Commit inside the handler so I control it" | Let `get_db` own commit/rollback; handlers stay thin. |
-| "Default-mutable arg / module-level engine at import is fine" | Mutable defaults bite; engine must live in lifespan. |
+| `requests` (or any blocking call) inside an `async def` route | Blocks the event loop → use `httpx.AsyncClient`. |
+| `.dict()` / `from_orm()` on a model | Pydantic v2: use `.model_dump()`; `.dict()`/`from_orm` are deprecated. |
+| Returning the ORM object with no `response_model` | Leaks columns + lazy-loads in serializer → declare `response_model`. |
+| `allow_origins=['*']` together with credentials | Browser rejects it; Starlette blocks it. Pin origins. |
+| Decoding a JWT without checking `exp`/`aud` | Forged/replayed tokens. Validate exp/iss/aud + pin alg. |
+| Building the WHERE clause with an f-string | SQLi. Bound params / SQLAlchemy expressions only. |
+| One global session shared by the whole app | Cross-request data bleed + concurrency bugs. One session per request. |
+| Catching `Exception` and returning its message | Leaks internals. Log it, return generic 500. |
+| `BackgroundTasks` for a payment-webhook retry | No durability/retry. Use a real broker. |
+| Skipping `mypy --strict` because it is noisy | Strict catches the bugs FastAPI's runtime won't. Keep it. |
+| Committing inside the handler | Let `get_db` own commit/rollback; handlers stay thin. |
+| Default-mutable arg / engine built at import time | Mutable defaults bite; engine must live in lifespan. |
 
-## Quick reference
+## Project grounding
 
-| Task | Idiom |
-|---|---|
-| Async route doing I/O | `async def` + `httpx.AsyncClient` / asyncpg |
-| Request DB session | `db: Annotated[AsyncSession, Depends(get_db)]` |
-| Run a query / get rows | `await db.execute(select(Model)...)` → `result.scalars().all()` / `.scalar_one_or_none()` |
-| Get by PK | `await db.get(Model, pk)` |
-| Eager-load | `selectinload(Model.items)` (collection) / `joinedload(Model.parent)` (many-to-one) |
-| Settings | `Annotated[Settings, Depends(get_settings)]` |
-| Serialize ORM → schema | `model_config = ConfigDict(from_attributes=True)` |
-| Created response | `status_code=201` + `Location` header |
-| Test client | `AsyncClient(transport=ASGITransport(app=app))` + `app.dependency_overrides[dep] = fake` |
-| Hash password / verify JWT | `argon2.PasswordHasher().hash(pw)` / `jwt.decode(t, key, algorithms=[...], audience=..., issuer=...)` |
+In a project with a `02-DOCS/` layer ([`harness`](../harness/SKILL.md)), read
+`02-DOCS/wiki/stack/fastapi.md` first and stay consistent with it; create or update it with this
+project's real choices — auth model (JWT/OAuth2 provider, token TTLs), DB session + migration tool,
+error-envelope shape, settings/secrets approach, deployment target — bump its `Updated` date, and index
+it in `02-DOCS/wiki/index.md`. No `02-DOCS/`? Skip silently. Conventions are *recorded, not gated* —
+never block the task on this.
 
-## Project grounding (02-DOCS + CLAUDE.md)
-
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this project's API decisions in
-`02-DOCS/wiki/stack/fastapi.md` and index it in `02-DOCS/wiki/index.md` (the Knowledge map index; root
-`CLAUDE.md` points to it), so the next agent inherits the conventions instead of re-deriving them.
-
-- **Read it first** on every use and stay consistent; bump its `Updated` date when a
-  convention changes.
-- **Create/update it** with the project's real choices — auth model (JWT/OAuth2 provider,
-  token TTLs), DB session + migration tool, error-envelope shape, settings/secrets approach,
-  deployment target — indexing it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it) if absent.
-
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Technical conventions are
-*recorded, not gated* — never block the task on this.
-
-## See Also
-
-- [`secure-coding`](../secure-coding/SKILL.md) — language-agnostic injection / secret / authz hardening behind this skill's security rules.
-- [`postgresdb`](../postgresdb/SKILL.md) — engine-level schema design, indexing, EXPLAIN, zero-downtime migrations, PgBouncer (below the SQLAlchemy layer this skill drives).
-- [`deployment`](../deployment/SKILL.md) — Dockerfile, Compose, CI/CD, container runtime (this skill keeps only a Docker note).
-- References: [`references/testing.md`](references/testing.md), [`references/database.md`](references/database.md), [`references/security.md`](references/security.md), [`references/production.md`](references/production.md).
-- Verify gate: [`scripts/verify.sh`](scripts/verify.sh).
+Verify gate: [`scripts/verify.sh`](scripts/verify.sh).

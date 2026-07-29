@@ -1,6 +1,6 @@
 ---
 name: cold-outreach
-description: "Use when writing a cold email or DM to someone with no prior relationship, building a follow-up sequence, deciding how fast/how much to send per inbox so it stays out of spam, or rescuing outreach that reads like a template. Covers first-touch copy under a word ceiling, 4-7 step bump sequences, email-vs-LinkedIn variants, per-inbox volume and new-domain warm-up ramps, and the CAN-SPAM/GDPR opt-out footer. Triggers: 'write me a cold email', 'fix my follow-up sequence', 'my cold emails get opened but nobody replies', 'how many emails per inbox per day before I get blacklisted', 'write a LinkedIn connection note + DM', 'this email reads like a template', 'escríbeme una secuencia de cold email en frío', 'missatge en fred a LinkedIn'. NOT the SPF/DKIM/DMARC/tracking-domain setup (that is email-deliverability), NOT sourcing the prospect list (that is lead-gen), NOT what happens after a reply (that is sales-pipeline)."
+description: "Use when writing a cold email or LinkedIn DM to a stranger and its cadence: first-touch copy under a word ceiling, 4-7 step bump sequences, per-inbox volume and warm-up limits, the compliant opt-out footer. NOT SPF/DKIM/DMARC setup (that is email-deliverability), NOT sourcing the list (that is lead-gen), NOT life after a reply (that is sales-pipeline)."
 tags: [cold-email, outreach, sequences, deliverability, sales]
 recommends: [lead-gen, sales-pipeline, email-deliverability, proposals, marketing]
 origin: risco
@@ -10,20 +10,7 @@ origin: risco
 
 *You write the message a stranger actually replies to, and the sending rhythm that keeps the mailbox provider delivering it. You do not set up DNS, source the list, or run the CRM.*
 
-This skill owns two things and only two: the **copy** of an unsolicited 1:1 touch (cold email, LinkedIn note/DM) and the **cadence** around it (step count, spacing, per-inbox volume, warm-up ramp, the compliant footer). Everything upstream and downstream belongs to a sibling — see the route table below and honor it.
-
-## When to use / When NOT
-
-Use when:
-
-- Writing a cold email or its subject line to a recipient with no prior relationship.
-- Building or fixing a multi-step follow-up sequence (the "bump" cadence) — step count and spacing.
-- Writing a LinkedIn connection note or cold DM sequence.
-- Deciding daily/weekly send volume per inbox, or a new-domain warm-up ramp.
-- Writing the CAN-SPAM/GDPR-compliant footer and one-click opt-out line.
-- Rescuing a cold email that "reads like a template" or gets opens but no replies.
-
-Do NOT use when (route to the sibling that owns it):
+This skill owns two things and only two: the **copy** of an unsolicited 1:1 touch (cold email, LinkedIn note/DM) and the **cadence** around it (step count, spacing, per-inbox volume, warm-up ramp, the compliant footer). Everything upstream and downstream belongs to a sibling — route by naming the owner, do not improvise their job:
 
 | The ask | Owner | Why it is not here |
 |---|---|---|
@@ -33,8 +20,6 @@ Do NOT use when (route to the sibling that owns it):
 | Write the proposal / SOW / pricing after a prospect engages | `proposals` | A cold touch earns a conversation, not a contract. |
 | Inbound launch emails, nurture to an opted-in list, marketing-site copy | `marketing` (`../marketing/SKILL.md`) | Opted-in and broadcast copy is a different game from a 1:1 cold touch. |
 | Actually wire the send through Gmail/an ESP API or a scheduler | `email-connector` / `google-workspace` | This skill produces text + a plan; it does not push the send. |
-
-Only `marketing` exists in this catalog today, so it is the only sibling linked as a file. The rest are named by id — route by naming the owner, do not improvise their job.
 
 ## The reply-rate reality (calibrate before you write)
 
@@ -110,7 +95,9 @@ The Good version names a real signal (`{{signal}}`), states one concrete outcome
 
 The first-touch body is literally lines 2→3→4 in order; line 1 becomes the subject. If the INFER line is generic, the email is generic no matter how many merge fields you add. **Test the INFER line in isolation: would it be false for a competitor in the same situation? If it is true of everyone, it is a platitude — go back to the OBSERVE step and pick a sharper fact.**
 
-When the user hands you only a company name and no signal, do not invent one. Ask for (or, if you have web access, look up) one of these signal classes, ranked by reply lift: a **hiring/role-change** signal > a **funding/launch/news** signal > a **tech-stack or job-description detail** > a **public number from their own site/report** > a **shared context** (mutual, group, event). A generic industry trend ("AI is changing your space") is not a signal and never clears the INFER test. Worked OBSERVE→INFER→BRIDGE→PROVE chains across six industries live in `references/hook-derivation.md`.
+Two boundaries on the OBSERVE line, because both are unrecoverable once sent: keep it **professional, public and business-relevant** ("saw you're hiring 3 SREs" is relevant; "saw you were at the lake house last weekend" is surveillance), and **never invent it** — a fabricated "I loved your recent post on X" that does not exist destroys trust on contact.
+
+When the user hands you only a company name and no signal, do not invent one. Ask for (or, if you have web access, look up) one of these signal classes, ranked by reply lift: a **hiring/role-change** signal > a **funding/launch/news** signal > a **tech-stack or job-description detail** > a **public number from their own site/report** > a **shared context** (mutual, group, event). A generic industry trend ("AI is changing your space") is not a signal and never clears the INFER test. If no true signal exists at all, that is a `lead-gen` targeting gap, not a copy task. Worked OBSERVE→INFER→BRIDGE→PROVE chains across six industries live in `references/hook-derivation.md`.
 
 ## The sequence — decision table
 
@@ -144,7 +131,9 @@ Rules that make the table work:
 
 *(LinkedIn figures: Skylead / Kondo / Expandi 2025-2026 guides, accessed 2026-06-02.)*
 
-On LinkedIn the connection note must **not** pitch — earn the connection on a real signal, then make the ask in the first DM after they accept. Skeletons for both channels live in `references/templates.md`.
+On LinkedIn the connection note must **not** pitch — earn the connection on a real signal, then make the ask in the first DM after they accept.
+
+Reusable skeletons for both channels — first-touch + 4-step bump, with every variable slot (`{{signal}}`, `{{outcome}}`, `{{proof}}`) marked — live in `references/templates.md`. Start from a skeleton, then fill every slot with a *real* value before sending. An unfilled slot is a defect, not a placeholder to ship.
 
 ## Sending cadence & deliverability guardrails
 
@@ -179,12 +168,6 @@ If the user asks you to *configure* the `List-Unsubscribe` header, SPF, or DKIM,
 
 EU enforcement varies — UK ICO and France CNIL are permissive for B2B; Germany and Poland are stricter (Poland often requires prior consent). When the recipient is in the EU, write the footer for the strictest plausible jurisdiction. The full footer wording, the LIA checklist, and the CASL/Australia matrix → `references/compliance-footer.md`.
 
-## Personalization without creepiness
-
-- **One real signal, surfaced plainly.** "Saw you're hiring 3 SREs" is relevant; "Saw you were at the lake house last weekend" is surveillance. Stay on professional, public, business-relevant signals. Then run it through the four-line bridge above — a relevant signal with a generic INFER line still reads like a template.
-- **Do not fake personalization with spintax.** Rotating "{Hi|Hey|Hello}" or `{{first_name}}`-only mail-merge is not personalization — it is a template wearing a name tag, and recipients can smell it. If the only variable is the name, the email is generic; add a real `{{signal}}` or do not send.
-- **Never invent the signal.** A fabricated "I loved your recent post on X" that does not exist destroys trust on contact. If you cannot find a true signal, that is a `lead-gen` targeting gap, not a copy task.
-
 ## Anti-patterns
 
 | Anti-pattern | Why it fails | Do instead |
@@ -193,14 +176,10 @@ EU enforcement varies — UK ICO and France CNIL are permissive for B2B; Germany
 | Pitch in sentence one | No earned relevance; reads like a billboard | Lead with the observed signal, earn the ask |
 | Two CTAs ("call OR I'll send a guide") | Splits the decision; lowers reply rate | One binary yes/no ask per email |
 | "Just following up" / "circling back" with no new angle | Adds noise, not value; trains them to ignore you | Each step adds one new angle or it is deleted |
-| Name-only mail merge as "personalization" | Recipients see the template underneath | One true `{{signal}}` per first touch or do not send |
+| Name-only mail merge or spintax (`{Hi\|Hey}`) as "personalization" | Recipients see the template underneath | One true `{{signal}}` per first touch or do not send |
 | No opt-out / no postal address | CAN-SPAM/GDPR violation; complaint-rate spike | Always append the compliant footer |
 | Subject like "Quick question!!" or "FREE" | Clickbait + spam-trigger words land you in spam | ≤6 plain words that read like a coworker wrote them |
 | Padding to 7 steps for completeness | Replies past step 5 are thin; you just annoy | Stop at the breakup unless a real new trigger appears |
 | "I hope this email finds you well" opener | The classic AI/template tell; wastes the first line | Open on the signal — your first 6 words are the hook |
-
-## Templates
-
-Reusable skeletons — first-touch + 4-step bump for email and LinkedIn, with every variable slot (`{{signal}}`, `{{outcome}}`, `{{proof}}`) marked — live in `references/templates.md`. Start from a skeleton, then fill every slot with a *real* value before sending. An unfilled slot is a defect, not a placeholder to ship.
 
 To self-check a drafted email or sequence file, run `scripts/verify.sh path/to/draft.md` — it flags missing opt-out, multiple CTAs, over-ceiling word count, and spam/AI-tell phrases (read-only).

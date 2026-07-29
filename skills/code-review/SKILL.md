@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Use when you have a concrete diff, branch, or GitHub PR to judge on its own merits and there is no rsc-SDD spec/plan/constitution chain to key off — the standalone, spec-less giving pass behind the executable /code-review. Triggers: 'review this PR before I merge', 'revisa este diff', 'revísame el PR', 'què està malament en aquest canvi', 'tear apart the contractor's branch', 'is this PR safe to merge', 'is this dependency bump safe', '/code-review --comment 1432', 'high-signal review of this change'. Scales coverage by effort (low/medium = fewer high-confidence findings; high/max = broader, may surface uncertain ones labelled [question]); read-only by default, posts comments only with --comment and edits only with --fix. NOT the SDD review gate keyed to 02-DOCS/wiki/sdd/ that also processes incoming comments and pushes back (that is review)."
+description: "Use to judge a concrete diff, branch, or GitHub PR on its own merits with no rsc-SDD spec/plan chain to key off — the spec-less giving pass behind /code-review: only findings you can defend, one verdict, read-only unless --comment or --fix. NOT the SDD gate keyed to 02-DOCS/wiki/sdd/ that also processes incoming review comments (that is `review`)."
 tags: [code-review, pr-review, quality, correctness]
 recommends: [review, secure-coding, verify]
 origin: risco
@@ -8,9 +8,7 @@ origin: risco
 
 # Code review — standalone, spec-less diff judgment
 
-You are reviewing a concrete change — a `git diff`, a branch, a GitHub PR, a pasted patch — on its own merits. No rsc-SDD spec/plan/constitution chain is required and you should not pretend one exists. This is the doctrine behind the executable `/code-review` slash command: same evidence bar, written as a discipline you run by hand.
-
-> **The one-line disambiguator:** `review` needs `02-DOCS/wiki/sdd/` (spec + plan + constitution) and owns the *receiving* loop. `code-review` needs only the diff. If the user is mid-SDD and wants to process incoming comments, route to `../review/SKILL.md`. If they hand you a naked diff or an inbound third-party PR, this skill.
+You are reviewing a concrete change — a `git diff`, a branch, a GitHub PR, a pasted patch — on its own merits. No rsc-SDD spec/plan/constitution chain is required and you should not pretend one exists. This is the doctrine behind the executable `/code-review` slash command: same evidence bar, written as a discipline you run by hand. If the user is mid-SDD and wants to process *incoming* comments against `02-DOCS/wiki/sdd/`, that is `../review/SKILL.md`; a naked diff or an inbound third-party PR is this skill.
 
 **The north star is signal-to-noise.** Report only findings you would stake your name on. A clean diff is `APPROVE`, not a manufactured nit. High-false-positive review gets tuned out by humans in about two weeks; the bar to aim for is the logic-error review where under 1% of findings come back marked wrong. Padding does not make you look thorough — it trains the reader to ignore you.
 
@@ -30,7 +28,7 @@ git diff --stat main...HEAD   # see blast radius before reading
 # A pasted patch — read it as given
 ```
 
-A review with no notion of intent is a review of vibes. If no purpose is stated, **infer it from the diff and say what you assumed** ("Assuming this is meant to add idempotency to the webhook handler…") so the reader can correct a wrong premise. Then read the *whole* changed file, not just the green/red lines — the structural failure of standalone review is judging a hunk without its context and shipping generic pattern-matched suggestions.
+A review with no notion of intent is a review of vibes. If no purpose is stated, **infer it from the diff and say what you assumed** ("Assuming this is meant to add idempotency to the webhook handler…") so the reader can correct a wrong premise — a silent wrong premise produces a confidently wrong review. Then read the *whole* changed file, not just the green/red lines: the structural failure of standalone review is judging a hunk without its context and shipping generic pattern-matched suggestions.
 
 ## The pass order
 
@@ -46,6 +44,8 @@ Run these in order. Passes 1–5 are correctness/safety and are blocking-eligibl
 | 6 | Reuse / simplification / efficiency | Could existing code do this? | Reimplemented helper, copy-paste divergence, N+1, needless allocation in a hot loop |
 
 Pass 4 is a **boundary** pass — trace untrusted input to its sink and flag the reachable ones. For a real STRIDE/OWASP threat model with exploitability ranking and vulnerable→fixed diffs, hand off to `../secure-coding/SKILL.md`.
+
+Adjacent jobs, delegated by name: running the lint/type/test gates until they are green is `../verify/SKILL.md` (this skill judges whether green is *correct*); root-causing one confirmed failure is `../debug/SKILL.md`; cross-checking spec/plan/tasks *before* code exists is `../analyze/SKILL.md`.
 
 ## Confidence floor and the false-positive skip-list
 
@@ -103,7 +103,7 @@ End every review with exactly one, plainly — no mushy middle:
 
 ## Effort dial
 
-Mirror the slash command's effort level: **low/medium** → fewer, high-confidence findings (raise the confidence floor, focus on passes 1–4). **high/max** → broader coverage; you may surface uncertain findings, but they must be labelled `[question]`, never inflated into blockers. This is *coverage vs precision* and is distinct from the harness L0..L3 accompaniment dial, which sets how much you narrate, not how rigorous you are.
+Mirror the slash command's effort level: **low/medium** → fewer, high-confidence findings (raise the confidence floor, focus on passes 1–4). **high/max** → broader coverage; uncertain findings are allowed but must be labelled `[question]`, never inflated into blockers. This is *coverage vs precision*, not the harness accompaniment dial — it changes what you look at, not how much you narrate.
 
 ## Emitting comments and applying fixes
 
@@ -120,24 +120,11 @@ gh pr review 1432 --approve -b "APPROVE — correctness and contracts clean."
 
 Inline line-anchored comments go through the GitHub REST API — see `references/pr-workflow.md` for the JSON shape, fork-PR handling, and large-diff strategy. If `--fix` puts you on the default branch, **branch first**; commit or push **only when the user asks**; git authorship is **Eric** (no Claude co-author or generated footer).
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization | Reality |
+| Failure mode | Reality |
 |---|---|
 | "It compiles and the tests pass, so it's correct." | Tests prove green, not correct. Pass 5 asks whether the tests actually exercise the new branch — green for the wrong reason is a finding. |
-| "I'll list everything I'd have done differently." | That is noise. Report defects and reuse wins you can defend; preference is not a finding. |
-| "This looks like a bug." | Looks-like is not a finding. Trace the value to a reachable sink, or file it `[question]`. |
-| "More findings = more thorough." | False positives get you tuned out in two weeks. Signal-to-noise is the metric; one real blocker beats ten nits. |
-| "No PR description, so I'll guess the intent silently." | State the intent you assumed. A wrong silent premise produces a confidently wrong review. |
+| Listing everything you would have done differently. | That is noise. Report defects and reuse wins you can defend; preference is not a finding. |
 | "It's just a dependency bump, skim it." | Bumps carry supply-chain and transitive risk and behaviour changes. Check the changelog/lockfile diff, not just the version string. |
-| "Apply every nit to be safe." | Each unrequested edit is scope creep and a regression surface. With `--fix`, apply the agreed findings only. |
-
-## See Also
-
-- `../review/SKILL.md` — the rsc-SDD penultimate gate keyed to `02-DOCS/wiki/sdd/`, and the *receiving* loop (process comments, push back with proof).
-- `../secure-coding/SKILL.md` — deep STRIDE/OWASP threat model with vulnerable→fixed diffs; the depth pass 4 defers to.
-- `../verify/SKILL.md` — run lint/type/test/`verify.sh` and prove green (code-review judges whether green is correct).
-- `../debug/SKILL.md` — root-cause one confirmed failure (code-review surveys for latent ones).
-- `../analyze/SKILL.md` — consistency across spec/plan/tasks *before* code exists.
-- `../ship/SKILL.md` — PR/merge/close after approval; consumes this skill's verdict.
-- Stack idiom for the change under review: `../nextjs/SKILL.md`, `../fastapi/SKILL.md`, `../go/SKILL.md`, `../typescript/SKILL.md`, `../python/SKILL.md`.
+| Applying every nit "to be safe" under `--fix`. | Each unrequested edit is scope creep and a regression surface. Apply the agreed findings only. |

@@ -1,6 +1,6 @@
 ---
 name: client-onboarding
-description: "Use when a deal just closed or a user just signed up and you need a real activation plan — not an ad-hoc welcome email: defining what 'activated'/first-value means for the product, taking the sales→delivery handoff so nothing promised is lost, running a kickoff (agenda + welcome packet + RACI), or laying a 30/60/90 (high-touch) or day-0→day-14 nudge sequence (self-serve) with owners, dates, and a measurable exit. Triggers: 'build an onboarding plan for a new client', 'define our activation event', 'the deal is signed, what now before they go cold', 'run the kickoff call', 'sales-to-CS handoff', 'plan de onboarding para un cliente nuevo', 'munta'm el kickoff i el pla de 30/60/90', 'day-0 to day-14 nudge sequence to the aha moment'. NOT inbound ticket triage (that is customer-support), NOT the ongoing renewal/churn/health program (that is retention), NOT the pre-close proposal/SOW (that is proposals)."
+description: "Use when a deal closed or a user signed up and the first 30 days need an activation plan: sales→delivery handoff, one verifiable activation event, kickoff, and a 30/60/90 or day-0→14 plan with owners, dates and a measurable exit. NOT reactive ticket triage (that is `customer-support`), NOT renewals/churn past the onboarded gate (that is `retention`)."
 tags:
   - onboarding
   - activation
@@ -32,16 +32,17 @@ lost, (2) define **one verifiable activation event** and the shortest path to
 it, (3) run the kickoff (welcome packet, agenda, RACI), and (4) lay a phased
 plan with named owners, dates, and a measurable exit.
 
-What you do **not** own — hand off explicitly:
-
-- Inbound ticket from an existing customer → [`customer-support`](../customer-support/SKILL.md). You are proactive first-30-days, not reactive triage.
-- Renewals, churn programs, health scoring of the installed base → [`retention`](../retention/SKILL.md). You **end** at the onboarded gate; the lifecycle after it is theirs.
-- The proposal/SOW that precedes the signature → [`proposals`](../proposals/SKILL.md). You start *after* the win.
-- Moving the deal through pre-close stages / forecasting → [`sales-pipeline`](../sales-pipeline/SKILL.md). The handoff is the seam between you.
-- Sending kickoff invites → [`calendar-scheduling`](../calendar-scheduling/SKILL.md); e-signing the order form → [`e-signature`](../e-signature/SKILL.md); writing the help-center setup docs → [`technical-writing`](../technical-writing/SKILL.md).
-
-Building the product's in-app tour widget is a product job. You define the
-*plan and content*, not the tour UI.
+Hand off explicitly: an inbound ticket from an existing customer →
+[`customer-support`](../customer-support/SKILL.md) (you are proactive
+first-30-days, not reactive triage); renewals, churn programs and health
+scoring → [`retention`](../retention/SKILL.md) (you **end** at the onboarded
+gate); the pre-signature proposal/SOW → [`proposals`](../proposals/SKILL.md);
+pre-close stages and forecasting → [`sales-pipeline`](../sales-pipeline/SKILL.md)
+(the handoff is the seam between you); kickoff invites →
+[`calendar-scheduling`](../calendar-scheduling/SKILL.md); e-signing the order
+form → [`e-signature`](../e-signature/SKILL.md); help-center setup docs →
+[`technical-writing`](../technical-writing/SKILL.md). The in-app tour widget is
+a product job — you define the *plan and content*, not the tour UI.
 
 ## Step 1 — Pick the motion first
 
@@ -159,7 +160,11 @@ opinion in the first 30 days, and ~75% of new users abandon within the first
 week if they never hit value. Each phase row carries an **owner + date + exit
 milestone**.
 
-High-touch 30/60/90 (skeleton — full filled table in references):
+High-touch 30/60/90 skeleton below. Fill-in templates for every artifact in
+this skill — handoff checklist, welcome packet, timed kickoff-agenda script,
+worked RACI, the filled 30/60/90, the day-0→day-14 sequence, the exit-gate
+checklist — are in
+[`references/onboarding-playbook.md`](references/onboarding-playbook.md).
 
 | Phase | Focus | Owner | Exit milestone |
 | --- | --- | --- | --- |
@@ -245,10 +250,3 @@ onboarding gets them to first value, retention keeps them past it.
 | Front-load nothing, hope for day-60 | ~75% abandon in week 1 without value | Front-load days 1–30 (Step 5) |
 | Same motion for every customer | A call insults self-serve; a nudge insults enterprise | Pick the motion first (Step 1) |
 | Treating activation as adoption | Conflates a one-time event with a long-term state | Define activation; leave adoption to `retention` |
-
-## References
-
-Full fill-in templates — sales→CS handoff checklist, welcome-packet template,
-the timed kickoff-call agenda script, a worked RACI matrix, a filled 30/60/90
-table, the day-0→day-14 nudge sequence, and the exit-gate checklist — are in
-[`references/onboarding-playbook.md`](references/onboarding-playbook.md).

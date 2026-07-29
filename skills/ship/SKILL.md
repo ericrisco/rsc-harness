@@ -1,6 +1,6 @@
 ---
 name: ship
-description: "Use when the work is complete and verified and it is time to CLOSE the development branch — the final phase of the rsc SDD chain, after review approves the diff. Triggers: 'ship it', 'close the branch', 'open the PR', 'merge this', 'merge into main', 'create the pull request', 'how do I land this work', 'finish this feature', 'haz el merge', 'abre el PR', 'cierra la rama', 'súbelo a main', 'clean up the branch', 'I'm done, what now'. HARD RULE it enforces: git authorship is ALWAYS Eric — never a Co-Authored-By or 'generated with' footer in any commit or PR. NOT running lint/type/test (that is `verify`), NOT reading the diff adversarially (that is `review`), NOT deploy/release mechanics to a server (that is `deployment`). Honors the harness accompaniment dial."
+description: "Use when a verified, review-approved branch has to land — the close of the rsc SDD chain: safety checks, then three landing options (merge, PR, park/discard), authorship always Eric and never an AI trailer. NOT running the gates (that is `verify`), NOT reading the diff for defects (that is `review`), NOT shipping to a server (that is `deployment`)."
 tags: [sdd, ship, release, pr]
 recommends: []
 profiles: [core, full]
@@ -11,22 +11,21 @@ origin: risco
 
 Ship is the **last gate** of the rsc SDD chain: `constitution → specify → clarify → plan → tasks → analyze → implement → verify → review → **ship**`. Everything upstream proved the work is *correct* and *green*; ship is the act of **landing it** — turning an approved branch into merged history, a pull request, or a clean parked branch — without breaking the trunk and without ever forging the author.
 
-This skill owns one decision and its safe execution: **how does this work integrate?** It does not write code, run test gates, or read the diff for defects — those phases already happened. It takes a diff that *earned* its verdict and gets it home.
+This skill owns one decision and its safe execution: **how does this work integrate?** It does not write code, run test gates, or read the diff for defects — those phases already happened. It is the **close, not the open**: creating the isolated branch or worktree is `../worktrees/SKILL.md`, taking the gates green is `../verify/SKILL.md`, reading the diff adversarially is `../review/SKILL.md`, and putting merged code onto a server is `../deployment/SKILL.md`.
 
 ## The hard rule: git authorship is Eric, never Claude
 
 > **Every commit and every PR ships under Eric's name. No `Co-Authored-By: Claude`. No `Co-Authored-By` for any AI. No "🤖 Generated with Claude Code" footer. No "made by an agent" line in the PR body. Nothing that attributes the work to a tool.**
 
-This is non-negotiable and it is the reason this skill exists as its own phase. The work is Eric's; the agent is a tool he used, like an editor or a compiler. You do not credit the compiler in the commit message.
+This is absolute — not a preference to weigh against convenience — because a commit is a permanent, published claim about who wrote something. The work is Eric's; the agent is a tool he used, like an editor or a compiler, and you do not credit the compiler in the commit message. Once a forged trailer is pushed it is in everyone's history and only a rewrite removes it.
 
 Concretely, before any commit or PR:
 
-- **Never** append a trailer, footer, or body line crediting Claude, an AI, an agent, or "Claude Code".
 - **Never** pass `--author` to set a non-Eric author. The repo's configured `user.name` / `user.email` (Eric's) is the author and committer.
 - If `git config user.email` is unset or clearly not Eric's, **stop and ask** which identity to commit under — do not guess, and do not substitute an agent identity.
 - If you find a Claude/AI trailer in a commit you are about to push (e.g. left over from an upstream tool), **strip it** before the branch lands.
 
-Verify it after writing the commit:
+Verify it after writing the commit. A non-empty match is a blocker: amend and re-check before the branch goes anywhere.
 
 ```bash
 git log -1 --format='%an <%ae>%n%n%b' | grep -iE 'co-authored-by.*(claude|anthropic|ai)|generated with|claude code' \
@@ -34,30 +33,11 @@ git log -1 --format='%an <%ae>%n%n%b' | grep -iE 'co-authored-by.*(claude|anthro
   || echo "authorship clean"
 ```
 
-A non-empty match is a blocker. Amend the commit and re-check before the branch goes anywhere.
-
 ## Read these first
 
-1. `02-DOCS/wiki/harness/user-profile.md` — the **accompaniment dial** (L0..L3). It sets how much you narrate and how you frame the three options, never whether you run the safety checklist. See "Accompaniment dial" below.
-2. The **review verdict** for this branch — ship runs only on `APPROVE` or `APPROVE WITH NITS`. If the last verdict was `CHANGES REQUESTED`, the loop goes back to `implement`, not forward to ship.
+1. `02-DOCS/wiki/harness/user-profile.md` — the accompaniment dial (L0..L3). It sets narration only, never whether you run the safety checklist.
+2. The **review verdict** for this branch — ship runs only on `APPROVE` or `APPROVE WITH NITS`. `CHANGES REQUESTED` loops back to `implement`, not forward to ship. If there is no verdict on record, say so and treat it as a red flag: do not ship a diff that skipped `../review/SKILL.md` — offer to run it first.
 3. `02-DOCS/wiki/sdd/decisions.md` and the spec/plan slug — so the commit message and PR body describe *what shipped against which spec*, not a vague "various changes".
-
-If there is no review verdict on record, say so and treat it as a red flag — do not ship a diff that skipped the `review` phase. Offer to run review first.
-
-## When to use / When NOT to use
-
-Use when:
-
-- A branch has passed `verify` (green gates) and `review` (approved), and the work needs to land.
-- The user says "ship it", "merge this", "open the PR", "close the branch", "I'm done" — and the code is actually ready.
-- A finished branch needs to be parked or discarded cleanly (abandoned spike, superseded approach).
-
-Do NOT use when (route elsewhere):
-
-- Lint / type-check / tests / audit still need to run and go green → that is the **verify** phase (`../verify/SKILL.md`). Ship assumes green.
-- The diff hasn't been read for defects, or a review comment needs processing → that is **review** (`../review/SKILL.md`).
-- The merge is clean but now it must reach a *server* — provisioning, release pipeline, environment promotion, rollback → that is **deployment** (`../deployment/SKILL.md`). Ship lands the code in the repo; deployment puts it in production.
-- You need to *create* the isolated branch/worktree to start work → that is **worktrees** (`../worktrees/SKILL.md`). Ship is the close, not the open.
 
 ## The pre-ship safety checklist
 
@@ -65,9 +45,9 @@ Run this before presenting the landing options. Any unchecked item is a stop —
 
 - [ ] **Review verdict is APPROVE / APPROVE WITH NITS** (not CHANGES REQUESTED, not absent).
 - [ ] **Working tree is clean** — `git status --short` is empty. No stray edits sneaking into the merge.
-- [ ] **On a feature branch, not the trunk** — `git rev-parse --abbrev-ref HEAD` is not `main`/`master`. If work landed directly on the trunk, that is its own problem; flag it.
+- [ ] **On a feature branch, not the trunk** — `git rev-parse --abbrev-ref HEAD` is not `main`/`master`. If work landed directly on the trunk, that is its own problem; flag it, don't paper over it.
 - [ ] **Rebased / up to date with the base** — branch is on top of latest `main`; conflicts resolved locally, not punted to the merge.
-- [ ] **No secrets in the diff** — scan the staged/branch diff for keys, tokens, `.env` values (`git diff main... | grep -iE 'api[_-]?key|secret|password|token|BEGIN .*PRIVATE KEY'`). A hit is a blocker.
+- [ ] **No secrets in the diff** — scan the staged/branch diff for keys, tokens, `.env` values (`git diff main... | grep -iE 'api[_-]?key|secret|password|token|BEGIN .*PRIVATE KEY'`). A hit is a blocker; remove it, and rotate it if it was ever pushed.
 - [ ] **Authorship is Eric** — `git config user.email` is Eric's; no AI trailer in any commit on the branch (run the grep above across `main..HEAD`).
 - [ ] **Commit history is intelligible** — squashed or organized so the history reads as deliberate, not "wip wip fix fix".
 
@@ -87,9 +67,10 @@ When rsc is installed for Claude Code, a `PreToolUse` hook (`.rsc/ship-guard.mjs
 phase at the one deterministic moment it matters: it **denies** any Bash command that switches to
 `main`/`master` or merges while the current feature branch has **uncommitted changes** or **commits
 that were never pushed**. The denial reason names the branch and routes you here. The guard is
-local-only (no network), **fail-open** (any ambiguity allows the command), and can be disabled per
-project with `.rsc/.no-ship-guard`. It guarantees the commit → push step; opening the PR is still
-this skill's job (and its hard rule). If the guard blocks you, do not work around it — run ship.
+local-only (no network), **fail-open** (any ambiguity — detached HEAD, no repo, git error — allows
+the command), and can be disabled per project with `.rsc/.no-ship-guard`. It guarantees the
+commit → push step; opening the PR is still this skill's job (and its hard rule). If the guard
+blocks you, do not work around it — run ship.
 
 ## The three landing options — always present exactly three
 
@@ -115,6 +96,8 @@ Read `02-DOCS/wiki/sdd/config.yaml` and the `Review Workload Forecast` in the pl
 Stacked PR / feature-track support still fits inside the three landing options: it is a shape of **option 2**, not a fourth option. Use a feature-track branch when several stacked PRs should integrate together before trunk.
 
 ## Executing each option
+
+**Nothing below runs before the user picks an option.** Merging, pushing, opening a PR and deleting a branch are outward or irreversible — they change shared history or publish to a forge, and no later phase undoes them. A recommendation is not a yes; wait for one.
 
 ### Option 1 — direct merge
 
@@ -176,7 +159,7 @@ Never stack to hide review risk. Stack because each slice is independently revie
 ### Option 3 — park or discard
 
 - **Park:** leave the branch, push it so it's not lost (`git push -u origin feature/<slug>`), and log *why it's parked* to `02-DOCS/wiki/sdd/decisions.md`. Do not merge.
-- **Discard:** deletion is **destructive** — require an explicit confirmation that quotes the branch name (e.g. the literal `yes, delete feature/<slug>`) before `git branch -D`. Anything ambiguous means keep it. Log the discard and the reason so the dead-end is remembered, not re-attempted.
+- **Discard:** deletion is **destructive and unrecoverable** once the branch is gone from both sides, so it takes an explicit confirmation that quotes the branch name (the literal `yes, delete feature/<slug>`) before `git branch -D`. Anything ambiguous means keep it. Log the discard and the reason so the dead-end is remembered, not re-attempted.
 
 **If the work lived in a worktree, clean it up provenance-aware.** After the merge/park/discard, only
 remove a worktree **rsc created** (under `.worktrees/`/`worktrees/` or the `../<repo>-<slug>` dir),
@@ -196,25 +179,24 @@ The commit is the durable record. Make it describe the change and tie it to the 
 
 ## Model tier — `light` (opt-in routing)
 
-This phase's default model tier is **`light`** — closing the branch (PR / merge / cleanup) is mechanical. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch per the accompaniment dial when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change. The Eric-only authorship rule is independent of the model and never relaxes.
+Closing the branch (PR / merge / cleanup) is mechanical, so this phase's default tier is **`light`**. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`; when it is on, follow `../sdd/references/model-routing.md` for resolving and announcing the switch rather than from memory. Routing off or no profile → honor the session model silently, and skip routing on a one-line change. The Eric-only authorship rule is independent of the model and never relaxes.
 
 ## Accompaniment dial (L0..L3)
 
-Read the level from `02-DOCS/wiki/harness/user-profile.md`. It changes the narration, **never** the safety checklist or the authorship rule.
+Read the level from `02-DOCS/wiki/harness/user-profile.md`. It changes what you show, **never** the safety checklist or the authorship rule. No profile → default to L2 and proceed; don't stall the ship to ask for a dial setting.
 
-- **L0** — run the checklist silently, state the recommended option in one line, execute on a yes. `Clean, rebased, authorship Eric. Recommend PR (main is protected). Open it?`
-- **L1** — the three options as one-liners with the recommendation and its *why*.
-- **L2** — the full options table, the checklist results, and why the recommended option fits this repo's workflow.
-- **L3** — the above plus teaching: what a fast-forward vs `--no-ff` merge does to history, why a protected `main` wants a PR, what squashing trades away — framed for a non-technical owner ("a PR is asking permission before changing the shared copy"). Still never skips a checklist item.
-
-When no profile exists, default to L2 and proceed — don't stall the ship to ask for a dial setting.
+| Level | What ship shows |
+| --- | --- |
+| **L0** | Checklist run silently, recommended option in one line, execute on a yes: `Clean, rebased, authorship Eric. Recommend PR (main is protected). Open it?` |
+| **L1** | The three options as one-liners, with the recommendation and its *why*. |
+| **L2** | The full options table, the checklist results, and why the recommended option fits this repo's workflow. |
+| **L3** | L2 plus teaching, framed for a non-technical owner: what fast-forward vs `--no-ff` does to history, why a protected `main` wants a PR ("asking permission before changing the shared copy"), what squashing trades away. |
 
 ## Anti-patterns → STOP
 
 | Rationalization | Reality |
 | --- | --- |
-| "I'll add `Co-Authored-By: Claude` to be transparent" | No. The work is Eric's. No AI trailer, ever — this is the whole point of the phase. |
-| "A 'Generated with Claude Code' footer is just polite" | It forges the record. Strip it. The commit credits Eric and only Eric. |
+| "I'll add `Co-Authored-By: Claude` / a 'Generated with Claude Code' footer to be transparent" | It forges the record. The work is Eric's — no AI trailer, ever. Strip it. |
 | "Review didn't formally approve but it's obviously fine" | No verdict = not ready. Ship runs on APPROVE only. Route back to review. |
 | "The tree has a couple of stray edits, they're harmless" | A dirty tree means the merge is not the reviewed diff. Clean it or stash it first. |
 | "`main` is protected but I'll just force-merge, I'm sure" | Protected means PR. Don't bypass the gate the repo deliberately set. |
@@ -222,14 +204,6 @@ When no profile exists, default to L2 and proceed — don't stall the ship to as
 | "This branch is dead, I'll just delete it" | Discard is destructive — confirm with the quoted branch name and log why first. |
 | "Squash everything, history doesn't matter" | Squash noise, preserve meaning. The history is the next reader's spec. |
 | "There's a key in the diff but it's a test key" | A secret in the diff is a blocker regardless. Pull it out before landing. |
-
-## Red flags — abort and re-plan
-
-- Any commit on the branch carries an AI `Co-Authored-By` or "generated with" line → strip it; do not push until clean.
-- `git config user.email` is unset or not Eric's → stop and ask which identity to commit under.
-- No review verdict, or the last verdict was `CHANGES REQUESTED` → not shippable; route to review/implement.
-- The branch is `main`/`master` itself → work landed on the trunk directly; flag it, don't paper over it.
-- A secret matches in the branch diff → blocker; remove it (and rotate it if it was ever pushed).
 
 ## Where this writes
 
@@ -269,12 +243,8 @@ End with:
 
 ## Next in the chain
 
-Ship is the end of the SDD loop for a feature. Two onward paths:
-
-- The code is merged but must reach a **server / release** — provisioning, pipeline, environment promotion, rollback → hand off to **deployment** (`../deployment/SKILL.md`). Ship lands it in the repo; deployment puts it in front of users.
-- The next feature starts the loop again at **specify** (`../specify/SKILL.md`) — or at **constitution** if the project's principles changed. The `sdd` dispatcher (`../sdd/SKILL.md`) routes whichever comes next.
+Ship is the end of the SDD loop for a feature. Two onward paths: the merged code still has to reach a **server / release** → hand off to **deployment** (`../deployment/SKILL.md`); or the next feature restarts the loop at **specify** (`../specify/SKILL.md`), or at **constitution** if the project's principles changed. The `sdd` dispatcher (`../sdd/SKILL.md`) routes whichever comes next.
 
 ## Orientación (siempre)
 
 Cierra cada turno con el **bloque-brújula** (📍 dónde estás · ✅ qué hiciste · 🧭 por qué · ➡️ siguiente, terminando en pregunta), calibrado al dial de `02-DOCS/wiki/harness/user-profile.md`. **Nunca termines en seco.** Protocolo completo: skill `orient` → `skills/orient/references/orientation-contract.md`. (Defiere a `suggest` el "¿instalo la skill que falta?".)
-

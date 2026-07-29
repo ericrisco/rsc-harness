@@ -1,6 +1,6 @@
 ---
 name: bookkeeping
-description: "Use when a small business needs clean, audit-ready books — standing up a chart of accounts, recording a transaction and unsure which account or which side (debit vs credit), a bank feed full of uncategorized lines, a month-end ledger that won't reconcile to the bank, or choosing cash vs accrual. Triggers: 'set up a chart of accounts', 'where does this transaction post', 'which side is a debit when I pay rent', 'my books don't tie out to the bank', '300 transactions sitting uncategorized', 'cash or accrual accounting', 'how long do I keep receipts', 'categoriza los movimientos del banco', 'mi contabilidad está hecha un desastre', 'cuadra el libro con el extracto', 'comptabilitat feta un desastre'. The loop is record → classify → reconcile so the numbers are trustworthy. NOT analyzing runway/burn/P&L or the monthly finance cadence (that is finance-ops), NOT issuing a customer invoice (that is invoicing), NOT setting a price (that is pricing), NOT future projections (that is financial-model)."
+description: "Use when a small business needs audit-ready books — a chart of accounts, posting a transaction to the right account and side, clearing an uncategorized bank feed, cash vs accrual, or a ledger that won't tie to the bank. NOT interpreting the numbers — runway, burn, P&L cadence (that is `finance-ops`), NOT issuing invoices (that is `invoicing`)."
 tags: [bookkeeping, double-entry, chart-of-accounts, reconciliation, ledger, accounting, categorization]
 recommends: [finance-ops, invoicing, pricing, financial-model, cost-tracking, stripe, spreadsheet-ops]
 origin: risco
@@ -14,7 +14,7 @@ The whole job is one loop: **Record → Classify → Reconcile.** Record the raw
 
 ## Route out before you start
 
-This skill answers "where does this transaction go and does the ledger balance." When the ask is something else, stop and route:
+"Where does this post and does it balance" is bookkeeping; "what do these numbers mean for the business" is not. Route out when the ask is:
 
 - Interpreting the numbers — runway, burn, P&L review, monthly finance cadence → `../finance-ops/SKILL.md`.
 - Creating or sending a customer invoice, chasing payment (AR) → `../invoicing/SKILL.md`.
@@ -23,8 +23,6 @@ This skill answers "where does this transaction go and does the ledger balance."
 - Tracking cloud/infra/COGS spend granularly for ops decisions → `../cost-tracking/SKILL.md`.
 - Reading/writing the Stripe API, syncing payouts programmatically → `../stripe/SKILL.md`.
 - Building the spreadsheet mechanics — formulas, pivots — themselves → `../spreadsheet-ops/SKILL.md`.
-
-Rule of thumb: "where does this post and does it balance" is bookkeeping; "what do these numbers mean for the business" is finance-ops.
 
 ## Rule 1 — every entry balances: debits = credits
 
@@ -176,9 +174,3 @@ Spain (autónomo, estimación directa simplificada): the obligation is **libros 
 | Mixing personal and business in one account | Untraceable books, tax and liability exposure | Separate business account; owner draws/capital for transfers |
 | Trusting bank-feed auto-match blindly | Miscategorizes transfers, refunds, draws | Review every match against type/date/amount |
 | Over-splitting the COA into 200 accounts | Every classification becomes a coin flip | Start at ~20–30; merge when you hesitate |
-
-## References
-
-- `references/chart-of-accounts.md` — full numbered example COA across the five categories, contra accounts (accumulated depreciation, allowance for doubtful accounts), add-vs-merge rules, the over-splitting failure mode.
-- `references/reconciliation-playbook.md` — step-by-step month-end reconciliation, the full won't-tie-out diagnostic ladder, and the jurisdiction detail (IRS retention table + Spain libros registro de IVA fields).
-- `references/tricky-transactions.md` — the classification cases that bare judgment gets wrong: transfers, refunds, partial/overpayments, loan & finance splits, payroll decomposition, prepaids & deferrals, accruals, sales tax/VAT collected, merchant-fee netting (Stripe/PayPal gross-vs-net), bad debt, foreign currency, personal/mixed-use — each with the right journal entry and the wrong one it replaces.

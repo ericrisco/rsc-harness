@@ -1,6 +1,6 @@
 ---
 name: typescript
-description: "Use when writing, reviewing, or fixing TypeScript type code (.ts/.tsx/.d.ts), modeling data with generics/unions/branded types, or configuring tsconfig and the build toolchain - the language and type system itself, not any runtime or framework. Triggers: \"make this generic preserve the literal type\", \"why won't this narrow / why won't TypeScript narrow this union\", \"type X is not assignable to type Y, fix the type not cast it\", \"set up a strict tsconfig with project references\", \"convert these magic strings into a discriminated union with exhaustiveness\", \"bundler vs nodenext moduleResolution\", \"configura el tsconfig en modo estricto y elimina los any\", \"por qué no estrecha el tipo\". NOT the Node runtime, fs/streams/http server (that is nodejs); NOT React/Next component wiring (that is react/nextjs); NOT ORM schema type-gen (that is drizzle-orm)."
+description: "Use when writing or fixing TypeScript type code (.ts/.tsx/.d.ts), modeling data with generics/unions/branded types, diagnosing narrowing failures, or configuring tsconfig and the build toolchain. NOT runtime code, fs/streams/http (that is `nodejs`); NOT component/route typing (that is `react`/`nextjs`); NOT ORM type-gen (that is `drizzle-orm`)."
 tags: [typescript, types, generics, tsconfig, type-safety]
 recommends: [nodejs, secure-coding, drizzle-orm]
 origin: risco
@@ -18,42 +18,18 @@ compiler** (`tsgo`, the Go port) is in preview as `@typescript/native-preview` a
 type-checks roughly 10x faster (VS Code's 1.5M LOC: 89s -> 8.74s) — adopt it for fast
 local checks; stable 7.0 lands early 2026.
 
-This is a *language* skill: the type system plus the compiler config. It is the canonical
-authority for "how do I express this in TS and make `tsc` honor it", independent of any
-runtime or framework.
-
-## When to use / When NOT to use
-
-**Use when:**
-
-- Authoring or fixing type code: generics, constraints, overloads, conditional/mapped/
-  template-literal types, utility types, narrowing, `.d.ts` declarations.
-- Modeling data: discriminated unions, `satisfies`, branded/nominal types, exhaustiveness.
-- Setting up or hardening `tsconfig.json`: strict flags, `moduleResolution`, project
-  references, path aliases, declaration emit, `isolatedModules`/`verbatimModuleSyntax`.
-- Diagnosing type errors: "why won't this narrow", "X is not assignable to Y", inference
-  failures, `any`/`unknown` leakage, variance surprises.
-- Choosing the build toolchain: `tsc` vs `tsgo` (TS7), `tsx`, bundler vs nodenext resolution.
-
-**When NOT to use (delegate):**
-
-- Node runtime/server code — event loop, `fs`, streams, `http` server, `process`, env -> `nodejs`.
-- React/Next/Nest component or framework typing *in framework context* -> `react` / `nextjs` /
-  `nestjs` (the type-level mechanics still come from here; the framework wiring does not).
-- ORM schema-to-type generation (Drizzle/Prisma) -> `drizzle-orm` / `prisma-orm`.
-- REST/contract shape design (status codes, resource naming) -> `api-design`.
-- Test runner / coverage / E2E setup -> `testing-web` / `e2e-testing`.
-- Language-agnostic injection/authz/threat review -> `secure-coding`.
-- Python typing -> `python`; Go -> `go`.
-
 ## Boundary: language vs runtime vs framework
 
-Three layers, three owners. **Language + compiler config lives here** (`tsconfig`, generics,
-narrowing). **Runtime behavior** (how a stream backpressures, how the event loop schedules)
-is `nodejs`. **Framework idioms** (component props, route maps, server-component typing) are
+Three layers, three owners. **Language + compiler config lives here** — generics, narrowing,
+`.d.ts`, `tsconfig`, and the build toolchain (`tsc` vs `tsgo`, `tsx`, resolution mode).
+**Runtime behavior** (how a stream backpressures, how the event loop schedules) is `nodejs`.
+**Framework idioms** (component props, route maps, server-component typing) are
 `react`/`nextjs`/`nestjs` — those *borrow* this skill's type mechanics but own their wiring.
 A `tsconfig` question is here; a "stream backpressure" question is `nodejs`; a "type my
-`useReducer` state" question is `react`.
+`useReducer` state" question is `react`. Also delegate: ORM schema-to-type generation ->
+`drizzle-orm` / `prisma-orm`; REST/contract shape design -> `api-design`; test runner and E2E
+setup -> `testing-web` / `e2e-testing`; injection/authz review -> `secure-coding`; Python
+typing -> `python`; Go -> `go`.
 
 ## Decision rules
 
@@ -62,28 +38,13 @@ Apply these on every TypeScript edit:
 1. **Prefer inference; annotate boundaries.** Let TS infer locals and returns; annotate
    function parameters, public APIs, and `.d.ts`. Why: redundant annotations drift from
    reality and suppress the better inferred type.
-2. **`unknown`, never `any`.** `any` disables checking and leaks; `unknown` forces a narrow
-   before use. Why: `any` silently poisons every downstream type it touches.
-3. **`import type` for type-only imports**, with `verbatimModuleSyntax: true`. Why: it
+2. **`import type` for type-only imports**, with `verbatimModuleSyntax: true`. Why: it
    prevents emitting type-only imports as runtime `require`s and lets esbuild/swc transpile
    each file alone.
-4. **Model state as discriminated unions, not optional-field bags.** A literal discriminant
-   makes illegal states unrepresentable. Why: `{ data?: T; error?: E; loading?: bool }`
-   permits `loading && error` — a union does not.
-5. **`satisfies` for config objects, not a type annotation.** Why: annotation widens the
-   value to the type (you lose literal keys); `satisfies` validates *without* widening, and
-   catches discriminant typos at the construction site.
-6. **Narrow, don't cast.** Reach for type guards, `in`, `typeof`, discriminant checks before
-   `as`. Why: `as` asserts a claim the compiler cannot verify — it is a silenced error.
-7. **`as` is a last resort, and only `as <narrower>` or `as unknown as T` at true I/O
-   boundaries.** Why: `as` to a *wider* or unrelated type is almost always a real bug hidden.
-8. **One `tsconfig` base, extended per package.** A shared `tsconfig.base.json` holds strict
-   flags; each package `extends` it and sets only `outDir`/`rootDir`/references. Why: a single
-   giant config can't express per-package module targets and breaks project references.
-9. **Turn on `noUncheckedIndexedAccess`.** Why: `arr[i]` and `record[key]` are `T | undefined`
-   in reality — without this flag TS lies and you get runtime `undefined`.
-10. **Make unions exhaustive with a `never` guard.** A `default: const _: never = x` in
-    every switch over a union turns "added a case, forgot a branch" into a compile error.
+3. **Narrow, don't cast.** Reach for type guards, `in`, `typeof`, discriminant checks before
+   `as`; when `as` is unavoidable, only `as <narrower>` or `as unknown as T` at a true I/O
+   boundary. Why: `as` asserts a claim the compiler cannot verify — it is a silenced error,
+   and `as` to a *wider* or unrelated type is almost always a real bug hidden.
 
 ## The type-system toolbox
 
@@ -104,6 +65,9 @@ const r = pick({ a: 1, b: "x" } as const, "b"); // r: "x", not string
 ```
 
 ### `unknown` over `any` at every boundary
+
+`any` disables checking and silently poisons every downstream type it touches; `unknown`
+forces a narrow before use.
 
 ```ts
 // Bad: any flows everywhere, no error ever fires downstream.
@@ -133,8 +97,11 @@ routes.home.method; // "GET" (narrow), and "GE" would error right here
 
 ### Discriminated unions + exhaustive `never`
 
-The discriminant must be a **literal** type (not `string`), and you must check it **before**
-destructuring — destructuring first throws away the narrowing.
+Model state as a discriminated union, not an optional-field bag:
+`{ data?: T; error?: E; loading?: boolean }` permits `loading && error`; a literal discriminant
+makes illegal states unrepresentable. That discriminant must be a **literal** type (not
+`string`), and you must check it **before** destructuring — destructuring first throws away
+the narrowing.
 
 ```ts
 type State =

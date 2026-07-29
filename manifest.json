@@ -1,12 +1,12 @@
 {
   "version": "0.1.43",
   "counts": {
-    "skills": 257
+    "skills": 258
   },
   "skills": [
     {
       "id": "ab-testing",
-      "description": "Use when designing or analyzing a controlled experiment — writing a falsifiable hypothesis, sizing a test from a minimum detectable effect, reading significance/confidence intervals/power, or rescuing a test that 'won't go significant'. Triggers: 'how many users do I need to detect a 2% lift', 'is this result significant', 'control 540/10000 vs variant 590/10000', 'why is my A/B test inconclusive', 'we keep peeking and stopping early', 'set up CUPED to speed up the test', 'sample ratio mismatch', 'cuántos usuarios necesito para el test', 'el experiment no surt significatiu'. NOT recurring metric tracking (that is analytics), NOT defining north-star/KPI trees (that is kpi-framework), NOT projecting a metric forward (that is forecasting).",
+      "description": "Use when designing or analyzing a controlled experiment — falsifiable hypothesis, sample size from an MDE, reading significance/CI/power, CUPED, or rescuing tests that won't go significant. NOT recurring metric tracking (that is `analytics`), NOT north-star/KPI trees (that is `kpi-framework`), NOT projecting metrics forward (that is `forecasting`).",
       "tags": [
         "ab-testing",
         "experimentation",
@@ -27,7 +27,7 @@
     },
     {
       "id": "accessibility",
-      "description": "Use when making a web UI conform to WCAG 2.2 Level AA — fixing axe-core violations, a low Lighthouse a11y score, adding keyboard support, focus management, ARIA roles/labels, skip links, live regions, accessible names, or checking contrast and tap-target size. Triggers: 'make this accessible', 'fix the contrast', 'keyboard navigation is broken', 'screen reader can't read this', 'axe says button-name / color-contrast', 'the modal doesn't trap focus', 'tab order is wrong', 'our tap targets are smaller than 24px', 'fes-ho accessible', 'el lector de pantalla no lee los errores'. NOT general performance / LCP tuning (that is performance), NOT setting up the Jest/RTL test runner itself (that is testing-web).",
+      "description": "Use when making a web UI conform to WCAG 2.2 Level AA — axe-core or Lighthouse a11y violations, keyboard operability, focus management, ARIA roles/names/live regions, contrast, tap-target size. NOT palette or visual intent (that is `design`), NOT test-runner setup (that is `testing-web`), NOT LCP/page-speed (that is `performance`).",
       "tags": [
         "wcag",
         "accessibility",
@@ -46,7 +46,7 @@
     },
     {
       "id": "ads",
-      "description": "Use when you need to run or fix paid acquisition on Google or Meta — structuring campaigns (Performance Max, Demand Gen, Search, Advantage+), writing platform-fit creative, allocating budget, and deciding scale-vs-kill on ROAS. Use when a campaign spends but won't convert, conversions dropped after Consent Mode v2 or iOS, or you need the break-even ROAS math. Triggers: 'set up our Google Ads', 'our Performance Max isn't converting', 'what ROAS do we need to break even', 'how much budget per campaign and how fast can we scale', 'our Meta CPA is too high', 'platform ROAS looks great but the bank account disagrees', 'configura una campaña de Google Ads', 'qué ROAS necesito para no perder dinero', 'la campanya de Meta no converteix'. NOT writing the landing page the ad clicks into (that is landing-copy), NOT designing the experiment's statistics and sample size (that is ab-testing), NOT the whole-funnel channel-mix plan (that is marketing).",
+      "description": "Use when running or fixing paid acquisition on Google or Meta — campaign structure (Performance Max, Demand Gen, Search, Advantage+), platform-fit creative, budget/scaling rules, break-even ROAS math, and Consent Mode v2 / CAPI tracking gaps. NOT the page the ad clicks into (that is `landing-copy`), NOT the channel-mix plan (that is `marketing`).",
       "tags": [
         "paid-ads",
         "google-ads",
@@ -70,7 +70,7 @@
     },
     {
       "id": "agent-eval",
-      "description": "Use when you need to measure whether an LLM or agent system actually got better and gate merges on it — before/after a prompt or model change, building a golden set, fixing a noisy or inflated LLM-as-judge, scoring a RAG pipeline (faithfulness, contextual recall) or an agent trajectory (tool-correctness, task-completion), or choosing between DeepEval / Inspect AI / promptfoo / Braintrust. Triggers: 'is the new prompt actually better', 'build a golden set / regression suite', 'our judge gives everything a 9/10', 'fail the PR when answer quality drops', 'score the tool path not just the final answer', 'medir si el agente mejoró', 'tenim un eval que dona puntuacions inflades', 'montar un golden set'. NOT building the agent loop/tools/RAG plumbing (that is building-agents).",
+      "description": "Use when measuring whether an LLM or agent system actually got better and gating merges on it: golden sets, fixing an inflated LLM-as-judge, scoring RAG (faithfulness, contextual recall) or agent trajectories (tool correctness, completion), or picking an eval framework. NOT building the agent loop, tools or RAG plumbing (that is `building-agents`).",
       "tags": [
         "evals",
         "llm",
@@ -88,7 +88,7 @@
     },
     {
       "id": "agent-safety",
-      "description": "Use when putting guardrails on an LLM agent that already runs — limiting its task scope, gating its tools to least privilege, defending against prompt injection from untrusted content (web pages, emails, RAG docs), requiring human approval on irreversible actions, capping runtime, or after an agent did something it should not have. Triggers: 'lock down the MCP tools', 'the agent deleted prod', 'an email told it to wire money and it did', 'our support agent can run any shell command', 'the agent keeps repeating a wrong instruction across sessions', 'review what this autonomous agent is allowed to do before we ship', 'posa límits a l'agent', 'l'agent ha fet una cosa que no tocava'. NOT building the agent loop, tools, or RAG (that is building-agents).",
+      "description": "Use when bounding an LLM agent that already runs — scoping its task domain, gating tools to least privilege, defending against prompt injection in untrusted web/email/RAG text, requiring human approval on irreversible actions, capping runtime and cost, or triaging what it already did. NOT building the loop, tools, or RAG (that is `building-agents`).",
       "tags": [
         "agent-security",
         "guardrails",
@@ -105,7 +105,7 @@
     },
     {
       "id": "ai-media",
-      "description": "Use when turning a creative goal into a finished media file by orchestrating multiple generative-media models and gluing the pieces with ffmpeg — narrated explainer, product teaser, faceless short, AI voiceover, image-to-video clip, background score, or muxing/ducking/normalizing/stitching existing assets. Triggers: 'make a narrated video with AI voice and B-roll', 'generate a voiceover and mix it over the footage', 'duck the music under the voiceover', 'stitch the scene clips into one MP4 and normalize loudness', 'turn this still into a 9:16 clip with a music bed', 'genérame una voz en off y un vídeo para este guion con música de fondo', 'posa música de fons i abaixa-la quan parla la veu'. NOT still-image generation/editing (that is replicate-images).",
+      "description": "Use when a creative goal must become a finished media file: pick and order generative-media models per modality — AI voiceover, image-to-video clips, score — then glue them with ffmpeg (mux, duck, loudnorm, concat). NOT still-image generation/editing (that is `replicate-images`); NOT code-rendered React compositing (that is `remotion-video`).",
       "tags": [
         "ai-media",
         "text-to-speech",
@@ -127,7 +127,7 @@
     },
     {
       "id": "analytics",
-      "description": "Use when instrumenting product or web analytics — adding GA4 or PostHog to an app, designing an event taxonomy, wiring funnels, or making event collection consent-compliant. Triggers: 'set up GA4', 'install PostHog', 'track signup and checkout', 'design the event taxonomy', 'our purchase events fire twice / double-counting', 'PII leaking into event props', 'Consent Mode v2 broke our Google Ads conversions', 'missing client_id / distinct_id', 'instrumentar analítica de producto', 'añade GA4 / PostHog', 'los eventos se cuentan dos veces', 'consentiment abans de capturar dades'. NOT charting the captured data (that is dashboard), NOT choosing which metrics matter (that is kpi-framework), NOT experiment math (that is ab-testing), NOT the legal cookie text (that is gdpr-privacy).",
+      "description": "Use when instrumenting product or web analytics — GA4/PostHog SDK wiring, event taxonomy, funnels, double-counted events, consent gating, PII scrubbing. NOT charting that data (that is dashboard), NOT choosing which metrics matter (that is kpi-framework), NOT experiment math (that is ab-testing), NOT cookie-policy text (that is gdpr-privacy).",
       "tags": [
         "analytics",
         "ga4",
@@ -150,7 +150,7 @@
     },
     {
       "id": "analyze",
-      "description": "Use when the spec, plan and task list are written and you want a last consistency check BEFORE any code is touched — the pre-implementation GATE of the rsc-sdd chain. It cross-reads constitution vs spec vs plan vs tasks and reports gaps, contradictions, duplication, ambiguity and scope drift, mapping every artifact to the requirements it claims to satisfy. Report-only: it never edits artifacts and never writes code; the user decides each resolution. Triggers: 'analyze', 'analiza la spec antes de implementar', 'cross-check constitution spec plan tasks', 'consistency gate', 'are spec and plan aligned', 'did we miss any requirement', 'scope drift check', 'gap analysis before coding', 'is the plan complete', 'sanity-check before implement', 'coverage of requirements'. NOT clarifying a single spec (that is `clarify`), NOT writing the plan or tasks, NOT running tests/lint (that is `verify`), NOT root-causing a bug (that is `debug`).",
+      "description": "Use when constitution, spec, plan and tasks all exist and you want them cross-read against each other before any code is written — the rsc-sdd pre-implementation gate. Reports coverage gaps, contradictions, duplication, ambiguity and scope drift; edits nothing. NOT the task breakdown (that is `tasks`), NOT the coding (that is `implement`), NOT the post-code test gate (that is `verify`), NOT resolving ambiguity (that is `clarify`).",
       "tags": [
         "sdd",
         "analyze",
@@ -166,7 +166,7 @@
     },
     {
       "id": "angular",
-      "description": "Use when building, refactoring, reviewing, or debugging an Angular app (Angular 20/21+: standalone components, signals, zoneless change detection, the @if/@for/@defer built-in control flow, inject() DI, resource()/httpResource(), RxJS interop, NgRx SignalStore, the ng CLI). Triggers: 'why isn't my view updating', migrating NgModules to standalone, replacing *ngFor with @for, decorator inputs vs input() signals, 'monta una app Angular', 'componente standalone con signals', 'com passo a zoneless', going zoneless / removing Zone.js, app.config.ts providers, toSignal/toObservable interop, ng generate/ng update. NOT React (that is react), NOT Next.js (that is nextjs), NOT a plain TypeScript language question (that is typescript).",
+      "description": "Use when building, refactoring, or debugging Angular (v20/21+): standalone components, signals, zoneless change detection, @if/@for/@defer control flow, inject() DI, resource()/httpResource(), RxJS interop, NgRx SignalStore, ng CLI. NOT React (that is react), NOT Next.js (that is nextjs), NOT a TypeScript language question (that is typescript).",
       "tags": [
         "angular",
         "frontend",
@@ -184,7 +184,7 @@
     },
     {
       "id": "api-connector-builder",
-      "description": "Use when writing a client against a third-party REST or GraphQL API and the boring-but-critical parts keep biting — token refresh mid-run, only-the-first-page results, random 429s, banned keys. Covers auth flow selection (API key, Bearer, OAuth2 client-credentials, auth-code+PKCE, device), pagination to exhaustion (offset, cursor/keyset, Link header, Relay connections), retry-with-jitter on transient failures only, and rate-limit-aware throttling. Triggers: 'write a connector for the Linear/Shopify API', 'this API keeps 429-ing us', 'paginate through all results', 'token expires mid-run add refresh', 'wrap this REST API as a typed SDK', 'conector para una API que nos limita', 'recórreme totes les pàgines'. NOT receiving inbound callbacks (that is webhooks), NOT chaining many services into a flow (that is automation-flows), NOT designing your own API surface (that is api-design).",
+      "description": "Use when writing a client for someone else's REST or GraphQL API: auth flow choice and token refresh, pagination to exhaustion, retry-with-jitter on transient failures only, rate-limit-aware throttling. NOT inbound callbacks (that is `webhooks`), NOT chaining services (that is `automation-flows`), NOT designing your own API (that is `api-design`).",
       "tags": [
         "api",
         "rest",
@@ -209,7 +209,7 @@
     },
     {
       "id": "api-design",
-      "description": "Use when designing the contract of a network API before/independent of implementation — modeling resources and URLs, choosing REST vs GraphQL, picking a versioning strategy, defining one consistent error envelope, and settling pagination/filtering/idempotency conventions. Triggers: 'design the REST API for X', 'what should the endpoints be', 'how do I version this without breaking clients', 'should this be REST or GraphQL', 'cursor vs offset pagination', 'standard error format for my API', 'RFC 9457 problem details', 'idempotency key on POST', '200 with error body', 'diseña la API REST de esto', 'cómo verziono la API sin romper clientes'. NOT implementing endpoints in a framework (that is fastapi/nestjs/go/nodejs), NOT security/auth hardening (that is secure-coding), NOT receiving inbound webhooks (that is webhooks), NOT building an outbound client to a third-party API (that is api-connector-builder).",
+      "description": "Use when settling the contract of an API you expose, before implementation: resources/URLs, REST vs GraphQL, versioning, one RFC 9457 error envelope, pagination, idempotency — emitted as OpenAPI 3.1. NOT implementing the endpoints (that is `fastapi`/`nestjs`/`go`/`nodejs`), NOT auth hardening (that is `secure-coding`), NOT consuming a third-party API (that is `api-connector-builder`).",
       "tags": [
         "api-design",
         "rest",
@@ -235,7 +235,7 @@
     },
     {
       "id": "article-writing",
-      "description": "Use when drafting a long-form blog post or article from a topic or target query and you need publishable prose plus the on-page surface that ships with it — an answer-first lede, a question-shaped H2/H3 hierarchy, title tag, meta description, slug, FAQ block, and Article/FAQPage JSON-LD. Use when an intro buries the answer, a draft rambles or reads padded with AI tells, or a piece needs depth matched to search intent for AI Overviews and featured snippets. Triggers: 'write a blog post about X', 'draft a 1500-word article', 'rewrite this intro so the answer comes first', 'add FAQ schema to this post', 'cut the fluff out of this draft', 'escriu un article de blog sobre teletreball optimitzat per SEO', 'redacta un artículo optimizado para SEO'. NOT keyword research or which topics to target (that is seo-geo), and NOT the editorial calendar or content pipeline (that is content-engine).",
+      "description": "Use when writing one long-form article end to end — answer-first lede, question-shaped headings, plus its on-page surface (title, meta, slug, FAQ, Article/FAQPage JSON-LD) — or fixing a draft that buries the answer or reads AI-padded. NOT keyword research or topic selection (that is `seo-geo`), NOT the editorial calendar (that is `content-engine`).",
       "tags": [
         "article",
         "blog",
@@ -258,7 +258,7 @@
     },
     {
       "id": "astro",
-      "description": "Use when building a content-driven or marketing site with Astro 6 — static-first pages, islands, content collections, partial hydration, server islands, per-route on-demand rendering, and deploy adapters. Triggers: 'Astro blog with content collections', 'make this widget interactive only when it scrolls into view', 'server island to personalize a static page', 'migrate Astro 5 to 6', the non-obvious 'ship zero JS but keep one form interactive', and Catalan/Spanish 'web de marketing rápida con Astro' / 'una web de contingut amb Astro'. NOT app-router React or server actions (that is nextjs).",
+      "description": "Use when building a content-driven or marketing site with Astro 6: static-first pages, islands and partial hydration, content collections, server islands, per-route on-demand rendering, deploy adapters, and Astro 5→6 migration. NOT app-router React with server actions and heavy client interactivity (that is `nextjs`).",
       "tags": [
         "astro",
         "ssg",
@@ -279,7 +279,7 @@
     },
     {
       "id": "author-skill",
-      "description": "Use when authoring a NEW skill or editing an existing one for the rsc catalog — writing or fixing a SKILL.md, crafting a trigger-rich third-person description that fires on the right prompts, deciding what goes in references/ vs the body, writing evals/cases.yaml + evals/README.md, or wiring a skill into the catalog (tags, recommends, manifest). Triggers: 'write a skill', 'author a skill', 'create a new skill', 'escribe una skill', 'haz una skill nueva', 'edit this skill', 'improve this skill', 'my skill never triggers', 'my skill always fires', 'fix the description', 'the frontmatter is invalid', 'write evals for this skill', 'add this skill to the catalog', 'audit this skill against the rubric', 'progressive disclosure', 'SKILL.md too long'. Knows the rsc conventions: hybrid layout, tags/recommends frontmatter, manifest.json, the npx @ericrisco/rsc CLI, the Knowledge map. NOT building runtime features (that is the SDD chain) and NOT general docs.",
+      "description": "Use when authoring a NEW rsc skill or editing an existing one — scoping it to one job, writing the description that decides whether it ever loads, splitting the body into references/, writing its evals, auditing it against the rubric. NOT building a product feature (that is `specify`) and NOT designing an agent loop (that is `building-agents`).",
       "tags": [
         "skill",
         "authoring",
@@ -290,7 +290,7 @@
     },
     {
       "id": "automation-flows",
-      "description": "Use when building or fixing a no-code automation on n8n, Make, or Zapier — wiring a trigger to multi-app steps with branching, data mapping, retries, and an error path, or choosing the platform by its billing model. Triggers: 'wire up a Zap / Make scenario / n8n workflow that does X when Y happens', 'new Stripe payment → Notion row → Slack message in n8n', 'my Zap keeps failing silently, add error handling and retries', 'should I use Make or Zapier for 50k runs a month', 'my automation bill exploded', 'give me the JSON to import into n8n', 'automatiza esto en Make sin código', 'munta un workflow a n8n amb gestió d'errors', 'por qué se me dispara el Zap dos veces'. NOT writing a typed API client in code with auth/pagination/backoff (that is api-connector-builder), NOT building the inbound endpoint that receives and verifies webhook events in your own app (that is webhooks), NOT scripting one vendor's SDK directly (that is stripe / notion-connector / google-workspace / whatsapp-telegram).",
+      "description": "Use when building or fixing a no-code automation on n8n, Make, or Zapier — trigger to multi-app steps with data mapping, dedup, retries and an error path — or picking the platform by billing unit (task vs credit vs execution). NOT a typed API client in code (that is api-connector-builder), NOT a webhook receiver in your own app (that is webhooks).",
       "tags": [
         "automation",
         "n8n",
@@ -319,7 +319,7 @@
     },
     {
       "id": "automation-strategy",
-      "description": "Use when deciding whether a process is worth automating, choosing an automation platform, sizing ROI / build-vs-buy, designing an automation strategy, or diagnosing why a fleet of automations keeps breaking — the discipline layer that runs BEFORE anyone builds. Triggers: 'should we automate this?', 'is this worth automating', 'n8n vs Make vs Zapier vs Power Automate — which do we pick', 'custom script or no-code platform', \\\"what's the ROI on automating X\\\", 'design our automation strategy', 'our automations keep breaking', 'automating this cost more than it saved', '¿merece la pena automatizar esto?', 'qué plataforma de automatización elegimos'. NOT building the flow on a platform (design + importable artifact is automation-flows; driving a live platform API/MCP is the n8n / make / zapier / power-automate skills), NOT a typed API client with auth/pagination/backoff (api-connector-builder), NOT the inbound endpoint that receives webhook events in your app (webhooks).",
+      "description": "Use when deciding whether a process is worth automating, sizing ROI and build-vs-buy, choosing an automation platform, or diagnosing why a fleet of automations keeps breaking — the decision layer before anyone builds. NOT building the flow (that is `automation-flows`, or `n8n` / `make` / `zapier` / `power-automate` to drive a live platform).",
       "tags": [
         "automation",
         "strategy",
@@ -347,7 +347,7 @@
     },
     {
       "id": "aws-essentials",
-      "description": "Use when standing up the core AWS surface a small product needs — create a private S3 bucket for uploads, provision an encrypted RDS Postgres, choose ECS Fargate vs EC2 for a container, put CloudFront in front of S3, write or tighten an IAM policy, or harden a fresh account (root MFA, no long-lived keys). Triggers: 'set up an S3 bucket for user uploads', 'this role has AdministratorAccess, scope it down', 'spin up Multi-AZ Postgres on RDS', 'my bucket is public and I don't know why', 'this role can do everything', 'I can't encrypt RDS now', 'Fargate or EC2 for a low-traffic app', 'monta un bucket S3 privado', 'permisos mínims a IAM', 'posa CloudFront davant del bucket'. NOT the CI pipeline that ships your container (that is deployment), NOT app-code access-control review (that is secure-coding).",
+      "description": "Use when standing up the core AWS surface a small product needs: hardening a fresh account, a private S3 bucket, encrypted RDS Postgres, ECS Fargate vs EC2, CloudFront + OAC, or scoping an IAM policy to least privilege. NOT the CI pipeline that ships the container (that is `deployment`), NOT app-code access-control review (that is `secure-coding`).",
       "tags": [
         "aws",
         "cloud",
@@ -365,7 +365,7 @@
     },
     {
       "id": "backups",
-      "description": "Use when designing or auditing a backup-and-restore program that must survive a real disaster — picking defensible RPO/RTO targets, building a 3-2-1-1-0 layout, wiring point-in-time recovery, adding offsite+immutable copies, or proving restores actually work. Triggers: 'we have no real backups, design something', 'what RPO/RTO should we target', 'set up PITR for Postgres', 'are our backups any good', the non-obvious 'our backups live on the same server as the database', and Catalan 'com provo que les còpies de seguretat funcionen de debò'. NOT tuning Postgres internals or writing the archive_command (that is postgresdb).",
+      "description": "Use when designing or auditing a backup-and-restore program that must survive a real disaster: setting defensible RPO/RTO targets, laying out 3-2-1-1-0 copies that are offsite and immutable, wiring point-in-time recovery, and proving restores work on a schedule. NOT tuning Postgres internals or writing the archive_command (that is `postgresdb`).",
       "tags": [
         "backups",
         "disaster-recovery",
@@ -382,7 +382,7 @@
     },
     {
       "id": "bash-scripting",
-      "description": "Use when writing or hardening a shell script that has to survive another machine — a CI step, install script, build glue, cron job, git hook, or devcontainer entrypoint — and it 'works on my machine' but fails in CI/Docker/macOS, mangles filenames with spaces, leaks temp files when interrupted, or trips ShellCheck. Triggers: 'works locally but breaks in CI', 'filenames with spaces break my loop', 'set -e didn't catch the error', 'unquoted variable ate my path', 'trap fires twice', 'fix these SC2086 warnings', 'make this run on macOS and Linux', 'should this be #!/bin/bash or #!/bin/sh', 'script que peta en CI però funciona al portàtil', 'fes el script portable / hazlo robusto'. NOT CI workflow structure, runners, caching, matrix (that is github-actions).",
+      "description": "Use when writing or hardening a shell script that must survive another machine — a CI step, install script, cron job, git hook, devcontainer entrypoint: strict-mode leaks, quoting/word-splitting, arrays, trap cleanup, bash-vs-POSIX portability, ShellCheck findings. NOT CI workflow structure, runners, caching or matrix (that is `github-actions`).",
       "tags": [
         "bash",
         "shell",
@@ -400,7 +400,7 @@
     },
     {
       "id": "bookkeeping",
-      "description": "Use when a small business needs clean, audit-ready books — standing up a chart of accounts, recording a transaction and unsure which account or which side (debit vs credit), a bank feed full of uncategorized lines, a month-end ledger that won't reconcile to the bank, or choosing cash vs accrual. Triggers: 'set up a chart of accounts', 'where does this transaction post', 'which side is a debit when I pay rent', 'my books don't tie out to the bank', '300 transactions sitting uncategorized', 'cash or accrual accounting', 'how long do I keep receipts', 'categoriza los movimientos del banco', 'mi contabilidad está hecha un desastre', 'cuadra el libro con el extracto', 'comptabilitat feta un desastre'. The loop is record → classify → reconcile so the numbers are trustworthy. NOT analyzing runway/burn/P&L or the monthly finance cadence (that is finance-ops), NOT issuing a customer invoice (that is invoicing), NOT setting a price (that is pricing), NOT future projections (that is financial-model).",
+      "description": "Use when a small business needs audit-ready books — a chart of accounts, posting a transaction to the right account and side, clearing an uncategorized bank feed, cash vs accrual, or a ledger that won't tie to the bank. NOT interpreting the numbers — runway, burn, P&L cadence (that is `finance-ops`), NOT issuing invoices (that is `invoicing`).",
       "tags": [
         "bookkeeping",
         "double-entry",
@@ -423,7 +423,7 @@
     },
     {
       "id": "brand-identity",
-      "description": "Use when defining a project's visual identity foundation from scratch or consolidating ad-hoc brand assets into one system: a logo brief, a color system, a type system, usage rules, and an exported design-tokens.json that downstream skills consume. Use when there is no visual foundation yet, or a rebrand must unify scattered colors/fonts. Triggers: 'build our brand identity', 'create a brand book / brand guidelines', 'logo brief', 'pick our color palette', 'define our type system', 'consolidate our random fonts and hex codes scattered across files into one system', 'necesito una identidad de marca', 'crea la guia de marca amb les normes d'us del logo'. NOT the applied UI/pixels (that is design), NOT the words/tone (that is brand-voice), NOT a journalist asset pack (that is press-kit).",
+      "description": "Use when a project needs its visual foundation built or consolidated into one system: logo brief, color system in HEX/RGB/CMYK/OKLCH with proven AA contrast, type system, usage rules, and an exported W3C design-tokens.json that later skills consume. NOT the applied UI pixels (that is design), NOT the words or tone (that is brand-voice).",
       "tags": [
         "brand",
         "identity",
@@ -441,7 +441,7 @@
     },
     {
       "id": "brand-voice",
-      "description": "Use when defining or documenting how a brand SOUNDS — turning fuzzy adjectives ('professional but approachable') into voice rules a writer or LLM can actually apply, building a use/avoid word bank, plotting tone on the four dimensions, or producing an AI voice-DNA block so generated copy stays on-brand. Also when content drifts: blog, emails, and support replies read like five different people wrote them. Triggers: 'define our tone of voice', 'we have no brand voice guide', 'turn these adjectives into rules', 'word bank / banned words', 'make ChatGPT write like us', 'our content sounds like AI', 'everything sounds off-brand', 'define el tono de voz de la marca', 'la nostra veu de marca'. NOT writing the actual landing copy (that is landing-copy), the launch email (that is marketing), or the logo/colors (that is brand-identity).",
+      "description": "Use when defining how a brand SOUNDS as a reusable system: adjectives turned into linguistic rules, four tone dimensions as ratios, a use/avoid word bank, an AI voice-DNA block — so content stops sounding like five different writers. NOT the finished copy written against it (that is `landing-copy` / `marketing`), NOT the brand's look (`brand-identity`).",
       "tags": [
         "brand-voice",
         "tone-of-voice",
@@ -460,7 +460,7 @@
     },
     {
       "id": "building-agents",
-      "description": "Use when designing or building an LLM agent, tool-using system, RAG pipeline, eval harness, or MCP server in this repo — across any provider (OpenAI, Anthropic, Google Gemini, or OSS via OpenAI-compatible endpoints / litellm). Triggers: 'build an agent', 'add tool calling / function calling', 'structured JSON output', 'RAG / retrieval / embeddings / rerank', 'agent loop / ReAct / orchestrator-worker / multi-agent', 'LLM eval / golden set / LLM-as-judge / regression gate', 'prompt caching / model routing / token budget / cost control', 'trace / observability for LLM calls', 'build an MCP server', or 'make our LLM code provider-agnostic / swap models'. FastAPI/Python, Next.js, Go, Flutter, Postgres stacks.",
+      "description": "Use when building or restructuring an LLM agent — provider adapter, tool calling, structured output, RAG, agent loop, eval gate, cost routing, tracing, MCP server — model-agnostic across OpenAI/Anthropic/Gemini/OSS so a model swap is a config change. NOT vector-store SQL alone (that is `postgresdb`) or service deployment (that is `deployment`).",
       "tags": [
         "agents",
         "llm",
@@ -477,7 +477,7 @@
     },
     {
       "id": "business-intelligence",
-      "description": "Use when someone wants to ask business questions over the org's data in plain language and get consistent, trustworthy numbers, when a metric (revenue, MRR, active users, gross margin) must be defined once so every dashboard/report/agent computes it identically, when wiring an LLM or agent to query data without hallucinating SQL, or when two teams report different numbers for the same thing. Triggers: 'semantic layer', 'metrics layer', 'define MRR once', 'self-serve analytics in plain English', 'text-to-SQL but trustworthy', 'sales and finance disagree on revenue', 'the agent keeps hallucinating SQL', 'dbt Semantic Layer', 'MetricFlow', 'Cube', 'capa semántica', 'consultar dades en llenguatge natural'. NOT designing chart layout or panels (that is dashboard), NOT choosing which KPIs to track (that is kpi-framework), NOT writing the raw query by hand (that is sql).",
+      "description": "Use when a metric (revenue, MRR, margin) needs defining once in a governed semantic layer so every dashboard, report and agent returns the same number, or when an LLM must answer data questions in plain language without hallucinating SQL. NOT chart layout (that is `dashboard`), NOT which KPIs to track (that is `kpi-framework`), NOT a hand-written query (that is `sql`).",
       "tags": [
         "business-intelligence",
         "semantic-layer",
@@ -501,7 +501,7 @@
     },
     {
       "id": "calendar-scheduling",
-      "description": "Use when adding booking/scheduling to a product — a 'pick a slot' page, an embedded Cal.com/Calendly widget, or a flow that shows real availability and writes the confirmed meeting to Google/Outlook/Apple — and when fixing the three classic bugs: double-booking, wrong-time-after-DST, and orphaned events on reschedule. Triggers: 'add a book-a-call page', 'embed Cal.com and white-label it', 'show my real availability and create the calendar event', 'we keep getting double-booked when two people pick the same slot', 'bookings show the wrong time after the clocks changed', 'fire a webhook on each booking', 'añade reservas de citas a la web y evita solapamientos con mi calendario de Outlook', 'evita que se reserve dos veces el mismo hueco'. NOT raw calendar CRUD, free/busy plumbing, or watch channels for an internal app with no booking surface (that is google-workspace), NOT a generic non-booking inbound event receiver (that is webhooks), NOT charging for a paid appointment (that is stripe).",
+      "description": "Use when a product needs a booking surface — a pick-a-slot page, a Cal.com/Calendly embed, or real availability plus the confirmed meeting written to Google/Outlook — or when fixing double-booking, DST drift, or orphaned reschedule events. NOT calendar CRUD with no booking surface (that is `google-workspace`), NOT the payment (that is `stripe`).",
       "tags": [
         "scheduling",
         "booking",
@@ -524,7 +524,7 @@
     },
     {
       "id": "case-studies",
-      "description": "Use when turning a real customer win into a case study or testimonial — a metrics-anchored success story or an attributed quote a prospect can act on, including when a great result reads like a brochure and needs to convert. Triggers: 'turn this customer win into a case study', 'we cut their churn 40% — write it up', 'draft a testimonial quote from this customer-interview transcript', 'we have a 40% drop but the write-up sounds like marketing fluff — make it convert', 'build a reusable customer-story template plus an intake/consent form', 'escríbeme un caso de éxito de este cliente con métricas y una cita', 'redacta un cas d'èxit amb mètriques'. NOT the deck that pitches the vision to a room (that is pitch-deck), NOT a long thought-leadership article with no single named customer (that is article-writing).",
+      "description": "Use when turning one named customer's measured win into a case study, or the attributed testimonial quote that travels with it — consent-cleared, metrics-anchored proof for the next skeptical buyer. NOT the deck that sells the vision to a room (that is `pitch-deck`), NOT thought-leadership with no single named customer (that is `article-writing`).",
       "tags": [
         "case-study",
         "testimonial",
@@ -544,7 +544,7 @@
     },
     {
       "id": "chatbot",
-      "description": "Use when putting a support or sales bot on a live website and it must behave — writing or hardening its persona/system prompt, designing the bot→human handoff, stopping it inventing prices/policies/refunds, defending against jailbreaks and prompt injection, qualifying leads, or setting launch metrics and a kill switch. Triggers: 'put a chatbot on our site that answers from our docs', 'add a chat widget', 'our bot promised a refund we don't offer — lock it down', 'stop people jailbreaking our website assistant', 'design the handoff to a human agent', 'qualify leads and book demos', 'necesito un chatbot de ventas para la web que califique leads i reservi demos'. NOT building the agent loop/RAG index/eval harness under it (that is building-agents), and NOT a human answering one live ticket (that is customer-support).",
+      "description": "Use when a support or sales bot on a live website must behave: persona/system prompt, grounding so it cannot invent prices or policy, jailbreak and injection defense, the human handoff, launch metrics and kill switch. NOT the agent loop or RAG index under it (that is `building-agents`), NOT a human answering one ticket (that is `customer-support`).",
       "tags": [
         "chatbot",
         "support-bot",
@@ -566,7 +566,7 @@
     },
     {
       "id": "chrome-extension",
-      "description": "Use when building, structuring, or shipping a Manifest V3 browser extension and hitting its quirks — the service worker keeps dying or losing state between events, permission warnings scare users away, the Chrome Web Store rejected the listing, or you must drag an old Manifest V2 extension to V3. Triggers: 'build a Chrome extension', 'my background script keeps resetting its state', 'store rejected me for excessive permissions', 'migrate MV2 to MV3', 'content script messaging to the popup', 'declarativeNetRequest ad blocker', 'crear una extensión de Chrome', 'publicar a la Chrome Web Store', 'el service worker se muere'. NOT a generic web app (that is nextjs).",
+      "description": "Use when building or shipping a Manifest V3 browser extension and hitting its quirks — service worker dying and losing state, permission warnings, a Chrome Web Store rejection, content-script/worker/popup messaging, or an MV2-to-V3 migration. NOT a generic web app (that is `nextjs`), NOT a desktop shell (that is `electron`).",
       "tags": [
         "chrome-extension",
         "manifest-v3",
@@ -585,7 +585,7 @@
     },
     {
       "id": "clarify",
-      "description": "Use when a spec exists and you need to de-risk it BEFORE planning — hunt the ambiguities, unstated assumptions, edge cases, and underspecified areas, ask the user the high-leverage questions, then bake the answers back into the spec. The fourth phase of the rsc SDD chain (constitution → specify → clarify → plan → tasks → analyze → implement → verify → review → ship). Triggers: 'clarify the spec', 'what's ambiguous here', 'poke holes in this spec', 'is this spec ready to plan', 'aclara el spec', 'qué falta en este spec', 'review the requirements before we build', 'de-risk before planning', 'what questions should I answer first', 'this spec feels vague', a spec under 02-DOCS/wiki/sdd/specs/ heading into planning, or a plan that keeps stalling on unknowns. Reads the spec + constitution + harness profile; writes resolved answers back into the same spec file. NOT spec authoring (specify) and NOT the technical plan (plan).",
+      "description": "Use when a spec exists and must be de-risked before planning — hunt its ambiguities, unstated assumptions and edge cases, ask the few build-changing questions, bake the answers back into the spec. The rsc SDD gate between `specify` (writes the spec) and `plan` (designs the build). NOT the cross-artifact consistency check (that is `analyze`).",
       "tags": [
         "sdd",
         "clarify",
@@ -601,7 +601,7 @@
     },
     {
       "id": "clickhouse-analytics",
-      "description": "Use when standing up a ClickHouse server for high-volume OLAP analytics, picking a MergeTree engine plus ORDER BY/PARTITION BY keys, ingesting billions of event/log/metric rows (async inserts, batch sizing, dedup), building materialized-view pre-aggregations, or optimizing a slow ClickHouse query. Triggers: 'design a ClickHouse table for 2B events/day', 'which MergeTree engine and ORDER BY', 'queries scan the whole table, the primary key isn't pruning', 'parts keep piling up and merges can't keep up', 'pre-aggregate at insert time so dashboards stay sub-second', 'AggregatingMergeTree materialized view for uniq users per hour', 'montar ClickHouse para analítica de eventos a gran escala', 'consultes lentes a ClickHouse, l'índex no poda particions'. NOT local file analytics with no server (that is duckdb), NOT app transactional CRUD/OLTP indexing (that is postgresdb).",
+      "description": "Use when running a ClickHouse server for high-volume OLAP: choosing a MergeTree engine and ORDER BY/PARTITION BY keys, ingesting billions of event/log/metric rows, pre-aggregating with materialized views, or fixing a query that scans instead of pruning. NOT in-process file analytics (that is `duckdb`), NOT OLTP CRUD indexing (that is `postgresdb`).",
       "tags": [
         "clickhouse",
         "olap",
@@ -624,7 +624,7 @@
     },
     {
       "id": "client-onboarding",
-      "description": "Use when a deal just closed or a user just signed up and you need a real activation plan — not an ad-hoc welcome email: defining what 'activated'/first-value means for the product, taking the sales→delivery handoff so nothing promised is lost, running a kickoff (agenda + welcome packet + RACI), or laying a 30/60/90 (high-touch) or day-0→day-14 nudge sequence (self-serve) with owners, dates, and a measurable exit. Triggers: 'build an onboarding plan for a new client', 'define our activation event', 'the deal is signed, what now before they go cold', 'run the kickoff call', 'sales-to-CS handoff', 'plan de onboarding para un cliente nuevo', 'munta'm el kickoff i el pla de 30/60/90', 'day-0 to day-14 nudge sequence to the aha moment'. NOT inbound ticket triage (that is customer-support), NOT the ongoing renewal/churn/health program (that is retention), NOT the pre-close proposal/SOW (that is proposals).",
+      "description": "Use when a deal closed or a user signed up and the first 30 days need an activation plan: sales→delivery handoff, one verifiable activation event, kickoff, and a 30/60/90 or day-0→14 plan with owners, dates and a measurable exit. NOT reactive ticket triage (that is `customer-support`), NOT renewals/churn past the onboarded gate (that is `retention`).",
       "tags": [
         "onboarding",
         "activation",
@@ -645,7 +645,7 @@
     },
     {
       "id": "cloudflare",
-      "description": "Use when working on Cloudflare's edge platform — writing or editing wrangler.jsonc/wrangler.toml bindings, choosing between D1/KV/R2/Durable Objects/Queues, deploying a Worker or a Vite/React SPA via Static Assets, wiring Queue producers/consumers, or hitting a Cloudflare runtime limit and needing the architecture fix. Triggers: 'deploy to Cloudflare Workers', 'add an R2 bucket binding', 'D1 vs KV for sessions', 'why is my KV read stale after writing', 'too many subrequests in my Worker', 'wrangler deploy', 'desplegar a Cloudflare Workers', 'quin binding faig servir per R2'. NOT generic CI/release deploy (that is deployment), NOT the Next.js framework wiring itself (that is nextjs), NOT Cloudflare DNS records (that is domains-dns).",
+      "description": "Use when working on Cloudflare's edge platform — wrangler.jsonc bindings, choosing between D1/KV/R2/Durable Objects/Queues, deploying a Worker or SPA via Static Assets, or designing around a Workers runtime limit. NOT generic CI/release (that is `deployment`), NOT Next.js framework wiring (that is `nextjs`), NOT DNS records (that is `domains-dns`).",
       "tags": [
         "cloudflare",
         "workers",
@@ -669,7 +669,7 @@
     },
     {
       "id": "code-review",
-      "description": "Use when you have a concrete diff, branch, or GitHub PR to judge on its own merits and there is no rsc-SDD spec/plan/constitution chain to key off — the standalone, spec-less giving pass behind the executable /code-review. Triggers: 'review this PR before I merge', 'revisa este diff', 'revísame el PR', 'què està malament en aquest canvi', 'tear apart the contractor's branch', 'is this PR safe to merge', 'is this dependency bump safe', '/code-review --comment 1432', 'high-signal review of this change'. Scales coverage by effort (low/medium = fewer high-confidence findings; high/max = broader, may surface uncertain ones labelled [question]); read-only by default, posts comments only with --comment and edits only with --fix. NOT the SDD review gate keyed to 02-DOCS/wiki/sdd/ that also processes incoming comments and pushes back (that is review).",
+      "description": "Use to judge a concrete diff, branch, or GitHub PR on its own merits with no rsc-SDD spec/plan chain to key off — the spec-less giving pass behind /code-review: only findings you can defend, one verdict, read-only unless --comment or --fix. NOT the SDD gate keyed to 02-DOCS/wiki/sdd/ that also processes incoming review comments (that is `review`).",
       "tags": [
         "code-review",
         "pr-review",
@@ -685,7 +685,7 @@
     },
     {
       "id": "codebase-onboarding",
-      "description": "Use when you land in an unfamiliar or inherited codebase and must get productive fast — map the entry points, the request/data flow, who owns the business logic, the hidden side effects (cron, webhooks, workers, listeners) and the hotspot files, before you touch anything. Triggers: 'I just cloned this repo and don't know where anything is', 'I inherited this project, map it before I change something', 'where does the business logic actually live', 'what happens behind the scenes when a request hits /checkout', 'which files are the dangerous ones nobody understands', 'acabo de heredar este repo y no sé por dónde empezar, mápamelo', 'mapea este codebase'. NOT a deep correctness/security audit of one module (that is analyze).",
+      "description": "Use when you land in an unfamiliar or inherited codebase and must get productive fast: a breadth-first map of entry points, request flow, module ownership, hidden side effects (cron, webhooks, workers) and churn hotspots, committed as CODEBASE-MAP.md. NOT a deep audit of one module (that is `analyze`) or chasing one failure (that is `debug`).",
       "tags": [
         "onboarding",
         "codebase",
@@ -707,7 +707,7 @@
     },
     {
       "id": "cold-outreach",
-      "description": "Use when writing a cold email or DM to someone with no prior relationship, building a follow-up sequence, deciding how fast/how much to send per inbox so it stays out of spam, or rescuing outreach that reads like a template. Covers first-touch copy under a word ceiling, 4-7 step bump sequences, email-vs-LinkedIn variants, per-inbox volume and new-domain warm-up ramps, and the CAN-SPAM/GDPR opt-out footer. Triggers: 'write me a cold email', 'fix my follow-up sequence', 'my cold emails get opened but nobody replies', 'how many emails per inbox per day before I get blacklisted', 'write a LinkedIn connection note + DM', 'this email reads like a template', 'escríbeme una secuencia de cold email en frío', 'missatge en fred a LinkedIn'. NOT the SPF/DKIM/DMARC/tracking-domain setup (that is email-deliverability), NOT sourcing the prospect list (that is lead-gen), NOT what happens after a reply (that is sales-pipeline).",
+      "description": "Use when writing a cold email or LinkedIn DM to a stranger and its cadence: first-touch copy under a word ceiling, 4-7 step bump sequences, per-inbox volume and warm-up limits, the compliant opt-out footer. NOT SPF/DKIM/DMARC setup (that is email-deliverability), NOT sourcing the list (that is lead-gen), NOT life after a reply (that is sales-pipeline).",
       "tags": [
         "cold-email",
         "outreach",
@@ -726,7 +726,7 @@
     },
     {
       "id": "community",
-      "description": "Use when building or running a persistent two-way community space — Discord, Telegram, or Circle — and you need structure, onboarding, moderation, rituals, growth, or health metrics; covers picking the platform, standing up channels/roles/spaces, the rules/verification gate, the 3-layer moderation stack, an operating-rhythm of rituals, lurker-to-contributor growth loops, and the few metrics that prove it is alive. Triggers: 'set up our Discord server', 'our community is a graveyard / dead chat', 'we keep getting spam raids and scam DMs', 'Discord vs Telegram vs Circle', 'design community rituals / weekly cadence', 'how do I get lurkers to post', 'community onboarding flow', 'community health metrics', 'monta la comunitat de Discord', 'la comunidad está muerta, nadie escribe'. NOT customer churn-prevention for a paid product (that is retention), NOT one-to-many broadcast email (that is newsletter), and NOT running a single live event (that is webinar).",
+      "description": "Use when building or running a persistent two-way community space — Discord, Telegram, Circle: platform choice, structure, onboarding, native→bot→human moderation, rituals, growth loops, health metrics. NOT churn of paying product customers (that is `retention`), NOT broadcast email (that is `newsletter`), NOT one live event (that is `webinar`).",
       "tags": [
         "community",
         "discord",
@@ -747,7 +747,7 @@
     },
     {
       "id": "competitor-watch",
-      "description": "Use when you keep a named set of rivals under continuous, dated observation — tracking their pricing, features, positioning, and changelog over time, turning page diffs into a maintained tracker plus a classified change log on a cadence. Use when asked what moved at a competitor this month, whether a rival changed price or shipped something, or for a feature matrix kept current rather than written once. Triggers: 'set up competitor monitoring', 'watch their pricing page', 'did [rival] reposition or launch anything', 'what moved at [competitor] this month', 'keep this comparison matrix updated', 'track how their positioning shifted over 6 months', 'monitoritza els competidors i avisa-m quan canviïn de preu', 'vigila los precios de la competencia'. NOT sizing the market or producing the competitor list (that is market-research), NOT setting our own price (that is pricing), NOT building the sales battlecard (that is sales-pipeline).",
+      "description": "Use when an already-named set of rivals is watched on a cadence — pricing, features, positioning and changelog diffed into a maintained tracker plus an append-only, classified change log. NOT sizing the market or choosing who the rivals are (that is `market-research`), NOT one-off page extraction (that is `data-scraper`).",
       "tags": [
         "competitive-intelligence",
         "monitoring",
@@ -768,7 +768,7 @@
     },
     {
       "id": "compliance",
-      "description": "Use when a business needs to know which regulatory frameworks actually bind it and how to keep the program true between audits — scoping SOC 2 / ISO 27001 / HIPAA / PCI DSS / EU AI Act / DORA / NIS2, building a control register with owners and evidence, or standing up a recurring compliance cadence. Triggers: 'what compliance do we need for a fintech', 'build a SOC 2 readiness checklist', 'map our controls — who owns what', 'we have an audit in 90 days, set up the prep rhythm', 'does the EU AI Act apply to us and what's the deadline', 'set up a continuous-compliance calendar so we stop scrambling', '¿qué compliance necesitamos para una app de salud con datos médicos?', 'muntar el checklist de SOC 2'. NOT drafting the privacy policy, ROPA, or DPA text (that is gdpr-privacy), NOT writing Terms of Service (that is terms-conditions), NOT hardening the code itself (that is secure-coding).",
+      "description": "Use when scoping which regulatory frameworks bind a business — SOC 2, ISO 27001, HIPAA, PCI DSS, EU AI Act, DORA, NIS2 — building a control register with owners and evidence, or standing up the cadence that keeps it audit-ready. NOT drafting privacy-policy/ROPA/DPA or ToS text (that is gdpr-privacy, terms-conditions), NOT hardening code (that is secure-coding).",
       "tags": [
         "compliance",
         "soc2",
@@ -788,7 +788,7 @@
     },
     {
       "id": "compose-multiplatform",
-      "description": "Use when building shared UI across Android, iOS, and desktop from one Kotlin codebase with Compose Multiplatform — shared commonMain @Composables, expect/actual for platform divergence, native interop, multiplatform ViewModel/navigation/Koin. Triggers: 'share one Compose UI across Android and iOS', 'my expect has no actual and the build fails', 'where does this code go — commonMain or iosMain', 'embed a SwiftUI/UIKit view inside shared Compose with UIKitView', 'host shared Compose in a SwiftUI app', 'add a desktop target and package it', 'compartir la UI entre Android i iOS amb Kotlin', 'una sola UI para Android, iOS y escritorio'. NOT a single-platform native build (that is kotlin-android / swift-ios), and NOT Dart/Flutter cross-platform UI (that is flutter).",
+      "description": "Use when building one shared Compose UI in Kotlin across Android, iOS, and desktop — commonMain @Composables, expect/actual, source-set placement, native interop, multiplatform ViewModel/navigation/Koin. NOT a single-platform native build (that is kotlin-android / swift-ios), and NOT Dart/Flutter cross-platform UI (that is flutter).",
       "tags": [
         "kotlin",
         "kmp",
@@ -809,7 +809,7 @@
     },
     {
       "id": "constitution",
-      "description": "Use when capturing or revising a project's non-negotiable principles — its stack canon, quality bars, naming/structure conventions, branching/commit rules, testing thresholds, security and accessibility floors, the things every later phase must obey. This is the FIRST rsc-sdd phase, run once per project (then amended). Writes/updates 02-DOCS/wiki/sdd/constitution.md and links it from the root CLAUDE.md Knowledge map; reconciles with conventions the harness already holds under 02-DOCS/wiki/stack/*. Triggers: 'set the project principles', 'define our engineering standards', 'establecer las reglas del proyecto', 'project constitution', 'what are our non-negotiables', 'lock the stack canon', 'quality bar', 'coding standards doc', 'amend the constitution', 'ratify principle', 'definition of done for the repo'. NOT a feature spec (that's specify) and NOT an implementation plan (that's plan).",
+      "description": "Use when setting or amending a project's non-negotiables — stack canon, quality bars, conventions, security/a11y floors — as numbered, testable rules later phases obey. First rsc-sdd phase; writes 02-DOCS/wiki/sdd/constitution.md. NOT a feature spec (that is `specify`), NOT the technical plan (that is `plan`), NOT the wiki itself (that is `harness`).",
       "tags": [
         "sdd",
         "constitution",
@@ -825,7 +825,7 @@
     },
     {
       "id": "content-engine",
-      "description": "Use when a content operation needs a SYSTEM — a dated editorial calendar built top-down from pillars and a production pipeline that moves every slot through stages — not when writing one piece. Use for building/refreshing an editorial calendar, defining pillars/clusters/cadence/mix, standing up stage gates and a brief template, planning the 1:10 atomization of a flagship into derivatives, or setting WIP limits and the calendar of record. Triggers: 'build a content calendar', 'set up a content pipeline', 'what should we post and when', 'turn this pillar post into everything', 'our content is chaos, nobody knows what to post' (symptom, no calendar word), 'móntame un calendario de contenidos', 'atomiza este artículo en piezas'. NOT writing the pieces (that is article-writing), NOT distributing them (that is social-publisher), NOT keyword/cluster research (that is seo-geo), NOT codifying tone (that is brand-voice).",
+      "description": "Use when a content operation needs a SYSTEM: a dated editorial calendar built top-down from pillars, plus the stage gates, briefs, WIP limits and 1:10 atomization plan that move each slot to publish-ready. NOT writing the pieces (that is `article-writing`), NOT publishing them (that is `social-publisher`), NOT keyword research (that is `seo-geo`).",
       "tags": [
         "content",
         "editorial-calendar",
@@ -846,7 +846,7 @@
     },
     {
       "id": "context-budget",
-      "description": "Use when a long-horizon task is filling the context window and you must decide what to keep, offload, drop, or hand off — large refactors and migrations that won't fit one window, multi-hour research/agent runs, planning a harness that survives across fresh sessions, or deciding when to compact and whether to spawn a subagent. Triggers: 'we're 80% through context, compact before it breaks', 'context is 80% full', 'make this survive a fresh window', 'this conversation is getting huge', 'should I spawn a subagent for this huge log read or just inline it', 'the agent keeps re-reading the same files and forgetting decisions it made earlier', 'se está llenando el contexto, ¿qué guardo y qué tiro?', 'compacta abans que peti'. NOT dollar spend or budget caps (that is cost-tracking), NOT fetching context via embeddings (that is rag).",
+      "description": "Use when a long-horizon task is filling the context window and you must decide what to keep, offload, drop, or hand off to a fresh window — when to compact, what the summary must preserve, and whether to isolate a read-heavy subtask in a subagent. NOT dollar spend or caps (that is cost-tracking), NOT finding context via embeddings (that is rag).",
       "tags": [
         "context-window",
         "token-budget",
@@ -867,7 +867,7 @@
     },
     {
       "id": "continuous-learning",
-      "description": "Use when something went wrong, got corrected, surprised you, or otherwise taught the workspace something and you want it to stick — a retro or postmortem after an incident or sprint, the same agent mistake corrected 2+ times, a wrong assumption that just surfaced, a resolved bug worth never repeating, or scattered notes-to-self that need a durable home. Triggers: 'run a retro', 'capture this lesson', 'write this down so we don't repeat it', 'you keep doing X — make it stop for good', 'harvest the corrections and notes-to-self into wherever they belong', 'guarda esta lección para que no vuelva a pasar', 'apúntalo para no repetir el error'. NOT capturing a forward design choice with alternatives (that is decision-records).",
+      "description": "Use when a mistake, correction, or surprise taught the workspace something that must stick — a retro or postmortem, the same agent error corrected twice, a resolved bug's root cause, scattered notes-to-self — and route that lesson to the durable surface that fires next time. NOT a forward choice with alternatives (that is `decision-records`).",
       "tags": [
         "learning",
         "retro",
@@ -887,7 +887,7 @@
     },
     {
       "id": "contracts",
-      "description": "Use when drafting or reviewing everyday business contracts and clauses in plain language — NDAs, MSAs, SOWs, consulting/contractor agreements, and the boilerplate that allocates risk (liability caps, indemnity, force majeure, termination, governing law); symptoms include a counterparty's paper you must redline, a one-sided clause, or a draft a founder can't read. Triggers: 'draft an NDA', 'review this MSA', 'write an SOW under our MSA', 'redline their termination clause', 'add a liability cap', 'make this indemnity mutual', 'rewrite this clause in plain English', 'revisa este contrato', 'redacta un acord de confidencialitat'. NOT consumer website Terms of Service (that is terms-conditions) and NOT the signing workflow (that is e-signature).",
+      "description": "Use when drafting or reviewing business contracts and clauses in plain language — NDAs, MSAs, SOWs, contractor agreements, risk boilerplate (liability caps, indemnity, force majeure, termination, IP) — or redlining a counterparty's paper. NOT consumer Terms of Service (that is terms-conditions) and NOT the signing workflow (that is e-signature).",
       "tags": [
         "contracts",
         "legal",
@@ -910,7 +910,7 @@
     },
     {
       "id": "coolify",
-      "description": "Use when self-hosting apps, managed databases and deploys on a VPS you own with Coolify instead of paying a managed PaaS — installing Coolify on a fresh Ubuntu/Debian box, claiming the first-admin account, deploying from a Git repo (Nixpacks/Railpack/Dockerfile/compose), provisioning Postgres/MySQL/MongoDB/Redis in-product, wiring scheduled DB backups to S3-compatible storage, or custom domains + automatic SSL via the built-in Traefik proxy. Triggers: 'install Coolify', 'self-host my app on a cheap VPS', 'my Vercel/Heroku bill is killing me, move it to a box I own', 'control plane on my own server', 'nightly Postgres backups to R2 in Coolify', 'montar mi propio PaaS en un VPS barato con Coolify', 'autoallotjar les meves apps amb Coolify'. NOT the managed push-and-forget PaaS where someone else owns the box (that is railway), NOT sizing/hardening the VPS itself (that is hetzner / digitalocean), NOT generic Docker image authoring (that is docker).",
+      "description": "Use when self-hosting apps and databases with Coolify on a VPS you own — install, first-admin lockdown, Git-to-deploy (Nixpacks/Dockerfile/compose), managed Postgres/Redis, scheduled S3 backups, domains + auto-SSL. NOT a PaaS someone else runs (that is `railway`), NOT sizing/hardening the box (that is `hetzner`), NOT authoring Dockerfiles (that is `docker`).",
       "tags": [
         "coolify",
         "self-hosting",
@@ -933,7 +933,7 @@
     },
     {
       "id": "cost-tracking",
-      "description": "Use when you need to track and cap what an AI or cloud app spends — capturing per-request tokens, pricing them against a current rate table, ledgering spend per user/feature/model/tenant, and firing budget alerts or a hard cap before the bill lands instead of after. Triggers: 'track token costs per request', 'cap our OpenAI/Claude spend', 'budget alert before we blow the bill', 'attribute cost per user or tenant', 'a runaway agent loop just burned $X', 'is prompt caching actually cheaper and where is the break-even', 'why is our bill 3x the estimate', 'reconcile billed usage against the response usage object', 'cuánto gastamos en tokens este mes', 'pon un tope de gasto a la API y avísame al 80%', 'controlar el cost de la IA'. NOT company cash runway or burn (that is finance-ops), NOT cost-per-unit margin (that is unit-economics), NOT the accounting record of the spend (that is bookkeeping).",
+      "description": "Use when metering and capping AI or cloud app spend — tokens read from the response `usage` object, priced off a dated rate table, ledgered per user/tenant/feature, with alerts and a hard cap before the bill. NOT cash runway (that is `finance-ops`), NOT cost-per-unit margin (that is `unit-economics`), NOT booking the spend (that is `bookkeeping`).",
       "tags": [
         "cost-tracking",
         "token-accounting",
@@ -956,7 +956,7 @@
     },
     {
       "id": "course-builder",
-      "description": "Use when you must turn a vague \\\"I want to teach X\\\" into a defensible course/curriculum skeleton — writing measurable learning outcomes, designing assessment that proves them, sequencing modules, scoping a workshop/bootcamp/cohort/onboarding track, or building an outcome×module×assessment alignment matrix. Triggers: 'structure my course', 'turn these topics into a curriculum', 'write learning outcomes / objectives', 'design the final project and quizzes', 'map my modules to outcomes', 'is my course actually aligned?', 'my course just ends with no real endpoint — what should they be able to DO?', 'estructura el temario de mi curso', 'define los resultados de aprendizaje', 'dissenya el pla docent', 'quina avaluació demostra cada objectiu'. NOT making a concept land emotionally (that is course-storytelling).",
+      "description": "Use when turning \\\"I want to teach X\\\" into a defensible course skeleton — measurable outcomes (Bloom + ABCD), assessment that proves each one, sequenced modules, and an outcome×module×assessment matrix — for a workshop, bootcamp, cohort or onboarding track. NOT making one concept land emotionally with story or analogy (that is course-storytelling).",
       "tags": [
         "course",
         "curriculum",
@@ -973,7 +973,7 @@
     },
     {
       "id": "course-storytelling",
-      "description": "Use when you have course / lesson / module content and you need the teaching to LAND — so grounded, named, and emotionally resonant that the student loves the teacher. Ingests slides/transcripts/notes/outline, extracts the concepts AND the existing narrative spine, finds the abstract/jargon-heavy/ungrounded gaps, then reframes each concept with Russell Brunson's Expert Secrets methodology (Epiphany Bridge, the three false beliefs, the Big Domino, named mental models, story-selling, grounding analogies, future-pacing). Profiles the LEARNER and AUDIENCE first (hard gate). Outputs a per-concept 'landing recipe' and a reworked narrative spine. Triggers: 'make this lesson land', 'teach this concept', 'storytelling for my course', 'expert secrets', 'epiphany bridge', 'mental models for teaching', 'this lesson is too abstract', 'my students aren't getting it', 'name this concept'. NOT slide visuals (that's `presentations`/`design`) and NOT a content-audit/review pass (run review-content first, bring findings here).",
+      "description": "Use when lesson or course content is correct but forgettable and a concept has to LAND: profiles the learner, breaks the blocking false belief, then rebuilds it as epiphany story → named model → grounded analogy → proof → so-what. NOT outcomes, assessment or module order (that is `course-builder`), NOT slide visuals (that is `presentations`).",
       "tags": [
         "course",
         "teaching",
@@ -987,7 +987,7 @@
     },
     {
       "id": "cpp",
-      "description": "Use when writing, reviewing, modernizing, building, or debugging C++ - RAII and resource lifetime, smart-pointer ownership (unique_ptr/shared_ptr/weak_ptr), move semantics and the Rule of Zero/Five, target-based CMake with FetchContent, and killing undefined behavior with ASan/UBSan/TSan plus clang-tidy. Triggers: \\\"modernize this C++\\\", \\\"who owns this pointer\\\", \\\"use-after-free\\\", \\\"double free\\\", \\\"dangling reference\\\", \\\"segfault under load\\\", \\\"should this move be noexcept\\\", \\\"write a CMakeLists with FetchContent\\\", .cpp/.hpp/.ixx files, \\\"revisa este código C++\\\", \\\"tengo un segfault\\\", \\\"fuga de memoria\\\". NOT borrow-checker / Result-Option / cargo memory-safety (that is rust).",
+      "description": "Use when writing, reviewing, modernizing, building, or debugging C++ - RAII and resource lifetime, smart-pointer ownership, move semantics and the Rule of Zero/Five, target-based CMake with FetchContent, and killing undefined behavior with ASan/UBSan/TSan plus clang-tidy. NOT borrow-checker / Result-Option / cargo memory safety (that is rust).",
       "tags": [
         "cpp",
         "c++",
@@ -1004,7 +1004,7 @@
     },
     {
       "id": "csharp-dotnet",
-      "description": "Use when writing, reviewing, testing, or shipping C# / .NET code, ASP.NET Core APIs, or EF Core data access — editing .cs/.csproj/.sln files, designing minimal APIs vs controllers, fixing async correctness, or structuring a dotnet solution. Triggers: 'build a .NET API', 'is this idiomatic C#', 'should this DTO be a record', 'my endpoint hangs/deadlocks under load' (sync-over-async), 'EF query hits the DB once per row' (N+1), 'set up xUnit + WebApplicationFactory', 'crea una API en .NET', 'revisa este código C# antes de hacer deploy'. NOT a Java/Spring backend (that is spring-boot), NOT a Node/TypeScript backend (that is nestjs).",
+      "description": "Use when writing, reviewing, testing, or shipping C# / .NET code — ASP.NET Core APIs (minimal APIs vs controllers), EF Core data access, async correctness, solution layout in .cs/.csproj/.sln. NOT a Java/Spring backend (that is spring-boot), NOT a Node/TypeScript backend (that is nestjs), NOT framework-neutral REST naming (that is api-design).",
       "tags": [
         "csharp",
         "dotnet",
@@ -1021,7 +1021,7 @@
     },
     {
       "id": "customer-support",
-      "description": "Use when a support ticket, email, or chat lands and you must handle it well and fast — triage it (priority + queue + intent), draft a reply that does not read like a template, decide whether to escalate to a human, and keep the SLA clock from blowing. Also when an angry or churn-risk customer needs a de-escalation reply, when you need a canned-response library, or when you must set or audit first-response and resolution SLA targets. Triggers: 'a customer says our app is down and they're losing money', 'this user is threatening to cancel and leave a bad review, draft a reply', 'give me canned replies for common questions', 'what response times should we promise', 'redacta una respuesta para un cliente enfadado', 'tracta aquest ticket de suport'. NOT writing the help-center article the ticket links to (that is technical-writing), not the new-customer welcome flow (that is client-onboarding), not a win-back program (that is retention), and not building the auto-answer bot (that is chatbot).",
+      "description": "Use when a live support ticket needs triage (intent, P1–P4 priority, SLA clock), an on-voice reply, not a raw template, de-escalation of an angry or churn-risk customer, or escalation with a handoff packet. NOT the help-center article it links to (that is `technical-writing`), a win-back program (`retention`), or the auto-answer bot (`chatbot`).",
       "tags": [
         "customer-support",
         "helpdesk",
@@ -1044,7 +1044,7 @@
     },
     {
       "id": "dashboard",
-      "description": "Use when building or fixing a KPI dashboard that decision-makers will actually open and act on within one screen — arranging which metrics earn a tile, framing each tile so it answers a decision at a glance, and picking the right chart per metric. Triggers: 'build a KPI dashboard for leadership', 'exec dashboard on one screen', 'nobody opens the dashboard we built', '20 tiles and I still can't tell if the business is healthy', 'which chart for each of these metrics', 'munta un dashboard de KPIs per a direcció amb el north-star a dalt', 'el dashboard tiene demasiados gráficos y nadie lo mira'. NOT defining the metrics or their targets (that is kpi-framework), wiring the data (that is analytics), or writing a narrative status report (that is reporting).",
+      "description": "Use when building or fixing a KPI dashboard decision-makers must read in one screen: which metrics earn a tile, how each tile is framed to answer a decision, and which chart fits it. NOT defining the metrics or their targets (that is kpi-framework), wiring the data (that is analytics), or writing a narrative status report (that is reporting).",
       "tags": [
         "kpi-dashboard",
         "data-visualization",
@@ -1067,7 +1067,7 @@
     },
     {
       "id": "data-cleaning",
-      "description": "Use when a raw dataset is too dirty to trust — nulls and sentinels (-1, 999, \\\"N/A\\\"), duplicate rows, inconsistent categories (USA / U.S. / United States), mixed types in one column, junk whitespace/encoding, out-of-range numbers or malformed dates — and you need it cleaned the same way every time, with a schema that fails loud on bad input. Triggers: 'clean and dedupe this CSV', 'normalize these messy categories', 'why did my integer column turn into floats', 'build a repeatable cleaning pipeline', 'add a validation gate before this feeds my model', 'quarantine the bad rows instead of dropping them', 'limpiar y deduplicar este dataset', 'normalitzar dades brutes abans d''analitzar', 'mis fechas se parsean mal y unas filas se duplican'. NOT producing or repairing a spreadsheet/formula/.xlsx (that is spreadsheet-ops), NOT scraping rows off a website (that is data-scraper), NOT parsing fields out of PDFs/HTML (that is structured-extraction).",
+      "description": "Use when a raw table is too dirty to trust — nulls, sentinels, duplicate rows, category sprawl, mixed types, bad dates — and you need a re-runnable clean() plus a schema gate that fails loud. NOT emitting .xlsx (that is spreadsheet-ops), NOT acquiring rows (that is data-scraper), NOT parsing PDF/HTML into rows (that is structured-extraction).",
       "tags": [
         "data-cleaning",
         "data-quality",
@@ -1092,7 +1092,7 @@
     },
     {
       "id": "data-policy",
-      "description": "Use when an operator needs the internal data-governance machinery a business runs on — a retention schedule (how long each data category is kept and what happens at expiry), the lawful basis per activity, a Record of Processing Activities (ROPA), or a consent capture/withdrawal model; symptoms include 'how long can we keep this', a paper policy that never runs in systems, or data still in backups past its retention. Triggers: 'write our data retention policy', 'how long can we keep customer/HR/support/log data', 'set up a ROPA', 'lawful basis consent or legitimate interest', 'design our consent capture and withdrawal flow', 'auto-deletion with legal-hold exceptions', 'we delete from prod but backups still have it', 'política de conservación de datos', 'cuánto tiempo guardamos los datos'. NOT the public-facing privacy notice or DSAR handling (that is gdpr-privacy), NOT SOC 2 audit posture (that is compliance), and NOT the database TTL/partition-drop mechanics (that is db-migrations).",
+      "description": "Use when building internal data-governance machinery: a retention schedule (period, lawful basis, expiry action, system where deletion runs), an Art. 6 lawful-basis register, an Art. 30 ROPA, or a consent capture/withdrawal model. NOT the public privacy notice or DSAR handling (that is `gdpr-privacy`), NOT SOC 2 posture (that is `compliance`).",
       "tags": [
         "data-governance",
         "retention",
@@ -1115,7 +1115,7 @@
     },
     {
       "id": "data-scraper",
-      "description": "Use when you need data that lives on a website with no usable API — listings, prices, public records, directories — and the scrape must stay legal and not get blocked. Triggers: 'scrape this site', 'extract data from a webpage', 'build a crawler', 'pull all the prices off this catalog', 'my scraper keeps getting 429s / IP-banned', 'the selectors break every time the site redesigns', 'is it legal to scrape this without getting sued', 'extreure dades d'una web', 'scrapear una página sin que me bloqueen'. NOT parsing HTML/PDF you already have into fields (that is structured-extraction), NOT a site that already exposes a documented API or key (that is api-connector-builder).",
+      "description": "Use when data lives on a website with no usable API — listings, prices, public records — and the scrape must stay legal and not get blocked: legal gate, extraction path, durable selectors, pacing, resilience. NOT parsing bytes you already hold into fields (that is structured-extraction), NOT a documented API or key (that is api-connector-builder).",
       "tags": [
         "web-scraping",
         "crawler",
@@ -1156,7 +1156,7 @@
     },
     {
       "id": "debug",
-      "description": "Use when something is broken and the impulse is to start patching — a bug, a failing or flaky test, a crash, an exception, a wrong result, a regression, or behavior nobody can explain — and you want the root cause found BEFORE any fix is proposed. The on-demand rsc-sdd diagnosis discipline, callable from inside implement (or any phase) the moment a check fails for a reason you don't understand. Triggers: 'debug this', 'why is this failing', 'this test is flaky', 'find the root cause', 'it works locally but not in CI', 'this used to work', 'track down this bug', 'the fix didn't stick', 'figure out why', 'NullPointer/segfault/500 out of nowhere', 'intermittent failure'. Fixes the ONE confirmed cause, then hands back. NOT writing a planned feature (that is `implement`), NOT the lint/test gate (that is `verify`), NOT adversarial diff reading (that is `review`). Honors the harness accompaniment dial.",
+      "description": "Use when something is broken — a failing or flaky test, crash, wrong result or regression — and the root cause must be reproduced and proven before any fix. On-demand; callable mid-`implement`. NOT a feature to spec or build (that is `specify`/`implement`), NOT the lint/test gate (that is `verify`), NOT adversarial diff reading (that is `review`).",
       "tags": [
         "debug",
         "bug",
@@ -1219,7 +1219,7 @@
     },
     {
       "id": "deployment",
-      "description": "Use when containerizing an app, writing a Dockerfile, setting up GitHub Actions CI/CD, choosing a deploy target, or deploying to Coolify, Vercel, or a Hetzner VPS — multi-stage builds (FastAPI/uv, Go/distroless, Next.js standalone, Flutter web, Postgres), BuildKit build secrets, image scanning (trivy/hadolint), OIDC to registries (no long-lived secrets), least-privilege GITHUB_TOKEN, zero-downtime/rolling deploys, env/secrets flow GitHub→Coolify, healthchecks, rollback, and a hosting decision matrix (Vercel vs Hetzner+Coolify vs a third option). Trigger phrases: 'dockerize', 'write a Dockerfile', 'CI pipeline', 'GitHub Actions', 'deploy', 'ship it', 'where should I host this', 'Coolify', 'Vercel', 'Hetzner', 'VPS', 'docker-compose for local dev'.",
+      "description": "Use when taking an app from source to live: choosing the deploy target from requirements (Hetzner+Coolify vs Vercel vs a third), then wiring container → CI → registry → host with build secrets, healthchecks and rollback. NOT one platform's mechanics (that is `coolify`, `vercel`, `railway`, `render`), NOT the Dockerfile alone (that is `docker`).",
       "tags": [
         "deploy",
         "docker",
@@ -1234,7 +1234,7 @@
     },
     {
       "id": "design",
-      "description": "Use when designing a modern UI, building/writing a high-converting landing page or web page, refreshing a hero, choosing type/color/spacing/motion, or making an interface feel premium instead of generic/AI-templated. Brand-grounded: reads the project's 02-DOCS brand study first and STOPS to interview the user if it is missing or incomplete. Research-first: studies award-winning current work (Awwwards, Godly, Land-book, Refactoring UI, Linear/Stripe/Vercel/Resend-tier) and pulls current 2026 trends with citations before prescribing. Ships Tailwind v4 + Next.js 15 + React 19 patterns with correctly-stated WCAG 2.2 AA and Core Web Vitals (LCP/INP/CLS) as hard design constraints; ties to 'marketing' for the words and 'nextjs' for the build. Triggers: 'design a landing page', 'build a web page', 'make this look premium', 'pick a color palette', 'this UI feels generic', 'bento section', 'design review', 'modern UI'.",
+      "description": "Use when designing or refreshing a web UI or landing page — visual concept, type/color/spacing/motion tokens, composition, rescuing a UI that reads AI-generic, or a graded design review. Brand-grounded and research-first; ships Tailwind v4 + Next.js 15 under WCAG 2.2 AA and Core Web Vitals budgets. NOT the words on the page (that is `marketing`), NOT the App Router build (that is `nextjs`).",
       "tags": [
         "design",
         "ux",
@@ -1618,7 +1618,7 @@
     },
     {
       "id": "fable-operator",
-      "description": "Use when a task needs reliable, verified, well-communicated reasoning: analysis, debugging, review, advice, decisions, explanations, technical questions, or drafting anything the user will act on — any substantive request, even when rigor isn't asked for. Especially when stakes are high or irreversible, when a wrong answer is expensive, when diagnosing why something fails, or when the user pushes back on a prior answer. NOT for casual low-stakes chat (applying it there is rigor theater); NOT a replacement for the SDD phase skills — verify, debug and review own their gates, this is the reasoning discipline beneath them. Invoke on demand with /fable-operator.",
+      "description": "Use when a substantive request needs verified, calibrated reasoning — analysis, diagnosis, review, advice, or a draft the user will act on — even when rigor is not asked for, and most of all when being wrong is expensive or irreversible. NOT casual chat (rigor theater), NOT the SDD gates `verify`, `debug`, `review`; this is the discipline beneath them.",
       "tags": [
         "reasoning",
         "verification",
@@ -1663,7 +1663,7 @@
     },
     {
       "id": "fastapi",
-      "description": "Use when building, reviewing, testing, securing or deploying a FastAPI / async Python service. Triggers: creating endpoints/routers, Pydantic v2 models (Create/Update/Response), dependency injection, async SQLAlchemy 2.0 + Alembic, OAuth2/JWT auth + RBAC, pytest + httpx ASGITransport tests, CORS / rate limiting / secret handling, uvicorn/gunicorn + structured logging + healthchecks + graceful shutdown, pyproject + ruff + mypy strict + uv. Any .py file importing fastapi, pydantic, sqlalchemy, starlette, or a pyproject.toml declaring those.",
+      "description": "Use when building, reviewing, testing, securing or shipping a FastAPI / async Python service — routers, Pydantic v2 schemas, dependency injection, async SQLAlchemy 2.0, OAuth2/JWT, ASGITransport tests, production wiring. NOT language-level Python or packaging (that is `python`), NOT engine-level SQL (that is `postgresdb`), NOT framework-agnostic REST contracts (that is `api-design`).",
       "tags": [
         "python",
         "api",
@@ -1766,7 +1766,7 @@
     },
     {
       "id": "flutter",
-      "description": "Use when building, structuring, testing or optimizing a Flutter app (Dart 3, Riverpod 3 / Bloc, go_router, Material 3, freezed, widget & golden tests). Triggers: creating a Flutter feature, choosing state management, wiring navigation/auth guards, modeling async/error state, JSON/dio data layer, killing widget rebuilds/jank, or writing widget/golden/integration tests. Stack: Flutter 3.44 / Dart 3.12.",
+      "description": "Use when building, structuring, testing or optimizing a Flutter app — feature-first layering, Riverpod 3 or Bloc, typed go_router, freezed models, a dio data layer, Material 3, jank hunting, widget/golden tests. Targets Flutter 3.44 / Dart 3.12. NOT React Native (that is `react-native`), NOT Compose Multiplatform (that is `compose-multiplatform`).",
       "tags": [
         "flutter",
         "dart",
@@ -2086,7 +2086,7 @@
     },
     {
       "id": "go",
-      "description": "Use when writing, reviewing, testing, securing, or shipping Go code or HTTP services - Go idioms (simplicity, useful zero value, accept-interfaces/return-structs, functional options, embedding), error wrapping with %w and errors.Is/As, goroutines/channels/context/errgroup concurrency, net/http with Go 1.22 routing, log/slog structured logging, graceful shutdown, cmd/-internal/-pkg/ layout, table-driven tests with httptest/-race/fuzz, and govulncheck/SQL-parametrization security. Triggers - \\\"write a Go service/handler\\\", \\\"review this Go code\\\", \\\"add tests\\\", \\\"fix a goroutine leak\\\", \\\"is this idiomatic Go\\\", .go files, go.mod, net/http, slog, chi, errgroup.",
+      "description": "Use when writing, reviewing, testing, or shipping Go code and HTTP services: idioms, `%w` error wrapping, goroutine/context/errgroup concurrency, net/http 1.22 routing, log/slog, project layout, table-driven tests, Go hardening. NOT language-agnostic threat modeling (that is `secure-coding`), NOT Dockerfile/CI shipping (that is `deployment`).",
       "tags": [
         "go",
         "golang",
@@ -2280,7 +2280,7 @@
     },
     {
       "id": "implement",
-      "description": "Use when an approved plan and task list exist and it is time to turn them into working, tested code — the SDD phase AFTER analyze and BEFORE verify. Enforces TDD discipline: a test fails before the code that makes it pass. Triggers: 'implement the plan', 'build out the tasks', 'start coding this feature', 'work through the task list', 'execute the implementation', 'write the code for this spec', 'do task 3', 'continue implementing', 'red-green-refactor this', 'implement with tests first'. Delegates concrete test tooling to the stack skill (fastapi/go/nextjs/flutter) and fans independent tasks out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the final lint/test/audit gate (that is `verify`).",
+      "description": "Use when an approved plan and task list exist and it is time to turn them into working, tested code — the SDD phase after `analyze` and before `verify`. Enforces TDD: a failing test comes before the code that makes it pass, one task at a time, appended to a progress ledger that survives compaction. Delegates test tooling to the stack skill and fans disjoint tasks out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the final lint/test/audit gate (that is `verify`).",
       "tags": [
         "sdd",
         "implement",
@@ -2812,7 +2812,7 @@
     },
     {
       "id": "marketing",
-      "description": "Use when writing the WORDS for a landing page, marketing site, or launch — value proposition, hero/headline, section-by-section landing copy, microcopy, CTAs, email and launch sequences, channel-adapted messaging (X/LinkedIn/newsletter), SEO-aware copy structure, and SEO/GEO optimization (technical SEO, JSON-LD schema, and getting cited by AI engines like ChatGPT/Perplexity/Gemini/Claude). Grounds every output in the project's brand study under 02-DOCS; if that study is missing or incomplete, it STOPS and interviews the user first. Triggers: 'write the landing copy', 'write the hero', 'value proposition', 'rewrite this CTA', 'write the launch emails', 'turn features into benefits', 'adapt this for LinkedIn/X', 'this copy sounds like AI', 'marketing copy', 'seo', 'geo', 'ai search', 'schema', 'json-ld', 'get cited by ChatGPT', 'rank on Google', 'keyword research', 'meta description', 'AI Overview'. NOT the pixels (that's `design`) and NOT the build (that's `nextjs`).",
+      "description": "Use when the words span a marketing surface — value proposition, section copy, microcopy, launch and email sequences, channel adaptation, SEO-aware structure — grounded in the brand study, which it stops and builds if missing. NOT one conversion page (that is `landing-copy`), NOT tone rules (that is `brand-voice`), NOT pixels (that is `design`).",
       "tags": [
         "marketing",
         "copywriting",
@@ -3094,7 +3094,7 @@
     },
     {
       "id": "nextjs",
-      "description": "Use when building, reviewing, testing, securing, or optimizing a Next.js App Router app (Next.js 15/16, React Server Components, \\\"use client\\\"/\\\"use server\\\", server actions, route handlers, layouts, streaming/Suspense, the App Router caching model, TypeScript, Auth.js, Vitest/Playwright, CSP/security headers). Triggers on `app/` directory work, `next.config.ts`, `proxy.ts`/`middleware.ts`, server actions, route handlers, `use cache`, `useActionState`, RSC boundary questions, hydration errors, and Next.js perf/Core Web Vitals.",
+      "description": "Use when building, reviewing, testing, securing, or optimizing a Next.js App Router app: Server vs Client boundaries, `use server` actions, route handlers, the v15 vs v16 `use cache` caching model, metadata/SEO, auth, and Core Web Vitals. NOT framework-agnostic React or a Vite SPA (that is `react`), and NOT visual/UI design (that is `design`).",
       "tags": [
         "nextjs",
         "react",
@@ -3270,7 +3270,7 @@
     },
     {
       "id": "parallel",
-      "description": "Use when you have two or more genuinely independent pieces of work and want to fan them out across subagents instead of doing them one after another — disjoint scope, no shared files or state, no ordering dependency, then gather and reconcile the results. Triggers: 'do these in parallel', 'fan this out', 'split this across subagents', 'run these at the same time', 'these tasks are independent, parallelize them', 'dispatch agents for each module', 'hazlo en paralelo', 'reparte esto en subagentes', 'a la vez'. The on-demand SDD helper that implement calls when its task list has disjoint clusters; it owns the partition→dispatch→gather→reconcile discipline. NOT for sequential or data-dependent steps (serialize those), NOT the TDD loop itself (that stays inside implement), NOT git isolation (that's worktrees).",
+      "description": "Use when two or more pieces of work are genuinely independent — disjoint files, no shared state, no ordering edge — and should fan out across subagents, then be gathered and reconciled under a combined test suite. Decides WHAT can run concurrently; NOT the isolation it runs in (that is `worktrees`), NOT the per-unit TDD loop (that is `implement`).",
       "tags": [
         "parallel",
         "subagents",
@@ -3390,7 +3390,7 @@
     },
     {
       "id": "plan",
-      "description": "Use when turning an approved, clarified spec into a technical implementation plan — the SDD phase between clarify and tasks. Covers architecture and component boundaries, the public interfaces/contracts, data model and data flow, the testing strategy, sequencing, and the risk register. Triggers: 'plan this feature', 'how should we build this', 'design the architecture', 'write the implementation plan', 'plan.md', 'what's the data flow', 'how do we test this', 'what are the risks', 'we have the spec, now what'. Reads the spec under 02-DOCS/wiki/sdd/specs/ and the constitution; writes 02-DOCS/wiki/sdd/plans/<slug>.md; defers concrete stack mechanics (framework APIs, ORM, test tooling) to the relevant stack skill. NOT requirements capture (that's specify), NOT ambiguity removal (that's clarify), NOT the task breakdown (that's tasks). Honors the harness accompaniment dial.",
+      "description": "Use when an approved, clarified spec must become a technical blueprint before any code — the SDD phase between clarify and tasks: architecture, contracts, data flow, testing strategy, sequencing and risks, at structure altitude, never framework syntax. NOT the what/why spec (that is `specify`), NOT the ambiguity sweep (that is `clarify`), NOT the task breakdown (that is `tasks`), NOT the code (that is `implement`).",
       "tags": [
         "sdd",
         "plan",
@@ -3445,7 +3445,7 @@
     },
     {
       "id": "postgresdb",
-      "description": "Use when designing or reviewing a PostgreSQL schema (types, constraints, normalization), writing or optimizing SQL, choosing or adding indexes, reading EXPLAIN/ANALYZE, planning a migration (expand-contract, concurrent index, batched backfill), or operating/securing Postgres (roles, RLS, PgBouncer pooling, VACUUM/autovacuum, pg_stat_statements, declarative partitioning, backups/PITR). Triggers - \"slow query\", \"add an index\", \"EXPLAIN\", \"design this table\", \"zero-downtime migration\", \"row level security\", \"connection pool\", \"N+1\", \"JSONB\", \"full-text search\", \"pgvector\". PostgreSQL 16; ORM-agnostic (SQLAlchemy/Alembic, Prisma, golang-migrate, raw SQL).",
+      "description": "Use when PostgreSQL engine behaviour decides the answer — schema and type design, index choice, reading EXPLAIN on a slow query, zero-downtime DDL and backfills, or ops (roles, RLS, pooling, vacuum, partitioning, PITR). PG16, ORM-agnostic. NOT portable query logic (that is `sql`), NOT a managed provider's platform surface (that is `neon`).",
       "tags": [
         "postgres",
         "sql",
@@ -3483,7 +3483,7 @@
     },
     {
       "id": "presentations",
-      "description": "Use when building a presentation deck — a pitch deck, sales deck, product/keynote talk, investor deck, board/QBR review, or a leave-behind one-pager — and you need a stunning, on-brand result exported to PDF and/or an editable PPTX. Covers two production pipelines: design-led Markdown decks (Marp/Slidev themed from the project's design tokens, exported to PDF + PPTX) and native editable PowerPoint via python-pptx (masters, layouts, native charts, tables, speaker notes). Grounds copy in the brand study and visuals in the design tokens; defers the WORDS to `marketing` and the visual system to `design`. Triggers: 'make a deck', 'build a pitch/sales/investor deck', 'slides for my talk', 'turn this doc into slides', 'export to PowerPoint/PPTX', 'Marp', 'Slidev', 'python-pptx', 'keynote deck', 'one-pager'. NOT a video skill (motion is used with restraint, not as the medium).",
+      "description": "Use when building, theming, or exporting a presentation deck — pitch, sales, keynote, board/QBR, leave-behind one-pager — from slide structure to a token-based theme to PDF or editable PPTX (Marp, Slidev, python-pptx). NOT the words (that is `marketing`), NOT the visual tokens (that is `design`), NOT the investor story arc (that is `pitch-deck`).",
       "tags": [
         "presentations",
         "pptx",
@@ -3645,7 +3645,7 @@
     },
     {
       "id": "python",
-      "description": "Use when writing, reviewing, modernizing, typing, or packaging Python at the language level (any framework or none) - PEP 695 generics and the type-alias statement, mypy --strict typing, dataclasses/Protocol/TypedDict/Enum choices, asyncio.TaskGroup and structured concurrency, stdlib idioms (pathlib/itertools/functools/contextlib/match), src/ layout + pyproject.toml managed with uv, and a ruff+mypy+pytest verify gate. Triggers: 'set up a Python project with uv', 'is this Pythonic / modernize to 3.12+', 'make mypy --strict pass', 'convertir este gather a TaskGroup', 'dataclass slots frozen vs NamedTuple', any .py file or pyproject.toml. NOT building a FastAPI/ASGI service (that is fastapi), NOT a deep pytest fixture/mock suite (that is testing-py).",
+      "description": "Use when the task is Python itself, in any framework or none: PEP 695 generics, mypy --strict typing, dataclass/Protocol/TypedDict/Enum choices, asyncio.TaskGroup, stdlib idioms, src/ layout + pyproject.toml with uv, ruff+mypy+pytest gate. NOT a FastAPI/ASGI service (that is fastapi), NOT a deep pytest suite (that is testing-py).",
       "tags": [
         "python",
         "typing",
@@ -3732,7 +3732,7 @@
     },
     {
       "id": "react",
-      "description": "Use when building or reviewing a client-side React SPA on Vite (React 19.2 — components, where state lives, hooks, client routing, server data fetching) and NOT server-rendered React. Triggers: 'React + Vite app', 'I'm fetching in useEffect and it fires twice', 'where should this filter state live', 'my list flickers and the wrong row updates', 'set up React Router', 'cómo hago data fetching en React sin useEffect', 'per què es re-renderitza tot l'arbre'. NOT App Router / server components / SSR (that is nextjs); NOT mobile screens (that is react-native).",
+      "description": "Use when building or reviewing a client-side React SPA bundled by Vite (React 19.2): components, where state lives, hooks, server data fetching, client routing, re-render and effect bugs. NOT App Router / server components / SSR (that is `nextjs`); NOT native screens (that is `react-native`).",
       "tags": [
         "react",
         "vite",
@@ -3957,7 +3957,7 @@
     },
     {
       "id": "review",
-      "description": "Use when giving OR receiving an adversarial code review in the rsc SDD chain — after implement/verify and before ship. Triggers: 'review this PR', 'review my diff', 'revisa este código', 'critique this change', 'be my reviewer', 'tear this apart', 'what's wrong with this code', plus the receiving side: 'the reviewer said X', 'address this review comment', 'they want me to change Y', 'do I have to do what the review says', 'PR feedback', 'someone left comments on my PR'. Covers the full loop: producing a rigorous, evidence-backed review keyed to the spec/plan/constitution under 02-DOCS/wiki/sdd/, AND processing incoming feedback with technical rigor — verify each finding against the code before agreeing, push back on the wrong ones, fix the real ones. NOT running lint/type/test gates (that's the verify phase) and NOT merging/closing the branch (that's ship). No performative agreement; points to ship when the diff survives review.",
+      "description": "Use when a green diff needs adversarial judgment in the rsc SDD chain, between verify and ship — give a review keyed to the spec/plan/constitution in 02-DOCS/wiki/sdd/, or receive one and verify each comment before agreeing. NOT running lint/type/tests (that is `verify`), NOT the spec-less standalone pass (that is `code-review`), NOT merging (that is `ship`).",
       "tags": [
         "sdd",
         "review",
@@ -4056,7 +4056,7 @@
     },
     {
       "id": "rust",
-      "description": "Use when writing, reviewing, testing, or shipping Rust code or async services - ownership/borrowing (move vs borrow vs clone, Arc/Rc/RefCell, lifetimes), error modeling with Result/?/thiserror/anyhow, async on tokio (.await, JoinSet, select!, spawn_blocking, Send-across-await), axum 0.8 HTTP handlers/extractors/State, cargo test (unit/integration/doctests), and sqlx + cargo-audit security. Triggers: \\\"write an axum/tokio service\\\", \\\"is this idiomatic Rust\\\", \\\"add tests\\\", compiler error text like \\\"value moved here\\\", \\\"borrow of moved value\\\", \\\"future cannot be sent between threads safely\\\", \\\"does not live long enough\\\", \\\"cannot borrow as mutable\\\", \\\"el borrow checker no em deixa\\\", \\\"petición async en Rust\\\", .rs files, Cargo.toml, thiserror, sqlx. NOT desktop/GUI shells (that is tauri).",
+      "description": "Use when writing, reviewing, testing, or shipping Rust — ownership and the borrow checker (move/borrow/clone, Arc/RefCell, lifetimes), errors with Result/`?`/thiserror/anyhow, async on tokio, axum 0.8 services, cargo test, and sqlx + cargo-audit hardening. NOT the same service in Go (that is `go`), NOT a desktop webview shell (that is `tauri`).",
       "tags": [
         "rust",
         "tokio",
@@ -4139,7 +4139,7 @@
     },
     {
       "id": "sdd-init",
-      "description": "Use when calibrating an existing repo before running the rsc SDD flow: detecting stack, package manager, test runners, lint/type/build commands, monorepo signals, artifact store, execution mode, review budget, strict TDD capability, and project skill registry. Triggers: 'calibrate this repo for SDD', 'run sdd init', 'detect my test runner before implementing', 'set up SDD config', 'prepare this repo for spec-driven development', 'configure per-phase model routing', 'assign models per SDD phase', 'set up cheaper model for implementation'. NOT first-contact user/workspace bootstrap (init), NOT 01-TOOLS/02-DOCS scaffolding (harness), NOT writing a feature spec (specify).",
+      "description": "Use when calibrating an existing repo for the rsc SDD chain: detect stack, package manager, test runners and apply/verify commands, refresh the skill registry, and write the runtime config at 02-DOCS/wiki/sdd/config.yaml. NOT the dispatcher that routes SDD phases (that is `sdd`), NOT first-contact user/workspace bootstrap (that is `init`).",
       "tags": [
         "sdd",
         "init",
@@ -4160,7 +4160,7 @@
     },
     {
       "id": "secure-coding",
-      "description": "Use when threat-modeling a feature, reviewing code or a diff for security, hardening authentication/authorization, handling secrets, configuring CORS/CSP/security headers, or fixing OWASP-class vulnerabilities (broken access control, injection, SSRF, auth failures, supply-chain) in FastAPI/Python, Go, Next.js, or Flutter. Triggers: 'security review', 'threat model this', 'is this safe', 'harden auth', 'rotate secrets', 'fix this vuln', 'OWASP', 'why is this endpoint exposed', before merging an endpoint that touches auth/payments/PII/uploads.",
+      "description": "Use when securing application code: threat-modeling a feature, security-reviewing a diff, hardening auth/authz, secrets, CORS/CSP, or fixing OWASP-class bugs (access control, injection, SSRF, supply chain) in FastAPI, Next.js, Go or Flutter. NOT running the scanners (that is security-scan), NOT agent prompt-injection guardrails (that is agent-safety).",
       "tags": [
         "security",
         "owasp",
@@ -4216,7 +4216,7 @@
     },
     {
       "id": "ship",
-      "description": "Use when the work is complete and verified and it is time to CLOSE the development branch — the final phase of the rsc SDD chain, after review approves the diff. Triggers: 'ship it', 'close the branch', 'open the PR', 'merge this', 'merge into main', 'create the pull request', 'how do I land this work', 'finish this feature', 'haz el merge', 'abre el PR', 'cierra la rama', 'súbelo a main', 'clean up the branch', 'I'm done, what now'. HARD RULE it enforces: git authorship is ALWAYS Eric — never a Co-Authored-By or 'generated with' footer in any commit or PR. NOT running lint/type/test (that is `verify`), NOT reading the diff adversarially (that is `review`), NOT deploy/release mechanics to a server (that is `deployment`). Honors the harness accompaniment dial.",
+      "description": "Use when a verified, review-approved branch has to land — the close of the rsc SDD chain: safety checks, then three landing options (merge, PR, park/discard), authorship always Eric and never an AI trailer. NOT running the gates (that is `verify`), NOT reading the diff for defects (that is `review`), NOT shipping to a server (that is `deployment`).",
       "tags": [
         "sdd",
         "ship",
@@ -4647,7 +4647,7 @@
     },
     {
       "id": "tasks",
-      "description": "Use when you have an approved implementation plan and need to break it into an ordered, independently-verifiable task list before any code is written — the SDD `tasks` phase (GitHub Spec Kit lineage: constitution → specify → clarify → plan → tasks → analyze → implement). Turns a plan into numbered tasks, each with an explicit done-check (the literal command or observation that proves it complete), dependencies, and a parallel-safe marker. Triggers: 'break the plan into tasks', 'make a task list', 'task breakdown', 'descompón el plan en tareas', 'lista de tareas', 'what are the steps to build this', 'turn the plan into a checklist', 'sequence the work', 'which tasks can run in parallel', 'give each task a done-check'. Appends the task list into the plan artifact under 02-DOCS/wiki/sdd/plans/<slug>.md. NOT writing the plan itself (that is `plan`), NOT the consistency gate over the artifacts (that is `analyze`), NOT executing the tasks (that is `implement`).",
+      "description": "Use when an approved plan needs slicing into an ordered task list before any code — the SDD `tasks` phase. Each row carries a literal done-check, dependencies, a parallel-safe marker and a spec trace, appended to the plan artifact. NOT writing the plan (that is `plan`), NOT the consistency gate (that is `analyze`), NOT executing the tasks (that is `implement`).",
       "tags": [
         "sdd",
         "tasks",
@@ -4893,7 +4893,7 @@
     },
     {
       "id": "typescript",
-      "description": "Use when writing, reviewing, or fixing TypeScript type code (.ts/.tsx/.d.ts), modeling data with generics/unions/branded types, or configuring tsconfig and the build toolchain - the language and type system itself, not any runtime or framework. Triggers: \\\"make this generic preserve the literal type\\\", \\\"why won't this narrow / why won't TypeScript narrow this union\\\", \\\"type X is not assignable to type Y, fix the type not cast it\\\", \\\"set up a strict tsconfig with project references\\\", \\\"convert these magic strings into a discriminated union with exhaustiveness\\\", \\\"bundler vs nodenext moduleResolution\\\", \\\"configura el tsconfig en modo estricto y elimina los any\\\", \\\"por qué no estrecha el tipo\\\". NOT the Node runtime, fs/streams/http server (that is nodejs); NOT React/Next component wiring (that is react/nextjs); NOT ORM schema type-gen (that is drizzle-orm).",
+      "description": "Use when writing or fixing TypeScript type code (.ts/.tsx/.d.ts), modeling data with generics/unions/branded types, diagnosing narrowing failures, or configuring tsconfig and the build toolchain. NOT runtime code, fs/streams/http (that is `nodejs`); NOT component/route typing (that is `react`/`nextjs`); NOT ORM type-gen (that is `drizzle-orm`).",
       "tags": [
         "typescript",
         "types",
@@ -5040,7 +5040,7 @@
     },
     {
       "id": "verify",
-      "description": "Use when implementation is finished and someone is about to say it's done, shipped, working, or ready to merge in the rsc-sdd flow — the post-implementation GATE that demands evidence before any 'done' claim. Triggers: 'verify this feature', 'is it done?', 'run the checks', 'lint/type/test before merge', 'did the acceptance criteria pass', 'confirm the tasks are complete', 'gate before review', 'audit the change', 'are we green', 'prove it works'. Runs the relevant stack skill's scripts/verify.sh (lint, type-check, tests, coverage, dependency/vuln audit), then walks every task done-check and every spec acceptance criterion, attaching the actual command output as evidence. Writes the verification record under 02-DOCS/wiki/sdd/ and points to the review phase. NOT writing tests or features (that is implement), NOT adversarial code reading (that is review), NOT root-cause diagnosis of a failing test (that is debug). Honors the harness accompaniment dial.",
+      "description": "Use when implementation is finished and about to be called done or merged — the rsc-sdd evidence gate: runs the stack's scripts/verify.sh (lint, type, test, audit), walks every task done-check and acceptance criterion, records a dated verdict. NOT judging the diff by eye (that is `review`, spec-less `code-review`), NOT diagnosis (that is `debug`).",
       "tags": [
         "sdd",
         "verify",
@@ -5079,6 +5079,30 @@
       "profiles": []
     },
     {
+      "id": "viral-score",
+      "description": "Use to judge whether a short-form clip is worth publishing — scores a reel, short or podcast excerpt 0-100 on ten weighted criteria with automatic penalties, then ranks a batch and says where the cut-off falls. Run it on transcript candidates before rendering. NOT writing the hook or caption (that is `shortform-packaging`), NOT inventing the idea (that is `shortform-ideation`), NOT executing the edit (that is `shortform-editing`).",
+      "tags": [
+        "viral",
+        "score",
+        "rubric",
+        "shortform",
+        "reels",
+        "shorts",
+        "tiktok",
+        "ranking",
+        "evaluation",
+        "retention"
+      ],
+      "recommends": [
+        "shortform-packaging",
+        "shortform-ideation",
+        "shortform-editing",
+        "shortform-strategy",
+        "video-shorts"
+      ],
+      "profiles": []
+    },
+    {
       "id": "vllm",
       "description": "Use when self-hosting an open-weight LLM for high-throughput, concurrent serving with vLLM — running `vllm serve` as an OpenAI-compatible endpoint, splitting a model across GPUs with tensor/pipeline parallelism, loading AWQ/GPTQ/FP8/compressed-tensors quants, serving one or many LoRA adapters, or debugging KV-cache OOM from --gpu-memory-utilization / --max-model-len. Triggers: 'serve a 70B to many users at once', 'point my OpenAI client at a self-hosted model', 'split a model across 4 GPUs with tensor parallel', 'why does vllm OOM at long context', 'serve my fine-tuned LoRA adapter', 'health check my vllm server', 'servir un modelo abierto con alta concurrencia en mis propias GPUs'. NOT renting/provisioning the GPU box itself (that is runpod / modal), NOT single-user laptop inference (that is ollama), NOT a hosted inference API you do not operate (that is together-fireworks / huggingface).",
       "tags": [
@@ -5099,7 +5123,7 @@
     },
     {
       "id": "vue-nuxt",
-      "description": "Use when building, reviewing, or optimizing a Vue 3 + Nuxt 4 app — Composition API/`<script setup>`, SSR/SSG/hybrid rendering, the `app/`+`server/` structure, SSR-safe data fetching and shared state, Nitro server routes, reactivity/hydration discipline. Triggers: `.vue` SFCs, `useFetch`/`useAsyncData`/`$fetch`, `useState`/Pinia, `defineModel`/`useTemplateRef`, hydration node mismatch, double-fetch on SSR, `server/api` handlers, `routeRules`, Nuxt 3→4 migration, `nuxt.config.ts`, 'app SSR no hidrata', 'per què es fa doble fetch'. NOT React/RSC (that is nextjs), NOT a static multi-framework site (that is astro).",
+      "description": "Use when building or reviewing a Vue 3 + Nuxt 4 app — `<script setup>` reactivity, SSR/SSG/hybrid `routeRules`, the `app/`+`server/` layout, SSR-safe fetching (`useFetch`/`useAsyncData`) and state (`useState`/Pinia), Nitro routes, hydration mismatches, Nuxt 3→4 migration. NOT React/RSC (that is nextjs), NOT a static islands site (that is astro).",
       "tags": [
         "vue",
         "nuxt",
@@ -5202,7 +5226,7 @@
     },
     {
       "id": "worktrees",
-      "description": "Use when feature work needs an isolated workspace before code is touched — branch or git worktree off the default branch so the main checkout stays clean while a plan is executed. Triggers: 'isolate this work', 'I don't want to touch main', 'set up a worktree', 'work on a branch for this', 'spin up an isolated checkout', 'start the feature without dirtying my tree', 'create a worktree for the plan', 'I'm on main and need to implement', 'keep the working tree clean', 'parallel checkout for this branch'. The on-demand SDD step that runs right before implement: it confirms a clean, isolated workspace exists (native EnterWorktree first, git worktree fallback), records nothing to runtime, and hands back to implement. NOT the task breakdown (tasks), NOT writing code (implement), NOT branch cleanup/merge after the work (that's the ship phase). Honors the harness accompaniment dial.",
+      "description": "Use when work is about to become commits and needs isolation first — check the tree state, then branch or cut a git worktree off a clean base (native EnterWorktree first, git fallback) so implement never runs on main. NOT what may run concurrently inside those workspaces (that is `parallel`), NOT the merge/cleanup after (that is `ship`).",
       "tags": [
         "git",
         "worktree",

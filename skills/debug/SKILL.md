@@ -1,6 +1,6 @@
 ---
 name: debug
-description: "Use when something is broken and the impulse is to start patching — a bug, a failing or flaky test, a crash, an exception, a wrong result, a regression, or behavior nobody can explain — and you want the root cause found BEFORE any fix is proposed. The on-demand rsc-sdd diagnosis discipline, callable from inside implement (or any phase) the moment a check fails for a reason you don't understand. Triggers: 'debug this', 'why is this failing', 'this test is flaky', 'find the root cause', 'it works locally but not in CI', 'this used to work', 'track down this bug', 'the fix didn't stick', 'figure out why', 'NullPointer/segfault/500 out of nowhere', 'intermittent failure'. Fixes the ONE confirmed cause, then hands back. NOT writing a planned feature (that is `implement`), NOT the lint/test gate (that is `verify`), NOT adversarial diff reading (that is `review`). Honors the harness accompaniment dial."
+description: "Use when something is broken — a failing or flaky test, crash, wrong result or regression — and the root cause must be reproduced and proven before any fix. On-demand; callable mid-`implement`. NOT a feature to spec or build (that is `specify`/`implement`), NOT the lint/test gate (that is `verify`), NOT adversarial diff reading (that is `review`)."
 tags: [debug, bug, troubleshoot]
 recommends: []
 profiles: [core, full]
@@ -20,31 +20,9 @@ The one rule everything else serves: **no fix before a reproduced, isolated, con
 you cannot make the bug happen on demand, you cannot know you fixed it — you can only know the
 symptom stopped showing, which is not the same thing.
 
-This is a process skill. It does not own the test runner, the debugger, or the profiler — the
-**stack skills do** (`../fastapi/SKILL.md`, `../go/SKILL.md`, `../nextjs/SKILL.md`,
-`../flutter/SKILL.md`; data-layer issues `../postgresdb/SKILL.md`; security-shaped failures
-`../secure-coding/SKILL.md`). `debug` owns the *method*; it pulls the *mechanics* from whichever
-stack the failure lives in.
-
-## When to use / when not to
-
-Use when:
-
-- A test fails (or flakes) for a reason you don't fully understand, mid-`implement` or after.
-- A crash, exception, 500, segfault, or wrong output appears and nobody can yet say why.
-- A regression shows up ("this used to work") and you need the commit/change that caused it.
-- A fix was applied and the symptom came back, or a "fix" didn't actually stick.
-- The behavior differs between environments ("works locally, fails in CI").
-
-Do NOT use when:
-
-- You're writing a *planned* feature task and its expected failing test — that's `implement`'s
-  red→green→refactor; no mystery yet.
-- You're running the lint/type/test gate to confirm "done" — that's `verify` (it *reports* failures
-  and hands them here; it doesn't diagnose).
-- You're reading a clean diff adversarially for smells a test can't catch — that's `review`.
-- The "bug" is actually an unclear requirement or contradictory spec — that's `clarify`/`analyze`,
-  not a code defect.
+This is a process skill: it owns the *method*, never the instruments. The test runner, debugger,
+race detector and profiler belong to whichever stack the failure lives in — pull them from the
+delegation table below.
 
 ## Model tier — `heavy` (opt-in routing)
 
@@ -53,7 +31,9 @@ This phase's default model tier is **`heavy`** — root-cause diagnosis is deep 
 ## Read the room first (accompaniment dial)
 
 Before diagnosing, read `02-DOCS/wiki/harness/user-profile.md` for the technical + accompaniment
-level and match it. The *method* never changes with the dial — the volume does.
+level and match it; with no profile yet, assume non-technical — narrate the reasoning plainly and
+never apply a behavior-changing fix without a quick confirm. The *method* never changes with the
+dial — the volume does.
 
 | Level | While diagnosing you show… | Questions you ask |
 | --- | --- | --- |
@@ -62,10 +42,7 @@ level and match it. The *method* never changes with the dial — the volume does
 | **L2** decisions | each step's finding (repro, the half that isolated it, the cause) | confirm before a fix that changes behavior beyond the bug |
 | **L3** full | narrate the whole loop, teach the binary-search reasoning aloud | ask to contextualize the environment, recent changes, expectations |
 
-No profile yet → assume non-technical, narrate the reasoning plainly, and never apply a
-behavior-changing fix without a quick confirm.
-
-## The loop — five steps, in order
+## The loop — five steps, never skipped, never reordered
 
 ```text
 REPRODUCE   → make the bug happen on demand. A reliable repro (or a quantified flake rate) is the
@@ -83,11 +60,6 @@ VERIFY      → re-run the repro: symptom gone. Re-run the new test: green. Re-r
               suite: still green (no new red). For a flake, run it enough times to show the rate
               dropped to zero. Only now is it fixed.
 ```
-
-Never skip a step and never reorder. **Reproduce before isolate** — you can't bisect a bug you can't
-trigger. **Hypothesize before fix** — an edit with no stated cause is a guess wearing a commit
-message. **Verify before "fixed"** — the word *fixed* is a claim about the repro no longer firing
-and the test being green, nothing less.
 
 ### Reproduce — the entry ticket
 
@@ -169,9 +141,9 @@ Why missed — what let it through, so the class of bug doesn't recur
 
 Skip the trivial ones (a typo'd variable). Log the cause a future debugger would pay to know.
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization | Reality |
+| Anti-pattern | Why it fails |
 | --- | --- |
 | "I see the likely line — let me just change it and see." | That's guess-and-patch. Reproduce first; a fix to an untriggered bug proves nothing. |
 | "It's intermittent, you can't really reproduce it." | "Intermittent" is a rate to measure (k/N), not an excuse. Flakes have causes: state, order, races, time. |
@@ -185,8 +157,6 @@ Skip the trivial ones (a typo'd variable). Log the cause a future debugger would
 
 ## Red flags — stop and re-route
 
-- **You're editing code and you can't yet reproduce the bug** → stop; you're guessing. Get a repro
-  (or a measured flake rate) first.
 - **The "bug" is a spec contradiction or unclear requirement**, not a defect → route to
   `clarify` / `analyze`; debugging won't fix an ambiguity.
 - **The fix grows past the cause** (you're refactoring "while you're here") → split it out; keep the
@@ -209,15 +179,6 @@ Skip the trivial ones (a typo'd variable). Log the cause a future debugger would
 - [ ] Non-obvious cause logged to 02-DOCS/wiki/sdd/decisions.md
 - [ ] Handed the whole-gate re-run back to verify; resumed implement where the failure interrupted it
 ```
-
-## What this skill is NOT
-
-- **Not the feature builder.** Once the cause is fixed and verified, planned work resumes in
-  `implement` (its red→green→refactor for the *next* task, not this bug).
-- **Not the quality gate.** The lint/type/full-suite/audit run that licenses "done" is `verify`'s
-  job; `debug` proves the one bug dead and hands the gate back.
-- **Not a refactor pass.** Keep the fix minimal; broader cleanups are `implement`/`review` territory,
-  not smuggled into a bugfix.
 
 ## Where you are in the chain
 

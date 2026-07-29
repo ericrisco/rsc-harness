@@ -1,6 +1,6 @@
 ---
 name: analytics
-description: "Use when instrumenting product or web analytics — adding GA4 or PostHog to an app, designing an event taxonomy, wiring funnels, or making event collection consent-compliant. Triggers: 'set up GA4', 'install PostHog', 'track signup and checkout', 'design the event taxonomy', 'our purchase events fire twice / double-counting', 'PII leaking into event props', 'Consent Mode v2 broke our Google Ads conversions', 'missing client_id / distinct_id', 'instrumentar analítica de producto', 'añade GA4 / PostHog', 'los eventos se cuentan dos veces', 'consentiment abans de capturar dades'. NOT charting the captured data (that is dashboard), NOT choosing which metrics matter (that is kpi-framework), NOT experiment math (that is ab-testing), NOT the legal cookie text (that is gdpr-privacy)."
+description: "Use when instrumenting product or web analytics — GA4/PostHog SDK wiring, event taxonomy, funnels, double-counted events, consent gating, PII scrubbing. NOT charting that data (that is dashboard), NOT choosing which metrics matter (that is kpi-framework), NOT experiment math (that is ab-testing), NOT cookie-policy text (that is gdpr-privacy)."
 tags: [analytics, ga4, posthog, event-tracking, telemetry, consent-mode, funnels, privacy]
 recommends: [kpi-framework, ab-testing, gdpr-privacy, nextjs, dashboard, clickhouse-analytics]
 origin: risco
@@ -14,23 +14,7 @@ artifacts — an event taxonomy, tracking code (GA4 and/or PostHog), and a conse
 downstream of capture (charts, KPI choice, experiment stats, raw-event SQL, legal text) belongs to a
 sibling; see the routing table below.
 
-## The one rule that governs everything
-
-**An event name is a contract. Design the taxonomy before you write a single SDK call, and never rename a
-live event in production.** Why: every funnel, audience, dashboard, and saved insight downstream is keyed
-by the exact event name and property keys. Rename `signup_completed` to `sign_up` after launch and you
-silently fork the metric into two — the old funnel flatlines, the new one starts from zero, and nobody
-notices for a week. You can add events forever; you can never safely rename one. So the order of work is
-fixed: **taxonomy → SDK wiring → consent gate → PII scrub → funnel + validation.**
-
-## When to use
-
-- "Add analytics to my app", "set up GA4", "install PostHog", "track signups and checkout".
-- Designing or auditing an **event taxonomy** — naming convention, event-vs-property, identify-vs-anonymous.
-- Defining a **funnel** (signup → activation → purchase) and the events that feed it.
-- Debugging **double-counting**, missing `client_id`/`distinct_id`, or events that fire on every render.
-- Making collection **privacy-safe**: Consent Mode v2, opt-out, redacting emails/tokens from props.
-- **Server-side** events for actions off the browser (webhook, cron, payment confirmation).
+The order of work is fixed: **taxonomy → SDK wiring → consent gate → PII scrub → funnel + validation.**
 
 ## When NOT to use
 
@@ -46,9 +30,6 @@ fixed: **taxonomy → SDK wiring → consent gate → PII scrub → funnel + val
 | Predict future values from a series | `forecasting` |
 
 The load-bearing line: `analytics` = events flow **in**; `dashboard`/`reporting` = events flow **out**.
-`kpi-framework` decides *what* to measure; `analytics` makes the measurement *happen in code*.
-`ab-testing` owns the experiment math; `analytics` owns the event the experiment reads. `gdpr-privacy`
-owns the legal text; `analytics` owns the `gtag('consent', ...)` call and the PII scrubber.
 
 ## Decision: GA4 vs PostHog vs both
 
@@ -62,6 +43,12 @@ Running both is normal and fine. Keep **one taxonomy** shared across both so a `
 thing everywhere. Do not let the two tools drift into two naming schemes.
 
 ## Step 1 — Event taxonomy first, code second
+
+**An event name is a contract: design the taxonomy before you write a single SDK call, and never rename a
+live event in production.** Every funnel, audience, dashboard, and saved insight downstream is keyed by the
+exact event name and property keys. Rename `signup_completed` to `sign_up` after launch and you silently
+fork the metric into two — the old funnel flatlines, the new one starts from zero, and nobody notices for a
+week. You can add events forever; you can never safely rename one.
 
 Name events `object_action` in `snake_case`: `signup_completed`, `checkout_started`, `invoice_paid`. The
 **object** is the noun, the **action** is a past-tense verb. Detail goes in **properties**, never in the
@@ -208,12 +195,3 @@ the ≤ 40-char / leading-letter / charset rule; GA present without a `gtag('con
 | Server `user_id` ≠ browser `user_id` | Creates duplicate users; funnel splits | Use the same stable id on both sides; stitch within 48h |
 | `posthog.init` with no proxy host | Ad-blockers eat ~20-40% of events | Serve SDK + ingest under a first-party path (`/ingest`) |
 | Email as GA4 `user_id` | PII leak + Google policy violation | A stable opaque id (DB id / UUID) |
-
-## References
-
-- `references/ga4-setup.md` — gtag + Next.js install, full Consent Mode v2 with region-scoped defaults,
-  Measurement Protocol server event, recommended-event param tables, DebugView.
-- `references/posthog-setup.md` — `init` options, `identified_only`, EU vs US host, reverse proxy,
-  `@posthog/next` server capture, feature-flag read, autocapture tuning, `optIn`/`optOut`.
-- `references/event-taxonomy.md` — naming rules, starter SaaS + e-commerce catalog, property conventions,
-  identify vs group, the anti-rename rule.

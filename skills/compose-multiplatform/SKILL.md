@@ -1,6 +1,6 @@
 ---
 name: compose-multiplatform
-description: "Use when building shared UI across Android, iOS, and desktop from one Kotlin codebase with Compose Multiplatform — shared commonMain @Composables, expect/actual for platform divergence, native interop, multiplatform ViewModel/navigation/Koin. Triggers: 'share one Compose UI across Android and iOS', 'my expect has no actual and the build fails', 'where does this code go — commonMain or iosMain', 'embed a SwiftUI/UIKit view inside shared Compose with UIKitView', 'host shared Compose in a SwiftUI app', 'add a desktop target and package it', 'compartir la UI entre Android i iOS amb Kotlin', 'una sola UI para Android, iOS y escritorio'. NOT a single-platform native build (that is kotlin-android / swift-ios), and NOT Dart/Flutter cross-platform UI (that is flutter)."
+description: "Use when building one shared Compose UI in Kotlin across Android, iOS, and desktop — commonMain @Composables, expect/actual, source-set placement, native interop, multiplatform ViewModel/navigation/Koin. NOT a single-platform native build (that is kotlin-android / swift-ios), and NOT Dart/Flutter cross-platform UI (that is flutter)."
 tags: [kotlin, kmp, compose-multiplatform, cross-platform, shared-ui, expect-actual, ios, android]
 recommends: [kotlin-android, swift-ios, flutter, tauri]
 origin: risco

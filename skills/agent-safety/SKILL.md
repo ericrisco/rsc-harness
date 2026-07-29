@@ -1,6 +1,6 @@
 ---
 name: agent-safety
-description: "Use when putting guardrails on an LLM agent that already runs — limiting its task scope, gating its tools to least privilege, defending against prompt injection from untrusted content (web pages, emails, RAG docs), requiring human approval on irreversible actions, capping runtime, or after an agent did something it should not have. Triggers: 'lock down the MCP tools', 'the agent deleted prod', 'an email told it to wire money and it did', 'our support agent can run any shell command', 'the agent keeps repeating a wrong instruction across sessions', 'review what this autonomous agent is allowed to do before we ship', 'posa límits a l'agent', 'l'agent ha fet una cosa que no tocava'. NOT building the agent loop, tools, or RAG (that is building-agents)."
+description: "Use when bounding an LLM agent that already runs — scoping its task domain, gating tools to least privilege, defending against prompt injection in untrusted web/email/RAG text, requiring human approval on irreversible actions, capping runtime and cost, or triaging what it already did. NOT building the loop, tools, or RAG (that is `building-agents`)."
 tags: [agent-security, guardrails, prompt-injection, least-privilege, owasp-agentic]
 recommends: [building-agents, secure-coding, agent-eval]
 origin: risco
@@ -11,8 +11,13 @@ origin: risco
 You are the security review for an agent's **agency**, not for its code. The loop works,
 tools are wired, memory persists — your job is to make that autonomy *bounded*. If you
 want to review ordinary endpoints, auth, or secrets handling, that is
-`../secure-coding/SKILL.md`. If the loop or tools do not exist yet, that is
+`../secure-coding/SKILL.md` — this skill is the *Agentic* Top 10, the risks that exist only
+because a model has tools and autonomy. If the loop or tools do not exist yet, that is
 `../building-agents/SKILL.md`. You arrive *after* both.
+
+`references/threat-model.md` carries the OWASP Agentic Top 10 2026 risks mapped to the
+controls below, the pre-ship guardrail checklist, and the incident-triage flow for "the
+agent did X" — open it when you are reviewing before ship or reconstructing an incident.
 
 ## The ownership split
 
@@ -162,15 +167,3 @@ Log every tool call (arguments redacted) and alert on repeated approval-bypass a
 | Scope/limits stated only in the prompt         | Prompt is advisory; the model can be talked out of it         | Enforce at the tool/harness boundary                |
 | No loop / cost / rate cap                       | A hijacked or looping agent runs until it runs out of money   | Hard fail-closed kill-switches                      |
 | Redact PII only in the UI                       | The secret was already written to memory/logs                 | Redact before persistence, at the source            |
-
-## References
-
-- `references/threat-model.md` — OWASP Agentic Top 10 2026 risks mapped to the controls
-  above, a pre-ship guardrail checklist, and an incident-triage flow for "the agent did X".
-
-## Related
-
-- `../building-agents/SKILL.md` — builds the loop, tools, RAG, MCP server. Hand off here once
-  it exists; it recommends secure-coding, agent-safety is the deeper guardrail layer.
-- `../secure-coding/SKILL.md` — STRIDE/OWASP for ordinary code and web endpoints. agent-safety
-  is the *Agentic* Top 10: risks that exist only because a model has tools and autonomy.

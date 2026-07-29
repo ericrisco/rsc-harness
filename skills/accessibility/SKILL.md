@@ -1,6 +1,6 @@
 ---
 name: accessibility
-description: "Use when making a web UI conform to WCAG 2.2 Level AA — fixing axe-core violations, a low Lighthouse a11y score, adding keyboard support, focus management, ARIA roles/labels, skip links, live regions, accessible names, or checking contrast and tap-target size. Triggers: 'make this accessible', 'fix the contrast', 'keyboard navigation is broken', 'screen reader can't read this', 'axe says button-name / color-contrast', 'the modal doesn't trap focus', 'tab order is wrong', 'our tap targets are smaller than 24px', 'fes-ho accessible', 'el lector de pantalla no lee los errores'. NOT general performance / LCP tuning (that is performance), NOT setting up the Jest/RTL test runner itself (that is testing-web)."
+description: "Use when making a web UI conform to WCAG 2.2 Level AA — axe-core or Lighthouse a11y violations, keyboard operability, focus management, ARIA roles/names/live regions, contrast, tap-target size. NOT palette or visual intent (that is `design`), NOT test-runner setup (that is `testing-web`), NOT LCP/page-speed (that is `performance`)."
 tags: [wcag, accessibility, a11y, aria, axe-core]
 recommends: [testing-web, e2e-testing, design, react, performance]
 origin: risco
@@ -76,7 +76,7 @@ Everything a mouse can do, a keyboard must do.
 2. **Trap focus** inside while open — Tab from the last element wraps to the first.
 3. **Escape closes**, and **focus returns to the trigger** that opened it.
 
-Composite widgets (menus, tabs, grids) use **roving tabindex**: one element is `tabindex="0"`, the rest `-1`, arrow keys move the `0`. Full keyboard tables per pattern → `references/aria-patterns.md`.
+Composite widgets (menus, tabs, grids) use **roving tabindex**: one element is `tabindex="0"`, the rest `-1`, arrow keys move the `0`. Full keyboard tables per pattern — modal, disclosure, tabs, combobox, menu, toast → `references/aria-patterns.md`.
 
 ## Visible focus & the WCAG 2.2 deltas
 
@@ -144,7 +144,7 @@ Mental model: **Name, Role, Value.** Every custom control needs an accessible *n
 
 ## Automate it (versioned, 2026-06-02)
 
-Three layers — each catches what the cheaper one can't. Restate the ceiling: **automation ≈ 57% coverage**, the rest is manual.
+Three layers — each catches what the cheaper one can't.
 
 **Lint (static, JSX only) — `eslint-plugin-jsx-a11y` 6.10.2.** Catches missing `alt`, label-less inputs, positive `tabindex`, invalid roles, at edit time.
 
@@ -190,7 +190,7 @@ Do these by hand before you call it done:
 - [ ] **`prefers-reduced-motion`** honored — no autoplay parallax/animation that ignores it.
 - [ ] **Alt text is meaningful, not decorative-as-content** — informative images describe; decorative images use `alt=""`.
 
-Full AA checklist grouped by POUR, with the per-item auto/manual split → `references/wcag22-checklist.md`.
+Full AA checklist grouped by POUR, with the per-item auto/manual split and the 6 new 2.2 criteria flagged → `references/wcag22-checklist.md`.
 
 ## Anti-patterns
 
@@ -207,10 +207,8 @@ Full AA checklist grouped by POUR, with the per-item auto/manual split → `refe
 | Shipping on a green axe run                    | Covers ~57%; keyboard/SR/cognitive untested              | run the manual checklist                            |
 | Autoplaying motion, no reduced-motion guard    | Triggers vestibular disorders (2.3.3)                    | gate behind `prefers-reduced-motion`                |
 
-## Where to go next
+## Hand off to
 
-- Full WCAG 2.2 AA checklist (POUR, auto/manual tags, the 6 new criteria flagged) → `references/wcag22-checklist.md`
-- Copy-ready accessible patterns with keyboard tables (modal, disclosure, tabs, combobox, menu, toast) → `references/aria-patterns.md`
 - Test harness, render setup, fixtures, CI runner mechanics → `../testing-web/SKILL.md` (this skill supplies the a11y *assertions* that run inside it)
 - Full browser-driven flow orchestration → `../e2e-testing/SKILL.md`
 - Visual intent, color palette, spacing scale → `../design/SKILL.md` (this skill checks the contrast/target-size *outcome*, not the aesthetic)

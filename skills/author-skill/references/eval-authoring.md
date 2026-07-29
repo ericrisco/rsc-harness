@@ -59,7 +59,7 @@ For `author-skill`, the natural confusables are `specify`/`plan` (building a fea
 
 ## Writing good `capability` cases
 
-The `must_include` points are the differentiators — the specific things a *good* answer shows that a baseline answer misses. Make them **gradeable**: name the rule, the file path, the structural choice. "Writes a good skill" is not gradeable; "produces a third-person description ≤1024 with a `Use when` lead, a `NOT … (sibling)` boundary, and at least one non-English trigger" is.
+The `must_include` points are the differentiators — the specific things a *good* answer shows that a baseline answer misses. Make them **gradeable**: name the rule, the file path, the structural choice. "Writes a good skill" is not gradeable; "produces a third-person description under ~350 chars with a `Use when` lead and a `NOT … (sibling)` boundary naming a sibling that exists" is.
 
 For a process skill (no `verify.sh`), the capability scenario is the *primary* rigor — it is how you prove the safety rails actually change behavior. Make it count.
 

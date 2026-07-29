@@ -1,6 +1,6 @@
 ---
 name: python
-description: "Use when writing, reviewing, modernizing, typing, or packaging Python at the language level (any framework or none) - PEP 695 generics and the type-alias statement, mypy --strict typing, dataclasses/Protocol/TypedDict/Enum choices, asyncio.TaskGroup and structured concurrency, stdlib idioms (pathlib/itertools/functools/contextlib/match), src/ layout + pyproject.toml managed with uv, and a ruff+mypy+pytest verify gate. Triggers: 'set up a Python project with uv', 'is this Pythonic / modernize to 3.12+', 'make mypy --strict pass', 'convertir este gather a TaskGroup', 'dataclass slots frozen vs NamedTuple', any .py file or pyproject.toml. NOT building a FastAPI/ASGI service (that is fastapi), NOT a deep pytest fixture/mock suite (that is testing-py)."
+description: "Use when the task is Python itself, in any framework or none: PEP 695 generics, mypy --strict typing, dataclass/Protocol/TypedDict/Enum choices, asyncio.TaskGroup, stdlib idioms, src/ layout + pyproject.toml with uv, ruff+mypy+pytest gate. NOT a FastAPI/ASGI service (that is fastapi), NOT a deep pytest suite (that is testing-py)."
 tags: [python, typing, async, packaging, uv]
 recommends: [fastapi, secure-coding, deployment]
 origin: risco
@@ -20,15 +20,7 @@ annotations`), PEP 750 template strings (`t"..."`), and `compression.zstd`. Tool
 **uv 0.11** (project + package manager), **ruff 0.15** (lint + format), **mypy 1.20
 `--strict`** (or Astral's `ty`, still preview — default to mypy), **pytest 8**.
 
-## When to use / When NOT to use
-
-**Use when** the question is *the language* in any `.py` file or `pyproject.toml`: typing,
-generics, protocols, dataclass/NamedTuple/TypedDict/Enum choices, async (`TaskGroup`, timeouts,
-cancellation — not a web server), comprehensions, context managers, error handling; setting up a
-project from zero with `uv` (init, venv, lockfile, scripts); modernizing to PEP 695; or wiring
-the `ruff` + type-checker + `pytest` + `verify.sh` gate.
-
-**When NOT to use (delegate):**
+## Scope — what this skill delegates
 
 - Building a FastAPI / ASGI service (routes, Pydantic models, SQLAlchemy, uvicorn) ->
   [`fastapi`](../fastapi/SKILL.md). That skill owns the service shape; this one owns the
@@ -56,19 +48,10 @@ Apply on every Python edit:
    unindented — arrow code hides the logic.
 3. **Stdlib before a dependency.** `pathlib`, `itertools`, `functools`, `dataclasses`,
    `collections` cover most needs; a new dep is a maintenance liability you must justify.
-4. **One `pyproject.toml`, managed with uv.** Never hand-edit `requirements.txt`; `uv add`
-   writes the dep and updates `uv.lock`, which you commit.
-5. **Prefer immutability.** `@dataclass(frozen=True, slots=True)` for value objects; mutate
+4. **Prefer immutability.** `@dataclass(frozen=True, slots=True)` for value objects; mutate
    only where you must — shared mutable state is the bug you debug at 2am.
-6. **`pathlib`, not `os.path`.** `Path("a") / "b"` over `os.path.join`; it is typed and composable.
-7. **Structured `logging`, never `print` in a library.** `print` writes to a caller's stdout
-   you do not own; `logging.getLogger(__name__)` lets them configure it.
-8. **`asyncio.TaskGroup` over bare `gather`.** A `TaskGroup` cancels siblings on first error and
-   propagates an `ExceptionGroup`; `gather` leaks tasks on failure (rule 8 in Async below).
-9. **No mutable default arguments.** `def f(xs: list[int] | None = None)` then `xs = xs or []`;
-   `def f(xs=[])` shares one list across all calls — a classic latent bug.
-10. **Everything passes the gate.** `ruff check` + `ruff format --check` + `mypy --strict` +
-    `pytest` — green locally via `scripts/verify.sh` before you call it done.
+5. **Everything passes the gate.** `ruff check` + `ruff format --check` + `mypy --strict` +
+   `pytest` — green locally via `scripts/verify.sh` before you call it done.
 
 ## Typing
 
@@ -95,7 +78,7 @@ annotations`.
 
 Full PEP 695 bounds/constraints/variance, `Protocol` vs ABC, `TypedDict`
 `Required`/`NotRequired`, `ParamSpec`/`TypeVarTuple`, `TypeGuard`/`TypeIs`, `cast`, and common
-`--strict` errors with fixes -> `references/typing.md`.
+`--strict` errors with fixes -> [`references/typing.md`](references/typing.md).
 
 ## Data modeling
 
@@ -129,11 +112,13 @@ the thing genuinely *is* a small tuple you also unpack positionally.
 Reach into the stdlib before adding a dependency.
 
 - **`pathlib`** for all filesystem paths: `Path("data") / name`, `p.read_text()`,
-  `p.glob("*.json")`, `p.with_suffix(".bak")`.
+  `p.glob("*.json")`, `p.with_suffix(".bak")` — typed and composable, never `os.path.join`.
 - **`collections`**: `defaultdict(list)`, `Counter(words)`, `deque(maxlen=100)` for ring buffers.
 - **`itertools`**: `chain`, `groupby`, `islice`, `batched` (3.12+) instead of hand-rolled loops.
 - **`functools`**: `@cache` / `@lru_cache` for pure memoization, `@cached_property`, `partial`.
 - **`contextlib`**: `@contextmanager`, `ExitStack` for dynamic resource sets, `suppress(FileNotFoundError)`.
+- **`logging`**, never `print` in a library: `print` writes to a caller's stdout you do not own;
+  `logging.getLogger(__name__)` lets them configure it.
 
 Prefer comprehensions over `map`/`filter`+`lambda`; prefer a generator (`(... for ...)`) when
 you only iterate once. Use `match` for structural dispatch over a chain of `isinstance`:
@@ -158,7 +143,7 @@ f-strings for formatting; note 3.14's PEP 750 `t"..."` template strings yield a 
 (not a `str`) for *safe custom interpolation* (e.g. escaping) — use them when an f-string would
 inject untrusted text. Full cookbook (itertools/functools/collections recipes, `match`
 patterns, dataclass `field`/`default_factory`/`__post_init__`, `Enum`/`StrEnum`/`IntFlag`) ->
-`references/stdlib.md`.
+[`references/stdlib.md`](references/stdlib.md).
 
 ## Errors & resources
 
@@ -205,7 +190,8 @@ Bound every wait with `async with asyncio.timeout(5.0):`. On `CancelledError`, c
 concurrency only; CPU-bound work blocks the loop — push it to `asyncio.to_thread` / a
 `ProcessPoolExecutor` (or 3.14's free-threaded build). **HTTP servers belong to
 [`fastapi`](../fastapi/SKILL.md), not here.** Runtime model, `ExceptionGroup`/`except*`, queues
-with backpressure, cancellation discipline, and sync<->async bridging -> `references/async.md`.
+with backpressure, cancellation discipline, and sync<->async bridging ->
+[`references/async.md`](references/async.md).
 
 ## Project layout & packaging (uv)
 
@@ -221,7 +207,8 @@ myapp/
   scripts/verify.sh
 ```
 
-`pyproject.toml` is the single config — PEP 621 metadata, dependency groups, and tool config:
+`pyproject.toml` is the single config — PEP 621 metadata, dependency groups, and tool config.
+Never hand-edit a `requirements.txt`; `uv add` writes the dep and updates `uv.lock`, which you commit.
 
 ```toml
 [project]
@@ -306,9 +293,9 @@ random.random()  # tokens                       secrets.token_urlsafe(32)      #
 Keep deps locked (`uv.lock`) and audited (`pip-audit` / `uv` resolution); read secrets from
 env or a secret manager, never hardcode or log them.
 
-## Anti-patterns / rationalizations -> STOP
+## Anti-patterns -> STOP
 
-| Rationalization | Reality / Do instead |
+| Tempting move | Reality / do instead |
 | --- | --- |
 | "`def f(xs=[])` is fine, it's empty" | One list shared across all calls; use `= None` then `xs = xs or []`. |
 | "bare `except:` to be safe" | Swallows `KeyboardInterrupt`/bugs; catch a specific type. |
@@ -323,47 +310,11 @@ env or a secret manager, never hardcode or log them.
 | "`pickle.loads` the cache, it's ours" | Any untrusted byte = code execution; use `json`. |
 | "explicit `TypeVar` everywhere" | New code uses PEP 695 `def f[T]` / `class C[T]` / `type X`. |
 
-## Quick reference
+## Project grounding (02-DOCS)
 
-| Task | Command / idiom |
-| --- | --- |
-| New project | `uv init --package myapp` |
-| Add dep / dev dep | `uv add httpx` / `uv add --dev pytest` |
-| Reproducible install | `uv sync --frozen` |
-| Run in venv | `uv run python -m myapp` |
-| Lint + autofix | `uv run ruff check --fix .` |
-| Format (check) | `uv run ruff format --check .` |
-| Type check | `uv run mypy --strict src` |
-| Test | `uv run pytest -q` |
-| Local gate | `./scripts/verify.sh` |
-| Generic | `def f[T](x: T) -> T:` / `type Alias = ...` |
-| Optional | `X | None` (not `Optional[X]`) |
-| Structured async | `async with asyncio.TaskGroup() as tg: tg.create_task(...)` |
-| Memoize | `@functools.cache` |
-| Token | `secrets.token_urlsafe(32)` |
-
-## Project grounding (02-DOCS + CLAUDE.md)
-
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this project's Python conventions
-there so the next agent inherits them — *recorded, not gated*, never block the task on this.
-
-1. **Find** `02-DOCS/wiki/stack/python.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, write the project's real choices (interpreter floor, `src/` layout,
-   uv workflow, ruff/mypy config, async-vs-sync stance, data-modeling defaults) and index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
-3. **Read it first on every use**; bump its `Updated` date when a convention changes.
-
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`).
-
-## See Also
-
-Sibling skills: [`fastapi`](../fastapi/SKILL.md) (the FastAPI/ASGI service shape — this skill
-owns the language it is written in), [`secure-coding`](../secure-coding/SKILL.md) (language-
-agnostic threat modeling/authz — this skill keeps the Python-specific controls),
-[`deployment`](../deployment/SKILL.md) (Containerfile/CI/shipping — this skill ships only the
-uv CI note), and `testing-py` (by id; deep pytest technique — this skill carries only the baseline).
-
-Local references (read when): `references/typing.md` (PEP 695 generics, Protocol vs ABC,
-TypedDict, narrowing, `--strict` fixes); `references/async.md` (asyncio model, TaskGroup vs
-gather, timeouts, cancellation, queues, CPU-bound); `references/stdlib.md`
-(itertools/functools/collections/contextlib/pathlib cookbook, `match`, dataclasses, Enum).
+In a project that has the [`harness`](../harness/SKILL.md) wiki, record this project's Python
+conventions in `02-DOCS/wiki/stack/python.md` and index it in `02-DOCS/wiki/index.md` — the
+interpreter floor, `src/` layout, uv workflow, ruff/mypy config, async-vs-sync stance, and
+data-modeling defaults. Read it first on every use and bump its `Updated` date when a convention
+changes. This is *recorded, not gated*: never block the task on it, and skip silently when there
+is no `02-DOCS/` layer.

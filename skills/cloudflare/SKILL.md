@@ -1,6 +1,6 @@
 ---
 name: cloudflare
-description: "Use when working on Cloudflare's edge platform — writing or editing wrangler.jsonc/wrangler.toml bindings, choosing between D1/KV/R2/Durable Objects/Queues, deploying a Worker or a Vite/React SPA via Static Assets, wiring Queue producers/consumers, or hitting a Cloudflare runtime limit and needing the architecture fix. Triggers: 'deploy to Cloudflare Workers', 'add an R2 bucket binding', 'D1 vs KV for sessions', 'why is my KV read stale after writing', 'too many subrequests in my Worker', 'wrangler deploy', 'desplegar a Cloudflare Workers', 'quin binding faig servir per R2'. NOT generic CI/release deploy (that is deployment), NOT the Next.js framework wiring itself (that is nextjs), NOT Cloudflare DNS records (that is domains-dns)."
+description: "Use when working on Cloudflare's edge platform — wrangler.jsonc bindings, choosing between D1/KV/R2/Durable Objects/Queues, deploying a Worker or SPA via Static Assets, or designing around a Workers runtime limit. NOT generic CI/release (that is `deployment`), NOT Next.js framework wiring (that is `nextjs`), NOT DNS records (that is `domains-dns`)."
 tags: [cloudflare, workers, edge, r2, d1, kv, queues, wrangler, serverless]
 recommends: [deployment, nextjs, domains-dns, postgresdb, redis, secure-coding]
 origin: risco
@@ -74,7 +74,7 @@ This is the decision that shapes the architecture. Pick by access pattern and co
 | **Durable Objects** | Strongly-consistent coordination, per-entity state, WebSockets | Strong (single-threaded per object) | One object = one serialized actor | Bulk storage; high-fanout reads |
 | **Queues** | Async/batch work, decoupling, retries | At-least-once delivery | Batch ≤100 (default 10) | Synchronous request/response |
 
-Rule of thumb: **need read-after-write? Not KV.** Need SQL joins? D1. Need a file? R2. Need a counter or lock? Durable Object. Deep config and code per primitive live in `references/storage-primitives.md`.
+Rule of thumb: **need read-after-write? Not KV.** Need SQL joins? D1. Need a file? R2. Need a counter or lock? Durable Object. Per-primitive binding config and code, consistency semantics, the complete limits/pricing tables, and Hyperdrive for external Postgres are in `references/storage-primitives.md`.
 
 ## Static & full-stack hosting
 
@@ -85,7 +85,7 @@ Workers **Static Assets** is the recommended way to host SPAs and full-stack app
 - `assets.not_found_handling` — `"single-page-application"` (serve `index.html` on miss, for client-side routing) or `"404-page"`.
 - `assets.run_worker_first` — run the Worker before serving static assets, e.g. so `/api/*` hits your handler not a file.
 
-Do **not** use Workers Sites for new projects — it is deprecated in Wrangler v4 and unsupported by the Cloudflare Vite plugin. Migrating off Pages? Pages still works, but new full-stack work targets Workers; the migration checklist is in `references/wrangler-config.md`.
+Do **not** use Workers Sites for new projects — it is deprecated in Wrangler v4 and unsupported by the Cloudflare Vite plugin. Migrating off Pages? Pages still works, but new full-stack work targets Workers; the asset-routing rules and the migration checklist are in `references/wrangler-config.md`.
 
 ## Bindings in code
 
@@ -184,8 +184,3 @@ Plan note: the **Workers Paid** plan is a $5/mo minimum bundling Workers, Pages 
 | Secrets in `vars` or committed | Plaintext in repo / config = leak | `wrangler secret put`; `.dev.vars` (gitignored) for local |
 | Treating D1 like a pooled SQL connection | D1 is accessed over HTTP, not a persistent pool — no transactions across requests, no long-held connections | One prepared statement per call; batch with `db.batch()` |
 | Heavy fan-out to many subrequests | Hits the subrequest cap and fails the request | Cache in KV, batch, or offload to a Queue consumer |
-
-## References
-
-- `references/storage-primitives.md` — full per-service binding config and code (R2/D1/KV/Queues/Durable Objects), consistency semantics, complete limits/pricing tables, Hyperdrive for external Postgres.
-- `references/wrangler-config.md` — complete annotated `wrangler.jsonc`, environments/routes/custom domains, compatibility flags & dates, Pages→Workers migration checklist, Static Assets routing.
