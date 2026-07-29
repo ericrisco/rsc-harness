@@ -1,6 +1,6 @@
 ---
 name: angular
-description: "Use when building, refactoring, reviewing, or debugging an Angular app (Angular 20/21+: standalone components, signals, zoneless change detection, the @if/@for/@defer built-in control flow, inject() DI, resource()/httpResource(), RxJS interop, NgRx SignalStore, the ng CLI). Triggers: 'why isn't my view updating', migrating NgModules to standalone, replacing *ngFor with @for, decorator inputs vs input() signals, 'monta una app Angular', 'componente standalone con signals', 'com passo a zoneless', going zoneless / removing Zone.js, app.config.ts providers, toSignal/toObservable interop, ng generate/ng update. NOT React (that is react), NOT Next.js (that is nextjs), NOT a plain TypeScript language question (that is typescript)."
+description: "Use when building, refactoring, or debugging Angular (v20/21+): standalone components, signals, zoneless change detection, @if/@for/@defer control flow, inject() DI, resource()/httpResource(), RxJS interop, NgRx SignalStore, ng CLI. NOT React (that is react), NOT Next.js (that is nextjs), NOT a TypeScript language question (that is typescript)."
 tags: [angular, frontend, web, signals, typescript, spa]
 recommends: [typescript, testing-web, secure-coding]
 origin: risco
@@ -10,31 +10,23 @@ origin: risco
 
 > Build Angular the way it ships in 2026: standalone components, signals as the reactivity model, zoneless change detection, built-in control flow, and `inject()` DI. Treat NgModules, `*ngFor`, and `@Input()` decorators as legacy you only touch to migrate.
 
-## When to use
+## Not this skill
 
-- Creating or editing Angular components, directives, services, guards, resolvers, interceptors, or routes.
-- Anything touching `angular.json`, the `ng` CLI, `main.ts` bootstrap, `app.config.ts`, or `provide*()` providers.
-- Deciding signals vs RxJS, or migrating decorators/NgModules to standalone + signals.
-- Wiring data fetching with `httpResource()`/`resource()` or `HttpClient` + RxJS.
-- Debugging zoneless change detection, `OnPush`, or "view not updating" bugs.
-- State with NgRx SignalStore or plain signal services; reactive/typed forms; route-bound signal inputs.
-
-## When NOT to use
-
-- **AngularJS (1.x)** — out of scope entirely. This skill is Angular 2+ only; the APIs do not map.
-- **React** → that is the `react` skill. NOT React (that is react).
-- **Next.js App Router** → `../nextjs/SKILL.md`.
-- **Vue/Nuxt, Svelte, SolidJS, Astro** → `vue-nuxt`, `svelte`, `solid-js`, `../astro/SKILL.md`.
-- **Pure TypeScript language question** (generics, narrowing, tsconfig) with no Angular dimension → `../typescript/SKILL.md`.
-- **A standalone NestJS API** → `../nestjs/SKILL.md`. A generic Node service → `nodejs`. Angular Universal SSR itself stays here.
-- **Cross-framework Playwright e2e strategy** → `testing-web` / `e2e-testing`. Angular's own `ng test` (Vitest) setup stays here.
+**AngularJS (1.x)** is out of scope entirely — this skill is Angular 2+ only and the APIs do not map.
+Route elsewhere for **React** → `../react/SKILL.md`; **Next.js App Router** → `../nextjs/SKILL.md`;
+**Vue/Nuxt, Svelte, SolidJS, Astro** → `../vue-nuxt/SKILL.md`, `../svelte/SKILL.md`,
+`../solid-js/SKILL.md`, `../astro/SKILL.md`; a **pure TypeScript language question** (generics,
+narrowing, tsconfig) with no Angular dimension → `../typescript/SKILL.md`; a **standalone NestJS
+API** → `../nestjs/SKILL.md`; a generic Node service → `../nodejs/SKILL.md`; **cross-framework
+Playwright e2e strategy** → `../testing-web/SKILL.md` / `../e2e-testing/SKILL.md`. Angular Universal
+SSR and Angular's own `ng test` (Vitest) setup stay here.
 
 ## Decide first
 
 | Situation | Do this | Why |
 |-----------|---------|-----|
 | Greenfield app / new feature | Zoneless + signals + standalone by default. `ng new` (Angular 21) already excludes Zone.js. | The defaults shipped stable in v20-v21; fight them and you write more code that the framework now does for you. |
-| Brownfield NgModule + decorator app | Migrate incrementally with schematics; do not rewrite. Keep Zone.js until you flip it on purpose. | A working app that uses `*ngIf` is not a bug. Churn introduces risk for no user value. |
+| Brownfield NgModule + decorator app | Migrate incrementally with the schematics in `references/migration.md` (NgModule→standalone, control flow, decorator→signal inputs, Zone.js→zoneless, Karma→Vitest); do not rewrite. Keep Zone.js until you flip it on purpose. | A working app that uses `*ngIf` is not a bug. Churn introduces risk for no user value. |
 | "View not updating" complaint | Jump to the change-detection section: signal not read in template, `OnPush` without a signal, or stale Zone.js assumption. | Zoneless means a mutation that no signal observes will never repaint — the fix is structural, not a `detectChanges()` call. |
 
 ## The modern baseline
@@ -178,7 +170,7 @@ profile = resource({
 ```
 
 - Rule: `httpResource()`/`resource()` give you `value()`, `isLoading()`, `error()`, `reload()` for free — prefer them over a manual `subscribe` that you have to clean up. Why: less boilerplate, no leak, refetches automatically when its source signals change.
-- Rule: when you genuinely need a stream (websocket, debounced search, retry/switchMap), keep `HttpClient` + RxJS and bridge to a signal with `toSignal()`. Why: signals are not streams; do not fake backpressure with effects. See `references/signals-rxjs.md`.
+- Rule: when you genuinely need a stream (websocket, debounced search, retry/switchMap), keep `HttpClient` + RxJS and bridge to a signal with `toSignal()`. Why: signals are not streams; do not fake backpressure with effects. `references/signals-rxjs.md` has the signals-vs-RxJS decision matrix, `toSignal`/`toObservable` interop recipes, `effect` pitfalls (infinite loops, untracked reads), and `takeUntilDestroyed`.
 
 ## DI & services
 
@@ -279,10 +271,5 @@ it('renders the user name', async () => {
 | `ChangeDetectorRef.detectChanges()` to "fix" a stale view | Masks the real cause under zoneless | Read the value through a signal so CD tracks it |
 | Nested `subscribe()` inside `subscribe()` | Callback pyramid, lost cancellation | `switchMap`/`concatMap`, one subscription |
 | Constructor DI only (`constructor(private x: X)`) | Legacy ergonomic; can't compose into functions | `private x = inject(X)` |
-
-## References
-
-- `references/signals-rxjs.md` — signals-vs-RxJS decision matrix, `toSignal`/`toObservable` interop recipes, `effect` pitfalls (infinite loops, untracked reads), `linkedSignal`/`resource()` patterns, `takeUntilDestroyed`.
-- `references/migration.md` — incremental migration checklist + schematics: NgModule→standalone, control-flow migration, decorator-input→signal-input, Zone.js→zoneless go-live, Karma/Jasmine→Vitest.
 
 `scripts/verify.sh` is a heuristic copy-banlist lint — it greps your Angular sources for the banned patterns above. It is a hint, not a compiler.
