@@ -1,6 +1,6 @@
 ---
 name: automation-strategy
-description: "Use when deciding whether a process is worth automating, choosing an automation platform, sizing ROI / build-vs-buy, designing an automation strategy, or diagnosing why a fleet of automations keeps breaking — the discipline layer that runs BEFORE anyone builds. Triggers: 'should we automate this?', 'is this worth automating', 'n8n vs Make vs Zapier vs Power Automate — which do we pick', 'custom script or no-code platform', \"what's the ROI on automating X\", 'design our automation strategy', 'our automations keep breaking', 'automating this cost more than it saved', '¿merece la pena automatizar esto?', 'qué plataforma de automatización elegimos'. NOT building the flow on a platform (design + importable artifact is automation-flows; driving a live platform API/MCP is the n8n / make / zapier / power-automate skills), NOT a typed API client with auth/pagination/backoff (api-connector-builder), NOT the inbound endpoint that receives webhook events in your app (webhooks)."
+description: "Use when deciding whether a process is worth automating, sizing ROI and build-vs-buy, choosing an automation platform, or diagnosing why a fleet of automations keeps breaking — the decision layer before anyone builds. NOT building the flow (that is `automation-flows`, or `n8n` / `make` / `zapier` / `power-automate` to drive a live platform)."
 tags: [automation, strategy, roi, build-vs-buy, platform-selection, orchestration, idempotency, n8n, make, zapier, power-automate]
 recommends: [automation-flows, n8n, make, zapier, power-automate]
 profiles: [core, full]
@@ -110,14 +110,6 @@ These are the guarantees every automation must meet regardless of platform. This
 | **Hidden single point of failure** | One personal token / one undocumented flow everyone depends on | Service accounts, documented dependencies, no personal-account glue |
 | **No owner** | Orphaned automations rot; nobody notices the break or knows how it works | Name an owner + a one-page runbook per automation |
 | **Choosing platform by familiarity** | Bill 10× higher than the right billing unit; "our automation bill exploded" | Pick by billing unit for your run shape (§3) |
-
-## Related skills
-
-- `../automation-flows/SKILL.md` — **build layer**: designs the flow and emits the importable artifact once this skill has decided *whether* and *where*. Strategy decides; automation-flows designs.
-- `../n8n/SKILL.md`, `../make/SKILL.md`, `../zapier/SKILL.md`, `../power-automate/SKILL.md` — **operate layer**: drive that platform's live API/MCP to CRUD, activate, and run. Route here after §3.
-- `../api-connector-builder/SKILL.md` — when the answer is custom code, not a platform: typed client with auth/pagination/backoff.
-- `../webhooks/SKILL.md` — when you need to *receive* events in your own app (this skill treats webhooks as triggers, it doesn't build the receiver).
-- `../secure-coding/SKILL.md` — secrets/rotation engineering behind the orchestration policy in §4.
 
 ## Checklist
 
