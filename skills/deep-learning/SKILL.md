@@ -1,6 +1,6 @@
 ---
 name: deep-learning
-description: "Use when training or debugging a neural network in PyTorch — writing the training loop, chasing loss that won't drop or goes NaN, adding mixed precision (AMP), scaling across GPUs, or making a run reproducible. Covers tensors/autograd/nn.Module, torch.compile, the forward→loss→backward→step→zero_grad loop and its silent bugs, AdamW + cosine/warmup schedulers, DDP vs FSDP vs DeepSpeed ZeRO, checkpointing and seeds. PyTorch-first (JAX/TF exist). Triggers: 'my training loss isn't decreasing', 'loss becomes NaN after a few steps', 'how do I use torch.autocast and GradScaler', 'train this model across 4 GPUs', 'val accuracy is worse than train and I forgot model.eval()', 'gradients seem to add up across batches', 'build a CNN from scratch and train it', 'entrenar una xarxa neuronal des de zero amb PyTorch'. NOT adapting a pretrained LLM with LoRA/QLoRA (that is finetuning); NOT classic/tabular models like XGBoost or sklearn (that is machine-learning); NOT tokenization or NLP task metrics (that is nlp)."
+description: "Use when training or debugging a neural net in PyTorch — the forward/loss/backward/step loop and its silent bugs, mixed precision (AMP), AdamW/LR schedules, DDP/FSDP/ZeRO, checkpoints and seeds. NOT LoRA/QLoRA on a pretrained LLM (that is `finetuning`), NOT tabular sklearn/XGBoost (that is `machine-learning`), NOT tokenization or NLP metrics (that is `nlp`)."
 tags: [pytorch, deep-learning, neural-networks, training-loop, autograd, mixed-precision, amp, ddp, fsdp, optimizer, lr-scheduler, reproducibility, torch-compile]
 recommends: [machine-learning, finetuning, nlp, python]
 origin: risco
@@ -27,8 +27,7 @@ is stable 2.x API. The one namespace shift to know: AMP now lives under `torch.a
 | Adapting a *pretrained LLM* — LoRA/QLoRA, SFT, trl/peft | [`finetuning`](../finetuning/SKILL.md) |
 | Classic/tabular — sklearn, XGBoost/LightGBM, feature engineering | [`machine-learning`](../machine-learning/SKILL.md) |
 | Tokenization, NLP task modeling, task metrics (F1/BLEU/ROUGE) | [`nlp`](../nlp/SKILL.md) |
-
-If the model is a from-scratch or vision/custom net and you're writing the loop yourself, stay.
+| Envs, packaging, tests and hygiene around the model code | [`python`](../python/SKILL.md) |
 
 ## 1. PyTorch essentials
 
@@ -83,7 +82,7 @@ for epoch in range(epochs):
         scheduler.step()                         # if a per-step scheduler
 ```
 
-The load-bearing traps (all in the gotchas table, worth stating once here):
+The load-bearing traps, stated next to the lines they govern:
 
 - **Missing `optimizer.zero_grad()` → gradients silently add up across batches.** PyTorch
   *accumulates* `.grad` by design (so you can split a batch); if you never zero it, every step
@@ -200,7 +199,6 @@ Save optimizer + scheduler + scaler too, or a resumed run restarts its LR schedu
 `pytorch.org/docs/stable/notes/randomness.html`, quoted: *"Completely reproducible results are not
 guaranteed across PyTorch releases, individual commits, or different platforms. Furthermore,
 results may not be reproducible between CPU and GPU executions, even when using identical seeds."*
-So bit-exact reproducibility is a debugging/regression tool, not a guarantee.
 
 ```python
 import random, numpy as np, torch
@@ -217,47 +215,12 @@ DataLoader workers need their own seeding (each worker forks its RNG), via `work
 a seeded `generator` — full snippet in `references/training-recipes.md`. Determinism costs speed
 (`benchmark=False` disables autotuned convs).
 
-## Guardrails (the silent killers)
+## Anti-patterns (the silent killers)
 
-- **`optimizer.zero_grad()` every step.** Skipping it makes `.grad` accumulate across batches — no
-  error, just diverging training. (`torch.optim` / optimization tutorial, pytorch.org)
-- **`model.eval()` + `torch.no_grad()` at inference/validation.** Forgetting `eval()` leaves Dropout
-  dropping and BatchNorm using *batch* stats instead of running stats, so val numbers are wrong;
-  forgetting `no_grad()` builds the autograd graph and can OOM. Flip back to `model.train()` after.
-  (`nn.Module.eval` / autograd docs, pytorch.org)
-- **Determinism is not guaranteed across releases/platforms/CPU-vs-GPU** even with identical seeds —
-  seed for debugging, don't promise bit-exactness. (randomness note, pytorch.org)
-- **fp16 without `GradScaler`** underflows to zero grads → no learning. bf16 doesn't need it.
-- **`CrossEntropyLoss`/`BCEWithLogitsLoss` take raw logits** — no Softmax/Sigmoid before them.
-- **Everything on the same device** — a stray CPU tensor in a CUDA graph is a hard error you'll hit
-  fast; `.to(device)` inputs, targets, and model.
-- **NaN loss?** LR too high, no AMP scaler on fp16, unclipped exploding grads, or a `log(0)`/`0/0`
-  in a custom loss. Bisect: drop LR 10×, clip grads, switch fp16→bf16.
-
-## Related skills
-
-- [`finetuning`](../finetuning/SKILL.md) — adapting a **pretrained LLM** (LoRA/QLoRA, SFT via
-  trl/peft). If the base is a foundation model you're specializing, that's the skill; this one is
-  general/from-scratch net training.
-- [`machine-learning`](../machine-learning/SKILL.md) — classic/**tabular** (sklearn, GBDT). No
-  autograd, no GPU loop.
-- [`nlp`](../nlp/SKILL.md) — tokenization, NLP **task** modeling and metrics. Route text task
-  specifics there; route the raw training loop back here.
-- [`python`](../python/SKILL.md) — env/packaging, testing, general Python hygiene under the model
-  code.
-
-## Checklist
-
-- [ ] Right skill: from-scratch/vision/custom net in PyTorch (not finetuning / ML / nlp).
-- [ ] Loop has all five steps in order; `zero_grad(set_to_none=True)` every step.
-- [ ] Loss takes raw logits (no double activation); running loss uses `.item()`.
-- [ ] `model.train()` for training; `model.eval()` **and** `torch.no_grad()` for val/inference.
-- [ ] AMP: `torch.autocast` on forward+loss only; fp16 → `GradScaler`, bf16 → skip it; clip after
-      `unscale_`.
-- [ ] AdamW (decoupled decay) with no weight decay on bias/Norm params; LR warmup→cosine, `step()`
-      cadence matches scheduler units.
-- [ ] Multi-GPU chosen by fit: DDP (fits) vs FSDP2 (doesn't) vs ZeRO (offload/config).
-- [ ] Checkpoint saves model+optimizer+scheduler+scaler `state_dict`s; resume loads model first.
-- [ ] Seeds set; determinism flags on if needed, with the "not guaranteed across releases/devices"
-      caveat acknowledged.
-- [ ] Version claims hedged to "PyTorch 2.x (~2.13, verify)"; no hard minor pin presented as current.
+| Anti-pattern | What actually happens | Instead |
+|---|---|---|
+| Validating with the model left in `train()` mode, or without `torch.no_grad()` | Dropout keeps dropping and BatchNorm uses *batch* stats instead of running stats, so val numbers are wrong; the graph is still built and can OOM | `model.eval()` + `torch.no_grad()` around val/inference, `model.train()` after (`nn.Module.eval` / autograd docs, pytorch.org) |
+| Reading a NaN loss as a modeling problem | It is almost always LR too high, fp16 with no `GradScaler`, unclipped exploding grads, or a `log(0)`/`0/0` in a custom loss | Bisect: drop LR 10×, clip grads, switch fp16→bf16 |
+| fp16 with the scaler left off | Gradients underflow to zero → no learning, and no error to tell you | Keep `GradScaler` on fp16, or move to bf16 where underflow can't happen |
+| A stray CPU tensor in a CUDA graph | Hard device-mismatch error mid-step, usually on the targets or a hand-built mask rather than the inputs | `.to(device)` inputs, targets **and** model |
+| Promising bit-exact reproducibility from seeds | Not guaranteed across releases, commits, platforms, or CPU-vs-GPU even with identical seeds | Seed for debugging/regression and say so; state the caveat with the result (randomness note, pytorch.org) |
