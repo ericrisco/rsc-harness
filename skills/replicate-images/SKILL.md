@@ -1,6 +1,6 @@
 ---
 name: replicate-images
-description: "Use when generating or editing images through the Replicate API, or when a modern image model keeps ignoring the prompt — running google/nano-banana-2, openai/gpt-image-1, Flux, or SeeDream from Node or Python, choosing aspect ratio, resolution, seed, and output format, doing image-to-image, multi-reference composition, or text-driven inpainting, and structuring prompts per model family. Triggers: 'replicate.run nano-banana-2', 'why does Flux ignore half my prompt', 'render readable text inside a generated product label', 'compose a product shot from two reference images', 'make the generation reproducible with a seed', 'generar y editar imágenes con la API de Replicate', 'per què Flux no segueix el prompt'. NOT general Replicate platform/auth/non-image models like LLMs or audio (that is replicate)."
+description: "Use when generating or editing images through the Replicate API, or when a modern image model keeps ignoring the prompt — choosing aspect ratio, resolution, seed and output format, image-to-image, multi-reference composition, text-driven inpainting, readable text inside a generated image, and structuring prompts per model family. NOT general Replicate platform, auth or non-image models (that is `replicate`)."
 tags: [replicate, image-generation, image-editing, nano-banana, flux, prompting, gpt-image, seedream]
 recommends: [replicate, prompt-engineering, ai-media, fal]
 origin: risco

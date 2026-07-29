@@ -1,6 +1,6 @@
 ---
 name: retention
-description: "Use when revenue is leaking out the bottom of the funnel and you need a program to keep, score, and win back customers — building a customer health score, running NPS, catching churn signals before renewal, designing a cancellation save flow, or a win-back sequence. Triggers: 'reduce churn', 'health score', 'NPS', 'save play', 'cancellation flow', 'win-back', 'at-risk accounts', 'GRR vs NRR', non-obvious 'my annual customers are downgrading to monthly', 'renewal is slipping', 'detractors keep canceling'; Catalan/Spanish 'reduir la rotació de clients', 'recuperar clients perduts', 'puntuació de salut del client', 'evitar bajas'. NOT working a single live churn-risk ticket in the moment (that is customer-support), NOT the first-30-days welcome flow (that is client-onboarding)."
+description: "Use when revenue is leaking out the bottom of the funnel and you need a program to keep, score and win back customers — a customer health score, NPS, catching churn signals before renewal, a cancellation save flow, or a win-back sequence, and reading GRR against NRR. NOT working a single live churn-risk ticket in the moment (that is `customer-support`), NOT the first-30-days welcome flow (that is `client-onboarding`)."
 tags: [retention, churn, nps, health-score, save-play, win-back, nrr, grr, customer-success]
 recommends: [customer-support, client-onboarding, unit-economics, pricing, forecasting, compliance, newsletter, review-management]
 origin: risco

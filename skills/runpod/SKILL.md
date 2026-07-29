@@ -1,6 +1,6 @@
 ---
 name: runpod
-description: "Use when running GPU compute on RunPod and deciding between Pods (hourly, always-on) and Serverless (per-second, autoscaling) for training, fine-tuning, or model inference. Triggers: deploying a vLLM or custom-model serverless endpoint, writing or debugging a handler(job) worker, building a worker Docker template, attaching a network volume, tuning idle/execution timeout, max/active workers, FlashBoot, or chasing a runaway RunPod bill or slow cold starts; 'mi factura de RunPod se disparó', 'pod o serverless en RunPod', 'workers que no escalan a cero', 'el cold start tarda 20s'. NOT generic Python-native serverless GPU with snapshot autoscaling (that is modal); NOT calling hosted prebuilt model APIs (that is replicate); NOT pulling weights from the Hub (that is huggingface)."
+description: "Use when running GPU compute on RunPod and deciding between Pods (hourly, always-on) and Serverless (per-second, autoscaling) for training, fine-tuning or inference — serverless endpoints, handler workers, worker Docker templates, network volumes, timeout and worker-count tuning, cold starts, and runaway bills. NOT Python-native serverless GPU with snapshot autoscaling (that is `modal`), NOT calling hosted prebuilt model APIs (that is `replicate`), NOT pulling weights from the Hub (that is `huggingface`)."
 tags: [runpod, gpu, serverless, inference, training, cost-control, vllm, ai-infra]
 recommends: [modal, replicate, huggingface, docker, llm-pipeline, cost-tracking, ollama]
 origin: risco

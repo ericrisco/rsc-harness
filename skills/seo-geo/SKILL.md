@@ -1,6 +1,6 @@
 ---
 name: seo-geo
-description: "Use when you need one existing page to rank in Google AND get cited by AI answer engines (ChatGPT Search, Perplexity, Gemini/AI Overviews, Copilot) — auditing a URL for on-page SEO, structured-data/JSON-LD schema, GEO citation levers, Core Web Vitals, crawlability, and AI-bot access in robots.txt. Triggers: 'audit this page for SEO', 'why isn't this ranking', 'get us cited in ChatGPT/Perplexity', 'optimize for AI search', 'add schema markup', 'write the JSON-LD', 'should we block GPTBot', 'our Core Web Vitals are failing', 'audita el SEO de esta página', 'optimitza per a cerca amb IA', 'afegeix schema a aquest article'. NOT writing the article body (that is article-writing), NOT keyword research or content strategy (that is content-engine)."
+description: "Use when one existing page needs to rank in Google AND get cited by AI answer engines — auditing a URL for on-page SEO, structured-data JSON-LD, GEO citation levers, Core Web Vitals, crawlability, and AI-bot access in robots.txt. NOT writing the article body (that is `article-writing`), NOT keyword research or content strategy (that is `content-engine`)."
 tags: [seo, geo, structured-data, schema-org, core-web-vitals, ai-search, technical-seo]
 recommends: [content-engine, article-writing, landing-copy, performance, nextjs, accessibility, analytics]
 origin: risco
