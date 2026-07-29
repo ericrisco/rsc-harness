@@ -1,6 +1,6 @@
 ---
 name: procurement
-description: "Use when a small operator must decide what to buy and from whom — pick a supplier/vendor, write an RFI/RFQ/RFP that gets comparable bids back, compare quotes on total cost not sticker price, negotiate price and payment terms, judge single-source risk, or build a vendor scorecard for quarterly review. Triggers: 'help me pick a supplier for X', 'write an RFQ for 5,000 units', 'which of these quotes is actually cheapest over three years', 'should I take the 2/10 net 30 early-payment discount', 'we buy a critical part from one supplier — how risky is that', 'build a supplier scorecard', 'compara estos proveedores / negociar condiciones de pago', 'compara aquests proveïdors / negociar condicions amb el proveïdor'. NOT signing the binding purchase agreement or redlining liability/IP clauses (that is contracts), NOT the price you charge your own customers (that is pricing), NOT counting or reordering the stock once it arrives (that is inventory)."
+description: "Use when a small operator must choose what to buy and from whom: pick a supplier, write an RFI/RFQ/RFP that returns comparable bids, score quotes on total cost of ownership, negotiate price and payment terms, or judge single-source risk. NOT redlining the purchase agreement (that is `contracts`), NOT the price you charge customers (that is `pricing`), NOT stock once it lands (that is `inventory`)."
 tags: [procurement, sourcing, suppliers, rfq, negotiation, vendor-management]
 recommends: [contracts, pricing, inventory, logistics-ops, invoicing, cost-tracking]
 origin: risco
@@ -172,8 +172,3 @@ You own the decision and the deal. The moment it becomes something else, route:
 - Tracking ongoing SaaS/subscription spend after a renewal decision → `../cost-tracking/SKILL.md`.
 
 > Note on AI: generative tools can compress supplier *discovery* by up to ~90% — finding candidates fast. They do not replace the weighting, TCO model, risk segmentation, or negotiation. Use AI to widen the shortlist; keep the judgment human and on paper.
-
-## references/
-
-- `references/sourcing-requests.md` — copy-ready RFI/RFQ/RFP skeletons with the mandatory comparable-bid sections, plus invite and award/regret email templates.
-- `references/scorecard-and-tco.md` — weighted-scorecard template, worked TCO comparison layout, supplier performance scorecard, SRM-cadence-by-quadrant table, and re-source trigger thresholds.
