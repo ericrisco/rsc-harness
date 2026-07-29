@@ -1,6 +1,6 @@
 ---
 name: hetzner
-description: "Use when provisioning or hardening a Hetzner Cloud VPS to host real apps: picking a plan/location (CX/CPX/CAX/CCX), bringing a box up reproducibly with the hcloud CLI + cloud-init, locking down SSH, and wiring the Hetzner Cloud Firewall before handing off a Docker/Coolify-ready host. Triggers: 'set up a Hetzner server', 'provision a Hetzner VPS', 'harden SSH on my box', 'which Hetzner plan for a small API', 'configure the Hetzner Cloud Firewall', the non-obvious 'my ipv6-only box is cheaper but docker pull can't reach the registry', and the Spanish/Catalan 'monta un servidor en Hetzner', 'configura el firewall de Hetzner'. NOT deploying apps through Coolify (that is coolify)."
+description: "Use when provisioning or hardening a Hetzner Cloud VPS: picking the plan/location (CX/CPX/CAX/CCX), bringing it up reproducibly with hcloud + cloud-init, locking down SSH, and wiring the Cloud Firewall to hand off a Docker-ready host. NOT app deploys on Coolify (that is `coolify`), NOT Dockerfiles (that is `docker`), NOT another provider (that is `digitalocean`)."
 tags: [hetzner, vps, cloud-firewall, hcloud, ssh-hardening, cloud-init, self-hosting]
 recommends: [coolify, docker, secure-coding, domains-dns, backups, monitoring]
 origin: risco
@@ -14,17 +14,8 @@ include 20 TB of egress. The risk is that "cheap" becomes "unhardened and
 unmonitored" — a root-SSH box on a public IPv4 with password auth on. Your job
 is to make the cheap box **safe** and **reproducible**: every server comes up
 from a committed cloud-init file and a Cloud Firewall ruleset, never from
-click-ops in the console.
-
-Operating posture:
-
-- **Reproducible by default.** A box you can't recreate from a file isn't a box,
-  it's a pet. Bake the non-root user, SSH key, and sshd hardening into first
-  boot via cloud-init — not into a post-login checklist you'll forget.
-- **Two firewalls, edge first.** The Hetzner Cloud Firewall stops packets before
-  they reach the VM; host `ufw` is defense-in-depth. You need both.
-- **Honest about the trade-off.** No managed DB, no uptime SLA, phone support
-  only for dedicated-server customers. Name it; don't pretend it's AWS.
+click-ops in the console. A box you can't recreate from a file isn't a box, it's
+a pet.
 
 ## Decide before you create
 
@@ -139,8 +130,8 @@ hcloud firewall add-rule    app-edge --direction in --protocol tcp --port 22 --s
 
 ## SSH hardening rules
 
-- **Key-only auth.** `PasswordAuthentication no`. A password is brute-forceable;
-  an ed25519 key is not.
+- **Key-only auth.** `PasswordAuthentication no`, `PubkeyAuthentication yes`. A
+  password is brute-forceable; an ed25519 key is not.
 - **No root login.** `PermitRootLogin no` + a sudo user. Root over SSH is the
   single most-targeted login on the internet.
 - **fail2ban on.** Bans IPs after repeated failures — cheap insurance for the
@@ -148,16 +139,6 @@ hcloud firewall add-rule    app-edge --direction in --protocol tcp --port 22 --s
 - **Moving port 22 is obscurity, not security.** It quiets log noise; it does not
   harden anything. Do it if you like clean logs, but never *instead* of key-only
   + a firewall.
-
-Bad → Good:
-
-```diff
-- PermitRootLogin yes
-- PasswordAuthentication yes
-+ PermitRootLogin no
-+ PasswordAuthentication no
-+ PubkeyAuthentication yes
-```
 
 ## Hand off to Docker / Coolify
 
@@ -169,28 +150,29 @@ Bad → Good:
 - [ ] `ufw status` enabled with the same allowlist.
 - [ ] `unattended-upgrades` and `fail2ban` running.
 
-Then route the install/deploy: Coolify (the self-hosted PaaS) and container
-build/run are not this skill's job. Use the `coolify` skill for the Coolify
-install + app deploy flow, and the `docker` skill for Dockerfiles, compose, and
-image hardening. This skill stops at a clean, hardened host.
+This skill stops at a clean, hardened host. Then route the install/deploy:
+[`coolify`](../coolify/SKILL.md) for the Coolify install + app deploy flow,
+[`docker`](../docker/SKILL.md) for Dockerfiles, compose, and image hardening.
 
 ## Day-2
 
 - **Snapshot ≠ backup.** A snapshot is a one-off manual image you can boot from;
   the **Backups** add-on is automated, rotating, ~20% of the server price. A
-  snapshot you took once in March is not a backup strategy — for that, see the
-  `backups` skill.
+  snapshot you took once in March is not a backup strategy — for that, see
+  [`backups`](../backups/SKILL.md).
 - **Resize grows, never shrinks.** You can scale the disk up; you cannot scale it
   back down. Size conservatively or you're stuck paying for it.
 - **Volumes** for data you want to outlive/detach from the server. Keep databases
   and uploads on a volume so a server rebuild doesn't take the data with it.
 - **Reverse DNS** must match for outbound mail to be accepted — set the PTR in the
-  console/`hcloud` if the box sends email. Forward DNS records belong to the
-  `domains-dns` skill.
-- **No SLA, no managed DB.** There's no uptime guarantee and no managed-database
-  product — you run Postgres yourself, you monitor it yourself. For monitoring
-  and alerting, see the `monitoring` skill; treat the box as something you must
-  watch, not something Hetzner watches for you.
+  console/`hcloud` if the box sends email. Forward DNS records belong to
+  [`domains-dns`](../domains-dns/SKILL.md).
+- **No SLA, no managed DB.** There's no uptime guarantee, no managed-database
+  product, and phone support only for dedicated-server customers — you run
+  Postgres yourself, you monitor it yourself. For monitoring and alerting, see
+  [`monitoring`](../monitoring/SKILL.md); treat the box as something you must
+  watch, not something Hetzner watches for you. Name the trade-off to the user;
+  don't pretend it's AWS.
 
 ## Anti-patterns
 
