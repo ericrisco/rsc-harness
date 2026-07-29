@@ -1,6 +1,6 @@
 ---
 name: webinar
-description: "Use when planning, promoting, or running a webinar meant to convert — deciding the offer before the title, building the registration + reminder funnel, scripting the run-of-show, or splitting post-event follow-up by segment. Triggers: 'plan a webinar', 'webinar that converts', 'people register but don't show up', 'webinar got attendees but no sales', 'reminder email sequence', 'no-show replay follow-up', non-obvious: 'my live attend rate is only 30%', 'how do I transition into the pitch without it feeling salesy', ES 'montar un webinar que convierta', CA 'fer un webinar que vengui'. NOT the slide visuals themselves (that is presentations), NOT the registration page copy (that is landing-copy)."
+description: "Use when planning, promoting or running a webinar meant to convert — deciding the offer before the title, building the registration and reminder funnel, scripting the run-of-show, and splitting post-event follow-up by segment. Covers a low live attend rate, attendees who do not buy, and the transition into the pitch. NOT the slide visuals themselves (that is `presentations`), NOT the registration page copy (that is `landing-copy`)."
 tags: [webinar, conversion-funnel, run-of-show, registration, follow-up, marketing-brand]
 recommends: [presentations, landing-copy, content-engine, newsletter, lead-gen, cold-outreach, sales-pipeline, calendar-scheduling, email-connector]
 profiles: []
