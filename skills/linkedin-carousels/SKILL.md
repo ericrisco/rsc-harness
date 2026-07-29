@@ -1,6 +1,6 @@
 ---
 name: linkedin-carousels
-description: "Use when designing a LinkedIn carousel / document post — the swipeable multi-page PDF that is currently the highest-reach native LinkedIn format — and you need the slide-by-slide build: a scroll-stopping cover hook, a narrative arc that pulls swipe-to-swipe, one focused idea per slide with real visual hierarchy, a payoff + CTA closer, and a PDF export spec. Triggers: 'turn this into a LinkedIn carousel', 'design a swipeable PDF document post', 'my carousel cover gets no swipes fix the hook', 'how many slides and what goes on each', 'restructure one-idea-per-slide', 'what size to export so it isnt cropped on mobile', 'convierte este post en un carrusel de LinkedIn', 'dissenya'm un carrusel de LinkedIn amb portada i CTA'. NOT the account/format plan (that is linkedin-strategy), NOT a text or single-image feed post (that is linkedin-content), NOT a spoken-to talk deck (that is presentations)."
+description: "Use when building a LinkedIn carousel / document post — the swipeable multi-page PDF — slide by slide: cover hook, narrative arc, one idea per slide, CTA closer, PDF export spec. NOT the account/format plan (that is `linkedin-strategy`), NOT a text or single-image feed post (that is `linkedin-content`), NOT a 16:9 talk deck (that is `presentations`)."
 tags: [linkedin, carousel, document-post, slide-design, visual-hierarchy, hook, b2b, social-content]
 recommends: [linkedin-content, linkedin-strategy, brand-identity, brand-voice, presentations, social-publisher]
 origin: risco
@@ -8,16 +8,10 @@ origin: risco
 
 # LinkedIn carousels
 
-Design **one swipeable LinkedIn document post**: the cover hook, the narrative arc, one idea
-per slide, and the PDF export spec. You hand back a slide-by-slide build ready to assemble in
-Canva/Figma/Slides and a one-page design+export checklist.
-
-You do not own the account plan (which formats, cadence, niche — that is
-[`../linkedin-strategy/SKILL.md`](../linkedin-strategy/SKILL.md)), the words of a text or
-single-image feed post ([`../linkedin-content/SKILL.md`](../linkedin-content/SKILL.md)), the
-programmatic upload ([`../linkedin-api/SKILL.md`](../linkedin-api/SKILL.md)), or a spoken-to
-16:9 talk deck ([`../presentations/SKILL.md`](../presentations/SKILL.md)). Your artifact is the
-*slides of a phone-read PDF* — sequence and visual hierarchy are the product.
+Design **one swipeable LinkedIn document post**. Your artifact is the *slides of a phone-read
+PDF* — sequence and visual hierarchy are the product — handed back as a slide-by-slide build
+ready to assemble in Canva/Figma/Slides plus a one-page design+export checklist. Everything
+adjacent (the account plan, the feed copy, the upload, a talk deck) routes out; see Handoffs.
 
 ## What you produce
 
@@ -27,34 +21,30 @@ programmatic upload ([`../linkedin-api/SKILL.md`](../linkedin-api/SKILL.md)), or
 - **A design + export spec** — canvas, safe area, type floor, PDF checklist (one page).
 - **A one-line caption starter** — the first feed line; full caption tuning routes out.
 
-Precondition: you need a topic, an angle, or a source (post/article). If the ask is the
-account plan or a block of feed copy, you are in the wrong skill — see the handoffs table.
+Precondition: a topic, an angle, or a source (post/article). If the ask is the account plan or
+a block of feed copy, you are in the wrong skill — see the handoffs table.
 
 ## Ground first
 
-A carousel inherits an identity; it does not invent one. Before you design slides:
-
-- **Read the brand kit** if it exists in `02-DOCS/` (colors, type, logo) —
-  [`../brand-identity/SKILL.md`](../brand-identity/SKILL.md) owns it. Don't pick arbitrary fonts.
-- **Read the voice** so the headlines sound like the account —
-  [`../brand-voice/SKILL.md`](../brand-voice/SKILL.md) owns it.
-- **Pull the angle** from any plan/post already produced by
-  [`../linkedin-strategy/SKILL.md`](../linkedin-strategy/SKILL.md) or
-  [`../linkedin-content/SKILL.md`](../linkedin-content/SKILL.md). Reuse the hook, don't reopen it.
-
-If none exist, name your assumptions on slide 0 of the spec and proceed — don't stall.
+A carousel inherits an identity; it does not invent one. Read the brand kit (colors, type,
+logo — owned by [`../brand-identity/SKILL.md`](../brand-identity/SKILL.md)) and the voice
+([`../brand-voice/SKILL.md`](../brand-voice/SKILL.md)) from `02-DOCS/` if they exist; don't pick
+arbitrary fonts. Pull the angle from any plan or post already produced by
+[`../linkedin-strategy/SKILL.md`](../linkedin-strategy/SKILL.md) or
+[`../linkedin-content/SKILL.md`](../linkedin-content/SKILL.md) — reuse the hook, don't reopen
+it. If none exist, name your assumptions on slide 0 of the spec and proceed; don't stall.
 
 ## The swipe economics (why every rule below exists)
 
 Document/carousel posts are the **highest-engagement native format on LinkedIn right now** —
-they hit roughly 6.6% average engagement, ahead of every other format, and top-performing
-pages post far more of them than median pages. The reason is **dwell time**: a swipeable deck
-holds the thumb on screen, and dwell — not likes — is the algorithm's main distribution signal.
+roughly 6.6% average engagement, ahead of every other format, and top-performing pages post far
+more of them than median pages. The reason is **dwell time**: a swipeable deck holds the thumb
+on screen, and dwell — not likes — is the algorithm's main distribution signal.
 
 So the whole bet is the **cover slide and the swipe-to-slide-2 bounce**. If the cover doesn't
-earn the first swipe, your slide count, your arc, and your CTA never get seen. Every swipe
-after that extends dwell and signals quality, which is why each slide must *pull to the next*.
-Design backwards from that: stop the thumb, then keep it moving.
+earn the first swipe, your slide count, your arc, and your CTA never get seen; every swipe after
+that extends dwell and signals quality, which is why each slide must *pull to the next*. Design
+backwards from that: stop the thumb, then keep it moving.
 
 ## The cover slide
 
@@ -150,11 +140,10 @@ Good — one idea, one dominant element, breathing room
 ## Slide count
 
 Aim for the **6–12 band, ~8 as the sweet spot** (cover + ~6 content + CTA). Reported peaks
-cluster around 7–8 slides; 8–12 is where the highest dwell/save/share rates show up. Fewer
-than 5 underdelivers (not worth the swipe); more than ~15 loses people before the payoff.
-
-Treat the band as a guide, not a law: **length follows the arc, not a quota.** If the arc
-resolves in 7 slides, ship 7 — don't pad to hit a number.
+cluster around 7–8 slides; 8–12 is where the highest dwell/save/share rates show up. Fewer than
+5 underdelivers (not worth the swipe); more than ~15 loses people before the payoff. Treat the
+band as a guide, not a law: **length follows the arc, not a quota** — if the arc resolves in 7
+slides, ship 7, don't pad to hit a number.
 
 ## The CTA closer
 
@@ -184,17 +173,17 @@ Gotchas:   open the exported PDF and verify fonts — free Canva silently substi
 ```
 
 Portrait 4:5 takes the most vertical space in a mobile feed, which raises dwell and the chance
-of a scroll-stop. PDF is the only export that preserves fonts and layout reliably across
-devices — exporting slides as images loses crispness and breaks selectable text. The full
+of a scroll-stop; PDF is the only export that preserves fonts and layout reliably across
+devices, since slides exported as images lose crispness and break selectable text. The full
 checklist in prose is in [`references/carousel-patterns.md`](references/carousel-patterns.md).
 
 ## The feed caption handoff
 
 A document post still has a **text caption above it**, and its first 1–2 lines (before the
 "…more" fold) must restate the cover hook — that line is what people read before deciding to
-expand and swipe. Give a one-line starter that echoes the cover, then route full feed-copy
-length/tone tuning to [`../linkedin-content/SKILL.md`](../linkedin-content/SKILL.md). You own
-the slides; that sibling owns the caption.
+expand and swipe. Give a one-line starter that echoes the cover; you own the slides, and
+[`../linkedin-content/SKILL.md`](../linkedin-content/SKILL.md) owns the caption's full
+length/tone tuning.
 
 ## Handoffs
 
@@ -202,7 +191,7 @@ the slides; that sibling owns the caption.
 |---|---|
 | The account/format plan, cadence, niche, who to target | [`../linkedin-strategy/SKILL.md`](../linkedin-strategy/SKILL.md) |
 | A text or single-image feed post (just the copy) | [`../linkedin-content/SKILL.md`](../linkedin-content/SKILL.md) |
-| 1:1 DMs / connection-request outreach sequences | `linkedin-outreach` |
+| 1:1 DMs / connection-request outreach sequences | [`../linkedin-outreach/SKILL.md`](../linkedin-outreach/SKILL.md) |
 | To publish/schedule the deck via the LinkedIn API | [`../linkedin-api/SKILL.md`](../linkedin-api/SKILL.md) |
 | A spoken-to 16:9 talk deck (speaker support) | [`../presentations/SKILL.md`](../presentations/SKILL.md) |
 | The color / type / logo brand kit the deck is styled in | [`../brand-identity/SKILL.md`](../brand-identity/SKILL.md) |
@@ -236,4 +225,4 @@ scripts/verify.sh path/to/carousel-spec.md
 It checks (read-only) for a labeled cover slide, a slide count in 5–15 (warns outside 6–12), a
 CTA slide with an explicit ask, a portrait/square canvas, a ≥28 px type floor, "PDF" as the
 export target, and warns on any crammed (3+ bullet) interior slide. An empty or clean target
-passes. The deeper rigor is the capability eval in `evals/`.
+passes.
