@@ -1,6 +1,6 @@
 ---
 name: level-design
-description: "Use when designing a game level, map, arena, or encounter — laying out a blockout/greybox, fixing pacing that drags or spikes, guiding players without hand-holding, placing secrets and rewards, or diagnosing a level that plays as boring, confusing, or where players get lost or stuck. Engine-agnostic craft: the blockout->greybox->playtest->art pipeline, sightlines and landmarks, tension/release rhythm, the introduce->develop->twist->combine encounter progression, readability via light/color/composition, and traversal heatmaps. Triggers: 'design this level', 'my level is boring/confusing', 'players keep getting lost', 'how do I pace this', 'blockout', 'greybox', 'encounter design', 'where do I put the secret'. NOT systemic mechanics or economy tuning (that's game-design), NOT narrative or story beats (that's game-storytelling), and NOT engine-specific level tooling — nav meshes, occlusion, tilemap editors, lightmap baking (that's the godot/unity/unreal skill)."
+description: "Use when designing a game level's space — blockout/greybox layout, pacing that drags or spikes, guiding lost players without waypoints, encounter and arena progression, or secret placement. NOT mechanics or economy (that is `game-design`), NOT story beats (that is `game-storytelling`), NOT engine tooling like nav meshes or lightmaps (that is `godot`/`unity`/`unreal`)."
 tags: [level-design, blockout, pacing, encounter, playtest]
 recommends: [game-design, godot, unity, unreal]
 profiles: [full]
@@ -11,28 +11,11 @@ origin: risco
 
 *Shape the space, the rhythm, and the encounters so the player always knows where to go, never gets bored, and feels smart for exploring. Prove it in grey boxes; add art last.*
 
-This skill owns the **craft of physical space and its play**: how a level is laid out, how it reads, how its intensity rises and falls, how encounters teach, and where reward hides. It is **engine-agnostic** — every technique here is validated in a blockout, then handed to an engine skill for the actual tooling (nav meshes, occlusion, lightmaps, tilemaps). It does not design the mechanics the level exercises (that's the systemic layer) or write the story it tells.
-
-## When to use / When NOT to use
-
-**Use when:** blocking out a new level/map/arena; a level playtests as boring, confusing, or too hard/easy; players get lost or stuck; you need to pace a level, space encounters, or add breathers; you're guiding players without arrows/waypoints; placing secrets, rewards, or shortcuts; teaching a mechanic through the space itself.
-
-**Do NOT use for:**
-
-- **Systemic / mechanic design** — the verbs, rules, economy, and numbers the player brings *into* the level (jump height as a rule, weapon balance, loot tables, progression systems). That's `game-design`. This skill *exercises* those verbs in space; it doesn't invent or tune them.
-- **Narrative, quests, dialogue, environmental story beats** — what the space *says*. That's `game-storytelling`. Level design places the beat; storytelling writes it.
-- **Engine-specific level tooling** — nav-mesh baking, occlusion culling, terrain/tilemap/ProBuilder editors, lightmap/GI bakes, streaming volumes, collision setup. Defer to `godot` / `unity` / `unreal`. This skill decides *what* the space must do; the engine skill implements *how*.
-
-## The craft laws (non-negotiable)
-
-1. **Art last.** Never model or texture a space you haven't proven fun in blockout. Art-first means reworking expensive assets when the layout inevitably changes.
-2. **Metrics before geometry.** Lock the player's dimensions (height, jump, reach, cover) first; build everything as multiples of them. → `references/blockout-to-art.md`
-3. **The player always knows where to go, never how it ends.** Guide the critical path; leave exploration to earn its own reward. Lostness is a readability bug, not player error.
-4. **Watch, don't tell.** A level is only as good as it plays for someone you didn't coach. Every claim ("this is obvious", "the fight is fun") is a hypothesis until a fresh player validates it.
-5. **Rhythm, not a flat line.** Intensity must rise and fall. Sustained peak = fatigue; sustained calm = boredom. Design the graph, not just the rooms.
-6. **Teach through space, not text.** Introduce a threat where it's safe to learn it, before it can kill.
+This skill owns the **craft of physical space and its play**: how a level is laid out, how it reads, how its intensity rises and falls, how encounters teach, and where reward hides. It is **engine-agnostic** — every technique here is validated in a blockout, then handed to an engine skill for the actual tooling.
 
 ## The pipeline: blockout -> greybox -> playtest -> art (never art-first)
+
+**Lock the player's metrics first** — height, jump, reach, cover, door/corridor widths — and build all geometry as multiples of them. Guessing widths breaks traversal after the space is full of dependent geometry, which is why this comes before the first box. → `references/blockout-to-art.md`
 
 | Stage | You build | You answer | Gate to next |
 |---|---|---|---|
@@ -41,7 +24,7 @@ This skill owns the **craft of physical space and its play**: how a level is lai
 | **Playtest** | Nothing — you watch fresh players. | Where do they hesitate, get lost, die, skip? | Fixes are cheap because it's still grey. |
 | **Art pass** | Meshes, materials, VFX, final lighting, audio — *serving* the proven layout. | Does art reinforce the guidance the greybox already established? | Ship. |
 
-Iterate blockout↔playtest many times before art. Changing a grey box is minutes; changing a finished art set-piece is days. Full stage detail, the metrics block, and the art-pass handoff checklist → `references/blockout-to-art.md`.
+Iterate blockout↔playtest many times before art: changing a grey box is minutes, changing a finished art set-piece is days — so never model or texture a space you have not already proven fun. Full stage detail, the metrics block, and the art-pass handoff checklist → `references/blockout-to-art.md`.
 
 ## Spatial composition — leading the eye
 
@@ -49,13 +32,13 @@ Iterate blockout↔playtest many times before art. Changing a grey box is minute
 - **Landmarks (the "weenie").** One large, distinct, distant silhouette per area that the player orients toward (tower, spire, mountain) — Disney's term for the visual magnet that pulls you forward. Self-locating beats a minimap.
 - **Lead the eye** with converging lines (rails, beams), framing (foreground arches), contrast (a bright end to a dark corridor), and motion. The eye goes to the brightest, highest-contrast, most-different thing — put that on the path you want taken.
 - **Silhouette readability.** Enemies, interactables, and hazards must read by shape alone at a glance. Two things sharing a silhouette is an unintended trap.
-- **Golden path vs exploration.** The **critical path** is the always-legible guaranteed route to the objective; **exploration** is optional branches and loops off it. Prefer loops that return the player forward (avoid dead-end backtracking); breadcrumb side routes with a visible reward.
+- **Golden path vs exploration.** The **critical path** is the always-legible guaranteed route to the objective; **exploration** is optional branches and loops off it. The player must always know where to go and never how it ends. Prefer loops that return the player forward (avoid dead-end backtracking); breadcrumb side routes with a visible reward.
 
 Framing, contrast, and layout topologies (loops, hubs, gates) → `references/guidance-and-readability.md`.
 
 ## Pacing & rhythm — tension and release
 
-Design the **intensity graph** for the whole level, not room by room. A good level is a sawtooth trending upward: each peak (combat, platforming gauntlet, chase) followed by a valley — a **safe room / breather** with no threat, low stimulus, often a save/restock.
+Design the **intensity graph** for the whole level, not room by room. Intensity must rise and fall — sustained peak is fatigue, sustained calm is boredom. A good level is a sawtooth trending upward: each peak (combat, platforming gauntlet, chase) followed by a valley — a **safe room / breather** with no threat, low stimulus, often a save/restock.
 
 - **Space encounters in time and distance, and *vary* both** — three identical-length fights back to back feel like one long slog.
 - **Breathers earn the next peak.** The calm between (Halo's cadence is often described as "thirty seconds of fun" on repeat) is what makes the fun read as fun. Use it to let adrenaline drop, reward observation, and telegraph the next escalation.
@@ -66,7 +49,7 @@ Intensity-graph template, breather patterns, and difficulty-curve worked example
 
 ## Encounter design — introduce, develop, twist, combine
 
-The four-beat progression teaches a mechanic/threat through space (the pattern behind Portal, Half-Life 2, and Mario level craft):
+Teach through space, not text: the four-beat progression (the pattern behind Portal, Half-Life 2, and Mario level craft) introduces a threat where it is safe to learn, before it can kill.
 
 1. **Introduce** — meet the new element somewhere it *can't* hurt you. A single turret across a safe gap; one platform of the new hazard. Learn it risk-free.
 2. **Develop** — use it for real, low stakes. The turret now guards a corridor you must cross.
@@ -84,7 +67,7 @@ Encounter template, arena patterns, and a full introduce→develop→twist→com
 
 ## Guidance & readability — direct without hand-holding
 
-Guide with the environment so you never need a floating arrow:
+Guide with the environment so you never need a floating arrow. When a player is lost, that is a readability bug in the level, not player error:
 
 - **Light leads.** Players move toward light (the moth effect) and higher value-contrast. Light the path, objective, and exit; keep dead-ends dim. Placeholder lighting is a greybox *design* tool, not a final-art afterthought.
 - **Reserve one accent color for "you can interact / go here"** (Mirror's Edge runner red, Dishonored's usable glint) and **never** use it decoratively. Consistency is the whole point; break it once and you've lied to the player.
@@ -96,7 +79,7 @@ Full catalog — lighting/color/composition, the affordance language, the "criti
 
 ## Metrics & playtesting — where players get lost and stuck
 
-You cannot see your own level fresh. **Observe, don't coach:**
+You cannot see your own level fresh, so every claim ("this is obvious", "the fight is fun") is a hypothesis until a fresh player validates it. **Observe, don't coach:**
 
 - **Watch a first-timer play, silent.** Note every hesitation (readability gap), wrong turn (navigation gap), repeated death (telegraph/difficulty gap), and skipped content (reward-placement gap). Do **not** answer "where do I go?" — that question *is* the finding.
 - **Traversal telemetry** turns anecdote into pattern: **position heatmaps** (cold zones players never enter = wasted level), **death heatmaps** (clusters = unfair/unreadable threats), **path traces** (golden path or lost?), **dwell time** at forks (long dwell = unclear guidance), and **look/aim heatmaps** (did they even see the landmark?).
@@ -114,41 +97,26 @@ Playtest protocol, question scripts, and turning heatmaps into fixes → `refere
 
 Reward taxonomy, secret-signposting, and risk/reward tuning → `references/guidance-and-readability.md`.
 
-## Anti-patterns / rationalizations -> STOP
+## Anti-patterns
 
-| Rationalization | Reality / Fix |
+| Anti-pattern | Do instead |
 |---|---|
-| "Let's make it look good first, then tune the layout." | Art-first burns days reworking assets when the layout changes. Blockout, playtest, *then* art. |
-| "It's obvious where to go." | Obvious to *you*, the author. Fresh players get lost. Watch one before you believe it. |
-| "I'll just add a waypoint arrow / big text prompt." | That's a patch over a readability failure. Fix it with light, framing, and a landmark first. |
-| "The whole level is intense — it's exciting!" | Sustained peak = fatigue and it all flattens into noise. Add breathers so the peaks read. |
-| "Backtracking reuses the space for free." | Repeated dead-end backtracking reads as padding. Use loops that return the player forward. |
-| "Players will figure the new mechanic out." | Not while it's killing them. Introduce it where it's safe, then develop/twist/combine. |
-| "Yellow paint everywhere so they see the ledges." | Only if yellow means *exactly* climbable and appears nowhere else. Inconsistent affordances lie. |
-| "The secret's hidden well — no one will find it." | A secret with no breadcrumb is just frustration. Show the thread; reward the curious eye. |
-| "The gap/cover/door width feels about right." | Guessing metrics breaks traversal later. Set the metrics block first; build to multiples. |
-
-## Quick reference
-
-| Lever | Default | Where |
-|---|---|---|
-| Build order | blockout → greybox → playtest → art (art last) | `references/blockout-to-art.md` |
-| Metrics block | lock player height/jump/reach/cover first; build to multiples | `references/blockout-to-art.md` |
-| Navigation | one dominant landmark per area; legible critical path + breadcrumbed loops | `references/guidance-and-readability.md` |
-| Pacing | sawtooth: peak → breather (safe room) → higher peak | `references/pacing-and-encounters.md` |
-| Encounter teaching | introduce → develop → twist → combine | `references/pacing-and-encounters.md` |
-| Arena shape | sightline length matched to threat range; flanks + verticality | `references/pacing-and-encounters.md` |
-| Guidance | light leads; one reserved interact color; consistent affordances | `references/guidance-and-readability.md` |
-| Playtest | watch silent; log hesitation/lost/death/skip; read heatmaps | `references/guidance-and-readability.md` |
-| Secrets / risk | breadcrumb them; best optional reward behind biggest optional risk | `references/guidance-and-readability.md` |
+| Making it look good first, then tuning the layout. | Art-first burns days reworking assets when the layout changes. Blockout, playtest, *then* art. |
+| Trusting that it's "obvious where to go". | Obvious to *you*, the author. Fresh players get lost. Watch one before you believe it. |
+| Patching confusion with a waypoint arrow or big text prompt. | That's a patch over a readability failure. Fix it with light, framing, and a landmark first. |
+| Keeping the whole level intense because intensity is exciting. | Sustained peak = fatigue and it all flattens into noise. Add breathers so the peaks read. |
+| Reusing the space by sending the player back the way they came. | Repeated dead-end backtracking reads as padding. Use loops that return the player forward. |
+| Dropping a new mechanic in and expecting players to figure it out. | Not while it's killing them. Introduce it where it's safe, then develop/twist/combine. |
+| Yellow paint everywhere so they see the ledges. | Only if yellow means *exactly* climbable and appears nowhere else. Inconsistent affordances lie. |
+| Hiding a secret so well nobody finds it. | A secret with no breadcrumb is just frustration. Show the thread; reward the curious eye. |
+| Eyeballing gap, cover, and door widths because they feel about right. | Guessing metrics breaks traversal later. Set the metrics block first; build to multiples. |
 
 ## Related skills
 
-- **`game-design`** — the systemic layer: mechanics, verbs, economy, progression, difficulty *systems*. Level design exercises those verbs in space; if the request is about the rules themselves, route there.
-- **`game-storytelling`** — narrative, quests, dialogue, and the meaning of environmental beats. Level design places the beat; storytelling authors it.
-- **`godot` / `unity` / `unreal`** — the engine tooling that *implements* a proven layout: nav meshes, occlusion, terrain/tilemap editors, lightmap/GI bakes, streaming, collision. Hand off here after the blockout plays well.
-- **`harness`** — the `02-DOCS` Karpathy-wiki this skill records level conventions into.
-- **References:** `references/blockout-to-art.md` (pipeline, metrics block, art handoff, playtesting the blockout); `references/pacing-and-encounters.md` (intensity graph, encounter template, arena patterns, difficulty curve); `references/guidance-and-readability.md` (light/color/composition, affordances, playtest protocol, telemetry, reward & secrets).
+- `game-design` — the systemic layer: mechanics, verbs, economy, progression, difficulty *systems*. Level design exercises those verbs in space; if the request is about the rules themselves, route there.
+- `game-storytelling` — narrative, quests, dialogue, and the meaning of environmental beats. Level design places the beat; storytelling authors it.
+- `godot` / `unity` / `unreal` — the engine tooling that *implements* a proven layout: nav meshes, occlusion, terrain/tilemap editors, lightmap/GI bakes, streaming, collision. Hand off here after the blockout plays well.
+- `harness` — the `02-DOCS` Karpathy-wiki this skill records level conventions into.
 
 ## Checklist
 
