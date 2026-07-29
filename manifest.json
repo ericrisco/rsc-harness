@@ -4934,7 +4934,7 @@
     },
     {
       "id": "unity",
-      "description": "Use when writing, reviewing, or structuring Unity game code in C# for current Unity 6 LTS (6000.x) — GameObjects and Transform hierarchy, MonoBehaviour lifecycle, prefabs and prefab variants, ScriptableObjects for data, scenes and additive loading, the new Input System, coroutines vs async/await/Awaitable, Addressables, and build/player settings for 2D and 3D. Triggers: 'my Unity script', 'Awake vs Start', 'why is my physics jittery', MonoBehaviour .cs files, 'set up the new Input System', 'ScriptableObject config', 'load a scene additively', 'Instantiate a prefab', 'convert Input.GetAxis to the new system', 'build for Android/WebGL', 'por qué no se llama mi Start', 'com carrego una escena en additiu'. NOT Godot/GDScript (that is godot); NOT Unreal/Blueprint/C++ engine work (that is unreal); NOT the netcode wire protocol itself (that is gamedev-multiplayer).",
+      "description": "Use when writing, reviewing or structuring Unity game code in C# for Unity 6 LTS — GameObjects and the Transform hierarchy, the MonoBehaviour lifecycle, prefabs and variants, ScriptableObjects for data, scenes and additive loading, the Input System, coroutines versus async and Awaitable, Addressables, and build settings for 2D and 3D. NOT Godot or GDScript (that is `godot`), NOT Unreal Blueprint or C++ engine work (that is `unreal`), NOT the netcode wire protocol (that is `gamedev-multiplayer`).",
       "tags": [
         "unity",
         "csharp",
@@ -4957,7 +4957,7 @@
     },
     {
       "id": "unreal",
-      "description": "Use when building, scripting, or debugging a game in Unreal Engine 5 (UE5) with Blueprint and/or C++ — gameplay framework (Actor/Pawn/Character/GameMode/PlayerController), Actor lifecycle and tick, UPROPERTY/UFUNCTION/UCLASS reflection and garbage collection, Enhanced Input, dynamic multicast delegates, UMG widgets, Paper2D sprites/flipbooks, and Blueprint↔C++ parity (exposing C++ to Blueprint, calling Blueprint from C++). Triggers: \\\"UE5\\\", \\\"Unreal\\\", \\\"Blueprint\\\", \\\"make a Character in C++\\\", \\\"expose this to Blueprint\\\", \\\"BlueprintCallable\\\", \\\"why is my UObject garbage collected\\\", \\\"Enhanced Input mapping context\\\", \\\"UMG widget\\\", \\\"Paper2D flipbook\\\", \\\".uproject\\\", \\\"GameMode vs GameState\\\". NOT for Godot (→ godot), NOT for Unity/C#/MonoBehaviour (→ unity), NOT for language-only C++ memory/RAII questions with no Unreal types (→ cpp).",
+      "description": "Use when building, scripting or debugging a game in Unreal Engine 5 with Blueprint or C++ — the gameplay framework (Actor, Pawn, Character, GameMode, PlayerController), Actor lifecycle and tick, the reflection macros and garbage collection, Enhanced Input, multicast delegates, UMG widgets, Paper2D, and Blueprint-to-C++ parity in both directions. NOT Godot (that is `godot`), NOT Unity or MonoBehaviour (that is `unity`), NOT language-only C++ memory and RAII questions with no Unreal types (that is `cpp`).",
       "tags": [
         "unreal",
         "ue5",
@@ -4980,7 +4980,7 @@
     },
     {
       "id": "unsloth",
-      "description": "Use when fine-tuning an open-weight LLM fast on ONE GPU with low VRAM — Unsloth's FastLanguageModel/FastModel + 4-bit QLoRA + trl SFTTrainer, response-only loss masking via get_chat_template/train_on_responses_only, GRPO reasoning FT, and export to merged-16bit / GGUF / push_to_hub for Ollama or vLLM. Triggers: 'fine-tune Llama/Qwen/Gemma/gpt-oss on a single 16GB/24GB GPU', 'QLoRA OOMs on my GPU, make it fit', 'train ~2x faster with less VRAM', 'why is my loss covering the prompt / how do I mask the user turn', 'save my LoRA as GGUF Q4_K_M for Ollama', 'ajustar un modelo en una sola GPU sense quedar-me sense VRAM'. NOT whether/why/which method to fine-tune or trl/peft theory (that is finetuning), NOT running the exported GGUF locally (that is ollama), NOT serving-engine flags/throughput (that is vllm), NOT building the JSONL dataset (that is training-data).",
+      "description": "Use when fine-tuning an open-weight LLM fast on ONE GPU with low VRAM — Unsloth's fast model loaders with 4-bit QLoRA and the trl trainer, response-only loss masking so the prompt is not trained on, GRPO reasoning fine-tunes, and export to merged 16-bit, GGUF or the Hub. NOT whether, why or which method to fine-tune (that is `finetuning`), NOT running the exported GGUF locally (that is `ollama`), NOT serving-engine flags and throughput (that is `vllm`), NOT building the JSONL dataset (that is `training-data`).",
       "tags": [
         "unsloth",
         "qlora",
@@ -5000,7 +5000,7 @@
     },
     {
       "id": "vector-db",
-      "description": "Use when operating a vector store as a data layer — choosing or migrating between Pinecone, Qdrant, Weaviate, or pgvector; designing a collection/index (distance metric, dimensions, HNSW m/ef_construction, named vectors); filtering on metadata/payload; running hybrid dense+sparse search; or picking quantization to cut RAM and cost. Symptoms: search returns garbage, filters get silently ignored, recall is low, queries are slow, the bill is too high, a filtered query returns fewer than k rows. Triggers: 'set up a vector database', 'my similarity search ignores the metadata filter', 'ef_search vs recall', 'move off Pinecone to pgvector to cut cost', 'hybrid search with RRF', 'why does my filtered query return fewer than k results', 'crear una colección en Qdrant con cuantización binaria', 'la cerca vectorial retorna resultats dolents'. NOT how to produce, chunk, or judge embeddings (that is embeddings-search).",
+      "description": "Use when operating a vector store as a data layer — choosing or migrating between Pinecone, Qdrant, Weaviate and pgvector; designing a collection or index (distance metric, dimensions, HNSW parameters, named vectors); filtering on metadata; hybrid dense-plus-sparse search; and quantization to cut RAM and cost. Covers garbage results, silently ignored filters, low recall, slow queries, and filtered queries returning fewer than k rows. NOT producing, chunking or judging embeddings (that is `embeddings-search`).",
       "tags": [
         "vector-database",
         "pinecone",
@@ -5023,7 +5023,7 @@
     },
     {
       "id": "vercel",
-      "description": "Use when operating an already-chosen Vercel project from the CLI or vercel.json/vercel.ts — deploying preview vs production, debugging builds, pushing/pulling env vars across production/preview/development, attaching custom domains, configuring functions (runtime, maxDuration, regions), crons, rewrites/redirects/headers, and deployment protection. Triggers: 'deploy to Vercel', 'vercel --prod', 'my function timed out at 10s', 'vercel env pull doesn't update .env.local', 'should I still use Edge Functions', 'set maxDuration', 'add a cron on Vercel', 'desplega a Vercel', 'configura les variables d'entorn a Vercel', 'configurar un cron en Vercel'. NOT host choice / Docker / CI (that is deployment), NOT Next.js app code or next.config.js (that is nextjs), NOT DNS records / registrar transfers (that is domains-dns).",
+      "description": "Use when operating an already-chosen Vercel project from the CLI or its config file — preview versus production deploys, debugging builds, pushing and pulling env vars across environments, custom domains, function runtime, duration and regions, crons, rewrites and headers, and deployment protection. NOT host choice, Docker or CI (that is `deployment`), NOT Next.js app code or next.config (that is `nextjs`), NOT DNS records or registrar transfers (that is `domains-dns`).",
       "tags": [
         "vercel",
         "deploy",
@@ -5056,7 +5056,7 @@
     },
     {
       "id": "video-shorts",
-      "description": "Use when scripting or directing the edit of a single vertical short for Reels/Shorts/TikTok that has to hold attention from the first frame — turning a topic, a clip, or a long video into a shot-by-shot script and an edit decision sheet. Use for writing a 15–60s short, fixing a hook that dies in second three, generating hook variants to A/B test, planning cuts and burned-in captions, or extracting shorts from a long video. Triggers: 'write me a 30-second Reel/TikTok/Short', 'my Reels die in the first 3 seconds', 'give me 5 hook variants to A/B test', 'turn this podcast clip into a vertical short', 'plan the cuts and on-screen text for this faceless voiceover Reel', 'escríbeme un guion para un Reel de 30 segundos', 'convierte este vídeo largo en un Short', 'el gancho de mis Reels no engancha'. NOT scheduling or cross-platform cadence (that is social-publisher), NOT running the editorial calendar/pipeline (that is content-engine), NOT defining the durable brand tone (that is brand-voice).",
+      "description": "Use when scripting or directing the edit of a single vertical short that has to hold attention from the first frame — turning a topic, a clip or a long video into a shot-by-shot script and an edit decision sheet, fixing a hook that dies in second three, generating hook variants to test, and planning cuts and on-screen text. NOT scheduling or cross-platform cadence (that is `social-publisher`), NOT running the editorial calendar (that is `content-engine`), NOT defining the durable brand tone (that is `brand-voice`).",
       "tags": [
         "short-form-video",
         "reels",
@@ -5104,7 +5104,7 @@
     },
     {
       "id": "vllm",
-      "description": "Use when self-hosting an open-weight LLM for high-throughput, concurrent serving with vLLM — running `vllm serve` as an OpenAI-compatible endpoint, splitting a model across GPUs with tensor/pipeline parallelism, loading AWQ/GPTQ/FP8/compressed-tensors quants, serving one or many LoRA adapters, or debugging KV-cache OOM from --gpu-memory-utilization / --max-model-len. Triggers: 'serve a 70B to many users at once', 'point my OpenAI client at a self-hosted model', 'split a model across 4 GPUs with tensor parallel', 'why does vllm OOM at long context', 'serve my fine-tuned LoRA adapter', 'health check my vllm server', 'servir un modelo abierto con alta concurrencia en mis propias GPUs'. NOT renting/provisioning the GPU box itself (that is runpod / modal), NOT single-user laptop inference (that is ollama), NOT a hosted inference API you do not operate (that is together-fireworks / huggingface).",
+      "description": "Use when self-hosting an open-weight LLM for high-throughput concurrent serving with vLLM — running an OpenAI-compatible endpoint, splitting a model across GPUs with tensor or pipeline parallelism, loading quantized weights, serving one or many LoRA adapters, and debugging KV-cache OOM from memory-utilisation and context-length flags. NOT renting or provisioning the GPU box (that is `runpod` or `modal`), NOT single-user laptop inference (that is `ollama`), NOT a hosted inference API you do not operate (that is `together-fireworks` or `huggingface`).",
       "tags": [
         "vllm",
         "llm-serving",
@@ -5162,7 +5162,7 @@
     },
     {
       "id": "webinar",
-      "description": "Use when planning, promoting, or running a webinar meant to convert — deciding the offer before the title, building the registration + reminder funnel, scripting the run-of-show, or splitting post-event follow-up by segment. Triggers: 'plan a webinar', 'webinar that converts', 'people register but don't show up', 'webinar got attendees but no sales', 'reminder email sequence', 'no-show replay follow-up', non-obvious: 'my live attend rate is only 30%', 'how do I transition into the pitch without it feeling salesy', ES 'montar un webinar que convierta', CA 'fer un webinar que vengui'. NOT the slide visuals themselves (that is presentations), NOT the registration page copy (that is landing-copy).",
+      "description": "Use when planning, promoting or running a webinar meant to convert — deciding the offer before the title, building the registration and reminder funnel, scripting the run-of-show, and splitting post-event follow-up by segment. Covers a low live attend rate, attendees who do not buy, and the transition into the pitch. NOT the slide visuals themselves (that is `presentations`), NOT the registration page copy (that is `landing-copy`).",
       "tags": [
         "webinar",
         "conversion-funnel",

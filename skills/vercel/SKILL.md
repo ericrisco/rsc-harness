@@ -1,6 +1,6 @@
 ---
 name: vercel
-description: "Use when operating an already-chosen Vercel project from the CLI or vercel.json/vercel.ts — deploying preview vs production, debugging builds, pushing/pulling env vars across production/preview/development, attaching custom domains, configuring functions (runtime, maxDuration, regions), crons, rewrites/redirects/headers, and deployment protection. Triggers: 'deploy to Vercel', 'vercel --prod', 'my function timed out at 10s', 'vercel env pull doesn't update .env.local', 'should I still use Edge Functions', 'set maxDuration', 'add a cron on Vercel', 'desplega a Vercel', 'configura les variables d'entorn a Vercel', 'configurar un cron en Vercel'. NOT host choice / Docker / CI (that is deployment), NOT Next.js app code or next.config.js (that is nextjs), NOT DNS records / registrar transfers (that is domains-dns)."
+description: "Use when operating an already-chosen Vercel project from the CLI or its config file — preview versus production deploys, debugging builds, pushing and pulling env vars across environments, custom domains, function runtime, duration and regions, crons, rewrites and headers, and deployment protection. NOT host choice, Docker or CI (that is `deployment`), NOT Next.js app code or next.config (that is `nextjs`), NOT DNS records or registrar transfers (that is `domains-dns`)."
 tags: [vercel, deploy, serverless, edge, env-vars]
 recommends: [deployment, nextjs, domains-dns]
 origin: risco
