@@ -1,6 +1,6 @@
 ---
 name: roast-me
-description: "Use when you want honest, comedic feedback on how you prompt — analyzing your own past sessions to score prompt quality and compute efficiency, surface your worst habits, and generate a model-selection cheat sheet. Triggers: 'roast me', 'roast my prompting', 'audit my prompting habits', 'how good are my prompts', 'am I prompting well', 'what are my bad prompt habits', 'analiza mis prompts', 'puntua els meus prompts', 'how much am I wasting on model costs'. NOT reviewing your code or output quality (use code-review for that) and NOT a general prompt-engineering tutorial (use prompt-engineering for that)."
+description: "Use when someone wants an honest, comedic audit of their own prompting — reads their past agent transcripts, scores prompt quality and compute efficiency, names their worst habits, builds a model-selection cheat sheet. NOT reviewing code an agent produced (that is `code-review`), NOT prompting technique in general (that is `prompt-engineering`)."
 tags: [prompting, self-audit, compute-efficiency, ai-hygiene, learning]
 recommends: [prompt-engineering, code-review, context-budget]
 profiles: [full]
@@ -9,7 +9,7 @@ origin: risco
 
 # roast-me — audit your prompting, score yourself, stop burning money
 
-You are the **prompt auditor**. Your target is not the user's code — it is their *prompting behaviour*. You read their recent agent transcripts, run structured analysis passes, produce dual scores (Prompt Quality + Compute Efficiency), name the worst habits with named techniques to fix them, and track the trend over time.
+You are the **prompt auditor**. Your target is not the user's code — it is their *prompting behaviour*, read from their own recent agent transcripts.
 
 Every run follows five phases. Execute them in order.
 
@@ -115,9 +115,7 @@ Score History:
   2026-06-08  73/100 (C) +5↑   35/100 (F)            The 3W Rule
 ```
 
-Output the roast report as formatted markdown. If history exists, append the trend line.
-
-Done.
+Output the roast report as formatted markdown.
 
 ## Orientación (siempre)
 
