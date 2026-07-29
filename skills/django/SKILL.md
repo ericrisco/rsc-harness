@@ -1,6 +1,6 @@
 ---
 name: django
-description: "Use when building, reviewing, securing, testing or shipping a Django web app — models, migrations, QuerySets, managers, FBV/CBV views, forms, the admin, settings split, and Django REST Framework (serializers, ModelViewSet, routers, permissions, throttling). Triggers: 'add a filter and fix the N+1 in this ListView', 'build a DRF ModelViewSet with owner-only permission', 'this template loops over books and queries book.author each iteration' (N+1 without the word Django), 'why does manage.py check --deploy warn about SECURE_HSTS_SECONDS', 'revisa este modelo y añade un UniqueConstraint en (tenant, slug)', 'el queryset hace N+1', any file with manage.py, settings.py, models.py, serializers.py or a 0001_initial migration. NOT async-first FastAPI services (that is fastapi)."
+description: "Use when building, reviewing, securing, testing or shipping a Django app — models, migrations, QuerySets/managers, FBV/CBV views, forms, the admin, settings split, and Django REST Framework (serializers, ModelViewSet, permissions). NOT async FastAPI/Pydantic services (that is `fastapi`), NOT Postgres schema/index work (that is `postgresdb`)."
 tags: [python, django, orm, drf, backend, web]
 recommends: [postgresdb, secure-coding, deployment, testing-py, api-design]
 origin: risco
@@ -31,10 +31,7 @@ add a dependency.
 
 **Version rule:** default to 5.2 LTS. Pick 6.0 only for a concrete Tasks/CSP need, and say so.
 
-## When to use vs route elsewhere
-
-The test: if the project has `manage.py` and `INSTALLED_APPS`, it is Django. If it imports
-`fastapi` + `pydantic`, it is not.
+## Route elsewhere
 
 | Situation | Route to |
 |---|---|
@@ -44,8 +41,6 @@ The test: if the project has `manage.py` and `INSTALLED_APPS`, it is Django. If 
 | Container/Compose/CI, gunicorn prod tuning, collectstatic pipeline | `deployment` |
 | REST contract design (cursor vs offset, status codes, versioning) | `api-design` |
 | ruff/uv/general type hints, packaging | `python` |
-
-Everything else Django-shaped — models, QuerySets, migrations, views, DRF, settings — is here.
 
 ## Project shape
 
