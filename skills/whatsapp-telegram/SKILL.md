@@ -1,6 +1,6 @@
 ---
 name: whatsapp-telegram
-description: "Use when wiring an app or agent to send messages to customers over the WhatsApp Cloud API or a Telegram bot — order updates, OTP codes, reminders, alerts, broadcasts — or when debugging not-delivered messages, 24-hour-window errors, rejected templates, or 429 rate limits. Triggers: 'send a WhatsApp template message', 'error 131047 re-engage outside the 24h window', 'verify X-Hub-Signature-256 on the WhatsApp webhook', 'setWebhook vs getUpdates for my Telegram bot', 'honor retry_after on a Telegram 429', 'enviar plantilla de WhatsApp d'avis al client', 'bot de Telegram para avisos'. NOT the reply content you send (that is customer-support)."
+description: "Use when wiring an app or agent to message customers over the WhatsApp Cloud API or a Telegram bot — order updates, OTP codes, reminders, alerts and broadcasts — or when debugging undelivered messages, 24-hour-window errors, rejected templates, webhook signature verification, or rate limits and their retry headers. NOT the reply content you send (that is `customer-support`)."
 tags: [whatsapp, telegram, messaging, cloud-api, bot-api]
 recommends: [customer-support, webhooks, automation-flows, chatbot, nodejs]
 origin: risco
