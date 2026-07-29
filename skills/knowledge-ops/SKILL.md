@@ -1,6 +1,6 @@
 ---
 name: knowledge-ops
-description: "Use when an already-running 02-DOCS/ wiki needs day-to-day gardening — too many half-finished articles, a 600-line page that covers three unrelated topics, a note with no obvious home, orphan pages nothing links to, stale answers and superseded articles piling up, or two articles that contradict each other. This is the judgment layer over harness's automation: decide what is worth capturing (default: nothing), where it goes, how to title/split/merge it, build the See Also web, and prune to _archive (never delete). Triggers: 'limpia mi wiki', 'organiza mis notas', 'esto dónde va en la wiki', 'ordena la base de conocimiento', 'split this bloated article', 'where should this note live', 'scores.json says these three are orphans — fix the cross-links', 'prune the stale and superseded stuff'. NOT building, bootstrapping or sweeping the wiki engine (that is harness)."
+description: "Use when an already-running 02-DOCS/ wiki needs gardening judgment — what is worth capturing (default: nothing), where a loose note belongs, whether to split a bloated article or merge near-duplicates, how to link orphans back in, and what retires to _archive (never delete). NOT building or sweeping the wiki engine itself (that is `harness`)."
 tags: [knowledge-ops, wiki, 02-docs, knowledge-base, curation, cross-linking, pruning, knowledge-meta]
 recommends: [harness, decision-records, meeting-notes, sop-builder, research-ops, codebase-onboarding]
 origin: risco
@@ -8,7 +8,7 @@ origin: risco
 
 # Knowledge Ops — Garden the 02-DOCS Wiki
 
-*The engine is already running. `harness` built the `02-DOCS/` wiki and owns its automation — the inbox sweep, deterministic lint, scoring, gap detection, the self-improve loop. Your job is the four judgments that automation deliberately leaves to a human: what is worth capturing, how it should be shaped, how it connects, and what should retire. You are the gardener, not the machinery.*
+*The engine is already running. `harness` built the `02-DOCS/` wiki and owns its automation — the inbox sweep, deterministic lint, scoring, gap detection, the self-improve loop — and changing that machinery or filling the wiki in bulk stays with it. Yours are the four judgments automation deliberately leaves to a human: what is worth capturing, how it should be shaped, how it connects, and what should retire. You are the gardener, not the machinery.*
 
 ## Before you touch anything
 
@@ -29,7 +29,7 @@ Every gardening request is one of four operations. Identify which before you act
 | **Link** | Pages are unreachable or under-connected | `scores.json` orphan_penalty (=5), low inbound count | `## See Also` in articles, `index.md` |
 | **Prune** | Answers are stale, articles superseded, conflicts unresolved, gaps bloated | freshness, conflict annotations, old `[FILLED]` gaps | `_archive/`, `log.md`, `gaps.md` |
 
-Whichever you do, record a line in `wiki/log.md`. `log.md` is the OKF reserved change-log: new entries are **prepended at the top (newest first)**, ISO 8601 dates, and past entries are never edited or deleted. (`gaps.md` is the append-only file — new entries go at the bottom.) The exact entry shapes per operation live in `references/gardening-playbook.md`.
+Whichever you do, record a line in `wiki/log.md` under the reserved-file rule in **Safety rails** below. The exact entry shapes per operation live in `references/gardening-playbook.md`.
 
 ## Capture — the bar is high
 
@@ -44,7 +44,7 @@ Walk the altitude ladder, lowest rung first; stop at the first that fits:
 
 Worked examples for each rung are in `references/gardening-playbook.md`.
 
-**Topic choice.** Reuse an existing topic before inventing one, and keep `wiki/` exactly **one level of subdirs** deep (the protocol's rule). 
+**Topic choice.** Reuse an existing topic before inventing one, and keep `wiki/` exactly **one level of subdirs** deep (the protocol's rule).
 
 - Bad: `wiki/payments/stripe/webhooks/retries.md` (four levels deep).
 - Good: `wiki/payments/stripe-webhook-retries.md` (existing `payments/` topic, one level).
@@ -81,20 +81,19 @@ Every article earns **≥1 inbound link** or is a conscious leaf you can justify
 
 - **Conflicts:** you **flag** contradictions and the **human arbitrates**. Once they choose a winner, you may apply the resolution and annotate the loser — but you never auto-pick. Why: silently choosing a side is data corruption.
 - **Stale answers:** mark a page or archived copy with a `> ⚠ Stale — superseded YYYY-MM-DD` note rather than rewriting history.
-- **Compaction is bounded:** only `[FILLED YYYY-MM-DD]` gaps **older than 90 days** may be compacted, and only via a single marker prepended to `log.md`. `gaps.md` is append-only and `log.md` is newest-first (both immutable past entries) — gaps get a `[FILLED]` stamp, never a deletion.
-- **Log every prune** by prepending to `wiki/log.md` (newest first). Exact entry shapes per operation: `references/gardening-playbook.md`.
+- **Compaction is bounded:** only `[FILLED YYYY-MM-DD]` gaps **older than 90 days** may be compacted, and only via a single marker prepended to `log.md` — a gap gets a `[FILLED]` stamp, never a deletion.
+- **Log every prune** by prepending to `wiki/log.md`.
 
-A full worked prune session (stale + superseded + conflict + gap compaction, all logged) is in the playbook.
+A full worked prune session (stale + superseded + conflict + gap compaction, all logged) is in `references/gardening-playbook.md`.
 
-## Safety rails (inherited from the protocol)
+## Safety rails
 
-These are hard constraints, not suggestions. They come from `../harness/references/wiki-protocol.md` — do not override them.
+Inherited from `../harness/references/wiki-protocol.md` — do not override them; each one guards against a loss you cannot undo.
 
 1. **Preserve before overwrite.** Never overwrite an article without first copying the old version to `wiki/<topic>/_archive/<article>__YYYY-MM-DD.md`.
 2. **Never auto-resolve a conflict.** Flag it; the human arbitrates.
-3. **`gaps.md` is append-only; `log.md` is newest-first.** New `gaps.md` entries are appended at the bottom; new `log.md` entries are prepended at the top (the OKF reserved-file rule). Past entries in either are immutable — gaps get `[FILLED YYYY-MM-DD]`, nothing is ever edited out.
-4. **Log every change** by prepending to `wiki/log.md` (newest first).
-5. **Never touch an article whose `timestamp` is < 24h ago** without explicit user say-so. Why: it is likely still being worked. (`timestamp` is the OKF last-meaningful-edit field, ISO 8601 — see `../harness/references/wiki-protocol.md` "## Conventions".)
+3. **The reserved files only grow.** Log every change in `wiki/log.md`, the OKF reserved change-log: new entries are **prepended at the top (newest first)**, ISO 8601 dates. `gaps.md` is the append-only one — new entries go at the bottom. Past entries in either are immutable: a gap gets a `[FILLED YYYY-MM-DD]` stamp, nothing is ever edited out or deleted.
+4. **Never touch an article whose `timestamp` is < 24h ago** without explicit user say-so. Why: it is likely still being worked. (`timestamp` is the OKF last-meaningful-edit field, ISO 8601 — see `../harness/references/wiki-protocol.md` "## Conventions".)
 
 ## Anti-patterns
 
@@ -117,9 +116,7 @@ Route elsewhere when the request is not gardening an existing wiki:
 |---------|----------|
 | Build/bootstrap the wiki, run an inbox sweep, scaffold `01-TOOLS`, generate root `CLAUDE.md` | `harness` (`../harness/SKILL.md`) — it owns the engine |
 | Turn a meeting transcript into a recap with action items + owners | `meeting-notes` (`../meeting-notes/SKILL.md`) |
-| Author a decision record (ADR) with alternatives, status, review cadence | `decision-records` (you may *file* one; that skill *authors* the discipline) |
+| Author a decision record (ADR) with alternatives, status, review cadence | `decision-records` (`../decision-records/SKILL.md`) — you may *file* one; that skill *authors* the discipline |
 | Document a repeatable procedure step by step | `sop-builder` (`../sop-builder/SKILL.md`) |
-| First-pass walkthrough of an unfamiliar codebase | `codebase-onboarding` |
-| Run a literature / source-gathering research project | `research-ops` |
-
-The sharp line: changing the wiki's machinery or filling it in bulk is `harness`. Exercising judgment over what an already-running wiki should contain and how it should be shaped is `knowledge-ops`.
+| First-pass walkthrough of an unfamiliar codebase | `codebase-onboarding` (`../codebase-onboarding/SKILL.md`) |
+| Run a literature / source-gathering research project | `research-ops` (`../research-ops/SKILL.md`) |
