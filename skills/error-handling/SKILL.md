@@ -1,6 +1,6 @@
 ---
 name: error-handling
-description: "Use when designing how code recognizes, recovers from, and reports failure — typed error taxonomies, retry/backoff/timeout policy, circuit breakers, React/Next error boundaries, and the user message + operator log line. Triggers: 'add retries with backoff', 'set up an error boundary', 'standardize our error types', 'stop swallowing exceptions', 'this catch block hides the real error', 'degrade gracefully when the payment provider is down', 'why does our retry storm take the database down', 'maneja los errores sin tragarte la excepción', 'afegeix reintents amb backoff i tallacircuits'. NOT finding why one specific thing broke (that is debug), NOT wiring logs/metrics/traces (that is observability), NOT the on-the-wire error envelope contract (that is api-design)."
+description: "Use when designing the reaction to a class of failures — typed error taxonomies, retry/backoff/timeout policy, circuit breakers, React/Next error boundaries, and the user-message vs operator-log split. NOT diagnosing one specific crash (that is debug), NOT logs/metrics/traces (that is observability), NOT the wire error envelope (that is api-design)."
 tags: [error-handling, resilience, retry, circuit-breaker, error-boundary, typed-errors, fault-tolerance]
 recommends: [debug, observability, monitoring, api-design, secure-coding, testing-web, nextjs]
 origin: risco
@@ -9,22 +9,10 @@ origin: risco
 # Error handling — classify, contain, surface
 
 You are designing what happens *whenever anything in a class breaks*, not chasing
-one crash (that is [`debug`](../debug/SKILL.md)). The deliverable is a typed error
-taxonomy, a retry policy with caps and jitter, boundary placement, and a
+one crash (that is [`debug`](../debug/SKILL.md)). Every failure gets classified,
+contained, and surfaced — never swallowed. The deliverable, in that order: a typed
+error taxonomy, a retry policy with caps and jitter, boundary placement, and a
 two-audience message contract — never a pile of `try { … } catch {}`.
-
-## The one rule
-
-**Every failure gets classified, contained, and surfaced — never swallowed.**
-
-- **Classify** — give the failure a type so the right code can react to the right
-  kind. An untyped `catch (e)` cannot decide anything.
-- **Contain** — stop one failing dependency from taking the process (or the DB)
-  with it. No timeout, no cap = unbounded blast radius.
-- **Surface** — emit two things: a human message that never leaks internals, and
-  an operator log with the full cause chain.
-
-The five steps below are those three jobs in order. Do them in order.
 
 ## Step 1 — Model failure as a taxonomy
 
@@ -257,19 +245,6 @@ GOOD → 503 { "code": "upstream_unavailable", "correlationId": "a1b2c3" }
 More before/after rewrites and the copy contract are in
 [`references/boundaries-and-messaging.md`](references/boundaries-and-messaging.md).
 
-## Decision table
-
-| Situation | Reaction |
-|---|---|
-| Expected domain outcome the caller must handle | `Result<T,E>` |
-| Programmer bug / invariant violation | `throw` → nearest boundary |
-| Transient failure on an idempotent call | retry (capped + full jitter) |
-| Transient failure on a mutation without a key | do **not** retry; require idempotency key first |
-| Dependency failing repeatedly | circuit-break + fallback |
-| Failure during React render | `error.tsx` boundary |
-| Failure in an event handler / async callback | explicit `try/catch` + state |
-| Unhandled at the top of the process | process handler → log + exit |
-
 ## Anti-patterns
 
 | Anti-pattern | Why it bites | Fix |
@@ -289,19 +264,10 @@ More before/after rewrites and the copy contract are in
 | One giant `try` around 200 lines | you cannot tell which call failed | scope `try` to the fallible call |
 | Treat every error as a retryable transient | masks real bugs as "flaky" | classify first (Step 1), then react |
 
-## Verification checklist
+## The gate
 
-Before claiming the failure path is handled:
-
-- [ ] Every failure maps to one of the three buckets (Step 1).
-- [ ] No empty `catch {}` / `except: pass` / bare `except:`.
-- [ ] Retries are capped, jittered, transient-only, and idempotent-only.
-- [ ] Every outbound call has a per-attempt timeout.
-- [ ] Repeatedly-failing dependencies have a circuit breaker + fallback.
-- [ ] `error.tsx` / `global-error.tsx` placed correctly; render-only limits known.
-- [ ] User message has no internals + carries a correlation id; the log has the cause chain.
-- [ ] Cause is preserved on every wrap (no lost root error).
-
-Run `scripts/verify.sh <path>` to scan the working tree for the highest-signal
-anti-patterns above. It is **advisory** (exit 0 with warnings); pass `--strict` to
-make any hit fail. It is heuristic — it flags, you judge.
+Before claiming the failure path is handled, read your diff against the table
+above — those rows *are* the checklist. `scripts/verify.sh <path>` scans the
+working tree for the highest-signal ones. It is **advisory** (exit 0 with
+warnings); pass `--strict` to make any hit fail. It is heuristic — it flags,
+you judge.
