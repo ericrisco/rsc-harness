@@ -1,6 +1,6 @@
 ---
 name: dynamodb
-description: "Use when designing or operating an Amazon DynamoDB table - modeling entities and relationships without joins, choosing partition/sort keys, deciding single-table vs table-per-entity, adding a GSI/LSI, picking on-demand vs provisioned capacity, or diagnosing throttling. Triggers: 'design a DynamoDB table', 'model one-to-many / many-to-many without joins', 'single-table design worth it?', 'query the same data by two different keys' (inverted GSI), 'writes throttled even though I'm under my provisioned capacity' (hot partition), 'on-demand or provisioned?', 'why does my Query only return some rows?' (1 MB page), 'diseña la tabla DynamoDB para estos patrones de acceso', 'modela aquesta relació amb clau composta a DynamoDB'. NOT relational schema / SQL / EXPLAIN / B-tree indexing (that is postgresdb), and NOT document modeling with aggregation pipelines (that is mongodb)."
+description: "Use when modeling or operating a DynamoDB table: deriving partition/sort keys from access patterns, single-table vs table-per-entity, adding a GSI/LSI, on-demand vs provisioned capacity, or diagnosing hot-partition throttling. NOT relational schema/SQL/EXPLAIN (that is `postgresdb`), NOT aggregation-pipeline document modeling (that is `mongodb`)."
 tags: [dynamodb, nosql, single-table-design, aws, data-modeling]
 recommends: [postgresdb, mongodb, redis, vector-db, aws-essentials, deployment, secure-coding]
 origin: risco
@@ -29,24 +29,16 @@ You **refuse** to: click through the AWS console, wire the IaC/CI provisioning p
 `../deployment/SKILL.md`), or model the data as normalized tables you then "join" in application code.
 You emit DDL, IaC snippets, and example SDK calls — you do not provision the infrastructure.
 
-## The non-negotiable order
-
-Do these in sequence. Reordering them is the single most common DynamoDB mistake.
-
-1. **Access patterns first.** You cannot query what your keys do not express, and there is no `WHERE`
-   over arbitrary columns. List the patterns before you name a single attribute.
-2. **Keys second.** Co-locate items that are read together so one `Query` returns them.
-3. **Indexes last.** A GSI is a cost and a consistency compromise; reach for it only when the base
-   table cannot answer a pattern.
-4. **Capacity last.** Capacity mode is a billing decision, not a modeling one — it changes nothing about
-   the keys. Pick it after the model is stable.
-
-Why the order matters: changing a table's key schema after launch means a full migration (new table +
-backfill + dual-write). Get the keys wrong and you pay for it forever.
+The steps below run in sequence — access patterns, then keys, then indexes, then capacity. Reordering
+them is the single most common DynamoDB mistake.
 
 ## Step 1 — Enumerate access patterns
 
-Produce this table before touching keys. It is also exactly what `scripts/verify.sh` checks.
+You cannot query what your keys do not express, and there is no `WHERE` over arbitrary columns, so
+produce this table before you name a single attribute. It is also exactly what `scripts/verify.sh`
+checks: run `scripts/verify.sh <path-to-key-design.{md,json}>` and every row must carry a key target
+(`pk`/`sk` or a named `gsi`) and a `query_type`. It FAILS on any pattern served by `Scan`, WARNS on
+`FilterExpression`, and asserts ≤20 GSIs / ≤5 LSIs. Read-only; exits 0 on an empty or clean target.
 
 | pattern | entity | key condition | read/write | est. freq | served by |
 |---|---|---|---|---|---|
@@ -65,8 +57,12 @@ modeling smell — redesign the key, do not patch it with a filter.
 
 ## Step 2 — Key design + single-table decision
 
+Get this wrong and you pay for it forever: changing a table's key schema after launch means a full
+migration (new table + backfill + dual-write).
+
 **Composite-key encoding.** Use prefixed, sortable strings so one partition holds an entity and its
-children, and so a sort-key range query slices them:
+children — items read together are co-located, so one `Query` returns them — and so a sort-key range
+query slices them:
 
 ```text
 PK = USER#123
@@ -84,8 +80,10 @@ One `Query` with `PK = USER#123 AND SK begins_with("ORDER#")` returns all of tha
 already sorted. That is a **one-to-many** relationship with no join.
 
 **Many-to-many** uses an adjacency list: store the edge twice (or use an inverted GSI, see Step 3) so
-you can traverse it from either side. Full worked example in
-[references/access-patterns.md](references/access-patterns.md).
+you can traverse it from either side. Worked end-to-end in
+[references/access-patterns.md](references/access-patterns.md) — a multi-tenant SaaS / e-commerce model
+(pattern table → PK/SK map → GSI map → AWS SDK v3 `@aws-sdk/lib-dynamodb` calls), adjacency-list
+many-to-many, time-series and leaderboard patterns.
 
 **Single-table vs table-per-entity** — decide honestly, do not cargo-cult:
 
@@ -130,7 +128,8 @@ under one partition key). GSI-only tables have no such cap — a real reason to 
 
 ## Step 4 — Capacity & cost
 
-Pick the mode after the model is stable. Decision table:
+Capacity mode is a billing decision, not a modeling one — it changes nothing about the keys, so pick it
+after the model is stable. Decision table:
 
 | traffic shape | recommendation | why |
 |---|---|---|
@@ -156,7 +155,8 @@ PK = METRIC#daily_total
 PK = METRIC#daily_total#<0..9>
 ```
 
-Capacity math, full pricing detail, and the sharding recipe live in
+Capacity math, full pricing detail (including the Nov-2024 cut), warm throughput, the full quota table,
+and hot-partition diagnosis + the sharding recipe live in
 [references/capacity-and-limits.md](references/capacity-and-limits.md).
 
 ## Step 5 — Operational guardrails
@@ -195,23 +195,10 @@ aws dynamodb query --table-name App \
 | Storing > 400 KB inline (images, docs, logs) | Hits the 400 KB item cap; bloats every read | Put the blob in S3, store the pointer in the item |
 | Picking capacity mode before the model is done | Mode is billing, not modeling — premature and often wrong | Stabilize keys/GSIs first, then choose on-demand vs provisioned |
 
-## References & siblings
+## Route elsewhere when the engine is different
 
-- [references/access-patterns.md](references/access-patterns.md) — full multi-tenant SaaS / e-commerce
-  model end-to-end: pattern table → PK/SK map → GSI map → example AWS SDK v3 (`@aws-sdk/lib-dynamodb`)
-  calls; adjacency-list many-to-many; time-series and leaderboard patterns.
-- [references/capacity-and-limits.md](references/capacity-and-limits.md) — capacity-mode detail, current
-  pricing + the Nov-2024 cut, warm throughput, the full quota table, hot-partition diagnosis + sharding.
-
-Route elsewhere when the engine is different: relational schema / SQL / EXPLAIN / indexing →
-`../postgresdb/SKILL.md`; MySQL-engine schema → `mysql`; document modeling + aggregation pipeline →
-`mongodb`; cache / queue / rate-limiter → `redis`; vector store / semantic search → `vector-db`; AWS
-account / IAM / VPC setup → `aws-essentials`; provisioning the table in CI/CD → `../deployment/SKILL.md`;
-API-layer auth/secrets in front of the table → `../secure-coding/SKILL.md`.
-
-## verify.sh
-
-`scripts/verify.sh <path-to-key-design.{md,json}>` checks the access-pattern artifact: every row has a
-key target (`pk`/`sk` or a named `gsi`) and a `query_type`; it FAILS on any pattern served by `Scan`,
-WARNS on `FilterExpression`, and asserts ≤20 GSIs / ≤5 LSIs. Read-only; exits 0 on an empty or clean
-target.
+Relational schema / SQL / EXPLAIN / indexing → `../postgresdb/SKILL.md`; MySQL-engine schema → `mysql`;
+document modeling + aggregation pipeline → `mongodb`; cache / queue / rate-limiter → `redis`; vector
+store / semantic search → `vector-db`; AWS account / IAM / VPC setup → `aws-essentials`; provisioning the
+table in CI/CD → `../deployment/SKILL.md`; API-layer auth/secrets in front of the table →
+`../secure-coding/SKILL.md`.
