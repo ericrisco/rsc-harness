@@ -1,6 +1,6 @@
 ---
 name: meeting-notes
-description: "Use when a meeting, standup, or call just ended and you have a transcript or rough notes to turn into a durable record — extract the decisions with their why, assign action items with an owner and a real due date, flag open questions, and ship a one-screen recap within 24–48h. Also when an AI-notetaker transcript hallucinated tasks or mixed up speakers and you must clean it before sending. Triggers: 'pull the action items out of this transcript and tell me who owns what by when', 'the Otter transcript mixed up who said what, clean it up so I can send it', 'resume la reunión de hoy y saca los próximos pasos con responsable y fecha límite', 'fes una acta de la reunió'. NOT the durable decision record with full alternatives and review cadence (that is decision-records)."
+description: "Use when a meeting just ended and a transcript or rough notes must become a record the absent can act on — decisions with their why, actions with an owner and a real date, open questions, a recap inside 24–48h — or to clean an AI-notetaker draft that invented tasks or swapped speakers. NOT the durable ADR with alternatives weighed (that is decision-records)."
 tags: [meeting-notes, action-items, decisions, recap, transcript-cleanup, minutes, standup, business-ops]
 recommends: [decision-records, sop-builder, project-ops, calendar-scheduling, notion-connector, automation-flows, document-processing]
 origin: risco
@@ -12,16 +12,16 @@ origin: risco
 
 You own the **point-in-time meeting record**: take a transcript or raw notes, separate signal from noise, and emit a curated artifact — decisions (with rationale), action items (owner + due date), open questions, and a one-screen TL;DR. The output is human-readable judgment, not a code file.
 
-## What this owns vs. what it does not
+## Not this skill
 
-- The **durable decision record** — full rationale, alternatives weighed, reversibility framing, review cadence → [`decision-records`](../decision-records/SKILL.md). This skill *captures* a decision in its meeting context and hands the heavy ADR off; it does not maintain the long-lived artifact.
-- A **reusable step-by-step procedure / runbook** → [`sop-builder`](../sop-builder/SKILL.md). A SOP is a repeatable how-to; meeting notes are a point-in-time record.
-- **Tracking the emitted tasks across a board / sprint** → [`project-ops`](../project-ops/SKILL.md). This skill *emits* action items; managing their lifecycle is project-ops.
-- **Scheduling the meeting, finding a slot, sending the invite** → [`calendar-scheduling`](../calendar-scheduling/SKILL.md).
-- **Building the integration that pushes notes into Notion/Slack/a tracker** → [`notion-connector`](../notion-connector/SKILL.md) / [`automation-flows`](../automation-flows/SKILL.md).
-- **Summarizing an arbitrary document that is not a meeting** → [`document-processing`](../document-processing/SKILL.md).
-
-Boundary in one line: the durable decision record with alternatives and review lives in `decision-records`; `meeting-notes` captures the decision in context and ships the actionable recap.
+| If the ask is… | Route to |
+|---|---|
+| The **durable decision record** — full rationale, alternatives weighed, reversibility argued, review cadence | [`decision-records`](../decision-records/SKILL.md). This skill *captures* a decision in its meeting context and hands the heavy ADR off; it does not maintain the long-lived artifact |
+| A **reusable step-by-step procedure / runbook** | [`sop-builder`](../sop-builder/SKILL.md). A SOP is a repeatable how-to; meeting notes are a point-in-time record |
+| **Tracking the emitted tasks across a board / sprint** | [`project-ops`](../project-ops/SKILL.md). This skill *emits* action items; their lifecycle is not its job |
+| **Scheduling the meeting, finding a slot, sending the invite** | [`calendar-scheduling`](../calendar-scheduling/SKILL.md) |
+| **Building the integration that pushes notes into Notion/Slack/a tracker** | [`notion-connector`](../notion-connector/SKILL.md) / [`automation-flows`](../automation-flows/SKILL.md) |
+| **Summarizing an arbitrary document that is not a meeting** | [`document-processing`](../document-processing/SKILL.md) |
 
 ## The capture loop
 
@@ -69,15 +69,11 @@ go/no-go by Jun 12, payments integration is still open.
 - Revisit pricing tiers next sync (not in scope today)
 ```
 
-Rule: every major decision gets **one sentence of context**. A decision with no why rots — six weeks later nobody remembers what trade-off it solved. (Umbrex / Fellow.app, accessed 2026-06-02.)
+Four filled versions of this skeleton — decision meeting, standup/sync, retro, 1:1 — plus copy-paste action-item and decision rows are in [`references/templates.md`](references/templates.md).
 
 ## Action items done right
 
-A complete action item is **`verb, owner, by <real date>`** — never a vague "soon". Explicit dates and named owners raise completion and ownership. (Umbrex, accessed 2026-06-02.)
-
-- **Verb-first** — the task starts with what to do: "Draft…", "Spike…", "Send…", "Confirm…".
-- **One named owner** — a person, not "the team" or "we". Shared ownership means nobody owns it.
-- **A real date** — "by Tue Jun 9", not "next week", not "soon", not "ASAP".
+A complete action item is **`verb, owner, by <real date>`**: verb-first ("Draft…", "Spike…", "Send…", "Confirm…"), **one named person** — not "the team", not "we", since shared ownership means nobody owns it — and **a real date** ("by Tue Jun 9", never "next week", "soon", or "ASAP"). Explicit dates and named owners raise completion and ownership. (Umbrex, accessed 2026-06-02.)
 
 Bad → Good:
 
@@ -98,7 +94,7 @@ Add **RACI only when ownership is genuinely contested** — a cross-team decisio
 For each real decision capture three things:
 
 1. **The decision** — what was decided, stated as a fact.
-2. **One sentence of why** — the trade-off or context. (Umbrex / Fellow.app, accessed 2026-06-02.)
+2. **One sentence of why** — the trade-off or context. Every major decision gets one; a decision with no why rots, and six weeks later nobody remembers what trade-off it solved. (Umbrex / Fellow.app, accessed 2026-06-02.)
 3. **Dissent or unresolved issue** — if someone disagreed or it's conditional, note it. A record that hides dissent will be re-litigated.
 
 Tag each decision by **reversibility** — `reversible` / `partially-reversible` / `irreversible` — as a single field. Reversible calls can be made fast on imperfect info; irreversible ones warrant slowing down and recording more context, and the tag helps later review. (fs.blog / Reflect OS, accessed 2026-06-02.)
@@ -109,7 +105,7 @@ Bad → Good:
 |---|---|
 | "Decided to use Postgres." | "Adopt Postgres over DynamoDB for the events store. *Why:* relational queries we need; team already knows it. *Reversibility:* partially-reversible. Dissent: none." |
 
-When a decision needs the full ADR — alternatives weighed, reversibility argued, a review date — that is `decision-records`' job. Capture it here in context, then hand it off. Don't grow an ADR inside the meeting notes.
+When a decision needs the full ADR — alternatives weighed, reversibility argued, a review date — that is [`decision-records`](../decision-records/SKILL.md)' job. Capture it here in context, then hand it off. Don't grow an ADR inside the meeting notes.
 
 ## Working with AI transcripts
 
@@ -129,14 +125,7 @@ Recording a conversation carries real legal and confidentiality exposure. (Justi
 
 - **Announce + get consent before recording.** Roughly a dozen US states require all-party (two-party) consent — per Justia's 50-state survey, CA, CT, DE, FL, IL, MD, MA, MT, NV, NH, PA, WA — but the canonical list is contested (some sources classify MI, OR, or NV differently). Verify the current rule for your jurisdiction; don't assert a fixed count. Under GDPR, recording is data processing — you need a basis and to inform attendees.
 - **A cloud AI notetaker grants a third party access** to the conversation, which can waive privilege. Don't auto-record sensitive or privileged meetings (legal, HR, M&A, incident reviews).
-- **Redact** names, secrets, and confidential details before distribution if the audience is wider than the room.
-
-Decision checklist before you record or distribute:
-
-- [ ] Is this being recorded? → announce it and get consent first.
-- [ ] Any all-party-consent jurisdiction or EU attendee? → explicit consent, on record.
-- [ ] Sensitive / privileged (legal, HR, M&A)? → don't auto-record; notes by hand, tighter distribution.
-- [ ] Distributing beyond the room? → redact names/secrets first.
+- **Redact** names, secrets, and confidential details before distribution if the audience is wider than the room — and tighten distribution on anything sensitive.
 
 ## Distribution
 
@@ -162,7 +151,3 @@ Then route, don't fork. Action items → a tracker via [`project-ops`](../projec
 | Fork the notes into three places | Versions diverge; people act on the stale one | One canonical home, link don't copy |
 | Invent a missing owner or date | A fabricated commitment is worse than a flagged gap | Flag it as "needs confirmation" — never guess |
 | Bolt RACI onto a standup | Overhead nobody reads; slows a simple sync | RACI only when ownership is genuinely contested |
-
-## References
-
-- [`references/templates.md`](references/templates.md) — four ready meeting-record templates (decision meeting, standup/sync, retro, 1:1), the full AI-transcript verification checklist, and copy-paste action-item and decision-row formats.
