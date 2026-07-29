@@ -1,6 +1,6 @@
 ---
 name: building-agents
-description: "Use when designing or building an LLM agent, tool-using system, RAG pipeline, eval harness, or MCP server in this repo — across any provider (OpenAI, Anthropic, Google Gemini, or OSS via OpenAI-compatible endpoints / litellm). Triggers: 'build an agent', 'add tool calling / function calling', 'structured JSON output', 'RAG / retrieval / embeddings / rerank', 'agent loop / ReAct / orchestrator-worker / multi-agent', 'LLM eval / golden set / LLM-as-judge / regression gate', 'prompt caching / model routing / token budget / cost control', 'trace / observability for LLM calls', 'build an MCP server', or 'make our LLM code provider-agnostic / swap models'. FastAPI/Python, Next.js, Go, Flutter, Postgres stacks."
+description: "Use when building or restructuring an LLM agent — provider adapter, tool calling, structured output, RAG, agent loop, eval gate, cost routing, tracing, MCP server — model-agnostic across OpenAI/Anthropic/Gemini/OSS so a model swap is a config change. NOT vector-store SQL alone (that is `postgresdb`) or service deployment (that is `deployment`)."
 tags: [agents, llm, mcp, rag, evals, ai]
 recommends: [secure-coding, deployment]
 origin: risco
@@ -8,65 +8,26 @@ origin: risco
 
 # Building production LLM agents (model-agnostic)
 
-Build production LLM agents that are model-agnostic by construction — a thin provider adapter, a disciplined agent loop, schema-validated tools, provider-neutral RAG, eval gates, OTel tracing, and optionally an MCP server — so swapping OpenAI ↔ Anthropic ↔ Gemini ↔ OSS is a config change, not a rewrite.
+A thin provider adapter, a disciplined agent loop, schema-validated tools, provider-neutral RAG, eval gates, OTel tracing, and optionally an MCP server — so swapping OpenAI ↔ Anthropic ↔ Gemini ↔ OSS is a config change, not a rewrite.
 
 ## The one rule
 
-> Program against a **capability interface**, never a vendor SDK. Vendor specifics (model id, tool-schema shape, JSON mode, caching, token limits) live behind one adapter resolved from config. If a model name or price appears in business logic, it's a bug.
+> Program against a **capability interface**, never a vendor SDK. Vendor specifics (model id, tool-schema shape, JSON mode, caching, token limits) live behind one adapter resolved from config. Model names and prices rot — if one appears in business logic it's a bug, and re-verify the dated tables before quoting a number.
 
-> Model names and prices rot. Never hardcode them in app logic — resolve from config/registry, and re-verify the dated tables before quoting a number.
-
-## When to use / When NOT to use
-
-> **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
-
-**Use when:** starting any production-bound LLM feature; code is hardwired to one SDK and you want to swap/route/fallback models; adding tools/function calling, structured output, or streaming; standing up RAG over Postgres/`pgvector` or an external store; building an eval harness / CI quality gate; adding tracing, cost tracking, caching, or routing/cascades; building or hardening an MCP server.
-
-**Do NOT use when:**
-
-- One-shot throwaway prompt, no tools, no eval, no production path → just call the SDK directly.
-- Pure prompt-wording improvement with no architecture → that's prompt engineering, not this.
-- Anthropic-SDK-specific tuning (caching internals, thinking, batch) in a file that *only* imports `anthropic` → defer to a dedicated Anthropic-SDK skill if your environment provides one (e.g. `claude-api`); this skill stays multi-provider.
-- Workspace scaffolding (`01-TOOLS`/`02-DOCS` layout) → **`harness`**.
-- Picking *which* coding agent (Claude Code vs Aider) → agent-eval territory, not this.
-- No retrieval, no tools, no loop, no evals at all → you don't need an agent; say so.
+**Hand off instead when:** a new non-trivial feature has no approved spec + plan under `02-DOCS/wiki/sdd/` → stop and run [`specify`](../specify/SKILL.md) first (method: [`sdd`](../sdd/SKILL.md)), which routes back here once the plan is approved; one-line/low-risk changes go straight through. Anthropic-SDK internals (caching, thinking, batch) in a file that *only* imports `anthropic` → `claude-api` if your environment has it, since this skill stays multi-provider. Workspace scaffolding → [`harness`](../harness/SKILL.md). Choosing *which* coding agent to use → agent-eval territory. Pure prompt-wording tuning with no architecture change → prompt engineering, not this. A one-shot throwaway prompt, or no retrieval/tools/loop/evals at all → you don't need an agent; call the SDK directly and say so.
 
 ## Decision rules (read before writing code)
 
 1. **Adapter first** — define the `LLMProvider` Protocol before any provider call.
-2. **Smallest loop that works** — single-agent before multi-agent; ReAct only when the path is uncertain; plan-execute when steps are knowable.
+2. **Smallest loop that works** — single-agent before multi-agent; ReAct only when the path is uncertain; plan-execute when steps are knowable. Multi-agent means orchestrator-worker with a semaphore-bounded parallel fan-out, never a free-for-all.
 3. **Tools are typed contracts** — schema + validation + idempotency key on every side-effecting tool; no catch-all tools.
 4. **Retrieve, don't stuff** — RAG when ground truth lives in data; cite or refuse.
 5. **Eval before ship** — a golden set + regression gate in CI, or it's not production.
 6. **Cheapest model that passes the eval** — route/cascade up, never default to flagship.
 
-## Architecture at a glance
-
-```text
-            ┌───────────────────────────────────────────────────────────┐
-  Caller ──▶│  Agent loop  (perceive → decide → act → observe, bounded) │
-            └───────────────────────────────────────────────────────────┘
-               │              │                │              │
-               ▼              ▼                ▼              ▼
-        ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐
-        │  Provider  │  │   Tool     │  │ Retriever  │  │  Tracer    │
-        │  adapter   │  │  registry  │  │ (pgvector) │  │  (OTel)    │
-        │ ↔ OpenAI / │  │ → sandboxed│  │ → cite/    │  │ gen_ai.*   │
-        │ Anthropic /│  │   tools    │  │   refuse   │  │            │
-        │ Gemini /OSS│  └────────────┘  └────────────┘  └────────────┘
-        └────────────┘
-               ▲                                          │
-               └──────────── Eval gate (CI) ◀─────────────┘
-   provider-abstraction.md  agent-loops…/tools-and-rag.md  evals-and-observability.md
-```
-
 ## The provider adapter (the heart of the skill)
 
-The one payload to internalize. Python 3.12+, Pydantic v2, **async** so it composes
-directly with the agent loop in `references/agent-loops-and-harness.md`. Streaming,
-the Gemini and OSS/litellm adapters, tool-result plumbing, and a `route()` registry live
-in `references/provider-abstraction.md` — this excerpt is the load-bearing core, not the
-whole interface.
+The one payload to internalize. Python 3.12+, Pydantic v2, **async** so it composes directly with the bounded loop (and orchestrator-worker fan-out) in [`references/agent-loops-and-harness.md`](references/agent-loops-and-harness.md). Structured output is the quirk that differs most per vendor: strict JSON Schema (OpenAI), tool-forcing (Anthropic), `response_json_schema` (Gemini). Streaming, the Gemini and OSS/litellm adapters, tool-result plumbing, and a `route()` registry live in [`references/provider-abstraction.md`](references/provider-abstraction.md) — this excerpt is the load-bearing core, not the whole interface.
 
 ```python
 from __future__ import annotations
@@ -176,21 +137,7 @@ def get_provider(spec: str | None = None) -> LLMProvider:
 
 ## Good vs Bad
 
-```python
-# BAD — vendor SDK + model id hardwired into a handler; swapping = rewrite every call-site.
-client = OpenAI()
-def summarize(text: str) -> str:
-    r = client.chat.completions.create(model="gpt-5.5", messages=[{"role": "user", "content": text}])
-    return r.choices[0].message.content
-```
-
-```python
-# GOOD — one adapter resolved from config; logic never names a model.
-provider = get_provider(settings.llm)  # e.g. "anthropic:claude-sonnet-4-6"
-async def summarize(text: str) -> str:
-    req = CompletionRequest(model=settings.model_id, messages=[Message(role="user", content=text)])
-    return (await provider.complete(req)).text
-```
+Call-sites use the adapter and never name a model: `provider = get_provider(settings.llm)` (e.g. `"anthropic:claude-sonnet-4-6"`), then `await provider.complete(req)`. The two failures that survive that discipline:
 
 ```python
 # BAD — parse-and-pray; wrong shape fails silently at 3am.
@@ -276,8 +223,9 @@ def dispatch(name: str, raw_args: dict) -> ToolResult:
         return ToolResult(status="error", summary="invalid args", data={"errors": e.errors()},
                           next_actions=["fix the arguments and retry"])
     return handler(args)
-# schema design, sandboxing, idempotency, DI-scoped DB sessions -> references/tools-and-rag.md
 ```
+
+Schema design, sandboxing, idempotency, DI-scoped DB sessions, plus the RAG internals below — chunking, hybrid RRF, rerank, the citation grader, memory — are in [`references/tools-and-rag.md`](references/tools-and-rag.md).
 
 ## RAG in 30 lines (provider-agnostic embeddings)
 
@@ -320,7 +268,6 @@ async def answer(query: str) -> str:
                   Message(role="user", content=f"{context}\n\nQ: {query}")],
     )
     return (await provider.complete(req)).text
-# chunking, hybrid RRF, rerank, citation grader, memory -> references/tools-and-rag.md
 ```
 
 ## Evals & cost gates (the production line)
@@ -355,8 +302,8 @@ async def run_eval(golden_path: str, graders: list, thresholds: dict[str, float]
 ```
 
 Routing cascade in one line: `route(task) → cheapest model whose eval passes; escalate only on a failed self-check`.
-
-Pointer: full runner, judge, CI gate, caching, batching, budgets → `references/evals-and-observability.md`.
+Full runner, judge, CI gate, caching, batching and budgets →
+[`references/evals-and-observability.md`](references/evals-and-observability.md).
 
 ## Observability (OTel GenAI, vendor-neutral)
 
@@ -381,10 +328,10 @@ async def traced_complete(provider: LLMProvider, req: CompletionRequest) -> Comp
 
 ## MCP: when and the smallest server
 
-**Native tools** when the agent and tools share a process/repo. **MCP** when tools must be reused across clients/teams or run out-of-process — accept the MCP cost (schema tokens, transport, ops) in exchange for reuse.
+**Native tools** when the agent and tools share a process/repo. **MCP** when tools must be reused across clients/teams or run out-of-process — accept the MCP cost (schema tokens, transport, ops) in exchange for reuse. TypeScript server, transports, HTTP+auth and testing are in [`references/mcp-servers.md`](references/mcp-servers.md).
 
 ```python
-from fastmcp import FastMCP  # standalone fastmcp 2.x; see references/mcp-servers.md
+from fastmcp import FastMCP  # standalone fastmcp 2.x
 
 mcp = FastMCP("invoices")
 
@@ -406,12 +353,11 @@ def read_invoice(invoice_id: str) -> str:
 if __name__ == "__main__":
     mcp.run()  # stdio transport
 # (MCP spec 2025-11-25; stateless-core RC 2026-07-28; verify before quoting)
-# TypeScript server, transports, HTTP+auth, testing -> references/mcp-servers.md
 ```
 
-## Anti-patterns → STOP
+## Anti-patterns
 
-| Rationalization | Reality |
+| Anti-pattern | Reality |
 |---|---|
 | "I'll just call the OpenAI SDK directly, we'll never switch" | The adapter is ~40 lines; retrofitting it across 30 call-sites later is a rewrite. Adapter first. |
 | "JSON output is usually valid, I'll parse it" | "Usually" = pages at 3am. Use strict structured output + schema validation. |
@@ -426,44 +372,15 @@ if __name__ == "__main__":
 | "Tool results just return the raw API blob" | Give the model `status/summary/next_actions`; raw blobs waste context and stall recovery. |
 | "Prompt caching is Anthropic-only so skip caching" | Each provider has its own caching/dedup; abstract it behind the adapter, don't skip it. |
 
-## Quick reference
-
-| Task | Do this | Reference |
-|---|---|---|
-| Define a provider | `LLMProvider` Protocol + normalized request/response | `references/provider-abstraction.md` |
-| Add a tool | Pydantic args model + `ToolResult` + validating dispatcher | `references/tools-and-rag.md` |
-| Structured output | Strict JSON Schema (OpenAI) / tool-forcing (Anthropic) / `response_json_schema` (Gemini) | `references/provider-abstraction.md` |
-| Build the loop | Bounded perceive → decide → act → observe with budgets | `references/agent-loops-and-harness.md` |
-| Multi-agent | Orchestrator-worker + parallel fan-out with a semaphore | `references/agent-loops-and-harness.md` |
-| RAG | `pgvector` ANN + hybrid RRF + rerank + cite | `references/tools-and-rag.md` |
-| Eval gate | Golden set + graders + CI threshold exit code | `references/evals-and-observability.md` |
-| Trace | OTel GenAI `gen_ai.*` spans, swappable exporter | `references/evals-and-observability.md` |
-| Cut cost | Cache + route/cascade + batch + budgets | `references/evals-and-observability.md` |
-| MCP server | FastMCP stdio / Streamable HTTP server | `references/mcp-servers.md` |
-
 ## verify.sh
 
 `scripts/verify.sh` lints example agent code and dry-runs the eval smoke test in **the user's project** — not in this skill repo. It detects each tool (`ruff`, `mypy`, `tsc`/`node`, `go`, the eval entrypoint, `markdownlint`) and skips any that are missing with a yellow WARN; a missing tool never fails the run. Invoke it with `bash scripts/verify.sh` from the project root. Exit 0 means clean (or only skips); a non-zero exit means a real lint/typecheck/vet/eval failure.
 
-## Project grounding (02-DOCS + CLAUDE.md)
+## Project grounding
 
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this
-project's agent decisions there and index them in `02-DOCS/wiki/index.md`, so the next
-agent inherits the conventions instead of re-deriving them.
+In a project with a `02-DOCS/` layer ([`harness`](../harness/SKILL.md)), read `02-DOCS/wiki/stack/agents.md` first on every use and stay consistent with it. If it is missing or stale, write this project's real choices there — provider(s) and model routing, where the adapter lives, tool/RAG conventions, eval gates, observability backend — as a `type: stack` article per the harness [`wiki-article-template.md`](../harness/references/wiki-article-template.md), index it in `02-DOCS/wiki/index.md`, and bump its `timestamp` in the same change as any convention change. No `02-DOCS/`? Skip silently — technical conventions here are *recorded, not gated*; never block the task on this.
 
-1. **Find the article** `02-DOCS/wiki/stack/agents.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, create/update it with the project's real choices — the provider(s) and model routing, where the provider adapter lives, tool/RAG conventions, the eval gates, and the observability backend —
-   then index it in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it). Write it as an OKF v0.1 wiki article per the harness [`wiki-article-template.md`](../harness/references/wiki-article-template.md): open with YAML frontmatter carrying a non-empty `type:` (use `type: stack`), and use standard markdown links — never wikilinks.
-3. **Read it first on every use** and stay consistent; when a convention changes, update the
-   article (bump its `timestamp`) in the same change.
+## See also
 
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Unlike the
-brand study, technical conventions are *recorded, not gated* — never block the task on this.
-
-## See Also
-
-- `../harness/SKILL.md` — workspace `01-TOOLS`/`02-DOCS` scaffolding.
-- Stack siblings the examples target: `../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`; plus `../secure-coding/SKILL.md` and `../deployment/SKILL.md` for hardening and shipping the agent service.
-- External skills (no sibling in this repo; use if your environment provides them): `claude-api` — Anthropic-SDK-specific tuning (caching internals, thinking, batch) when a file only imports `anthropic`; `deep-research` — the research-harness fan-out / verify pattern.
-- ECC analogues (external, no links): `agent-harness-construction`, `eval-harness`, `cost-aware-llm-pipeline`, `mcp-server-patterns`, `context-budget`.
+- Stacks the examples target: [`fastapi`](../fastapi/SKILL.md), [`nextjs`](../nextjs/SKILL.md), [`go`](../go/SKILL.md), [`postgresdb`](../postgresdb/SKILL.md), [`flutter`](../flutter/SKILL.md). Harden with [`secure-coding`](../secure-coding/SKILL.md), ship with [`deployment`](../deployment/SKILL.md).
+- External (no sibling here; use if your environment provides them): `claude-api` for Anthropic-SDK-only tuning, `deep-research` for the research-harness fan-out / verify pattern.
