@@ -1,6 +1,6 @@
 ---
 name: firebase
-description: "Use when building on Firebase — modeling Firestore data, writing or auditing Security Rules, wiring Auth, shipping Cloud Functions, storing files in Cloud Storage, or choosing modular Web/Admin SDK imports — and when symptoms appear like 'my database is open to the internet', 'rules reject my query', a counter stuck at 1 write/sec, custom-claim RBAC, or a callable function. Triggers: 'firestore.rules audit', 'denormalize for read paths', 'collection vs subcollection', 'my query works in the emulator but fails in prod with requires-an-index', 'set a custom admin claim', 'regles de seguretat de Firestore', 'mi base de datos está abierta a internet'. NOT managed-Postgres BaaS with SQL and RLS (that is supabase)."
+description: "Use when building on Firebase — Firestore data modeling, Security Rules, Auth and custom claims, Cloud Functions, Storage, modular Web/Admin SDK imports — including symptoms like a database open to the internet, a query rejected by rules, or a doc stuck at ~1 write/sec. NOT managed-Postgres BaaS with SQL and RLS (that is supabase)."
 tags: [firebase, firestore, security-rules, cloud-functions, auth]
 recommends: [secure-coding, gcp-essentials, nextjs]
 origin: risco
@@ -8,43 +8,29 @@ origin: risco
 
 # Firebase — Firestore, Rules, Auth, Functions, Storage
 
-Build correctly on the Firebase product surface that sits on top of GCP: model Firestore data,
-write and test Security Rules, wire Auth, ship Cloud Functions, and store files — all on the
-modular Web SDK (v12) and the Admin SDK. The whole skill exists to stop two failure modes: dragging
-relational/SQL habits into a NoSQL document store, and leaving the database open to the internet.
+The Firebase product surface that sits on top of GCP, on the modular Web SDK (v12) and the Admin SDK.
+The whole skill exists to stop two failure modes: dragging relational/SQL habits into a NoSQL
+document store, and leaving the database open to the internet.
 
-Hold these three facts the entire time:
+Two facts drive everything below:
 
-- **It is a NoSQL document store.** No joins, no server-side `OR` across different fields without a
-  composite index, no `SELECT *` across collections. You shape data for the read path, not for
-  normalization.
+- **It is a NoSQL document store, shaped for the read path.** No joins, no server-side `OR` across
+  different fields without a composite index, no `SELECT *` across collections. Denormalize and
+  fan-out so a screen is one cheap query — reads are what you pay for and what users wait on.
 - **Rules ARE the access control.** Firestore is reachable directly from untrusted clients. There is
   no app server in the trust path by default — `firestore.rules` (CEL) is the only thing between a
   browser and your data. App Check attests the request even came from your app before Rules evaluate.
-- **Shape data for reads.** Denormalize and fan-out so a screen is one cheap query. Reads are the
-  thing you pay for and the thing users wait on.
 
-## When to use / When NOT to use
+Not this skill:
 
-**When to use:**
-
-- Firestore data modeling: collections vs subcollections, denormalization, fan-out, the 1 MiB
-  document limit, hotspot avoidance, query constraints.
-- Writing or auditing Firestore/Storage Security Rules and testing them with the emulator.
-- Firebase Auth: providers, ID-token verification on the server, custom claims, session cookies.
-- Cloud Functions (2nd gen): Firestore/HTTPS/callable/Auth-blocking triggers, secrets, idempotency.
-- Cloud Storage uploads/downloads gated by Rules + signed URLs.
-- Modular SDK imports for tree-shaking, `firebase.json` / `firestore.indexes.json`, Emulator Suite.
-
-**When NOT to use:**
-
-- Relational schema, SQL, EXPLAIN, indexing a SQL engine → `../postgresdb/SKILL.md`.
-- Managed Postgres BaaS (SQL + Postgres RLS + PostgREST) → `supabase`. This is the most-confused
-  sibling: same "backend-as-a-service" shape, but a completely different data model and rules language.
-- AWS document/key-value store with its own capacity model → `dynamodb`.
-- Self-hosted Mongo document modeling → `mongodb`.
-- Generic GCP project/IAM/billing not specific to a Firebase product → `gcp-essentials`.
-- React/Next.js component or rendering work that merely calls Firebase → `react` / `../nextjs/SKILL.md`.
+| Instead of Firebase | Go to |
+|---|---|
+| Relational schema, SQL, EXPLAIN, indexing a SQL engine | `../postgresdb/SKILL.md` |
+| Managed Postgres BaaS (SQL + Postgres RLS + PostgREST) — the most-confused sibling: same "backend-as-a-service" shape, completely different data model and rules language | `supabase` |
+| AWS document/key-value store with its own capacity model | `dynamodb` |
+| Self-hosted Mongo document modeling | `mongodb` |
+| Generic GCP project/IAM/billing not specific to a Firebase product | `gcp-essentials` |
+| React/Next.js component or rendering work that merely calls Firebase | `react` / `../nextjs/SKILL.md` |
 
 ## Data modeling
 
