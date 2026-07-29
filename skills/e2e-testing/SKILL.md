@@ -1,6 +1,6 @@
 ---
 name: e2e-testing
-description: "Use when writing or stabilizing browser end-to-end tests with Playwright — driving real navigation, forms, logins, and multi-step user journeys through an actual browser, picking durable locators, or killing tests that pass locally but flake in CI. Covers getByRole/getByTestId locator choice, web-first assertions, storageState auth via setup projects, retries/trace config, sharding, and the 2026 flakiness playbook. Triggers: 'write a Playwright test', 'my e2e tests flake in CI but pass locally', 'set up storageState so I don't log in every test', 'getByRole vs CSS selector', 'shard Playwright across machines', 'trace on retry', 'strict mode resolved to 2 elements', 'els tests d'extrem a extrem fallen aleatòriament al pipeline', 'los tests e2e fallan a veces'. NOT in-process component/unit web tests (that is testing-web), NOT pytest suites (that is testing-py), NOT a11y audits as the goal (that is accessibility), NOT building the CI pipeline itself (that is github-actions)."
+description: "Use when writing or stabilizing Playwright tests that drive a real browser through multi-step journeys — durable locators, web-first assertions, storageState auth, trace/retries, and flakes that only bite in CI. NOT in-process component tests (that is testing-web), NOT WCAG auditing (that is accessibility), NOT the pre-merge gate (that is verify)."
 tags: [playwright, e2e, browser-testing, flakiness, ci]
 recommends: [testing-web, accessibility, performance, github-actions, debug]
 origin: risco
@@ -18,17 +18,6 @@ line is **Playwright v1.60.x** (v1.60.0 shipped 2026-05-11). The `_react` / `_vu
 and the `:light` Shadow-DOM suffix were **removed in v1.58.0** — at any version you should be pinning
 they are long gone, so do not reach for them.
 
-## What good looks like
-
-- **User-facing locators.** Tests find elements the way a user does — by role and accessible name —
-  not by `div.card > button:nth-child(2)`. The test survives a refactor that the user never sees.
-- **Web-first assertions.** Every assertion auto-retries until the DOM settles. You never read a
-  value once and compare it.
-- **Deterministic by design.** No `waitForTimeout`. No test that depends on another test's leftovers.
-  Flakiness is a design defect you prevent, not a rerun you tolerate.
-- **Traces on retry.** CI captures a full trace the first time a test retries, so a CI-only failure
-  is debuggable from the artifact without a local repro.
-
 ## Is this even an e2e test?
 
 E2e is the most expensive layer. Spend it only on journeys that cross pages or services. Route the rest out.
@@ -40,6 +29,7 @@ E2e is the most expensive layer. Spend it only on journeys that cross pages or s
 | "Is this page accessible?" — WCAG/ARIA as the deliverable | `../accessibility/SKILL.md` | E2e may *call* axe inside a test, but auditing a11y is its own skill. |
 | "Is this page fast?" — LCP/CWV budgets | `../performance/SKILL.md` | Perf budgets are a different signal than journey correctness. |
 | The runner matrix, caching, the pipeline itself | `../github-actions/SKILL.md` | E2e contributes a *job*; owning the pipeline is theirs. |
+| "Is the change done?" — run the gate, collect evidence, then merge | `../verify/SKILL.md` | Running an existing suite as a pre-merge gate is not authoring or stabilizing one. |
 
 Rule: if you can prove it without launching a browser, you should. Push logic down to `testing-web`.
 
