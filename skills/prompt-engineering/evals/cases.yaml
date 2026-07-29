@@ -10,7 +10,7 @@ should_trigger:
   - prompt: "Make this prompt enforce a fixed schema reliably instead of sometimes returning prose."
     why: "Forcing a fixed schema out of a model — the output-contract decision table (strict json_schema / strict tool use vs JSON mode)."
   - prompt: "Write me a small eval set to check this prompt before I change it."
-    why: "Inline eval set authored before tuning — 'the one rule' of the skill; the small set, not a standing harness."
+    why: "Inline eval set authored before tuning — the discipline the 'Inline evals — write these first' section exists to enforce; the small set, not a standing harness."
   - prompt: "Users can paste 'ignore your instructions' into my input field and the model obeys it."
     why: "Prompt-scope injection hardening — delimiting untrusted input and treating it as data, a named robustness rule."
   - prompt: "I'm moving this prompt from one model to another and the behavior shifted; how do I keep it stable?"

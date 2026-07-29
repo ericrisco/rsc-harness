@@ -1,6 +1,6 @@
 ---
 name: prompt-engineering
-description: "Use when one prompt has to give the same right answer across reruns, models, and hostile inputs — a prompt that works sometimes, forcing valid JSON or a fixed schema out of a model, choosing how many few-shot examples and which ones, hardening a prompt against injected instructions, writing a tiny eval set before changing a prompt, or porting a prompt to a new model without behavior drift. Triggers: 'the prompt works sometimes', 'force valid JSON from the model', 'how many few-shot examples', 'outputs drift between reruns', 'the model ignores my instructions on long inputs', 'users can paste instructions into my input field', 'el prompt a veces falla', 'forzar JSON válido del modelo', 'el model no segueix les instruccions'. NOT the agent loop, tool wiring, or RAG retrieval (that is building-agents)."
+description: "Use when one prompt must give the same right answer across reruns, models, and pasted-in hostile input: forcing a fixed schema, picking the few-shot set, ordering the prompt blocks, or the inline cases you run while tuning. NOT the agent loop, tools, or retrieval (that is `building-agents`), NOT a standing CI eval harness (that is `agent-eval`)."
 tags: [prompts, llm, few-shot, structured-output, evals]
 recommends: [building-agents, agent-eval, structured-extraction]
 origin: risco
@@ -9,12 +9,6 @@ origin: risco
 # Prompt engineering: one robust prompt
 
 You are tuning a single prompt so it produces the same correct output across reruns, across models, and against adversarial input. This is the craft layer — the prompt artifact itself: its block order, its few-shot set, its output contract, and the small eval that proves it. The systems layer (loop, tools, retrieval) is `../building-agents/SKILL.md`.
-
-## The one rule
-
-> A prompt is not done until it passes a small eval set you wrote **before** you started tuning. Without cases you are fiddling — changing words and trusting a vibe. With 5-15 cases, every edit is a measurement.
-
-Write the cases first. They define "right answer" before you fall in love with a phrasing.
 
 ## Prompt skeleton (this order)
 
@@ -86,11 +80,11 @@ Good (range: normal / awkward / edge):
 - **Re-state the task after the input** for long inputs. Why: when the input is huge, early instructions fall out of attention — this is the cause of "the model ignores my instructions on long inputs".
 - **Phrase constraints positively.** "Output only the category" survives; "don't add commentary" invites the model to negotiate.
 - **Add a refusal anchor** — one explicit branch for out-of-contract input (`If the ticket is empty or unreadable, output: other`). Why: undefined behavior is where injections and drift live.
-- System-scope abuse handling — refusal policy, monitoring, jailbreak defense across a product — is `agent-safety`, not this skill. Here you harden one prompt.
+- System-scope abuse handling — refusal policy, monitoring, jailbreak defense across a product — is `../agent-safety/SKILL.md`, not this skill. Here you harden one prompt.
 
-## Inline evals (the part people skip)
+## Inline evals — write these first
 
-Build 5-15 cases next to the prompt and run them before AND after every change.
+A prompt is not done until it passes a small eval set you wrote **before** you started tuning: 5-15 cases next to the prompt, run before AND after every change. Cases fix what "right answer" means before you fall in love with a phrasing — without them you are fiddling, changing words and trusting a vibe; with them every edit is a measurement.
 
 ```yaml
 # prompt-eval cases for the triage prompt
@@ -112,7 +106,7 @@ cases:
     expect: { equals: "billing" }   # input treated as data, not command
 ```
 
-Assert on the contract: schema-valid, exact token, contains/not-contains. Keep them in the repo beside the prompt. The standing harness — golden set, LLM-as-judge, CI regression gate, metrics — is `agent-eval`; this is the small inline set you run while tuning.
+Assert on the contract: schema-valid, exact token, contains/not-contains. Keep them in the repo beside the prompt; `references/eval-templates.md` has the cases.yaml shape, assertion helpers, and a before/after diff runner. The standing harness — golden set, LLM-as-judge, CI regression gate, metrics — is `../agent-eval/SKILL.md`; this is the small inline set you run while tuning.
 
 ## Iterate one variable at a time
 
@@ -131,8 +125,3 @@ Assert on the contract: schema-valid, exact token, contains/not-contains. Keep t
 | 3 near-identical few-shot examples | Teaches one shape, wastes tokens | 3 deliberately different: normal / awkward / edge |
 | Negative-only constraints ("don't…") | Invites negotiation, ignored on long input | Phrase positively; re-state task after long input |
 | Tuning by vibe, no cases | You are fiddling, not engineering | Write 5-15 cases first; measure each edit |
-
-## References
-
-- `references/output-contracts.md` — per-provider strict-output recipes, schema surface (pydantic/zod), streaming caveat, retry-on-parse-fail loop.
-- `references/eval-templates.md` — cases.yaml shape, assertion helpers, before/after diff runner, DSPy MIPROv2-vs-GEPA when-to-optimize note.
