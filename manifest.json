@@ -2065,7 +2065,7 @@
     },
     {
       "id": "github-actions",
-      "description": "Use when authoring or fixing GitHub Actions CI/CD — workflows under .github/workflows, jobs, the runner matrix, dependency caching, secrets and OIDC cloud deploys, environments and approval gates, reusable and composite workflows. Triggers: 'write a CI workflow', 'my GitHub Actions builds are slow / add caching', 'run the tests on a matrix of node versions', 'deploy to AWS without storing access keys' (OIDC), 'every push spawns a run and the old ones keep finishing' (concurrency), 'pin my actions / supply-chain hardening after the tj-actions thing', 'munta el desplegament continu amb GitHub Actions cap a producció', 'per què el GITHUB_TOKEN té permisos d'escriptura per defecte'. NOT writing the Dockerfile or image build strategy (that is docker), NOT the branching/merge model (that is git-workflow), NOT release readiness or the changelog (that is ship).",
+      "description": "Use when authoring or fixing GitHub Actions CI/CD — workflows under .github/workflows, triggers, job matrix, caching, token permissions, OIDC cloud deploys, environment gates, reusable workflows. NOT the Dockerfile or image build strategy (that is `docker`), NOT the branching model (that is `git-workflow`), NOT release readiness (that is `ship`).",
       "tags": [
         "github-actions",
         "ci-cd",
@@ -2789,7 +2789,7 @@
     },
     {
       "id": "market-research",
-      "description": "Use when you need a defensible picture of a MARKET as a whole — sizing it with TAM/SAM/SOM, cutting it into reachable segments, and proving demand is real and moving — with a dated source behind every number. Triggers: 'how big is the market for X', 'size this market', 'what's our TAM', 'is there real demand for this', 'who are the segments', 'where's the beachhead', 'sanity-check this TAM before the raise', 'top-down or bottom-up', '¿qué tamaño tiene el mercado de X', 'calcula el TAM', 'hay demanda real para esto', 'quina mida té aquest mercat'. NOT profiling specific named rivals and their moves (that is competitor-watch), NOT building a named list of accounts to sell to (that is lead-gen).",
+      "description": "Use when a MARKET as a whole needs a defensible picture — TAM/SAM/SOM sized top-down AND bottom-up until the two converge, cut into reachable segments with one named beachhead, demand proven real, and a dated source behind every figure. NOT profiling named rivals and their moves (that is `competitor-watch`), NOT building a list of accounts to sell to (that is `lead-gen`).",
       "tags": [
         "market-research",
         "tam-sam-som",
@@ -3033,7 +3033,7 @@
     },
     {
       "id": "nestjs",
-      "description": "Use when building or structuring a NestJS backend — feature modules, providers, controllers, DI wiring, and the cross-cutting layer (guards, interceptors, pipes, exception filters) — including binding-scope and request-lifecycle decisions and Nest-specific testing. Triggers: 'create a NestJS module', 'wire a custom provider with useFactory', 'APP_GUARD vs @UseGuards on the controller', 'my request-scoped provider is undefined in a guard', 'A circular dependency has been detected at bootstrap', 'mock a repository provider with overrideProvider', 'monta un módulo de Nest', 'guard de autenticación JWT en NestJS'. NOT a bare Express/Node service with no DI (that is nodejs).",
+      "description": "Use when building or structuring a NestJS backend — feature modules, providers and DI wiring, provider scopes and request-lifecycle order, where to bind guards/pipes/interceptors/filters, and testing with Test.createTestingModule. NOT a bare Express/Fastify service with no DI (that is `nodejs`), NOT framework-agnostic REST design (that is `api-design`).",
       "tags": [
         "nestjs",
         "nodejs",
@@ -3158,7 +3158,7 @@
     },
     {
       "id": "nodejs",
-      "description": "Use when building or structuring a plain Node.js / Express backend service — project layout, async correctness, central error handling, config validation, and graceful shutdown — the runtime and HTTP service, not a DI framework. Triggers: 'set up an Express 5 service', 'my async route error returns 200 with an empty body', 'where do controllers vs services go', 'centralize error handling middleware', 'shut down cleanly on SIGTERM without dropping requests', 'why does one unhandled promise rejection crash my server', 'monta un backend con Express y manejo de errores', 'apaga el servidor sin perder peticiones en vuelo'. NOT NestJS DI/modules/guards (that is nestjs); NOT the TS type system/tsconfig (that is typescript); NOT REST contract/versioning (that is api-design).",
+      "description": "Use when building or operating a plain Node.js / Express 5 backend service: project layout, async correctness, central error middleware, fail-fast config, graceful shutdown on SIGTERM. NOT DI modules/providers/guards (that is `nestjs`), NOT the type system or tsconfig (that is `typescript`), NOT REST contract design (that is `api-design`).",
       "tags": [
         "nodejs",
         "express",
@@ -3546,7 +3546,7 @@
     },
     {
       "id": "prisma-orm",
-      "description": "Use when modeling data or writing type-safe queries with Prisma ORM in TypeScript and hitting its classic problems: N+1 on relations, over-fetching with fat include, an unbounded findMany scanning the whole table, the v7 'requires either adapter or accelerateUrl' error, or a Prisma 6 to 7 upgrade. Owns schema.prisma, the prisma-client generator, prisma.config.ts, the Prisma Client query API, and Prisma Migrate. Triggers: 'PrismaClient requires either adapter or accelerateUrl', 'client is not in node_modules anymore', 'relationLoadStrategy join vs query', 'migrate dev vs migrate deploy in CI', 'findMany returns the whole table', 'modela el esquema de usuarios y pedidos con Prisma', 'migració de Prisma a la versió 7'. NOT the schema-as-TS SQL-builder ORM (that is drizzle-orm), NOT cross-cutting zero-downtime migration strategy (that is db-migrations), NOT Postgres server tuning and EXPLAIN (that is postgresdb).",
+      "description": "Use when modeling data or writing type-safe queries with Prisma ORM in TypeScript — `schema.prisma`, `prisma.config.ts`, the generated Prisma Client, and Prisma Migrate, including the v6 to v7 upgrade. NOT schema-as-TS with a SQL builder (that is `drizzle-orm`), NOT ORM-agnostic zero-downtime migration (that is `db-migrations`), NOT Postgres engine tuning (that is `postgresdb`).",
       "tags": [
         "prisma",
         "prisma-orm",
@@ -3571,7 +3571,7 @@
     },
     {
       "id": "procurement",
-      "description": "Use when a small operator must decide what to buy and from whom — pick a supplier/vendor, write an RFI/RFQ/RFP that gets comparable bids back, compare quotes on total cost not sticker price, negotiate price and payment terms, judge single-source risk, or build a vendor scorecard for quarterly review. Triggers: 'help me pick a supplier for X', 'write an RFQ for 5,000 units', 'which of these quotes is actually cheapest over three years', 'should I take the 2/10 net 30 early-payment discount', 'we buy a critical part from one supplier — how risky is that', 'build a supplier scorecard', 'compara estos proveedores / negociar condiciones de pago', 'compara aquests proveïdors / negociar condicions amb el proveïdor'. NOT signing the binding purchase agreement or redlining liability/IP clauses (that is contracts), NOT the price you charge your own customers (that is pricing), NOT counting or reordering the stock once it arrives (that is inventory).",
+      "description": "Use when a small operator must choose what to buy and from whom: pick a supplier, write an RFI/RFQ/RFP that returns comparable bids, score quotes on total cost of ownership, negotiate price and payment terms, or judge single-source risk. NOT redlining the purchase agreement (that is `contracts`), NOT the price you charge customers (that is `pricing`), NOT stock once it lands (that is `inventory`).",
       "tags": [
         "procurement",
         "sourcing",
@@ -3884,7 +3884,7 @@
     },
     {
       "id": "reporting",
-      "description": "Use when you need a recurring report that ships to stakeholders on a cadence — a weekly team digest, monthly exec pack, quarterly board summary, or recurring client performance report — and it must go out reliably without a human in the loop. Symptoms: a standing metrics email keeps breaking or shows stale numbers, the Monday digest is hand-assembled every week, leadership asks for 'the same report but every month', or a client expects a PDF on a schedule. Triggers: 'set up a weekly automated report emailed to the exec team', 'build a monthly PDF report for our biggest client on a schedule', 'send the board a quarterly summary every quarter', 'our Monday metrics email keeps going out with last week's numbers — make it reliable', 'automatiza un informe mensual para dirección', 'munta un informe setmanal automàtic per al comitè'. NOT a live screen people open to slice metrics (that is dashboard), NOT deciding which KPIs to track (that is kpi-framework), NOT a one-off investigation (that is analytics).",
+      "description": "Use when a recurring report must ship itself on a cadence — weekly digest, monthly exec pack, board pack — via a fetch→narrate→render→deliver pipeline with a schedule and a freshness gate. NOT a live view people slice (that is `dashboard`), NOT picking which KPIs to track (that is `kpi-framework`), NOT a one-off investigation (that is `analytics`).",
       "tags": [
         "reporting",
         "automated-reports",
@@ -4013,7 +4013,7 @@
     },
     {
       "id": "ruby",
-      "description": "Use when writing idiomatic Ruby outside Rails — plain scripts, CLIs, gems, libraries — or refactoring imperative loops into Enumerable chains, designing module mixins, packaging with Bundler, deciding whether metaprogramming is worth it, or setting up Minitest/RSpec. Triggers: 'write this in Ruby', 'refactor this loop with map/reduce', 'build a gem', 'gemspec / Gemfile.lock', 'method_missing or define_method?', 'Minitest vs RSpec', 'FrozenError after Ruby 3.4 upgrade', 'mixin vs inheritance', 'escribir una gema en Ruby', 'refactoritzar amb blocs'. NOT Rails/ActiveRecord/controllers (that is rails).",
+      "description": "Use when writing or refactoring plain Ruby outside Rails — scripts, CLIs, gems, libraries: Enumerable chains and blocks, module mixins and value objects, Bundler/gemspec packaging, whether metaprogramming earns its keep, Minitest or RSpec, Ruby 3.4/4.0 frozen-string hygiene. NOT Rails, ActiveRecord, or ActiveSupport idioms (that is `rails`).",
       "tags": [
         "ruby",
         "gems",
@@ -4273,7 +4273,7 @@
     },
     {
       "id": "shortform-ideation",
-      "description": "Use when an account that already posts (or is about to start posting) Reels/TikTok/Shorts needs a ranked batch of next video ideas grounded in its own performance log plus live trending sounds/formats/hashtags, and a ledger that ties each idea-bet to its measured outcome. Use to fold this week's trending audio into ideas, to decide which 3 of 12 ideas to shoot first, or to review why the bets you made flopped. Triggers: 'give me 10 Reels ideas for next week', 'which of these ideas do we make first', 'fold this week's trending TikTok sounds into our idea list', 'why did the ones we bet on last month flop', 'idea backlog for our TikTok', 'idéame Reels para esta semana basándote en lo que ya nos funcionó', 'prioritza idees de vídeo curt per aquesta setmana'. NOT writing the shot-by-shot script or edit decision sheet for a chosen idea (that is video-shorts), NOT setting cadence/pillars/positioning (that is shortform-strategy), NOT captions/covers/hashtag-sets for a finished cut (that is shortform-packaging).",
+      "description": "Use when a Reels/TikTok/Shorts account needs its next video ideas scored into a ranked backlog, grounded in its own performance log plus dated trending sounds, each bet logged so its outcome feeds the next batch. NOT scripting a chosen idea (that is `video-shorts`), NOT pillars or cadence (that is `shortform-strategy`), NOT packaging a finished cut (that is `shortform-packaging`).",
       "tags": [
         "shortform",
         "reels",
