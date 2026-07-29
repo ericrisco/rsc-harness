@@ -1,6 +1,6 @@
 ---
 name: ruby
-description: "Use when writing idiomatic Ruby outside Rails — plain scripts, CLIs, gems, libraries — or refactoring imperative loops into Enumerable chains, designing module mixins, packaging with Bundler, deciding whether metaprogramming is worth it, or setting up Minitest/RSpec. Triggers: 'write this in Ruby', 'refactor this loop with map/reduce', 'build a gem', 'gemspec / Gemfile.lock', 'method_missing or define_method?', 'Minitest vs RSpec', 'FrozenError after Ruby 3.4 upgrade', 'mixin vs inheritance', 'escribir una gema en Ruby', 'refactoritzar amb blocs'. NOT Rails/ActiveRecord/controllers (that is rails)."
+description: "Use when writing or refactoring plain Ruby outside Rails — scripts, CLIs, gems, libraries: Enumerable chains and blocks, module mixins and value objects, Bundler/gemspec packaging, whether metaprogramming earns its keep, Minitest or RSpec, Ruby 3.4/4.0 frozen-string hygiene. NOT Rails, ActiveRecord, or ActiveSupport idioms (that is `rails`)."
 tags: [ruby, gems, bundler, metaprogramming, rspec, minitest, enumerable]
 recommends: [rails, testing-web, secure-coding]
 profiles: []
@@ -14,30 +14,17 @@ leaning on `Enumerable` and `Comparable` instead of hand-rolled loops, with
 `frozen_string_literal` hygiene and a real `Gemfile`/`.gemspec` when you package.
 
 This is **Ruby the language and its non-Rails ecosystem** — blocks, modules, gems,
-metaprogramming, Minitest/RSpec. The moment code loads the Rails framework or reaches
-for ActiveRecord/ActiveSupport idioms, it is no longer this skill — that is `rails`.
+metaprogramming, Minitest/RSpec. Delegate: Rails apps, ActiveRecord models, controllers,
+migrations, views, Hotwire — anything that loads Rails or uses ActiveSupport/ActiveRecord
+idioms — to [`rails`](../rails/SKILL.md); the same task in another language to
+[`python`](../python/SKILL.md), [`go`](../go/SKILL.md), [`rust`](../rust/SKILL.md),
+[`elixir`](../elixir/SKILL.md), [`php`](../php/SKILL.md) or
+[`typescript`](../typescript/SKILL.md); the CI pipeline that runs your Ruby tests to
+[`github-actions`](../github-actions/SKILL.md) — this skill writes the tests, not the workflow.
 
 Targets **Ruby 4.0** (released 2025-12-25) on **3.4** semantics: Prism is the default
 parser, string literals warn on mutation without a magic comment, `it` is an implicit
 block param, and `Set` is now a core class.
-
-## When to use / When NOT to use
-
-**Use when:**
-
-- Authoring or refactoring any plain-Ruby `.rb` file, CLI, script, gem, or library.
-- Turning imperative loops into `Enumerable` chains (`map`/`select`/`reduce`/`each_with_object`/`group_by`).
-- Designing module mixins, `Comparable`/`Enumerable` inclusion, refinements, or value objects (`Struct`/`Data`).
-- Setting up a gem: `bundle gem`, `.gemspec`, SemVer, version constraints, publishing to RubyGems.
-- Deciding whether metaprogramming (`method_missing`, `define_method`, `instance_eval`, DSLs) earns its keep.
-- Writing tests with Minitest or RSpec, wiring RuboCop/Standard, or adding RBS/Sorbet typing.
-
-**When NOT to use (delegate):**
-
-- Rails apps, ActiveRecord models, controllers, migrations, views, Hotwire -> `rails`.
-  The hard line: anything that loads Rails or uses ActiveSupport/ActiveRecord idioms.
-- The same task in another language -> `python`, `go`, `rust`, `elixir`, `php`, `typescript`.
-- A CI pipeline that runs your Ruby tests -> `github-actions` (this skill writes the tests, not the workflow).
 
 ## Mental model
 
@@ -291,7 +278,8 @@ examples with `let`/`subject`/`context` are in
 - **Types:** two coexisting systems — **RBS** (official signatures in separate `.rbs`
   files, checked by Steep) and **Sorbet** (inline `sig` blocks, with experimental
   inline-RBS-comment support). Add types only on a library's public surface or a hot,
-  bug-prone core — not on throwaway scripts.
+  bug-prone core — not on throwaway scripts. RuboCop vs Standard config sits in
+  [references/gems-and-testing.md](references/gems-and-testing.md).
 
 ## Anti-patterns
 
@@ -305,12 +293,3 @@ examples with `let`/`subject`/`context` are in
 | Not committing `Gemfile.lock` for an app | Non-reproducible installs across machines | Commit it for apps; omit only for library gems |
 | `eval` of user-derived input | Remote code execution | Parse explicitly; never `eval` untrusted data |
 | Over-DSLing config a Hash would serve | Hidden control flow, slow `method_missing` | A plain Hash or `Data` object |
-
-## References
-
-- [references/metaprogramming.md](references/metaprogramming.md) — `define_method`,
-  `method_missing` + `respond_to_missing?`, `instance_eval`/`class_eval`, building a DSL,
-  refinements vs monkey-patching, `prepend` wrapping.
-- [references/gems-and-testing.md](references/gems-and-testing.md) — full `bundle gem`
-  tree and `.gemspec`, SemVer + `~>`, publishing, Rakefile, full Minitest + RSpec files,
-  RuboCop vs Standard config.
