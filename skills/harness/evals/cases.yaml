@@ -28,7 +28,7 @@ should_trigger:
 should_not_trigger:
   - prompt: "I want to add a single Sentry tool folder to 01-TOOLS. Just copy the template and wire it up."
     route_to: "none"
-    why: "SKILL.md 'Do NOT use' is explicit: adding a single tool is a manual `cp -r 01-TOOLS/_TEMPLATE 01-TOOLS/<X>` — the full SCAN/AUDIT/APPLY harness is overkill, no skill needed."
+    why: "SKILL.md 'Out of scope' is explicit: adding a single tool is a manual `cp -r 01-TOOLS/_TEMPLATE 01-TOOLS/<X>` — the full SCAN/AUDIT/APPLY harness is overkill, no skill needed."
 
   - prompt: "Refactor the runtime database layer in my FastAPI service to use async SQLAlchemy sessions."
     route_to: "fastapi"
