@@ -1,6 +1,6 @@
 ---
 name: scaling
-description: "Use when traffic is growing or about to spike and the system bends under concurrency — deciding what to add and in what order (cache, connection pool, async queue, read replica, more instances) and proving it with a load test instead of guessing. Triggers: 'will we survive the launch spike', 'fine for me but dies under load', 'too many clients already', 'add caching or a read replica?', 'set RPS and p95 targets and load-test before go-live', the non-obvious 'DB connections are maxed out', and Catalan/Spanish 'aguantarem el pic de trànsit del llançament' / 'prepara un test de carga con objetivos de p95'. NOT making one slow request faster or profiling an N+1 (that is performance), NOT race-free Redis caches/locks/queue semantics (that is redis)."
+description: "Use when traffic is growing or about to spike and the system bends under concurrency — deciding what to add and in what order (cache, connection pool, async queue, read replica, more instances) and proving it with a load test against explicit RPS and p95 targets rather than guessing. NOT making one slow request faster or profiling an N+1 (that is `performance`), NOT race-free Redis caches, locks and queue semantics (that is `redis`)."
 tags: [scaling, capacity, load-testing, caching, read-replicas, pgbouncer, k6, devops]
 recommends: [performance, redis, postgresdb, monitoring, deployment, backups, fly-io]
 profiles: []

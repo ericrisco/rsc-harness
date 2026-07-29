@@ -3863,7 +3863,7 @@
     },
     {
       "id": "replicate-images",
-      "description": "Use when generating or editing images through the Replicate API, or when a modern image model keeps ignoring the prompt — running google/nano-banana-2, openai/gpt-image-1, Flux, or SeeDream from Node or Python, choosing aspect ratio, resolution, seed, and output format, doing image-to-image, multi-reference composition, or text-driven inpainting, and structuring prompts per model family. Triggers: 'replicate.run nano-banana-2', 'why does Flux ignore half my prompt', 'render readable text inside a generated product label', 'compose a product shot from two reference images', 'make the generation reproducible with a seed', 'generar y editar imágenes con la API de Replicate', 'per què Flux no segueix el prompt'. NOT general Replicate platform/auth/non-image models like LLMs or audio (that is replicate).",
+      "description": "Use when generating or editing images through the Replicate API, or when a modern image model keeps ignoring the prompt — choosing aspect ratio, resolution, seed and output format, image-to-image, multi-reference composition, text-driven inpainting, readable text inside a generated image, and structuring prompts per model family. NOT general Replicate platform, auth or non-image models (that is `replicate`).",
       "tags": [
         "replicate",
         "image-generation",
@@ -3908,7 +3908,7 @@
     },
     {
       "id": "research-ops",
-      "description": "Use when someone hands you an open question to find out the truth about — a tech choice, a regulation, a 'what's actually true about X' — and the answer must survive scrutiny: every non-obvious claim dated and sourced, source disagreements surfaced not averaged away, and the deliverable is a cited memo you could defend in a room. Also when refreshing a stale research memo. Triggers: 'research whether A or B is better in 2026 with sources', 'give me a memo I can defend in Monday's meeting', 'settle this argument, is X actually true, cite your sources', 'what's the state of Y with citations', 'investiga a fondo X y cítame las fuentes con fecha', 'fes una recerca a fons amb fonts datades i nivell de confiança'. NOT sizing a market with TAM/SAM/SOM (that is market-research), NOT a standing cadence watch on named rivals (that is competitor-watch).",
+      "description": "Use when someone hands you an open question whose answer must survive scrutiny — a tech choice, a regulation, a what-is-actually-true-about-X — with every non-obvious claim dated and sourced, source disagreements surfaced rather than averaged away, and a cited memo as the deliverable. Also for refreshing a stale research memo. NOT sizing a market with TAM/SAM/SOM (that is `market-research`), NOT a standing cadence watch on named rivals (that is `competitor-watch`).",
       "tags": [
         "research-ops",
         "deep-research",
@@ -3931,7 +3931,7 @@
     },
     {
       "id": "retention",
-      "description": "Use when revenue is leaking out the bottom of the funnel and you need a program to keep, score, and win back customers — building a customer health score, running NPS, catching churn signals before renewal, designing a cancellation save flow, or a win-back sequence. Triggers: 'reduce churn', 'health score', 'NPS', 'save play', 'cancellation flow', 'win-back', 'at-risk accounts', 'GRR vs NRR', non-obvious 'my annual customers are downgrading to monthly', 'renewal is slipping', 'detractors keep canceling'; Catalan/Spanish 'reduir la rotació de clients', 'recuperar clients perduts', 'puntuació de salut del client', 'evitar bajas'. NOT working a single live churn-risk ticket in the moment (that is customer-support), NOT the first-30-days welcome flow (that is client-onboarding).",
+      "description": "Use when revenue is leaking out the bottom of the funnel and you need a program to keep, score and win back customers — a customer health score, NPS, catching churn signals before renewal, a cancellation save flow, or a win-back sequence, and reading GRR against NRR. NOT working a single live churn-risk ticket in the moment (that is `customer-support`), NOT the first-30-days welcome flow (that is `client-onboarding`).",
       "tags": [
         "retention",
         "churn",
@@ -3973,7 +3973,7 @@
     },
     {
       "id": "review-management",
-      "description": "Use when a public review just landed and needs an on-voice reply, or you need to earn more reviews legally, or your aggregate rating is slipping across Google Business Profile, Trustpilot, the App Store, or Google Play. Use when a 1-star feels unfair and you want it removed not just answered, when you must decide reply-vs-flag, or when wiring programmatic replies (GBP v4 updateReply, Trustpilot, App Store Connect, Play). Triggers: 'responder a esta reseña de Google', 'conseguir más reseñas sin saltarnos la ley', 'respon aquesta ressenya d''una estrella', 'aconseguir més ressenyes sense saltar-nos la llei', 'a 1-star landed and I want it removed not just answered', 'are we allowed to ask only happy customers for reviews', 'draft a reply to this 2-star', 'set up a review-request flow', 'build a reputation scorecard across Google and the App Store'. NOT a private 1:1 support ticket against an SLA (that is customer-support), NOT churn/NPS/save plays (that is retention).",
+      "description": "Use when a public review needs an on-voice reply, when you need to earn more reviews legally, or when an aggregate rating is slipping across Google Business Profile, Trustpilot, the App Store or Google Play — including deciding reply versus flag, getting an unfair one-star removed rather than merely answered, and wiring programmatic replies. NOT a private support ticket against an SLA (that is `customer-support`), NOT churn, NPS or save plays (that is `retention`).",
       "tags": [
         "reviews",
         "reputation",
@@ -4032,7 +4032,7 @@
     },
     {
       "id": "runpod",
-      "description": "Use when running GPU compute on RunPod and deciding between Pods (hourly, always-on) and Serverless (per-second, autoscaling) for training, fine-tuning, or model inference. Triggers: deploying a vLLM or custom-model serverless endpoint, writing or debugging a handler(job) worker, building a worker Docker template, attaching a network volume, tuning idle/execution timeout, max/active workers, FlashBoot, or chasing a runaway RunPod bill or slow cold starts; 'mi factura de RunPod se disparó', 'pod o serverless en RunPod', 'workers que no escalan a cero', 'el cold start tarda 20s'. NOT generic Python-native serverless GPU with snapshot autoscaling (that is modal); NOT calling hosted prebuilt model APIs (that is replicate); NOT pulling weights from the Hub (that is huggingface).",
+      "description": "Use when running GPU compute on RunPod and deciding between Pods (hourly, always-on) and Serverless (per-second, autoscaling) for training, fine-tuning or inference — serverless endpoints, handler workers, worker Docker templates, network volumes, timeout and worker-count tuning, cold starts, and runaway bills. NOT Python-native serverless GPU with snapshot autoscaling (that is `modal`), NOT calling hosted prebuilt model APIs (that is `replicate`), NOT pulling weights from the Hub (that is `huggingface`).",
       "tags": [
         "runpod",
         "gpu",
@@ -4075,7 +4075,7 @@
     },
     {
       "id": "sales-pipeline",
-      "description": "Use when an operator runs deals out of a spreadsheet, Notion, or Airtable and wants real stages, win-probabilities, deal hygiene, a weekly follow-up sweep, or a defensible roll-up forecast off the list — and when the pipeline looks full but nothing closes. Triggers: 'set up stages and a weighted forecast for my deal sheet', 'which deals are stale and what do I follow up on this week', 'my forecast keeps slipping every quarter', 'what's my pipeline coverage vs a 250k quota', 'build me a lightweight CRM without Salesforce', 'munta'm un CRM lleuger amb etapes i previsió', 'quins deals estan encallats', 'previsió de vendes del pipeline'. NOT statistical / scenario forecast modeling, time-series or cohort projections (that is forecasting), NOT sourcing new prospects (that is lead-gen), NOT writing the outbound emails (that is cold-outreach), NOT writing the proposal/quote (that is proposals), NOT the post-close kickoff (that is client-onboarding).",
+      "description": "Use when an operator runs deals out of a spreadsheet or Notion and wants real stages, win probabilities, deal hygiene, a weekly follow-up sweep, and a defensible roll-up forecast — including the case where the pipeline looks full but nothing closes. NOT statistical or scenario forecast modelling (that is `forecasting`), NOT sourcing prospects (that is `lead-gen`), NOT writing the outbound emails (that is `cold-outreach`), NOT the proposal or quote (that is `proposals`), NOT the post-close kickoff (that is `client-onboarding`).",
       "tags": [
         "sales",
         "crm",
@@ -4096,7 +4096,7 @@
     },
     {
       "id": "scaling",
-      "description": "Use when traffic is growing or about to spike and the system bends under concurrency — deciding what to add and in what order (cache, connection pool, async queue, read replica, more instances) and proving it with a load test instead of guessing. Triggers: 'will we survive the launch spike', 'fine for me but dies under load', 'too many clients already', 'add caching or a read replica?', 'set RPS and p95 targets and load-test before go-live', the non-obvious 'DB connections are maxed out', and Catalan/Spanish 'aguantarem el pic de trànsit del llançament' / 'prepara un test de carga con objetivos de p95'. NOT making one slow request faster or profiling an N+1 (that is performance), NOT race-free Redis caches/locks/queue semantics (that is redis).",
+      "description": "Use when traffic is growing or about to spike and the system bends under concurrency — deciding what to add and in what order (cache, connection pool, async queue, read replica, more instances) and proving it with a load test against explicit RPS and p95 targets rather than guessing. NOT making one slow request faster or profiling an N+1 (that is `performance`), NOT race-free Redis caches, locks and queue semantics (that is `redis`).",
       "tags": [
         "scaling",
         "capacity",
@@ -4193,7 +4193,7 @@
     },
     {
       "id": "seo-geo",
-      "description": "Use when you need one existing page to rank in Google AND get cited by AI answer engines (ChatGPT Search, Perplexity, Gemini/AI Overviews, Copilot) — auditing a URL for on-page SEO, structured-data/JSON-LD schema, GEO citation levers, Core Web Vitals, crawlability, and AI-bot access in robots.txt. Triggers: 'audit this page for SEO', 'why isn't this ranking', 'get us cited in ChatGPT/Perplexity', 'optimize for AI search', 'add schema markup', 'write the JSON-LD', 'should we block GPTBot', 'our Core Web Vitals are failing', 'audita el SEO de esta página', 'optimitza per a cerca amb IA', 'afegeix schema a aquest article'. NOT writing the article body (that is article-writing), NOT keyword research or content strategy (that is content-engine).",
+      "description": "Use when one existing page needs to rank in Google AND get cited by AI answer engines — auditing a URL for on-page SEO, structured-data JSON-LD, GEO citation levers, Core Web Vitals, crawlability, and AI-bot access in robots.txt. NOT writing the article body (that is `article-writing`), NOT keyword research or content strategy (that is `content-engine`).",
       "tags": [
         "seo",
         "geo",
