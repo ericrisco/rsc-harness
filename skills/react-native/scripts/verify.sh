@@ -42,6 +42,7 @@ flag() { # message + matching lines
   findings=1
   printf '%s[finding]%s %s\n' "$YELLOW" "$RESET" "$1"
   [ -n "${2:-}" ] && printf '%s\n' "$2" | sed 's/^/    /'
+  return 0 # never let a message-only finding trip set -e and skip the remaining checks
 }
 
 md_files() { # SKILL.md + every references/*.md
@@ -86,11 +87,13 @@ if [ -n "$bare" ]; then
   done < "$SKILL"
 fi
 
-# 4) Description must carry the Triggers: label and a NOT-boundary.
+# 4) Description shape: a "Use when/to" lead, a NOT-boundary, and no keyword trigger list
+#    (the model matches by meaning; a phrase list is per-turn cost for every install).
 desc="$(grep -m1 -E '^description:' "$SKILL" 2>/dev/null || true)"
 if [ -n "$desc" ]; then
-  printf '%s' "$desc" | grep -q 'Triggers:' || flag "description missing 'Triggers:' label"
+  printf '%s' "$desc" | grep -qE 'Use (when|to) ' || flag "description does not open with 'Use when/to'"
   printf '%s' "$desc" | grep -qE 'NOT ' || flag "description missing a 'NOT <x> (that is <sibling>)' boundary"
+  printf '%s' "$desc" | grep -q 'Triggers:' && flag "description carries a 'Triggers:' keyword list -> delete it, the model matches by meaning" ""
 fi
 
 # 5) No cross-ref to a sibling that does not exist on disk next to this skill.

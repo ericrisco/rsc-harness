@@ -1,6 +1,6 @@
 ---
 name: react-native
-description: "Use when writing the JS/TS code inside a React Native or Expo app — screens, navigation, lists, animation, platform-conditional UI, data/offline state, and native-module authoring — and when killing runtime jank or render bugs. Triggers: 'scaffold an Expo Router app', 'FlashList vs FlatList', 'auth-gated route groups', 'gesture reattaches every render', 're-render storm on every keystroke', 'deep link lands on the wrong screen', 'write an Expo Module wrapping a native SDK', 'la llista pateix lag quan faig scroll', 'mi app va fluida en iOS pero a tirones en Android'. NOT eas build/submit/OTA update/prebuild/config-plugin (that is expo), NOT a Dart app (that is flutter), NOT web React/DOM (that is react or nextjs)."
+description: "Use when writing the JS/TS inside a React Native or Expo app — screens, Expo Router navigation, lists, Reanimated gestures, platform forks, offline state, native modules — or killing jank and render storms. NOT eas build/submit/OTA/config-plugin (that is `expo`), NOT a Dart app (that is `flutter`), NOT web React/DOM (that is `react` or `nextjs`)."
 tags: [react-native, expo, mobile, ios, android, navigation, performance]
 recommends: [expo, react, flutter, design, debug, performance]
 origin: risco
@@ -8,11 +8,7 @@ origin: risco
 
 # React Native (app code)
 
-You write the code that runs *inside* the app: render, navigate, animate, list, persist, and author native modules. The pipeline around it — building, signing, OTA, native config — is not yours.
-
-## What this skill owns
-
-Mobile is split across two skills by **verb**. Run the verb test before doing anything:
+You write the code that runs *inside* the app: render, navigate, animate, list, persist, and author native modules. Mobile is split across two skills by **verb** — run the verb test before doing anything:
 
 | Verb in the request | Skill |
 |---|---|
@@ -149,7 +145,7 @@ Use Reanimated 4 CSS animations for simple declarative cases (fades, simple tran
 
 - Small forks: `Platform.select({ ios: 12, android: 8 })` or `Platform.OS === 'ios'`.
 - Whole-component forks: `Button.ios.tsx` / `Button.android.tsx` — the bundler picks the right one; import `./Button` with no extension.
-- Safe area: use `react-native-safe-area-context` insets, not hardcoded notch padding. Why: insets differ per device and orientation.
+- Safe area: use `react-native-safe-area-context` insets, not hardcoded notch padding. Why: insets differ per device and orientation. Palette, type scale and layout intent are not decided here → `../design/SKILL.md`.
 - `KeyboardAvoidingView` behaves differently per platform — `padding` on iOS, often `height` or nothing on Android; test both, don't assume the iOS behavior ports.
 - Set the status bar style explicitly per screen via `expo-status-bar`.
 
@@ -196,6 +192,7 @@ Full Expo Module (Swift + Kotlin + view), the Turbo Module codegen-spec walkthro
 - Read **Hermes** stack traces from the bottom up; the JS frame that matters is usually above the native bridge frames.
 - "Works on iOS, breaks on Android" (or vice versa) → run the platform-divergence checklist in `references/performance-debugging.md` before guessing.
 - A red screen citing the interop layer is usually an old-architecture lib running under Fabric — update the lib or find a New-Arch-ready replacement; do **not** disable New Arch.
+- A fault that resists all of the above needs systematic isolation, not more guesses → `../debug/SKILL.md`.
 
 ## Anti-patterns
 
@@ -211,10 +208,3 @@ Full Expo Module (Swift + Kotlin + view), the Turbo Module codegen-spec walkthro
 | Index as list key | Breaks recycling, reorders rows on insert | Stable domain id |
 | Doing native config / `eas.json` / OTA here | Wrong skill; this is app code | `../expo/SKILL.md` |
 | Hardcoded notch/safe-area padding | Wrong on other devices/orientations | `react-native-safe-area-context` insets |
-
-## Cross-references
-
-- Building, signing, OTA, native config → `../expo/SKILL.md`
-- Dart cross-platform alternative → `../flutter/SKILL.md`
-- Layout/visual design decisions → `../design/SKILL.md`
-- Systematic runtime fault isolation → `../debug/SKILL.md`
