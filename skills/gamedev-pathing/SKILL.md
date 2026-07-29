@@ -1,6 +1,6 @@
 ---
 name: gamedev-pathing
-description: "Use when implementing AI navigation or pathfinding in a game - moving enemies/NPCs/units toward goals, \"how do enemies navigate the level\", A*/Dijkstra/JPS/HPA* search, choosing grid vs waypoint-graph vs navmesh, baking a navmesh and tuning agent radius/height, off-mesh/nav links, dynamic obstacles and re-baking, steering (seek/flee/arrive/pursue/wander/path-following/flocking), local avoidance (RVO/ORCA, crowds), and flow fields for many agents to one goal. Per-engine: Godot 4.x (NavigationServer2D/3D, NavigationRegion, NavigationAgent, get_next_path_position), Unity (NavMeshAgent + NavMeshObstacle + AI Navigation baking), Unreal (RecastNavMesh + AIController + Behavior Trees/EQS). Triggers: \"my enemies get stuck\", \"units clump together\", \"navmesh not updating\", \"agentes se atascan\". NOT physics/rigidbody collision response or character-controller tuning (gamedev-physics), and NOT high-level enemy AI behaviour design like aggro/states/difficulty (game-design)."
+description: "Use when making NPCs, enemies, or units navigate a level — grid vs waypoint vs navmesh, A*/JPS, navmesh baking and agent radius, off-mesh links, steering, RVO crowd avoidance, and flow fields in Godot 4.x, Unity, Unreal. NOT collision response or character controllers (that is gamedev-physics), NOT aggro or difficulty design (that is game-design)."
 tags: [pathfinding, navmesh, navigation, steering, a-star]
 recommends: [godot, unity, unreal, gamedev-physics]
 profiles: [full]
@@ -102,7 +102,8 @@ Combine either as a **weighted sum** (simple) or **priority/arbitration** (avoid
 **Local avoidance (RVO / ORCA):** each agent picks a velocity that is collision-free assuming neighbours
 share the burden (*reciprocal* — hence no oscillating "dance"). This is avoidance, **not** collision
 *response*: it changes intended velocity *before* moving; the physics/collision solver is a separate,
-last-resort backstop (→ `gamedev-physics`). For dense crowds use the engine's crowd/avoidance system.
+last-resort backstop (→ [`gamedev-physics`](../gamedev-physics/SKILL.md)). For dense crowds use the
+engine's crowd/avoidance system.
 
 **Flow fields** — for **many agents → one (or few) goals** (RTS swarm, tower-defense creeps): run one
 **Dijkstra from the goal** over the grid to build a cost/integration field, derive a per-cell direction
@@ -182,30 +183,26 @@ AICon->MoveToActor(TargetActor, /*AcceptanceRadius*/ 50.f);   // or MoveToLocati
 4. Costs/holes: **`NavModifierVolume`** + `NavArea` classes. Off-mesh: **`NavLinkProxy`**. Crowd
    avoidance: enable the **Detour Crowd** manager (or `DetourCrowdAIController`) for RVO on many agents.
 
-> High-level BT *design* (states, aggro, difficulty) is `game-design`; this skill wires the BT's
+> High-level BT *design* (states, aggro, difficulty) is [`game-design`](../game-design/SKILL.md); this skill wires the BT's
 > movement/EQS tasks to navigation, not the decision tree's semantics.
 
-## Guardrails / gotchas
+## Anti-patterns
 
-- **Agent radius mismatch** is the top "stuck in doorways / clipping walls" cause — bake with the real radius.
-- Bake covers **static** geometry; runtime-spawned meshes need a rebake, a carving obstacle, or a nav link.
-- Path returns empty when start/end are **off the navmesh** or in disconnected islands — snap to nearest poly and check reachability first.
-- Avoidance (RVO) ≠ collision (physics). Agents can still overlap under pressure; that is expected, not a physics bug.
-- Off-mesh links are **directional and manual** — a jump-down link does not imply a jump-up link.
-- Smooth grid paths (funnel / string-pull) or agents walk visible zig-zag staircases.
-
-## Anti-patterns / rationalizations → STOP
-
-| Rationalization | Reality / do instead |
+| Anti-pattern | Do instead |
 | --- | --- |
-| "Just A* every frame, it's fine" | Melts CPU at scale; path on goal-change, steer between frames. |
-| "One navmesh bake works for every unit" | Radius/height differ; bake per agent size or use agent-type profiles. |
-| "Agents clip through each other — physics bug" | Missing **local avoidance**; enable RVO/crowd, that's the navigation layer. |
-| "Navmesh doesn't see my spawned wall" | Static bake; set Dynamic/rebake, or add a carving obstacle/nav link. |
-| "I'll grid-search my own A* in Unity/Unreal" | Reinvents the built-in navmesh; use `NavMeshAgent` / `AAIController::MoveTo`. |
-| "500 zombies each run A* to the player" | That's a **flow field**: one Dijkstra from the goal, agents sample cells. |
-| "Set `agent.destination` and read the path same frame" | Path is async (`pathPending`); gate on it before trusting `remainingDistance`. |
-| "Bigger heuristic = smarter" | Over-estimating `h` breaks A* optimality; keep it admissible (or weight it *knowingly*). |
+| Running a full A* every frame | Path on goal-change (or throttled) and steer between frames — per-frame search melts CPU at scale. |
+| One navmesh bake shared by every unit | Radius/height differ; bake per agent size or use agent-type profiles. |
+| Baking with a placeholder agent radius | Bake with the real radius — mismatch is the top "stuck in doorways / clipping walls" cause. |
+| Treating agents that clip through each other as a physics bug | Missing **local avoidance**; enable RVO/crowd — that is the navigation layer. |
+| Expecting RVO to prevent every overlap | Avoidance ≠ collision. Agents can still overlap under pressure; that is expected, not a physics bug. |
+| Expecting a **static** bake to see runtime-spawned geometry | Set Dynamic runtime generation / rebake, or add a carving obstacle or nav link. |
+| Hand-rolling your own grid A* in Unity/Unreal | Reinvents the built-in navmesh; use `NavMeshAgent` / `AAIController::MoveTo`. |
+| 500 zombies each running A* to the player | That's a **flow field**: one Dijkstra from the goal, agents sample cells. |
+| Setting `agent.destination` and reading the path the same frame | Path is async (`pathPending`); gate on it before trusting `remainingDistance`. |
+| Inflating `h` because a bigger heuristic seems smarter | Over-estimating `h` breaks A* optimality; keep it admissible (or weight it *knowingly*). |
+| Trusting a path query that came back empty | Start/end are **off the navmesh** or in disconnected islands — snap to the nearest poly and check reachability first. |
+| Assuming an off-mesh link works both ways | Links are **directional and manual** — a jump-down link does not imply a jump-up link. |
+| Feeding raw grid paths to the mover | Smooth them (funnel / string-pull) or agents walk visible zig-zag staircases. |
 
 ## Related skills
 
@@ -213,7 +210,7 @@ AICon->MoveToActor(TargetActor, /*AcceptanceRadius*/ 50.f);   // or MoveToLocati
 - [`unity`](../unity/SKILL.md) — Unity/C# project setup; here for the NavMesh + AI Navigation package details.
 - [`unreal`](../unreal/SKILL.md) — UE5/Blueprint/C++; here for RecastNavMesh + AIController/BT/EQS wiring.
 - [`gamedev-physics`](../gamedev-physics/SKILL.md) — collision *response*, rigidbodies, character controllers; steering decides intended velocity, physics resolves the contact.
-- `game-design` — high-level enemy behaviour, aggro, encounter/difficulty design (what the AI *decides*, not how it *moves*).
+- [`game-design`](../game-design/SKILL.md) — high-level enemy behaviour, aggro, encounter/difficulty design (what the AI *decides*, not how it *moves*).
 
 ## Checklist
 
@@ -234,9 +231,3 @@ the project's navigation decisions in `02-DOCS/wiki/stack/gamedev-pathing.md` (i
 `02-DOCS/wiki/index.md`): engine + version, chosen representation, bake settings (agent sizes, cell
 size), avoidance/crowd choice, custom links/areas. Read it first on every use; bump its `Updated` date
 when a convention changes. No `02-DOCS/` layer? Skip silently — conventions are *recorded, not gated*.
-
-## See Also — local references (read when)
-
-- `references/search-algorithms.md` — representations, A*/Dijkstra/JPS/HPA* pseudocode, heuristics & admissibility, tie-breaking, any-angle, funnel smoothing.
-- `references/navmesh-workflow.md` — bake-parameter table, areas/costs, off-mesh links, obstacles vs carving vs partial rebake, per-engine baking, debugging.
-- `references/steering-and-avoidance.md` — steering primitives, path following, boids weights, RVO/ORCA intuition, crowds, flow-field construction.
