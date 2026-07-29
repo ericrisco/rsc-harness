@@ -1,6 +1,6 @@
 ---
 name: fal
-description: "Use when calling a fal.ai model endpoint by id to generate an image, audio, or video from JS/Python/curl, wiring the queue (subscribe vs submit), receiving results by webhook and verifying the ED25519 signature, estimating per-call cost, or migrating off the deprecated @fal-ai/serverless-client. Use when a fal request is stuck IN_QUEUE, a webhook never arrives or its signature won't verify, or a long video gen drops mid-call. Triggers: 'generate an image with fal-ai/flux/dev', 'subscribe vs submit on fal', 'my fal webhook signature won't verify', 'fal request stuck IN_QUEUE', 'how much will 500 Seedream images cost on fal', 'migrate off @fal-ai/serverless-client', 'genera esta imagen con fal y guarda la URL', 'munta el webhook de fal i verifica la firma'. NOT picking the model or art direction (that is ai-media)."
+description: "Use when calling a fal.ai endpoint by id to generate image, audio, or video from JS/Python/curl: subscribe vs submit, queue states, ED25519 webhook signature verification, per-call cost, or migrating off @fal-ai/serverless-client. NOT which model or art direction (that is ai-media); NOT the same models on another platform (that is replicate)."
 tags: [fal, fal-ai, inference, image-generation, video-generation, queue, webhooks, serverless]
 recommends: [ai-media, replicate, replicate-images, modal, webhooks]
 origin: risco
@@ -10,16 +10,7 @@ origin: risco
 
 The wire to fal.ai's fast, pre-warmed media endpoints: call a model by id, control the queue, get the file back. fal is the **fast-media path** — latency-optimized image (FLUX, Seedream, SD), audio (TTS, music), and video (Veo, Wan, Kling, Hailuo) endpoints you invoke by id with `FAL_KEY`.
 
-You own the *mechanics*: auth, call mode, queue states, webhook signatures, file I/O, per-call cost. You do not decide *what* to generate or which model is artistically right — that is the strategy layer above you.
-
-## When to use
-
-- Generating media by calling a fal endpoint (`fal-ai/flux/dev`, `fal-ai/veo3`, `fal-ai/wan-2.5`) from JS, Python, or curl.
-- Choosing the call mode: `subscribe` (block + auto-poll) vs `submit` (instant `request_id`) + queue polling or webhook.
-- Receiving a result by webhook and verifying its ED25519 signature; handling retries and idempotency.
-- Uploading local inputs (image-to-image, image-to-video, ref audio) and reading output URLs.
-- Estimating and capping cost: per-image / per-second / per-megapixel / GPU-hour, plus the 50%-off batch path.
-- Migrating off the deprecated `@fal-ai/serverless-client`.
+You own the *mechanics*: auth, call mode, queue states, webhook signatures, file I/O, per-call cost.
 
 ## When NOT to use
 
@@ -203,8 +194,3 @@ The full model-family map and per-modality knob list live in [`references/models
 | Ignoring the model's pricing unit | "$0.05" is per-second, not per-video — surprise bill | Read the pricing tab; pick the right knob |
 | Tight `while` loop on `queue.status` | Hammers the API, gains nothing | Back off, or use a webhook |
 | `@fal-ai/serverless-client` | Deprecated; missing fixes and APIs | `@fal-ai/client` (v1.10.1) |
-
-## References
-
-- [`references/queue-and-webhooks.md`](references/queue-and-webhooks.md) — full async lifecycle, complete ED25519 verification (Node + Python), JWKS caching, IP allowlist, idempotent handler, retry/timeout handling.
-- [`references/models-and-cost.md`](references/models-and-cost.md) — model-family map, pricing-unit cheatsheet with 2026 examples, batch path, per-modality spend knobs, finding an endpoint id and its schema.
