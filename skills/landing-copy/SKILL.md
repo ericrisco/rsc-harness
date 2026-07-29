@@ -1,6 +1,6 @@
 ---
 name: landing-copy
-description: "Use when writing the words on a single conversion page — the hero headline and subhead, the offer, the proof/testimonials, and one primary CTA — or rescuing a page that gets traffic but does not convert (a copy diagnosis, not a layout one). Triggers: 'write the hero headline and subhead', 'write the landing copy', 'turn these features into benefits', 'what should the button say', 'make the page headline match the ad', 'people land on the page and bounce', 'my headline is clever but nobody clicks the button', 'escríbeme el copy de la landing', 'el titular del hero no convierte'. NOT the paid ad that drives the click (that is ads), NOT the visual layout the words sit in (that is design), NOT the experiment that picks the winning variant (that is ab-testing)."
+description: "Use when writing the words on a single conversion page — the hero headline and subhead, the offer, the proof and testimonials, and one primary CTA — or diagnosing a page that gets traffic and does not convert, as a copy problem rather than a layout one. NOT the paid ad that drives the click (that is `ads`), NOT the visual layout the words sit in (that is `design`), NOT the experiment that picks the winning variant (that is `ab-testing`)."
 tags: [landing-page, copywriting, conversion, hero-headline, cta, social-proof]
 recommends: [ads, design, brand-voice, ab-testing, case-studies]
 origin: risco

@@ -1,6 +1,6 @@
 ---
 name: laravel
-description: "Use when building or extending a Laravel 11/12 app - Eloquent models/migrations/relationships, routing + controllers + Form Requests, queues and background jobs, framework-native security (validation, mass-assignment, policies, signed URLs, rate limiting), and Pest/PHPUnit feature tests. Triggers: \"add a queued job with retries\", \"create an Eloquent model and migration\", \"write a Pest feature test\", \"where did app/Http/Kernel.php go\", \"my job runs immediately in tests instead of queueing\", \"configura una cua amb Horizon i Redis\", \"crea una migración con relaciones\", editing bootstrap/app.php / routes/console.php / app/Models. NOT pure PHP language/toolchain work (that is php)."
+description: "Use when building or extending a Laravel 11/12 app — Eloquent models, migrations and relationships, routing with controllers and Form Requests, queues and background jobs, framework-native security (validation, mass-assignment, policies, signed URLs, rate limiting), and Pest/PHPUnit feature tests. NOT pure PHP language or toolchain work (that is `php`)."
 tags: [laravel, php, eloquent, queues, pest, artisan]
 recommends: [php, mysql, redis, api-design, secure-coding, testing-web]
 origin: risco

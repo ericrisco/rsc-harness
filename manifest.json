@@ -2508,7 +2508,7 @@
     },
     {
       "id": "landing-copy",
-      "description": "Use when writing the words on a single conversion page — the hero headline and subhead, the offer, the proof/testimonials, and one primary CTA — or rescuing a page that gets traffic but does not convert (a copy diagnosis, not a layout one). Triggers: 'write the hero headline and subhead', 'write the landing copy', 'turn these features into benefits', 'what should the button say', 'make the page headline match the ad', 'people land on the page and bounce', 'my headline is clever but nobody clicks the button', 'escríbeme el copy de la landing', 'el titular del hero no convierte'. NOT the paid ad that drives the click (that is ads), NOT the visual layout the words sit in (that is design), NOT the experiment that picks the winning variant (that is ab-testing).",
+      "description": "Use when writing the words on a single conversion page — the hero headline and subhead, the offer, the proof and testimonials, and one primary CTA — or diagnosing a page that gets traffic and does not convert, as a copy problem rather than a layout one. NOT the paid ad that drives the click (that is `ads`), NOT the visual layout the words sit in (that is `design`), NOT the experiment that picks the winning variant (that is `ab-testing`).",
       "tags": [
         "landing-page",
         "copywriting",
@@ -2528,7 +2528,7 @@
     },
     {
       "id": "laravel",
-      "description": "Use when building or extending a Laravel 11/12 app - Eloquent models/migrations/relationships, routing + controllers + Form Requests, queues and background jobs, framework-native security (validation, mass-assignment, policies, signed URLs, rate limiting), and Pest/PHPUnit feature tests. Triggers: \\\"add a queued job with retries\\\", \\\"create an Eloquent model and migration\\\", \\\"write a Pest feature test\\\", \\\"where did app/Http/Kernel.php go\\\", \\\"my job runs immediately in tests instead of queueing\\\", \\\"configura una cua amb Horizon i Redis\\\", \\\"crea una migración con relaciones\\\", editing bootstrap/app.php / routes/console.php / app/Models. NOT pure PHP language/toolchain work (that is php).",
+      "description": "Use when building or extending a Laravel 11/12 app — Eloquent models, migrations and relationships, routing with controllers and Form Requests, queues and background jobs, framework-native security (validation, mass-assignment, policies, signed URLs, rate limiting), and Pest/PHPUnit feature tests. NOT pure PHP language or toolchain work (that is `php`).",
       "tags": [
         "laravel",
         "php",
@@ -2590,7 +2590,7 @@
     },
     {
       "id": "linkedin-api",
-      "description": "Use when wiring an app to LinkedIn's organic Posts / Community Management API — completing 3-legged OAuth, publishing text/article/document posts to a member profile or company page, or pulling impressions/engagement/follower stats and logging them as a durable feedback record. Triggers: 'connect our app to the LinkedIn Posts API', 'publish to our company page programmatically', 'pull last month's impressions for our org posts', 'my /v2/ugcPosts call returns 403', 'unauthorized scope w_organization_social at consent', 'log post performance into the wiki', 'publica a la pàgina de LinkedIn per API', 'conectar la API de LinkedIn y traer las impresiones'. NOT writing the post copy (that is linkedin-content), planning cadence (that is linkedin-strategy), or DM sequences (that is linkedin-outreach).",
+      "description": "Use when wiring an app to LinkedIn's organic Posts / Community Management API — 3-legged OAuth, publishing text, article or document posts to a member profile or company page, and pulling impressions, engagement and follower stats into a durable feedback record. NOT writing the post copy (that is `linkedin-content`), NOT planning cadence (that is `linkedin-strategy`), NOT DM sequences (that is `linkedin-outreach`).",
       "tags": [
         "linkedin",
         "social-api",
@@ -2632,7 +2632,7 @@
     },
     {
       "id": "linkedin-content",
-      "description": "Use when writing the actual words of one LinkedIn feed post — turning a raw idea, story, or asset into ready-to-paste copy that earns dwell time and comments: a text post, a document/carousel cover + slide copy + caption, or a 30–90s native-video script + caption. Use to fix a weak hook so people tap 'see more', reformat a wall of text for the mobile feed, or get a CTA that provokes a real comment (not 'thoughts?'). Triggers: 'write me a LinkedIn post about X', 'my hook is weak, rewrite the first three lines so people click see more', 'give me a CTA that gets comments not thoughts?', 'should the link go in the post or the first comment?', 'escríbeme un post de LinkedIn que enganche', 'fes-me un post de LinkedIn amb ganxo sobre el llançament'. NOT planning what/when to post or cadence (that is linkedin-strategy), NOT designing the carousel slides/layout/PDF export (that is linkedin-carousels), NOT DM/connection sequences (that is linkedin-outreach), NOT programmatic publish (that is linkedin-api).",
+      "description": "Use when writing the actual words of one LinkedIn feed post — turning a raw idea, story or asset into ready-to-paste copy: a text post, a document/carousel cover with slide copy and caption, or a short native-video script. Covers fixing a weak hook, reformatting a wall of text for the mobile feed, and a CTA that provokes a real comment. NOT planning what or when to post (that is `linkedin-strategy`), NOT designing the carousel slides and PDF export (that is `linkedin-carousels`), NOT DM sequences (that is `linkedin-outreach`), NOT programmatic publishing (that is `linkedin-api`).",
       "tags": [
         "linkedin",
         "social-copywriting",
@@ -2673,7 +2673,7 @@
     },
     {
       "id": "linkedin-strategy",
-      "description": "Use when a LinkedIn presence — personal brand or company page — needs an account-level decision over months: positioning/POV, defining 3-5 content pillars, posting cadence, whether content lives on the founder's profile or the company page, or the SSI / social-selling rhythm, read from and written back to the presence's own learning wiki. Triggers: 'what should I be known for on LinkedIn', 'what should I post about', 'how often should I post', 'company page or founder profile for content', 'my company page is dead where should content live', 'I post but nothing comes back / no inbound', 'my SSI is stuck how do I raise it', 'quarterly LinkedIn review which pillar is working', 'qué debería publicar en LinkedIn', 'cada cuánto publico per ser referent'. NOT writing the post copy or hook (that is linkedin-content), NOT building a carousel deck (that is linkedin-carousels), NOT sending DMs or sequences (that is linkedin-outreach), NOT pulling raw analytics (that is linkedin-api).",
+      "description": "Use when a LinkedIn presence — personal brand or company page — needs an account-level decision spanning months: positioning and point of view, three to five content pillars, posting cadence, whether content lives on the founder's profile or the company page, and the social-selling rhythm, read from and written back to the presence's own learning wiki. NOT writing the post copy or hook (that is `linkedin-content`), NOT building a carousel deck (that is `linkedin-carousels`), NOT sending DMs (that is `linkedin-outreach`), NOT pulling raw analytics (that is `linkedin-api`).",
       "tags": [
         "linkedin",
         "positioning",
@@ -2718,7 +2718,7 @@
     },
     {
       "id": "logistics-ops",
-      "description": "Use when an order is paid and packed and the box now has to physically move, go sideways, or come home — pick a carrier/service and cut a label, react to a tracker that fired a delivery exception, get ahead of 'where is my order' tickets, run a return/exchange/refund decision and the reverse label, file a carrier claim before the window closes, or set return-window / restocking-fee policy. Triggers: 'which carrier and service for order #1043, cut me the label', 'the tracker says delivery exception — what do I tell the customer', 'customers keep opening where-is-my-order tickets', 'a package arrived smashed, how long to file a FedEx claim', 'gestiona la devolución de este pedido, quiere cambiar la talla', 'quin transportista surt més barat per a aquest enviament'. NOT setting stock levels or reorder points (that is inventory), NOT sourcing or buying from suppliers (that is procurement), NOT writing the on-voice apology to the customer (that is customer-support).",
+      "description": "Use when an order is paid and packed and the box now has to move, go sideways, or come back — picking a carrier and service and cutting a label, reacting to a delivery exception, getting ahead of where-is-my-order tickets, running a return, exchange or refund with its reverse label, filing a carrier claim before the window closes, and setting return-window and restocking-fee policy. NOT setting stock levels or reorder points (that is `inventory`), NOT sourcing or buying from suppliers (that is `procurement`), NOT writing the apology to the customer (that is `customer-support`).",
       "tags": [
         "logistics",
         "shipping",
@@ -2765,7 +2765,7 @@
     },
     {
       "id": "make",
-      "description": "Use when operating Make.com (formerly Integromat) programmatically — driving its REST API v2 or the Make MCP server from code or an agent to create, read, update, activate, run, clone, or delete scenarios, connections, hooks, and data stores. Triggers: 'create a Make scenario via the API', 'export a scenario blueprint, mutate it, and push it back', 'start/stop/run a Make scenario from a script', 'clone this Integromat scenario into another team', 'connect the Make MCP server so an agent runs my scenarios as tools', 'my valid Make API token returns an auth error' (zone trap), 'automatiza escenarios de Make.com desde la API'. NOT designing what the flow should do — trigger, branching, mapping, dedup, error path (automation-flows), NOT choosing Make vs n8n vs Zapier by billing model (automation-strategy), NOT operating n8n / Zapier / Power Automate (their skills), NOT a generic typed REST client with pagination/backoff (api-connector-builder) or an inbound webhook receiver in your own app (webhooks).",
+      "description": "Use when operating Make.com (formerly Integromat) programmatically — driving its REST API v2 or the Make MCP server from code or an agent to create, read, update, activate, run, clone or delete scenarios, connections, hooks and data stores. NOT designing what the flow should do (that is `automation-flows`), NOT choosing between Make, n8n and Zapier by billing model (that is `automation-strategy`), NOT a generic typed REST client (that is `api-connector-builder`), NOT receiving inbound webhooks in your own app (that is `webhooks`).",
       "tags": [
         "make",
         "integromat",
@@ -2846,7 +2846,7 @@
     },
     {
       "id": "medium-strategy",
-      "description": "Use when planning Medium as a growth + money SYSTEM over months, not one post: enrolling in and optimizing for the Partner Program, deciding solo profile vs starting a publication vs joining or pitching one, engineering for Boost and the three distribution tiers, choosing tags/topics for reach, and a canonical cross-posting plan — read from and written back to 02-DOCS/wiki/medium/ so each session compounds. Triggers: 'how does the Medium Partner Program pay me', 'why does my story get views but no distribution', 'how do I get Boosted', 'should I start my own publication or pitch the big ones', 'repurpose my blog onto Medium without tanking my SEO', 'what tags maximize reach', 'qué tags uso en Medium', 'com guanyar diners a Medium'. NOT writing the article's hook/structure/prose (that is medium-writing), NOT the mechanical format-and-submit-one-story step (that is medium-publishing).",
+      "description": "Use when planning Medium as a growth and revenue system over months rather than one post — the Partner Program, solo profile versus starting or pitching a publication, engineering for Boost and the distribution tiers, tag and topic choices for reach, and a canonical cross-posting plan, read from and written back to the wiki so each session compounds. NOT writing the article's hook, structure or prose (that is `medium-writing`), NOT the mechanical format-and-submit step (that is `medium-publishing`).",
       "tags": [
         "medium",
         "partner-program",

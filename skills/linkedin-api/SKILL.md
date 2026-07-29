@@ -1,6 +1,6 @@
 ---
 name: linkedin-api
-description: "Use when wiring an app to LinkedIn's organic Posts / Community Management API — completing 3-legged OAuth, publishing text/article/document posts to a member profile or company page, or pulling impressions/engagement/follower stats and logging them as a durable feedback record. Triggers: 'connect our app to the LinkedIn Posts API', 'publish to our company page programmatically', 'pull last month's impressions for our org posts', 'my /v2/ugcPosts call returns 403', 'unauthorized scope w_organization_social at consent', 'log post performance into the wiki', 'publica a la pàgina de LinkedIn per API', 'conectar la API de LinkedIn y traer las impresiones'. NOT writing the post copy (that is linkedin-content), planning cadence (that is linkedin-strategy), or DM sequences (that is linkedin-outreach)."
+description: "Use when wiring an app to LinkedIn's organic Posts / Community Management API — 3-legged OAuth, publishing text, article or document posts to a member profile or company page, and pulling impressions, engagement and follower stats into a durable feedback record. NOT writing the post copy (that is `linkedin-content`), NOT planning cadence (that is `linkedin-strategy`), NOT DM sequences (that is `linkedin-outreach`)."
 tags: [linkedin, social-api, oauth, community-management-api, analytics, connector]
 recommends: [api-connector-builder, webhooks, analytics, knowledge-ops]
 origin: risco
