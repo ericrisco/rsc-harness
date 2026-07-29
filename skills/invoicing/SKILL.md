@@ -1,6 +1,6 @@
 ---
 name: invoicing
-description: "Use when someone needs to cut a legally-valid bill or quote, move it through its get-paid lifecycle, or chase money that hasn't arrived — billing completed work, drafting a quote before a job, an invoice weeks overdue, what must legally be on the page, or readiness for a structured e-invoicing mandate. Triggers: 'send an invoice to this client', 'create a quote / estimate for a prospect', 'this invoice is 3 weeks overdue, what do I send', 'what legally has to be on my invoice', 'our invoice numbers jump from 0042 to 0044 — is that a problem', 'issue a credit note for the one I sent', 'are we ready for the French e-invoicing mandate', 'emite una factura con el IVA desglosado', 'esta factura está vencida', 'crear un presupuesto', 'fes una factura per aquest client'. NOT recording a paid invoice in the books (that is bookkeeping), NOT wiring up the Stripe SDK as a software task (that is stripe), NOT setting the price (that is pricing)."
+description: "Use when issuing an invoice, quote, or credit note and moving it draft-to-paid — the legally required VAT fields, gap-free numbering, per-country e-invoicing mandates, dunning overdue ones. NOT recording a paid invoice in the books (that is `bookkeeping`), NOT Stripe SDK plumbing (that is `stripe`), NOT setting the price (that is `pricing`)."
 tags: [invoicing, billing, vat-invoice, dunning, accounts-receivable, e-invoicing, quotes, credit-note]
 recommends: [bookkeeping, stripe, pricing, contracts, proposals, e-signature, webhooks, finance-ops]
 origin: risco
@@ -8,7 +8,7 @@ origin: risco
 
 # Invoicing — cut the document, run the lifecycle, get paid
 
-You are the person in the business who **cuts the invoice, sends it, and gets it paid**. You own the billing document and its collection lifecycle: what must be on the page for a tax authority to accept it, how it moves from draft to paid, and how to chase money politely-then-firmly without breaking the law. You are not the accountant who later files it, and not the engineer who wires up the payment processor.
+You own the billing document and its collection lifecycle: what must be on the page for a tax authority to accept it, how it moves from draft to paid, and how to chase money politely-then-firmly without breaking the law.
 
 The whole job is three moves: **cut a valid document → run its lifecycle → get it paid.** Skip the validity step and the customer can't deduct the VAT. Skip the lifecycle and you lose track of who owes what. Skip the chase and you work for free.
 
@@ -39,7 +39,7 @@ Before anything, decide which document you are issuing — they use different nu
 | Proforma | A "please-pay-this" preview that is not yet a tax document | Not the invoice series | No — not a fiscal invoice |
 | Credit note / corrective (factura rectificativa) | To cancel or reduce an invoice already sent | Its own corrective series, **referencing the original number** | Reduces an existing obligation |
 
-Why it matters: you **never** delete or renumber a finalized invoice to fix it. You issue a corrective that points back at the original. A missing number in the invoice series is an audit flag.
+Never delete or renumber a finalized invoice to fix it — issue a corrective that points back at the original (see the lifecycle rule below).
 
 ## The legally-valid invoice checklist
 
@@ -143,12 +143,3 @@ Quotes follow `draft → finalize (assigns number) → accept`, which auto-gener
 | Chasing payment with no statutory basis | Weak, easily ignored | From D+15 cite ECB+8pp interest + EUR 40 fixed cost |
 | Omitting the per-rate VAT breakdown | Customer can't deduct VAT; invalid invoice | Net + rate + VAT amount per rate, plus total |
 | Recording the payment in the books yourself | Wrong skill, double-entry not your job | Hand the paid invoice to `../bookkeeping/SKILL.md` |
-
-## Hand-off
-
-- Invoice paid → record + reconcile it: `../bookkeeping/SKILL.md`.
-- Need the SDK / webhook plumbing: `../stripe/SKILL.md`, `../webhooks/SKILL.md`.
-- Deciding the amount before you bill: `../pricing/SKILL.md`.
-- The terms the invoice bills against: `../contracts/SKILL.md`.
-- The pre-sale pitch, not the bill: `../proposals/SKILL.md`.
-- Getting it signed: `../e-signature/SKILL.md`.
