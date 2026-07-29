@@ -1,6 +1,6 @@
 ---
 name: netlify
-description: "Use when deploying or operating a site on Netlify — writing or fixing netlify.toml, authoring Functions or Edge Functions, redirects/rewrites/headers, env vars per deploy context, or shipping via the Netlify CLI. Triggers: 'deploy to Netlify', 'netlify.toml build command', 'Netlify function returns 404 after deploy', 'page not found on SPA refresh on Netlify', 'build works locally but fails on Netlify', 'add a Netlify edge function', 'env var only in deploy preview', 'desplega-ho a Netlify', 'configura el netlify.toml'. NOT deploying to Vercel (that is vercel)."
+description: "Use when deploying or operating a site on Netlify — writing or fixing netlify.toml, authoring Functions or Edge Functions, redirects, rewrites and headers, env vars per deploy context, and shipping via the Netlify CLI. NOT deploying to Vercel (that is `vercel`)."
 tags: [netlify, deployment, serverless-functions, edge-functions, netlify-toml, redirects]
 recommends: [vercel, cloudflare, nextjs, domains-dns, github-actions]
 origin: risco

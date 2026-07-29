@@ -1,6 +1,6 @@
 ---
 name: neon
-description: "Use when you picked Neon (serverless Postgres) and need to connect it correctly from a serverless/edge runtime, wire database branching into dev/preview/CI, or stop getting burned by scale-to-zero cold starts and pooler limits — code imports @neondatabase/serverless, DATABASE_URL points at *.neon.tech, or you must choose HTTP neon() vs WebSocket Pool. Triggers: 'connect to Neon from a Cloudflare Worker / Vercel edge', 'too many connections from my serverless function', 'first request after idle is slow' (scale-to-zero cold start), 'which connection string for migrations vs app queries', 'a database branch per pull request', 'pooled vs direct -pooler endpoint', 'conexión serverless a Postgres en Neon', 'branca de base de dades per cada PR'. NOT generic Postgres schema/index/EXPLAIN/RLS/migration engine work (that is postgresdb)."
+description: "Use when you have picked Neon (serverless Postgres) and need to connect correctly from a serverless or edge runtime, wire database branching into dev, preview and CI, or stop being burned by scale-to-zero cold starts and pooler limits — including choosing HTTP versus WebSocket connections and pooled versus direct endpoints for migrations. NOT generic Postgres schema, index, EXPLAIN, RLS or migration-engine work (that is `postgresdb`)."
 tags: [neon, postgres, serverless, database, branching, edge]
 recommends: [postgresdb, drizzle-orm, prisma-orm, vercel]
 origin: risco

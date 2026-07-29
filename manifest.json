@@ -2866,7 +2866,7 @@
     },
     {
       "id": "medium-writing",
-      "description": "Use when crafting or rewriting ONE Medium story so it earns reads, claps, and Boost curation — writing the title/subtitle/kicker as a hook system, fixing a story that gets views but a low read ratio (title over-promises, intro buries the payoff, wall-of-text body), making a draft scannable and curation-eligible, or reshaping a blog post/newsletter into Medium-native form. Triggers: 'write a Medium article that gets read', 'my Medium post gets views but nobody finishes it', 'fix my read ratio', 'give me a title subtitle and kicker', 'make this Boost-eligible', 'curation-worthy Medium draft', 'escribe un artículo de Medium que enganche desde el primer párrafo', 'fes que aquest esborrany de Medium sigui llegible'. NOT scheduling/publishing/tags/submitting to a publication (that is medium-publishing), and NOT deciding what topics or cadence to write (that is medium-strategy).",
+      "description": "Use when crafting or rewriting ONE Medium story so it earns reads, claps and Boost curation — the title, subtitle and kicker as a hook system, fixing a story with views but a low read ratio, making a draft scannable and curation-eligible, or reshaping a blog post or newsletter into Medium-native form. NOT scheduling, tags or submitting to a publication (that is `medium-publishing`), NOT deciding topics or cadence (that is `medium-strategy`).",
       "tags": [
         "medium",
         "writing",
@@ -2935,7 +2935,7 @@
     },
     {
       "id": "mongodb",
-      "description": "Use when modeling MongoDB documents (embed vs reference, the 16MB cap, bucket/subset/extended-reference patterns), choosing or fixing indexes (compound order via the ESR rule, partial/TTL/multikey, reading explain), writing aggregation pipelines that stay index-eligible ($match-first, $lookup cost, $group memory + allowDiskUse), running multi-document transactions with retry, or operating/securing a deployment (replica set, read/write concern, Atlas M0/Flex/dedicated tiers, Vector Search, Queryable Encryption). Triggers: 'slow Mongo query', 'add an index', 'COLLSCAN', 'embed or reference', 'aggregation pipeline', '$lookup', 'transaction keeps retrying', 'modela esta colección', 'mi consulta hace un full scan'. MongoDB 8.2, driver-agnostic (mongosh syntax). NOT relational schema/SQL/EXPLAIN ANALYZE (that is postgresdb).",
+      "description": "Use when modeling MongoDB documents (embed versus reference, the 16MB cap, bucket and subset patterns), choosing or fixing indexes (compound order by the ESR rule, partial, TTL, multikey, reading explain), writing aggregation pipelines that stay index-eligible, running multi-document transactions with retry, or operating and securing a deployment (replica set, read/write concern, Atlas tiers, Vector Search, Queryable Encryption). MongoDB 8.2, driver-agnostic. NOT relational schema, SQL or EXPLAIN ANALYZE (that is `postgresdb`).",
       "tags": [
         "mongodb",
         "nosql",
@@ -2951,7 +2951,7 @@
     },
     {
       "id": "monitoring",
-      "description": "Use when setting up uptime/health monitoring, alerts, or on-call basics for a service already in production and you need to know it's down before customers do. Triggers: 'set up uptime monitoring', 'alert me if the site goes down', 'add /healthz and /readyz and probe them', 'we get paged at 3am for CPU spikes that self-resolve — fix alert fatigue', 'alert on our SLO error-budget burn rate not raw error count', 'an untested alert isn't an alert', 'create an on-call rotation with escalation and a status page', 'monta monitorització d'uptime i avísa'm si l'API torna 5xx', 'avísame si la web se cae'. NOT instrumenting logs/metrics/traces or wiring OpenTelemetry (that is observability).",
+      "description": "Use when setting up uptime and health monitoring, alerts, or on-call basics for a service already in production, so you learn it is down before customers do — health and readiness probes, alerting on SLO error-budget burn rather than raw counts, curing alert fatigue, on-call rotation with escalation, and a status page. NOT instrumenting logs, metrics or traces, or wiring OpenTelemetry (that is `observability`).",
       "tags": [
         "monitoring",
         "uptime",
@@ -2970,7 +2970,7 @@
     },
     {
       "id": "mysql",
-      "description": "Use when designing, querying, indexing, or operating a MySQL or MariaDB database and engine-specific behaviour matters: schema and type choices, index design, reading EXPLAIN, online schema change, replication, locking, deadlocks, and server config. Triggers: 'slow MySQL query', 'why isn't my index used', 'EXPLAIN says Using filesort', 'add a column to a huge table without downtime', 'set up GTID replication', 'replica lag', 'InnoDB deadlock', 'utf8mb4 vs utf8', 'caching_sha2_password cannot be loaded', 'pt-online-schema-change', 'gh-ost', 'emoji stored as ????', 'optimizar consulta MySQL', 'por qué no usa el índice', 'optimitzar consulta MySQL', 'MariaDB 11.8 vector'. NOT portable SELECT/JOIN/window-function craft (that is sql); NOT PostgreSQL engine behaviour like VACUUM or JSONB (that is postgresdb); NOT the PlanetScale/Vitess branch-and-deploy workflow (that is planetscale).",
+      "description": "Use when designing, querying, indexing or operating a MySQL or MariaDB database and engine-specific behaviour matters — schema and type choices, index design, reading EXPLAIN, online schema change, replication and replica lag, locking and InnoDB deadlocks, charset traps, and server config. NOT portable SELECT/JOIN/window-function craft (that is `sql`), NOT PostgreSQL engine behaviour like VACUUM or JSONB (that is `postgresdb`), NOT the PlanetScale/Vitess branch-and-deploy workflow (that is `planetscale`).",
       "tags": [
         "mysql",
         "mariadb",
@@ -3014,7 +3014,7 @@
     },
     {
       "id": "neon",
-      "description": "Use when you picked Neon (serverless Postgres) and need to connect it correctly from a serverless/edge runtime, wire database branching into dev/preview/CI, or stop getting burned by scale-to-zero cold starts and pooler limits — code imports @neondatabase/serverless, DATABASE_URL points at *.neon.tech, or you must choose HTTP neon() vs WebSocket Pool. Triggers: 'connect to Neon from a Cloudflare Worker / Vercel edge', 'too many connections from my serverless function', 'first request after idle is slow' (scale-to-zero cold start), 'which connection string for migrations vs app queries', 'a database branch per pull request', 'pooled vs direct -pooler endpoint', 'conexión serverless a Postgres en Neon', 'branca de base de dades per cada PR'. NOT generic Postgres schema/index/EXPLAIN/RLS/migration engine work (that is postgresdb).",
+      "description": "Use when you have picked Neon (serverless Postgres) and need to connect correctly from a serverless or edge runtime, wire database branching into dev, preview and CI, or stop being burned by scale-to-zero cold starts and pooler limits — including choosing HTTP versus WebSocket connections and pooled versus direct endpoints for migrations. NOT generic Postgres schema, index, EXPLAIN, RLS or migration-engine work (that is `postgresdb`).",
       "tags": [
         "neon",
         "postgres",
@@ -3055,7 +3055,7 @@
     },
     {
       "id": "netlify",
-      "description": "Use when deploying or operating a site on Netlify — writing or fixing netlify.toml, authoring Functions or Edge Functions, redirects/rewrites/headers, env vars per deploy context, or shipping via the Netlify CLI. Triggers: 'deploy to Netlify', 'netlify.toml build command', 'Netlify function returns 404 after deploy', 'page not found on SPA refresh on Netlify', 'build works locally but fails on Netlify', 'add a Netlify edge function', 'env var only in deploy preview', 'desplega-ho a Netlify', 'configura el netlify.toml'. NOT deploying to Vercel (that is vercel).",
+      "description": "Use when deploying or operating a site on Netlify — writing or fixing netlify.toml, authoring Functions or Edge Functions, redirects, rewrites and headers, env vars per deploy context, and shipping via the Netlify CLI. NOT deploying to Vercel (that is `vercel`).",
       "tags": [
         "netlify",
         "deployment",
@@ -3112,7 +3112,7 @@
     },
     {
       "id": "nlp",
-      "description": "Use when choosing how to tokenize text or which transformer type fits an NLP task, when a tokenizer over-fragments non-English text or inflates token cost, when picking a language metric, or when classification / NER / summarization output looks wrong and you can't tell whether the tokenizer, the architecture, or the metric is at fault. Covers BPE / WordPiece / SentencePiece-Unigram / byte-level BPE, special tokens, encoder (BERT) vs decoder (GPT) vs encoder-decoder (T5) choice, classification, NER, seq2seq, sentence embeddings, and metrics (F1, entity-F1, BLEU / ROUGE / chrF, perplexity, LLM-as-judge). Triggers: 'BPE or WordPiece', 'BERT vs GPT vs T5 for this task', 'tokenizer splits Catalan into too many tokens', 'is BLEU good for summaries', 'entity F1 for NER', 'quin model faig servir per classificar text'. NOT retrieval / vector search (that is embeddings-search), NOT the RAG loop (that is rag), NOT prompt wording (that is prompt-engineering), NOT training the net (that is finetuning / deep-learning).",
+      "description": "Use when choosing how to tokenize text or which transformer type fits an NLP task, when a tokenizer over-fragments non-English text or inflates token cost, when picking a language metric, or when classification, NER or summarization output looks wrong and it is unclear whether the tokenizer, the architecture or the metric is at fault. Covers subword tokenizers, encoder versus decoder versus encoder-decoder choice, sentence embeddings, and the metric families. NOT retrieval or vector search (that is `embeddings-search`), NOT the RAG loop (that is `rag`), NOT prompt wording (that is `prompt-engineering`), NOT training the network (that is `finetuning`).",
       "tags": [
         "nlp",
         "tokenization",
@@ -3215,7 +3215,7 @@
     },
     {
       "id": "ollama",
-      "description": "Use when running open-weight LLMs locally with Ollama — pulling/tagging models, calling the local API, picking a quant/GGUF, writing Modelfiles, or sizing VRAM/RAM for the box you're on. Triggers: 'run Llama/Qwen/gpt-oss/Gemma locally', 'self-host an LLM, no API keys, offline', 'model requires more memory than is available', 'why does my 70B OOM at long context', 'point the OpenAI SDK at localhost:11434', 'ollama ps / pull / create', 'ejecutar un LLM en local sin API key', 'quin model i quina quantització caben a la meva GPU de 12GB'. NOT remote/managed GPU serving or autoscaling (that is runpod), NOT downloading raw weights/datasets (that is huggingface), NOT retrieval pipeline design (that is rag).",
+      "description": "Use when running open-weight LLMs locally with Ollama — pulling and tagging models, calling the local API, picking a quantization or GGUF, writing Modelfiles, and sizing VRAM and RAM for the machine at hand. NOT remote or managed GPU serving and autoscaling (that is `runpod`), NOT downloading raw weights or datasets (that is `huggingface`), NOT retrieval pipeline design (that is `rag`).",
       "tags": [
         "ollama",
         "local-llm",

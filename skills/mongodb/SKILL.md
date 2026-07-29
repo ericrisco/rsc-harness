@@ -1,6 +1,6 @@
 ---
 name: mongodb
-description: "Use when modeling MongoDB documents (embed vs reference, the 16MB cap, bucket/subset/extended-reference patterns), choosing or fixing indexes (compound order via the ESR rule, partial/TTL/multikey, reading explain), writing aggregation pipelines that stay index-eligible ($match-first, $lookup cost, $group memory + allowDiskUse), running multi-document transactions with retry, or operating/securing a deployment (replica set, read/write concern, Atlas M0/Flex/dedicated tiers, Vector Search, Queryable Encryption). Triggers: 'slow Mongo query', 'add an index', 'COLLSCAN', 'embed or reference', 'aggregation pipeline', '$lookup', 'transaction keeps retrying', 'modela esta colección', 'mi consulta hace un full scan'. MongoDB 8.2, driver-agnostic (mongosh syntax). NOT relational schema/SQL/EXPLAIN ANALYZE (that is postgresdb)."
+description: "Use when modeling MongoDB documents (embed versus reference, the 16MB cap, bucket and subset patterns), choosing or fixing indexes (compound order by the ESR rule, partial, TTL, multikey, reading explain), writing aggregation pipelines that stay index-eligible, running multi-document transactions with retry, or operating and securing a deployment (replica set, read/write concern, Atlas tiers, Vector Search, Queryable Encryption). MongoDB 8.2, driver-agnostic. NOT relational schema, SQL or EXPLAIN ANALYZE (that is `postgresdb`)."
 tags: [mongodb, nosql, database, aggregation, indexing]
 recommends: [secure-coding, harness]
 profiles: []
