@@ -4,6 +4,7 @@ description: "Always-on. Use whenever the current user turn would clearly benefi
 tags: [suggest, detect, install, meta, always-on]
 recommends: []
 profiles: [minimal, core, full]
+origin: risco
 ---
 
 # rsc-suggest — the always-on layer

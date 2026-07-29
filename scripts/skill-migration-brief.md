@@ -114,16 +114,24 @@ Everything above is for the agent doing one skill. This half is for whoever is d
 
 ## Resuming, from nothing
 
-There is no state file to keep in sync, on purpose. **The remote branches are the ledger:**
+There is no state file to keep in sync, on purpose. **The content is the ledger** — a migrated skill
+no longer carries a `Triggers:` list in its description:
 
 ```bash
-# what is done
-git ls-remote --heads origin 'refs/heads/skill/*'
-# what is left = skills/ minus those, minus what is already merged to main
+node -e "const fs=require('fs');const out=[];for(const d of fs.readdirSync('skills')){const p='skills/'+d+'/SKILL.md';if(!fs.existsSync(p))continue;const m=/^---\n([\s\S]*?)\n---/.exec(fs.readFileSync(p,'utf8'));if(m&&/Triggers:/i.test(m[1]))out.push(d)}console.log(out.join('\n'))"
 ```
 
-So a cold session resumes with: *read this brief, compute the skills with no `skill/*` branch, launch
-one agent per skill in its own worktree.* Nothing from any previous conversation is required.
+So a cold session resumes with: *read this brief, run that, launch one agent per remaining skill in
+its own worktree.* Nothing from any previous conversation is required.
+
+**An earlier version of this section said the remote `skill/*` branches were the ledger. They are
+not, and the failure is instructive**: once integration PRs started merging with `--delete-branch`,
+the branches for finished skills vanished, so a branch-based check re-offered work that was already
+on main — and an agent duly re-migrated `harness` a second time before anyone noticed. The
+instruction was true when written and was invalidated by a later change to the merge flow, with
+nothing to catch the drift. That is the same failure this whole migration keeps finding in the
+catalog; the brief was not exempt from it. Prefer a check against the artifact over a check against
+bookkeeping that something else can quietly change.
 
 ## Order: by profile, not alphabetically
 

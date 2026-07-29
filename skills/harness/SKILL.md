@@ -4,6 +4,7 @@ description: "Use to control, govern or maintain a workspace's harness — softw
 tags: [harness, company, ops, docs, wiki, connect, tools, knowledge]
 recommends: [init]
 profiles: [minimal, core, full]
+origin: risco
 ---
 
 # Harness — the workspace control plane
