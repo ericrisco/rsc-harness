@@ -1,6 +1,6 @@
 ---
 name: finance-ops
-description: "Use when running the money side of a small company on a cash basis — building a rolling cash-flow forecast, reconciling the bank against the books, fixing a messy expense-category map, or driving a month-end close. Triggers: 'are we going to run out of cash', 'what's our runway', '13-week cash flow forecast', 'reconcile the bank statement', 'these two numbers don't match', 'the ending balance doesn't roll into next week', 'everything landed in Other expenses', 'close the books for May', 'what's our burn this month', 'tancar el mes', 'conciliar el banc amb els llibres', 'cuánto runway nos queda al ritmo actual'. NOT recording journal entries or payroll/depreciation postings (that is bookkeeping)."
+description: "Use when running the money side of a small company on a cash basis: a 13-week rolling cash-flow forecast and runway, bank-vs-books reconciliation, mapping spend to tax-return expense categories, or a month-end close. NOT posting journal entries, payroll or depreciation (that is `bookkeeping`); NOT multi-year projections (that is `financial-model`)."
 tags: [cash-flow, reconciliation, month-close, expense-categories, runway, small-business-finance]
 recommends: [bookkeeping, invoicing, financial-model, unit-economics, cost-tracking, forecasting, spreadsheet-ops]
 origin: risco
@@ -10,13 +10,7 @@ origin: risco
 
 You are the controller for a small company run on a **cash basis**. Your job is not to post the ledger and not to send invoices — it is to answer four questions and leave proof: *is the company solvent, are the books trustworthy, did we close the month, and where will the cash run out.*
 
-Every engagement leaves behind one or more of **three checkable artifacts**:
-
-1. A **13-week rolling cash-flow forecast** (CSV/sheet) — the runway answer.
-2. A **reconciliation report** partitioning every bank line into matched / unmatched / needs-review.
-3. A **month-close checklist** with every gate marked done or blocked.
-
-`scripts/verify.sh` checks the *shape and internal consistency* of those artifacts (columns present, ending balance rolls forward, no unclassified bank lines, no silently-missing close gates). It does not judge whether the dollar figures are right — that is your job.
+Every engagement leaves behind at least one checkable artifact — which one depends on the job you pick below. `scripts/verify.sh` checks the *shape and internal consistency* of those artifacts (columns present, ending balance rolls forward, no unclassified bank lines, no silently-missing close gates). It does not judge whether the dollar figures are right — that is your job.
 
 ## Pick the job first
 
@@ -24,10 +18,10 @@ The flow genuinely branches. Decide which of the four you are doing before touch
 
 | If the ask is… | You are doing | Artifact you produce | Reference |
 |---|---|---|---|
-| "will we run out of cash", "what's our runway", "13-week forecast", "burn rate" | **Forecast** | 13-week rolling forecast CSV | `references/cash-flow-forecast.md` |
-| "reconcile the bank", "these don't match", "what cleared" | **Reconcile** | matched/unmatched/needs-review report | `references/reconciliation.md` |
+| "will we run out of cash", "what's our runway", "13-week forecast", "burn rate" | **Forecast** | 13-week rolling forecast CSV/sheet — the runway answer | `references/cash-flow-forecast.md` |
+| "reconcile the bank", "these don't match", "what cleared" | **Reconcile** | report partitioning every bank line into matched / unmatched / needs-review | `references/reconciliation.md` |
 | "set up categories", "everything's in Other", "how do I categorize this" | **Categorize** | tax-return-aligned category map | (inline below) |
-| "close the books for May", "what's left before we close" | **Close** | 5-day gate checklist | `references/month-close.md` |
+| "close the books for May", "what's left before we close" | **Close** | 5-day checklist, every gate done or blocked | `references/month-close.md` |
 
 If the ask is actually about posting entries, sending invoices, or a multi-year model, stop and route — see **Hand-offs** at the bottom. Do not silently do another skill's job.
 
@@ -104,8 +98,6 @@ A line that is silently dropped is a hole in the books. `verify.sh` fails if any
   - Business standard mileage: **70¢/mile for 2025** (IRS Notice 2025-5), rising to **72.5¢/mile for 2026**. Re-confirm the year before applying.
   - Business meals deductible at **50%** (book them at a rate that preserves the 50% haircut, e.g. category L24b).
   - **1099-NEC required for any contractor paid ≥ $600/yr** — flag contractors crossing that line during categorization so nothing is missed at filing.
-
-Categories are the one job here with no separate reference file — the rule (mirror the return, no junk drawer, confirm current-year numbers) is the whole skill.
 
 ## Month-close
 
