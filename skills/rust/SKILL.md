@@ -1,6 +1,6 @@
 ---
 name: rust
-description: "Use when writing, reviewing, testing, or shipping Rust code or async services - ownership/borrowing (move vs borrow vs clone, Arc/Rc/RefCell, lifetimes), error modeling with Result/?/thiserror/anyhow, async on tokio (.await, JoinSet, select!, spawn_blocking, Send-across-await), axum 0.8 HTTP handlers/extractors/State, cargo test (unit/integration/doctests), and sqlx + cargo-audit security. Triggers: \"write an axum/tokio service\", \"is this idiomatic Rust\", \"add tests\", compiler error text like \"value moved here\", \"borrow of moved value\", \"future cannot be sent between threads safely\", \"does not live long enough\", \"cannot borrow as mutable\", \"el borrow checker no em deixa\", \"petición async en Rust\", .rs files, Cargo.toml, thiserror, sqlx. NOT desktop/GUI shells (that is tauri)."
+description: "Use when writing, reviewing, testing, or shipping Rust — ownership and the borrow checker (move/borrow/clone, Arc/RefCell, lifetimes), errors with Result/`?`/thiserror/anyhow, async on tokio, axum 0.8 services, cargo test, and sqlx + cargo-audit hardening. NOT the same service in Go (that is `go`), NOT a desktop webview shell (that is `tauri`)."
 tags: [rust, tokio, axum, async, backend, service]
 recommends: [go, postgresdb, secure-coding, deployment]
 origin: risco
@@ -21,60 +21,12 @@ The thing an agent gets wrong in Rust is almost never syntax — it is *ownershi
 compile errors about moves, borrows, and `Send + Sync` across `.await`. Front-load that mental model;
 the rest follows.
 
-## When to use / When NOT to use
-
-**Use when:**
-
-- Authoring, reviewing, or testing any `.rs` file, `Cargo.toml`, or workspace.
-- Fighting the borrow checker: "value moved here", "cannot borrow as mutable", "does not live long
-  enough", or choosing between `Rc`/`Arc`/`RefCell`/`Mutex`.
-- Modeling errors: `Result<T, E>`, `?`, a `thiserror` enum vs `anyhow::Result`, `#[from]` conversions,
-  mapping a domain error to an HTTP status.
-- Async on tokio: `#[tokio::main]`, `.await`, `JoinSet`, `select!`, channels, `spawn_blocking`,
-  cancellation, the "future is not `Send`" / "held across await" error class.
-- Building an axum service: routers, extractors, `State`, `IntoResponse`, tower middleware, shutdown.
-
-**When NOT to use (delegate):**
-
-- Language-agnostic threat modeling / authz / OWASP review -> `secure-coding` (this skill keeps the
-  Rust-specific controls: sqlx parametrization, `#![forbid(unsafe_code)]`, `cargo audit`).
-- Dockerfile / CI pipeline / shipping infra -> `deployment` (this skill carries only a multi-stage
-  Docker note + release-profile flags).
-- Pure SQL schema/index tuning -> `postgresdb` (this skill covers only the Rust-side sqlx query).
-- Native GUI / desktop shell with a webview -> `tauri`; cross-platform app work is out of scope.
-- A Go / Python / Node service -> `go` / `fastapi` / `nodejs` respectively.
-
-Rust error modeling and the HTTP error->status contract live **here**, in Rust terms — they are not a
-separate skill. `go` is the structural twin: same shape, GC + goroutines instead of ownership + futures.
-
-## Decision rules
-
-Apply these on every Rust edit:
-
-1. Prefer borrowing (`&T`) over moving over cloning; `.clone()` to silence the borrow checker is a
-   smell, not a fix — it hides the real ownership question.
-2. Take `&str`/`&[T]` in function params, return owned `String`/`Vec<T>`; borrow on the way in, own on
-   the way out. It is the most flexible and the cheapest.
-3. `?` over `.unwrap()`/`.expect()` everywhere off the test path; an `.unwrap()` on untrusted input is a
-   remote panic.
-4. Model errors with a `thiserror` enum when callers branch on the failure mode; reach for `anyhow` only
-   at the application boundary (`main`, top-level handlers) where you just need context + a backtrace.
-5. Never hold a `MutexGuard` (or any non-`Send` value) across an `.await` — it deadlocks or fails to
-   compile with "future cannot be sent between threads".
-6. Bound concurrency with a `JoinSet` (or a semaphore); a loop of bare `tokio::spawn` is unbounded
-   fan-out that can exhaust the runtime.
-7. `spawn_blocking` for CPU-bound or synchronous-blocking work; blocking inside an async task starves
-   the executor's worker threads.
-8. Validate at the boundary, parse into a typed domain model; "parse, don't validate" — make illegal
-   states unrepresentable.
-9. Parametrize every sqlx query with bind args; `format!` into SQL is injection.
-10. `#![forbid(unsafe_code)]` at the crate root unless you have a measured, reviewed, documented reason;
-    `clippy -D warnings` and `cargo fmt --check` are build gates, not suggestions.
-
 ## Ownership & borrowing (essentials)
 
 This is the skill's center of gravity. Three moves: **move** (transfer ownership), **borrow** (`&`/`&mut`,
-no transfer), **clone** (a real copy, real cost).
+no transfer), **clone** (a real copy, real cost) — and prefer them in that order, borrow first.
+Take `&str`/`&[T]` in function params, return owned `String`/`Vec<T>`: borrow on the way in, own on the
+way out is both the most flexible and the cheapest.
 
 ```rust
 fn print_name(name: &str) { println!("{name}"); }   // borrows; caller keeps ownership
@@ -127,8 +79,8 @@ Lifetimes, `'static`, `Cow`, and the full smart-pointer tree -> `references/owne
 
 ## Errors
 
-Error modeling is owned here. The model: `Result<T, E>` + `?`, typed enums for libraries, `anyhow` at
-the edge, one mapping from a domain enum to an HTTP status.
+Error modeling is owned here, in Rust terms — it is not a separate skill. The model: `Result<T, E>` +
+`?`, typed enums for libraries, `anyhow` at the edge, one mapping from a domain enum to an HTTP status.
 
 ```rust
 use thiserror::Error;
@@ -172,9 +124,7 @@ impl IntoResponse for UserError {
 }
 ```
 
-**Anti-patterns:** `.unwrap()`/`.expect()` on the request path (a panic = 500 + a stack trace, or a
-crashed worker); stringly-typed errors you `match` on by message; `Box<dyn Error>` smeared everywhere so
-nothing can branch on the failure. Full repo->service->handler skeleton -> `references/axum-service.md`.
+Full repo->service->handler skeleton -> `references/axum-service.md`.
 
 ## Async (tokio, essentials)
 
@@ -242,7 +192,9 @@ let app = Router::new()
     .with_state(state);
 ```
 
-Full skeleton — tower middleware (`TraceLayer`, timeout, request-id), graceful shutdown via
+Validate at the boundary and parse into a typed domain model — "parse, don't validate" makes illegal
+states unrepresentable, so the handler body never re-checks. Full skeleton — tower middleware
+(`TraceLayer`, timeout, request-id), graceful shutdown via
 `axum::serve(...).with_graceful_shutdown(...)`, and JSON helpers -> `references/axum-service.md`.
 
 ## Project layout
@@ -302,7 +254,8 @@ sqlx::query_as!(User, "SELECT id, name FROM users WHERE id = $1", id).fetch_one(
 `#![forbid(unsafe_code)]` at the crate root; run `cargo audit` (RustSec advisories) and `cargo deny` (license
 + ban + advisory policy) in CI; never `.unwrap()` on untrusted input — a malicious request becomes a
 panic. Read secrets from env or a secret manager, never hardcode or log them. Deeper authz / threat
-modeling -> `secure-coding`.
+modeling -> [`secure-coding`](../secure-coding/SKILL.md). Pure SQL schema/index/plan tuning ->
+[`postgresdb`](../postgresdb/SKILL.md); this skill covers only the Rust-side sqlx query.
 
 ## Production
 
@@ -323,73 +276,45 @@ strip = true            # strip symbols
 
 Expose `/healthz` (static 200 liveness) and `/readyz` (pings the DB pool, 503 on failure). Docker:
 multi-stage build, `cargo build --release`, copy the binary onto a distroless/slim base. Full
-Containerfile + CI -> `deployment`.
+Containerfile + CI -> [`deployment`](../deployment/SKILL.md).
 
-## Anti-patterns / rationalizations -> STOP
+## Anti-patterns
 
-| Rationalization | Reality / Do instead |
+| Anti-pattern | Reality / Do instead |
 | --- | --- |
-| ".clone() to make the borrow checker happy" | It hides the real ownership question; borrow, or restructure who owns what. |
-| ".unwrap() here, it can't fail" | It can, and a panic on the request path is a 500/crash; use `?` + a typed error. |
-| "`Box<dyn Error>` everywhere is simpler" | Nothing can branch on the failure; use a `thiserror` enum the caller can match. |
-| "`#[async_trait]` on every async trait" | Edition 2024 has native async fn in traits; drop the macro for most cases. |
-| "lock the Mutex, then .await" | Guard held across await = deadlock / not-`Send`; drop it first or use `tokio::sync::Mutex`. |
-| "`block_on` inside this async fn" | Nesting a runtime panics/deadlocks; restructure to `.await`. |
-| "just `tokio::spawn` in the loop" | Unbounded fan-out exhausts the runtime; bound it with `JoinSet`/semaphore. |
-| "`unsafe` to get past the borrow checker" | `unsafe` turns a compile error into UB; the checker was right — restructure. |
-| "`format!` the id into the SQL, it's trusted" | Injection; bind parameters with `$1` always. |
-| "skip clippy, it's just style" | clippy catches correctness (`.unwrap()` on `Option`, await-holds-lock); gate on `-D warnings`. |
-| "`Arc<Mutex<T>>` for everything shared" | If data flows one way it is a channel; reach for `mpsc` first. |
-| "`String` params everywhere" | Take `&str`; you force needless allocations and lose flexibility. |
+| `.clone()` to make the borrow checker happy | It hides the real ownership question; borrow, or restructure who owns what. |
+| `.unwrap()` / `.expect()` off the test path | A panic on the request path is a 500 or a crashed worker; use `?` + a typed error. |
+| Matching an error by its message string | Messages are prose and they change; match the enum variant. |
+| `Box<dyn Error>` everywhere because it is simpler | Nothing can branch on the failure; use a `thiserror` enum the caller can match. |
+| `#[async_trait]` on every async trait | Edition 2024 has native async fn in traits; drop the macro for most cases. |
+| `block_on` inside an async fn | Nesting a runtime panics or deadlocks; restructure to `.await`. |
+| A bare `tokio::spawn` per loop iteration | Unbounded fan-out exhausts the runtime; bound it with `JoinSet`/semaphore. |
+| `Arc<Mutex<T>>` for everything shared | If data flows one way it is a channel; reach for `mpsc` first. |
+| `unsafe` to get past the borrow checker | `unsafe` turns a compile error into UB; the checker was right — restructure. |
+| Skipping clippy as "just style" | clippy catches correctness (`.unwrap()` on `Option`, await-holds-lock); gate on `-D warnings`. |
 
-## Quick reference
+## Gates & commands
 
-| Task | Command / idiom |
+| Task | Command |
 | --- | --- |
 | Format check | `cargo fmt --all -- --check` |
 | Lint (gate) | `cargo clippy --all-targets -- -D warnings` |
 | Test | `cargo test` / `cargo nextest run` |
 | Doctests | `cargo test --doc` |
 | Audit deps | `cargo audit` / `cargo deny check` |
-| Propagate error | `let v = thing()?;` |
-| Library error | `#[derive(Error)]` enum + `#[from]` |
-| App error | `anyhow::Result<T>` + `.context(...)` |
-| Async test | `#[tokio::test] async fn ...` |
-| Bound concurrency | `JoinSet` + `join_next().await` |
-| Off-runtime work | `spawn_blocking(move || ...).await?` |
 | Local gate | `./scripts/verify.sh` (run in your crate root) |
 
-## Project grounding (02-DOCS + CLAUDE.md)
+Format and lint are build gates, not suggestions.
 
-When this skill runs in a project with a `02-DOCS/` layer (the
-[`harness`](../harness/SKILL.md) Karpathy wiki), record this project's service decisions there and index
-them from the root `CLAUDE.md`, so the next agent inherits the conventions instead of re-deriving them.
+## Project grounding (02-DOCS)
 
-1. **Find the article** `02-DOCS/wiki/stack/rust.md`, indexed in `02-DOCS/wiki/index.md` (the
-   Knowledge map index; root `CLAUDE.md` points to it).
-2. **If missing or stale**, create/update it with the project's real choices — the crate/workspace layout,
-   the runtime (tokio), the HTTP framework (axum 0.8), the error strategy (thiserror enum + IntoResponse
-   mapping), the DB layer (sqlx + pool), and tracing/concurrency defaults — then index it in
-   `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it).
-3. **Read it first on every use** and stay consistent; when a convention changes, update the article
-   (bump its `Updated` date) in the same change.
+In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) wiki), the service decisions
+live in `02-DOCS/wiki/stack/rust.md`, indexed from `02-DOCS/wiki/index.md`. Read it first and stay
+consistent; if it is missing or stale, write the project's real choices there — crate/workspace layout,
+runtime (tokio), HTTP framework (axum 0.8), error strategy (thiserror enum + `IntoResponse` mapping), DB
+layer (sqlx + pool), tracing and concurrency defaults — bump its `Updated` date, and index it. No
+`02-DOCS/`? Skip silently. Conventions are *recorded, not gated* — never block the task on this.
 
-No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Technical conventions are *recorded,
-not gated* — never block the task on this.
-
-## See Also
-
-Sibling skills (all resolve under `skills/`):
-
-- [`go`](../go/SKILL.md) - the structural twin: same write/review/test/ship service shape, GC + goroutines + multi-return errors instead of ownership + futures + `Result`.
-- [`secure-coding`](../secure-coding/SKILL.md) - threat modeling and language-agnostic authz/abuse/OWASP review (this skill keeps the Rust-specific controls).
-- [`postgresdb`](../postgresdb/SKILL.md) - SQL schema/index/query-plan tuning (this skill covers only the Rust-side sqlx query).
-- [`deployment`](../deployment/SKILL.md) - Docker multi-stage, CI, shipping infra (this skill ships only the Docker note + release-profile flags).
-- [`harness`](../harness/SKILL.md) - the `02-DOCS/` workspace wiki where per-project Rust conventions are recorded (see "Project grounding").
-
-Local references (read when):
-
-- `references/ownership.md` - move/borrow/clone deep dive, the borrow-checker error catalog, lifetimes, `'static`, `Cow`, smart-pointer tree, interior mutability.
-- `references/async-tokio.md` - runtime model, `JoinSet`/`select!`/channels, cancellation, `spawn_blocking`, `Send + Sync` across await, bounded-concurrency + retry helper.
-- `references/axum-service.md` - full skeleton: router, extractors, `State`, error->response, tower middleware, graceful shutdown, JSON helpers.
-- `references/testing.md` - unit/integration/doctests, `#[tokio::test]`, `tests/` HTTP tests against the Router, fakes/trait mocks, `cargo nextest`, `insta` snapshots.
+[`go`](../go/SKILL.md) is the structural twin: same write/review/test/ship service shape, GC +
+goroutines + multi-return errors instead of ownership + futures + `Result`. A desktop shell around a
+webview is [`tauri`](../tauri/SKILL.md), not this.
