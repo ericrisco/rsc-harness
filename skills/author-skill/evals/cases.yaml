@@ -1,8 +1,8 @@
 skill: author-skill
 
 # Cases for the rsc-core "author-skill" meta skill.
-# author-skill authors or edits a SKILL.md to the rsc catalog bar: a trigger-rich
-# third-person description (<=1024, valid YAML, origin: risco), a focused body with
+# author-skill authors or edits a SKILL.md to the rsc catalog bar: a discriminating
+# third-person description (~350 chars, valid YAML, origin: risco), a focused body with
 # progressive disclosure into references/, the best-practice rubric, and an
 # evals/cases.yaml + README for the NEW skill, plus the rsc plumbing (tags,
 # recommends, manifest.json, Knowledge map). It is NOT for building a
@@ -20,7 +20,7 @@ should_trigger:
     why: "Non-obvious symptom phrasing (no mention of 'skill authoring') pointing straight at the description craft — diagnosing/repairing a description that fails to route is exactly this skill's highest-leverage area."
 
   - prompt: "This SKILL.md is 600 lines and feels bloated. Help me restructure it."
-    why: "Edit/refactor of an existing skill toward progressive disclosure — author-skill's body-vs-references decision table and the 120-400 line target are the direct fix."
+    why: "Edit/refactor of an existing skill toward progressive disclosure — author-skill's body-vs-references decision table and the 400-line ceiling are the direct fix."
 
   - prompt: "Write the evals/cases.yaml for the skill I just drafted, with trigger and capability tests."
     why: "Eval authoring for a skill is squarely owned here (the should_trigger/should_not_trigger/route_to and capability rubric minimums) — a deliberately specific, non-obvious trigger."
@@ -57,8 +57,8 @@ capability:
     must_include:
       - "Reads 02-DOCS/wiki/harness/user-profile.md for the accompaniment dial (or asks the two gauging questions if absent) and adapts verbosity"
       - "Confirms scope is one job and checks no existing sibling already owns PR-description authoring before creating a new skill"
-      - "Drafts the description FIRST: third-person, 'Use when…' lead, concrete Triggers including a non-obvious symptom phrasing and a non-English one, a 'NOT … (that is `sibling`)' boundary, valid single-line quoted YAML <=1024 chars, with origin: risco"
-      - "Produces a focused body (~120-400 lines) with progressive disclosure — long/branch-specific detail pushed to references/ and pointed to inline, not an orphaned references/ folder"
+      - "Drafts the description FIRST: third-person, 'Use when…' lead, only the capabilities that discriminate it from its nearest sibling, a 'NOT … (that is `sibling`)' boundary, valid single-line quoted YAML aiming <=350 chars (1024 hard limit), with origin: risco"
+      - "Produces the smallest body that still routes (400 lines is a ceiling, not a target) with progressive disclosure — long/branch-specific detail pushed to references/ and pointed to inline, not an orphaned references/ folder"
       - "Language-tags every code/example fence and includes an anti-patterns table; adds a checklist/decision table only where a flow actually branches"
       - "Writes evals/cases.yaml meeting the minimums (>=5 should_trigger incl. non-obvious, >=4 should_not_trigger each with a real-sibling route_to, >=1 capability with a must_include rubric) plus an honest evals/README.md describing the two-axis run"
       - "Decides NO scripts/verify.sh because a PR-description skill is a process skill judged on its capability eval, OR includes verify.sh only if it emits a checkable artifact — and justifies the choice"
@@ -67,9 +67,9 @@ capability:
 
   - scenario: "A user pastes a skill whose description is 'I help you with deployments' and says 'it fires on everything and also misses real deploy questions — fix the triggering.' Show the description repair."
     must_include:
-      - "Diagnoses the two failure modes: first-person + no boundary causes hijacking; no concrete Triggers/situation causes misses"
+      - "Diagnoses the two failure modes: first-person + no boundary causes hijacking; no situation clause causes misses"
       - "Rewrites to third-person with a 'Use when…' situation lead and concrete verb phrases"
-      - "Adds a Triggers: list of real phrasings including a non-obvious symptom and a non-English one"
+      - "Keeps only the capabilities that discriminate deployment work from its nearest siblings, rather than padding a keyword list for coverage"
       - "Adds a 'NOT … (that is `sibling`)' boundary naming the real sibling(s) that own the excluded turns to stop hijacking"
-      - "Verifies the result is valid single-line quoted YAML and <=1024 chars (e.g. via the python YAML/length check) and keeps origin: risco"
+      - "Verifies the result is valid single-line quoted YAML, aims <=350 chars against the 1024 hard limit, and keeps origin: risco"
       - "Recommends updating evals/cases.yaml (especially should_not_trigger with route_to) and re-running the triggering eval, since description edits are wording-sensitive"
