@@ -1,6 +1,6 @@
 ---
 name: shortform-ideation
-description: "Use when an account that already posts (or is about to start posting) Reels/TikTok/Shorts needs a ranked batch of next video ideas grounded in its own performance log plus live trending sounds/formats/hashtags, and a ledger that ties each idea-bet to its measured outcome. Use to fold this week's trending audio into ideas, to decide which 3 of 12 ideas to shoot first, or to review why the bets you made flopped. Triggers: 'give me 10 Reels ideas for next week', 'which of these ideas do we make first', 'fold this week's trending TikTok sounds into our idea list', 'why did the ones we bet on last month flop', 'idea backlog for our TikTok', 'idéame Reels para esta semana basándote en lo que ya nos funcionó', 'prioritza idees de vídeo curt per aquesta setmana'. NOT writing the shot-by-shot script or edit decision sheet for a chosen idea (that is video-shorts), NOT setting cadence/pillars/positioning (that is shortform-strategy), NOT captions/covers/hashtag-sets for a finished cut (that is shortform-packaging)."
+description: "Use when a Reels/TikTok/Shorts account needs its next video ideas scored into a ranked backlog, grounded in its own performance log plus dated trending sounds, each bet logged so its outcome feeds the next batch. NOT scripting a chosen idea (that is `video-shorts`), NOT pillars or cadence (that is `shortform-strategy`), NOT packaging a finished cut (that is `shortform-packaging`)."
 tags: [shortform, reels, tiktok, ideation, content-ideas, trend-jacking, experiment-log]
 recommends: [video-shorts, shortform-strategy, shortform-packaging, analytics, content-engine]
 origin: risco
@@ -8,27 +8,27 @@ origin: risco
 
 # Shortform Ideation — The Idea Engine and the Bet Ledger
 
-*You run the closed loop for a Reels/TikTok/Shorts account: hypothesis → bet → measured outcome → a better next batch.* You own the idea list, the priority score, and the experiment ledger. You do not write the spoken lines, you do not pick the cadence, and you do not finalize the caption.
+*You run the closed loop for a Reels/TikTok/Shorts account: hypothesis → bet → measured outcome → a better next batch.* You own the idea list, the priority score, and the experiment ledger.
 
-**Your output stops at a ranked, evidenced idea carrying a chosen trend hook and a written hypothesis.** The moment you start writing spoken lines or beat timecodes, you have crossed into `video-shorts`. Hand off; do not squat.
+**Your output stops at a ranked, evidenced idea carrying a chosen trend hook and a written hypothesis.** The moment you start writing spoken lines or beat timecodes you have crossed into [`video-shorts`](../video-shorts/SKILL.md) — hand off, do not squat.
 
 An idea you cannot defend with (a) this account's own performance log and (b) a dated trend signal is a brainstorm, not a bet. This skill refuses to emit a brainstorm dump.
 
 ## Decision gate — are you even in ideation?
 
-Read the ask against this table before you generate anything. *Why: half the misfires here are scope creep into a sibling that owns the real deliverable.*
+Read the ask against this table before you generate anything, and hand off by the same table when a request lands outside your column. *Why: half the misfires here are scope creep into a sibling that owns the real deliverable.*
 
 | The ask | Owner | Why it is not you |
 |---|---|---|
 | "Give me N ranked ideas / which do we shoot first" | **you** | generating + scoring + ranking is the core loop |
 | "Fold this week's trending sounds into ideas" | **you** | trend-grounded ideation is the signature move |
 | "Why did the bets we made flop?" | **you** | the outcome ledger ties bet → result; that is yours |
-| "Write the shot-by-shot script / edit sheet for this idea" | `video-shorts` | you stop at the idea + hook angle + chosen sound |
-| "What should our pillars / cadence / positioning be?" | `shortform-strategy` | you consume pillars as input, you do not set them |
-| "Write the caption + hashtags + cover for this finished cut" | `shortform-packaging` | you may *suggest* a hashtag as a trend signal, not finalize one |
-| "YouTube ideas with thumbnail-first packaging" | `youtube-ideation` | that pipeline is packaging-led and decays slower |
-| "Run the cross-channel calendar across blog/email/social" | `content-engine` | you feed ranked ideas *into* a calendar, you don't run it |
-| "Build me a metrics dashboard" | `analytics` | you *read* the perf log to score ideas, you don't build reporting |
+| "Write the shot-by-shot script / edit sheet for this idea" | [`video-shorts`](../video-shorts/SKILL.md) | you stop at the idea + hook angle + chosen sound |
+| "What should our pillars / cadence / positioning be?" | [`shortform-strategy`](../shortform-strategy/SKILL.md) | you consume pillars as input, you do not set them |
+| "Write the caption + hashtags + cover for this finished cut" | [`shortform-packaging`](../shortform-packaging/SKILL.md) | you may *suggest* a hashtag as a trend signal, not finalize one |
+| "YouTube ideas with thumbnail-first packaging" | [`youtube-ideation`](../youtube-ideation/SKILL.md) | that pipeline is packaging-led and decays slower |
+| "Run the cross-channel calendar across blog/email/social" | [`content-engine`](../content-engine/SKILL.md) | you feed ranked ideas *into* a calendar, you don't run it |
+| "Build me a metrics dashboard" | [`analytics`](../analytics/SKILL.md) | you *read* the perf log to score ideas, you don't build reporting |
 
 ## The loop — four phases, in order
 
@@ -118,6 +118,8 @@ The hypothesis is one falsifiable sentence:
 
 Then leave the **result fields pending** — `result: pending | 3s-hold: __ | hook-rate: __ | shares: __ | saves: __ | verdict: __` — to be filled after the video runs. The next cycle reads these verdicts in Phase 1: a confirmed hypothesis becomes a winning pattern; a falsified one becomes a dead pattern. *Why: logging the bet but never the outcome turns the ledger into a graveyard of guesses — the loop only learns if the result loop closes.*
 
+To structurally lint an emitted backlog or experiment file, point `scripts/verify.sh` at it (read-only): `bash scripts/verify.sh 02-DOCS/shortform/`.
+
 ## Metrics that matter
 
 Score and judge on these, not on raw views. *Why: views are lagging and gameable; these are the levers the algorithm actually rewards.*
@@ -141,13 +143,3 @@ Score and judge on these, not on raw views. *Why: views are lagging and gameable
 | Logging the bet but never the outcome | the loop never learns; next batch re-guesses | leave result fields and fill them; Phase 1 reads the verdicts |
 | Writing the full script/timecodes here | crosses into `video-shorts`; muddies the idea ledger | stop at hook line + chosen sound; hand off |
 | Capturing a trend signal with no date | freshness is unscorable; you may brief a dead sound | every signal carries a first-seen date or it doesn't enter Phase 3 |
-
-## Hand-off
-
-- Chosen an idea and need the shot-by-shot script + edit decision sheet? → [`../video-shorts/SKILL.md`](../video-shorts/SKILL.md).
-- Missing the pillars/cadence/positioning the ideas should fit inside? → `shortform-strategy` (it owns strategy; you consume it).
-- The cut exists and needs caption/cover/hashtag-set? → `shortform-packaging`.
-- Feeding the ranked backlog into a multi-channel calendar? → [`../content-engine/SKILL.md`](../content-engine/SKILL.md).
-- Long-form/YouTube idea pipeline instead? → [`../youtube-ideation/SKILL.md`](../youtube-ideation/SKILL.md).
-
-To structurally lint an emitted backlog or experiment file, point `scripts/verify.sh` at it (read-only): `bash scripts/verify.sh 02-DOCS/shortform/`.

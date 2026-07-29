@@ -2,7 +2,7 @@ skill: market-research
 
 should_trigger:
   - prompt: "How big is the market for AI legal-research tools in Spain?"
-    why: Core sizing request — "how big is the market for X" is the central trigger.
+    why: Core sizing request for a whole market — Job 1, the central case for this skill.
   - prompt: "Sanity-check this TAM before our seed raise — does $2B hold up?"
     why: Non-obvious; cross-checking an existing number IS the triangulation core, not deck design or modeling.
   - prompt: "Cut our addressable market into segments and tell me which one to attack first."
@@ -12,9 +12,9 @@ should_trigger:
   - prompt: "Should we size this top-down from the industry report or bottom-up from our customers?"
     why: Non-obvious; the top-down-vs-bottom-up choice and triangulation gate are this skill's method, not a generic data pull.
   - prompt: "¿Qué tamaño tiene el mercado de software de reservas para restaurantes y cuál es el TAM/SAM/SOM?"
-    why: Spanish trigger for the full sizing job — TAM/SAM/SOM explicitly requested.
+    why: Spanish-language ask for the full sizing job — TAM/SAM/SOM explicitly requested.
   - prompt: "Quina mida té el mercat d'apps de reserves i hi ha demanda real?"
-    why: Catalan trigger combining market size and demand validation — both core jobs.
+    why: Catalan-language ask combining market size and demand validation — both core jobs.
 
 should_not_trigger:
   - prompt: "Profile Competitor X — their pricing tiers, feature gaps, and recent product launches."

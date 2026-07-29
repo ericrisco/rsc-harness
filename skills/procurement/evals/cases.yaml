@@ -12,9 +12,9 @@ should_trigger:
   - prompt: "We buy a critical component from only one supplier — how worried should I be?"
     why: Single/sole-source concentration risk and the backup-plan requirement.
   - prompt: "Negociar mejores condiciones de pago con nuestro proveedor."
-    why: Spanish trigger — payment-terms negotiation, trading a concession for extended terms.
+    why: Asked in Spanish — payment-terms negotiation, trading a concession for extended terms.
   - prompt: "Compara aquests proveïdors i munta una scorecard ponderada per decidir."
-    why: Catalan trigger — weighted-scorecard supplier comparison.
+    why: Asked in Catalan — weighted-scorecard supplier comparison.
 
 should_not_trigger:
   - prompt: "Draft and redline the purchase agreement so we can sign it."

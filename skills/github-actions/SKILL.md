@@ -1,6 +1,6 @@
 ---
 name: github-actions
-description: "Use when authoring or fixing GitHub Actions CI/CD — workflows under .github/workflows, jobs, the runner matrix, dependency caching, secrets and OIDC cloud deploys, environments and approval gates, reusable and composite workflows. Triggers: 'write a CI workflow', 'my GitHub Actions builds are slow / add caching', 'run the tests on a matrix of node versions', 'deploy to AWS without storing access keys' (OIDC), 'every push spawns a run and the old ones keep finishing' (concurrency), 'pin my actions / supply-chain hardening after the tj-actions thing', 'munta el desplegament continu amb GitHub Actions cap a producció', 'per què el GITHUB_TOKEN té permisos d'escriptura per defecte'. NOT writing the Dockerfile or image build strategy (that is docker), NOT the branching/merge model (that is git-workflow), NOT release readiness or the changelog (that is ship)."
+description: "Use when authoring or fixing GitHub Actions CI/CD — workflows under .github/workflows, triggers, job matrix, caching, token permissions, OIDC cloud deploys, environment gates, reusable workflows. NOT the Dockerfile or image build strategy (that is `docker`), NOT the branching model (that is `git-workflow`), NOT release readiness (that is `ship`)."
 tags: [github-actions, ci-cd, workflows, oidc, caching]
 recommends: [docker, git-workflow, ship, deployment, secure-coding, aws-essentials, vercel]
 origin: risco
@@ -10,26 +10,16 @@ origin: risco
 
 A workflow is config that runs on an event. Before you write a single step, decide three things: **which events** fire the workflow, **what permissions** the token needs, and **where credentials come from**. Get those wrong and you have a fast pipeline that leaks secrets or a secure one nobody can trigger. Everything after that — checkout, install, test, build — is just steps.
 
-This skill owns the workflow layer: the `.github/workflows/*.yml` files, their triggers, jobs, matrix, caching, secret/OIDC handling, environments, and deploy gates. It does not own the image you build, the branching model, or the release decision (see the boundaries below).
+This skill owns the workflow layer — the `.github/workflows/*.yml` files, their triggers, jobs, matrix, caching, secret/OIDC handling, environments and deploy gates. Route the rest out:
 
-## Use this when
-
-- Writing or fixing a `ci.yml` / `deploy.yml` / `release.yml`.
-- Adding lint/test/build jobs on push or pull_request.
-- Speeding up CI with dependency caching.
-- Running a build across an OS x language-version matrix.
-- Wiring deploys: environments, approval gates, OIDC to a cloud, secrets.
-- Reusable workflows (`workflow_call`) and composite actions to kill copy-paste.
-- Killing redundant runs with `concurrency`; SHA-pinning actions for supply-chain safety.
-
-## Not this when
-
-- Authoring the `Dockerfile` or deciding the image build strategy → docker. The workflow may *call* `docker build`; designing the image is not this skill.
-- Branching model, PR hygiene, merge vs rebase, commit conventions → git-workflow.
-- Release readiness checklist, changelog, the shipping decision → `../ship/SKILL.md`.
-- Blue/green, canary, rollback *theory* → `../deployment/SKILL.md`. Actions triggers the deploy; the strategy is deployment's.
-- Choosing the host and its deploy primitives → `../vercel/SKILL.md` / `../aws-essentials/SKILL.md` / the host skill. Actions *triggers* the deploy; the host owns the target.
-- Triaging SAST/CVE findings or threat-modeling → `../secure-coding/SKILL.md`. This skill runs a scanner *as a job*; it does not interpret the report.
+| Not this skill | Goes to | Because |
+| --- | --- | --- |
+| The `Dockerfile`, image build strategy | `../docker/SKILL.md` | The workflow may *call* `docker build`; designing the image is not this skill. |
+| Branching model, PR hygiene, merge vs rebase, commit conventions | `../git-workflow/SKILL.md` | That is the source-control model, not the CI config layer. |
+| Release readiness checklist, changelog, the shipping decision | `../ship/SKILL.md` | Whether to release is a decision; this skill only automates the mechanics. |
+| Blue/green, canary, rollback *theory* | `../deployment/SKILL.md` | Actions triggers the deploy; the strategy is deployment's. |
+| Choosing the host and its deploy primitives | `../vercel/SKILL.md`, `../aws-essentials/SKILL.md` | Actions *triggers* the deploy; the host owns the target. |
+| Triaging SAST/CVE findings, threat modeling | `../secure-coding/SKILL.md` | This skill runs a scanner *as a job*; it does not interpret the report. |
 
 ## Decide the trigger first
 
@@ -74,16 +64,15 @@ jobs:
         with:
           node-version: 22
           cache: npm                     # built-in lockfile-keyed cache
-      - run: npm ci                       # ci, not install — respects the lockfile
+      - run: npm ci                       # not install — fails on a stale lockfile, reproducible
       - run: npm run lint
       - run: npm test
 ```
 
-Rules baked into that file, each with its why:
-- `permissions: contents: read` at the top — **default token permissions may be write**; declare read-only and widen per job. A leaked write token can push tags or publish packages.
-- `concurrency` + `cancel-in-progress: true` — without it, every push to an open PR leaves the old run finishing and billing. One group per ref keeps at most one running + one pending.
-- `npm ci` not `npm install` — `ci` fails on a stale lockfile and is reproducible.
-- `actions/checkout@v6`, `setup-node@v6` — current majors (checkout v6.0.2, setup-node v6.4.0). Old majors run on Node 20, removed from runners in **September 2026**; JS actions are forced onto **Node 24** by default since June 2026. Upgrade to silence deprecation warnings and stay supported.
+Why those three lines are not optional:
+- `permissions: contents: read` at the top — **default token permissions may be write**, and a leaked write token can push tags or publish packages. Widen per job and only to what that job needs (`packages: write` to publish, `id-token: write` for OIDC), never at the top.
+- `concurrency` + `cancel-in-progress: true` — without it every push to an open PR leaves the old run finishing and billing. One group per ref keeps at most one running + one pending.
+- `actions/checkout@v6`, `setup-node@v6` are the current majors (checkout v6.0.2, setup-node v6.4.0). Old majors run on Node 20, removed from runners in **September 2026**; JS actions are forced onto **Node 24** by default since June 2026.
 
 ## Caching
 
@@ -183,7 +172,6 @@ Per-cloud trust setup (AWS role, GCP Workload Identity Federation, Azure federat
   ```
 
   First-party `actions/*` and `github/*` may stay on a major tag (GitHub controls them), but pinning everything is the stronger posture.
-- **Keep `GITHUB_TOKEN` read-only by default**, widen per job. Set `permissions: contents: read` at the top, then grant exactly what a job needs (`packages: write` to publish, `id-token: write` for OIDC).
 - **`pull_request_target` + checking out the PR head = remote code execution with your secrets.** That trigger runs in the *base* repo's trusted context. If you then `checkout` `github.event.pull_request.head.sha`, you execute a fork's code with full secret access. Never combine them.
 
 ## Reuse: workflow vs composite action
