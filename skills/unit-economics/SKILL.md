@@ -1,6 +1,6 @@
 ---
 name: unit-economics
-description: "Use when computing or improving the per-customer economics of a business — CAC, LTV, CAC payback period, contribution margin — or judging whether LTV:CAC and payback are healthy against 2025-2026 norms, and naming the one lever that fixes the worst number. Triggers: 'what's our CAC / LTV / payback', 'is our LTV:CAC ratio healthy', 'our payback period feels too long', 'is a 5:1 LTV:CAC actually good', 'our blended CAC looks fine but I think paid is bleeding money', 'the model says we're profitable but each customer feels like a loss — what's the contribution margin per customer', 'calcula'm el CAC i quant trigo a recuperar el cost d'un client', 'el ratio LTV:CAC és sa?', 'margen de contribución por cliente'. NOT the multi-year P&L / scenario projection (that is financial-model)."
+description: "Use when computing or improving the per-customer economics of a business — CAC, LTV, CAC payback period and contribution margin — judging whether the ratios are healthy against current norms, and naming the one lever that fixes the worst number. Covers a blended CAC that hides a bleeding channel, and a model that shows profit while each customer loses money. NOT the multi-year P&L or scenario projection (that is `financial-model`)."
 tags: ["cac", "ltv", "payback-period", "contribution-margin", "unit-economics", "ltv-cac-ratio", "nrr", "saas-metrics"]
 recommends: ["financial-model", "pricing", "retention", "cost-tracking", "forecasting", "investor-materials", "dashboard"]
 origin: risco

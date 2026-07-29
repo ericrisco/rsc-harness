@@ -1,6 +1,6 @@
 ---
 name: translation-l10n
-description: "Use when adding a second or Nth language to a web/app product, wiring i18n plumbing (extract strings, ICU messages, locale routing), fixing broken plurals or dates, or making a UI survive other languages (RTL, text expansion). Triggers: 'ship the app in French and Arabic', 'set up next-intl routing with generateStaticParams', 'our Russian plurals always show the singular', 'German text overflows the buttons', 'dates still show American format for Spanish users', 'the Arabic layout is mirrored wrong', 'traducir la app al árabe y montar el glosario', 'necessito localitzar el producte'. NOT defining the brand's tone in one language (that is brand-voice)."
+description: "Use when adding a second or Nth language to a web or app product — i18n plumbing (string extraction, ICU messages, locale routing), fixing broken plurals or date formats, and making a UI survive other languages through right-to-left layout and text expansion. NOT defining the brand's tone in one language (that is `brand-voice`)."
 tags: [i18n, l10n, internationalization, localization, translation, rtl, icu-messageformat]
 recommends: [brand-voice, nextjs, seo-geo, accessibility, content-engine]
 origin: risco

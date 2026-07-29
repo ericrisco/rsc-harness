@@ -1,6 +1,6 @@
 ---
 name: testing-go
-description: "Use when writing or running Go tests — table-driven cases, named subtests, parallel isolation, fakes instead of mock frameworks, coverage profiles, benchmarks, and fuzzing. Triggers: 'write Go tests', 'table-driven test', 'go test -cover', 'benchmark this function', 'testing.B.Loop', 'test concurrent goroutines deterministically', flaky parallel subtest uses wrong case data, golden files, 'mockear una interfaz en Go', 'cobertura de tests en Go', 'testar goroutines sense esperar 5 segons'. NOT general Go code or modules (that is go), NOT pytest fixtures (that is testing-py), NOT browser user flows (that is e2e-testing)."
+description: "Use when writing or running Go tests — table-driven cases, named subtests, parallel isolation, fakes instead of mock frameworks, coverage profiles, benchmarks, fuzzing, golden files, and testing concurrent goroutines deterministically. NOT general Go code or modules (that is `go`), NOT pytest fixtures (that is `testing-py`), NOT browser user flows (that is `e2e-testing`)."
 tags: [go, testing, table-driven-tests, benchmarks, coverage, synctest, mocks, fuzzing]
 recommends: [go, secure-coding, testing-py, e2e-testing]
 origin: risco
