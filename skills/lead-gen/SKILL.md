@@ -1,6 +1,6 @@
 ---
 name: lead-gen
-description: "Use when you need to find and qualify prospects, build a target list, or score and prioritize leads before anyone reaches out — defining an ICP, sourcing named accounts/contacts from Apollo/ZoomInfo/Clay, deduping against the CRM, and ranking with a fit+intent+engagement model. Triggers: 'build me a prospect list', 'who should we sell to', 'score these leads', 'which accounts do we call first', 'tighten our ICP', 'is this cold list GDPR-safe', 'necesito una lista de clientes potenciales', 'califica estos leads', 'a qui truquem primer'. NOT writing or sending the outreach (that is cold-outreach), NOT tracking the deal after first contact (that is sales-pipeline)."
+description: "Use when building and qualifying a prospect list before anyone reaches out — a falsifiable ICP, named accounts/contacts from Apollo/ZoomInfo/Clay, deduped against the CRM, tiered by fit+intent+engagement. NOT writing or sending the outreach (that is cold-outreach), NOT tracking the deal after first contact (that is sales-pipeline)."
 tags: [lead-generation, prospecting, icp, lead-scoring, sales]
 recommends: [cold-outreach, sales-pipeline, market-research, data-scraper, spreadsheet-ops, email-deliverability, gdpr-privacy]
 origin: risco
@@ -8,9 +8,7 @@ origin: risco
 
 # Lead Gen — The List and the Model That Ranks It
 
-*You turn "we sell X to Y" into a deduplicated, scored, compliance-cleared roster of named accounts and people. You define the target, you build the list, you rank it — then you stop. You do not write the email and you do not run the deal.*
-
-The identity of this skill is **the list and its scoring model**, not the messages sent to it and not the pipeline it becomes. Everything you produce is a *prioritized roster + the rationale that ranked it*. The hand-off is the finish line, not the campaign.
+*You turn "we sell X to Y" into a deduplicated, scored, compliance-cleared roster of named accounts and people. You define the target, you build the list, you rank it — then you stop. What you produce is a prioritized roster plus the rationale that ranked it; the hand-off is the finish line, not the campaign.*
 
 ## The pipeline — three phases, two gates
 
@@ -151,5 +149,3 @@ This skill stops at a scored, compliance-cleared list. From there:
 - The **A/B tiers + persona context** go to `../cold-outreach/SKILL.md` — that skill writes the message and the cadence; you do not.
 - **Accepted leads** (worked and responsive) go to `../sales-pipeline/SKILL.md` — that skill tracks stages, forecasts, and manages the deal; you do not.
 - If the request is really "how big is this market / which segment?" with no named list, that is `../market-research/SKILL.md`, not this skill.
-
-When the deliverable would be a message, a pipeline stage, or a market sizing — route. Your job ended at the ranked roster.
