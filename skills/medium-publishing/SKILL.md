@@ -1,6 +1,6 @@
 ---
 name: medium-publishing
-description: "Use when getting a finished article onto Medium correctly — choosing profile vs publication, cross-posting from your own site without an SEO duplicate-content hit, the import tool, the 5-tag limit, and Medium's pseudo-Markdown formatting gotchas. Triggers: 'cross-post to Medium', 'republish on Medium with a canonical link', 'submit my draft to a Medium publication', 'why are my code blocks broken on Medium', 'can I still automate Medium via the API', 'the Medium import tool failed with a 403', 'importar mi artículo a Medium sin penalización SEO', 'publicar a Medium amb enllaç canònic'. NOT drafting, structuring, or headlining the article itself (that is medium-writing)."
+description: "Use when a finished article has to land on Medium correctly — profile vs publication, cross-posting under a canonical link so your own site keeps the SEO credit, import-tool failures, the 5-tag cap, pseudo-Markdown gotchas. NOT writing or headlining the piece (that is `medium-writing`), NOT cadence or earnings (that is `medium-strategy`)."
 tags: [medium, publishing, cross-posting, canonical-url, seo, import-tool]
 recommends: [medium-writing, medium-strategy, seo-geo, social-publisher]
 origin: risco
@@ -10,13 +10,11 @@ origin: risco
 
 Land a finished article on Medium with correct metadata: right destination, no duplicate-content penalty, valid tags, intact formatting. Writing the article is `../medium-writing/SKILL.md`; deciding when/where/how-often to publish and how it grows is `../medium-strategy/SKILL.md`. This skill is only the mechanics of getting bytes onto the platform with the right metadata attached.
 
-## Reality check — read this first (2025-2026)
+## Reality check (2025-2026)
 
 **The Medium API is closed to new integrations.** As of 2025-01-01 Medium issues no new integration tokens and accepts no new integrations; only tokens minted before that date still work. Why it matters: any plan that starts with "register a Medium API token and automate it" is dead on arrival for anyone who didn't already have one. Integration platforms confirm this — the Medium app in Make is marked legacy, and n8n's Medium credentials can no longer be newly configured.
 
-So the default publishing path is **web editor + import tool + canonical link**, done through the UI. Treat the API as a legacy escape hatch (last section), not the plan.
-
-Do not promise API automation. If the user asks "can I get a token and automate this?", the honest answer is almost always no — explain why and route them to the import path below.
+So the default publishing path is **web editor + import tool + canonical link**, done through the UI. Treat the API as a legacy escape hatch (last section), not the plan — when asked "can I get a token and automate this?", the honest answer is almost always no, so say why and route to the import path below rather than promising automation.
 
 ## Decision table — pick your path
 
@@ -30,11 +28,9 @@ Branch on where the article already lives and what you control:
 | You hold a pre-2025 API token and want automation | Legacy `POST /v1/users/{id}/posts` | `canonicalUrl` field in the request body |
 | Destination is a publication you write for | Submit draft to the publication | Same as above; submission is separate from canonical |
 
-When in doubt and the piece exists elsewhere, prefer the import tool — it gets canonical *and* backdate right in one step.
-
 ## Cross-post without an SEO penalty (the core job)
 
-When the article already lives on your own site, you must tell search engines the original is canonical, or Google sees two copies and may credit Medium or neither. Two mechanisms, in order of preference:
+When the article already lives on your own site, you must tell search engines that the **origin** — your page, never the Medium URL — is canonical, or Google sees two copies and may credit Medium or neither. Two mechanisms, in order of preference:
 
 **1. Import tool (preferred).** Pasting the original URL into Medium's import field does three things at once:
 - imports the rendered content into a new draft,
@@ -53,8 +49,6 @@ Good: Use the import tool (canonical + backdate set automatically), or if
       you paste natively, set "Customize canonical link" to the origin URL
       BEFORE publishing.
 ```
-
-The canonical must point to the **origin** (your site), not to the Medium URL. The whole point is that your site keeps the SEO credit.
 
 ## When the import fails
 
@@ -98,9 +92,7 @@ Good: Convert the table to a labeled list, or screenshot/export it as an
 Two outcomes, often confused:
 
 - **Self-publish** puts the story on your own profile immediately.
-- **Submit to a publication** routes the draft to that publication's editors. It stays **pending** — not live — until an editor publishes it, and you must already be an accepted writer for that publication. Submitting does not auto-publish.
-
-Why it sits pending: a publication is editorially controlled; submission is a request, not a publish action. If you're not yet a writer there, request access first; submitting otherwise goes nowhere.
+- **Submit to a publication** routes the draft to that publication's editors, where it stays **pending** — not live — until one of them publishes it. A publication is editorially controlled, so submission is a request, not a publish action, and it only works if you are already an accepted writer there. If you're not, request access first; submitting otherwise goes nowhere.
 
 ## Legacy API — only if you hold a pre-2025 token
 

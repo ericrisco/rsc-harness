@@ -58,13 +58,13 @@ model Order {
 }
 ```
 
-ORM-client ergonomics beyond this knob belong to the `prisma-orm` sibling, not here.
+ORM-client ergonomics beyond this knob belong to `../../prisma-orm/SKILL.md`, not here.
 
 ## Drizzle: app-level relations
 
 Drizzle models relations in app code via `relations()` and queries them with the relational API. On
 PlanetScale you index the join column and skip the `references()`-backed DB constraint; the relation
-lives in code, not in the database. The query-builder side is the `../drizzle-orm/SKILL.md` sibling.
+lives in code, not in the database. The query-builder side is `../../drizzle-orm/SKILL.md`.
 
 ## The unsharded FK opt-in
 

@@ -1950,7 +1950,7 @@
     },
     {
       "id": "gamedev-shaders",
-      "description": "Use when writing shaders, materials, VFX, or post-processing for a game engine, or asking \\\"how do I make this effect\\\" — covers the vertex→fragment pipeline, UVs / normals / coordinate spaces, and per-engine authoring in Godot 4.x (shader_type spatial/canvas_item/particles, source_color, hint_screen_texture, ShaderMaterial), Unity 6 (Shader Graph vs HLSL, URP/HDRP, ShaderLab), and Unreal 5.x (Material graph, material domains, Custom HLSL node). Includes recipes for dissolve, rim/outline, toon/cel, water/flow, force field, hologram; full-screen post-process; and shader performance (overdraw, texture-sample cost, branching, mobile). Triggers: \\\"write a dissolve shader\\\", \\\"rim light\\\", \\\"toon shading\\\", \\\"screen-space effect\\\", \\\"my shader is slow on mobile\\\", \\\"cómo hago un shader de agua\\\". NOT gameplay or engine-API code (→ godot / unity / unreal) and NOT physics simulation, collision, or rigid bodies (→ gamedev-physics).",
+      "description": "Use when authoring or debugging a shader, material, VFX, or full-screen post-process in a game engine — Godot 4.x `.gdshader`, Unity 6 URP/HDRP, Unreal 5.x Materials, effect recipes, shader performance. NOT gameplay or engine-API code (that is `godot`/`unity`/`unreal`), NOT physics (`gamedev-physics`), NOT build variant stripping (`gamedev-shipping`).",
       "tags": [
         "shaders",
         "vfx",
@@ -1995,7 +1995,7 @@
     },
     {
       "id": "gcp-essentials",
-      "description": "Use when running a small product on the core of Google Cloud with the gcloud CLI: creating a project, deploying a container to Cloud Run, standing up a Cloud Storage bucket, a managed Cloud SQL Postgres/MySQL, and wiring them together with least-privilege IAM. Triggers: 'deploy to Cloud Run', 'gcloud run deploy', 'set up a GCP project', 'crear bucket en GCP', 'desplegar a Cloud Run', 'service account sin claves JSON', 'why is my Cloud Run running as the default service account', 'connect Cloud Run to Cloud SQL', 'turn off the bucket public access'. NOT AWS (that is aws-essentials).",
+      "description": "Use when running a small product on core Google Cloud via the gcloud CLI: a project, Cloud Run deploys, a locked-down Cloud Storage bucket, managed Cloud SQL, and least-privilege IAM wiring them together. NOT AWS (that is `aws-essentials`), NOT the CI pipeline that ships the image (that is `deployment`), NOT Postgres schema/query tuning (that is `postgresdb`).",
       "tags": [
         "gcp",
         "cloud-run",
@@ -2192,7 +2192,7 @@
     },
     {
       "id": "hetzner",
-      "description": "Use when provisioning or hardening a Hetzner Cloud VPS to host real apps: picking a plan/location (CX/CPX/CAX/CCX), bringing a box up reproducibly with the hcloud CLI + cloud-init, locking down SSH, and wiring the Hetzner Cloud Firewall before handing off a Docker/Coolify-ready host. Triggers: 'set up a Hetzner server', 'provision a Hetzner VPS', 'harden SSH on my box', 'which Hetzner plan for a small API', 'configure the Hetzner Cloud Firewall', the non-obvious 'my ipv6-only box is cheaper but docker pull can't reach the registry', and the Spanish/Catalan 'monta un servidor en Hetzner', 'configura el firewall de Hetzner'. NOT deploying apps through Coolify (that is coolify).",
+      "description": "Use when provisioning or hardening a Hetzner Cloud VPS: picking the plan/location (CX/CPX/CAX/CCX), bringing it up reproducibly with hcloud + cloud-init, locking down SSH, and wiring the Cloud Firewall to hand off a Docker-ready host. NOT app deploys on Coolify (that is `coolify`), NOT Dockerfiles (that is `docker`), NOT another provider (that is `digitalocean`).",
       "tags": [
         "hetzner",
         "vps",
@@ -2439,7 +2439,7 @@
     },
     {
       "id": "knowledge-ops",
-      "description": "Use when an already-running 02-DOCS/ wiki needs day-to-day gardening — too many half-finished articles, a 600-line page that covers three unrelated topics, a note with no obvious home, orphan pages nothing links to, stale answers and superseded articles piling up, or two articles that contradict each other. This is the judgment layer over harness's automation: decide what is worth capturing (default: nothing), where it goes, how to title/split/merge it, build the See Also web, and prune to _archive (never delete). Triggers: 'limpia mi wiki', 'organiza mis notas', 'esto dónde va en la wiki', 'ordena la base de conocimiento', 'split this bloated article', 'where should this note live', 'scores.json says these three are orphans — fix the cross-links', 'prune the stale and superseded stuff'. NOT building, bootstrapping or sweeping the wiki engine (that is harness).",
+      "description": "Use when an already-running 02-DOCS/ wiki needs gardening judgment — what is worth capturing (default: nothing), where a loose note belongs, whether to split a bloated article or merge near-duplicates, how to link orphans back in, and what retires to _archive (never delete). NOT building or sweeping the wiki engine itself (that is `harness`).",
       "tags": [
         "knowledge-ops",
         "wiki",
@@ -2827,7 +2827,7 @@
     },
     {
       "id": "medium-publishing",
-      "description": "Use when getting a finished article onto Medium correctly — choosing profile vs publication, cross-posting from your own site without an SEO duplicate-content hit, the import tool, the 5-tag limit, and Medium's pseudo-Markdown formatting gotchas. Triggers: 'cross-post to Medium', 'republish on Medium with a canonical link', 'submit my draft to a Medium publication', 'why are my code blocks broken on Medium', 'can I still automate Medium via the API', 'the Medium import tool failed with a 403', 'importar mi artículo a Medium sin penalización SEO', 'publicar a Medium amb enllaç canònic'. NOT drafting, structuring, or headlining the article itself (that is medium-writing).",
+      "description": "Use when a finished article has to land on Medium correctly — profile vs publication, cross-posting under a canonical link so your own site keeps the SEO credit, import-tool failures, the 5-tag cap, pseudo-Markdown gotchas. NOT writing or headlining the piece (that is `medium-writing`), NOT cadence or earnings (that is `medium-strategy`).",
       "tags": [
         "medium",
         "publishing",
@@ -2992,7 +2992,7 @@
     },
     {
       "id": "n8n",
-      "description": "Use when operating a live n8n instance programmatically — driving its public REST API (`{host}/api/v1`, `X-N8N-API-KEY`) or the n8n-mcp server to create, validate, test, activate/deactivate, list, update, or delete workflows and read executions, on self-host or `*.app.n8n.cloud`. Triggers: 'deploy this workflow to my n8n over the API', 'push my workflow JSON to n8n with curl', 'I set active:true in the create call but it stays inactive', 'connect n8n-mcp / n8n_create_workflow to Claude', 'validate and autofix my n8n workflow', 'run an n8n workflow by id from a script', 'delete a workflow via the API', 'automatiza n8n por API', 'desplega el workflow a n8n.cloud'. NOT designing the flow's trigger-step-error logic or hand-building the importable workflow JSON (that is automation-flows), NOT operating Make / Zapier / Power Automate (their own skills), NOT a typed API client with auth+pagination+retry (api-connector-builder), NOT the inbound webhook receiver in your own app (webhooks).",
+      "description": "Use when operating a live n8n instance programmatically — its REST API (`{host}/api/v1`, `X-N8N-API-KEY`) or the n8n-mcp server — to create, validate, test, activate, update, delete workflows and read executions on self-host or n8n.cloud. NOT designing the flow or its importable JSON (that is `automation-flows`), NOT another platform (`make`, `zapier`).",
       "tags": [
         "n8n",
         "automation",
@@ -3177,7 +3177,7 @@
     },
     {
       "id": "notion-connector",
-      "description": "Use when wiring an app, cron job, or service to Notion as an ops backend over the official HTTP API — pushing rows into a Notion database, mirroring a database into your app, syncing both ways without duplicates, building or reading page block content, or fixing an integration that broke after the 2025-09-03 data-source split. Triggers: 'store our tasks in a Notion database from code', 'use Notion as a CRM/content calendar', 'sync our CRM into Notion nightly without duplicates', 'why does POST /v1/databases/:id/query return 404 now', 'integration broke after a teammate added a second data source', 'guardar registros en una base de datos de Notion desde código', 'desar files a una base de dades de Notion'. NOT a generic call-any-REST-API integration (that is api-connector-builder), NOT receiving/verifying inbound Notion webhook events (that is webhooks).",
+      "description": "Use when wiring server code or a cron job to Notion as an ops backend over its HTTP API: pushing or mirroring database rows, two-way sync without duplicates, page blocks, or an integration broken by the 2025-09-03 data-source split. NOT generic REST wiring (that is `api-connector-builder`), NOT inbound Notion webhook events (that is `webhooks`).",
       "tags": [
         "notion",
         "ops-backend",
@@ -3406,7 +3406,7 @@
     },
     {
       "id": "planetscale",
-      "description": "Use when operating PlanetScale serverless MySQL (Vitess) — setting up a database/branch and wiring the pscale CLI, shipping a schema change through branches and deploy requests, debugging a stuck/queued deploy or a cutover that won't finish, designing tables without foreign keys, or picking the serverless HTTP driver for an edge runtime. Triggers: 'schema change without downtime on PlanetScale', 'my migration is stuck in the deploy queue', 'the cutover hung', 'can I still revert 40 minutes after deploy', 'the 30-minute revert window', 'PlanetScale won't let me add a foreign key', 'relationMode prisma', 'MySQL connection times out on Vercel Edge', 'cambio de esquema sin downtime', 'no me deja usar foreign keys'. NOT raw MySQL query tuning, EXPLAIN, or index choice (that is postgresdb's MySQL-engine analogue / the mysql sibling), and NOT generic expand-contract migration theory (that is db-migrations).",
+      "description": "Use when operating PlanetScale (Vitess serverless MySQL) — branches and the `pscale` CLI, schema changes through deploy requests (Online DDL cutover, ~30-min revert window), tables without foreign keys, or the edge HTTP driver. NOT MySQL engine work like EXPLAIN or index choice (that is `mysql`), NOT generic migration theory (that is `db-migrations`).",
       "tags": [
         "planetscale",
         "vitess",

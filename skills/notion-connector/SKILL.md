@@ -1,6 +1,6 @@
 ---
 name: notion-connector
-description: "Use when wiring an app, cron job, or service to Notion as an ops backend over the official HTTP API — pushing rows into a Notion database, mirroring a database into your app, syncing both ways without duplicates, building or reading page block content, or fixing an integration that broke after the 2025-09-03 data-source split. Triggers: 'store our tasks in a Notion database from code', 'use Notion as a CRM/content calendar', 'sync our CRM into Notion nightly without duplicates', 'why does POST /v1/databases/:id/query return 404 now', 'integration broke after a teammate added a second data source', 'guardar registros en una base de datos de Notion desde código', 'desar files a una base de dades de Notion'. NOT a generic call-any-REST-API integration (that is api-connector-builder), NOT receiving/verifying inbound Notion webhook events (that is webhooks)."
+description: "Use when wiring server code or a cron job to Notion as an ops backend over its HTTP API: pushing or mirroring database rows, two-way sync without duplicates, page blocks, or an integration broken by the 2025-09-03 data-source split. NOT generic REST wiring (that is `api-connector-builder`), NOT inbound Notion webhook events (that is `webhooks`)."
 tags: [notion, ops-backend, api-integration, databases, sync]
 recommends: [api-connector-builder, webhooks, automation-flows, spreadsheet-ops, secure-coding]
 origin: risco
@@ -14,24 +14,7 @@ write page blocks. This skill owns the **outbound** Notion API surface only —
 the database/data-source data model, property-type write shapes, and the
 rate-limit/pagination discipline that the API forces on you.
 
-## The one rule
-
-**Pin the `Notion-Version` per request, and resolve the data source before you
-query.** Post `2025-09-03` a database is a *container* of one or more data
-sources — not a queryable table. Skip either half and you get silent 404s on
-code that worked last year.
-
-- Current major version: **`2025-09-03`** (the SDK default). Latest: **`2026-03-11`**.
-- Behavior differs across versions; an unpinned client drifts when the default moves.
-
-## When to use / when NOT to use
-
-**Use when:** treating a Notion database as a CRM / task tracker / content
-calendar from code; pushing or pulling rows on a schedule; two-way sync that
-must not duplicate on re-run; building or reading page block content; migrating
-a `2022-06-28` integration that broke when someone added a second data source.
-
-**Route elsewhere:**
+## Route elsewhere
 
 | Situation | Route to |
 |---|---|
@@ -50,10 +33,12 @@ a `2022-06-28` integration that broke when someone added a second data source.
 3. **Share the target database/page with the integration** in the Notion UI
    (the page `•••` menu → Connections). *Skip this and every call 404s or
    returns empty* — the integration sees nothing it was not explicitly granted.
-4. **Construct the SDK client with a pinned version.** Official JS SDK is
-   `@notionhq/client` v5.12.0+ (latest 5.22.0, 2026-05-19); its default
-   `notionVersion` is `2025-09-03`, and it supports `2026-03-11` if you opt in.
-   The default and method names below are stable across the whole 5.x line.
+4. **Construct the SDK client with a pinned `Notion-Version`.** Official JS SDK
+   is `@notionhq/client` v5.12.0+ (latest 5.22.0, 2026-05-19); its default
+   `notionVersion` is the current major **`2025-09-03`**, and it supports the
+   latest **`2026-03-11`** if you opt in. The default and method names below are
+   stable across the whole 5.x line. Behavior differs across versions, so pin it
+   per client (or per request) — an unpinned client drifts when the default moves.
 
 ```ts
 import { Client } from "@notionhq/client"; // v5.12.0+ (latest 5.22.0)
@@ -66,9 +51,11 @@ const notion = new Client({
 
 ## The database → data source model (biggest gotcha)
 
-A database now holds a `data_sources` array; each data source has its **own
-schema**. One database can have several. You query and read schema against the
-*data source*, not the database.
+Post `2025-09-03` a database is a **container** of one or more data sources, not
+a queryable table: it holds a `data_sources` array and each data source has its
+**own schema**. Resolve the data source *before* you query — query and read
+schema against it, not against the database, or code that worked last year 404s
+silently.
 
 | You have… | Do this |
 |---|---|

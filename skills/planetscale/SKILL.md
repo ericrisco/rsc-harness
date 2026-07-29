@@ -1,6 +1,6 @@
 ---
 name: planetscale
-description: "Use when operating PlanetScale serverless MySQL (Vitess) — setting up a database/branch and wiring the pscale CLI, shipping a schema change through branches and deploy requests, debugging a stuck/queued deploy or a cutover that won't finish, designing tables without foreign keys, or picking the serverless HTTP driver for an edge runtime. Triggers: 'schema change without downtime on PlanetScale', 'my migration is stuck in the deploy queue', 'the cutover hung', 'can I still revert 40 minutes after deploy', 'the 30-minute revert window', 'PlanetScale won't let me add a foreign key', 'relationMode prisma', 'MySQL connection times out on Vercel Edge', 'cambio de esquema sin downtime', 'no me deja usar foreign keys'. NOT raw MySQL query tuning, EXPLAIN, or index choice (that is postgresdb's MySQL-engine analogue / the mysql sibling), and NOT generic expand-contract migration theory (that is db-migrations)."
+description: "Use when operating PlanetScale (Vitess serverless MySQL) — branches and the `pscale` CLI, schema changes through deploy requests (Online DDL cutover, ~30-min revert window), tables without foreign keys, or the edge HTTP driver. NOT MySQL engine work like EXPLAIN or index choice (that is `mysql`), NOT generic migration theory (that is `db-migrations`)."
 tags: [planetscale, vitess, mysql, deploy-requests, serverless-db]
 recommends: [mysql, db-migrations, prisma-orm, drizzle-orm, github-actions, postgresdb]
 origin: risco
@@ -17,34 +17,15 @@ then **cuts over** with no table lock. Because Online DDL and sharding are the p
 gravity, you **design without foreign keys** (FKs are now an opt-in but unsharded-only feature). This
 skill owns that workflow — not MySQL the engine.
 
-## When to use / When NOT to use
+Heuristic for the boundary: **would this answer be identical on RDS MySQL? Then it is not this skill.**
 
-**When to use:**
-
-- Standing up a PlanetScale database, branch, or org and wiring the `pscale` CLI.
-- Shipping a schema change safely: dev branch → DDL → deploy request → diff → review → deploy → revert window.
-- A deploy request that is stuck/queued, a cutover that won't finish, or a lint error blocking deploy.
-- Designing relations when FKs are unavailable/discouraged: emulated relations, app-level integrity, ORM `relationMode`.
-- Choosing a connection path for edge/serverless (Cloudflare Workers, Vercel Edge, Lambda) where TCP MySQL is blocked.
-- Wiring deploy requests into CI (GitHub Actions) or a branch-per-PR preview database.
-
-**When NOT to use:**
-
-- A slow query, an `EXPLAIN` plan, an index decision, JSON columns, locking — that is MySQL-engine
-  work. The closest built sibling for engine-level relational guidance is `../postgresdb/SKILL.md`
-  (Postgres, but the engine-thinking transfers); pure MySQL tuning routes to the `mysql` sibling.
-  Heuristic: **would this answer be identical on RDS MySQL? Then it is not this skill.**
-- PostgreSQL engine/design — even PlanetScale's managed Postgres SQL semantics → `../postgresdb/SKILL.md`.
-  PlanetScale sells Postgres too, but this skill is strictly the **Vitess/MySQL branch+deploy-request** flow.
-- Engine-agnostic migration *theory* (expand-contract, backfill ordering) → the `db-migrations` sibling.
-  Here you get the concrete PlanetScale realization, not the theory.
-- Neon's Postgres copy-on-write branches → the `neon` sibling. Supabase's Postgres BaaS → `supabase`.
-- ORM client ergonomics (Prisma `updateMany`, Drizzle query builder) → `prisma-orm` / `../drizzle-orm/SKILL.md`.
-  This skill owns only the PlanetScale-specific knobs those ORMs expose (`relationMode`, serverless driver adapter).
-
-Deep dives: [deploy-requests](references/deploy-requests.md) (lifecycle states, queue/gating, lint
-errors, revert edge cases, declarative vs imperative) · [no-foreign-keys](references/no-foreign-keys.md)
-(emulated relations, ORM `relationMode`, the unsharded FK opt-in, Bad→Good schemas).
+| When the question is really about | Route to |
+| --- | --- |
+| A slow query, an `EXPLAIN` plan, an index decision, JSON columns, locking | `../mysql/SKILL.md` for MySQL-engine work; `../postgresdb/SKILL.md` when you want the transferable engine reasoning |
+| PostgreSQL engine/design — even PlanetScale's own managed Postgres SQL semantics | `../postgresdb/SKILL.md`. PlanetScale sells Postgres too; this skill is strictly the **Vitess/MySQL branch+deploy-request** flow |
+| Engine-agnostic migration *theory* (expand-contract, backfill ordering) | `../db-migrations/SKILL.md`. Here you get the concrete PlanetScale realization, not the theory |
+| Postgres copy-on-write branches | `../neon/SKILL.md`. Postgres BaaS → `../supabase/SKILL.md` |
+| ORM client ergonomics (Prisma `updateMany`, Drizzle query builder) | `../prisma-orm/SKILL.md` / `../drizzle-orm/SKILL.md`. This skill owns only the PlanetScale-specific knobs those ORMs expose (`relationMode`, serverless driver adapter) |
 
 ## Mental model
 
@@ -149,9 +130,14 @@ datasource db {
 ```
 
 With Drizzle, model the relation in app code (`relations()`), index the join column, and skip the
-`references()`-backed FK constraint at the DB layer. The opt-in unsharded FK is acceptable only when
-you are certain the table will never shard and you accept the Online DDL friction — see
-[no-foreign-keys](references/no-foreign-keys.md) for emulated cascades, ORM specifics, and the opt-in caveats.
+`references()`-backed FK constraint at the DB layer.
+
+| Will this table shard? | FK strategy | Notes |
+| --- | --- | --- |
+| Yes, or unsure | No DB FK — emulate in app/ORM | Default. Index the relation column; cascade in code. |
+| Never (small, bounded, unsharded) | Unsharded FK opt-in *is* acceptable | Accept Online DDL friction; document why it won't shard. |
+
+See [no-foreign-keys](references/no-foreign-keys.md) for emulated cascades, ORM specifics, and the opt-in caveats.
 
 ## Connecting
 
@@ -196,7 +182,7 @@ installs `pscale`, authenticates with a service token (`PLANETSCALE_SERVICE_TOKE
 
 For a **branch-per-PR preview database**, create a PlanetScale branch named after the PR head, run the
 app's migrations against it, and tear the branch down when the PR closes. The orchestration (matrix,
-secrets, cleanup-on-close) is generic CI — defer the Actions plumbing to the `github-actions` sibling
+secrets, cleanup-on-close) is generic CI — defer the Actions plumbing to `../github-actions/SKILL.md`
 and keep the PlanetScale verbs here.
 
 ## Anti-patterns
@@ -210,14 +196,3 @@ and keep the PlanetScale verbs here.
 | Treating revert as available forever | The window is **~30 min** and excludes dropped tables/cols and FK changes | Plan rollbacks as new forward deploys |
 | Deploying without reading `deploy-request diff` | You ship DDL you never saw; surprise table rewrites | Always run the diff before `deploy` |
 | Inventing a driver name (`@planetscale/serverless`, `planetscale-js`) | There is no such package; install fails | The package is exactly `@planetscale/database` |
-
-## Decision: FK strategy by sharding posture
-
-| Will this table shard? | FK strategy | Notes |
-| --- | --- | --- |
-| Yes, or unsure | No DB FK — emulate in app/ORM | Default. Index the relation column; cascade in code. |
-| Never (small, bounded, unsharded) | Unsharded FK opt-in *is* acceptable | Accept Online DDL friction; document why it won't shard. |
-
-When the question is really about reading a plan, picking an index, or query latency, that is engine
-work — route to the `mysql` sibling (or `../postgresdb/SKILL.md` for the transferable engine
-reasoning). This skill stops at the Vitess platform boundary.
