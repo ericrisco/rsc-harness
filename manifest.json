@@ -1802,7 +1802,7 @@
     },
     {
       "id": "forecasting",
-      "description": "Use when you need to project sales, demand, units, revenue, signups or traffic forward from historical data and report a defensible number with an error band. Triggers: 'forecast next quarter's sales', 'how many units of SKU X next month', 'project revenue 12 months with a confidence band', 'is our forecast actually better than just repeating last quarter', lumpy/intermittent demand with lots of zero-sales weeks, 'prevé las ventas del próximo trimestre', 'prediu la demanda del proper mes per producte'. NOT building an assumption-driven P&L (that is financial-model), NOT sizing reorder points or safety stock (that is inventory).",
+      "description": "Use when projecting history forward — sales, demand, units, revenue, signups, traffic — into a defensible number with an error band: method by data shape, rolling-origin backtest, MASE vs the naive baseline. NOT an assumption-driven P&L or runway model (that is `financial-model`), NOT sizing reorder points or safety stock (that is `inventory`).",
       "tags": [
         "forecasting",
         "demand-planning",
@@ -1869,7 +1869,7 @@
     },
     {
       "id": "game-storytelling",
-      "description": "Use when designing a game's STORY as an interactive system: premise, theme and narrative pillars; branching narrative and meaningful choice; dialogue trees with state and flags; quests, objectives and fail states; worldbuilding; environmental and systemic storytelling; and keeping story in harmony with play (avoiding ludonarrative dissonance). Engine-agnostic — it designs the narrative graph, variables and beats, then hands the wiring to the engine skill. Triggers: 'write my game's story/premise', 'branching narrative', 'dialogue system/tree', 'quest structure', 'worldbuilding', 'meaningful choices', 'illusion of choice', 'Ink/Yarn Spinner/Twine/articy narrative', 'story keeps fighting the gameplay'. NOT core mechanics, systems or balance (that's game-design); NOT spatial/level layout or encounter placement (that's level-design); NOT the actual dialogue-node code, save format or plugin wiring inside an engine (that's godot/unity/unreal).",
+      "description": "Use when a game's story is the work: premise and pillars, branching topology, meaningful choice, dialogue state, quests, environmental storytelling, ludonarrative harmony. Author portable — engine wiring is `godot`/`unity`/`unreal`. NOT the mechanics and economy the story serves (that is `game-design`), NOT level layout (that is `level-design`).",
       "tags": [
         "game",
         "narrative",
@@ -1970,7 +1970,7 @@
     },
     {
       "id": "gamedev-shipping",
-      "description": "Use when exporting, building, packaging, or publishing a game — per engine (Godot export templates, Unity Build Profiles, Unreal Shipping vs Development) and per platform: desktop (Windows/macOS/Linux; macOS codesign + notarytool notarization), web (the COOP same-origin + COEP require-corp headers threaded SharedArrayBuffer WebAssembly builds need, and that Godot's C#/.NET edition can't export to web), mobile (Android JDK 17 build template, AAB vs APK, release keystore; iOS provisioning). Also store prep (icons/splash, metadata, age ratings, AAB for Play, Mac App Store, Steamworks/SteamPipe, itch.io butler), headless-export CI/CD, build/version numbers, and ship-time size/startup optimization. Triggers: 'export my game', 'build for Steam', 'ship to web/mobile', 'publish to the Play Store', 'notarize my Mac build', 'itch.io upload', 'SharedArrayBuffer is not defined'. NOT for writing gameplay/runtime code (that's the engine skill — godot/unity/unreal) or hosting a normal web app/API/container (→ deployment).",
+      "description": "Use when exporting, packaging, signing, or publishing a game — export presets per engine, macOS notarization, cross-origin isolation for threaded web builds, Android AAB/keystore, iOS provisioning, store submission (Steam, Play, App Store, itch.io), headless build CI. NOT gameplay code inside the artifact (that is `godot`, `unity`, `unreal`), NOT hosting a web app or container (that is `deployment`).",
       "tags": [
         "export",
         "build",
@@ -2103,7 +2103,7 @@
     },
     {
       "id": "godot",
-      "description": "Use when writing, reviewing, or debugging Godot 4.x games in GDScript (typed) or C# — nodes/scenes/custom Resources, autoload singletons and an EventBus, signals via Callable, @onready/@export/@tool, static typing, CharacterBody2D/3D + velocity + move_and_slide(), _process vs _physics_process, .tscn/.tres text formats, and headless GUT/gdUnit4 tests. Enforces Godot 4 APIs and rejects Godot 3 leftovers: yield→await, onready→@onready, .instance()→.instantiate(), KinematicBody→CharacterBody, Spatial→Node3D, string connect(\\\"sig\\\",obj,\\\"m\\\")→Callable. Triggers: 'write a Godot player controller', 'my move_and_slide does nothing', 'port this Godot 3 script to 4', 'connect a signal in Godot', 'GDScript won't type-check', 'CharacterBody2D won't move', 'add an autoload', 'escribe un script de Godot', 'por qué no se mueve mi personaje'. NOT Unity MonoBehaviour or Unreal (route to unity/unreal); NOT pure C++/CMake tooling unrelated to GDExtension (that is cpp); NOT shader code in .gdshader (that is gamedev-shaders).",
+      "description": "Use when writing, reviewing, or debugging Godot 4.x games in GDScript or C# — scenes, nodes, custom Resources, autoload/EventBus signals, typed GDScript, CharacterBody2D/3D movement, GUT/gdUnit4 — or porting Godot 3 APIs to 4. NOT Unity/Unreal (that is `unity`/`unreal`), NOT `.gdshader` code (`gamedev-shaders`), NOT GDExtension C++ tooling (`cpp`).",
       "tags": [
         "godot",
         "gdscript",
@@ -2150,7 +2150,7 @@
     },
     {
       "id": "grants",
-      "description": "Use when the goal is non-dilutive public or foundation funding — money you neither repay nor give equity for — and you must find a fit call, decide go/no-go, register an eligible entity, or write the application a reviewer scores against a published rubric (needs statement, logic model, SMART objectives, impact narrative, budget justification, LOI). Symptoms: a call with an Excellence/Impact/Implementation grid, a 3/5-per-criterion threshold, an indirect-cost line, a SAM.gov/UEI or BDNS lookup, an LOI that filters you before the full proposal. Triggers: 'find grants we qualify for', 'write the impact section so it scores above threshold', 'should we even bother applying to this call', 'build the budget justification', 'write a Letter of Inquiry', 'buscar la convocatòria a la BDNS', 'redactar la solicitud de subvención'. NOT equity rounds or investor pitches (that is fundraising), NOT a paying-customer SOW (that is proposals).",
+      "description": "Use when pursuing non-dilutive public or foundation funding — money you neither repay nor give equity for: finding a fit call, go/no-go, registration (UEI/PIC/BDNS), or writing the rubric-scored application, logic model, budget justification, or LOI. NOT an equity round (that is `fundraising`), NOT a paying-customer SOW (that is `proposals`).",
       "tags": [
         "grants",
         "subsidies",
@@ -2170,7 +2170,7 @@
     },
     {
       "id": "harness",
-      "description": "Use to control, govern or maintain a workspace's harness — software or non-code (a company, an ops desk, a knowledge vault). The harness is the control plane: the `01-TOOLS/` tooling layer, the `02-DOCS/` chaos→knowledge wiki, and the root Knowledge map. It audits, migrates legacy `XX-*` folders, scaffolds provider tooling, sweeps the inbox, and generates root CLAUDE.md/AGENTS.md. Brownfield-first. NOT the bootstrap front door (that is `init`, which hands off here).",
+      "description": "Use when governing a workspace's control plane, code or not — the `01-TOOLS/` tooling layer, the `02-DOCS/` chaos→knowledge wiki, the root Knowledge map. Audits it, migrates legacy `XX-*` folders, scaffolds provider tooling, sweeps the inbox, writes root CLAUDE.md/AGENTS.md. NOT the bootstrap front door (that is `init`, which hands off here).",
       "tags": [
         "harness",
         "company",
@@ -2214,7 +2214,7 @@
     },
     {
       "id": "hiring",
-      "description": "Use when there's an open role and you need to write the job post, screen inbound candidates, structure the interview loop, or build a scorecard to reach a fair hire decision; symptoms: gut-feel ratings, every interviewer asking the same question, a bloated requirements list, no consistent screen. Triggers: 'write a job description', 'screen these CVs', 'build an interview scorecard', 'structure the interview panel', 'redacta la oferta de empleo', 'necesito una scorecard', plus the non-obvious 'four people interviewed and we still can't decide' and 'is our AI résumé filter legal'. NOT managing the person after they're hired — onboarding, payroll, performance (that is people-ops).",
+      "description": "Use when a role is open and you must write the job post, screen inbound candidates, structure the interview loop, or score them to a defensible Hire / On-Hold / No-Hire — including whether an AI résumé filter is legal. NOT after the offer is accepted — onboarding, payroll, performance (that is `people-ops`), NOT offer terms (that is `contracts`).",
       "tags": [
         "hiring",
         "recruiting",
@@ -2315,7 +2315,7 @@
     },
     {
       "id": "instagram-api",
-      "description": "Use when wiring an agent into Instagram's Graph API to publish a Reel from a video URL, pull per-media insights (reach, views, watch-time, saves, shares, total_interactions), check the 24-hour publish cap, or ingest Reel performance into 02-DOCS/wiki/shortform. Triggers: 'publish this Reel via the API', 'pull reach and average watch time for these media IDs', 'why does /insights?metric=plays return an error', 'my container is stuck IN_PROGRESS', 'how many posts left in the 24h publish window', 'publica este Reel por la API', 'ingesta el rendimiento dels Reels al wiki'. NOT TikTok publishing (that is tiktok-api), NOT a posting calendar/cadence (that is social-publisher), NOT YouTube uploads/stats (that is youtube-api).",
+      "description": "Use when wiring an agent into Instagram's Graph API: publishing a Reel through the create/poll/publish container dance, reading per-media insights, checking the 24h publish cap, or ingesting Reel metrics into 02-DOCS/wiki/shortform. NOT TikTok (that is `tiktok-api`), NOT YouTube (that is `youtube-api`), NOT cross-platform cadence (that is `social-publisher`).",
       "tags": [
         "instagram",
         "graph-api",
@@ -2740,7 +2740,7 @@
     },
     {
       "id": "machine-learning",
-      "description": "Use when the task is a classic/tabular machine-learning problem — predict a column from rows of features with trees and scikit-learn: fit a RandomForest / XGBoost / LightGBM classifier or regressor, build a leak-proof Pipeline + ColumnTransformer, choose a cross-validation scheme (stratified / k-fold / time-series / grouped), pick the right metric on imbalanced classes (precision/recall/F1/ROC-AUC/PR-AUC, not accuracy), or debug a model that aced CV then collapsed in production. Triggers: 'train a model to predict churn/fraud/price', 'my ROC-AUC is 0.99 — is that leakage', 'which metric for imbalanced classes', 'cross-validation without leaking', 'XGBoost vs LightGBM', 'add a DummyClassifier baseline', 'entrena un modelo de clasificación tabular con scikit-learn'. NOT neural-net / PyTorch training (that is deep-learning), NOT cleaning the raw dirty table first (that is data-cleaning), NOT BI dashboards or forecasting a dated series (that is analytics/forecasting), NOT text/token modeling (that is nlp).",
+      "description": "Use when predicting a column from rows of tabular features with classic models — scikit-learn pipelines, RandomForest, XGBoost/LightGBM, leak-free cross-validation, metrics for imbalanced classes, or a model that aced CV then collapsed in production. NOT PyTorch neural nets (that is `deep-learning`), NOT cleaning the dirty table first (that is `data-cleaning`), NOT forecasting a dated series (that is `forecasting`), NOT text/token modeling (that is `nlp`).",
       "tags": [
         "machine-learning",
         "scikit-learn",
@@ -3196,7 +3196,7 @@
     },
     {
       "id": "observability",
-      "description": "Use when instrumenting a service from the inside so an incident can be explained from telemetry alone — wiring OpenTelemetry logs, metrics and traces, standing up a Collector, exporting via OTLP, and defining telemetry-driven alerts. Triggers: 'add OpenTelemetry to this service', 'we can't tell why requests are slow across services — add distributed tracing', 'replace our print/console.log with structured logs correlated to traces', 'stand up an OTel Collector and export to Grafana/Datadog/Honeycomb', 'instrument our LLM calls so each request is a span with token counts', 'define RED metrics and a burn-rate alert from the telemetry', 'instrumenta el servei amb OpenTelemetry i exporta a Grafana', 'añade trazas distribuidas y métricas'. NOT outside-in uptime probes, on-call rotation, or who-gets-paged (that is monitoring).",
+      "description": "Use when instrumenting a service from the inside so an incident can be explained from telemetry alone — wiring OpenTelemetry logs, metrics and traces, standing up a Collector, exporting via OTLP, and defining telemetry-driven alerts. NOT outside-in uptime probes, on-call rotation, or who-gets-paged (that is `monitoring`).",
       "tags": [
         "observability",
         "opentelemetry",
@@ -3662,7 +3662,7 @@
     },
     {
       "id": "rag",
-      "description": "Use when building grounded Q&A over your own documents — handbook, support tickets, PDFs, policies — and the answers must come only from the corpus with citations; when retrieval surfaces the right document but the answer is still wrong; when the model invents facts that are not in the sources; when you need to measure whether retrieval is any good; when the right document is found but the wrong passage is used. Triggers: 'build a bot that answers from our docs with citations', 'my RAG returns the right document but the answer is wrong', 'how do I stop the model hallucinating facts not in the corpus', 'context recall vs context precision', 'add contextual retrieval / prepend chunk context before embedding', 'hybrid search plus rerank pipeline', 'respuestas con citas sobre nuestros documentos', 'el bot s'inventa coses que no surten als documents'. NOT operating the vector store itself — collection schema, HNSW ef_search, quantization (that is vector-db).",
+      "description": "Use when building grounded Q&A over your own corpus — chunk, retrieve hybrid, rerank, ground, cite chunk ids, refuse when the sources fall short — or when the right document is retrieved but the answer is still wrong, invented, or unmeasured. NOT operating the store itself — collection schema, HNSW ef_search, quantization (that is `vector-db`).",
       "tags": [
         "rag",
         "retrieval-augmented-generation",
@@ -4664,7 +4664,7 @@
     },
     {
       "id": "tauri",
-      "description": "Use when building a lightweight cross-platform desktop (or v2 mobile) app with Tauri — a Rust core plus the OS-native WebView — wiring Rust commands and IPC, streaming data to the frontend, locking down the capabilities/permissions security model, or bundling and auto-updating tiny signed binaries. Triggers: 'build a Tauri app', 'expose a Rust command to my frontend', 'invoke from JS', 'tauri.conf.json', 'capabilities and permissions', 'stream download progress to the WebView', 'my command froze the UI', 'shrink my desktop binary vs Electron', 'set up the Tauri updater', 'crear una app d'escriptori lleugera amb Rust en lloc d'Electron', 'reducir el tamaño del binario de escritorio'. NOT a Chromium+Node desktop app that needs Node APIs in a main process (that is electron).",
+      "description": "Use when building a lightweight cross-platform desktop (or v2 mobile) app with Tauri — a Rust core plus the OS-native WebView: Rust commands and IPC, streaming to the frontend, the default-deny capabilities/permissions ACL, bundling and signed auto-updates. NOT a Chromium+Node shell needing Node APIs in a main process (that is electron).",
       "tags": [
         "tauri",
         "desktop",
@@ -5140,7 +5140,7 @@
     },
     {
       "id": "webhooks",
-      "description": "Use when building the inbound side of a webhook — the HTTP endpoint that receives events a system pushes you, proves they are authentic, refuses to process the same one twice, and acks fast. Covers the mechanics every source shares: raw-body HMAC verification, ~5-min timestamp/replay window, idempotency on a stable event id, fast-ack-then-queue, retry/poison handling. Triggers: 'receive webhooks and process them safely', 'verify an incoming webhook signature', 'my signature verification fails even though the secret is correct', 'provider keeps retrying and we process the same event twice', 'handler times out under load, ack fast and queue', 'recibir webhooks entrantes', 'verificar la firma del webhook entrante', 'evitar procesar el mismo evento dos veces'. NOT the Stripe-Signature scheme (that is stripe), NOT email bounce/suppression hooks (that is email-connector), NOT outbound clients calling a third-party API (that is api-connector-builder), NOT what runs after the event lands (that is automation-flows).",
+      "description": "Use when building the receiving end of a webhook — a provider-agnostic endpoint that proves pushed events are authentic and never processes one twice: raw-body HMAC, ~5-min replay window, idempotency on the event id, fast-ack-then-queue. NOT the Stripe-Signature scheme (that is stripe), NOT outbound clients you call (that is api-connector-builder).",
       "tags": [
         "webhooks",
         "inbound-webhooks",
