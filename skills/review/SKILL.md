@@ -1,6 +1,6 @@
 ---
 name: review
-description: "Use when giving OR receiving an adversarial code review in the rsc SDD chain — after implement/verify and before ship. Triggers: 'review this PR', 'review my diff', 'revisa este código', 'critique this change', 'be my reviewer', 'tear this apart', 'what's wrong with this code', plus the receiving side: 'the reviewer said X', 'address this review comment', 'they want me to change Y', 'do I have to do what the review says', 'PR feedback', 'someone left comments on my PR'. Covers the full loop: producing a rigorous, evidence-backed review keyed to the spec/plan/constitution under 02-DOCS/wiki/sdd/, AND processing incoming feedback with technical rigor — verify each finding against the code before agreeing, push back on the wrong ones, fix the real ones. NOT running lint/type/test gates (that's the verify phase) and NOT merging/closing the branch (that's ship). No performative agreement; points to ship when the diff survives review."
+description: "Use when a green diff needs adversarial judgment in the rsc SDD chain, between verify and ship — give a review keyed to the spec/plan/constitution in 02-DOCS/wiki/sdd/, or receive one and verify each comment before agreeing. NOT running lint/type/tests (that is `verify`), NOT the spec-less standalone pass (that is `code-review`), NOT merging (that is `ship`)."
 tags: [sdd, review, code-review]
 recommends: [ship]
 profiles: [core, full]
@@ -16,36 +16,17 @@ This skill owns **two roles that share one discipline**:
 - **Giving** a review — read a diff adversarially, find the real defects, rank them by impact, ship the verdict as evidence not opinion.
 - **Receiving** a review — take incoming feedback (human or machine), verify each point against the code *before* acting, fix the real findings, and push back — with proof — on the wrong ones.
 
-The discipline is the same in both directions: **claims are backed by evidence, never by deference.** A reviewer who waves through a bug to be agreeable, and an author who edits working code because a comment *sounded* authoritative, are making the same mistake. This skill exists to kill both.
+The discipline is the same in both directions: **every finding and every rebuttal carries evidence — no agreement without verification, no objection without a defect.** A reviewer who waves through a bug to be agreeable, and an author who edits working code because a comment *sounded* authoritative, are making the same mistake. Everything below is in service of that one rule.
+
+**Route out** when the ask isn't this gate: a deep OWASP / threat-model pass belongs to `../secure-coding/SKILL.md` (review folds its findings in, but the dedicated pass is owned there); a "is this idiomatic React/FastAPI/Go/SQL" question belongs to the stack skill (`../nextjs/SKILL.md`, `../fastapi/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`) — pull the idiom there, then judge against it here.
 
 ## Read these first
 
-1. `02-DOCS/wiki/harness/user-profile.md` — the **accompaniment dial** (L0..L3). It sets how much you narrate, not how rigorous you are. Rigor is fixed; verbosity is dialled. See "Accompaniment dial" below.
-2. `02-DOCS/wiki/sdd/specs/<slug>.md` and `02-DOCS/wiki/sdd/plans/<slug>.md` — what the diff was *supposed* to do. A review with no spec is a review of vibes.
-3. `02-DOCS/wiki/sdd/constitution.md` — the project's non-negotiables (stack canon, quality bars, conventions). Constitution violations are findings even when the code "works".
+1. `02-DOCS/wiki/sdd/specs/<slug>.md` and `02-DOCS/wiki/sdd/plans/<slug>.md` — what the diff was *supposed* to do. A review with no spec is a review of vibes.
+2. `02-DOCS/wiki/sdd/constitution.md` — the project's non-negotiables (stack canon, quality bars, conventions). Constitution violations are findings even when the code "works".
+3. `02-DOCS/wiki/harness/user-profile.md` — the accompaniment dial (see "Narration dial" below).
 
 If there is no spec/plan (someone jumped straight to code), say so and review against the constitution + the diff's own stated intent. Don't pretend a spec exists.
-
-## When to use / When NOT to use
-
-Use when:
-
-- A diff, branch, or PR is ready and you want it torn apart before it ships.
-- You are the author and a review landed — comments from a teammate, a bot, or another agent — and you need to decide what to actually change.
-- A "review comment" feels wrong, vague, or technically questionable and you're tempted to just comply.
-
-Do NOT use when (route elsewhere):
-
-- You need lint / type-check / test / audit to run and go green → that's the **verify** phase, run before review.
-- The diff has survived review and you want to PR / merge / close the branch → that's the **ship** phase (and ship enforces Eric-only git authorship).
-- It's specifically a *security* threat-model / OWASP pass → `../secure-coding/SKILL.md` (review folds in its findings, but the deep pass is owned there).
-- The "review" is really framework-level "is this idiomatic React/FastAPI/Go" — pull the relevant stack skill (`../nextjs/SKILL.md`, `../fastapi/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`) for the idiom, then judge against it here.
-
-## The one rule
-
-> **Every finding and every rebuttal carries evidence. No agreement without verification, no objection without a defect.**
-
-Everything below is in service of that rule.
 
 ## Confidence filtering
 
@@ -56,14 +37,7 @@ A review's value is its signal-to-noise. Every finding you report costs the auth
 - **Common false positives to skip:** patterns guarded two functions up; "unsafe" calls on values that are provably constant/internal; missing checks the framework already enforces; style the linter owns; defects behind a flag that's off everywhere (note as `nit`, not blocker); test-only or generated code held to prod standards.
 - **No severity inflation.** A `should-fix` dressed as a `blocker` burns the same trust as a missed bug. Rank by actual blast radius and reachability — if everything is a blocker, nothing is.
 
-## Executable review
-
-This skill is the **discipline**; the **`rsc-review` bundle is its automated counterpart**. When you want the doctrine above run for you over a real diff:
-
-- **`/code-review [pr]`** — fans the diff out to the per-language reviewer fleet (`code-reviewer`, `web-reviewer`, `python-reviewer`, `go-reviewer`, `sql-reviewer`, `flutter-reviewer`) in parallel and aggregates one ranked verdict.
-- **`/security-scan`** — two-layer security pass: automated scanners plus the `security-reviewer` agent, merged into one exploitability-ranked report.
-
-Those commands and agents enforce the same evidence bar and the same confidence filtering described here — they are this skill, executed.
+This skill is the discipline; the **`rsc-review` bundle is it executed** — `/code-review [pr]` fans a diff out to the per-language reviewer fleet and aggregates one ranked verdict, `/security-scan` merges automated scanners with the `security-reviewer` agent into an exploitability-ranked report. Both enforce the same evidence bar and confidence filtering described here.
 
 ---
 
@@ -114,13 +88,11 @@ A finding without a `repro` or a mechanism is a *suspicion*. Label it `[question
 
 ### Verify before you flag
 
-The reviewer is held to the same evidence bar as the author. Before writing a `blocker`:
+The reviewer is held to the same evidence bar as the author, because a reviewer who cries blocker on a non-bug burns the same trust as an author who ships one. Before writing a `blocker`:
 
 - **Read the surrounding code**, not just the diff hunk. The check you think is missing may live two functions up.
 - **Trace the value**, don't pattern-match. "This looks like SQL injection" is not a finding; "this f-string interpolates `request.args['q']` straight into `execute()`" is.
 - **Confirm the path is reachable.** A defect behind a flag that's off in every environment is a `nit`, not a `blocker` — say so.
-
-A reviewer who cries blocker on a non-bug burns the same trust as an author who ships one.
 
 ### The verdict
 
@@ -184,21 +156,6 @@ When you've processed the review, summarize for the reviewer (and the decisions 
 
 ---
 
-## Model tier — `heavy` (opt-in routing)
-
-This phase's default model tier is **`heavy`** — adversarial diff reading is where the strongest model pays off most. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch per the accompaniment dial when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
-
-## Accompaniment dial (L0..L3)
-
-Read the level from `02-DOCS/wiki/harness/user-profile.md`. **It changes the narration, never the rigor** — every level runs the same passes and the same evidence bar.
-
-- **L0** — verdict + the blocker list, terse. `CHANGES REQUESTED: 1 blocker (auth, documents.py:42), 1 nit. Fix the auth scope and re-run verify.`
-- **L1** — each finding gets its one-line *why*.
-- **L2** — full finding format (where/why/repro/fix); explain why each blocker blocks.
-- **L3** — the above plus teaching: name the defect class (IDOR, N+1, TOCTOU), why the boundary matters, and how to not reintroduce it. For non-technical authors, translate the impact ("any logged-in person could read everyone else's documents").
-
-When no profile exists, default to L2 and proceed — don't stall a review to ask for a dial setting.
-
 ## Anti-patterns → STOP
 
 | Rationalization | Reality |
@@ -211,6 +168,19 @@ When no profile exists, default to L2 and proceed — don't stall a review to as
 | "Pushing back will look defensive" | Pushing back *with a trace* strengthens the diff. Silent compliance hides bugs. |
 | "I'll approve it, the issues are minor" | If they're truly minor, label them nits and approve. If they block, don't approve. No mushy middle. |
 | "No spec, so I'll just eyeball it" | Say there's no spec and review against the constitution + stated intent. Don't fake a baseline. |
+
+## Narration dial
+
+Read the level from `02-DOCS/wiki/harness/user-profile.md`. It changes what a review *shows*, never its rigor — every level runs the same passes and the same evidence bar. No profile → default L2 and proceed; don't stall a review to ask for a dial setting.
+
+- **L0** — verdict + the blocker list, terse. `CHANGES REQUESTED: 1 blocker (auth, documents.py:42), 1 nit. Fix the auth scope and re-run verify.`
+- **L1** — each finding gets its one-line *why*.
+- **L2** — full finding format (where/why/repro/fix); explain why each blocker blocks.
+- **L3** — the above plus teaching: name the defect class (IDOR, N+1, TOCTOU), why the boundary matters, and how to not reintroduce it. For non-technical authors, translate the impact ("any logged-in person could read everyone else's documents").
+
+## Model tier — `heavy` (opt-in routing)
+
+This phase's default model tier is **`heavy`** — adversarial diff reading is where the strongest model pays off most. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch per the narration dial when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
 
 ## Where this writes
 
