@@ -1,6 +1,6 @@
 ---
 name: customer-support
-description: "Use when a support ticket, email, or chat lands and you must handle it well and fast — triage it (priority + queue + intent), draft a reply that does not read like a template, decide whether to escalate to a human, and keep the SLA clock from blowing. Also when an angry or churn-risk customer needs a de-escalation reply, when you need a canned-response library, or when you must set or audit first-response and resolution SLA targets. Triggers: 'a customer says our app is down and they're losing money', 'this user is threatening to cancel and leave a bad review, draft a reply', 'give me canned replies for common questions', 'what response times should we promise', 'redacta una respuesta para un cliente enfadado', 'tracta aquest ticket de suport'. NOT writing the help-center article the ticket links to (that is technical-writing), not the new-customer welcome flow (that is client-onboarding), not a win-back program (that is retention), and not building the auto-answer bot (that is chatbot)."
+description: "Use when a live support ticket needs triage (intent, P1–P4 priority, SLA clock), an on-voice reply, not a raw template, de-escalation of an angry or churn-risk customer, or escalation with a handoff packet. NOT the help-center article it links to (that is `technical-writing`), a win-back program (`retention`), or the auto-answer bot (`chatbot`)."
 tags: [customer-support, helpdesk, ticket-triage, sla, escalation, macros, de-escalation, csat]
 recommends: [technical-writing, client-onboarding, retention, chatbot, rag, brand-voice]
 origin: risco
@@ -8,21 +8,7 @@ origin: risco
 
 # Customer Support — Run the Desk on a Live Ticket
 
-*A ticket just came in. Triage it, answer it on-voice, escalate it if it needs a human, and keep the SLA from blowing. This skill handles the live ticket — it does not write the article the ticket links to.*
-
 You own the **support desk as an operation**: take an incoming ticket, assign priority and intent, start the SLA clock, draft the reply (macro or bespoke), enforce tone, and decide escalation with a clean handoff. The output is a triaged, answered ticket — human judgment, not a code artifact.
-
-## What this owns vs. what it does not
-
-| You reach for this when | Route elsewhere when |
-|---|---|
-| A ticket needs triage, a reply, an escalation call | Authoring the KB / help-center article a ticket links to → `technical-writing` |
-| One churn-risk ticket needs de-escalation **now** | Running a win-back / renewal **program** → `retention` |
-| You need macros, SLA targets, a handoff packet | Onboarding a brand-new customer (welcome, activation) → `client-onboarding` |
-| A human (or assisted) reply against the brand voice | Building the autonomous auto-answer bot → `chatbot` + `rag` |
-| Applying the voice to this reply | Authoring the voice guide itself → [`../brand-voice/SKILL.md`](../brand-voice/SKILL.md) |
-
-The line: **writing the help-center article a ticket links to is `technical-writing`'s job; `customer-support` only handles the live ticket.** This skill *consumes* the KB to answer; it never writes the docs.
 
 ## The triage-to-reply loop (the spine)
 
@@ -37,28 +23,21 @@ Run every ticket through these six steps in order. Skipping triage to "just repl
 6 Escalate or send  →  trigger met? hand off with the packet. else send + log.
 ```
 
-The branch is at step 6. Use this table to decide priority and the first-response target, then whether the ticket leaves your hands:
+## Priority, SLA, and the escalation call
 
-| Signal in the ticket | Priority | First-response target | Escalate? |
-|---|---|---|---|
-| Production down / data loss / many users blocked | P1 | 15–30 min | Yes → tier-2/eng + the packet |
-| Enterprise/VIP account, or "cancel / refund / lawyer / unacceptable" | P1–P2 | 30 min – 1 h | Yes → owner + tier-2 |
-| One user blocked, no workaround | P2 | 1–2 h | Only if unresolved past target |
-| Question with a workaround, billing query | P3 | 4–8 h | No, unless policy claim is unverifiable |
-| FAQ, cosmetic, feature request | P4 | ~1 business day | No |
+The branch is at step 6. This table sets priority, both SLA clocks, and whether the ticket leaves your hands:
+
+| Signal in the ticket | Priority | First response (FRT) | Resolution target | Escalate? |
+|---|---|---|---|---|
+| Production down / data loss / payments broken / many users blocked | P1 critical | 15–30 min | ASAP, status updates every 30–60 min | Yes → tier-2/eng + the packet |
+| Enterprise/VIP account, or "cancel / refund / lawyer / unacceptable" | P1–P2 | 30 min – 1 h | Same business day | Yes → owner + tier-2 |
+| One user blocked, no workaround | P2 high | 1–2 h | Same business day | Only if unresolved past target |
+| Question with a workaround, billing query | P3 medium | 4–8 h | 1–2 business days | No, unless policy claim is unverifiable |
+| FAQ, cosmetic, feature request | P4 low | ~1 business day | Best effort | No |
 
 **Why pick the FRT target before drafting:** the SLA decides your tone and length. A P1 gets a two-line acknowledgment in 20 minutes, not a polished essay in two hours.
 
-## Priority and SLA
-
 Use **3–4 priority tiers, never a flat SLA.** Too many tiers confuse the desk; too few don't differentiate the outage from the typo (Emailmeter / Hiver, 2026-06-02).
-
-| Priority | Meaning | First-response (FRT) | Resolution target |
-|---|---|---|---|
-| P1 critical | Outage, data loss, payments broken | 15–30 min | ASAP, status updates every 30–60 min |
-| P2 high | One user blocked, no workaround | 1–2 h | Same business day |
-| P3 medium | Workaround exists, billing/how-to | 4–8 h | 1–2 business days |
-| P4 low | Cosmetic, FAQ, feature request | ~1 business day | Best effort |
 
 **Acknowledge fast even when you cannot resolve fast.** First-response and resolution are *separate, linked* SLAs: FRT sets the expectation, resolution is the outcome. 89% of customers feel valued by a fast first response even when the full fix takes longer (getMonetizely / Hiver, 2026-06-02). So: acknowledge inside the FRT window with an honest "here's what I know and when I'll update you," then resolve honestly. Never go silent to wait for a perfect answer.
 
@@ -126,6 +105,8 @@ Banned phrases — they escalate, not de-escalate:
 
 Checklist before send: feeling acknowledged · first-person ownership · one timed next step · no banned phrase · no `{{placeholder}}` left.
 
+De-escalating *this* ticket is the job here; running a win-back or renewal **program** is `retention`.
+
 ## Escalation
 
 Escalate on **explicit conditions, not vibes.** Standard tiers: T1 frontline/common, T2 specialist/complex, T3 engineering or exec/critical (Kapture / Hiver, 2026-06-02). Hand off when any trigger fires:
@@ -158,7 +139,7 @@ The full escalation matrix (trigger → tier → owner) is in [`references/macro
 - If it is not in the KB, say "let me confirm" and escalate — do not fill the gap with a plausible guess.
 - Deflection is **bounded by KB quality.** Triage-only without a strong KB deflects ~20–30%; well-organized KBs push assisted/auto resolution to 50–80% (Zendesk / Intercom / Fini Labs, 2026-06-02). A bad answer fast is worse than a correct answer slightly slower.
 
-If the article the customer needs does not exist, that is a `technical-writing` job — flag the gap, don't write the doc inside the ticket.
+This skill *consumes* the KB; it never writes it. If the article the customer needs does not exist, flag the gap — authoring it is a `technical-writing` job, and building the autonomous auto-answer bot on top of the KB is `chatbot` + `rag`.
 
 ## Metrics — what to watch and when
 
@@ -187,7 +168,3 @@ Rule of thumb: optimize **FRT** for reassurance (the customer feeling handled), 
 | "Please calm down" / "as I said" | Tells them their feeling is the fault | De-escalation moves; banned-phrase swaps |
 | Promise a fix you can't verify | Breaks trust when it slips | Promise the *next update time*, not the fix |
 | Chase NPS off a single ticket | Wrong altitude metric | CSAT/FCR per ticket; NPS at relationship level |
-
-## References
-
-- [`references/macros-and-sla.md`](references/macros-and-sla.md) — the full macro skeleton library (10+ ready replies), the complete P1–P4 SLA matrix by channel, and the escalation matrix with the handoff-packet template. Pulled out because it is long, branch-specific lookup material you reach for mid-ticket, not flow you read top-to-bottom.
