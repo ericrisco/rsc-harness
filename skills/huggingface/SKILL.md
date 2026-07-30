@@ -19,8 +19,9 @@ Hugging Face is three surfaces, and you should always know which one you are on:
 
 The whole skill is choosing the right surface for the job and proving it works: a 200 router
 response, a live endpoint URL, a pushed repo commit. If the model is open and the workflow
-lives on huggingface.co, you are in the right place. If you operate the GPU yourself, or the
-vendor is not HF, stop — see the boundaries at the bottom.
+lives on huggingface.co, you are in the right place. Operating the GPU box yourself is
+[`../ollama/SKILL.md`](../ollama/SKILL.md) (your machine) or [`../runpod/SKILL.md`](../runpod/SKILL.md)
+(a rented box); training weights is [`../finetuning/SKILL.md`](../finetuning/SKILL.md).
 
 ## Decision: how should I run this model?
 
