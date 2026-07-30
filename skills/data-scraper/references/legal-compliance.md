@@ -4,7 +4,9 @@ Depth behind the legal gate in `../SKILL.md`. You are not a lawyer and you never
 
 ## robots.txt and ai.txt
 
-Fetch and honor both before queuing a single URL. `robots.txt` governs crawler access by user-agent and path; `ai.txt` (and the `noai` / `noimageai` signals some sites publish) is the emerging objection channel for AI training use specifically.
+Fetch both before queuing URLs. `robots.txt` states crawler preferences by user-agent and path; `ai.txt` (and the `noai` / `noimageai` signals some sites publish) is the emerging objection channel for AI training use specifically.
+
+**Neither is law.** robots.txt is a voluntary convention from 1994 with no statutory force — no jurisdiction makes a `Disallow` binding by itself, and courts treat it as evidence of the parties' expectations, not as the thing you violated. So it is input to your decision, never a hard stop. What *is* binding sits in the sections below: an accepted ToS, data-protection law, and anti-circumvention.
 
 ```python
 import urllib.robotparser, urllib.parse
@@ -19,9 +21,12 @@ def allowed(url: str, ua: str = "my-crawler") -> bool:
 
 Rules:
 
-- A `Disallow` for your path is a stop for that path, not a suggestion. Narrow the URL set.
-- Respect `Crawl-delay` if present — it is the host telling you its tolerance.
-- An `ai.txt` / `noai` objection means do not use the data for AI training, even if the page is public. Honor it; it is the cleanest evidence of good faith.
+Working defaults — deviate consciously, not by accident:
+
+- A `Disallow` for your path is the host's stated preference. Honoring it is the default and costs you little; overriding it is a judgment call you record, not a rule you break. Scraping your own property, a site you have written permission for, or public pages for research and archiving are all ordinary reasons to override.
+- Respect `Crawl-delay` if present — it is the host telling you its tolerance, and the cheapest way to not get banned.
+- An `ai.txt` / `noai` objection means the site objects to AI-training use. Honoring it is the cleanest evidence of good faith and matters most where the use is exactly what was objected to.
+- Whatever you decide, log it with the scrape. "We read robots, disallowed `/search`, proceeded anyway because X" is a defensible record; silence is not.
 
 ## ToS red flags
 
