@@ -18,13 +18,15 @@ In 2025-2026 scrapers do not fail on parsing. They fail on a terms-of-service br
 
 Walk every item. Each ends in **proceed**, **proceed-narrowed**, or **stop**. One item at stop means the whole scrape stops until you resolve it. Depth and the case law are in `references/legal-compliance.md`.
 
+The gates below are the ones with real legal exposure — contract, data-protection law, and anti-circumvention. **robots.txt is not one of them**: it is a voluntary convention with no statutory force, so it informs the decision and never blocks it on its own.
+
 - [ ] **Is there an API?** If yes, you are in the wrong skill — never scrape what an API serves. → otherwise proceed.
 - [ ] **Did you read the ToS, and does login/auth apply?** Scraping is most exposed as *breach of contract* when you accepted terms — typically by logging in (*Meta v. Bright Data*, 2024). Logged-out public data weakens that claim. **Prefer logged-out public pages; never bypass auth.** → narrow to public, or stop.
 - [ ] **Is it personal data?** Names, emails, photos, reviews, IP addresses all count. Scraping public personal data for a *new* purpose — aggregation, resale, AI training — is a severe GDPR breach with fines into the tens of millions of EUR. You need a lawful basis (usually legitimate interest) and data minimization. Filter out special categories at the source. → proceed-narrowed (basis + minimization, see `../gdpr-privacy/SKILL.md`), or stop.
-- [ ] **robots.txt and ai.txt?** Honor disallow rules and AI-objection signals. Ignoring them is the first fact cited against you. → narrow the path set, or stop.
+- [ ] **robots.txt and ai.txt?** Read them — they are a *convention*, not law, so this item never stops a scrape on its own. A `Disallow` tells you the host would rather you did not, and `Crawl-delay` tells you its tolerance; both are useful intelligence about where you are likely to get blocked. Weigh it: honoring robots is the low-friction default and the cleanest evidence of good faith, but scraping your own site, one you have permission for, or public pages for research is legitimate whether or not robots allows it. → **advisory: note the decision and move on.**
 - [ ] **Are you about to bypass a control you were shown?** A CAPTCHA, a hard block, an enforced rate limit. *Reddit v. Perplexity AI* (2025) turns precisely on whether anti-bot measures were circumvented — a materially worse position than respectfully pacing public pages. Pacing public data is defensible; defeating a control is the frontier where you lose. → **stop. Do not solve the CAPTCHA. Do not bypass the block.**
 
-`hiQ v. LinkedIn` established that scraping *public* data is not automatically a CFAA violation — but that is the floor, not a license. Public + logged-out + robots-honored + no-personal-data is the defensible quadrant. Anything else, document why and get a human to sign off.
+`hiQ v. LinkedIn` established that scraping *public* data is not automatically a CFAA violation — but that is the floor, not a license. Public + logged-out + no-personal-data is the defensible quadrant, and honoring robots keeps it tidy without being what makes it lawful. Anything outside it, document why and get a human to sign off.
 
 ## Extraction-path decision table
 
@@ -113,7 +115,7 @@ A recurring crawler must survive crashes, redeploys, and the target's schema dri
 | Anti-pattern | Why it bites | Do instead |
 |---|---|---|
 | Scraping behind a login, then calling it "public data" | Accepting ToS at login is the breach-of-contract hook (*Meta v. Bright Data*) | Stay logged-out on public pages; never bypass auth |
-| Ignoring robots.txt / ai.txt | First fact cited against you; signals bad faith | Parse and honor both before queuing URLs |
+| Not even reading robots.txt / ai.txt | You lose free intelligence on where you will get blocked, and any good-faith story later | Parse both; honor by default, override deliberately and write down why |
 | No delay, unbounded concurrency | Hammers the host → IP ban, possible CFAA-style exposure | 1 req / 1-3s, cap 2-5 concurrent per host |
 | Selectors on `nth-child` / `.css-1a2b3c` hashes | Break on the next deploy; silent data loss | Anchor on `data-*` / semantic / text, with fallbacks |
 | Silently writing `null` on a missing field | Corrupts the dataset; discovered months later | Raise on a missing *required* field — fail loud |
