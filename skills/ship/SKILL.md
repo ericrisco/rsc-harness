@@ -77,7 +77,9 @@ with `enabled: true`): commit, push and PR are denied unless the change's exact 
 sealed, approved review — one byte of drift, a moved base, or a missing review on a risk>0 change
 all block, and every denial names its way out (re-run `review`, or `npx @ericrisco/rsc sello off`).
 Risk-0 changes (docs/copy) always pass silently. Off by default; the flow lives in the `review`
-skill.
+skill. Note `.rsc/.no-ship-guard` opts out of the branch-hygiene rules above but **not** of the
+sello, which has its own switch. The sello binds bytes, not intent — it proves what ships is what
+was reviewed, never that the review was any good.
 
 ## The three landing options — always present exactly three
 

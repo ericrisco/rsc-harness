@@ -6,20 +6,33 @@ import { readState } from './lib/state.js';
 import { loadManifest } from './lib/manifest.js';
 import { listBackups } from './lib/backups.js';
 import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
-import { isEnabled, checkSello, readSello, countFindings } from '../targets/sello.mjs';
+import { isEnabled, checkSello, readSello, countFindings, readConfig, validateRiskConfig } from '../targets/sello.mjs';
 
 // The sello's health, surfaced where the user already looks (spec: non-blocking
 // findings live in the project and are SUMMARIZED here, never nagged about).
+// An INERT gate must never read as an armed one — a config that silently disables
+// enforcement is reported here, loudly.
 function selloStatus(root) {
   try {
     if (!isEnabled(root)) return { enabled: false };
     const sello = readSello(root);
-    return {
+    const verdict = checkSello(root);
+    const out = {
       enabled: true,
-      check: checkSello(root).code,
+      check: verdict.code,
       status: sello.missing ? 'none' : sello.corrupt ? 'corrupt' : sello.status,
       nonBlockingFindings: countFindings(root),
     };
+    if (verdict.warning) out.warning = verdict.warning;
+    if (verdict.code === 'no-trunk') out.inert = 'no-trunk';
+    if (existsSync(join(root, '.rsc', '.no-ship-guard'))) {
+      out.note = 'ship-guard branch-hygiene rules are opted out (.rsc/.no-ship-guard); the sello itself still enforces.';
+    }
+    try {
+      const { lowered } = validateRiskConfig(readConfig(root) || {});
+      if (lowered.length) out.loweredClasses = lowered;
+    } catch (e) { out.configError = e.message; }
+    return out;
   } catch { return { enabled: false }; }
 }
 

@@ -31,8 +31,9 @@ function deny(reason) {
   process.exit(0);
 }
 
-// Opt-out and "not a git repo" both mean: nothing to enforce.
-if (existsSync(join(root, '.rsc', '.no-ship-guard'))) allow();
+// "Not a git repo" means: nothing to enforce. (The .no-ship-guard opt-out is checked
+// AFTER the sello below — it opts out of THIS guard's branch-hygiene rules, not of a
+// different feature that happens to share the hook. The sello has its own switch.)
 if (!existsSync(join(root, '.git'))) allow();
 
 // Read the tool call. Only Bash commands can move branches.
@@ -47,16 +48,18 @@ if (typeof command !== 'string' || !command) allow();
 // must match the sealed bytes. OFF (the default) → this block is a no-op and the
 // guard behaves exactly as before. checkSello itself fails open on environment
 // problems and denies only on real divergence/no-review/corruption (spec).
-const DELIVERY = /\bgit\s+commit\b|\bgit\s+push\b|\bgh\s+pr\s+(?:create|merge)\b/;
-if (DELIVERY.test(command)) {
-  try {
-    const { checkSello, isEnabled } = await import(new URL('./sello.mjs', import.meta.url));
-    if (isEnabled(root)) {
-      const verdict = checkSello(root);
-      if (!verdict.ok) deny(verdict.message);
-    }
-  } catch { /* sello lib missing/unloadable → nothing to enforce, fail open */ }
-}
+// Deliberately BEFORE the .no-ship-guard opt-out: that file disables this guard's
+// branch-hygiene rules; the sello is a separate opt-in with its own `sello off`.
+try {
+  const { checkSello, isEnabled, isDeliveryCommand } = await import(new URL('./sello.mjs', import.meta.url));
+  if (isDeliveryCommand(command) && isEnabled(root)) {
+    const verdict = checkSello(root);
+    if (!verdict.ok) deny(verdict.message);
+  }
+} catch { /* sello lib missing/unloadable → nothing to enforce, fail open */ }
+
+// Ship-guard's own opt-out (branch hygiene only — the sello above already ran).
+if (existsSync(join(root, '.rsc', '.no-ship-guard'))) allow();
 
 // Does this command try to land on / move to the trunk?
 const TRUNK = /\bgit\s+(?:checkout|switch)\s+(?:-{1,2}\S+\s+)*(?:main|master)\b/;

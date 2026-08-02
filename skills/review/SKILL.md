@@ -104,8 +104,14 @@ End every review you give with one of three, and nothing mushy in between:
 
 ### The sello — when this project opted in
 
-If `.rsc/sello-config.json` has `enabled: true`, the review's verdict becomes **binding**: it is
-sealed to the exact bytes reviewed, and the ship gate refuses commit/push/PR on anything else.
+If `.rsc/sello-config.json` has `enabled: true`, the review's verdict is **sealed to the exact
+bytes reviewed**, and the ship gate refuses commit/push/PR on anything else.
+
+**What the sello does and does not prove.** It binds bytes, not intent: it guarantees *what ships
+is what was reviewed*, never *the review was good*. You are the one calling `sello approve`, so it
+is self-attested — drift protection between review and delivery, not tamper-evidence. Sealing
+without actually running the lenses produces a valid sello and a worthless one.
+
 Every state transition is deterministic CLI, never tokens:
 
 ```text
@@ -114,6 +120,10 @@ Every state transition is deterministic CLI, never tokens:
 3a. approved → npx @ericrisco/rsc sello approve --lenses correctness,security,tests
 3b. blocked  → npx @ericrisco/rsc sello block --reason "<the blocking finding>"
 ```
+
+`approve` refuses to seal with fewer lenses than the tier requires — pass them all, or accept the
+gap deliberately with `--accept-partial-lenses` (it is recorded). Every approval also appends to
+`.rsc/sello-log.jsonl`, so what shipped under which verdict survives the next freeze.
 
 **Lenses by risk tier** — tier 0 never reaches you (the gate passes docs/copy silently);
 tier 1 → run the single most relevant pass from the table above yourself; tier 2 → dispatch

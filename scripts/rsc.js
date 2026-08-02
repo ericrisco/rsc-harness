@@ -331,14 +331,21 @@ async function main() {
       // Deterministic transitions of the sello (review receipt). The `review` skill
       // orchestrates the lenses; every state change and every check runs HERE, token-free.
       const S = await import('../targets/sello.mjs');
-      const root = process.cwd();
+      const root = S.resolveRoot(process.cwd());
       const sub = argv[1];
       const paths = S.selloPaths(root);
+      // flag() yields boolean true for a valueless flag; every string flag below
+      // goes through this so `--lenses` with no value is a usage error, not a crash.
+      const str = (name) => { const v = flag(name); return typeof v === 'string' ? v : undefined; };
       switch (sub) {
         case 'on':
         case 'off': {
           const cfg = S.readConfig(root) || {};
-          try { S.validateRiskConfig(cfg); } catch (e) { say(e.message); process.exitCode = 1; return; }
+          // `off` never validates: it is the recovery advertised by every deny
+          // message, so a broken config must not be able to lock it away.
+          if (sub === 'on') {
+            try { S.validateRiskConfig(cfg); } catch (e) { say(e.message); process.exitCode = 1; return; }
+          }
           const { writeFileSync, mkdirSync } = await import('node:fs');
           const { dirname } = await import('node:path');
           mkdirSync(dirname(paths.config), { recursive: true });
@@ -349,34 +356,51 @@ async function main() {
           return;
         }
         case 'freeze': {
-          const candidate = S.computeCandidate(root);
-          if (!candidate) { say(S.MESSAGES.riskUnknown()); process.exitCode = 1; return; }
+          const cfg = S.readConfig(root);
+          const candidate = S.computeCandidate(root, cfg);
+          if (!candidate) { say(S.MESSAGES.noTrunk()); process.exitCode = 1; return; }
           const paths2 = Object.keys(candidate.files);
           if (!paths2.length) { say('sello: nothing to freeze — the working tree matches the trunk base.'); return; }
-          let risk;
-          try { risk = S.classifyRisk(paths2, S.readConfig(root)); }
-          catch (e) { say(e.message); process.exitCode = 1; return; }
-          S.writeSello(root, { status: 'frozen', ...candidate, risk, lenses: [], createdAt: new Date().toISOString() });
-          const lenses = risk.tier === 0 ? 0 : risk.tier === 1 ? 1 : 3;
-          say(`🧊 frozen: ${paths2.length} file(s), risk tier ${risk.tier} → ${lenses} lens(es) required.`);
+          const risk = S.classifyRisk(paths2, cfg);
+          if (risk.configError) say(`⚠️  ${risk.configError}\n   (using the default risk table until it is fixed)`);
+          const required = S.lensesRequired(risk.tier, cfg);
+          S.writeSello(root, { status: 'frozen', ...candidate, risk, required, lenses: [], createdAt: new Date().toISOString() });
+          say(`🧊 frozen: ${paths2.length} file(s), risk tier ${risk.tier} → ${required} lens(es) required.`);
           for (const [p, c] of Object.entries(risk.classes)) if (c !== 'default' && c !== 'docs') say(`   ${p} → ${c}`);
+          if (risk.lowered?.length) say(`   (lowered by config: ${risk.lowered.join(', ')})`);
           return;
         }
         case 'approve':
         case 'block': {
           const sello = S.readSello(root);
           if (sello.missing || sello.corrupt || !sello.status) { say(S.MESSAGES.notFrozen()); process.exitCode = 1; return; }
-          const current = S.computeCandidate(root);
+          const cfg = S.readConfig(root);
+          const current = S.computeCandidate(root, cfg);
           const changed = current && Object.keys({ ...sello.files, ...current.files })
             .some((p) => sello.files[p] !== current.files[p]);
           if (sub === 'approve' && (changed || sello.base !== current?.base)) {
             say(S.MESSAGES.staleFreeze()); process.exitCode = 1; return;
           }
-          const lenses = (flag('lenses') || '').split(',').filter(Boolean);
-          const notes = (flag('note') ? [String(flag('note'))] : []);
-          if (notes.length) S.appendFindings(root, notes.map((n) => `${new Date().toISOString().slice(0, 10)} ${n}`));
-          S.writeSello(root, { ...sello, status: sub === 'approve' ? 'approved' : 'blocked', lenses, reason: flag('reason') });
-          say(sub === 'approve' ? `✅ sealed (${lenses.length ? lenses.join(', ') : 'no lenses recorded'}).` : '⛔ blocked — fix and re-review.');
+          const lenses = (str('lenses') || '').split(',').map((s) => s.trim()).filter(Boolean);
+          const required = sello.required ?? S.lensesRequired(sello.risk?.tier ?? 1, cfg);
+          // An incomplete panel must not seal silently (spec error path): the user
+          // may still accept the gap, but only on purpose.
+          if (sub === 'approve' && lenses.length < required && !argv.includes('--accept-partial-lenses')) {
+            say(S.MESSAGES.partialLenses(lenses.length, required)); process.exitCode = 1; return;
+          }
+          const note = str('note');
+          if (note) S.appendFindings(root, [`${new Date().toISOString().slice(0, 10)} ${note}`]);
+          const status = sub === 'approve' ? 'approved' : 'blocked';
+          const next = { ...sello, status, lenses, reason: str('reason') };
+          S.writeSello(root, next);
+          S.appendLog(root, {
+            at: new Date().toISOString(), status, base: sello.base, risk: sello.risk?.tier,
+            files: Object.keys(sello.files).length, lenses, digest: S.candidateDigest(sello),
+            partialLenses: lenses.length < required || undefined, reason: str('reason'),
+          });
+          say(sub === 'approve'
+            ? `✅ sealed with ${lenses.length}/${required} lens(es)${lenses.length ? `: ${lenses.join(', ')}` : ''}.`
+            : '⛔ blocked — fix and re-review.');
           return;
         }
         case 'budget': {
@@ -391,10 +415,10 @@ async function main() {
         case 'budget-check': {
           const sello = S.readSello(root);
           if (sello.missing || sello.corrupt || !sello.budget) { say('sello: no declared budget. Recover: run `rsc sello budget --lines <N>` BEFORE fixing.'); process.exitCode = 1; return; }
-          const current = S.computeCandidate(root);
+          const current = S.computeCandidate(root, S.readConfig(root));
           const spent = S.budgetSpent(sello, current || { numstat: {} });
           if (spent <= sello.budget.lines) { say(`✅ within budget: ~${spent}/${sello.budget.lines} line(s).`); return; }
-          const justify = flag('justify');
+          const justify = str('justify');
           if (typeof justify === 'string' && justify.trim()) {
             S.writeSello(root, { ...sello, budget: { ...sello.budget, exceeded: spent, justification: justify } });
             S.appendFindings(root, [`budget exceeded (~${spent}/${sello.budget.lines}): ${justify}`]);
@@ -407,6 +431,7 @@ async function main() {
         }
         case 'check': {
           const verdict = S.checkSello(root);
+          if (verdict.warning) say(`⚠️  ${verdict.warning}`);
           if (verdict.ok) { say(`✅ sello check: ${verdict.code}`); return; }
           say(verdict.message);
           process.exitCode = 1;
@@ -418,22 +443,35 @@ async function main() {
           return;
         }
         case 'status': {
+          const { existsSync } = await import('node:fs');
+          const { join } = await import('node:path');
           const enabled = S.isEnabled(root);
           const verdict = S.checkSello(root);
           const sello = S.readSello(root);
+          const cfg = S.readConfig(root);
+          let lowered = [];
+          let configError;
+          try { ({ lowered } = S.validateRiskConfig(cfg || {})); } catch (e) { configError = e.message; }
           say(JSON.stringify({
             enabled,
             check: verdict.code,
+            // An inert gate must never look armed: name every reason it is standing down.
+            inert: enabled && ['no-trunk', 'disabled'].includes(verdict.code) ? verdict.code : undefined,
+            shipGuardOptOut: existsSync(join(root, '.rsc', '.no-ship-guard')) || undefined,
+            warning: verdict.warning,
+            configError,
+            loweredClasses: lowered.length ? lowered : undefined,
             status: sello.missing ? 'none' : sello.corrupt ? 'corrupt' : sello.status,
             risk: sello.risk?.tier,
             lenses: sello.lenses,
+            lensesRequired: sello.required,
             budget: sello.budget,
             nonBlockingFindings: S.countFindings(root),
           }, null, 2));
           return;
         }
         default:
-          say('Use: npx @ericrisco/rsc sello on|off|status|freeze|approve --lenses a,b|block --reason "…"|budget --lines N|budget-check [--justify "…"]|check|report');
+          say('Use: npx @ericrisco/rsc sello on|off|status|freeze|approve --lenses a,b [--accept-partial-lenses]|block --reason "…"|budget --lines N|budget-check [--justify "…"]|check|report');
           return;
       }
     }
