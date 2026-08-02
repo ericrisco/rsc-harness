@@ -340,7 +340,12 @@ async function main() {
       switch (sub) {
         case 'on':
         case 'off': {
-          const cfg = S.readConfig(root) || {};
+          // --global writes the user-scope switch (every project inherits it);
+          // without it, the project switch, which always wins over the global one.
+          const isGlobal = argv.includes('--global');
+          const target = isGlobal ? S.globalConfigPath() : paths.config;
+          const cfg = (isGlobal ? S.readGlobalConfig() : S.readConfig(root)) || {};
+          delete cfg.scope; // derived, never persisted
           // `off` never validates: it is the recovery advertised by every deny
           // message, so a broken config must not be able to lock it away.
           if (sub === 'on') {
@@ -348,15 +353,22 @@ async function main() {
           }
           const { writeFileSync, mkdirSync } = await import('node:fs');
           const { dirname } = await import('node:path');
-          mkdirSync(dirname(paths.config), { recursive: true });
-          writeFileSync(paths.config, JSON.stringify({ ...cfg, enabled: sub === 'on' }, null, 2) + '\n');
+          mkdirSync(dirname(target), { recursive: true });
+          writeFileSync(target, JSON.stringify({ ...cfg, enabled: sub === 'on' }, null, 2) + '\n');
+          const where = isGlobal ? 'for every project (global)' : 'for this project';
           say(sub === 'on'
-            ? '✅ sello ON for this project. Risk-0 changes (docs/copy) still pass silently; everything else needs a review before commit/push/PR.'
-            : '✅ sello OFF for this project. Delivery behaves exactly as before.');
+            ? `✅ sello ON ${where}. Risk-0 changes (docs/copy) still pass silently; everything else needs a review before commit/push/PR.`
+            : `✅ sello OFF ${where}. Delivery behaves exactly as before.`);
+          if (isGlobal) {
+            const p = S.readConfig(root);
+            if (p && p.enabled !== undefined && p.enabled !== (sub === 'on')) {
+              say(`   ⚠️  this project overrides it (project = ${p.enabled ? 'on' : 'off'}); the project switch always wins. Change it with \`sello ${p.enabled ? 'off' : 'on'}\` here.`);
+            }
+          }
           return;
         }
         case 'freeze': {
-          const cfg = S.readConfig(root);
+          const cfg = S.readEffectiveConfig(root);
           const candidate = S.computeCandidate(root, cfg);
           if (!candidate) { say(S.MESSAGES.noTrunk()); process.exitCode = 1; return; }
           const paths2 = Object.keys(candidate.files);
@@ -374,7 +386,7 @@ async function main() {
         case 'block': {
           const sello = S.readSello(root);
           if (sello.missing || sello.corrupt || !sello.status) { say(S.MESSAGES.notFrozen()); process.exitCode = 1; return; }
-          const cfg = S.readConfig(root);
+          const cfg = S.readEffectiveConfig(root);
           const current = S.computeCandidate(root, cfg);
           const changed = current && Object.keys({ ...sello.files, ...current.files })
             .some((p) => sello.files[p] !== current.files[p]);
@@ -415,7 +427,7 @@ async function main() {
         case 'budget-check': {
           const sello = S.readSello(root);
           if (sello.missing || sello.corrupt || !sello.budget) { say('sello: no declared budget. Recover: run `rsc sello budget --lines <N>` BEFORE fixing.'); process.exitCode = 1; return; }
-          const current = S.computeCandidate(root, S.readConfig(root));
+          const current = S.computeCandidate(root, S.readEffectiveConfig(root));
           const spent = S.budgetSpent(sello, current || { numstat: {} });
           if (spent <= sello.budget.lines) { say(`✅ within budget: ~${spent}/${sello.budget.lines} line(s).`); return; }
           const justify = str('justify');
@@ -448,12 +460,21 @@ async function main() {
           const enabled = S.isEnabled(root);
           const verdict = S.checkSello(root);
           const sello = S.readSello(root);
-          const cfg = S.readConfig(root);
+          const cfg = S.readEffectiveConfig(root);
           let lowered = [];
           let configError;
           try { ({ lowered } = S.validateRiskConfig(cfg || {})); } catch (e) { configError = e.message; }
+          const globalCfg = S.readGlobalConfig();
+          const projectCfg = S.readConfig(root);
           say(JSON.stringify({
             enabled,
+            // Which scope decided, and what each one says — two scopes quietly
+            // disagreeing is a failure this harness has already lived through.
+            decidedBy: cfg?.scope,
+            scopes: {
+              global: globalCfg?.enabled === undefined ? 'unset' : globalCfg.enabled ? 'on' : 'off',
+              project: projectCfg?.enabled === undefined ? 'unset' : projectCfg.enabled ? 'on' : 'off',
+            },
             check: verdict.code,
             // An inert gate must never look armed: name every reason it is standing down.
             inert: enabled && ['no-trunk', 'disabled'].includes(verdict.code) ? verdict.code : undefined,
@@ -471,7 +492,7 @@ async function main() {
           return;
         }
         default:
-          say('Use: npx @ericrisco/rsc sello on|off|status|freeze|approve --lenses a,b [--accept-partial-lenses]|block --reason "…"|budget --lines N|budget-check [--justify "…"]|check|report');
+          say('Use: npx @ericrisco/rsc sello on|off [--global]|status|freeze|approve --lenses a,b [--accept-partial-lenses]|block --reason "…"|budget --lines N|budget-check [--justify "…"]|check|report');
           return;
       }
     }

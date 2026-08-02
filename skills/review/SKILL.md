@@ -104,8 +104,9 @@ End every review you give with one of three, and nothing mushy in between:
 
 ### The sello — when this project opted in
 
-If `.rsc/sello-config.json` has `enabled: true`, the review's verdict is **sealed to the exact
-bytes reviewed**, and the ship gate refuses commit/push/PR on anything else.
+If the sello is on — `.rsc/sello-config.json` in the project, or `~/.rsc/sello-config.json` for
+every project (`sello on --global`; the project switch always wins) — the review's verdict is
+**sealed to the exact bytes reviewed**, and the ship gate refuses commit/push/PR on anything else.
 
 **What the sello does and does not prove.** It binds bytes, not intent: it guarantees *what ships
 is what was reviewed*, never *the review was good*. You are the one calling `sello approve`, so it

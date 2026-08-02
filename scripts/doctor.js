@@ -6,7 +6,7 @@ import { readState } from './lib/state.js';
 import { loadManifest } from './lib/manifest.js';
 import { listBackups } from './lib/backups.js';
 import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
-import { isEnabled, checkSello, readSello, countFindings, readConfig, validateRiskConfig } from '../targets/sello.mjs';
+import { isEnabled, checkSello, readSello, countFindings, readEffectiveConfig, validateRiskConfig } from '../targets/sello.mjs';
 
 // The sello's health, surfaced where the user already looks (spec: non-blocking
 // findings live in the project and are SUMMARIZED here, never nagged about).
@@ -19,6 +19,7 @@ function selloStatus(root) {
     const verdict = checkSello(root);
     const out = {
       enabled: true,
+      decidedBy: readEffectiveConfig(root)?.scope,
       check: verdict.code,
       status: sello.missing ? 'none' : sello.corrupt ? 'corrupt' : sello.status,
       nonBlockingFindings: countFindings(root),
@@ -29,7 +30,7 @@ function selloStatus(root) {
       out.note = 'ship-guard branch-hygiene rules are opted out (.rsc/.no-ship-guard); the sello itself still enforces.';
     }
     try {
-      const { lowered } = validateRiskConfig(readConfig(root) || {});
+      const { lowered } = validateRiskConfig(readEffectiveConfig(root) || {});
       if (lowered.length) out.loweredClasses = lowered;
     } catch (e) { out.configError = e.message; }
     return out;
