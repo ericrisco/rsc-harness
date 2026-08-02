@@ -25,6 +25,7 @@
 
 import { existsSync, lstatSync, readFileSync, readlinkSync, writeFileSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 
@@ -47,15 +48,49 @@ export function selloPaths(root) {
   };
 }
 
-export function readConfig(root) {
+// The user-scope switch: turn the sello on once for every project instead of
+// per repo. RSC_SELLO_HOME exists so tests can point it somewhere disposable
+// (same escape hatch as hook-once's marker dir).
+export function selloHome() {
+  return process.env.RSC_SELLO_HOME || homedir();
+}
+export function globalConfigPath(home = selloHome()) {
+  return join(home, '.rsc', 'sello-config.json');
+}
+
+function readJson(path) {
   try {
-    const cfg = JSON.parse(readFileSync(selloPaths(root).config, 'utf8'));
+    const cfg = JSON.parse(readFileSync(path, 'utf8'));
     return cfg && typeof cfg === 'object' ? cfg : null;
   } catch { return null; }
 }
 
+// Project-scope config only — this is what `sello on/off` writes.
+export function readConfig(root) {
+  return readJson(selloPaths(root).config);
+}
+export function readGlobalConfig() {
+  return readJson(globalConfigPath());
+}
+
+// What actually governs a project: global as the base, project keys on top.
+// PRECEDENCE IS EXPLICIT AND SURFACED — this harness has already been bitten by
+// two scopes silently disagreeing (a project opt-out that never reached the
+// user-scope guard), so `scope` says which one decided and `status`/`doctor`
+// print it.
+export function readEffectiveConfig(root) {
+  const g = readGlobalConfig();
+  const p = readConfig(root);
+  if (!g && !p) return null;
+  const merged = { ...(g || {}), ...(p || {}) };
+  merged.scope = p && p.enabled !== undefined ? 'project'
+    : g && g.enabled !== undefined ? 'global'
+      : 'none';
+  return merged;
+}
+
 export function isEnabled(root) {
-  const cfg = readConfig(root);
+  const cfg = readEffectiveConfig(root);
   return !!(cfg && cfg.enabled === true);
 }
 
@@ -351,7 +386,7 @@ export const MESSAGES = {
 
 export function checkSello(rawRoot) {
   const root = resolveRoot(rawRoot);
-  const cfg = readConfig(root);
+  const cfg = readEffectiveConfig(root);
   if (!cfg || cfg.enabled !== true) return { ok: true, code: 'disabled' };
 
   const candidate = computeCandidate(root, cfg);

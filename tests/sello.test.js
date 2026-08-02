@@ -493,6 +493,98 @@ test('materialization: the guard and its sello core are installed together', asy
   assert.match(guard, /new URL\('\.\/sello\.mjs', import\.meta\.url\)/, 'the guard must import its sibling, not a package path');
 });
 
+// --- the global switch and scope precedence ----------------------------------------
+// Two scopes silently disagreeing is a failure this harness has already lived
+// through (a project opt-out that never reached the user-scope guard), so
+// precedence is asserted in both directions and the decision is surfaced.
+
+function withHome(root) {
+  const home = mkdtempSync(join(tmpdir(), 'rsc-sello-home-'));
+  mkdirSync(join(home, '.rsc'), { recursive: true });
+  return { home, env: { ...process.env, RSC_SELLO_HOME: home } };
+}
+const setGlobal = (home, cfg) => writeFileSync(join(home, '.rsc', 'sello-config.json'), JSON.stringify(cfg));
+const cliIn = (root, env, ...args) => spawnSync('node', [RSC, 'sello', ...args], { cwd: root, encoding: 'utf8', env });
+
+test('sello global: a project with no config inherits the global switch', () => {
+  const root = makeRepo();
+  const { home, env } = withHome(root);
+  writeFileSync(join(root, 'app.js'), 'unreviewed\n');
+  setGlobal(home, { enabled: true });
+  const r = cliIn(root, env, 'status');
+  const st = JSON.parse(r.stdout);
+  assert.equal(st.enabled, true, 'global on must reach a project with no config of its own');
+  assert.equal(st.decidedBy, 'global');
+  assert.equal(st.scopes.global, 'on');
+  assert.equal(st.scopes.project, 'unset');
+  assert.equal(cliIn(root, env, 'check').status, 1, 'and it actually enforces');
+});
+
+test('sello global: the project switch always wins, in both directions', () => {
+  const root = makeRepo();
+  const { home, env } = withHome(root);
+  writeFileSync(join(root, 'app.js'), 'unreviewed\n');
+
+  setGlobal(home, { enabled: true });
+  writeFileSync(selloPaths(root).config, JSON.stringify({ enabled: false }));
+  let st = JSON.parse(cliIn(root, env, 'status').stdout);
+  assert.equal(st.enabled, false, 'project off must override global on');
+  assert.equal(st.decidedBy, 'project');
+
+  setGlobal(home, { enabled: false });
+  writeFileSync(selloPaths(root).config, JSON.stringify({ enabled: true }));
+  st = JSON.parse(cliIn(root, env, 'status').stdout);
+  assert.equal(st.enabled, true, 'project on must override global off');
+  assert.equal(st.decidedBy, 'project');
+});
+
+test('sello global: `on --global` writes the user scope and warns when a project overrides it', () => {
+  const root = makeRepo();
+  const { home, env } = withHome(root);
+  writeFileSync(selloPaths(root).config, JSON.stringify({ enabled: false }));
+  const r = cliIn(root, env, 'on', '--global');
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /global/);
+  assert.match(r.stdout, /project switch always wins/, 'a silently-overridden global switch is the bug this warns about');
+  assert.equal(JSON.parse(readFileSync(join(home, '.rsc', 'sello-config.json'), 'utf8')).enabled, true);
+  assert.equal(JSON.parse(readFileSync(selloPaths(root).config, 'utf8')).enabled, false, 'the project file must not be touched');
+});
+
+test('sello global: risk overrides come from the global config when the project has none', () => {
+  const root = makeRepo();
+  const { home, env } = withHome(root);
+  // A globally-declared raise rule must classify a project path it matches.
+  setGlobal(home, { enabled: true, risk: { raise: [{ class: 'infra', pattern: '(^|/)terraform/' }] } });
+  mkdirSync(join(root, 'terraform'), { recursive: true });
+  writeFileSync(join(root, 'terraform', 'main.tf'), 'resource {}\n');
+  const frozen = cliIn(root, env, 'freeze');
+  assert.equal(frozen.status, 0, frozen.stdout + frozen.stderr);
+  assert.match(frozen.stdout, /risk tier 2/, 'a global raise rule must apply to the project');
+  assert.match(frozen.stdout, /terraform\/main\.tf → infra/);
+});
+
+test('sello global: the derived scope marker is never persisted into a config file', () => {
+  const root = makeRepo();
+  const { home, env } = withHome(root);
+  setGlobal(home, { enabled: true });
+  cliIn(root, env, 'on');
+  assert.equal(JSON.parse(readFileSync(selloPaths(root).config, 'utf8')).scope, undefined, 'project config');
+  cliIn(root, env, 'on', '--global');
+  assert.equal(JSON.parse(readFileSync(join(home, '.rsc', 'sello-config.json'), 'utf8')).scope, undefined, 'global config');
+});
+
+test('sello global: the guard honors the global switch too', () => {
+  const root = makeRepo();
+  const { home, env } = withHome(root);
+  setGlobal(home, { enabled: true });
+  writeFileSync(join(root, 'app.js'), 'unreviewed\n');
+  const input = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'git commit -m x' } });
+  const r = spawnSync('node', [SHIP_GUARD, root], { encoding: 'utf8', input, env });
+  assert.equal(r.status, 0);
+  const denial = JSON.parse(r.stdout || '{}');
+  assert.equal(denial.hookSpecificOutput?.permissionDecision, 'deny', 'the gate must enforce a globally-enabled sello');
+});
+
 test('sello: non-blocking findings accumulate in a readable artifact', () => {
   const root = makeRepo();
   assert.equal(countFindings(root), 0);

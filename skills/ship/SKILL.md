@@ -72,8 +72,10 @@ the command), and can be disabled per project with `.rsc/.no-ship-guard`. It gua
 commit → push step; opening the PR is still this skill's job (and its hard rule). If the guard
 blocks you, do not work around it — run ship.
 
-The same guard also enforces the **sello** where the project opted in (`.rsc/sello-config.json`
-with `enabled: true`): commit, push and PR are denied unless the change's exact bytes match the
+The same guard also enforces the **sello** where it was opted into — per project
+(`.rsc/sello-config.json`) or for all of them (`~/.rsc/sello-config.json` via
+`sello on --global`, with the project switch always winning; `rsc sello status` prints which
+scope decided): commit, push and PR are denied unless the change's exact bytes match the
 sealed, approved review — one byte of drift, a moved base, or a missing review on a risk>0 change
 all block, and every denial names its way out (re-run `review`, or `npx @ericrisco/rsc sello off`).
 Risk-0 changes (docs/copy) always pass silently. Off by default; the flow lives in the `review`
