@@ -72,6 +72,13 @@ the command), and can be disabled per project with `.rsc/.no-ship-guard`. It gua
 commit → push step; opening the PR is still this skill's job (and its hard rule). If the guard
 blocks you, do not work around it — run ship.
 
+The same guard also enforces the **sello** where the project opted in (`.rsc/sello-config.json`
+with `enabled: true`): commit, push and PR are denied unless the change's exact bytes match the
+sealed, approved review — one byte of drift, a moved base, or a missing review on a risk>0 change
+all block, and every denial names its way out (re-run `review`, or `npx @ericrisco/rsc sello off`).
+Risk-0 changes (docs/copy) always pass silently. Off by default; the flow lives in the `review`
+skill.
+
 ## The three landing options — always present exactly three
 
 This mirrors the harness "siempre 3 opciones" pattern. Gather the one fact that changes the answer (does this repo use PRs / require review on `main`?), then present **exactly three** with an honest recommendation matched to the workflow and the accompaniment level.

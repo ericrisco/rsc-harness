@@ -62,6 +62,7 @@ function generatedHookFiles({ target, cwd }) {
     join(cwd, '.rsc', 'danger-guard.mjs'),
     join(cwd, '.rsc', 'userprompt-gate.mjs'),
     join(cwd, '.rsc', 'hook-once.mjs'),
+    join(cwd, '.rsc', 'sello.mjs'),
   ];
 }
 

@@ -6,6 +6,22 @@ import { readState } from './lib/state.js';
 import { loadManifest } from './lib/manifest.js';
 import { listBackups } from './lib/backups.js';
 import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
+import { isEnabled, checkSello, readSello, countFindings } from '../targets/sello.mjs';
+
+// The sello's health, surfaced where the user already looks (spec: non-blocking
+// findings live in the project and are SUMMARIZED here, never nagged about).
+function selloStatus(root) {
+  try {
+    if (!isEnabled(root)) return { enabled: false };
+    const sello = readSello(root);
+    return {
+      enabled: true,
+      check: checkSello(root).code,
+      status: sello.missing ? 'none' : sello.corrupt ? 'corrupt' : sello.status,
+      nonBlockingFindings: countFindings(root),
+    };
+  } catch { return { enabled: false }; }
+}
 
 export function doctor({ target, home, cwd }) {
   const root = cwd || process.cwd();
@@ -25,6 +41,7 @@ export function doctor({ target, home, cwd }) {
       latest: backups[0]?.id || null,
     },
     contextBudget: contextBudget({ target, home, cwd }),
+    sello: selloStatus(root),
   };
   for (const [id, e] of Object.entries(state.skills)) {
     for (const f of e.files) if (!existsSync(f)) report.missing.push(`${id}:${f}`);

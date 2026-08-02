@@ -102,6 +102,41 @@ End every review you give with one of three, and nothing mushy in between:
 - **`APPROVE WITH NITS`** — mergeable; the nits are the author's call.
 - **`CHANGES REQUESTED`** — one or more blockers/should-fix. List exactly what unblocks it.
 
+### The sello — when this project opted in
+
+If `.rsc/sello-config.json` has `enabled: true`, the review's verdict becomes **binding**: it is
+sealed to the exact bytes reviewed, and the ship gate refuses commit/push/PR on anything else.
+Every state transition is deterministic CLI, never tokens:
+
+```text
+1. npx @ericrisco/rsc sello freeze      → hashes the candidate, prints risk tier + lens count
+2. Run the lenses (below), filter findings, decide
+3a. approved → npx @ericrisco/rsc sello approve --lenses correctness,security,tests
+3b. blocked  → npx @ericrisco/rsc sello block --reason "<the blocking finding>"
+```
+
+**Lenses by risk tier** — tier 0 never reaches you (the gate passes docs/copy silently);
+tier 1 → run the single most relevant pass from the table above yourself; tier 2 → dispatch
+**three parallel fresh-context subagents** (correctness · security · tests-as-evidence), each
+given only the diff and told to *refute* readiness, not confirm it. Fresh context is the point:
+a reviewer who inherits the implementer's context inherits its blind spots.
+
+**A finding blocks only if it survives all three filters** — no exceptions, and eagerness to
+find something is not evidence:
+
+1. **Causal** — introduced by *this* change. Pre-existing defects → note with
+   `--note "<finding>"` (they land in `.rsc/sello-findings.md`, surfaced by `doctor`) and
+   suggest an issue; they never block this delivery.
+2. **Severity** — only `blocker` blocks. `should-fix`/`nit` → `--note`.
+3. **Evidence** — a `repro` or a concrete failure scenario. A suspicion without one is a
+   `[question]`, and questions don't block.
+
+**Fixing a blocker is budgeted, one attempt.** Before touching anything: estimate the fix and
+declare it — `npx @ericrisco/rsc sello budget --lines <N>`. After the fix:
+`sello budget-check` (over budget → justify with `--justify "…"` or shrink; an unexplained
+overrun is how over-engineering enters disguised as a fix). Then `sello freeze` + re-review
+**only the divergence**, and approve. Still broken after one attempt → stop, hand it to the human.
+
 ---
 
 ## RECEIVING a review

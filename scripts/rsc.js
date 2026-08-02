@@ -327,6 +327,116 @@ async function main() {
       say('Use: npx @ericrisco/rsc registry refresh | registry status');
       return;
     }
+    case 'sello': {
+      // Deterministic transitions of the sello (review receipt). The `review` skill
+      // orchestrates the lenses; every state change and every check runs HERE, token-free.
+      const S = await import('../targets/sello.mjs');
+      const root = process.cwd();
+      const sub = argv[1];
+      const paths = S.selloPaths(root);
+      switch (sub) {
+        case 'on':
+        case 'off': {
+          const cfg = S.readConfig(root) || {};
+          try { S.validateRiskConfig(cfg); } catch (e) { say(e.message); process.exitCode = 1; return; }
+          const { writeFileSync, mkdirSync } = await import('node:fs');
+          const { dirname } = await import('node:path');
+          mkdirSync(dirname(paths.config), { recursive: true });
+          writeFileSync(paths.config, JSON.stringify({ ...cfg, enabled: sub === 'on' }, null, 2) + '\n');
+          say(sub === 'on'
+            ? '✅ sello ON for this project. Risk-0 changes (docs/copy) still pass silently; everything else needs a review before commit/push/PR.'
+            : '✅ sello OFF for this project. Delivery behaves exactly as before.');
+          return;
+        }
+        case 'freeze': {
+          const candidate = S.computeCandidate(root);
+          if (!candidate) { say(S.MESSAGES.riskUnknown()); process.exitCode = 1; return; }
+          const paths2 = Object.keys(candidate.files);
+          if (!paths2.length) { say('sello: nothing to freeze — the working tree matches the trunk base.'); return; }
+          let risk;
+          try { risk = S.classifyRisk(paths2, S.readConfig(root)); }
+          catch (e) { say(e.message); process.exitCode = 1; return; }
+          S.writeSello(root, { status: 'frozen', ...candidate, risk, lenses: [], createdAt: new Date().toISOString() });
+          const lenses = risk.tier === 0 ? 0 : risk.tier === 1 ? 1 : 3;
+          say(`🧊 frozen: ${paths2.length} file(s), risk tier ${risk.tier} → ${lenses} lens(es) required.`);
+          for (const [p, c] of Object.entries(risk.classes)) if (c !== 'default' && c !== 'docs') say(`   ${p} → ${c}`);
+          return;
+        }
+        case 'approve':
+        case 'block': {
+          const sello = S.readSello(root);
+          if (sello.missing || sello.corrupt || !sello.status) { say(S.MESSAGES.notFrozen()); process.exitCode = 1; return; }
+          const current = S.computeCandidate(root);
+          const changed = current && Object.keys({ ...sello.files, ...current.files })
+            .some((p) => sello.files[p] !== current.files[p]);
+          if (sub === 'approve' && (changed || sello.base !== current?.base)) {
+            say(S.MESSAGES.staleFreeze()); process.exitCode = 1; return;
+          }
+          const lenses = (flag('lenses') || '').split(',').filter(Boolean);
+          const notes = (flag('note') ? [String(flag('note'))] : []);
+          if (notes.length) S.appendFindings(root, notes.map((n) => `${new Date().toISOString().slice(0, 10)} ${n}`));
+          S.writeSello(root, { ...sello, status: sub === 'approve' ? 'approved' : 'blocked', lenses, reason: flag('reason') });
+          say(sub === 'approve' ? `✅ sealed (${lenses.length ? lenses.join(', ') : 'no lenses recorded'}).` : '⛔ blocked — fix and re-review.');
+          return;
+        }
+        case 'budget': {
+          const sello = S.readSello(root);
+          if (sello.missing || sello.corrupt) { say(S.MESSAGES.notFrozen()); process.exitCode = 1; return; }
+          const lines = Number(flag('lines'));
+          if (!Number.isFinite(lines) || lines <= 0) { say('Use: rsc sello budget --lines <N>'); process.exitCode = 1; return; }
+          S.writeSello(root, { ...sello, budget: { lines, declaredAt: new Date().toISOString() } });
+          say(`📏 fix budget declared: ${lines} line(s). budget-check will hold the fix to it.`);
+          return;
+        }
+        case 'budget-check': {
+          const sello = S.readSello(root);
+          if (sello.missing || sello.corrupt || !sello.budget) { say('sello: no declared budget. Recover: run `rsc sello budget --lines <N>` BEFORE fixing.'); process.exitCode = 1; return; }
+          const current = S.computeCandidate(root);
+          const spent = S.budgetSpent(sello, current || { numstat: {} });
+          if (spent <= sello.budget.lines) { say(`✅ within budget: ~${spent}/${sello.budget.lines} line(s).`); return; }
+          const justify = flag('justify');
+          if (typeof justify === 'string' && justify.trim()) {
+            S.writeSello(root, { ...sello, budget: { ...sello.budget, exceeded: spent, justification: justify } });
+            S.appendFindings(root, [`budget exceeded (~${spent}/${sello.budget.lines}): ${justify}`]);
+            say(`⚠️ over budget (~${spent}/${sello.budget.lines}) — justification recorded.`);
+            return;
+          }
+          say(S.MESSAGES.overBudget(spent, sello.budget.lines));
+          process.exitCode = 1;
+          return;
+        }
+        case 'check': {
+          const verdict = S.checkSello(root);
+          if (verdict.ok) { say(`✅ sello check: ${verdict.code}`); return; }
+          say(verdict.message);
+          process.exitCode = 1;
+          return;
+        }
+        case 'report': {
+          const { existsSync, readFileSync } = await import('node:fs');
+          say(existsSync(paths.findings) ? readFileSync(paths.findings, 'utf8') : '(no non-blocking findings recorded)');
+          return;
+        }
+        case 'status': {
+          const enabled = S.isEnabled(root);
+          const verdict = S.checkSello(root);
+          const sello = S.readSello(root);
+          say(JSON.stringify({
+            enabled,
+            check: verdict.code,
+            status: sello.missing ? 'none' : sello.corrupt ? 'corrupt' : sello.status,
+            risk: sello.risk?.tier,
+            lenses: sello.lenses,
+            budget: sello.budget,
+            nonBlockingFindings: S.countFindings(root),
+          }, null, 2));
+          return;
+        }
+        default:
+          say('Use: npx @ericrisco/rsc sello on|off|status|freeze|approve --lenses a,b|block --reason "…"|budget --lines N|budget-check [--justify "…"]|check|report');
+          return;
+      }
+    }
     case 'uninstall': {
       const dry = argv.includes('--dry-run');
       // `uninstall --all` is an alias for a full purge.
@@ -339,7 +449,7 @@ async function main() {
       return void (await runPurge(argv.includes('--dry-run'), argv.includes('--with-docs')));
     default:
       say(`rsc: unknown command '${cmd}'.`);
-      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | audit | registry refresh | doctor | sync | backups | restore <id|latest> | upgrade | uninstall <id> | purge');
+      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | audit | registry refresh | doctor | sync | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | uninstall <id> | purge');
   }
 }
 

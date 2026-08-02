@@ -42,6 +42,22 @@ if ((input.tool_name || input.toolName) !== 'Bash') allow();
 const command = input.tool_input?.command || input.toolInput?.command || '';
 if (typeof command !== 'string' || !command) allow();
 
+// ---- sello gate (opt-in) ----------------------------------------------------
+// When the sello is ON for this project, delivery commands (commit, push, PR)
+// must match the sealed bytes. OFF (the default) → this block is a no-op and the
+// guard behaves exactly as before. checkSello itself fails open on environment
+// problems and denies only on real divergence/no-review/corruption (spec).
+const DELIVERY = /\bgit\s+commit\b|\bgit\s+push\b|\bgh\s+pr\s+(?:create|merge)\b/;
+if (DELIVERY.test(command)) {
+  try {
+    const { checkSello, isEnabled } = await import(new URL('./sello.mjs', import.meta.url));
+    if (isEnabled(root)) {
+      const verdict = checkSello(root);
+      if (!verdict.ok) deny(verdict.message);
+    }
+  } catch { /* sello lib missing/unloadable → nothing to enforce, fail open */ }
+}
+
 // Does this command try to land on / move to the trunk?
 const TRUNK = /\bgit\s+(?:checkout|switch)\s+(?:-{1,2}\S+\s+)*(?:main|master)\b/;
 const MERGE = /\bgit\s+merge\b/;
