@@ -90,6 +90,9 @@ export function wireHook(paths) {
   // (non-rsc) PreToolUse hooks are preserved.
   const sgDest = join(paths.projectRoot, '.rsc', 'ship-guard.mjs');
   copyFileSync(join(HERE, 'ship-guard.mjs'), sgDest);
+  // sello.mjs is ship-guard's sibling import (hooks are materialized file-by-file,
+  // so the deterministic sello core must land next to the guard that loads it).
+  copyFileSync(join(HERE, 'sello.mjs'), join(paths.projectRoot, '.rsc', 'sello.mjs'));
   const sgCmd = `node "${sgDest}" "${paths.projectRoot}"`;
   settings.hooks.PreToolUse ||= [];
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
