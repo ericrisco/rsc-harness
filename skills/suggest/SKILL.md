@@ -71,6 +71,12 @@ and never to interrupt a flow with a nice-to-have. Never recommend something alr
 nothing for natural-language or non-English intent. Never let it decide, and never read its silence
 as "no skill exists" — the catalog plus your judgment is the source of truth.
 
+### Automation gap — after the work
+
+Delivered work a repeatable **procedure**? Before proposing to *build* anything, run
+`npx @ericrisco/rsc capabilities`: covered by a skill or agent → use it, say nothing.
+Not covered → one line, skill or agent. Rules: `skill-scout`.
+
 ---
 
 ## 3. First contact

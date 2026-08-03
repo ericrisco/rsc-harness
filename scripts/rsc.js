@@ -327,6 +327,49 @@ async function main() {
       say('Use: npx @ericrisco/rsc registry refresh | registry status');
       return;
     }
+    case 'capabilities': {
+      // "What do I already have that solves this?" — the deterministic step the
+      // automation-gap rule requires BEFORE anyone proposes creating a skill or an
+      // agent. Without this command that rule would rest on the model's memory.
+      const { capabilities, appendGap, countGaps } = await import('./lib/capabilities.js');
+      const { resolveRoot } = await import('../targets/sello.mjs');
+      // A string flag must not swallow the next FLAG as its value (`flag()` returns
+      // the following token blindly), or `--procedure --verdict x` records "--verdict".
+      const str = (name) => {
+        const v = flag(name);
+        return typeof v === 'string' && !v.startsWith('--') ? v : undefined;
+      };
+      // Subcommand by presence, not by position: `capabilities --target claude gap-log`
+      // used to fall through and silently record nothing.
+      if (argv.includes('gap-log')) {
+        // The writer and doctor must agree on the root, or a run from a subdirectory
+        // writes a log nothing counts.
+        const root = resolveRoot(process.cwd());
+        try {
+          const p = appendGap({ procedure: str('procedure'), verdict: str('verdict'), cwd: root });
+          say(`📝 recorded (${countGaps(root)} total): ${p}`);
+        } catch (e) { say(e.message); process.exitCode = 1; }
+        return;
+      }
+      const full = argv.includes('--full');
+      const reports = targets.map((t) => capabilities({ target: t, full }));
+      if (argv.includes('--json')) {
+        return void say(JSON.stringify(reports.length === 1 ? reports[0] : reports, null, 2));
+      }
+      for (const caps of reports) {
+        if (reports.length > 1) say(`# target: ${caps.target}`);
+        for (const s of caps.installed) say(`skill\t${s.id}\tinstalled-${s.scope}\t${s.description}`);
+        for (const s of caps.available) say(`skill\t${s.id}\tavailable${s.description ? `\t${s.description}` : ''}`);
+        if (caps.agentsSupported) {
+          for (const a of caps.agents) say(`agent\t${a.id}\t${a.scope}\t${a.path}`);
+          if (!caps.agents.length) say('# no agent files found (this target supports them)');
+        } else {
+          say(`# ${caps.target} has no file-based agents — the agent option does not apply here`);
+        }
+      }
+      if (!full) say('# catalog shown as ids; add --full for descriptions, or use `catalog --available` to match by meaning');
+      return;
+    }
     case 'sello': {
       // Deterministic transitions of the sello (review receipt). The `review` skill
       // orchestrates the lenses; every state change and every check runs HERE, token-free.
@@ -508,7 +551,8 @@ async function main() {
       return void (await runPurge(argv.includes('--dry-run'), argv.includes('--with-docs')));
     default:
       say(`rsc: unknown command '${cmd}'.`);
-      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | audit | registry refresh | doctor | sync | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | uninstall <id> | purge');
+      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | uninstall <id> | purge');
+      process.exitCode = 1;
   }
 }
 

@@ -4348,7 +4348,7 @@
     },
     {
       "id": "skill-scout",
-      "description": "Use when a specialized skill probably exists but is not loaded, when a task feels harder than it should because generic reasoning is doing a domain skill's job, or when auditing a workspace's skill coverage for holes. Names the absent skill and emits an install command, or routes onward when none exists. NOT routing among skills you already have (that is `suggest`), NOT writing the skill when none exists (that is `author-skill`).",
+      "description": "Use when a specialized skill probably exists but is not loaded, when a task feels harder than it should because generic reasoning is doing a domain skill's job, when the work just delivered was a repeatable procedure worth turning into a skill or an agent, or when auditing coverage for holes. Resolves against what already exists — installed skills, catalog skills and agent files — then names the gap and emits the install command. NOT routing among skills you already have (that is `suggest`), NOT writing the artifact when none exists (that is `author-skill` for skills, `building-agents` for agents).",
       "tags": [
         "skill-discovery",
         "capability-gap",

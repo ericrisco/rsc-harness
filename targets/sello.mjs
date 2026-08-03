@@ -35,8 +35,14 @@ import { spawnSync } from 'node:child_process';
 // sello would mutate the change being sealed, so `freeze` → `approve` could never
 // converge (a permanent, unrecoverable delivery lockout). Excluded whether the
 // project tracks .rsc/ or not.
+// Every tool-written journal under .rsc/ belongs here, not just the sello's own:
+// `.rsc/` is a non-lowerable tier-2 risk class, so ANY file the harness writes
+// automatically would escalate risk and invalidate an approved seal on every write.
+// The automation-gap log is exactly that — it is appended after every piece of work,
+// with no switch to stop it, so leaving it out made the lockout permanent.
 export const SELLO_STATE_PATHS = [
   '.rsc/sello.json', '.rsc/sello-config.json', '.rsc/sello-findings.md', '.rsc/sello-log.jsonl',
+  '.rsc/automation-gaps.md',
 ];
 
 export function selloPaths(root) {

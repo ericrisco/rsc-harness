@@ -1,6 +1,6 @@
 ---
 name: skill-scout
-description: "Use when a specialized skill probably exists but is not loaded, when a task feels harder than it should because generic reasoning is doing a domain skill's job, or when auditing a workspace's skill coverage for holes. Names the absent skill and emits an install command, or routes onward when none exists. NOT routing among skills you already have (that is `suggest`), NOT writing the skill when none exists (that is `author-skill`)."
+description: "Use when a specialized skill probably exists but is not loaded, when a task feels harder than it should because generic reasoning is doing a domain skill's job, when the work just delivered was a repeatable procedure worth turning into a skill or an agent, or when auditing coverage for holes. Resolves against what already exists — installed skills, catalog skills and agent files — then names the gap and emits the install command. NOT routing among skills you already have (that is `suggest`), NOT writing the artifact when none exists (that is `author-skill` for skills, `building-agents` for agents)."
 tags: [skill-discovery, capability-gap, meta, recommendations, coverage-audit]
 recommends: [suggest, author-skill, context-budget, continuous-learning, knowledge-ops]
 origin: risco
@@ -8,9 +8,9 @@ origin: risco
 
 # skill-scout — find the skill you don't have
 
-You are the **gap detector** for the skills catalog. Before a task starts — or in the middle of one that is dragging — you answer exactly one question: *is there a skill that should be handling this, and is it loaded?* You do **not** do the work. You name what to load, then get out of the way.
+You are the **gap detector** for the skills catalog. Before a task starts, in the middle of one that is dragging, or right after delivering work that turned out to be a procedure — you answer exactly one question: *is there a skill that should be handling this, and is it loaded?* You do **not** do the work. You name what to load, then get out of the way.
 
-Every run ends in one of three verdicts:
+Every run ends in one of the verdicts in the table below:
 
 - **INSTALLED-elsewhere** — the skill exists in the catalog and on disk somewhere (user scope, another project, a plugin) but is not active *here*. → emit a scope-fix / install command.
 - **MISSING** — the skill exists in the catalog but is not installed at all. → emit an install command and a one-line why.
@@ -26,10 +26,45 @@ Why this matters: skills load by **progressive disclosure**. At session start Cl
 | Clear match, exists at user scope but not in this project (or vice versa) | INSTALLED-elsewhere | Emit the scope-fix (copy to the missing scope) + why. |
 | 2–3 plausible candidates, none dominant | AMBIGUOUS | Name the top 2 with a one-line distinction; ask which fits. Do not guess. |
 | Present skill already covers this task | NO GAP | Say so and hand to `../suggest/SKILL.md` (routing among present skills) — that is its job, not yours. |
+| An installed **agent** already does this work | AGENT-COVERS | Name it, use it (delegate), propose nothing. Agents are listed by `npx @ericrisco/rsc capabilities`; they are invisible to the catalog, so a scan that skips them proposes duplicates. |
 | Catalog match present but its description is too vague to ever fire | WEAK-DESCRIPTION | Treat as a gap; route to `../author-skill/SKILL.md` to fix the frontmatter. |
 | No catalog id fits at all | NONEXISTENT | Route to `../author-skill/SKILL.md`. Do not fabricate an id. |
 
 The branch you must never collapse: **MISSING vs NONEXISTENT.** Confusing them either sends the user to write a skill that already exists, or has them wait for an install command for a skill that was never authored.
+
+## The automation gap — the trigger that fires *after* the work
+
+Everything above is preventive: you scan *before* generic reasoning does a specialist's job. There is a second moment, and it is the opposite one — **the work is already done and delivered**, and only then you notice its shape:
+
+> The last thing you did by hand was a **procedure**: several mostly-deterministic steps, a recognizable result, repeatable by someone else from a description, and plausibly needed again.
+
+Then, in this order and never skipping ahead:
+
+1. **Deliver first.** This never delays, conditions or replaces the work asked for. Raising it beforehand turns a simple request into a conversation about harness architecture.
+2. **Enumerate what exists** — `npx @ericrisco/rsc capabilities` lists installed skills (with their scope), **agent files** and the catalog ids in one pass. Read it; do not recall it. Add `--full` for catalog descriptions, or use `catalog --available` when you need to match by meaning — the default stays cheap on purpose. If the command cannot run, **propose nothing** and say the check did not happen: never propose building on a check that did not occur.
+3. **Something covers it** → use it (install with the usual one-word confirm if it is catalog-only), and **propose nothing**. Proposing to build what already exists is the worst outcome available here — it costs attention and it spends the credibility of every later suggestion.
+4. **Nothing covers it** → one sentence at the end of the work: the procedure you saw, and whether it fits as a skill or an agent. Then stop; the user decides. Their "no" ends it for this procedure for the rest of the session.
+5. **Record it either way** — `npx @ericrisco/rsc capabilities gap-log --procedure "<what YOU observed doing>" --verdict <covered-installed|covered-catalog|covered-agent|proposed-accepted|proposed-declined>`.
+
+**Scale the sentence to the dial**, never whether it appears. Read the accompaniment level in `02-DOCS/wiki/harness/user-profile.md`: at L0/L1 it is one dry line ("this looked like a procedure — worth a skill?"); at L2/L3 add why it qualified and what the skill-vs-agent difference means for them. A profile that asked for brevity still gets the observation, just not the essay.
+
+**The privacy boundary is yours to hold**, not the command's — it validates shape and nothing else, and it cannot tell your description from a paraphrase of the request. `--procedure` carries *your* account of the work you did. Never the user's words. The test: if the line could be reconstructed from what they typed, it does not belong in the log.
+
+**Which log:** this one (`.rsc/automation-gaps.md`, verdicts `covered-*`/`proposed-*`) is for the after-the-work automation gap. The coverage-audit log below (`skill-gaps.jsonl`, verdicts `MISSING`/`NONEXISTENT`) is for a deliberate catalog audit. One event, one log — never both.
+
+**Silence is a correct and common outcome.** A one-off, an exploration, a one-liner, or work that failed is not a procedure — a procedure is extracted from something that worked. There is no switch to turn this off, which is exactly why the bar is high: propose on everything and the feature becomes noise a user cannot escape.
+
+### Skill or agent
+
+Decided by the nature of the work, never its size:
+
+| | Fits a **skill** | Fits an **agent** |
+| --- | --- | --- |
+| Shape | Knowledge + procedure that must **fire at the right moment**, in the conversation, user present | Work you want to **delegate**: its own context, possibly in parallel, possibly another model |
+| Tell | "Whenever X comes up, do it this way" | "Go do X and come back with the result" |
+| Build with | `../author-skill/SKILL.md` | `../building-agents/SKILL.md` |
+
+When both fit, name the cheaper one to try and say the other is possible. When it is genuinely ambiguous, ask instead of choosing. On a target with no file-based agents (`capabilities` says so), the agent option does not exist — do not offer it.
 
 ## Symptoms that the task should have a skill
 
@@ -129,5 +164,6 @@ One JSON object per line, append-only. `recommended_id` must be a real catalog i
 
 - `../suggest/SKILL.md` — routing among the skills you already have. suggest is routing; you are procurement. If the right skill is already present, it's suggest's job, not yours.
 - `../author-skill/SKILL.md` — building a new skill when none exists. You own the *exists / missing / nonexistent* decision; the moment the verdict is NONEXISTENT (or WEAK-DESCRIPTION), hand off here.
+- `../building-agents/SKILL.md` — designing the agent when the gap is delegated work rather than in-conversation procedure (see *Skill or agent* above).
 - `context-budget` — when the loaded set is too heavy for the window. That is token budgeting of what *is* loaded; orthogonal to finding what is *absent*. (Not yet on disk; do not link until it ships.)
 - `continuous-learning` / `knowledge-ops` — when the pattern is a recurring *learning* to capture, not a missing skill to install. (Not yet on disk.)
