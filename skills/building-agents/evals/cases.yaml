@@ -24,7 +24,7 @@ should_not_trigger:
     route_to: "none"
     why: "One-shot throwaway prompt with no tools/eval/production path — the skill says just call the SDK directly."
   - prompt: "Tune Anthropic prompt caching and extended thinking in our anthropic-only client.py to cut latency on a file that only imports the anthropic SDK."
-    route_to: "claude-api"
+    route_to: "external:claude-api"
     why: "Single-vendor Anthropic-SDK internals tuning in a file that only imports anthropic defers to the dedicated Anthropic skill; this skill stays multi-provider."
   - prompt: "Write the pgvector schema and an HNSW-indexed nearest-neighbour SQL query, plus tuning advice — just the database side, no LLM calls."
     route_to: "postgresdb"

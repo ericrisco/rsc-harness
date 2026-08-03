@@ -330,3 +330,52 @@ test('the gap log is excluded from the sello candidate', () => {
   assert.ok(SELLO_STATE_PATHS.includes('.rsc/automation-gaps.md'),
     'every tool-written .rsc/ journal must be in SELLO_STATE_PATHS');
 });
+
+// --- local state must not be publishable ------------------------------------------
+
+test('install: .rsc/ is gitignored, additively and idempotently', async () => {
+  const { ignoreLocalState } = await import('../scripts/install-apply.js');
+  // No repo → do nothing (never create a .gitignore where git is not in use).
+  const bare = tmp('rsc-gi-');
+  assert.equal(ignoreLocalState(bare), null);
+  assert.throws(() => statSync(join(bare, '.gitignore')));
+
+  // Fresh repo with an existing .gitignore: append, preserving what was there.
+  const root = tmp('rsc-gi-');
+  mkdirSync(join(root, '.git'), { recursive: true });
+  writeFileSync(join(root, '.gitignore'), 'node_modules/\ndist/');
+  assert.ok(ignoreLocalState(root), 'should write');
+  let gi = readFileSync(join(root, '.gitignore'), 'utf8');
+  assert.match(gi, /^node_modules\/$/m, 'existing entries survive');
+  assert.match(gi, /^dist\/$/m);
+  assert.match(gi, /^\.rsc\/$/m, '.rsc/ is ignored');
+
+  // Idempotent: a second call changes nothing.
+  assert.equal(ignoreLocalState(root), null, 'already present → no-op');
+  assert.equal(readFileSync(join(root, '.gitignore'), 'utf8'), gi, 'byte-identical on re-run');
+
+  // Recognizes the equivalent spellings a user may already have.
+  for (const spelling of ['.rsc', '/.rsc', '.rsc/']) {
+    const r = tmp('rsc-gi-');
+    mkdirSync(join(r, '.git'), { recursive: true });
+    writeFileSync(join(r, '.gitignore'), `${spelling}\n`);
+    assert.equal(ignoreLocalState(r), null, `${spelling} already covers it`);
+  }
+
+  // And it works when there is no .gitignore at all.
+  const empty = tmp('rsc-gi-');
+  mkdirSync(join(empty, '.git'), { recursive: true });
+  ignoreLocalState(empty);
+  assert.match(readFileSync(join(empty, '.gitignore'), 'utf8'), /^\.rsc\/$/m);
+});
+
+test('install: the gap log cannot be committed after a real install', () => {
+  const root = tmp('rsc-gi-');
+  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: root });
+  writeFileSync(join(root, '.gitignore'), 'node_modules/\n');
+  const env = { ...process.env, HOME: tmp('rsc-caps-home-') };
+  spawnSync('node', [RSC, 'add', 'suggest', '--target', 'claude'], { cwd: root, encoding: 'utf8', env });
+  spawnSync('node', [RSC, 'capabilities', 'gap-log', '--procedure', 'rotate a client credential', '--verdict', 'proposed-accepted'], { cwd: root, encoding: 'utf8', env });
+  const check = spawnSync('git', ['check-ignore', '.rsc/automation-gaps.md'], { cwd: root, encoding: 'utf8' });
+  assert.equal(check.status, 0, 'the gap log must be ignored, or `git add -A` publishes it');
+});

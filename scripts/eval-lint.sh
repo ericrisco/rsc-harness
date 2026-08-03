@@ -7,6 +7,16 @@ set -euo pipefail
 #   >= 5 should_trigger entries
 #   >= 4 should_not_trigger entries
 #   >= 1 capability scenario
+#   every should_not_trigger route_to resolves (see below)
+#
+# route_to is the one that used to be decorative: the rubric listed "route_to names a
+# real skill" as a deterministic gate and nothing checked it, so evals accumulated
+# routes to skills that were never authored. Each value must now be one of:
+#   - a real catalog skill id (a directory under skills/ with a SKILL.md)
+#   - "none" — deliberately nothing to route to
+#   - "external:<name>" — a skill outside this catalog, on purpose. Some skills
+#     legitimately defer to tools that ship elsewhere; the prefix makes that a
+#     visible, greppable claim instead of a typo indistinguishable from drift.
 #
 # Uses python3 for real YAML parsing when available. If python3 is missing,
 # falls back to a basic structural grep check and SKIPs the deep validation
@@ -36,7 +46,7 @@ warned_skip=0
 validate_py() {
   cy="$1"
   CASES_YAML="$cy" MIN_TRIGGER="$MIN_TRIGGER" MIN_NOT_TRIGGER="$MIN_NOT_TRIGGER" \
-  MIN_CAPABILITY="$MIN_CAPABILITY" python3 - <<'PYEOF'
+  MIN_CAPABILITY="$MIN_CAPABILITY" VALID_IDS="$VALID_IDS" python3 - <<'PYEOF'
 import os, sys
 try:
     import yaml
@@ -72,7 +82,39 @@ st = count("should_trigger")
 sn = count("should_not_trigger")
 cap = count("capability")
 
+# --- route_to resolution -------------------------------------------------------
+# Accepts a real catalog id, "none", or "external:<name>". A value may be a list,
+# or a string holding several targets separated by comma / | / " or ".
+valid = set(filter(None, os.environ.get("VALID_IDS", "").split(",")))
+NOTHING = {"none", "n/a", "-", ""}
+bad_routes = []
+
+def targets(value):
+    items = value if isinstance(value, list) else [value]
+    out = []
+    for item in items:
+        for part in str(item).replace("|", ",").replace(" or ", ",").split(","):
+            out.append(part.strip().strip("`"))
+    return out
+
+for case in (data.get("should_not_trigger") or []):
+    if not isinstance(case, dict) or case.get("route_to") is None:
+        continue
+    for t in targets(case["route_to"]):
+        low = t.lower()
+        if low in NOTHING:
+            continue
+        if low.startswith("external:"):
+            if not low[len("external:"):].strip():
+                bad_routes.append('"external:" with no name')
+            continue
+        if valid and t not in valid:
+            bad_routes.append(t)
+
 reasons = []
+if bad_routes:
+    uniq = sorted(set(bad_routes))
+    reasons.append("route_to does not resolve: %s (use a real skill id, \"none\", or \"external:<name>\")" % ", ".join(uniq))
 if st < 0:
     reasons.append("should_trigger is not a list")
 elif st < mt:
@@ -112,7 +154,16 @@ validate_grep() {
 
 echo "eval-lint: scanning $SKILLS_DIR"
 echo "minimums: should_trigger>=$MIN_TRIGGER should_not_trigger>=$MIN_NOT_TRIGGER capability>=$MIN_CAPABILITY"
+echo "route_to must resolve: a catalog skill id, \"none\", or \"external:<name>\""
 echo
+
+# The set of real skill ids, built once from disk — the same surface the router sees.
+VALID_IDS=""
+for sp in "$SKILLS_DIR"/*; do
+  [ -f "$sp/SKILL.md" ] || continue
+  VALID_IDS="$VALID_IDS,$(basename "$sp")"
+done
+VALID_IDS="${VALID_IDS#,}"
 
 # Iterate skills deterministically; bash 3.2-safe (no mapfile).
 for skill_path in "$SKILLS_DIR"/*; do
