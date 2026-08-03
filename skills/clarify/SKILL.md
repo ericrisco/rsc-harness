@@ -113,6 +113,28 @@ After baking back, the spec line becomes a bounded, testable behavior with accep
 
 The gate is passed when the spec, constitution and profile were all read (settled questions cited, not re-asked); all ten taxonomy categories were considered; only the build-changing gaps were put to the user, as dial-sized decisions with recommendations; every answer is baked into the spec body with observable acceptance criteria, logged under `## Clarifications` and bounded under `## Out of scope`; and the final re-read opened no new gap.
 
+## Result envelope
+
+End with the parseable block every SDD phase shares, so the dispatcher can chain without
+interpreting prose (contract: `../sdd/SKILL.md`):
+
+```json result-envelope
+{
+  "status": "complete|blocked|failed",
+  "executive_summary": "Open points resolved; the spec is de-risked and ready to plan against.",
+  "artifact": "02-DOCS/wiki/sdd/specs/<slug>.md",
+  "next_recommended": "plan",
+  "risk": "low|medium|high",
+  "skill_resolution": {
+    "used": ["clarify"],
+    "missing": [],
+    "fallback": [],
+    "compact_rules": ["Ask only what changes the spec.", "An unanswered question is recorded, never invented."]
+  },
+  "evidence": ["answers folded back into the spec", "remaining open points listed with their owner"]
+}
+```
+
 ## Next in the chain
 
 Hand off to **`plan`** — turn the now-sharp spec into a technical implementation plan (architecture, interfaces, data flow, testing strategy, risks), deferring stack specifics to the relevant stack skill. The chain continues: clarify → **plan** → tasks → analyze → implement → verify → review → ship. `debug` is callable any time if what you are "clarifying" turns out to be a runtime fault, not a spec gap.

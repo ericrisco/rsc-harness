@@ -237,6 +237,28 @@ Review is mostly a conversation, but two artifacts persist into the harness wiki
 
 Index both in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) under the `sdd/` topic — the harness owns that map; this skill just keeps its rows honest.
 
+## Result envelope
+
+End with the parseable block every SDD phase shares, so the dispatcher can chain without
+interpreting prose (contract: `../sdd/SKILL.md`):
+
+```json result-envelope
+{
+  "status": "complete|blocked|failed",
+  "executive_summary": "Adversarial review against spec/plan/constitution; verdict and blocking findings.",
+  "artifact": "02-DOCS/wiki/sdd/reviews/<slug>.md",
+  "next_recommended": "ship",
+  "risk": "low|medium|high",
+  "skill_resolution": {
+    "used": ["review"],
+    "missing": [],
+    "fallback": [],
+    "compact_rules": ["Rank or it is noise: blocker / should-fix / nit.", "A finding without a repro is a question, not a defect."]
+  },
+  "evidence": ["verdict stated (APPROVE | APPROVE WITH NITS | CHANGES REQUESTED)", "each blocker carries location + repro + fix"]
+}
+```
+
 ## Next in the chain
 
 When the diff carries an **APPROVE** / **APPROVE WITH NITS** verdict and every blocker is resolved, hand off to **ship** — close the branch via PR / merge / cleanup, with **git authorship as Eric, never Claude**. If the review came back **CHANGES REQUESTED**, the loop goes back to **implement** (fix), then **verify** (re-prove green), then back here for re-review. Don't ship a diff that hasn't earned its verdict.
