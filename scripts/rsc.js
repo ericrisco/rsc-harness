@@ -327,6 +327,34 @@ async function main() {
       say('Use: npx @ericrisco/rsc registry refresh | registry status');
       return;
     }
+    case 'capabilities': {
+      // "What do I already have that solves this?" — the deterministic step the
+      // automation-gap rule requires BEFORE anyone proposes creating a skill or an
+      // agent. Without this command that rule would rest on the model's memory.
+      const { capabilities, appendGap, countGaps, GAP_VERDICTS } = await import('./lib/capabilities.js');
+      if (argv[1] === 'gap-log') {
+        const procedure = typeof flag('procedure') === 'string' ? flag('procedure') : undefined;
+        const verdict = typeof flag('verdict') === 'string' ? flag('verdict') : undefined;
+        const artifact = typeof flag('artifact') === 'string' ? flag('artifact') : undefined;
+        try {
+          const p = appendGap({ procedure, verdict, artifact });
+          say(`📝 recorded (${countGaps()} total): ${p}`);
+        } catch (e) { say(e.message); process.exitCode = 1; }
+        return;
+      }
+      if (argv[1] === 'verdicts') return void say(GAP_VERDICTS.join('\n'));
+      const caps = capabilities({ target });
+      if (argv.includes('--json')) return void say(JSON.stringify(caps, null, 2));
+      for (const s of caps.installed) say(`skill\t${s.id}\tinstalled\t${s.description}`);
+      for (const s of caps.available) say(`skill\t${s.id}\tavailable\t${s.description}`);
+      if (caps.agentsSupported) {
+        for (const a of caps.agents) say(`agent\t${a.id}\t${a.scope}\t${a.path}`);
+        if (!caps.agents.length) say(`# no agent files found (this target supports them)`);
+      } else {
+        say(`# ${target} has no file-based agents — the agent option does not apply here`);
+      }
+      return;
+    }
     case 'sello': {
       // Deterministic transitions of the sello (review receipt). The `review` skill
       // orchestrates the lenses; every state change and every check runs HERE, token-free.

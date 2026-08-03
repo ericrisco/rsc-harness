@@ -7,6 +7,7 @@ import { loadManifest } from './lib/manifest.js';
 import { listBackups } from './lib/backups.js';
 import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
 import { isEnabled, checkSello, readSello, countFindings, readEffectiveConfig, validateRiskConfig } from '../targets/sello.mjs';
+import { countGaps } from './lib/capabilities.js';
 
 // The sello's health, surfaced where the user already looks (spec: non-blocking
 // findings live in the project and are SUMMARIZED here, never nagged about).
@@ -56,6 +57,8 @@ export function doctor({ target, home, cwd }) {
     },
     contextBudget: contextBudget({ target, home, cwd }),
     sello: selloStatus(root),
+    // Counted, never interpreted — by spec, the gap log's reader is the user.
+    automationGaps: countGaps(root),
   };
   for (const [id, e] of Object.entries(state.skills)) {
     for (const f of e.files) if (!existsSync(f)) report.missing.push(`${id}:${f}`);
