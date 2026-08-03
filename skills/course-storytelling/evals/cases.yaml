@@ -22,14 +22,14 @@ should_not_trigger:
     route_to: "marketing"
     why: "Sales/landing copy for the course is marketing's domain. The skill teaches; it never bolts a pitch on, and explicitly defers selling words to marketing."
   - prompt: "Audit module 14 of my course for gaps, redundancy, anachronisms, and outdated stack references, and give me a written report."
-    route_to: "review-content"
+    route_to: "external:review-content"
     why: "Diagnostic content-audit pass with a written report. The skill says run review-content first and bring findings here; it rebuilds, it does not audit."
   - prompt: "Design a color system, typography scale, and diagram style for my course slides."
     route_to: "design"
     why: "Pure visual system / pixels. The skill defers the visual layer to design; it owns narrative, not aesthetics."
   - prompt: "Fact-check whether the historical claims in my lesson about the origins of TCP are actually accurate, with sources."
-    route_to: "deep-research"
-    why: "Pure fact-checking/research of subject matter, not reframing teaching. The skill forbids inventing proof and defers verification to deep-research."
+    route_to: "research-ops"
+    why: "Pure fact-checking/research of subject matter, not reframing teaching. The skill forbids inventing proof and defers verification to a research pass — `research-ops` in this catalog, a deep-research tool where the environment provides one."
 
 capability:
   - scenario: "A learner profile already exists and is complete in 02-DOCS/wiki/teaching/. The user gives a flat, definition-only lesson on 'idempotency' for a mid-level backend course and asks to make it land."

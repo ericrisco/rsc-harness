@@ -17,7 +17,7 @@ Everything lives in `evals/cases.yaml` (the cases) and `evals/README.md` (how to
 
 `scripts/eval-lint.sh` parses every `cases.yaml` and fails the build only on the **structural minimums**: that `evals/cases.yaml` exists, that `should_trigger`, `should_not_trigger`, and `capability` are present as lists, and that their item counts meet **≥ 5 / ≥ 4 / ≥ 1**. (Without python3+PyYAML it degrades to a presence-only key check.) Run it before shipping to catch a missing or undersized section.
 
-It does **not** read inside the entries. Whether each `should_not_trigger` carries a `route_to`, whether that `route_to` names a sibling that actually exists in this repo, whether your `should_trigger` set includes a genuinely non-obvious or non-English phrasing, and whether each `capability` scenario has a real `must_include` rubric of gradeable points — none of that is enforced by the linter. Those are **author and review responsibilities**: verify them by hand (and in the self-audit / code-review pass) before shipping. A green eval-lint means the shape is right, not that the cases are good.
+It also resolves every `route_to`: each value must be a real catalog skill id, `none`, or `external:<name>` for a skill that deliberately lives outside this catalog — a stale route now fails the build. What it still does **not** read: whether each `should_not_trigger` actually carries a `route_to`, whether your `should_trigger` set includes a genuinely non-obvious or non-English phrasing, and whether each `capability` scenario has a real `must_include` rubric of gradeable points. Those are **author and review responsibilities**: verify them by hand (and in the self-audit / code-review pass) before shipping. A green eval-lint means the shape is right, not that the cases are good.
 
 ## cases.yaml structure
 
@@ -33,7 +33,7 @@ should_trigger:
 
 should_not_trigger:
   - prompt: "A near-miss that looks close but belongs elsewhere."
-    route_to: "sibling-id"   # a skill that ACTUALLY exists in this repo, or "none"
+    route_to: "sibling-id"   # a real catalog id, "none", or "external:<name>" — checked by eval-lint
     why: "Why it is NOT this skill and why the sibling owns it."
   # … ≥ 4 total
 
@@ -53,7 +53,7 @@ capability:
 
 ## Writing good `should_not_trigger` cases
 
-These are where descriptions get sharpened. Each near-miss should be genuinely tempting — adjacent in topic but owned by a sibling. The `route_to` must name a skill that **exists in this repo**; a `route_to` pointing at a non-existent skill is a defect. Pick the siblings most likely to be confused with this one and write a case that disambiguates each.
+These are where descriptions get sharpened. Each near-miss should be genuinely tempting — adjacent in topic but owned by a sibling. The `route_to` must name a skill that **exists in this repo** — `eval-lint` fails the build otherwise. If the right owner genuinely ships outside this catalog, say so with `external:<name>` rather than inventing an id: the prefix makes the claim visible instead of indistinguishable from drift. Pick the siblings most likely to be confused with this one and write a case that disambiguates each.
 
 For `author-skill`, the natural confusables are `specify`/`plan` (building a feature, not a skill), `building-agents` (agent loops), `harness` (generic docs/wiki), and `init` (bootstrapping). Route each near-miss to whichever it truly belongs to.
 

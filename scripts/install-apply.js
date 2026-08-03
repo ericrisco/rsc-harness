@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { rmSync, existsSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { rmSync, existsSync, cpSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planInstall } from './install-plan.js';
@@ -112,7 +112,33 @@ export async function applyInstall({ skillIds, target, home, cwd = process.cwd()
   writeState(paths.stateFile, state);
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
   writeFileSync(versionFile(cwd), CLI_VERSION + '\n');
+  ignoreLocalState(cwd);
   return { ...state, backup };
+}
+
+// `.rsc/` holds local machine state — hook scripts, install markers, the sello's
+// seals, the automation-gap log. None of it belongs in a user's repository, and the
+// gap log in particular is prose about what happened in their project: a routine
+// `git add -A` would publish it. Nothing used to keep that out, so add the entry.
+//
+// Additive and idempotent by construction: append one line to an existing
+// .gitignore, never rewrite or reorder it, and never create the file in a directory
+// that is not a git repository.
+export function ignoreLocalState(cwd = process.cwd()) {
+  if (!existsSync(join(cwd, '.git'))) return null;
+  const gi = join(cwd, '.gitignore');
+  let text = '';
+  try { text = existsSync(gi) ? readFileSync(gi, 'utf8') : ''; } catch { return null; }
+  const already = text.split('\n').some((l) => {
+    const s = l.trim().replace(/\/$/, '');
+    return s === '.rsc' || s === '/.rsc';
+  });
+  if (already) return null;
+  const prefix = text === '' ? '' : (text.endsWith('\n') ? '' : '\n');
+  try {
+    appendFileSync(gi, `${prefix}\n# rsc local state (hooks, seals, logs) — machine-local, never committed\n.rsc/\n`);
+    return gi;
+  } catch { return null; }
 }
 
 export function listInstalled({ target, home, cwd = process.cwd() }) {
