@@ -101,6 +101,28 @@ Render it at the dial's verbosity. Do not log a decision to `decisions.md` — a
 | Siding with the plan when it contradicts the constitution | The constitution wins by definition — flag CRITICAL. If the principle itself is wrong, that is a `constitution` change the user makes, not a quiet override here. |
 | Guessing what a vague requirement meant | Guessing defeats the gate. Mark AMBIGUOUS and route to `clarify`; do not encode your guess. |
 
+## Result envelope
+
+End with the parseable block every SDD phase shares, so the dispatcher can chain without
+interpreting prose (contract: `../sdd/SKILL.md`):
+
+```json result-envelope
+{
+  "status": "complete|blocked|failed",
+  "executive_summary": "Cross-read of spec/plan/tasks against the constitution; findings ranked.",
+  "artifact": "02-DOCS/wiki/sdd/analysis/<slug>.md",
+  "next_recommended": "implement",
+  "risk": "low|medium|high",
+  "skill_resolution": {
+    "used": ["analyze"],
+    "missing": [],
+    "fallback": [],
+    "compact_rules": ["Read adversarially across artifacts, not inside one.", "A finding without a location is an opinion."]
+  },
+  "evidence": ["report path exists", "blockers listed with artifact + location", "constitution conflicts named"]
+}
+```
+
 ## Next in the chain
 
 On `GATE: PASS` (or once the user consciously accepts the remaining MEDIUM/LOW findings), proceed to **`implement`** — execute the tasks with TDD discipline, delegating concrete test tooling to the relevant stack skill (`fastapi`, `nextjs`, `go`, `flutter`, `postgresdb`). On `GATE: BLOCKED`, route each CRITICAL/HIGH finding to its owning phase (`clarify`, `plan`, `tasks`, or `constitution`), let the user resolve, then re-run `analyze`. The gate only opens once.

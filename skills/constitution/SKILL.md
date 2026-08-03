@@ -132,6 +132,28 @@ This skill's `02-DOCS` record is the constitution at `02-DOCS/wiki/sdd/constitut
 
 Every later rsc-sdd phase reads this file before it works. The harness maintains and improves the article over the life of the project; this skill is the place that ratifies and amends it.
 
+## Result envelope
+
+End with the parseable block every SDD phase shares, so the dispatcher can chain without
+interpreting prose (contract: `../sdd/SKILL.md`):
+
+```json result-envelope
+{
+  "status": "complete|blocked|failed",
+  "executive_summary": "Constitution written with N numbered, testable rules the later phases inherit.",
+  "artifact": "02-DOCS/wiki/sdd/constitution.md",
+  "next_recommended": "specify",
+  "risk": "low|medium|high",
+  "skill_resolution": {
+    "used": ["constitution"],
+    "missing": [],
+    "fallback": [],
+    "compact_rules": ["Principles are inherited constraints, not choices to re-make.", "Every rule is testable or it is a preference."]
+  },
+  "evidence": ["constitution path exists", "rules numbered and testable", "decisions log appended"]
+}
+```
+
 ## Next in the chain
 
 The constitution is the guardrail; now describe what to build. Hand off to **`../specify/SKILL.md`** — turn a fuzzy intent into a spec (what & why, no implementation), grounded in these principles. The full chain: **constitution → specify → clarify → plan → tasks → analyze → implement → verify → review → ship** (with `debug`, `worktrees`, `parallel` callable on demand). The dispatcher is `../sdd/SKILL.md`.

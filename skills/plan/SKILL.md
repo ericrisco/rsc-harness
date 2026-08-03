@@ -141,6 +141,28 @@ regardless. (`implement` re-checks this as a hard gate before its first commit.)
 - Concrete framework/ORM/test-runner mechanics → the stack skill (`../fastapi/SKILL.md`,
   `../nextjs/SKILL.md`, `../go/SKILL.md`, `../flutter/SKILL.md`, `../postgresdb/SKILL.md`).
 
+## Result envelope
+
+End with the parseable block every SDD phase shares, so the dispatcher can chain without
+interpreting prose (contract: `../sdd/SKILL.md`):
+
+```json result-envelope
+{
+  "status": "complete|blocked|failed",
+  "executive_summary": "Technical plan derived from the clarified spec, with the isolation decision made.",
+  "artifact": "02-DOCS/wiki/sdd/plans/<slug>.md",
+  "next_recommended": "tasks",
+  "risk": "low|medium|high",
+  "skill_resolution": {
+    "used": ["plan"],
+    "missing": [],
+    "fallback": [],
+    "compact_rules": ["The plan answers HOW; the spec owns WHAT.", "Name the isolation choice before the build starts."]
+  },
+  "evidence": ["plan path exists", "each spec acceptance criterion has an approach", "risks and rollback stated"]
+}
+```
+
 ## Next in the chain
 
 Plan written, indexed, decisions logged → propose isolation (above), then hand off to
