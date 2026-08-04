@@ -7,7 +7,7 @@ The three guards below — **diff judge**, **hold-out**, **Generalization gate**
 mechanised: `tests/harden-generalization-gate.test.js` asserts, for each of those three, that the
 loop implements what this file promises. **Adding a fourth guard here means adding its pair to that
 test**; a guard documented but unchecked gives the safety without the protection, which is the
-failure mode this repo has now hit nine times (constitution P2).
+failure mode this repo has now hit ten times (constitution P2).
 
 ## Diagnosis (skill-fault vs eval-fault vs capability)
 
