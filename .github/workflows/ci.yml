@@ -19,6 +19,8 @@ jobs:
         run: npm test
       - name: eval-lint
         run: bash scripts/eval-lint.sh
+      - name: drift-check (every prose link in the catalog resolves)
+        run: npm run drift:check
       - name: cleanup gate (no old marketplace-distribution residue)
         # Unambiguous fingerprints of the retired plugin-marketplace model only.
         # NOT bare "marketplace"/"npx skills" — those are legit words in skill
