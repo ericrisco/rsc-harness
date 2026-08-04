@@ -87,7 +87,7 @@ export default function Todos() {
 
 - **Deployment**: SolidStart uses Nitro-style adapters; for Vercel/Netlify/Node
   targets configure the adapter in `app.config.ts`. Deployment specifics →
-  [`../vercel/SKILL.md`](../vercel/SKILL.md).
+  [`vercel`](../../vercel/SKILL.md).
 
 Version note: SolidStart 1.x is the maintained stable line; **2.0.0-alpha** tracks
 Solid 2.0. Default to 1.x unless the task targets the alpha.

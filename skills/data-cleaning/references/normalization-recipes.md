@@ -133,4 +133,4 @@ clean = clean.with_columns(
 
 pandera validates Polars frames too (`import pandera.polars as pa`), so the gate from
 [validation-patterns.md](validation-patterns.md) carries over. Hand multi-GB analytical SQL to
-[`duckdb`](../duckdb/SKILL.md) — the engine changes, the discipline does not.
+[`duckdb`](../../duckdb/SKILL.md) — the engine changes, the discipline does not.

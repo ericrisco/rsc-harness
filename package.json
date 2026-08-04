@@ -14,10 +14,12 @@
     "manifest": "node scripts/build-manifest.js",
     "manifest:check": "node scripts/build-manifest.js --check",
     "validate": "node scripts/build-manifest.js --validate",
+    "drift:check": "node scripts/drift-check.js",
+    "drift:knowledge": "node scripts/drift-check.js --knowledge",
     "test": "node --test",
     "coverage": "c8 --reporter=text node --test",
     "version": "npm run manifest && git add manifest.json",
-    "prepublishOnly": "npm run manifest && npm run validate"
+    "prepublishOnly": "npm run manifest && npm run validate && npm run drift:check"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
