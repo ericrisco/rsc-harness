@@ -39,10 +39,26 @@ const SCORE_SCHEMA = {
 const FAULT_SCHEMA = {
   type: 'object',
   properties: {
-    fault: { type: 'string', enum: ['skill', 'eval'] },
+    // 'capability' is the honest third exit: this loop can only ever write guidance (SKILL.md /
+    // references), so a failure that needs an executable capability is out of its reach. Saying so
+    // beats writing a paragraph that pretends to cover it.
+    fault: { type: 'string', enum: ['skill', 'eval', 'capability'] },
     rationale: { type: 'string' },
+    missingCapability: { type: 'string' },
+    surface: { type: 'string' },
   },
   required: ['fault', 'rationale'],
+}
+
+const HOLDOUT_VERDICT_SCHEMA = {
+  type: 'object',
+  properties: {
+    verdict: { type: 'string', enum: ['pass', 'block'] },
+    kind: { type: 'string', enum: ['transfer', 'regression', 'indeterminate'] },
+    lift: { type: 'number' },
+    reason: { type: 'string' },
+  },
+  required: ['verdict', 'kind', 'reason'],
 }
 
 const GUARD_SCHEMA = {
@@ -75,7 +91,26 @@ async function scoreRaw(raw, round) {
   )
 }
 
+// The hold-out gate: score the EDITED skill against a fresh scenario the fixer never saw, and let a
+// deterministic CLI decide. The verdict is a comparison of numbers the agent reports, never a
+// judgement the agent makes (constitution P1).
+async function holdoutVerdict(raw, scenario, round) {
+  const payload = JSON.stringify({ ...raw, holdoutScenario: scenario })
+  return agent(
+    `Write this JSON to /tmp/harden-${skillId}-holdout-r${round}.json exactly, then run ` +
+    `\`node scripts/skill-behavior-eval.js --holdout /tmp/harden-${skillId}-holdout-r${round}.json\`. ` +
+    `Read its markdown output and return {verdict, kind, lift, reason} verbatim from that output — ` +
+    `verdict "pass" if the CLI exit code was 0, "block" if it was 1. Do NOT form your own opinion ` +
+    `about whether the fix was good: report what the CLI decided.\n\nJSON:\n${payload}`,
+    { label: `holdout:r${round}`, phase: 'Diagnose & Fix', schema: HOLDOUT_VERDICT_SCHEMA },
+  )
+}
+
 const history = []
+const holdout = []          // one record per fix round: did the hold-out run, and what did it say
+let lastFixHoldout = null   // verdict of the last round that left an edit on disk
+let lastFault = null        // last diagnosis, so the report can name a capability we cannot write
+let outcome = null
 let round = 0
 let committed = null
 
@@ -96,9 +131,16 @@ while (true) {
   const fault = await agent(
     `Follow scripts/skill-harden-rubric.md (Diagnosis). The skill "${skillId}" FAILED its behavioral gate. ` +
     `mustFix:\n- ${score.mustFix.join('\n- ')}\n\nGrader signals (both A/B outputs, per-item evidence):\n${evidence}\n\n` +
-    `Decide fault = 'skill' or 'eval' and give a rationale. Default to 'skill' when unsure.`,
+    `Decide fault = 'skill', 'eval' or 'capability' and give a rationale. Default to 'skill' when unsure.\n\n` +
+    `Choose 'capability' ONLY when the gap cannot be closed by words in a skill body: it needs an ` +
+    `executable capability — something that fires on a real execution event and returns to the agent ` +
+    `information it cannot obtain on its own (a hook, a script, a tool, a sub-agent). Advice that only ` +
+    `tells the agent to remember something is NOT a capability. If you choose 'capability' you MUST name ` +
+    `it in missingCapability and name where it would live in surface; a verdict that cannot name the ` +
+    `capability is an excuse, not a diagnosis — pick 'skill' instead.`,
     { label: `diagnose:r${round}`, phase: 'Diagnose & Fix', schema: FAULT_SCHEMA },
   )
+  lastFault = fault
 
   if (fault.fault === 'eval') {
     const judged = await agent(
@@ -115,31 +157,69 @@ while (true) {
     }
   }
 
+  if (fault.fault === 'capability') {
+    // Out of this loop's reach: it can only write words. Stop honestly instead of producing guidance
+    // that raises the score without the capability existing. Nothing is edited here on purpose.
+    outcome = 'capability-out-of-reach'
+    log(`${skillId}: needs a capability, not guidance — ${fault.missingCapability || '(unnamed)'} in ${fault.surface || '(unnamed surface)'}`)
+    break
+  }
+
   if (fault.fault === 'skill') {
     await agent(
       `Follow the author-skill discipline. The skill "${skillId}" must genuinely cover this mustFix without ` +
       `keyword-stuffing:\n- ${score.mustFix.join('\n- ')}\n\nEdit skills/${skillId}/SKILL.md (body) and/or files under ` +
       `skills/${skillId}/references/ to add the REAL missing capability (method, decision rules, concrete guidance). ` +
-      `Do not touch evals/. Apply the edits now.`,
+      `Do not touch evals/. Apply the edits now.\n\n` +
+      `HARD CONSTRAINT — the Generalization gate (scripts/skill-harden-rubric.md defines it; it binds every ` +
+      `line you write, and it binds BEFORE you write, not after):\n` +
+      `Everything you add is global context that will apply to cases this skill has never seen. Write a ` +
+      `reusable criterion that carries its own applicability condition — never the answer to the one ` +
+      `scenario that failed. Banned outright: identifiers or titles from the eval scenario, names of its ` +
+      `files/symbols/fixtures, rules that branch on its specific data, and reciting the finding as if it ` +
+      `were a rule ("the last round showed X needs Y").\n` +
+      `Litmus test before every line: "would this still help on a case in this domain I have never seen?" ` +
+      `If no, rewrite it as a criterion or drop it. A fix that only lifts this scenario's score will be ` +
+      `caught by the hold-out and reverted, and the round will be wasted.`,
       { label: `fix:r${round}`, phase: 'Diagnose & Fix' },
     )
     const diffJudge = await agent(
       `Follow scripts/skill-harden-rubric.md (Skill-fix guard 1). Run \`git diff -- skills/${skillId}/SKILL.md skills/${skillId}/references\` ` +
-      `and judge: does the diff add genuine capability, or just echo the mustFix wording to satisfy the grader? ` +
-      `If it is keyword-stuffing, run \`git checkout -- skills/${skillId}/SKILL.md skills/${skillId}/references\` to revert it. ` +
+      `and judge BOTH: (a) does the diff add genuine capability, or just echo the mustFix wording to satisfy the ` +
+      `grader? and (b) does every added line survive the Generalization gate — a reusable criterion with its ` +
+      `applicability condition, not the answer to the observed scenario (no eval-specific names, no branching on ` +
+      `its data, no recited findings)? Fail either check and it is not a fix. ` +
+      `If it fails, run \`git checkout -- skills/${skillId}/SKILL.md skills/${skillId}/references\` to revert it. ` +
       `Return {genuine, rationale}.`,
       { label: `diff-judge:r${round}`, phase: 'Diagnose & Fix', schema: GUARD_SCHEMA },
     )
 
-    if (diffJudge.genuine) {
-      // Guard 2: hold-out. Generate a fresh scenario and re-score the A/B on it only.
-      const holdout = await agent(
+    if (!diffJudge.genuine) {
+      holdout.push({ round, ran: false, why: 'edit reverted by the diff judge — nothing to validate' })
+    } else {
+      // Guard 2: hold-out. Score the EDITED skill on a fresh scenario the fixer never saw. The eval
+      // engine runs every scenario with AND without the skill, so this already carries its own lift.
+      const fresh = await agent(
         `Invent ONE fresh capability scenario for the "${skillId}" skill's domain that is NOT in its cases.yaml and ` +
         `does NOT enumerate its own requirements. Return {scenario, mustInclude:[3-6 outcome-level checks]}.`,
         { label: `holdout-gen:r${round}`, phase: 'Diagnose & Fix', schema: HOLDOUT_SCHEMA },
       )
-      const holdoutRaw = await workflow(EVAL, { skillId, scenarios: [holdout] })
-      await scoreRaw(holdoutRaw, `${round}-holdout`) // recorded in transcript; informs the next loop's eval
+      const holdoutRaw = await workflow(EVAL, { skillId, scenarios: [fresh] })
+      const verdict = await holdoutVerdict(holdoutRaw, fresh.scenario, round)
+      lastFixHoldout = verdict
+      holdout.push({ round, ran: true, scenario: fresh.scenario, ...verdict })
+
+      if (verdict.verdict === 'block') {
+        // The edit lifted this skill's own cases.yaml but does not transfer to work the fixer never
+        // saw. A memorized fix is not a fix: revert it. This is the guard the rubric always promised
+        // and the code never enforced — see 02-DOCS/wiki/sdd/specs/generalization-gate.md.
+        log(`${skillId}: hold-out ${verdict.kind} (lift ${verdict.lift}) — reverting round ${round}'s edit`)
+        await agent(
+          `Run exactly \`git checkout -- skills/${skillId}/SKILL.md skills/${skillId}/references\` and nothing else. ` +
+          `The edit failed the hold-out gate (${verdict.kind}) so it must not survive. Return the command's output.`,
+          { label: `holdout-revert:r${round}`, phase: 'Diagnose & Fix', effort: 'low' },
+        )
+      }
     }
   }
 
@@ -147,7 +227,13 @@ while (true) {
 }
 
 const passed = history.length > 0 && history[history.length - 1].pass === true
-if (passed && !noCommit) {
+// A main-gate pass whose last surviving edit failed the hold-out is NOT a pass: it is a fix that
+// only works on the cases it was tuned against. Conservative on purpose — a lost commit costs one
+// re-run, a certified overfit costs the catalog.
+const holdoutClean = !lastFixHoldout || lastFixHoldout.verdict === 'pass'
+let notCommittedBecause = null
+
+if (passed && holdoutClean && !noCommit) {
   phase('Commit')
   const commit = await agent(
     `The skill "${skillId}" now passes its behavioral gate. Commit ONLY its files: ` +
@@ -156,6 +242,24 @@ if (passed && !noCommit) {
     { label: `commit:${skillId}`, phase: 'Commit' },
   )
   committed = (commit || '').trim()
+} else if (outcome === 'capability-out-of-reach') {
+  notCommittedBecause = `needs a capability this loop cannot write: ${lastFault.missingCapability || '(unnamed)'} in ${lastFault.surface || '(unnamed surface)'}. Route it through specify — guidance cannot close this gap.`
+} else if (!passed) {
+  notCommittedBecause = 'the behavioral gate still fails. Read the last scorecard and fix by hand, or deprecate the skill.'
+} else if (!holdoutClean) {
+  notCommittedBecause = `the last edit passed cases.yaml but failed the hold-out (${lastFixHoldout.kind}, lift ${lastFixHoldout.lift}) and was reverted. Re-run to try a different fix, or write the criterion by hand.`
+} else if (noCommit) {
+  notCommittedBecause = 'noCommit was requested.'
 }
 
-return { skillId, rounds: round + 1, history, committed, passed }
+return {
+  skillId,
+  rounds: round + 1,
+  history,
+  holdout,
+  outcome: outcome || (passed && holdoutClean ? 'passed' : 'gave-up'),
+  missingCapability: lastFault && lastFault.fault === 'capability' ? { capability: lastFault.missingCapability, surface: lastFault.surface, rationale: lastFault.rationale } : null,
+  committed,
+  passed: passed && holdoutClean,
+  notCommittedBecause,
+}
