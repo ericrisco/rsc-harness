@@ -1,0 +1,58 @@
+skill: bro
+
+# `bro` is the final-language pass: it rewrites an existing answer/draft or
+# drafts requested text in a natural register. It does not define a reusable
+# brand system, translate content, or choose a documentation/copy strategy.
+should_trigger:
+  - prompt: "Bro, escribe como un humano."
+    why: "A terse bro-style instruction after an answer is the canonical request to rewrite the last assistant message naturally."
+
+  - prompt: "Rewrite your last answer so it sounds like a person, not a consultant."
+    why: "The user wants a human-language pass over the previous answer while preserving its content."
+
+  - prompt: "Haz este correo más natural y directo, pero no cambies las fechas ni los compromisos."
+    why: "Rewriting a supplied draft while preserving facts and commitments is the skill's core contract."
+
+  - prompt: "Això sona escrit per una IA. Fes-ho més humà i sense tanta cerimònia."
+    why: "Catalan request to remove AI-shaped formality tests multilingual semantic triggering."
+
+  - prompt: "Can you say that again in plain language without all the corporate jargon?"
+    why: "The symptom is jargon and artificial formality rather than the skill name, but the needed action is the same rewrite."
+
+  - prompt: "Escríbeme una respuesta breve y humana para decirle que llegaremos un día tarde."
+    why: "The user requests new text rather than a rewrite, but explicitly wants the same natural, truthful voice."
+
+  - prompt: "Keep all the technical details, just make it sound less robotic."
+    why: "Humanizing without deleting precision exercises the distinction between plain language and simplification."
+
+should_not_trigger:
+  - prompt: "Define a reusable voice guide so every writer and channel sounds like our brand."
+    route_to: "brand-voice"
+    why: "A standing voice system is brand-voice; bro only performs a local writing pass."
+
+  - prompt: "Translate this onboarding email from English to Spanish and adapt the date and currency formats."
+    route_to: "translation-l10n"
+    why: "Translation and locale-aware adaptation are owned by translation-l10n, even when natural prose matters."
+
+  - prompt: "Turn this mixed README into a clean tutorial and API reference with runnable examples."
+    route_to: "technical-writing"
+    why: "Choosing documentation modes and restructuring technical docs is technical-writing, not a final tone pass."
+
+  - prompt: "Write the hero, value proposition and CTA for our pricing page."
+    route_to: "landing-copy"
+    why: "Conversion architecture and finished landing-page copy belong to landing-copy; bro may only polish its language afterward."
+
+  - prompt: "Rewrite this function to be simpler and remove the unnecessary abstractions."
+    route_to: "simplify-code"
+    why: "The requested source-code simplification is owned by simplify-code; 'rewrite' does not make it a prose task."
+
+capability:
+  - scenario: "The previous assistant answer is a long Spanish status update full of headings, repeated summaries, corporate jargon and fake enthusiasm. Rewrite it for a client while preserving a June 30 deadline, a EUR 2,400 price, one unresolved risk, two URLs and the original uncertainty."
+    must_include:
+      - "preserves June 30, EUR 2,400, both URLs, the unresolved risk and the original uncertainty exactly"
+      - "uses natural Spanish appropriate for a client rather than automatically becoming slangy or over-casual"
+      - "removes needless headings, repeated conclusions, corporate filler and canned enthusiasm"
+      - "uses concrete verbs and readable sentence rhythm without adding typos or forced fragments"
+      - "does not invent evidence, anecdotes, opinions, commitments or certainty"
+      - "returns the rewritten message without a meta preface or an explanation of the edits"
+      - "keeps any harness orientation clearly outside the client-ready artifact"

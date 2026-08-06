@@ -1,0 +1,42 @@
+skill: idea-refinement
+
+should_trigger:
+  - prompt: "I have a vague idea for helping remote teams share what they know; explore several versions before we spec it."
+    why: "A rough product idea needs divergent directions and a choice before requirements."
+  - prompt: "No quiero que me des la razón: abre opciones y destroza los supuestos de esta idea de onboarding."
+    why: "Spanish request for option generation and assumption pressure-testing."
+  - prompt: "Tenemos una idea de automatizar soporte, pero aún no sabemos si debería aconsejar, pedir aprobación o actuar sola."
+    why: "The trust ladder is the key unresolved product direction."
+  - prompt: "Fes un pre-mortem de la idea i proposa cinc enfocaments realment diferents abans de triar-ne un."
+    why: "Catalan request for pre-mortem plus meaningful divergence."
+  - prompt: "Turn this feature-shaped idea into a problem, alternatives, Not Now list, and the cheapest experiment."
+    why: "Names the complete refinement artifact and test handoff."
+  - prompt: "We keep circling three product concepts; compare them on evidence, reversibility, and time to learning."
+    why: "Convergence across explicit criteria is owned here."
+
+should_not_trigger:
+  - prompt: "Write the approved feature spec with user stories and acceptance criteria."
+    route_to: specify
+    why: "The direction is chosen and now needs the WHAT/WHY contract."
+  - prompt: "Size the European payroll market with TAM, SAM, SOM and dated sources."
+    route_to: market-research
+    why: "Defensible market sizing and demand evidence, not ideation."
+  - prompt: "Track what Notion and Slite shipped this quarter and compare their moves."
+    route_to: competitor-watch
+    why: "Standing named-competitor intelligence."
+  - prompt: "Break the notifications spec into dependency-ordered implementation tasks."
+    route_to: tasks
+    why: "Execution decomposition occurs after spec and plan."
+  - prompt: "Design the sample size and guardrail metrics for our landing-page experiment."
+    route_to: ab-testing
+    why: "The direction is already an experiment needing statistical design."
+
+capability:
+  - scenario: "Refine a rough idea for an AI assistant that helps small agencies capture project knowledge without creating more admin work."
+    must_include:
+      - "Reframes the feature idea as actor, current workaround, desired progress, constraints, and separate evidence versus assumptions."
+      - "Produces five to eight materially different directions, including different trust or workflow mechanisms rather than cosmetic variants."
+      - "Pressure-tests the strongest directions for adoption, data, permission, switching-cost, dependency, and failure assumptions."
+      - "Compares finalists against the same explicit criteria and recommends one with confidence and a fact that could reverse the decision."
+      - "Includes a Not Now list so discarded scope does not leak into the first experiment."
+      - "Defines one cheap next experiment with both a support signal and a kill signal, then hands the survivor to specify."

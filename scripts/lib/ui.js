@@ -92,11 +92,11 @@ function frame(phase, cols, sparks, white) {
 }
 
 // Animated ASCII wordmark — the exaggerated "WOW". Static plain text when not a TTY.
-export async function banner() {
+export async function banner(skillCount = 'all') {
   if (!stdout.isTTY) {
     say('');
     for (const l of ART) say(l);
-    say('  231 skills · one CLI · zero bloat');
+    say(`  ${skillCount} skills · one CLI · zero bloat`);
     return;
   }
   const rows = ART.length;
@@ -133,7 +133,7 @@ export async function banner() {
   // settle on a final rainbow snapshot
   stdout.write(`\x1b[${rows}A`);
   stdout.write(frame(15, W));
-  say(C.dim('  231 skills · one CLI · zero bloat'));
+  say(C.dim(`  ${skillCount} skills · one CLI · zero bloat`));
   stdout.write('\x1b[?25h'); // show cursor
 }
 

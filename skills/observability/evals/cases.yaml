@@ -47,3 +47,5 @@ capability:
       - a multi-window SLO burn-rate alert defined from the emitted metrics
       - respects the cardinality rule (no user_id/request_id/email as a metric label) and logs no PII (opaque ids, redaction in the Collector)
       - exports through a Collector via OTLP, not straight to a vendor
+      - starts from two to four concrete on-call questions and maps metrics to that/how much, traces to where, and logs to why
+      - induces one safe failure and proves the correlated metric, error trace, and structured log actually arrive without PII

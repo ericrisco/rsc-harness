@@ -1,0 +1,42 @@
+skill: decision-challenge
+
+should_trigger:
+  - prompt: "Before the irreversible customer-ID migration, challenge every safety claim and give me proceed, hold, or stop."
+    why: "High-impact irreversible decision with explicit adversarial preflight."
+  - prompt: "No me creo nuestra propia confianza en este cambio de auth: separa las afirmaciones y busca qué las tumba."
+    why: "Spanish request to isolate and attack high-stakes claims."
+  - prompt: "Stress-test this architecture bet, especially the facts that would reverse the recommendation."
+    why: "A consequential choice needs decision-changing counterevidence."
+  - prompt: "Abans de signar el GO, qüestiona el pla sense deixar-te arrossegar per l'explicació de l'autor."
+    why: "Catalan request for an isolated adversarial launch decision."
+  - prompt: "The executive wants an exception to failed launch gates; build a challenge packet and reconcile the surviving risks."
+    why: "Authority pressure plus failed gates calls for evidence-bound verdict."
+  - prompt: "Our rollback claim is based on a backup; verify restore time, data reconciliation, and dependencies before we proceed."
+    why: "Specific migration claims need tests, not debate."
+
+should_not_trigger:
+  - prompt: "Review this finished diff against the approved SDD spec and report findings."
+    route_to: review
+    why: "Post-verification SDD code judgment."
+  - prompt: "Review this standalone pull request; there is no spec or plan."
+    route_to: code-review
+    why: "Spec-less concrete diff review."
+  - prompt: "Cross-read the constitution, spec, plan and tasks for contradictions before implementation."
+    route_to: analyze
+    why: "Pre-code consistency gate across SDD artifacts."
+  - prompt: "Threat-model the upload endpoint and run the repository security scanners."
+    route_to: security-scan
+    why: "Security domain audit and tooling own the task."
+  - prompt: "Compare the new system prompt to the old one on a golden set and measure lift."
+    route_to: agent-eval
+    why: "Controlled AI-system evaluation, not generic decision challenge."
+
+capability:
+  - scenario: "A team plans to replace integer customer IDs with UUIDs in one maintenance window and assumes foreign keys, external consumers, duration and last night's backup are all sufficient."
+    must_include:
+      - "Materializes separate claims for dependency coverage, row volume/duration, consumer compatibility, restore timing, and data reconciliation."
+      - "Creates an isolated challenge packet that excludes author confidence and treats the migration artifact/revision as fixed input."
+      - "Raises concrete counterexamples and converts the strongest doubts into read-only inventory, dry-run, restore-rehearsal, and consumer-evidence requests."
+      - "Reconciles each claim as verified, refuted, mitigated, uncertain, or explicitly accepted risk with evidence and owner."
+      - "Issues PROCEED, HOLD, or STOP with a clear reason and the evidence/change that would unlock a non-proceed verdict."
+      - "Applies the two-cycle stopping rule and does not require cross-model execution or mutate production without authority."

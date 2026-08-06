@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildManifest } from '../scripts/build-manifest.js';
+import { skillsForProfile } from '../scripts/lib/manifest.js';
 
 test('manifest lists all skills with required fields', () => {
   const m = buildManifest();
@@ -17,5 +18,12 @@ test('every recommends id references a real skill', () => {
     for (const r of s.recommends || []) {
       assert.ok(ids.has(r), `${s.id} recommends unknown ${r}`);
     }
+  }
+});
+
+test('bro is present in every default profile', () => {
+  const m = buildManifest();
+  for (const profile of ['minimal', 'core', 'full']) {
+    assert.ok(skillsForProfile(m, profile).includes('bro'), `${profile} profile must install bro`);
   }
 });

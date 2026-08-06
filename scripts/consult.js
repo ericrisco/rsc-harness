@@ -1,4 +1,4 @@
-import initSqlJs from 'sql.js';
+import { buildTextCorpus, rankText } from './lib/text-rank.js';
 
 // Stopwords (es + en + common EU words) — these match everywhere via LIKE and drown the signal.
 const STOP = new Set([
@@ -43,6 +43,43 @@ const SYNONYMS = {
   presentacion: ['presentations'], 'presentación': ['presentations'], diapositivas: ['slides'],
   curso: ['course', 'teaching'], 'enseñar': ['teaching'], ensenar: ['teaching'],
   marketing: ['marketing'], copy: ['copywriting'], texto: ['copywriting'], textos: ['copywriting'],
+  human: ['bro', 'human-writing', 'natural-language', 'plain-language'],
+  humano: ['bro', 'human-writing', 'natural-language', 'plain-language'],
+  humana: ['bro', 'human-writing', 'natural-language', 'plain-language'],
+  huma: ['bro', 'human-writing', 'natural-language', 'plain-language'],
+  natural: ['bro', 'human-writing', 'natural-language', 'plain-language'],
+  robotico: ['bro', 'human-writing'], robotica: ['bro', 'human-writing'],
+  robotic: ['bro', 'human-writing'], roboticamente: ['bro', 'human-writing'],
+  jerga: ['bro', 'plain-language', 'no-jargon'], jargon: ['bro', 'plain-language', 'no-jargon'],
+  // Cross-cutting workflow vocabulary. These map multilingual/colloquial
+  // wording to the exact compound tags used by the catalog.
+  challenge: ['adversarial-review', 'decision-quality', 'preflight'], challenged: ['adversarial-review'],
+  cuestiona: ['adversarial-review', 'decision-quality', 'preflight'], cuestionar: ['adversarial-review'],
+  'qüestiona': ['adversarial-review', 'decision-quality', 'preflight'],
+  supuestos: ['assumptions', 'adversarial-review'], suposiciones: ['assumptions'],
+  afirmaciones: ['assumptions', 'adversarial-review'], claims: ['assumptions', 'adversarial-review'],
+  stress: ['adversarial-review', 'preflight'],
+  retire: ['deprecation', 'removal', 'consumer-migration'], retired: ['deprecation', 'removal'],
+  deprecated: ['deprecation', 'removal'], deprecada: ['deprecation', 'removal'],
+  retirar: ['deprecation', 'removal'], retirada: ['deprecation', 'removal', 'consumer-migration'],
+  legado: ['deprecation', 'compatibility'], legacy: ['deprecation', 'compatibility'],
+  simplifica: ['code-simplification', 'refactoring', 'readability'],
+  simplificar: ['code-simplification', 'refactoring', 'readability'],
+  simplify: ['code-simplification', 'refactoring', 'readability'],
+  simplified: ['code-simplification', 'readability'], clarity: ['readability', 'complexity'],
+  enginyos: ['readability', 'complexity'], caracterizacion: ['behavior-preservation'],
+  'caracterización': ['behavior-preservation'], caracteritzacio: ['behavior-preservation'],
+  'caracterització': ['behavior-preservation'], wrappers: ['code-simplification'],
+  official: ['official-docs', 'primary-sources'], oficiales: ['official-docs', 'primary-sources'],
+  oficial: ['official-docs', 'primary-sources'], documentacion: ['official-docs'],
+  'documentación': ['official-docs'], fonts: ['primary-sources'], fuentes: ['primary-sources'],
+  sources: ['primary-sources'], lockfile: ['version-detection'],
+  specification: ['primary-sources'], specifications: ['primary-sources'],
+  version: ['version-detection'], versions: ['version-detection'], versioned: ['version-detection'],
+  'versión': ['version-detection'], versio: ['version-detection'], 'versió': ['version-detection'],
+  cite: ['primary-sources'], cited: ['primary-sources'], citations: ['primary-sources'],
+  concepts: ['idea-refinement', 'ideation'], conceptos: ['idea-refinement', 'ideation'],
+  conceptes: ['idea-refinement', 'ideation'], premortem: ['idea-refinement', 'ideation'],
 };
 
 const SKILL_ROUTING_TERMS = ['suggest', 'detect', 'install', 'meta'];
@@ -78,6 +115,7 @@ const SKILL_ROUTING_VERBS = new Set([
 ]);
 
 const MIN_USEFUL_SCORE = 2;
+const LEXICAL_WEIGHT = 100;
 const LOW_SIGNAL_TAG_TERMS = new Set(['web', 'frontend']);
 
 function fold(term) {
@@ -101,7 +139,10 @@ function expandedTerms(query) {
   for (const t of tokens) {
     if (STOP.has(t)) continue;
     set.add(t);
-    for (const syn of SYNONYMS[t] || []) set.add(syn);
+    // Do not read inherited Object.prototype values (for example a query
+    // containing "constructor"). They are functions, not synonym arrays.
+    const synonyms = Object.hasOwn(SYNONYMS, t) ? SYNONYMS[t] : [];
+    for (const syn of synonyms) set.add(syn);
   }
   if (hasSkillNoun && hasSkillRoutingVerb) {
     for (const term of SKILL_ROUTING_TERMS) set.add(term);
@@ -109,48 +150,40 @@ function expandedTerms(query) {
   return [...set];
 }
 
+export async function createRanker(manifest) {
+  const corpus = buildTextCorpus(manifest.skills);
+
+  return {
+    rank(query) {
+      const terms = expandedTerms(query);
+      if (!terms.length) return [];
+      const exact = scoreRows(manifest.skills, terms);
+      const exactById = new Map(exact.map((row) => [row.id, row.score]));
+      // Synonyms feed the statistical ranker as well as the exact scorer. This
+      // preserves Spanish/Catalan intent mapping while TF-IDF handles lexical
+      // variants and description-wide relevance.
+      const lexical = rankText(corpus, `${query} ${terms.join(' ')}`);
+      const lexicalById = new Map(lexical.map((row) => [row.id, row.score]));
+      const maxExact = Math.max(0, ...exact.map((row) => row.score));
+      const maxLexical = lexical[0]?.score || 0;
+      if (maxExact < MIN_USEFUL_SCORE && maxLexical < 0.08) return [];
+
+      const ids = new Set([...exactById.keys(), ...lexicalById.keys()]);
+      return [...ids].map((id) => ({
+        id,
+        score: (exactById.get(id) || 0) + (lexicalById.get(id) || 0) * LEXICAL_WEIGHT,
+      })).sort(byScore);
+    },
+    close() {},
+  };
+}
+
 export async function rank(manifest, query) {
-  const terms = expandedTerms(query);
-  if (!terms.length) return [];
-  const scored = scoreRows(manifest.skills, terms);
-  if (!scored.length || Math.max(...scored.map((r) => r.score)) < MIN_USEFUL_SCORE) return [];
-  const SQL = await initSqlJs();
-  const db = new SQL.Database();
-
-  const rows = manifest.skills.map((sk) => [
-    sk.id,
-    ` ${sk.id} ${sk.description} ${(sk.tags || []).join(' ')} `.toLowerCase(),
-  ]);
-
-  // Prefer FTS5 for fidelity with ECC; fall back to scored whole-word LIKE if
-  // the sql.js wasm build was compiled without the FTS5 module.
+  const ranker = await createRanker(manifest);
   try {
-    db.run('CREATE VIRTUAL TABLE s USING fts5(id, doc);');
-    const stmt = db.prepare('INSERT INTO s (id, doc) VALUES (?, ?)');
-    for (const r of rows) stmt.run(r);
-    stmt.free();
-    const match = terms.map((t) => `"${t}"*`).join(' OR ');
-    const res = db.exec('SELECT id FROM s WHERE s MATCH ? ORDER BY rank', [match]);
-    db.close();
-    if (!res.length) return [];
-    const ids = new Set(res[0].values.map(([id]) => id));
-    return scored.filter((r) => ids.has(r.id)).sort(byScore);
-  } catch {
-    db.run('CREATE TABLE s (id TEXT, doc TEXT);');
-    const stmt = db.prepare('INSERT INTO s (id, doc) VALUES (?, ?)');
-    for (const r of rows) stmt.run(r);
-    stmt.free();
-    // Whole-word match: pad doc with spaces and look for "% term %".
-    const score = terms.map(() => '(doc LIKE ?)').join(' + ');
-    const params = terms.map((t) => `% ${t} %`);
-    const res = db.exec(
-      `SELECT id, (${score}) AS score FROM s WHERE score > 0 ORDER BY score DESC, id`,
-      params,
-    );
-    db.close();
-    if (!res.length) return [];
-    const ids = new Set(res[0].values.map(([id]) => id));
-    return scored.filter((r) => ids.has(r.id)).sort(byScore);
+    return ranker.rank(query);
+  } finally {
+    ranker.close();
   }
 }
 

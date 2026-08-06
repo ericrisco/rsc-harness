@@ -59,7 +59,7 @@ capability:
       - "Checks what is already installed (npx @ericrisco/rsc list) and never proposes a skill the user already has"
       - "Makes at most one suggestion and does not interrupt the flow for nice-to-haves"
 
-  - scenario: "Mid-conversation, after base install, the user says 'quiero montar una pagina web para vender cursos online'. `init`, `harness`, `orient`, and `suggest` are already installed; `nextjs` is not. Show how rsc-suggest behaves."
+  - scenario: "Mid-conversation, after base install, the user says 'quiero montar una pagina web para vender cursos online'. `init`, `harness`, `orient`, `suggest`, and `bro` are already installed; `nextjs` is not. Show how rsc-suggest behaves."
     must_include:
       - "Treats the message as in-agent capability intent, not as a CLI-only consult task"
       - "Runs `npx @ericrisco/rsc catalog --available` to see the not-installed skills (already excludes installed `init`/`harness`)"

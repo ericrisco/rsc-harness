@@ -14,6 +14,10 @@ You are wiring the *inside* view of a service: when something breaks at 3am, an 
 
 **Every signal carries the same correlation identity: `trace_id`, `service.name`, `deployment.environment`.** A log line you cannot pivot to its trace, or a spiking metric you cannot pivot to an exemplar span, doubles your mean-time-to-resolution — you are back to grepping. Three signals that don't share keys are three disconnected tools; three that do are one queryable system. Set the resource once at SDK init, inject `trace_id`/`span_id` into every log, and never emit a metric you can't tie back to a service and environment.
 
+## Start from the operator's questions
+
+Before choosing signals, write **two to four questions on-call must answer during the likely incident**. For example: “Are payment retries recovering?”, “Which dependency and failure class drives exhaustion?”, “Can one payment be charged twice?”, “Which customer-visible operations need intervention now?” Then assign the cheapest signal: metrics say **that/how much**, traces show **where/causal path**, logs explain **why for this event**. If a proposed event or label answers none of the questions, do not emit it.
+
 ## The three pillars — when each earns its place
 
 Don't emit all three of everything. Each signal answers a different question at a different cost.
@@ -227,3 +231,5 @@ The instrumentation above makes these *possible* — defining them is your job; 
 ## Verify
 
 Run `scripts/verify.sh` against the directory holding your Collector config + SDK init. It checks the config is valid, that every defined exporter is actually wired into a pipeline (the classic "defined but unused" footgun), that `service.name` is set, and warns on high-cardinality metric labels. It is read-only and exits 0 when there's nothing to check.
+
+Then prove the wire with one safe induced failure in a test/staging path. Confirm the expected error-rate metric changes, the trace records the failing operation and error status, and the structured log carries the same `trace_id` without PII. Query the backend/Collector output; “the instrumentation code ran” is not evidence that usable telemetry arrived. Live paging and escalation proof remains `../monitoring/SKILL.md`.

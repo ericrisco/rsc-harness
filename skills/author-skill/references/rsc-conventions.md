@@ -43,7 +43,7 @@ profiles: [core, full]           # optional: named-profile membership
 - `tags` drive the FTS recommender — pick the words a user would actually type.
 - `recommends` must reference **real skill ids**; `build-manifest.js --validate`
   fails on a dangling id.
-- `profiles` is optional. `minimal` = the floor (`suggest`, `harness`, `init`);
+- `profiles` is optional. `minimal` = the floor (`orient`, `suggest`, `bro`, `harness`, `init`);
   `core` = the SDD workflow; `full` = everything. Most stack skills set `[full]`
   or omit it (they are installed on demand, not by profile).
 

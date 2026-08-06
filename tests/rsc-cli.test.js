@@ -142,6 +142,8 @@ test('rsc install prints the agent handoff (reload → equipped → ready, no au
   assert.ok(out.includes('AGENT HANDOFF'), `handoff banner present:\n${out}`);
   assert.ok(/reload|restart/i.test(out), 'tells the agent to reload/restart');
   assert.ok(out.includes('orient + suggest'), 'names the always-on floor as equipped');
+  assert.ok(out.includes('bro is installed'), 'names the default human-language skill as equipped');
+  assert.ok(existsSync(join(cwd, '.claude/skills/bro/SKILL.md')), 'minimal profile installs bro');
   assert.ok(/do not auto-start/i.test(out), 'forbids auto-starting a task');
 });
 
@@ -153,6 +155,7 @@ test('rsc add nudges to reload so the new skill activates', () => {
   });
   assert.equal(result.status, 0, result.stderr);
   assert.ok(/reload|restart/i.test(result.stdout), `add reminds to reload:\n${result.stdout}`);
+  assert.ok(existsSync(join(cwd, '.claude/skills/bro/SKILL.md')), 'direct add also keeps bro in the default floor');
 });
 
 test('rsc upgrade --dry-run prints npm upgrade command', () => {

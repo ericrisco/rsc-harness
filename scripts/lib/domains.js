@@ -4,8 +4,8 @@
 // catalog grows deliberately, never silently.
 
 export const DOMAINS = [
-  { title: 'Core & control plane', ids: ['init', 'harness', 'orient', 'suggest', 'author-skill', 'sdd-init'] },
-  { title: 'Spec-Driven Development', ids: ['sdd', 'constitution', 'specify', 'clarify', 'plan', 'tasks', 'analyze', 'implement', 'verify', 'review', 'ship', 'debug', 'worktrees', 'parallel'] },
+  { title: 'Core & control plane', ids: ['init', 'harness', 'orient', 'suggest', 'bro', 'author-skill', 'sdd-init'] },
+  { title: 'Spec-Driven Development', ids: ['sdd', 'constitution', 'idea-refinement', 'specify', 'clarify', 'plan', 'tasks', 'analyze', 'decision-challenge', 'implement', 'source-grounded-development', 'verify', 'review', 'simplify-code', 'ship', 'debug', 'worktrees', 'parallel'] },
   { title: 'Run a business', ids: ['finance-ops', 'invoicing', 'bookkeeping', 'pricing', 'sales-pipeline', 'lead-gen', 'cold-outreach', 'proposals', 'contracts', 'customer-support', 'client-onboarding', 'retention', 'hiring', 'people-ops', 'inventory', 'logistics-ops', 'procurement', 'meeting-notes', 'sop-builder', 'project-ops'] },
   { title: 'Raise & model money', ids: ['pitch-deck', 'investor-materials', 'financial-model', 'fundraising', 'unit-economics', 'grants'] },
   { title: 'Legal, privacy & compliance', ids: ['gdpr-privacy', 'terms-conditions', 'compliance', 'data-policy', 'ip-trademark'] },
@@ -22,7 +22,7 @@ export const DOMAINS = [
   { title: 'Game development', ids: ['godot', 'unity', 'unreal', 'game-design', 'game-storytelling', 'level-design', 'gamedev-shaders', 'gamedev-multiplayer', 'gamedev-physics', 'gamedev-pathing', 'gamedev-shipping'] },
   { title: 'Databases & data layer', ids: ['postgresdb', 'mysql', 'mongodb', 'redis', 'supabase', 'neon', 'planetscale', 'sqlite-turso', 'prisma-orm', 'drizzle-orm', 'firebase', 'dynamodb', 'vector-db', 'clickhouse-analytics', 'duckdb', 'db-migrations', 'backups'] },
   { title: 'Ship & operate — platforms', ids: ['vercel', 'netlify', 'cloudflare', 'railway', 'render', 'fly-io', 'coolify', 'hetzner', 'digitalocean', 'aws-essentials', 'gcp-essentials'] },
-  { title: 'Ship & operate — devops', ids: ['docker', 'github-actions', 'git-workflow', 'domains-dns', 'monitoring', 'email-deliverability', 'scaling', 'deployment'] },
+  { title: 'Ship & operate — devops', ids: ['docker', 'github-actions', 'git-workflow', 'domains-dns', 'monitoring', 'email-deliverability', 'scaling', 'deployment', 'deprecation'] },
   { title: 'Ship & operate — quality & security', ids: ['code-review', 'security-scan', 'secure-coding', 'testing-py', 'testing-web', 'testing-go', 'e2e-testing', 'accessibility', 'performance', 'error-handling', 'observability'] },
   { title: 'Design & content craft', ids: ['design', 'presentations', 'course-storytelling', 'course-builder', 'technical-writing', 'translation-l10n'] },
   { title: 'Knowledge & meta', ids: ['knowledge-ops', 'codebase-onboarding', 'research-ops', 'decision-records', 'continuous-learning', 'skill-scout', 'context-budget', 'roast-me', 'fable-operator'] },

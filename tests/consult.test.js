@@ -20,6 +20,12 @@ test('empty query returns []', async () => {
   assert.deepEqual(await rank(m, '   '), []);
 });
 
+test('prototype-looking query terms do not crash synonym expansion', async () => {
+  const m = loadManifest();
+  const ranked = await rank(m, 'simplify the constructor without changing behavior');
+  assert.ok(Array.isArray(ranked));
+});
+
 test('ranks suggest for multilingual skill recommendation intent queries', async () => {
   const m = loadManifest();
   const queries = [
@@ -61,4 +67,25 @@ test('ranks project bootstrap intent for starting a web project', async () => {
   const ids = ranked.slice(0, 4).map((r) => r.id);
   assert.ok(ids.includes('init'), `expected init in top 4; got ${ids.join(', ')}`);
   assert.ok(ids.includes('nextjs'), `expected nextjs in top 4; got ${ids.join(', ')}`);
+});
+
+test('ranks bro first for human-language rewrite intent across supported phrasing', async () => {
+  const m = loadManifest();
+  const queries = [
+    'bro, escribe como un humano',
+    'escribe como un humano',
+    'hazlo más natural y menos robótico',
+    'Això sona escrit per una IA. Fes-ho més humà',
+    'rewrite your last answer in plain human language',
+    'say it without all the corporate jargon',
+  ];
+
+  for (const query of queries) {
+    const ranked = await rank(m, query);
+    assert.equal(
+      ranked[0]?.id,
+      'bro',
+      `${query} should rank bro first; got ${ranked.slice(0, 6).map((r) => r.id).join(', ')}`,
+    );
+  }
 });

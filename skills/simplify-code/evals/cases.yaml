@@ -1,0 +1,42 @@
+skill: simplify-code
+
+should_trigger:
+  - prompt: "This parser works and its tests are green, but the nested branches are impossible to follow; simplify it without changing behavior."
+    why: "Correct code needs bounded behaviour-preserving simplification."
+  - prompt: "Simplifica esta función, pero conserva exactamente errores, orden y efectos laterales."
+    why: "Spanish request explicitly names observable contract preservation."
+  - prompt: "The feature is done; now remove the accidental complexity from only the files we changed."
+    why: "Post-feature bounded cleanup is the default scope."
+  - prompt: "Fes el codi menys enginyós i més directe, amb tests de caracterització abans de tocar-lo."
+    why: "Catalan request for characterization-led simplification."
+  - prompt: "Collapse these pass-through wrappers and duplicate state if callers cannot observe a difference."
+    why: "Specific removable complexity with an equivalence condition."
+  - prompt: "Refactor this hot path for clarity, but keep the benchmark and allocation profile within noise."
+    why: "Performance is part of the observable simplification contract."
+
+should_not_trigger:
+  - prompt: "The parser throws on valid quoted values; reproduce the bug and fix it."
+    route_to: debug
+    why: "Behaviour is incorrect, so diagnosis precedes any cleanup."
+  - prompt: "Review this pull request and list correctness issues, but do not edit it."
+    route_to: code-review
+    why: "Read-only spec-less diff judgment."
+  - prompt: "Verify the finished SDD implementation against every acceptance criterion."
+    route_to: verify
+    why: "Evidence gate rather than code editing."
+  - prompt: "The page is slow; profile Core Web Vitals and fix the measured bottleneck."
+    route_to: performance
+    why: "Measured speed work owns the task."
+  - prompt: "Redesign the public API and migrate all callers to the new contract."
+    route_to: api-design
+    why: "The requested behaviour/interface change is not simplification."
+
+capability:
+  - scenario: "Simplify an 80-line configuration parser whose current tests cover the happy path but whose callers depend on comment handling, quoting, numeric conversion, insertion order and ignored malformed lines."
+    must_include:
+      - "Bounds the target and inspects callers, dirty-worktree state, generated code, and explicit protected regions without mutating files to hide content."
+      - "States the observable contract including return shape, ignored input, type conversion, order, errors and side effects."
+      - "Adds characterization cases for uncovered contract edges and records a green baseline before refactoring."
+      - "Removes one source of complexity at a time without adding features, redesigning public APIs, or relocating complexity into speculative abstractions."
+      - "Runs focused tests plus relevant lint/type/build gates after coherent steps and compares a benchmark when performance is contractual."
+      - "Uses targeted edits for a bad step and never resets, auto-commits, pushes, deploys, or discards unrelated changes."

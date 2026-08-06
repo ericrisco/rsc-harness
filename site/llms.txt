@@ -4,7 +4,7 @@
 > configures AI coding agents for a project. It reads the repository, asks which
 > assistants to target and what the user wants to build or manage, then installs only
 > the skills that fit — one at a time, so nothing unused touches the model's context.
-> 257 skills across 21 domains, each cleared an adversarial >= 8.5/10 quality gate.
+> 264 skills across 21 domains, each cleared an adversarial >= 8.5/10 quality gate.
 
 ## For AI agents: install rsc into the user's project
 
@@ -24,10 +24,11 @@ If your user asked you to install rsc / this harness / these skills, do this, in
 6. Leave the user ready to work ("minute 1"): after install the skills + hooks are NOT active
    until the session reloads. Tell the user to reload/restart (Claude Code: restart the
    session; Codex/AGENTS.md tools: picked up next turn). After reload you are EQUIPPED —
-   orient + suggest are always-on. Confirm rsc is ready and let the user start in their own
+   orient + suggest are always-on, and bro is installed for plain human-language rewrites.
+   Confirm rsc is ready and let the user start in their own
    words; do NOT auto-start a task — wait for the user.
 
-The floor it always installs: `orient` + `suggest` + `harness` + `init`. From then on it is
+The floor it always installs: `orient` + `suggest` + `bro` + `harness` + `init`. From then on it is
 self-driving: an always-on detector proposes the next skill as tasks appear.
 
 ## Key links
@@ -40,7 +41,7 @@ self-driving: an always-on detector proposes the next skill as tasks appear.
 
 ## Facts (verifiable)
 
-- 257 skills; profiles: minimal (4), core (21), full (37).
+- 264 skills; profiles: minimal (5), core (27), full (264).
 - 17 supported coding assistants; skill files written once and symlinked per assistant.
 - Quality gate: every skill scored >= 8.5/10 on an adversarial behavioral rubric before shipping.
 - No global install and no API key required; runs via `npx`.

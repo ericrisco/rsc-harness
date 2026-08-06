@@ -16,6 +16,7 @@
     "validate": "node scripts/build-manifest.js --validate",
     "drift:check": "node scripts/drift-check.js",
     "drift:knowledge": "node scripts/drift-check.js --knowledge",
+    "routing:audit": "node scripts/routing-audit.js",
     "test": "node --test",
     "coverage": "c8 --reporter=text node --test",
     "version": "npm run manifest && git add manifest.json",
@@ -23,8 +24,7 @@
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
-    "ajv": "^8.18.0",
-    "sql.js": "^1.14.1"
+    "ajv": "^8.18.0"
   },
   "devDependencies": {
     "c8": "^10.1.3"

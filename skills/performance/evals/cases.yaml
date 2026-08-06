@@ -45,3 +45,5 @@ capability:
       - "Proposes a concrete bundle cut — replace/remove a heavy dep, dynamic import() for non-critical UI, or fix a whole-library import — in payoff order."
       - "Does NOT blanket-memoize React components (notes React 19 compiler auto-memoizes) and does not guess fixes without the profile."
       - "Re-measures against the numeric targets (LCP ≤ 2.5s field p75 and a bundle budget) and stops at 'good' rather than gold-plating."
+      - "Never reports source inspection as a measured result; without runtime/field data it labels findings POTENTIAL and names the exact trace or benchmark required."
+      - "Records baseline conditions and variance, changes one lever, re-measures under the same conditions, and targeted-reverts neutral or worse experiments while preserving the failed-attempt record."

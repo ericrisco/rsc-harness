@@ -1,7 +1,7 @@
 {
   "version": "1.0.10",
   "counts": {
-    "skills": 258
+    "skills": 264
   },
   "skills": [
     {
@@ -457,6 +457,29 @@
         "customer-support"
       ],
       "profiles": []
+    },
+    {
+      "id": "bro",
+      "description": "Use whenever the user asks to make an answer or draft sound human, natural, plain-spoken or less AI-written — including a terse bro after the last response. Rewrites or drafts in the same language while preserving meaning, facts and channel. NOT a reusable brand voice (that is `brand-voice`), NOT translation (that is `translation-l10n`).",
+      "tags": [
+        "bro",
+        "human-writing",
+        "humano",
+        "plain-language",
+        "natural-language",
+        "rewrite",
+        "no-jargon"
+      ],
+      "recommends": [
+        "brand-voice",
+        "technical-writing",
+        "translation-l10n"
+      ],
+      "profiles": [
+        "minimal",
+        "core",
+        "full"
+      ]
     },
     {
       "id": "building-agents",
@@ -1169,6 +1192,28 @@
       ]
     },
     {
+      "id": "decision-challenge",
+      "description": "Use when a high-impact plan, migration or architecture claim needs a bounded adversarial challenge before commitment. Isolates claims from persuasion, attacks assumptions, reconciles doubts with evidence and emits proceed/hold/stop. NOT a finished-diff review (`review`/`code-review`), NOT SDD artifact consistency (`analyze`).",
+      "tags": [
+        "adversarial-review",
+        "decision-quality",
+        "assumptions",
+        "risk",
+        "preflight"
+      ],
+      "recommends": [
+        "analyze",
+        "review",
+        "code-review",
+        "decision-records",
+        "security-scan"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
+    },
+    {
       "id": "decision-records",
       "description": "Use when a hard-to-reverse choice (database, framework, vendor, auth model) must be frozen as an immutable numbered ADR — the context that forced it, the options weighed, the decision, consequences both ways — or superseded without erasing history. NOT a meeting recap (that is meeting-notes), NOT standing project principles (that is constitution).",
       "tags": [
@@ -1231,6 +1276,28 @@
         "secure-coding"
       ],
       "profiles": []
+    },
+    {
+      "id": "deprecation",
+      "description": "Use when retiring a public API, feature, integration, service or legacy path without abandoning consumers. Inventories usage, classifies advisory vs compulsory migration, ships compatibility/tooling, assigns owners and gates removal on evidence. NOT live schema expand-contract (`db-migrations`), NOT replacement API design (`api-design`).",
+      "tags": [
+        "deprecation",
+        "migration",
+        "compatibility",
+        "consumer-migration",
+        "removal"
+      ],
+      "recommends": [
+        "api-design",
+        "db-migrations",
+        "deployment",
+        "git-workflow",
+        "monitoring"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
     },
     {
       "id": "design",
@@ -2277,6 +2344,27 @@
         "ai-media"
       ],
       "profiles": []
+    },
+    {
+      "id": "idea-refinement",
+      "description": "Use when a rough product, service, workflow or feature idea needs divergent options and assumption pressure-testing before it becomes a spec. Produces a decision brief with alternatives, evidence gaps, Not Now and a cheap experiment. NOT requirements or acceptance criteria (`specify`), NOT market sizing (`market-research`).",
+      "tags": [
+        "ideation",
+        "idea-refinement",
+        "product-discovery",
+        "assumptions",
+        "decision-brief"
+      ],
+      "recommends": [
+        "specify",
+        "market-research",
+        "competitor-watch",
+        "ab-testing"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
     },
     {
       "id": "implement",
@@ -4347,6 +4435,28 @@
       "profiles": []
     },
     {
+      "id": "simplify-code",
+      "description": "Use when correct working code is unnecessarily hard to read, change or verify and needs behaviour-preserving simplification in a bounded scope. Characterizes the observable contract, removes accidental complexity one concept at a time and proves equivalence. NOT fixing a failure (`debug`), NOT read-only diff judgment (`review`/`code-review`).",
+      "tags": [
+        "code-simplification",
+        "refactoring",
+        "readability",
+        "complexity",
+        "behavior-preservation"
+      ],
+      "recommends": [
+        "code-review",
+        "review",
+        "verify",
+        "debug",
+        "performance"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
+    },
+    {
       "id": "skill-scout",
       "description": "Use when a specialized skill probably exists but is not loaded, when a task feels harder than it should because generic reasoning is doing a domain skill's job, when the work just delivered was a repeatable procedure worth turning into a skill or an agent, or when auditing coverage for holes. Resolves against what already exists — installed skills, catalog skills and agent files — then names the gap and emits the install command. NOT routing among skills you already have (that is `suggest`), NOT writing the artifact when none exists (that is `author-skill` for skills, `building-agents` for agents).",
       "tags": [
@@ -4422,6 +4532,27 @@
         "people-ops"
       ],
       "profiles": []
+    },
+    {
+      "id": "source-grounded-development",
+      "description": "Use when implementation or review depends on current version-specific framework, SDK, protocol or platform behaviour and memory is unsafe. Detects exact local versions, verifies primary sources, tests applicability and marks unknowns. NOT a standalone cited memo (`research-ops`), NOT diagnosis of a reproduced failure (`debug`).",
+      "tags": [
+        "official-docs",
+        "primary-sources",
+        "version-detection",
+        "implementation",
+        "verification"
+      ],
+      "recommends": [
+        "research-ops",
+        "decision-records",
+        "debug",
+        "technical-writing"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
     },
     {
       "id": "specify",

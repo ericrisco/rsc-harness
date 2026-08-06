@@ -12,7 +12,7 @@
   ██    ██   ███████     ███████ 
 ```
 
-# `rsc` — 256 agent skills, one CLI, zero bloat
+# `rsc` — 264 agent skills, one CLI, zero bloat
 
 **A self-recommending skill catalog for 17 coding assistants** — Claude Code,
 Codex, GitHub Copilot, Cursor, Gemini, Windsurf, Cline, Antigravity, Zed and more.
@@ -21,7 +21,7 @@ skills that fit — one at a time — into every assistant you pick, and keeps t
 equipped as you work.
 
 From *"document my company"* to *"ship a FastAPI service"* to *"grow my YouTube
-channel"* — **232 skills across 21 domains**, every one researched against live
+channel"* — **264 skills across 21 domains**, every one researched against live
 2025-2026 sources and **adversarially scored ≥ 8.5/10** before it shipped.
 
 ```bash
@@ -43,7 +43,7 @@ npx @ericrisco/rsc@latest
 ```
 
 That launches a plain-language wizard: it asks **which assistants** to target and **what the
-user wants**, reads the repo, then installs the floor (`orient` + `rsc-suggest` + `harness` +
+user wants**, reads the repo, then installs the floor (`orient` + `rsc-suggest` + `bro` + `harness` +
 `init`) plus only the skills that fit — one at a time. No global install and no API key needed.
 
 - **Choose assistants non-interactively:** `npx @ericrisco/rsc@latest --target claude` (comma-separate for several).
@@ -109,7 +109,7 @@ cd ~/rsc-skills && npm install && npm link
 The first run asks **which assistants** you want — Claude Code, Codex, Copilot,
 Cursor, Gemini, Windsurf, Cline and 11 more (pick any combination) — and installs
 the **floor**:
-`orient` + `rsc-suggest` (always-on) + `harness` + `init`. In Claude Code it
+`orient` + `rsc-suggest` (always-on) + `bro` (on request) + `harness` + `init`. In Claude Code it
 also wires a `SessionStart` hook (so your assistant proposes new skills on its
 own) and a `UserPromptSubmit` hook that re-asserts the **SDD new-feature gate**
 on every turn — so a feature request, in any language, routes through `specify`
@@ -129,10 +129,10 @@ $ rsc
  ██████╗ ███████╗ ██████╗     ← animated gradient wordmark
  ██╔══██╗██╔════╝██╔════╝
  ██████╔╝███████╗██║
-  232 skills · one CLI · zero bloat
+  264 skills · one CLI · zero bloat
 
 What do you want to do?          ↑↓ move · enter select
-❯ Base install — the essentials (orient + suggest + harness + init)
+❯ Base install — the essentials (orient + suggest + bro + harness + init)
   Base + Spec-Driven Development — specify → plan → implement → ship
   Pick skills by hand, by area
 ```
@@ -175,9 +175,9 @@ rsc                                  # plain-language wizard (recommended) — p
 rsc add fastapi postgresdb           # install specific skills, by name
 rsc add youtube-api remotion-video   # …grow a channel, edit with Remotion
 rsc add fastapi --target claude,codex   # install into several assistants at once
-rsc install --profile minimal        # the floor: orient + suggest + harness + init
+rsc install --profile minimal        # the floor: orient + suggest + bro + harness + init
 rsc install --profile core           # floor + the full SDD workflow
-rsc install --profile full           # everything (all 231)
+rsc install --profile full           # everything (all 264)
 rsc install --profile full --without go
 rsc consult "I want to launch a SaaS"  # recommend only, no install
 rsc registry refresh                 # write .rsc/skill-registry.{json,md}
@@ -228,7 +228,7 @@ rsc restore <snapshot-id>              # restore it
 Two faces, one catalog (`manifest.json`):
 
 - **In the terminal** — `rsc` / `rsc consult` rank the catalog against your words
-  (an FTS index over each skill's description + tags), merge that with what they
+  (multilingual TF-IDF blended with exact tag/id weights and intent synonyms), merge that with what they
   detect in your repo, and expand via each skill's `recommends`.
 - **In the chat** — `rsc-suggest` is a tiny always-on skill. When a task would
   benefit from a skill you don't have, it names it and (one-word confirm) runs
@@ -243,18 +243,20 @@ just asks in plain language.
 
 ## The catalog
 
-257 skills, grouped by what you're trying to do. Click any skill to read its
+264 skills, grouped by what you're trying to do. Click any skill to read its
 `SKILL.md`. It fires on its own when a task matches.
 
 ### 🧭 Core & control plane
 The front door and the workspace brain.
 
-[init](skills/init/) · [harness](skills/harness/) · [orient](skills/orient/) · [suggest](skills/suggest/) · [author-skill](skills/author-skill/) · [sdd-init](skills/sdd-init/)
+[init](skills/init/) · [harness](skills/harness/) · [orient](skills/orient/) · [suggest](skills/suggest/) · [bro](skills/bro/) · [author-skill](skills/author-skill/) · [sdd-init](skills/sdd-init/)
 
 > **harness** is the Karpathy *chaos→knowledge* engine — a `01-TOOLS/` layer (one
 > folder per provider, each with a working `test_connection`) and a `02-DOCS/`
 > self-improving wiki. It governs software *or* a whole company. **orient** is the
 > always-on compass that keeps a non-technical human oriented after every step.
+> **bro** is installed with every profile and rewrites any answer in plain, natural
+> language when the user asks — without making its full body always-on.
 
 > #### 📦 The `02-DOCS/` brain is now 100% Open Knowledge Format (OKF v0.1) conformant
 >
@@ -279,7 +281,7 @@ The front door and the workspace brain.
 ### 📐 Spec-Driven Development
 Take a fuzzy intent to a shipped, verified change — phase by phase. `npx @ericrisco/rsc install --profile core`.
 
-[sdd](skills/sdd/) · [constitution](skills/constitution/) · [specify](skills/specify/) · [clarify](skills/clarify/) · [plan](skills/plan/) · [tasks](skills/tasks/) · [analyze](skills/analyze/) · [implement](skills/implement/) · [verify](skills/verify/) · [review](skills/review/) · [ship](skills/ship/) · [debug](skills/debug/) · [worktrees](skills/worktrees/) · [parallel](skills/parallel/)
+[sdd](skills/sdd/) · [constitution](skills/constitution/) · [idea-refinement](skills/idea-refinement/) · [specify](skills/specify/) · [clarify](skills/clarify/) · [plan](skills/plan/) · [tasks](skills/tasks/) · [analyze](skills/analyze/) · [decision-challenge](skills/decision-challenge/) · [implement](skills/implement/) · [source-grounded-development](skills/source-grounded-development/) · [verify](skills/verify/) · [review](skills/review/) · [simplify-code](skills/simplify-code/) · [ship](skills/ship/) · [debug](skills/debug/) · [worktrees](skills/worktrees/) · [parallel](skills/parallel/)
 
 ### 💼 Run a business
 
@@ -354,7 +356,7 @@ Three engines + engine-agnostic disciplines. Every engine skill pins the current
 
 ### 🛠️ Ship & operate — devops
 
-[docker](skills/docker/) · [github-actions](skills/github-actions/) · [git-workflow](skills/git-workflow/) · [domains-dns](skills/domains-dns/) · [monitoring](skills/monitoring/) · [email-deliverability](skills/email-deliverability/) · [scaling](skills/scaling/) · [deployment](skills/deployment/)
+[docker](skills/docker/) · [github-actions](skills/github-actions/) · [git-workflow](skills/git-workflow/) · [domains-dns](skills/domains-dns/) · [monitoring](skills/monitoring/) · [email-deliverability](skills/email-deliverability/) · [scaling](skills/scaling/) · [deployment](skills/deployment/) · [deprecation](skills/deprecation/)
 
 ### 🔒 Ship & operate — quality & security
 

@@ -1,0 +1,42 @@
+skill: source-grounded-development
+
+should_trigger:
+  - prompt: "Before changing sessions, verify the installed Express and express-session versions against their official production guidance."
+    why: "A concrete implementation depends on current version-specific framework behaviour."
+  - prompt: "No te fíes de memoria: mira el lockfile y la documentación oficial de Stripe para comprobar la semántica de reintentos."
+    why: "Spanish request for local version detection and primary-source verification."
+  - prompt: "This SDK changed between majors; prove which callback contract applies to the version in this repo."
+    why: "A version boundary changes implementation correctness."
+  - prompt: "Comprova amb fonts primàries si aquesta opció està deprecada en la versió instal·lada i quin reemplaçament toca."
+    why: "Catalan request for official deprecation evidence tied to the installed version."
+  - prompt: "Implement the browser API only after checking its current specification and support boundary, then test the fallback."
+    why: "Protocol/browser behaviour requires primary evidence plus local proof."
+  - prompt: "Review this integration and cite the official pages behind every provider-specific claim that affects the verdict."
+    why: "A review depends on current provider contracts rather than recalled assumptions."
+
+should_not_trigger:
+  - prompt: "Research whether passkeys improve consumer login conversion and deliver a cited memo."
+    route_to: research-ops
+    why: "The artifact is a standalone research memo, not an implementation grounded in an installed version."
+  - prompt: "The checkout test fails on every third retry; reproduce it and find the root cause."
+    route_to: debug
+    why: "A concrete failure needs diagnosis; documentation may support but does not own the workflow."
+  - prompt: "Record why we selected Kafka over SQS and preserve the rejected alternatives."
+    route_to: decision-records
+    why: "Durable decision rationale is an ADR."
+  - prompt: "Write the public setup guide for our SDK users."
+    route_to: technical-writing
+    why: "The deliverable is documentation, not source-grounded implementation."
+  - prompt: "Audit this webhook handler for SSRF and secret leakage."
+    route_to: secure-coding
+    why: "Security threat/control review owns the task."
+
+capability:
+  - scenario: "Implement production session cookies for an application whose framework and session-library versions are pinned but whose deployment proxy behaviour is unclear."
+    must_include:
+      - "Reads lockfiles, runtime configuration, deployment target, and local wrappers before choosing documentation."
+      - "Creates a bounded claim ledger covering cookie defaults, proxy trust, secure transport, secret handling, and session-store production requirements."
+      - "Uses version-matching official docs, release/migration notes, specifications, or upstream source; secondary sources are not treated as final authority."
+      - "Explains why each material source applies to this runtime and flags deployment facts that remain unverified."
+      - "Adds or runs focused local proof plus the repository's normal verification gate instead of trusting documentation alone."
+      - "Reports citations in the result or decision record without filling ordinary source comments with URLs."

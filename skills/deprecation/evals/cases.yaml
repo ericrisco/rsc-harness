@@ -1,0 +1,42 @@
+skill: deprecation
+
+should_trigger:
+  - prompt: "We need to retire the v1 public API without stranding 200 external consumers."
+    why: "Public contract retirement with consumer migration is the core workflow."
+  - prompt: "Planifica la retirada del login legado: inventario, avisos, migración, telemetría y puerta de borrado."
+    why: "Spanish request names the complete deprecation program."
+  - prompt: "This SDK method is deprecated; ship a codemod and prove no supported clients still call it before removal."
+    why: "Migration tooling plus measured zero-use gate."
+  - prompt: "Hem de retirar una integració antiga, però alguns clients només executen un batch mensual."
+    why: "Catalan case where the observation window must match consumer cadence."
+  - prompt: "Classify this migration as advisory or compulsory and define who can grant expiring exceptions."
+    why: "The forcing model and exception authority are deprecation decisions."
+  - prompt: "Track every consumer from uncontacted to migrated and gate deletion on replacement health and tested rollback."
+    why: "Consumer ledger and evidence-based removal gate."
+
+should_not_trigger:
+  - prompt: "Add a nullable column, backfill ten million rows in batches, then enforce NOT NULL without downtime."
+    route_to: db-migrations
+    why: "Concrete live schema expand-contract mechanics."
+  - prompt: "Design the v2 API resources, error envelope, pagination and OpenAPI contract."
+    route_to: api-design
+    why: "Replacement interface design precedes the migration program."
+  - prompt: "Choose the SemVer tag and write the Conventional Commit for this breaking release."
+    route_to: git-workflow
+    why: "Version and Git release conventions."
+  - prompt: "Deploy the compatibility adapter to production with a healthcheck and rollback command."
+    route_to: deployment
+    why: "Authorized live rollout execution."
+  - prompt: "Write an ADR explaining why the team chose v2 over extending v1."
+    route_to: decision-records
+    why: "Durable decision rationale, not consumer migration execution."
+
+capability:
+  - scenario: "Deprecate a v1 REST API used by 200 organizations; v2 is live, current telemetry sees 173 active keys, twelve accounts are reseller-managed, and the largest contract requires 90 days' notice."
+    must_include:
+      - "Inventories exact v1 surfaces, all consumer classes, owners, contractual notice, baseline usage, data obligations, and telemetry/reachability gaps."
+      - "Classifies advisory versus compulsory with a forcing reason, authority, and expiring exception policy rather than an arbitrary universal timeline."
+      - "Makes v2 usable first through compatibility, guide, tooling/SDK, test path, data reconciliation, and a real restoration strategy."
+      - "Uses both machine-visible warnings and direct human channels, including a plan for reseller-managed and unreachable consumers."
+      - "Maintains a per-consumer migration ledger and assigns common migration work to the deprecating team rather than every consumer."
+      - "Defines a representative zero-use and replacement-health removal gate, then disables, observes, and deletes in reversible order."

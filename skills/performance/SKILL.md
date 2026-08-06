@@ -41,6 +41,16 @@ You have two kinds of measurement and they answer different questions. Use both,
 
 The output of Step 0 is **one sentence naming the bottleneck**: "LCP is 3.8 s and 2.1 s of it is resource load delay because the hero image is lazy-loaded." Do not proceed without that sentence. Tool runbooks (Lighthouse CI flags, reading a flame chart, the Profiler workflow, wiring `web-vitals` for RUM) live in `references/profiling-playbook.md`.
 
+**Measurement honesty:** static source can identify a *plausible* bottleneck, never a measured LCP/INP/CLS, latency win or byte saving. If runtime/field data is unavailable, label the finding `POTENTIAL`, name the exact trace/benchmark needed, and make no numeric improvement claim. Do not turn code inspection into fictional telemetry.
+
+Keep one experiment card per change:
+
+```text
+metric + conditions | baseline distribution | one hypothesis/change | after distribution | keep/revert | next
+```
+
+Use the same device, data volume, cache state, build mode and sampling method before and after. Repeat enough runs to see ordinary variance; a one-off result inside that noise is neutral. Keep a change only when it moves the target beyond the noise without violating another budget. Revert a neutral or worse experiment with a targeted edit and preserve the card — failed attempts prevent the next person from paying for the same guess.
+
 ## CWV "good" thresholds (field p75)
 
 | Metric | Good | Needs improvement | Poor |
@@ -210,6 +220,9 @@ Use **streaming SSR with `<Suspense>`** to flush the static shell immediately an
 | Images/embeds with no reserved space | content reflows on load → CLS | explicit width/height or `aspect-ratio` |
 | Micro-optimizing a non-bottleneck phase | effort moves a number off the critical path | fix only the phase the trace points at |
 | "Done" without re-measuring | the fix may not have moved the metric | re-measure against the threshold, then stop |
+| Reporting source-only review as a measured win | no trace/field/benchmark ran, so the number is invented | label POTENTIAL and name the measurement |
+| Changing three levers in one experiment | you cannot attribute the result or reuse the learning | one hypothesis/change per card, then re-measure |
+| Keeping a neutral optimization | complexity rose but the target did not beat normal variance | targeted revert; retain the failed-experiment record |
 
 ## Stop rule
 

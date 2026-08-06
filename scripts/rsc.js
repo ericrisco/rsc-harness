@@ -12,6 +12,7 @@ import { audit, writeAuditReport } from './audit.js';
 import { DOMAINS } from './lib/domains.js';
 import { listBackups, restoreBackup } from './lib/backups.js';
 import { runUpgrade } from './lib/upgrade.js';
+import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-floor.js';
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -97,8 +98,8 @@ function printNextSteps(targets, ids) {
     say('        "sdd-init"   then   "I want <your idea>"');
     say('      → walks you specify → plan → tasks → implement → verify → ship.');
   }
-  say(`   ${n++}. From there, work in your own words. orient + suggest stay always-on:`);
-  say('      they keep you oriented after each step and propose the missing skill (you confirm, it installs).');
+  say(`   ${n++}. From there, work in your own words. orient + suggest stay always-on; bro is ready on request:`);
+  say('      they keep you oriented, propose missing skills, and rewrite in plain human language when asked.');
   say('\n   Add something by hand anytime:    npx @ericrisco/rsc add <skill>');
   say('   Browse the catalog / get picks:   npx @ericrisco/rsc consult "whatever you need"');
   say('────────────────────────────────────────────────────────');
@@ -116,7 +117,7 @@ function printAgentHandoff() {
   say('AGENT, do this now:');
   say('  1. Reload/restart this session so the new skills + hooks load');
   say('     (Claude Code: restart the session · Codex/AGENTS.md tools: next turn).');
-  say('  2. After reload you are EQUIPPED — orient + suggest are always-on.');
+  say('  2. After reload you are EQUIPPED — orient + suggest are always-on; bro is installed.');
   say('  3. Tell the user rsc is ready; they can start in their own words.');
   say('     Do NOT auto-start a task — wait for the user.');
   say('════════════════════════════════════════════════');
@@ -153,12 +154,12 @@ function printContextBudget(b) {
 
 async function wizard() {
   const m = loadManifest();
-  await banner();
+  await banner(m.counts.skills);
   say('  the skill catalog for your assistant (Claude Code · Codex · Cursor · Gemini · Antigravity)\n');
   // Navigable loop: esc / "← Back" / "no" all return here instead of quitting.
   for (;;) {
     const choice = await select('What do you want to do?', [
-      { key: 'base', label: 'Base install — the essentials (orient + suggest + harness + init)' },
+      { key: 'base', label: 'Base install — the essentials (orient + suggest + bro + harness + init)' },
       { key: 'sdd', label: 'Base + Spec-Driven Development — the specify → plan → implement → ship flow' },
       { key: 'manual', label: 'Pick skills by hand, by area' },
     ]);
@@ -173,9 +174,9 @@ async function wizard() {
       ids = picked;
     } else continue;
 
-    // The floor is always installed: the compass + the detector.
-    ids = [...new Set(['orient', 'suggest', ...ids])];
-    if (ids.length <= 2 && choice !== 'base') {
+    // The floor is always installed: compass + detector + human-language pass.
+    ids = withDefaultSkillFloor(ids);
+    if (ids.length <= DEFAULT_SKILL_FLOOR.length && choice !== 'base') {
       say('\nNothing chosen — back to the menu.');
       continue;
     }
@@ -216,7 +217,7 @@ async function main() {
         if (argv[i].startsWith('--')) { i++; continue; }
         requested.push(argv[i]);
       }
-      const ids = [...new Set(['orient', 'suggest', ...requested])];
+      const ids = withDefaultSkillFloor(requested);
       for (const t of targets) await applyInstall({ skillIds: ids, target: t });
       say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
@@ -225,7 +226,7 @@ async function main() {
       const profile = flag('profile') || 'minimal';
       const without = argv.filter((a, i) => argv[i - 1] === '--without');
       let ids = skillsForProfile(loadManifest(), profile);
-      ids = [...new Set(['orient', 'suggest', ...ids])].filter((id) => !without.includes(id));
+      ids = withDefaultSkillFloor(ids).filter((id) => !without.includes(id));
       for (const t of targets) await applyInstall({ skillIds: ids, target: t });
       say(`✅ Profile '${profile}' installed for ${targets.join(', ')} (${ids.length} skills)`);
       printAgentHandoff();
