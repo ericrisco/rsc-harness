@@ -194,6 +194,26 @@ didn't change, and a giant DOM snapshot gets blindly `--updated` the first time 
 small, stable, serializable output (a formatted currency string, a normalized config object). Never
 snapshot a full component tree as your primary assertion.
 
+## Mutation: does the suite actually notice?
+
+Coverage tells you which code ran. It cannot tell you whether any test would have **noticed** if that code were wrong — and a `render()` with no assertion, or a snapshot nobody reads, raises coverage while detecting nothing. Mutation testing plants bugs on purpose: if the suite still passes, the mutant *survived* and you have found a test that asserts nothing.
+
+```jsonc
+// stryker.config.json — scope is not optional here
+{ "testRunner": "vitest", "mutate": ["src/cart/total.ts", "src/cart/discount.ts"] }
+```
+
+```bash
+npx stryker run
+```
+
+Reach for the real tool over a hand-written mutant list: Stryker generates mutants from the syntax tree, so it cannot apply one to code that moved and cannot report one it never ran.
+
+- **Always scope `mutate` to the files you changed.** A whole-project Stryker run on a real front-end does not finish in a useful amount of time; that is the main reason teams try it once and abandon it.
+- **Scale it to risk.** Not a default toll. Run it on the logic where a bug is expensive — pricing, totals, permissions, anything money- or auth-shaped — not on presentational components, where a surviving mutant usually just means the DOM detail genuinely does not matter.
+- **A survivor is not automatically a failure.** Some mutants are semantically equivalent to the original and cannot be killed; classify those with the reason. Never add an assertion about non-behaviour just to kill one — that is coverage-chasing wearing a different hat.
+- **A survivor that is a real bug gets an assertion, not an excuse.** Write it, then rerun.
+
 ## Anti-patterns
 
 | Anti-pattern | Why it's wrong | Do instead |

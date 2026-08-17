@@ -139,6 +139,24 @@ pytest --cov=mypkg --cov-branch --cov-report=term-missing --cov-fail-under=85
 
 Line coverage lies because executing a line is not the same as testing its outcomes. A function with `if x: a() else: b()` reaches 100% line coverage from a single test that only takes the `if` arm — the `else` ships untested. `--cov-branch` (or `branch = true`) forces both arms to be exercised, which is exactly where happy-path-only suites leak bugs. `term-missing` prints the unhit line and branch numbers so you know what to write next. Exclude only code that is correctly never run by tests (`if TYPE_CHECKING:`, `raise NotImplementedError`, `__repr__`) — never exclude a branch just to make the number go up.
 
+## Mutation: does the suite actually notice?
+
+Branch coverage tells you which code ran. It cannot tell you whether any test would have **noticed** if that code were wrong — and a test with no assertion, or an assertion that cannot fail, raises coverage without detecting anything. Mutation testing closes that gap by planting bugs on purpose: if the suite still passes, the mutant *survived* and you have found a test that asserts nothing.
+
+```bash
+# pyproject.toml → [tool.mutmut]  source_paths = ["src/"]
+mutmut run                    # whole source tree
+mutmut run "mypkg.core*"      # scope it — this is the normal case
+mutmut results                # what survived
+```
+
+Reach for the real tool, not a hand-written mutant list: mutmut generates mutants from the syntax tree, so it cannot apply one to code that moved and cannot report one it never ran.
+
+- **Scale it to risk.** This is not a default toll — it is minutes-to-hours on a real tree. Run it where a bug is expensive (money, auth, data loss, concurrency, a public API) or where a green suite keeps shipping bugs anyway. Always scope to the code you changed.
+- **A survivor is not automatically a failure.** Some mutants are semantically equivalent to the original and cannot be killed. Classify those with the reason ("equivalent: both branches return the same value for every reachable input"). Never add a test that asserts non-behaviour just to kill one — that is the same gaming that coverage-chasing is.
+- **A survivor that is a real bug gets a test, not an excuse.** Write the assertion that kills it, then rerun.
+- **If you hand-roll a runner, prove it executed every mutant.** Clear `__pycache__` and set `PYTHONDONTWRITEBYTECODE` per mutant: two same-size mutants written in the same second can share a bytecode cache, and the runner then reports a kill for code it never ran. That defect can only ever *inflate* the score, so it will never show up as a red run — which is why the proof has to be built in rather than assumed.
+
 ## Property testing
 
 Reach for Hypothesis when a fixed example matrix can't cover the input space: parsers, serializers, encoders, math, anything with an invariant. You assert a *property* that must hold for all inputs and let Hypothesis hunt counterexamples.

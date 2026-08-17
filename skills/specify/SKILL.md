@@ -130,6 +130,35 @@ irreversible, or large scope), dispatch a **fresh-context subagent** to read the
 **Skip it** for L0/L1 on a small, low-risk spec — the self-review scan is enough there; don't spin up
 a subagent to vet a two-paragraph spec. Like the rest of the chain, ceremony scales to the stakes.
 
+### Approval is its own exchange (step 9)
+
+**An answer to a question is not an approval.** If you asked the user to decide something, they
+answered *that question* and nothing else. Their answer is an **input** to the spec — and it
+*changes* the spec, which means any approval you were holding before the question is the approval
+of a document that no longer exists.
+
+Questions and approval are two exchanges, in that order:
+
+```text
+ask → user answers → fold it in → say what changed → show the revised spec → ask for approval
+```
+
+- **The recommended-option shape is where this fails most easily.** When the user picks the option
+  you recommended, the spec *looks* unchanged and consent *looks* implied. Neither is true — you
+  proposed, they chose, the spec moved.
+- **None of these are approval:** an answer to your question; a "go ahead" about some other step;
+  silence; the request that started the task. If you cannot quote the words that approved **this**
+  spec, you do not have approval.
+- **Autopilot is still valid** — an up-front "run it all yourself" authorizes the whole run, and
+  that is a real answer to a real question. What changes is the bookkeeping: record it as
+  **approved in autopilot, not item by item**, in the spec's `status:`. The spec then becomes the
+  artifact the user reviews *after the fact*, and the work claims correspondingly less certainty
+  about having captured their intent. Writing "aprobada" flat, when what happened was a blanket
+  go-ahead, is the record telling a small lie about the strongest gate in the chain.
+- **Rejection is information — keep it.** If the user turns the spec down, revise it in place and
+  append the reason to `## Revisions`. Never delete and start clean: what they rejected, and why,
+  is the most useful thing in the file.
+
 ## Worked shape (abridged)
 
 ```markdown
@@ -206,6 +235,8 @@ The proposal is allowed to mention options and tradeoffs; the spec that follows 
 | Skip the whole loop because "this is too simple to design" | That's the rationalization that wastes the most work. Every feature gets the loop; only a literal one-line, zero-risk change skips. |
 | Present one approach as the answer | Offer 2-3 distinct directions with trade-offs and a recommendation; let the user choose before you write the spec. |
 | Hand to `plan`/`implement` before the user approved the written spec | The approval at step 9 is the gate. No design approved → nothing gets built. |
+| Treat the answer to your question as the approval of the spec | They answered the question, and the answer *changed* the spec. Fold it in, say what changed, show it, ask again. |
+| Write `status: aprobada` after a blanket "just run it" | That is autopilot. Record it as such — the record must not overstate the strongest gate in the chain. |
 | Skip non-goals because "it's obvious" | Unsaid scope becomes assumed scope. State what you are *not* doing. |
 | Resolve every ambiguity yourself to look finished | Inventing answers is worse than naming gaps. List them in Points to clarify. |
 | Start designing the solution because it's clearer | Stay on WHAT/WHY. The plan is a later, separate phase. |

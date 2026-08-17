@@ -84,6 +84,15 @@ Rules for RUN:
 - Run from the directory the stack skill documents (Go runs from the module root; others from the subproject root). Don't guess paths.
 - If no `scripts/verify.sh` exists for a touched stack, that's a gap — say the gate is incomplete and recommend the user add the stack skill, rather than hand-rolling a one-off check that drifts from the real gate.
 
+#### A home-grown gate must prove it can fail
+
+The dangerous way a checker breaks is not a crash — it is **fail-open**: nothing errors, the layer prints pass, and it prints pass forever. That failure can only ever produce green, so no failing run will ever surface it. The rule follows: **before you trust a home-grown gate's pass, watch it fail** on a known-bad input. It is the RED principle applied to the checker.
+
+- **Third-party tools are exempt.** pytest, mypy, tsc, eslint, ruff, `go vet` have earned their failure behavior. This rule is for what we wrote: grep gates, one-off scripts, custom guards, anything whose exit codes nobody has tested.
+- **A must-find-nothing grep has three outcomes, not two.** No matches = pass. A match = fail. **The scan itself breaking** (unreadable input, bad pattern) = fail too. Left unhandled, an unreadable file becomes a silent pass. No `|| true`, no `2>/dev/null`, no bare fallthrough.
+- **State the limit where you state the pass.** Watching a gate fail once proves that *one* known-bad case reaches its failure path. It does **not** prove the gate recognizes every violation of the rule it claims to enforce — a gate can fail closed perfectly and still guard a spelling rather than a behavior. Record the control, and record what it does not buy.
+- **Our own known fail-open:** the stack `verify.sh` scripts SKIP a missing tool instead of failing. That is a documented gap, not a pass — so it goes in the record's *Capas no ejecutadas* under `HERRAMIENTA-AUSENTE`, never left implied.
+
 ### 3 — WALK the done-checks and acceptance criteria
 
 The stack gate proves the code is *clean and tested*. It does **not** prove the feature does what the spec asked. Walk both lists explicitly:
@@ -106,6 +115,7 @@ tags: [sdd, verification]
 timestamp: YYYY-MM-DDTHH:MM:SSZ
 topic: sdd
 slug: <slug>
+source_state: 3f9a1c2 (clean)
 ---
 
 # Verification — <slug> — YYYY-MM-DD
@@ -122,8 +132,32 @@ slug: <slug>
 - [x] AC1 user can place an order — evidence: e2e test green
 - [ ] AC3 duplicate submit is a no-op — UNVERIFIED: no observable proof
 
+## Capas no ejecutadas
+- **NO-APLICA** — mutation: no logic module changed, only templates.
+- **HERRAMIENTA-AUSENTE** — mypy: not installed in this environment; verify.sh printed SKIP and **nothing ran in its place**.
+- **SUSTITUIDA** — suite health: ran the suite twice in a fixed order instead of randomized. Cannot detect whole-suite order dependence.
+
+## Hallazgos descartados
+- "the retry loop can spin forever" — dismissed: `client.py:88` caps it at 3 attempts; test_client.py::test_retry_cap covers it.
+
 ## Verdict: FAIL — 2 open items (T4 done-check, AC3). Not ready for review.
 ```
+
+**`source_state:` is not decoration.** A verdict belongs to the commit it was measured against, not to the project: without it, nobody can tell whether the record describes the code that shipped. Record the short SHA plus `clean` or `dirty` — a dirty tree means the record describes bytes that exist on no commit, which is worth knowing when someone reads it three weeks later.
+
+**All numbers come from one fresh run made after the last edit.** A figure from mid-task is stale and does not go in the record, however true it was when you saw it.
+
+**Split "didn't run" three ways**, because one `SKIP` list collapses three different confidence claims and they read identically:
+
+| Label | Means | Reader should conclude |
+|---|---|---|
+| `NO-APLICA` | the project has no such surface | nothing missing; this describes the project |
+| `HERRAMIENTA-AUSENTE` | the surface exists, the tool was missing, **nothing ran** | that failure class was not looked for at all |
+| `SUSTITUIDA` | something else ran instead | say what the substitute **cannot** detect; never write this as a pass |
+
+`SUSTITUIDA` is the dangerous one. "Ran the suite twice" is not *suite health: stable* — it is a substitute that cannot see whole-suite order dependence, and a reader who can't tell the two apart reads "found nothing" where the truth is "did not look with that instrument".
+
+**A dismissed finding carries evidence, one line each.** A fix is self-evidencing — the test now passes. A dismissal is not: "not a real problem" is indistinguishable from "did not check". Name the command, the `file:line`, or the test that disproves it, or write "ninguno".
 
 Append-only spirit: don't overwrite a prior run's record; a new run is a new dated file. The record is the receipt the `review` and `ship` phases trust.
 
@@ -146,6 +180,9 @@ Append-only spirit: don't overwrite a prior run's record; a new run is a new dat
 | "A test is failing — let me just fix it real quick." | That's `debug`, a different discipline. `verify` reports the failure and hands off; it does not patch mid-gate. |
 | "I'll write the verdict, then run the checks to confirm." | Backwards. RUN and WALK first; the verdict is the *consequence* of output you already read. |
 | "The gate is mostly green, I'll call it done." | If you cannot point at the line of command output that proves a claim, you have no claim. Go run it. |
+| "I looked at that finding; it's not a real problem." | A dismissal with no evidence is indistinguishable from a check you never made. Name the command, `file:line`, or test that disproves it — or fix it. |
+| "The record is dated, that's enough to trace it." | A date does not identify code. Without `source_state`, nobody can tell whether the record describes what shipped. |
+| "My grep gate passed, so the tree is clean." | Did you ever watch it fail? An unhandled broken scan exits like a pass. Prove it can fail before you trust its green. |
 
 ## Result envelope
 
