@@ -42,3 +42,5 @@ capability:
       - A hand-written interface fake or net/http/httptest server for the HTTP dependency, not a mock framework by default
       - Runs with -race for the concurrent path and shows a go test -coverprofile / cross-package coverage command
       - A benchmark using for b.Loop() with b.ReportAllocs() rather than a b.N loop
+      - "Does not present the coverage percentage as proof the suite detects bugs: states Go has no mature mutation tool, gives the manual procedure, and distinguishes mutation (tests that would not notice a bug) from fuzzing (inputs the code mishandles)."
+      - "Requires a hand-rolled mutant runner to prove it executed each mutant, and says why — a kill reported without running can only inflate the score, so no failing run would ever reveal it."

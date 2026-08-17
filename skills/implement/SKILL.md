@@ -76,6 +76,24 @@ code tells you nothing about whether it can fail. **Refactor only on green** kee
 reversible against a passing bar. **Checkpoint after each task** is what makes this resumable and
 reviewable instead of a 2000-line surprise diff.
 
+### Four things you may never do to reach green
+
+The loop only means anything if green cannot be manufactured. These are absolute, and each one is a
+way people reach green without fixing anything:
+
+1. **Never weaken a test to make it pass.** Not broadening an assertion, not adding a skip, not
+   raising a tolerance, not deleting it. A test that looks wrong is a **spec conversation** — surface
+   it, don't bury it.
+2. **Never edit a test and the implementation in the same step to reach green.** Change one, run,
+   then the other. Simultaneous edits let you redefine correctness to match your bug without
+   noticing you did it.
+3. **Never mock the unit under test**, or mock so much that the test only exercises the mocks. Mock
+   boundaries you don't own — network, clock, filesystem, third-party SDK — never the logic you are
+   being paid to verify.
+4. **Never chase the coverage number.** Coverage detects untested code; it is not a target. A test
+   added to touch lines, with no meaningful assertion, is gaming — and mutation testing exists
+   precisely to catch it (`../testing-py/SKILL.md`, `../testing-web/SKILL.md`, `../testing-go/SKILL.md`).
+
 ### The done-check is the contract
 
 Each task carries a done-check from the `tasks` phase ("returns 409 on duplicate email", "list

@@ -11,6 +11,17 @@
 # Real problems (unformatted code, vet/test/vuln failures) exit non-zero.
 # Read-only: never mutates your source.
 #
+# ONE LAYER HERE IS A REPORT, NOT A GATE. `go test -cover` takes no threshold flag, so
+# coverage can print any number — 4%, 0% — and still exit 0. It is therefore reported as
+# [gap]: the layer ran and had nothing to fail with. Said out loud because a layer that
+# prints a number and exits 0 looks exactly like a layer that passed, and that shape can
+# only ever produce green — no failing run will ever tell you about it. Want a real
+# coverage gate in Go? Parse `go tool cover -func` and compare, or use a CI action; this
+# script does not pretend to be one.
+#
+# A [gap] does NOT change the exit code: this script reports, the `verify` skill judges,
+# and there it counts as an unverified criterion, which fails the verdict.
+#
 # Portability: runs on stock macOS bash 3.2 (no mapfile, no associative arrays,
 # no unguarded array expansions under `set -u`).
 
@@ -24,12 +35,16 @@ else
 fi
 
 failed=0
+gaps=0
 
 have()  { command -v "$1" >/dev/null 2>&1; }
 warn()  { printf '%s[skip]%s %s\n' "$YELLOW" "$RESET" "$*"; }
 fail()  { printf '%s[fail]%s %s\n' "$RED" "$RESET" "$*"; failed=1; }
 ok()    { printf '%s[ ok ]%s %s\n' "$GREEN" "$RESET" "$*"; }
 info()  { printf -- '----- %s\n' "$*"; }
+# A layer that ran but had nothing to fail with. Deliberately does NOT set `failed`:
+# breaking every repo that passes today is not this script's call to make.
+gap()   { printf '%s[gap ]%s %s\n' "$YELLOW" "$RESET" "$*"; gaps=$((gaps + 1)); }
 
 # Must run from a module root.
 if [ ! -f go.mod ]; then
@@ -89,6 +104,10 @@ if have go; then
     warn "cgo disabled or C compiler '$cgo_cc' not found; running plain go test -cover"
     if go test -cover ./...; then ok "tests pass (no race)"; else fail "tests failed"; fi
   fi
+  # The tests above are a gate; the coverage number printed alongside them is not.
+  # `go test -cover` has no threshold flag, so coverage cannot fail this script no matter
+  # how far it falls. Reported so nobody reads the percentage as a checked constraint.
+  gap "coverage: reported, not gated — 'go test -cover' takes no threshold, so this layer cannot fail"
 else
   warn "go not found - skipping tests"
 fi
@@ -102,8 +121,14 @@ else
 fi
 
 echo
+if [ "$gaps" -ne 0 ]; then
+  printf '%s%d layer(s) ran without being able to fail (see [gap] above).%s\n' "$YELLOW" "$gaps" "$RESET"
+  printf 'Not a pass and not a failure: report them as unverified rather than green.\n'
+fi
 if [ "$failed" -ne 0 ]; then
   printf '%sFAIL:%s one or more checks failed.\n' "$RED" "$RESET"
   exit 1
 fi
-printf '%sPASS:%s all checks passed.\n' "$GREEN" "$RESET"
+# Deliberately "checks that could fail, passed" and not "all checks passed": with a [gap]
+# present the second sentence would be false in the way this whole change exists to stop.
+printf '%sPASS:%s every check that could fail, passed.\n' "$GREEN" "$RESET"
