@@ -95,7 +95,14 @@ test('A — a hand-rolled runner must prove it executed every mutant', () => {
 
 test('B — verify requires a home-grown gate to be watched failing', () => {
   const body = skill('verify');
-  assert.match(body, /prove it can fail/i, 'verify: the rule itself must be present');
+  // Anchor on the HEADING, not the phrase. A bare /prove it can fail/ also matches the one-line
+  // reminder in the anti-patterns table, so it survived a mutant that gutted this whole section —
+  // found by the negative control in 02-DOCS/wiki/sdd/verifications/gate-honesty-2026-08-17.md.
+  assert.match(
+    body,
+    /^#+ .*prove it can fail\s*$/im,
+    'verify: the rule needs its own section, not just an anti-pattern row',
+  );
   assert.match(body, /fail-open/i, 'verify: must name the fail-open failure mode');
   assert.match(
     body,
@@ -200,7 +207,15 @@ test('C — autopilot stays valid but is recorded as autopilot', () => {
 
 test('D — the verification record binds to a source state', () => {
   const body = skill('verify');
-  assert.match(body, /source_state:/, 'verify: the record template must carry source_state');
+  // Anchor on the FIELD in the template, not a mention of it. A bare /source_state:/ also matches
+  // the prose that explains the field, so it survived a mutant that removed the field from the
+  // template and left the prose talking about it — the "guards a spelling, not the thing" failure
+  // this very rule warns about, caught by its own negative control.
+  assert.match(
+    body,
+    /^source_state: \S+/m,
+    'verify: the record template must carry an actual source_state field',
+  );
   assert.match(body, /dirty/i, 'verify: must record whether the tree was dirty');
   assert.match(
     body,
