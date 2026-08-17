@@ -169,6 +169,23 @@ go build -cover -o ./bin/app .                         # coverage for integratio
 
 A coverage **percentage is a smoke alarm, not a goal.** 100% line coverage with no assertions on the values is worthless; 70% on the branches that actually carry logic is fine. Use `-coverpkg=./...` when your tests live in a separate package and exercise code across the module, or the number undercounts. Profiles, integration-binary coverage, and reading the HTML report are in `references/coverage-and-benchmarks.md`.
 
+## Mutation: does the suite actually notice?
+
+Coverage tells you which code ran; it cannot tell you whether any test would have **noticed** if that code were wrong. A table-driven test whose cases all assert `err == nil` and nothing else raises coverage without detecting anything. Mutation testing plants bugs on purpose — flip a `<` to `<=`, drop an early return, replace a returned value with the zero value — and a mutant the suite still passes is a test that asserts nothing.
+
+This is **not** fuzzing. Fuzzing hunts inputs your code mishandles; mutation hunts tests that would not catch a bug you already know about. They find different things and neither substitutes for the other.
+
+Go has **no mature mutation tool** — `go-mutesting` and `gremlins` exist but neither is a dependable default — so this is the manual procedure, and that makes the discipline stricter here, not looser:
+
+1. Pick the changed logic. Script the run and **commit the script** (e.g. `tools/mutants.go` or a shell driver); do not hand-edit N times, because you will need to rerun it and a restore mistake is silent.
+2. One mutant at a time: flip a comparison, off-by-one a bound or slice index, delete one branch, swap `&&`/`||`, return the zero value. `go test ./...` must fail for every one.
+3. Restore, confirm with `git diff` that nothing else moved, and rerun the suite green.
+4. Report as `N/N killed`, naming the mutants.
+
+**The runner must prove it executed each mutant.** A hand-rolled driver that can report a kill it never ran only ever *inflates* the score — so that defect can never surface as a red run, and no failing test will ever tell you about it. Assert the mutated file changed on disk (compare hashes before and after) and that the test command actually exited non-zero for the reason you expect, rather than trusting the loop.
+
+**A survivor is not automatically a failure.** Some mutants are semantically equivalent and cannot be killed; classify those with the reason instead of writing a test that asserts non-behaviour. Scale the whole layer to risk (P7): reach for it where a bug is expensive — money, auth, data loss, concurrency, a public API — not on every change.
+
 ## Benchmarks
 
 Use `for b.Loop()` (Go 1.24+), not the legacy `for i := 0; i < b.N; i++`. `b.Loop` manages the timer itself (setup before the loop and teardown after are excluded automatically), runs the body the right number of times, and the compiler is taught **not** to dead-code-eliminate calls inside it.
