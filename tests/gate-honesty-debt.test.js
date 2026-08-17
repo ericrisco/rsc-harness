@@ -101,8 +101,15 @@ test('A — the go gate states coverage is a report, not a gate', () => {
 
 test('A — neither script still claims "all checks passed" while a GAP exists', () => {
   for (const id of COVERAGE_SCRIPTS) {
+    // Must appear on an EXECUTABLE line, not a comment: /could fail, passed/ anywhere in the file
+    // also matched the comment explaining the wording, so mutating the real success line left this
+    // green. Found by the negative control (mutant A5).
+    const code = script(id)
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('#'))
+      .join('\n');
     assert.match(
-      script(id),
+      code,
       /could fail, passed/,
       `${id}/verify.sh: the success line must be narrowed to checks that could fail`,
     );
@@ -150,7 +157,11 @@ test('B — verify prefers changed-line coverage over the global percentage', ()
 
 test('C — review enumerates exactly four inputs for the refuters', () => {
   const body = prose('review');
-  assert.match(body, /four inputs/i, 'review: the input set must be named as closed');
+  assert.match(
+    body,
+    /exactly four inputs — no more, no less/i,
+    'review: the instruction itself must name the set as closed (a later back-reference is not it)',
+  );
   for (const marker of [/task contract/i, /approved spec/i, /exact source state/i, /entry point/i]) {
     assert.match(body, marker, `review: missing input ${marker}`);
   }
@@ -231,7 +242,16 @@ test('D — each prohibition carries its reason, not just the ban', () => {
 test('E — the mutation rule is a gradeable behaviour in all three testing skills', () => {
   for (const id of TESTING) {
     const block = capabilityBlock(id);
-    assert.match(block, /mutation/i, `${id}: capability scenario does not grade mutation`);
+    assert.match(
+      block,
+      /proof the suite detects bugs/i,
+      `${id}: must grade the coverage-is-not-detection behaviour specifically`,
+    );
+    assert.match(
+      block,
+      /mutmut|Stryker|no mature mutation tool/,
+      `${id}: must grade the ecosystem's actual mutation answer`,
+    );
     // Graded as behaviour ("does not present coverage as proof"), not as a keyword mention.
     assert.match(
       block,
