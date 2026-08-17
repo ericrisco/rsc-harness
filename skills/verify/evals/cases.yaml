@@ -72,3 +72,8 @@ capability:
       - "RECORDS a dated verification file under 02-DOCS/wiki/sdd/verifications/ and indexes it in the root CLAUDE.md Knowledge map."
       - "Returns a VERDICT that is PASS only if EVERY item has passing evidence; a single unverified acceptance criterion makes the whole verdict FAIL — and refuses to call it 'done' otherwise."
       - "On PASS, points to the review phase; on FAIL, routes failing checks to debug and missing coverage back to implement."
+      - "Treats a coverage GAP (the layer ran with no threshold configured, so it could not have failed) as an unverified criterion that fails the verdict — not as a pass — and records it as SUSTITUIDA: a report in place of a gate, unable to detect coverage regressing."
+      - "Before trusting any home-grown gate that reports green, asks for it to be watched failing on a known-bad input, and states the limit: one negative control proves one bad case reaches the failure path, not that the gate covers the rule it claims to enforce."
+      - "Splits layers that did not run into NO-APLICA / HERRAMIENTA-AUSENTE / SUSTITUIDA rather than one undifferentiated SKIP list, and never writes SUSTITUIDA as a pass."
+      - "Binds the record to a source state (short commit SHA plus clean/dirty) and takes every number from one fresh run made after the last edit, refusing to reuse mid-task figures."
+      - "Gives any dismissed finding its own evidence line (command, file:line, or the test that disproves it) rather than asserting it was not a real problem."

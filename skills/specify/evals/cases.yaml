@@ -78,3 +78,5 @@ capability:
       - "Captures observable behaviour (what the user sees/can do) and explicit non-goals / out-of-scope rather than implementation (no file format library, storage, or job-queue detail)."
       - "Turns answers into binary acceptance criteria and defers unresolved items (e.g. data scope, retention, format) to Points to clarify instead of fabricating decisions."
       - "Notes that the spec is complete-enough-to-plan with open points remaining, and hands off to clarify — not to plan or implementation."
+      - "After the user answers a question, folds the answer in, states what changed, shows the revised spec, and asks for approval AGAIN — it does not treat the answer as approval of the spec, including when the user picked the recommended option."
+      - "If told to run the whole chain up front, records the approval as autopilot rather than item-by-item, and says the spec is the artifact to review after the fact."

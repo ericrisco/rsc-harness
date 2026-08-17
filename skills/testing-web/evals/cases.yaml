@@ -50,3 +50,5 @@ capability:
       - Tests an error path (500 -> visible error / role=alert) in a separate case
       - No bare act() misuse in the component test; no assertions on state/props/className
       - At least one real expect(...) assertion per test
+      - "Does not present coverage as proof the suite detects bugs: names Stryker as the layer that catches assertion-free tests, and scopes `mutate` to the changed files because a whole-project run does not finish."
+      - "Calibrates mutation by risk rather than prescribing it always, and treats a surviving mutant as possibly equivalent (classified with a reason) instead of adding an assertion about non-behaviour."

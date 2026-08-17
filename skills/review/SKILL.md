@@ -128,9 +128,41 @@ gap deliberately with `--accept-partial-lenses` (it is recorded). Every approval
 
 **Lenses by risk tier** — tier 0 never reaches you (the gate passes docs/copy silently);
 tier 1 → run the single most relevant pass from the table above yourself; tier 2 → dispatch
-**three parallel fresh-context subagents** (correctness · security · tests-as-evidence), each
-given only the diff and told to *refute* readiness, not confirm it. Fresh context is the point:
-a reviewer who inherits the implementer's context inherits its blind spots.
+**three parallel fresh-context subagents** (correctness · security · tests-as-evidence), each told
+to *refute* readiness, not confirm it. Fresh context is the point: a reviewer who inherits the
+implementer's context inherits its blind spots.
+
+**Give each refuter exactly four inputs — no more, no less.** The diff alone is not enough, and
+that is not a detail: with only the diff, the one failure class no test suite can structurally
+catch — *the change is correct and is not what the approved spec asked for* — is invisible to the
+whole panel.
+
+1. **The task contract** — the original request **plus every scope change a human explicitly
+   approved since.** Not just the first message: without the approved changes a legitimate scope
+   revision reads as a spec gap and you get a confident false positive.
+2. **The approved spec** (`02-DOCS/wiki/sdd/specs/<slug>.md`).
+3. **The exact source state** — commit SHA, or a tree hash when git is absent. A verdict belongs to
+   the state that was reviewed, not to the project.
+4. **The entry point** — the one command that reruns the checks.
+
+**And say what they do not get:** your conversation, your reasoning, your defences, and your draft
+verdict. If a claim needs your justification to stand, it is not proven.
+
+**Blind first, compare second.** Each refuter records what it attacked and what it found *before*
+being shown your conclusions. Only then may it compare and add findings — the blind record is
+append-only after that, never rewritten. Skip this and the fresh context is spent confirming your
+framing, which is the one thing it was bought to avoid.
+
+**The attack list is the deliverable, not just the findings.** "Nothing found" without saying where
+you looked is indistinguishable from not having looked — the same rule that governs a dismissal.
+
+Two extra finding classes the four inputs unlock, neither reachable from a diff:
+
+- **Contract vs spec** — what would a caller reasonably expect, given the stated deployment, that
+  no clause covers? An exclusion the spec deliberately approved is **not** a finding; an exclusion
+  the spec describes *inaccurately* is.
+- **Mapping, both directions** — an acceptance criterion with no test that can be made to fail, and
+  a test pinning behaviour no criterion asked for.
 
 **A finding blocks only if it survives all three filters** — no exceptions, and eagerness to
 find something is not evidence:

@@ -42,3 +42,5 @@ capability:
       - "asserts on the return value / observable behavior, not on mock private internals like _mock_calls"
       - "mentions a strict posture: --strict-markers and/or --strict-config (or the pytest 9 strict_* aliases)"
       - "at least one negative/error-path test (e.g. raises on non-200), not only the happy path"
+      - "Does not present branch coverage as proof the suite detects bugs: names mutation testing (mutmut) as the layer that catches assertion-free tests, and scopes it to the changed module rather than the whole tree."
+      - "Calibrates mutation by risk rather than prescribing it as a default toll, and says a surviving mutant may be semantically equivalent — to be classified with a reason, never killed with an assertion about non-behaviour."

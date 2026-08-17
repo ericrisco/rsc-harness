@@ -80,6 +80,7 @@ If `config.yaml` provides `testing.commands.verify`, run those commands first or
 Rules for RUN:
 
 - The stack `verify.sh` **skips missing tools** (yellow SKIP) rather than failing on them — so a SKIP is not a pass. Note every SKIP; a skipped test suite means that criterion is **unverified**, which is not the same as verified-passing.
+- A `GAP` is the third thing, and it is the one that looks most like a pass: **the layer ran and had nothing to fail with.** The fastapi gate reports it when coverage runs with no `--cov-fail-under` configured; the Go gate reports it always, because `go test -cover` takes no threshold. The script deliberately does not fail on a GAP — that judgement is yours. **Treat a GAP as an unverified criterion, which fails the verdict**, and record it (see the mapping below). A gate that reports and a gate that checks are indistinguishable on screen, and only the broken one is guaranteed to stay green.
 - A non-zero exit from a tool that actually ran is a hard FAIL. Record the failing tool and its output.
 - Run from the directory the stack skill documents (Go runs from the module root; others from the subproject root). Don't guess paths.
 - If no `scripts/verify.sh` exists for a touched stack, that's a gap — say the gate is incomplete and recommend the user add the stack skill, rather than hand-rolling a one-off check that drifts from the real gate.
@@ -156,6 +157,15 @@ source_state: 3f9a1c2 (clean)
 | `SUSTITUIDA` | something else ran instead | say what the substitute **cannot** detect; never write this as a pass |
 
 `SUSTITUIDA` is the dangerous one. "Ran the suite twice" is not *suite health: stable* — it is a substitute that cannot see whole-suite order dependence, and a reader who can't tell the two apart reads "found nothing" where the truth is "did not look with that instrument".
+
+**Where a `GAP` goes — and do not invent a fourth label.** A layer that ran without being able to fail is not `NO-APLICA` (the surface exists) and not `HERRAMIENTA-AUSENTE` (the tool ran). It is `SUSTITUIDA`: what ran was **a report in place of a gate**, and what it cannot detect is **coverage falling**. Write it that way:
+
+```text
+- **SUSTITUIDA** — coverage: ran without a threshold (GAP). A report, not a gate;
+  cannot detect coverage regressing. Fix: --cov-fail-under=<n> in pyproject addopts.
+```
+
+**And while you are there: the global percentage is the wrong number.** A project-wide floor barely moves when your change lands untested — 200 new uncovered lines in a 20k-line codebase is a rounding error against an 85% floor, so the gate passes and the change is untested. What matters is whether **the lines you touched** are exercised: `diff-cover coverage.xml --fail-under=100` gates exactly those. This is guidance, not something the generated `verify.sh` scripts do — recommend it, don't assume it ran.
 
 **A dismissed finding carries evidence, one line each.** A fix is self-evidencing — the test now passes. A dismissal is not: "not a real problem" is indistinguishable from "did not check". Name the command, the `file:line`, or the test that disproves it, or write "ninguno".
 
