@@ -16,6 +16,7 @@
     "validate": "node scripts/build-manifest.js --validate",
     "drift:check": "node scripts/drift-check.js",
     "drift:knowledge": "node scripts/drift-check.js --knowledge",
+    "knowledge:doctor": "node scripts/knowledge-doctor.js",
     "routing:audit": "node scripts/routing-audit.js",
     "test": "node --test",
     "coverage": "c8 --reporter=text node --test",
