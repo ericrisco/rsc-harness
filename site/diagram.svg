@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="rsc harness architecture: skills, hooks, tools, memory">
+  <title>rsc harness — skills, hooks, tools, memory</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12161c"/>
+      <stop offset="1" stop-color="#0b0e12"/>
+    </linearGradient>
+    <style>
+      .sans { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .h    { font-size: 46px; font-weight: 800; fill: #f7f7f4; letter-spacing: -0.5px; }
+      .cap  { font-size: 25px; font-weight: 400; fill: #9aa4b0; }
+      .tiny { font-size: 18px; fill: #9aa4b0; }
+      .panel{ fill: #131820; stroke: #63d68a; stroke-opacity: .28; stroke-width: 1; }
+      .flow { stroke: #63d68a; stroke-opacity: .55; stroke-width: 2; fill: none; }
+      .g    { stroke: #63d68a; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+
+  <!-- wordmark -->
+  <rect x="56" y="40" width="54" height="54" rx="14" fill="#f7f7f4"/>
+  <text x="83" y="77" text-anchor="middle" class="mono" font-size="23" font-weight="700" fill="#12161c">rsc</text>
+  <text x="126" y="76" class="sans" font-size="26" font-weight="800" fill="#f7f7f4">rsc</text>
+
+  <!-- cta -->
+  <rect x="1114" y="41" width="406" height="52" rx="12" fill="#171c22" stroke="#2a323c"/>
+  <text x="1138" y="75" class="mono" font-size="21" fill="#63d68a">$</text>
+  <text x="1158" y="75" class="mono" font-size="21" fill="#e8ebee">npx @ericrisco/rsc@latest</text>
+
+  <!-- spine: only in the gaps, so it never collides with a graphic -->
+  <circle cx="900" cy="108" r="3.5" fill="#63d68a" fill-opacity=".7"/>
+  <path class="flow" d="M900 112 V130 M900 282 V304 M900 456 V478 M900 630 V652"/>
+
+  <!-- return loop: memory -> skills -->
+  <path class="flow" d="M900 804 V846 Q900 858 888 858 H222 Q210 858 210 846 V218 Q210 206 222 206 H266"/>
+  <polygon points="280,206 266,199 266,213" fill="#63d68a" fill-opacity=".75"/>
+
+  <!-- ============ SKILLS ============ -->
+  <rect class="panel" x="280" y="130" width="1240" height="152" rx="18"/>
+  <text x="340" y="204" class="sans h">SKILLS</text>
+  <text x="342" y="240" class="sans cap">install one at a time</text>
+  <g>
+    <rect x="980"  y="188" width="36" height="36" rx="10" fill="#63d68a"/>
+    <rect x="1031" y="188" width="36" height="36" rx="10" fill="#63d68a"/>
+    <rect x="1082" y="188" width="36" height="36" rx="10" fill="#63d68a"/>
+    <rect x="1133" y="188" width="36" height="36" rx="10" fill="#63d68a"/>
+    <rect x="1184" y="188" width="36" height="36" rx="10" class="g" stroke-opacity=".45"/>
+    <rect x="1235" y="188" width="36" height="36" rx="10" class="g" stroke-opacity=".45"/>
+    <rect x="1286" y="188" width="36" height="36" rx="10" class="g" stroke-opacity=".45"/>
+    <rect x="1337" y="188" width="36" height="36" rx="10" class="g" stroke-opacity=".45"/>
+    <rect x="1388" y="188" width="36" height="36" rx="10" class="g" stroke-opacity=".45"/>
+    <rect x="1439" y="188" width="36" height="36" rx="10" class="g" stroke-opacity=".45"/>
+  </g>
+  <text x="1475" y="252" text-anchor="end" class="mono tiny">installed / available</text>
+
+  <!-- ============ HOOKS ============ -->
+  <rect class="panel" x="280" y="304" width="1240" height="152" rx="18"/>
+  <text x="340" y="378" class="sans h">HOOKS</text>
+  <text x="342" y="414" class="sans cap">rules the model cannot forget</text>
+  <path class="g" stroke-opacity=".5" d="M980 380 H1480"/>
+  <g>
+    <rect x="1003" y="352" width="14" height="56" rx="5" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <rect x="1118" y="352" width="14" height="56" rx="5" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <rect x="1233" y="352" width="14" height="56" rx="5" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <rect x="1348" y="352" width="14" height="56" rx="5" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <rect x="1463" y="352" width="14" height="56" rx="5" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+  </g>
+  <text x="1010" y="434" text-anchor="middle" class="mono tiny">start</text>
+  <text x="1125" y="434" text-anchor="middle" class="mono tiny">turn</text>
+  <text x="1240" y="434" text-anchor="middle" class="mono tiny">bash</text>
+  <text x="1355" y="434" text-anchor="middle" class="mono tiny">ship</text>
+  <text x="1470" y="434" text-anchor="middle" class="mono tiny">end</text>
+
+  <!-- ============ TOOLS ============ -->
+  <rect class="panel" x="280" y="478" width="1240" height="152" rx="18"/>
+  <text x="340" y="552" class="sans h">TOOLS</text>
+  <text x="342" y="588" class="sans cap">every connection tested</text>
+  <path class="g" stroke-opacity=".5" d="M1024 554 H1436"/>
+  <g>
+    <circle cx="1000" cy="554" r="24" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <polyline points="991,554 997,561 1009,547" class="g" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="1092" cy="554" r="24" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <polyline points="1083,554 1089,561 1101,547" class="g" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="1184" cy="554" r="24" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <polyline points="1175,554 1181,561 1193,547" class="g" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="1276" cy="554" r="24" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <polyline points="1267,554 1273,561 1285,547" class="g" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="1368" cy="554" r="24" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <polyline points="1359,554 1365,561 1377,547" class="g" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="1460" cy="554" r="24" fill="#131820" stroke="#63d68a" stroke-width="2"/>
+    <polyline points="1451,554 1457,561 1469,547" class="g" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="1484" y="608" text-anchor="end" class="mono tiny">01-TOOLS/</text>
+
+  <!-- ============ MEMORY ============ -->
+  <rect class="panel" x="280" y="652" width="1240" height="152" rx="18"/>
+  <text x="340" y="726" class="sans h">MEMORY</text>
+  <text x="342" y="762" class="sans cap">chaos into knowledge</text>
+  <text x="1010" y="736" text-anchor="middle" class="mono tiny" fill="#c8cfd6">raw/</text>
+  <path class="g" stroke-opacity=".5" d="M1046 728 H1170"/>
+  <path class="g" d="M1257 681.2 A 54 54 0 1 1 1203 681.2"/>
+  <polygon points="1213.4,675.2 1203.6,688.3 1197.2,677.1" fill="#63d68a"/>
+  <path class="g" stroke-opacity=".5" d="M1290 728 H1414"/>
+  <text x="1452" y="736" text-anchor="middle" class="mono tiny" fill="#c8cfd6">wiki/</text>
+
+  <!-- footer -->
+  <text x="1520" y="880" text-anchor="end" class="sans" font-size="23" fill="#9aa4b0">264 skills</text>
+</svg>

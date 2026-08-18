@@ -24,6 +24,15 @@ channel"* — **264 skills across 21 domains**, every one researched against liv
 npx @ericrisco/rsc            # plain-language wizard — no jargon, installs what your project needs
 ```
 
+<br>
+
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc is a meta-harness above your coding agents: TOOLS (01-TOOLS/, one folder per provider — Postgres, MongoDB, Stripe, Redis, Supabase, Firebase, Cloudflare, Hetzner, plus any API via api-connector-builder), 02-DOCS (the company brain — a knowledge graph turning raw/ into wiki/, OKF v0.1), and SKILLS (264, installed one at a time). All three feed Claude Code, Codex CLI and opencode, which work on your repo — and the results feed back into the brain." width="960">
+
+**One harness above every agent.** `rsc` wires three layers into whichever assistant you
+already use — the **tools** that connect your providers, the **02-DOCS brain** that turns your
+own results into knowledge, and the **skills** that teach the agent the job — then keeps all
+three in sync as you work.
+
 </div>
 
 ---
