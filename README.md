@@ -1,18 +1,14 @@
 <div align="center">
 
-```
-  ████████    ███████    ███████ 
-  ██    ██   ██         ██    ██ 
-  ██    ██   ██         ██       
-  ██    ██   ██         ██       
-  ████████    ██████    ██       
-  ██  ██           ██   ██       
-  ██   ██          ██   ██       
-  ██    ██         ██   ██    ██ 
-  ██    ██   ███████     ███████ 
-```
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc — 264 agent skills, one CLI, zero bloat" width="820">
 
 # `rsc` — 264 agent skills, one CLI, zero bloat
+
+[![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
+[![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
+[![skills](https://img.shields.io/badge/skills-264-63d68a?labelColor=12161c)](#the-catalog)
+[![license](https://img.shields.io/badge/license-MIT-63d68a?labelColor=12161c)](LICENSE)
+[![stars](https://img.shields.io/github/stars/ericrisco/rsc-harness?color=63d68a&labelColor=12161c)](https://github.com/ericrisco/rsc-harness/stargazers)
 
 **A self-recommending skill catalog for 17 coding assistants** — Claude Code,
 Codex, GitHub Copilot, Cursor, Gemini, Windsurf, Cline, Antigravity, Zed and more.
