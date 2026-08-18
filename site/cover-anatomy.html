@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<style>
+  :root{
+    --paper:oklch(0.165 0.012 260); --panel:oklch(0.205 0.013 260);
+    --ink:oklch(0.97 0.004 95); --muted:oklch(0.70 0.012 260);
+    --dim:oklch(0.56 0.012 260); --line:oklch(0.31 0.012 260);
+    --accent:oklch(0.80 0.17 156);
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1200px;height:630px;overflow:hidden}
+  body{
+    background:
+      radial-gradient(115% 80% at 50% -10%, oklch(0.30 0.05 156 / .26) 0%, transparent 60%),
+      linear-gradient(155deg, oklch(0.19 0.013 260) 0%, var(--paper) 52%, oklch(0.138 0.011 260) 100%);
+    font-family:var(--sans); -webkit-font-smoothing:antialiased;
+    padding:44px 56px; position:relative;
+    display:flex; flex-direction:column;
+  }
+  body::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.04;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E")}
+  body::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+    background-image:linear-gradient(to right,oklch(0.28 0.012 260/.5) 1px,transparent 1px),
+                     linear-gradient(to bottom,oklch(0.28 0.012 260/.5) 1px,transparent 1px);
+    background-size:60px 60px;
+    mask-image:radial-gradient(110% 80% at 50% 0%,black 0%,transparent 62%)}
+  header{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2}
+  .brand{display:flex;align-items:center;gap:11px}
+  .chip{width:36px;height:36px;border-radius:10px;background:var(--ink);color:var(--paper);
+    display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:-.02em}
+  .wm{font-family:var(--mono);font-weight:700;font-size:19px;color:var(--ink);letter-spacing:-.03em}
+  .cta{display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border-radius:9px;
+    background:oklch(0.225 0.013 260);border:1px solid var(--line);
+    font-family:var(--mono);font-size:14px;color:oklch(0.93 0.008 260);letter-spacing:-.01em}
+  .cta i{color:var(--accent);font-style:normal}
+  h1{margin-top:38px;position:relative;z-index:2;
+    font-family:var(--mono);font-weight:700;font-size:50px;line-height:1.08;
+    letter-spacing:-.045em;color:var(--ink);text-wrap:balance}
+  h1 em{font-style:normal;color:var(--accent)}
+  .sub{margin-top:16px;position:relative;z-index:2;font-size:19px;line-height:1.45;color:var(--muted);max-width:62ch}
+  .organs{margin-top:40px;position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+  .o{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:17px 17px 15px;
+    display:flex;flex-direction:column;gap:9px;min-height:196px;
+    box-shadow:0 1px 2px oklch(0 0 0/.22),0 16px 34px -22px oklch(0 0 0/.55)}
+  .o .bar{width:26px;height:3px;border-radius:2px;background:var(--accent)}
+  .o .k{font-family:var(--mono);font-size:12.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--accent)}
+  .o .w{font-size:20px;line-height:1.25;color:var(--ink);font-weight:500;text-wrap:pretty}
+  .o .foot{margin-top:auto;padding-top:11px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+  .o .p{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .o .ex{font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+  .meta{margin-top:auto;padding-top:16px;position:relative;z-index:2;font-family:var(--mono);font-size:12.5px;color:var(--dim);letter-spacing:.02em}
+</style></head>
+<body>
+  <header>
+    <div class="brand"><div class="chip">rsc</div><div class="wm">rsc</div></div>
+    <div class="cta"><i>$</i>npx @ericrisco/rsc@latest</div>
+  </header>
+
+  <h1>Your agent needs a memory,<br>arms, and <em>a trade</em>.</h1>
+  <p class="sub">rsc is the meta-harness that installs all three into whichever coding agent you
+  already use — plus the reflexes to keep it from breaking your repo.</p>
+
+  <div class="organs">
+    <div class="o"><span class="bar"></span><span class="k">Memory</span>
+      <span class="w">or it invents what it can&rsquo;t remember</span><span class="foot"><span class="p">02-DOCS/</span><span class="ex">raw/ &rarr; wiki/</span></span></div>
+    <div class="o"><span class="bar"></span><span class="k">Arms</span>
+      <span class="w">or it never touches your database</span><span class="foot"><span class="p">01-TOOLS/</span><span class="ex">Postgres &middot; Stripe &middot; Redis</span></span></div>
+    <div class="o"><span class="bar"></span><span class="k">A trade</span>
+      <span class="w">or it guesses how the job is done</span><span class="foot"><span class="p">264 skills</span><span class="ex">fastapi &middot; nextjs &middot; seo-geo</span></span></div>
+    <div class="o"><span class="bar"></span><span class="k">Reflexes</span>
+      <span class="w">or it forgets the rule mid-session</span><span class="foot"><span class="p">deterministic hooks</span><span class="ex">spec-first gate &middot; ship guard</span></span></div>
+  </div>
+
+  <div class="meta">MIT &middot; 17 coding assistants &middot; 21 domains &middot; no API key &middot; installed one at a time</div>
+</body></html>
