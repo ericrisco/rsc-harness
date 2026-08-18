@@ -148,6 +148,7 @@ A skill ships only when every box is checked or a miss is consciously justified.
 - [ ] **Concrete tooling delegated** to the stack skills rather than reinvented.
 - [ ] **evals present** — `cases.yaml` (≥5 `should_trigger` incl. non-obvious, ≥4 `should_not_trigger` each with a real-sibling `route_to`, ≥1 `capability` with a `must_include` rubric) + an honest `README.md`. `scripts/eval-lint.sh` passes — but it only checks presence and the counts (≥5/≥4/≥1) and that those keys are lists; the `route_to`-points-at-a-real-sibling, non-obvious phrasings, and `must_include` quality are yours to verify here, not the linter's.
 - [ ] **verify.sh** present iff the skill has a checkable artifact; process skills rely on evals.
+- [ ] **Every `must_include` item discriminates** — answerable by the scenario's task, plausibly caused by the skill and plausibly missed without it. An item *both* arms fail measures nothing and lowers the absolute; it has turned a real PASS into a FAIL here. → `references/eval-authoring.md`.
 - [ ] **Sibling links resolve** — every `../x/SKILL.md` points to a skill that exists.
 - [ ] **Wired** — `tags` + `recommends` set, `npm run manifest` re-run, and `npm run validate` / `npm run manifest:check` pass (manifest current, no dangling recommends).
 

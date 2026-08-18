@@ -61,13 +61,38 @@ should_not_trigger:
 # and refuses to call it done without evidence; an ungrounded answer tends to
 # eyeball the code, trust stale results, or declare success prematurely.
 capability:
-  - scenario: "Implementation of the 'duplicate-submit is a no-op' order feature just finished in a FastAPI service. The user says 'it's done, let's merge'. Verify it."
+  - scenario: >
+      A change is finished and the user says "it's done, let's merge". Verify it, and produce the
+      verification record.
+
+      Everything you need is here — do NOT assume any of it exists on disk; this scenario is
+      self-contained on purpose.
+
+      APPROVED SPEC (acceptance criteria):
+        AC1. Submitting an order returns 201 with the created order id.
+        AC2. Submitting the SAME order twice creates exactly one order; the second call returns
+             200 with the first order's id.
+        AC3. An order with a negative quantity is rejected with 422 and nothing is stored.
+
+      TASK DONE-CHECKS from the plan:
+        T1. POST /orders creates an order.            done-check: a test asserts 201 + id.
+        T2. Duplicate POST is a no-op.                done-check: a test asserts one row after two POSTs.
+        T3. Negative quantity is rejected.            done-check: a test asserts 422 + no write.
+
+      WHAT THE IMPLEMENTER REPORTS:
+        - Files changed: app/orders.py, tests/test_orders.py
+        - "I ran the suite: 2 passed. Tests written: test_create_order_returns_201,
+           test_negative_quantity_rejected."
+        - "mypy wasn't installed so the type step printed SKIP, and coverage ran without a
+           threshold configured. Everything else was green."
+        - "The retry loop can spin forever" was raised in review; the implementer replied
+          "not a real problem".
     must_include:
       - "Reads the accompaniment level from 02-DOCS/wiki/harness/user-profile.md and adapts verbosity (verdict legibility unchanged by the dial)."
-      - "LOCATES the spec acceptance criteria and the task done-checks, and identifies the FastAPI subproject as the touched stack from git diff/manifests."
-      - "RUNS the fastapi stack scripts/verify.sh (ruff/black, mypy, pytest+coverage, pip-audit) from the documented root and captures the output verbatim rather than reusing a previous run."
-      - "Treats any tool SKIP (missing tool) as UNVERIFIED, not as a pass, and notes the constitution's coverage floor as part of the gate."
-      - "WALKS every task done-check and every acceptance criterion, marking each with concrete evidence (a passing test / observable result) or as an open FAIL item — specifically flags the duplicate-submit criterion as UNVERIFIED if no test exercises the duplicate-POST path."
+      - "LOCATES the three acceptance criteria and the three task done-checks from the material given, and maps each to what the implementer actually reports."
+      - "Refuses to accept the implementer's summary as the gate: says the checks must be re-run and the output read, rather than trusting a reported '2 passed'."
+      - "Treats the mypy SKIP as UNVERIFIED rather than a pass, and does not let 'everything else was green' stand in for the skipped layer."
+      - "WALKS all three done-checks and all three acceptance criteria, and catches that AC2/T2 (duplicate POST is a no-op) has NO test at all — the two named tests cover AC1 and AC3 only — marking it UNVERIFIED rather than passing it."
       - "Does NOT fix a failing test inline; if a check fails it records it and hands off to debug, and refuses to fix-then-claim."
       - "RECORDS a dated verification file under 02-DOCS/wiki/sdd/verifications/ and indexes it in the root CLAUDE.md Knowledge map."
       - "Returns a VERDICT that is PASS only if EVERY item has passing evidence; a single unverified acceptance criterion makes the whole verdict FAIL — and refuses to call it 'done' otherwise."

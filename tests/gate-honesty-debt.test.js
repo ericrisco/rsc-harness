@@ -239,26 +239,30 @@ test('D — each prohibition carries its reason, not just the ban', () => {
 
 // -------------------------------------- E: the rules are gradeable behaviour in the eval scenarios
 
-test('E — the mutation rule is a gradeable behaviour in all three testing skills', () => {
-  for (const id of TESTING) {
+test('E — the mutation rule is gradeable where it DISCRIMINATES (testing-go only)', () => {
+  // Changed on 2026-08-18 by measurement, not by preference. The first real behavioral eval run
+  // showed these items came back unsatisfied in BOTH arms for testing-py and testing-web — they
+  // demanded the answer *name* a tool, and both arms did the behaviour without naming one. They
+  // contributed zero lift and still counted against the coverage term, dragging testing-py from
+  // PASS (9.0, +2.2) to FAIL (7.5, +1.7). So they were removed from those two rubrics.
+  //
+  // testing-go's equivalent item discriminated hard (lift 1.5 -> 2.7) because that skill gives a
+  // concrete procedure rather than a tool name. It stays, and is pinned here.
+  //
+  // The mutation RULE itself is still required in all three skill bodies — that is the test above.
+  // What changed is only the claim that the eval measures it. See 02-DOCS/wiki/sdd/specs/eval-integrity.md.
+  const go = capabilityBlock('testing-go');
+  assert.match(go, /proof the suite detects bugs/i, 'testing-go must grade coverage-is-not-detection');
+  assert.match(go, /no mature mutation tool/, "testing-go must grade Go's honest no-tool answer");
+  assert.match(go, /inflate/i, 'testing-go must grade the prove-it-ran requirement');
+
+  for (const id of ['testing-py', 'testing-web']) {
     const block = capabilityBlock(id);
-    assert.match(
+    assert.doesNotMatch(
       block,
       /proof the suite detects bugs/i,
-      `${id}: must grade the coverage-is-not-detection behaviour specifically`,
+      `${id}: the non-discriminating item is back — an item both arms fail lowers the absolute and measures nothing`,
     );
-    assert.match(
-      block,
-      /mutmut|Stryker|no mature mutation tool/,
-      `${id}: must grade the ecosystem's actual mutation answer`,
-    );
-    // Graded as behaviour ("does not present coverage as proof"), not as a keyword mention.
-    assert.match(
-      block,
-      /[Dd]oes not present/,
-      `${id}: the item must grade a behaviour, not a mention`,
-    );
-    assert.match(block, /equivalent|inflate/i, `${id}: must grade the survivor/runner nuance`);
   }
 });
 

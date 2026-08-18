@@ -63,6 +63,40 @@ The `must_include` points are the differentiators — the specific things a *goo
 
 For a process skill (no `verify.sh`), the capability scenario is the *primary* rigor — it is how you prove the safety rails actually change behavior. Make it count.
 
+## A `must_include` item must discriminate, or it subtracts
+
+Measured on 2026-08-18, running the behavioral eval on five skills for the first time. Two items
+added to `testing-py` and `testing-web` came back **unsatisfied in both arms** — treatment and
+baseline alike. They demanded the answer *name* a tool (`mutmut`, Stryker); both arms did the
+behaviour (planted a bug, checked the suite caught it) without naming one. Contributing nothing to
+lift and still counting against the coverage term, they dragged `testing-py` from **PASS (9.0,
+lift +2.2) to FAIL (7.5, lift +1.7)**. The rule they encoded was fine; the item was not.
+
+Two tests before an item earns its place:
+
+1. **Answerable by the scenario's task.** If the scenario says "write this test file", then "names
+   the mutation tool" is not part of that deliverable and no competent answer will contain it.
+2. **Discriminating.** The skill must plausibly cause it and a bare agent must plausibly miss it.
+   An item both arms satisfy measures the model; one both arms fail measures nothing and lowers the
+   absolute.
+
+**The symptom, so you can catch it from a scorecard:** an item unsatisfied in *both* arms is
+suspect. Nine times out of ten it is written as a spelling ("mentions X") rather than a behaviour
+("does not treat coverage as proof the suite detects bugs"). Rewrite it as the behaviour, or delete
+it — do not leave it in as an aspiration, because the aggregate cannot tell an aspiration from a
+failure.
+
+The same run showed the other side: the equivalent item in `testing-go`, where the skill gives a
+concrete *procedure* rather than a tool name, discriminated hard and nearly doubled the lift
+(1.5 → 2.7). Prescriptive guidance produces gradeable behaviour; a tool name produces a keyword
+check.
+
+**And the scenario itself must be executable where it runs.** `verify`'s scenario asked to verify a
+FastAPI orders feature that exists in no checkout, so both arms correctly answered "there is nothing
+to verify" and several items were unsatisfiable by construction — the absolute measured the scenario,
+not the skill. Make a `capability` scenario self-contained: carry the spec, the diff and the reported
+facts inline rather than assuming repo state.
+
 ## README.md — run it honestly
 
 `evals/README.md` documents the two-axis run procedure and is candid about limits:
