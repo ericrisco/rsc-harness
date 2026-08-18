@@ -29,12 +29,88 @@ export const ROLE_MARKERS = {
   loader: 'return its full text as',
 };
 
-// Write verbs that indicate a transcript actually WROTE a path rather than merely naming it. A
-// mention is not a mutation: the grader quotes repo paths constantly and is not violating anything.
-const WRITE_SIGNALS = [
-  'Write', 'Edit', 'MultiEdit', 'NotebookEdit',
-  'cat >', 'tee ', '>>', 'mv ', 'cp ', 'rm ',
+// Tools that write. Checked against a tool call's actual target path, never against nearby text.
+const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
+
+// Shell constructs that write TO a path. `cat 02-DOCS/x` is a read and must not match; `cat > 02-DOCS/x`
+// must. Each pattern is anchored on the redirect/verb so the protected path has to be its TARGET.
+const SHELL_WRITE_TO = (p) => [
+  new RegExp(`>>?\\s*\\S*${p}`),          // > path, >> path
+  new RegExp(`\\btee\\s+(-\\S+\\s+)*\\S*${p}`),
+  new RegExp(`\\b(mv|cp|rsync)\\s+[^|;&]*\\s\\S*${p}`),
+  new RegExp(`\\brm\\s+(-\\S+\\s+)*\\S*${p}`),
+  new RegExp(`\\b(mkdir|touch)\\s+(-\\S+\\s+)*\\S*${p}`),
 ];
+
+/**
+ * Structurally extract the tool calls from a transcript. This is the fix for the defect the first
+ * real run exposed: the previous version looked for a write VERB within ~400 chars of a protected
+ * path in the raw text. In a treatment transcript the injected SKILL.md itself names
+ * 02-DOCS/wiki/... paths, and tool names appear in every JSON envelope, so the proximity window
+ * matched almost always. It blocked a run in which nothing had been written — verified against the
+ * filesystem, which held no new files at all. An over-blocking gate is still a broken gate: it would
+ * have made every treatment run BLOCKED and wedged skill-harden permanently.
+ */
+export function extractToolCalls(transcriptText) {
+  const calls = [];
+  for (const line of String(transcriptText || '').split('\n')) {
+    if (!line.trim()) continue;
+    let o;
+    try { o = JSON.parse(line); } catch { continue; }
+    const msg = o && typeof o.message === 'object' && o.message ? o.message : o;
+    const content = msg && msg.content;
+    if (!Array.isArray(content)) continue;
+    for (const b of content) {
+      if (b && b.type === 'tool_use') calls.push({ name: b.name, input: b.input || {} });
+    }
+  }
+  return calls;
+}
+
+// The per-arm sandbox. A write under here is the CORRECT behaviour, however its path reads.
+export const SANDBOX_MARKER = '.rsc/eval-sandbox/';
+
+/**
+ * Did this tool call write to a path under `protected`?
+ *
+ * Two false positives were fixed here, both the same mistake — "the path appears in the string" is
+ * not "the write targets that location":
+ *  1. proximity matching in raw transcript text (the injected SKILL.md names 02-DOCS paths);
+ *  2. substring matching against a sandbox path that MIRRORS the wiki layout inside itself, e.g.
+ *     .rsc/eval-sandbox/specify/treatment-1/02-DOCS/wiki/sdd/specs/x.md — a correct write that
+ *     contains "02-DOCS/wiki/" as a substring.
+ * Both were caught only by checking the filesystem, which held no new files either time. The lesson
+ * is in the shape of the check, not in the patterns: anchor on the sandbox first, always.
+ */
+export function callWritesTo(call, protectedPath) {
+  if (!call) return false;
+  if (WRITE_TOOLS.has(call.name)) {
+    const target = String(call.input.file_path || call.input.path || call.input.notebook_path || '');
+    if (target.includes(SANDBOX_MARKER)) return false;
+    return target.includes(protectedPath);
+  }
+  if (call.name === 'Bash') {
+    const cmd = String(call.input.command || '');
+    if (!cmd.includes(protectedPath)) return false;
+    const esc = protectedPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const sandboxEsc = SANDBOX_MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return SHELL_WRITE_TO(esc).some((re) => {
+      const m = re.exec(cmd);
+      if (!m) return false;
+      // The matched write target itself must not sit inside the sandbox. Checking the whole command
+      // would let one sandboxed write excuse a real one in the same line.
+      return !new RegExp(`${sandboxEsc}[^\\s'"]*${esc}`).test(m[0]);
+    });
+  }
+  return false;
+}
+
+/** Did this tool call READ the given path? A path inside a tool input, not prose mentioning it. */
+export function callReads(call, path) {
+  if (!call) return false;
+  const input = JSON.stringify(call.input || {});
+  return input.includes(path);
+}
 
 // Paths an eval arm may never write. 02-DOCS is the project's brain and is untracked (P9), so a
 // stray write there has no undo.
@@ -73,35 +149,29 @@ export function findViolations({ skillId, agents }) {
   const rubricPath = `skills/${skillId}/evals/cases.yaml`;
 
   for (const a of agents || []) {
-    const text = String(a.text || '');
+    // Judged on TOOL CALLS, not on text. A transcript naming a path proves nothing: the treatment's
+    // own injected skill body names 02-DOCS paths, and the grader quotes repo paths constantly.
+    const calls = a.calls || extractToolCalls(a.text);
+
     if (a.role === 'baseline') {
-      // Graded separately: reading the skill removes the control; reading the rubric is reading the
-      // answer key, which also inflates the baseline's own score.
-      const skillHits = countOf(text, skillPath);
+      // Only the control arm is judged on reads — the treatment is supposed to have the skill and
+      // the loader reads both files by design.
+      const skillHits = calls.filter((c) => callReads(c, skillPath)).length;
       if (skillHits > 0) {
         violations.push({ kind: 'baseline-read-skill', agent: a.name, pattern: skillPath, count: skillHits });
       }
-      const rubricHits = countOf(text, rubricPath);
+      // Reading the rubric is reading the answer key: it also inflates the baseline's own score.
+      const rubricHits = calls.filter((c) => callReads(c, rubricPath)).length;
       if (rubricHits > 0) {
         violations.push({ kind: 'baseline-read-rubric', agent: a.name, pattern: rubricPath, count: rubricHits });
       }
     }
+
     if (a.role === 'baseline' || a.role === 'treatment') {
       for (const p of PROTECTED_PATHS) {
-        if (!text.includes(p)) continue;
-        // Require a write verb near the path, or a mention becomes a violation and the grader's
-        // quotations would block every run.
-        const wrote = WRITE_SIGNALS.some((verb) => {
-          let i = text.indexOf(p);
-          while (i !== -1) {
-            const window = text.slice(Math.max(0, i - 400), i + 400);
-            if (window.includes(verb)) return true;
-            i = text.indexOf(p, i + p.length);
-          }
-          return false;
-        });
-        if (wrote) {
-          violations.push({ kind: 'wrote-protected-path', agent: a.name, pattern: p, count: countOf(text, p) });
+        const hits = calls.filter((c) => callWritesTo(c, p)).length;
+        if (hits > 0) {
+          violations.push({ kind: 'wrote-protected-path', agent: a.name, pattern: p, count: hits });
         }
       }
     }
@@ -118,7 +188,7 @@ export function readAgents(dir) {
     .filter((f) => /^agent-.*\.jsonl$/.test(f))
     .map((f) => {
       const text = readFileSync(join(dir, f), 'utf8');
-      return { name: f, role: classifyAgent(text), text };
+      return { name: f, role: classifyAgent(text), text, calls: extractToolCalls(text) };
     });
 }
 
