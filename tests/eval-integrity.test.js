@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import {
   classifyAgent, findViolations, checkIntegrity, readAgents, ROLE_MARKERS, PROTECTED_PATHS,
+  extractToolCalls, callWritesTo, callReads,
 } from '../scripts/lib/eval-integrity.js';
 import { behavioralGate, scoreFromRaw, formatScorecard } from '../scripts/lib/behavior-score.js';
 
@@ -20,6 +21,9 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKFLOW = readFileSync(join(ROOT, 'scripts/skill-behavior-eval.workflow.js'), 'utf8');
 
 const agent = (name, role, text) => ({ name, role, text });
+// A transcript line carrying one tool_use, the shape the real .jsonl files use.
+const call = (name, input) => JSON.stringify({ message: { content: [{ type: 'tool_use', name, input }] } });
+const withCalls = (name, role, ...lines) => ({ name, role, text: lines.join('\n'), calls: extractToolCalls(lines.join('\n')) });
 
 // ------------------------------------------------------------------ role classification
 
@@ -61,7 +65,7 @@ test('a clean run has no violations', () => {
 test('a baseline that read the skill is a violation, with a count', () => {
   const r = findViolations({
     skillId: 'demo',
-    agents: [agent('base', 'baseline', 'cat skills/demo/SKILL.md ... skills/demo/SKILL.md again')],
+    agents: [withCalls('base', 'baseline', call('Read', { file_path: 'skills/demo/SKILL.md' }), call('Bash', { command: 'cat skills/demo/SKILL.md' }))],
   });
   assert.equal(r.ok, false);
   const v = r.violations.find((x) => x.kind === 'baseline-read-skill');
@@ -72,7 +76,7 @@ test('a baseline that read the skill is a violation, with a count', () => {
 test('a baseline that read the RUBRIC is reported separately — it is the answer key', () => {
   const r = findViolations({
     skillId: 'demo',
-    agents: [agent('base', 'baseline', 'opened skills/demo/evals/cases.yaml')],
+    agents: [withCalls('base', 'baseline', call('Read', { file_path: 'skills/demo/evals/cases.yaml' }))],
   });
   assert.ok(r.violations.some((x) => x.kind === 'baseline-read-rubric'));
 });
@@ -80,7 +84,7 @@ test('a baseline that read the RUBRIC is reported separately — it is the answe
 test('the TREATMENT reading the skill is not a violation — it is supposed to have it', () => {
   const r = findViolations({
     skillId: 'demo',
-    agents: [agent('t', 'treatment', 'skills/demo/SKILL.md skills/demo/evals/cases.yaml')],
+    agents: [withCalls('t', 'treatment', call('Read', { file_path: 'skills/demo/SKILL.md' }), call('Read', { file_path: 'skills/demo/evals/cases.yaml' }))],
   });
   assert.equal(r.ok, true, 'only the control arm is judged on reads');
 });
@@ -88,7 +92,7 @@ test('the TREATMENT reading the skill is not a violation — it is supposed to h
 test('the LOADER reading both files is not a violation — that is its job', () => {
   const r = findViolations({
     skillId: 'demo',
-    agents: [agent('l', 'loader', 'skills/demo/SKILL.md and skills/demo/evals/cases.yaml')],
+    agents: [withCalls('l', 'loader', call('Read', { file_path: 'skills/demo/SKILL.md' }))],
   });
   assert.equal(r.ok, true);
 });
@@ -97,7 +101,7 @@ test('writing into 02-DOCS/wiki is a violation for either arm', () => {
   for (const role of ['baseline', 'treatment']) {
     const r = findViolations({
       skillId: 'demo',
-      agents: [agent('x', role, 'Write to 02-DOCS/wiki/sdd/specs/thing.md')],
+      agents: [withCalls('x', role, call('Write', { file_path: '02-DOCS/wiki/sdd/specs/thing.md' }))],
     });
     assert.ok(
       r.violations.some((x) => x.kind === 'wrote-protected-path'),
@@ -106,14 +110,60 @@ test('writing into 02-DOCS/wiki is a violation for either arm', () => {
   }
 });
 
-test('MENTIONING a protected path without a write verb is not a violation', () => {
-  // The grader quotes repo paths constantly; if a mention counted, every run would block and the
-  // gate would be useless noise within a week.
-  const r = findViolations({
-    skillId: 'demo',
-    agents: [agent('x', 'baseline', 'the record would normally live in 02-DOCS/wiki/sdd/ somewhere')],
-  });
-  assert.equal(r.ok, true);
+test('REGRESSION: naming a protected path is not writing to it', () => {
+  // The defect the first real run exposed. The old check looked for a write VERB within ~400 chars
+  // of a protected path in the raw text. A treatment transcript embeds the whole SKILL.md, and
+  // verify/SKILL.md itself names 02-DOCS/wiki/sdd/config.yaml — so the window matched and the run was
+  // BLOCKED while the filesystem held no new files at all. Over-blocking is still a broken gate: it
+  // would have blocked every treatment run and wedged skill-harden.
+  const skillBodyMentions = withCalls('t', 'treatment',
+    call('Bash', { command: 'cat 02-DOCS/wiki/sdd/config.yaml' }),           // a READ
+    call('Bash', { command: "cat > .rsc/eval-sandbox/x/treatment-0/out.md <<'EOF'" }), // write, in zone
+  );
+  const r = findViolations({ skillId: 'demo', agents: [skillBodyMentions] });
+  assert.equal(r.ok, true, 'reading a protected path, or writing inside the sandbox, is not a violation');
+});
+
+test('a real write TO a protected path is still caught, by tool and by shell', () => {
+  const byTool = withCalls('a', 'treatment', call('Write', { file_path: '/repo/02-DOCS/wiki/x.md' }));
+  assert.ok(findViolations({ skillId: 'demo', agents: [byTool] }).violations.length, 'Write tool');
+
+  for (const cmd of [
+    'cat > 02-DOCS/wiki/x.md',
+    'echo hi >> 02-DOCS/wiki/x.md',
+    'tee 02-DOCS/wiki/x.md',
+    'mv /tmp/a.md 02-DOCS/wiki/a.md',
+    'cp a 02-DOCS/wiki/a',
+    'mkdir -p 02-DOCS/wiki/new',
+  ]) {
+    const a = withCalls('a', 'baseline', call('Bash', { command: cmd }));
+    assert.ok(
+      findViolations({ skillId: 'demo', agents: [a] }).violations.some((v) => v.kind === 'wrote-protected-path'),
+      `should catch: ${cmd}`,
+    );
+  }
+});
+
+test('reads are counted from tool inputs, not from prose', () => {
+  // Prose in an answer that happens to name the skill path is not the baseline having read it.
+  const prose = withCalls('b', 'baseline', JSON.stringify({ message: { content: [{ type: 'text', text: 'as skills/demo/SKILL.md would say' }] } }));
+  assert.equal(findViolations({ skillId: 'demo', agents: [prose] }).ok, true);
+
+  const real = withCalls('b', 'baseline', call('Read', { file_path: 'skills/demo/SKILL.md' }));
+  assert.ok(findViolations({ skillId: 'demo', agents: [real] }).violations.some((v) => v.kind === 'baseline-read-skill'));
+});
+
+test('extractToolCalls survives junk lines and non-tool content', () => {
+  const calls = extractToolCalls(['not json', '', '{"message":{"content":"plain string"}}', call('Bash', { command: 'ls' })].join('\n'));
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].name, 'Bash');
+});
+
+test('callWritesTo and callReads are exported and pure', () => {
+  assert.equal(callWritesTo({ name: 'Bash', input: { command: 'cat 02-DOCS/wiki/a' } }, '02-DOCS/wiki/'), false);
+  assert.equal(callWritesTo({ name: 'Bash', input: { command: 'cat > 02-DOCS/wiki/a' } }, '02-DOCS/wiki/'), true);
+  assert.equal(callWritesTo(null, '02-DOCS/wiki/'), false);
+  assert.equal(callReads({ name: 'Read', input: { file_path: 'skills/x/SKILL.md' } }, 'skills/x/SKILL.md'), true);
 });
 
 test('findViolations refuses to run without a skillId', () => {
