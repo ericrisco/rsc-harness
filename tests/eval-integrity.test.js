@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import {
   classifyAgent, findViolations, checkIntegrity, readAgents, ROLE_MARKERS, PROTECTED_PATHS,
-  extractToolCalls, callWritesTo, callReads,
+  extractToolCalls, callWritesTo, callReads, SANDBOX_MARKER,
 } from '../scripts/lib/eval-integrity.js';
 import { behavioralGate, scoreFromRaw, formatScorecard } from '../scripts/lib/behavior-score.js';
 
@@ -142,6 +142,32 @@ test('a real write TO a protected path is still caught, by tool and by shell', (
       `should catch: ${cmd}`,
     );
   }
+});
+
+test('REGRESSION 2: a sandbox path that MIRRORS the wiki layout is not a protected write', () => {
+  // Second false positive in this same check. The treatment arms wrote correctly inside their zone
+  // but recreated the wiki tree inside it:
+  //   .rsc/eval-sandbox/specify/treatment-1/02-DOCS/wiki/sdd/specs/x.md
+  // Substring matching flagged it; the filesystem held no new files in the real 02-DOCS. "The path
+  // appears in the string" is not "the write targets that location" — anchor on the sandbox first.
+  const mirrored = withCalls('t', 'treatment',
+    call('Bash', { command: "mkdir -p /repo/.rsc/eval-sandbox/specify/treatment-1/02-DOCS/wiki/sdd/specs" }),
+    call('Bash', { command: "cat > /repo/.rsc/eval-sandbox/specify/treatment-1/02-DOCS/wiki/sdd/specs/x.md <<'EOF'" }),
+    call('Write', { file_path: '/repo/.rsc/eval-sandbox/specify/treatment-0/02-DOCS/wiki/index.md' }),
+  );
+  assert.equal(findViolations({ skillId: 'demo', agents: [mirrored] }).ok, true);
+  assert.equal(SANDBOX_MARKER, '.rsc/eval-sandbox/');
+});
+
+test('a sandboxed write in the same command does not excuse a real one', () => {
+  // Checking the whole command for the sandbox marker would let one legitimate write launder another.
+  const both = withCalls('t', 'treatment', call('Bash', {
+    command: "cat > .rsc/eval-sandbox/x/treatment-0/a.md <<'EOF' ; cat > 02-DOCS/wiki/real.md <<'EOF'",
+  }));
+  assert.ok(
+    findViolations({ skillId: 'demo', agents: [both] }).violations.some((v) => v.kind === 'wrote-protected-path'),
+    'the unsandboxed write must still be caught',
+  );
 });
 
 test('reads are counted from tool inputs, not from prose', () => {

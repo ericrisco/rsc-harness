@@ -67,18 +67,40 @@ export function extractToolCalls(transcriptText) {
   return calls;
 }
 
-/** Did this tool call write to a path under `protected`? */
+// The per-arm sandbox. A write under here is the CORRECT behaviour, however its path reads.
+export const SANDBOX_MARKER = '.rsc/eval-sandbox/';
+
+/**
+ * Did this tool call write to a path under `protected`?
+ *
+ * Two false positives were fixed here, both the same mistake — "the path appears in the string" is
+ * not "the write targets that location":
+ *  1. proximity matching in raw transcript text (the injected SKILL.md names 02-DOCS paths);
+ *  2. substring matching against a sandbox path that MIRRORS the wiki layout inside itself, e.g.
+ *     .rsc/eval-sandbox/specify/treatment-1/02-DOCS/wiki/sdd/specs/x.md — a correct write that
+ *     contains "02-DOCS/wiki/" as a substring.
+ * Both were caught only by checking the filesystem, which held no new files either time. The lesson
+ * is in the shape of the check, not in the patterns: anchor on the sandbox first, always.
+ */
 export function callWritesTo(call, protectedPath) {
   if (!call) return false;
   if (WRITE_TOOLS.has(call.name)) {
     const target = String(call.input.file_path || call.input.path || call.input.notebook_path || '');
+    if (target.includes(SANDBOX_MARKER)) return false;
     return target.includes(protectedPath);
   }
   if (call.name === 'Bash') {
     const cmd = String(call.input.command || '');
     if (!cmd.includes(protectedPath)) return false;
     const esc = protectedPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return SHELL_WRITE_TO(esc).some((re) => re.test(cmd));
+    const sandboxEsc = SANDBOX_MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return SHELL_WRITE_TO(esc).some((re) => {
+      const m = re.exec(cmd);
+      if (!m) return false;
+      // The matched write target itself must not sit inside the sandbox. Checking the whole command
+      // would let one sandboxed write excuse a real one in the same line.
+      return !new RegExp(`${sandboxEsc}[^\\s'"]*${esc}`).test(m[0]);
+    });
   }
   return false;
 }
