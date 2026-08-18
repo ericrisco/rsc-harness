@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import { rmSync, existsSync, cpSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
-import { targetHasAgents, writeDeveloperAgent, removeDeveloperAgent, developerAgentPath } from '../targets/agents.js';
+import { targetHasAgents, writeAgents, removeAgents, agentPath, agentNames } from '../targets/agents.js';
 import { readState, writeState } from './lib/state.js';
 import { createBackup } from './lib/backups.js';
 
@@ -70,7 +70,7 @@ function managedPathsForInstall({ skillIds, target, home, cwd }) {
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
-  if (targetHasAgents(target)) out.push(developerAgentPath(target, cwd), join(cwd, '.rsc', 'developer.json'));
+  if (targetHasAgents(target)) out.push(...agentNames().map((n) => agentPath(target, cwd, n)), join(cwd, '.rsc', 'developer.json'));
   for (const step of plan) {
     if (step.kind === 'skill') {
       out.push(step.to, baseDir(step.id, cwd));
@@ -103,11 +103,18 @@ export async function applyInstall({ skillIds, target, home, cwd = process.cwd()
     }
   }
   writeBaseVersions(cwd, baseVersions);
-  // Install the `developer` subagent for targets that support file-based agents (Claude
-  // Code, Cursor, OpenCode, Gemini, Copilot, Junie, Kiro, Codex). It runs at the balanced
-  // tier by default (never light/Haiku); the tier lives in .rsc/developer.json, set by
-  // `init` at onboarding and honored on every (re)install/sync.
-  if (targetHasAgents(target)) state.agents = writeDeveloperAgent(target, cwd).length ? ['developer'] : [];
+  // Install the catalog's subagents for targets that support file-based agents (Claude
+  // Code, Cursor, OpenCode, Gemini, Copilot, Junie, Kiro, Codex): `developer` plus the three
+  // adversarial refuter lenses `review` dispatches at tier 2. They run at the balanced tier
+  // by default (never light/Haiku); the tier lives in .rsc/developer.json, set by `init` at
+  // onboarding and honored on every (re)install/sync.
+  //
+  // The recorded names come from what was WRITTEN, not from a hardcoded list: a state entry
+  // naming an agent whose file never landed answers "you have it" for something absent.
+  if (targetHasAgents(target)) {
+    const written = writeAgents(target, cwd);
+    state.agents = written.map((f) => basename(f).split('.')[0]);
+  }
   state.version = CLI_VERSION;
   writeState(paths.stateFile, state);
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
@@ -214,9 +221,12 @@ export async function purge({ home, cwd = process.cwd(), withDocs = false, dryRu
     }
     // unwireHook mutates files, so only run it for real (dry runs skip it).
     if (!dryRun) removed.push(...unwireHook(target, paths));
-    // Remove the installed developer subagent (agent-capable targets only).
-    const agentFile = developerAgentPath(target, cwd);
-    if (agentFile) drop(agentFile);
+    // Remove the subagents this catalog installed — and only those. An uninstaller that takes
+    // an agent the user wrote by hand is worse than one that leaves residue.
+    for (const n of agentNames()) {
+      const agentFile = agentPath(target, cwd, n);
+      if (agentFile) drop(agentFile);
+    }
   }
   drop(join(cwd, '.rsc'), true);
   if (withDocs) drop(join(cwd, '02-DOCS'), true);
