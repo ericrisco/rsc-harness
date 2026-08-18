@@ -148,20 +148,39 @@ export function capabilities({ target, home, cwd = process.cwd(), full = false }
 // ONLY — it cannot tell a description from a paraphrase, and it does not pretend to.
 // The rule lives in skills/skill-scout/SKILL.md, where it is held by whoever writes.
 
+// `proposed-capability` added 2026-08-18: none of the original five could express "this needs an
+// executable capability, not a skill", which is the majority of what the repetition detector actually
+// finds. Without it the honest case had to be recorded as one of the other five, and all five would
+// have been false. Additive — the existing five keep validating unchanged.
 export const GAP_VERDICTS = [
   'covered-installed', 'covered-catalog', 'covered-agent',
-  'proposed-accepted', 'proposed-declined',
+  'proposed-accepted', 'proposed-declined', 'proposed-capability',
 ];
 
 export function gapLogPath(cwd = process.cwd()) {
   return join(cwd, '.rsc', 'automation-gaps.md');
 }
 
+/**
+ * The user-level log. A procedure repeated across three projects is STRONGER evidence that it should
+ * stop being manual, not weaker — and the per-repo log makes that pattern invisible by construction
+ * (clarify 2026-08-18). Nothing "wins" when the two disagree: they are summed, de-duplicated by
+ * date+procedure+verdict, so double-writing cannot double-count.
+ */
+export function globalGapLogPath(home = homedir()) {
+  return join(home, '.rsc', 'automation-gaps.md');
+}
+
+/** Repo name as it appears in a log line, so the offer can say WHERE it repeated. */
+export function repoNameOf(cwd = process.cwd()) {
+  return basename(resolve(cwd));
+}
+
 // Any whitespace run collapses, not just \n: a lone \r is a CommonMark line ending,
 // so it would render as an extra (forged, dated) entry while `cat` hid it.
 const oneLine = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 
-export function appendGap({ procedure, verdict, cwd = process.cwd(), now }) {
+export function appendGap({ procedure, verdict, cwd = process.cwd(), now, home = homedir() }) {
   const text = oneLine(procedure);
   if (!text) throw new Error('gap-log: a procedure description is required. Recover: pass --procedure "<what you observed doing>" — your own description of the work, never the user\'s words.');
   if (!GAP_VERDICTS.includes(verdict)) {
@@ -177,6 +196,19 @@ export function appendGap({ procedure, verdict, cwd = process.cwd(), now }) {
   const d = now || new Date();
   const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   appendFileSync(p, `${header}- ${day} · ${text} · **${verdict}**\n`);
+
+  // Also record globally, tagged with the repo. Wrapped: a home directory that cannot be written must
+  // never take down the local record, which is the one the current repo depends on.
+  try {
+    const g = globalGapLogPath(home);
+    mkdirSync(dirname(g), { recursive: true });
+    let gHeader = true;
+    try { gHeader = statSync(g).size === 0; } catch { gHeader = true; }
+    const gh = gHeader
+      ? '# Huecos de automatización (global)\n\nAcumulado de todos los repos, para que un procedimiento repetido en varios proyectos sea visible.\nLo escribe `rsc capabilities gap-log`. Cada línea lleva `[repo:<nombre>]`. Fichero local: no lo commitees.\n\n'
+      : '';
+    appendFileSync(g, `${gh}- ${day} · ${text} · [repo:${repoNameOf(cwd)}] · **${verdict}**\n`);
+  } catch { /* the local log is what matters; a global failure is not fatal */ }
   return p;
 }
 
