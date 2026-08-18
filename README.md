@@ -26,12 +26,12 @@ npx @ericrisco/rsc            # plain-language wizard — no jargon, installs wh
 
 <br>
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc is a meta-harness above your coding agents: TOOLS (01-TOOLS/, one folder per provider — Postgres, MongoDB, Stripe, Redis, Supabase, Firebase, Cloudflare, Hetzner, plus any API via api-connector-builder), 02-DOCS (the company brain — a knowledge graph turning raw/ into wiki/, OKF v0.1), and SKILLS (264, installed one at a time). All three feed Claude Code, Codex CLI and opencode, which work on your repo — and the results feed back into the brain." width="960">
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc — the model (Claude, GPT, Gemini) is the brain your coding agent rents, and you already have that. Claude Code, Codex and opencode sit in the middle. Below them the rsc meta-harness adds everything the model lacks: memory (02-DOCS/) so it stops inventing, arms (01-TOOLS/) so it can execute, a trade (264 skills) so it stops guessing, and reflexes (deterministic hooks) so it cannot forget the rule mid-session." width="960">
 
-**One harness above every agent.** `rsc` wires three layers into whichever assistant you
-already use — the **tools** that connect your providers, the **02-DOCS brain** that turns your
-own results into knowledge, and the **skills** that teach the agent the job — then keeps all
-three in sync as you work.
+**The model is the only part your agent already has.** `rsc` is the meta-harness that adds
+the rest: a **memory** so it stops inventing, **arms** so it can execute, a **trade** so it stops
+guessing, and **reflexes** so it cannot forget the rule mid-session — into whichever assistant
+you already use, and kept in sync as you work.
 
 </div>
 
