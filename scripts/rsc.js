@@ -352,6 +352,26 @@ async function main() {
         } catch (e) { say(e.message); process.exitCode = 1; }
         return;
       }
+      // `capabilities repetition` — read the ledger nobody was interrogating. It lives here and not in
+      // a new command because the enumeration and the writing already live here, and splitting them
+      // across two places is the parallel bookkeeping P3 forbids.
+      if (argv.includes('repetition')) {
+        const root = resolveRoot(process.cwd());
+        const { repetitionReport } = await import('./lib/repetition-report.js');
+        const rep = repetitionReport({ cwd: root });
+        if (argv.includes('--json')) return void say(JSON.stringify(rep, null, 2));
+        if (rep.blocked) { say(`⚠️  ${rep.reason}`); process.exitCode = 1; return; }
+        if (!rep.offer) { say(`# nada que ofrecer — ${rep.reason} (${rep.entries} entradas leídas)`); return; }
+        const o = rep.offer;
+        const where = o.repos.length ? ` · ${o.repos.map((r) => `${r.repo}×${r.n}`).join(', ')}` : '';
+        say(`🔁 «${o.procedure}» visto ${o.seen} veces (${o.dates.join(', ')})${where}`);
+        say(`   → ${o.kind}: ${o.why}`);
+        say(`   registra la decisión con: rsc capabilities gap-log --procedure "..." --verdict proposed-${o.kind === 'capability' ? 'capability' : 'accepted'}|proposed-declined`);
+        if (rep.uncertain.length) {
+          say(`   (${rep.uncertain.length} parecido(s) que NO se agruparon por debajo del umbral — deliberado)`);
+        }
+        return;
+      }
       const full = argv.includes('--full');
       const reports = targets.map((t) => capabilities({ target: t, full }));
       if (argv.includes('--json')) {
