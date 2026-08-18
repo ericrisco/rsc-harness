@@ -7,6 +7,8 @@ import {
   AGENT_TARGET_IDS, targetHasAgents, agentNames, agentPath, writeAgents, removeAgents,
   developerAgentPath, writeDeveloperAgent, removeDeveloperAgent, agentByName,
 } from '../targets/agents.js';
+import { applyInstall } from '../scripts/install-apply.js';
+import { targetPaths } from '../targets/index.js';
 
 // `review` already dispatches three fresh-context refuters at tier 2, and v1.0.14 gave them four
 // rules — but all of it lived in PROSE inside a SKILL.md, reconstructed from memory on every run with
@@ -173,5 +175,22 @@ test('every agent declares a real description and body', () => {
     const a = agentByName(name);
     assert.ok(a.desc && a.desc.length > 40, `${name}: needs a real description`);
     assert.ok(a.body && a.body.length > 200, `${name}: needs a real body`);
+  }
+});
+
+// ------------------------------------------------------------------ the install state must not lie
+
+test('install records EVERY agent it wrote, derived from the files not a hardcoded list', async () => {
+  // Mutant M9 survived until this existed: hardcoding ['developer'] left the state claiming one agent
+  // while four files sat on disk. A state entry that under-reports is a smaller lie than one that
+  // over-reports, and still a lie — and it is the file `doctor` and `sync` read.
+  const cwd = mkdtempSync(join(tmpdir(), 'ra-state-'));
+  const home = mkdtempSync(join(tmpdir(), 'ra-home-'));
+  await applyInstall({ skillIds: ['fastapi'], target: 'claude', home, cwd });
+  const state = JSON.parse(readFileSync(targetPaths('claude', home, cwd).stateFile, 'utf8'));
+  assert.deepEqual([...state.agents].sort(), [...agentNames()].sort(),
+    'the recorded agents must match what was written');
+  for (const n of state.agents) {
+    assert.ok(existsSync(agentPath('claude', cwd, n)), `${n} is recorded but its file is not there`);
   }
 });
