@@ -147,6 +147,24 @@ test('REGRESSION: no frontmatter is only a candidate where every sibling has one
   assert.match(out[0].signal, /todos los demás/);
 });
 
+test('a type with NO dominant home is never judged — the over-firing control', () => {
+  // `article` genuinely lives in brand/, harness/ and stack/. Without the corroboration threshold every
+  // type would get a "home" (whichever dir happens to hold most) and the minority dirs would all be
+  // flagged — noise about correct work, on day one. Mutant M6 survived until this test existed.
+  const spread = [
+    doc('brand/a.md', fm({ type: 'article' })),
+    doc('brand/b.md', fm({ type: 'article' })),
+    doc('harness/c.md', fm({ type: 'article' })),
+    doc('stack/d.md', fm({ type: 'article' })),
+  ];
+  const conv = conventionsFrom(spread);
+  assert.equal(conv.dominantHome.has('article'), false, 'an evenly spread type has no home to be outside of');
+  for (const d of spread) {
+    assert.deepEqual(findMisplaced({ doc: d, conventions: conv, indexText: null }), [],
+      `${d.path} must stay silent — it is where it belongs`);
+  }
+});
+
 test('MISPLACED flags an indexable artifact with no row, and not a non-indexable one', () => {
   const d = doc('sdd/specs/x.plan.md', fm({ type: 'plan' }), { indexable: true });
   const conv = conventionsFrom([d, doc('sdd/specs/y.md', fm({ type: 'plan' })), doc('sdd/specs/z.md', fm({ type: 'plan' }))]);
@@ -198,8 +216,9 @@ test('diagnose composes the three detectors and reports what it did not look at'
   const r = diagnose({ docs: [doc('harness/a.md', fm({ type: 'article' }))], indexText: '# i', refExists: () => true });
   assert.equal(r.scanned, 1);
   assert.ok(r.notLookedAt.length >= 4);
-  assert.ok(r.notLookedAt.some((n) => /PRIMERA instancia/.test(n)),
-    'the derived-convention blind spot must be declared, not hidden');
+  assert.ok(r.notLookedAt.some((n) => n.startsWith('La PRIMERA instancia')),
+    'the derived-convention blind spot must be declared verbatim, not hidden or mangled');
+  assert.deepEqual(r.notLookedAt, NOT_LOOKED_AT, 'the disclosure list must reach the report intact');
 });
 
 // ----------------------------------------------------------------- against the real wiki
