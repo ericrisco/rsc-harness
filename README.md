@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc — 264 agent skills, one CLI, zero bloat" width="820">
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc — the plain-language wizard installing 5 of 264 skills into Claude Code and Codex CLI, leaving the other 259 out of your context window" width="960">
 
 # `rsc` — 264 agent skills, one CLI, zero bloat
 
