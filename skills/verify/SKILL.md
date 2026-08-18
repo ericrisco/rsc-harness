@@ -85,7 +85,7 @@ Rules for RUN:
 - Run from the directory the stack skill documents (Go runs from the module root; others from the subproject root). Don't guess paths.
 - If no `scripts/verify.sh` exists for a touched stack, that's a gap — say the gate is incomplete and recommend the user add the stack skill, rather than hand-rolling a one-off check that drifts from the real gate.
 
-#### A home-grown gate must prove it can fail
+#### A home-grown gate must prove it can fail — and that it can pass
 
 The dangerous way a checker breaks is not a crash — it is **fail-open**: nothing errors, the layer prints pass, and it prints pass forever. That failure can only ever produce green, so no failing run will ever surface it. The rule follows: **before you trust a home-grown gate's pass, watch it fail** on a known-bad input. It is the RED principle applied to the checker.
 
@@ -93,6 +93,14 @@ The dangerous way a checker breaks is not a crash — it is **fail-open**: nothi
 - **A must-find-nothing grep has three outcomes, not two.** No matches = pass. A match = fail. **The scan itself breaking** (unreadable input, bad pattern) = fail too. Left unhandled, an unreadable file becomes a silent pass. No `|| true`, no `2>/dev/null`, no bare fallthrough.
 - **State the limit where you state the pass.** Watching a gate fail once proves that *one* known-bad case reaches its failure path. It does **not** prove the gate recognizes every violation of the rule it claims to enforce — a gate can fail closed perfectly and still guard a spelling rather than a behavior. Record the control, and record what it does not buy.
 - **Our own known fail-open:** the stack `verify.sh` scripts SKIP a missing tool instead of failing. That is a documented gap, not a pass — so it goes in the record's *Capas no ejecutadas* under `HERRAMIENTA-AUSENTE`, never left implied.
+
+**Then run the other control: a known-GOOD input, and watch it pass.** Both directions or neither — a gate proven only against bad input is half-tested, and the untested half is the one that fires on every run.
+
+**Over-blocking is not the safe side.** It feels like caution and it is not: a gate that fires on correct work gets muted, worked around, or wedges the pipeline that depends on it, which is the same damage as a gate that checks nothing with the sign reversed. And it is *harder* to notice, because the failure arrives dressed as diligence.
+
+Where this bites hardest is a check that matches text rather than structure — **"the path appears in the string" is not "the write targets that location"**. Our own integrity gate learned this twice in one day: it flagged a transcript that merely *named* a protected path (the skill body it had been handed named it), then flagged a sandbox directory whose path *contained* the protected one as a substring. Twelve mutants had proven it could fail; not one had asked whether it could pass, so the defect shipped and surfaced on first real use with the filesystem provably untouched. → `02-DOCS/wiki/harness/puertas-y-mecanismos.md`
+
+So when you write the negative control, write the positive one beside it, and prefer matching **structure** (a parsed tool call, a resolved path, an exit code) over matching text that happens to contain the thing you care about.
 
 ### 3 — WALK the done-checks and acceptance criteria
 

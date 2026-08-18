@@ -21,6 +21,9 @@ import { fileURLToPath } from 'node:url';
 // sentence, so rewording the prose does not break the test while deleting the rule does.
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skill = (id) => readFileSync(join(ROOT, 'skills', id, 'SKILL.md'), 'utf8');
+// Prose assertions run against whitespace-collapsed text: skill bodies are hard-wrapped, so a
+// sentence matched with single spaces breaks the moment the wrap lands mid-phrase.
+const prose = (id) => skill(id).replace(/\s+/g, ' ');
 
 const TESTING_SKILLS = ['testing-py', 'testing-web', 'testing-go'];
 const TOUCHED = [...TESTING_SKILLS, 'verify', 'specify'];
@@ -98,9 +101,11 @@ test('B — verify requires a home-grown gate to be watched failing', () => {
   // Anchor on the HEADING, not the phrase. A bare /prove it can fail/ also matches the one-line
   // reminder in the anti-patterns table, so it survived a mutant that gutted this whole section —
   // found by the negative control in 02-DOCS/wiki/sdd/verifications/gate-honesty-2026-08-17.md.
+  // The heading gained "— and that it can pass" on 2026-08-18; anchored on the phrase within a
+  // heading line rather than at end-of-line, so extending the title does not break the pin.
   assert.match(
     body,
-    /^#+ .*prove it can fail\s*$/im,
+    /^#+ .*prove it can fail.*$/im,
     'verify: the rule needs its own section, not just an anti-pattern row',
   );
   assert.match(body, /fail-open/i, 'verify: must name the fail-open failure mode');
@@ -109,6 +114,35 @@ test('B — verify requires a home-grown gate to be watched failing', () => {
     /known-bad/i,
     'verify: must require a known-bad input, not just "test the gate"',
   );
+});
+
+test('B — the rule now requires BOTH controls: can-fail and can-pass', () => {
+  // The missing symmetric half, added 2026-08-18 after the integrity gate over-blocked twice on its
+  // first real use. Twelve mutants had proven it could fail; none asked whether it could pass, so the
+  // defect shipped. Rule stated at 02-DOCS/wiki/sdd/verifications/eval-run2-2026-08-18.md.
+  const body = prose('verify');
+  assert.match(
+    body,
+    /known-GOOD input/i,
+    'verify: a gate must also be watched passing on a known-good input',
+  );
+  assert.match(
+    body,
+    /[Bb]oth directions or neither/,
+    'verify: half-testing a gate leaves the half that fires on every run untested',
+  );
+  assert.match(
+    body,
+    /[Oo]ver-blocking is not the safe side/,
+    'verify: must say why over-blocking is not caution',
+  );
+  // The concrete failure shape, so the rule is actionable rather than a slogan.
+  assert.match(
+    body,
+    /is not "the write targets that location"/,
+    'verify: must name the text-vs-structure trap that caused it',
+  );
+  assert.match(body, /prefer matching \*\*structure\*\*|matching structure/i, 'verify: must prescribe structure over text');
 });
 
 test('B — third-party tools are exempt, and the exemption is explicit', () => {
