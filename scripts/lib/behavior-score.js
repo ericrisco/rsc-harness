@@ -41,7 +41,25 @@ export function aggregate(scenarios) {
   return { absoluteScore, lift, n: valid.length, dropped };
 }
 
-export function behavioralGate(agg) {
+// integrity is OPTIONAL and absent means "not checked", never "clean" — callers that predate the
+// integrity layer (holdoutGate, raw stdin scoring) keep their exact behaviour.
+//
+// A violated integrity is BLOCKED, not FAIL, and the distinction is the whole point: FAIL says "the
+// skill does not clear the bar" and sends someone to edit the skill. When the control read the
+// answer key, the only true statement is "this run measures nothing" — a different action entirely.
+export function behavioralGate(agg, integrity) {
+  if (integrity && integrity.ok === false) {
+    const vs = Array.isArray(integrity.violations) ? integrity.violations : [];
+    return {
+      pass: false,
+      blocked: true,
+      reasons: [integrity.reason || 'integrity check failed'],
+      mustFix: vs.length
+        ? vs.map((v) => `${v.kind}: ${v.agent} touched ${v.pattern} (x${v.count}) — re-run with the arm isolated.`)
+        : ['Re-run the eval with integrity verifiable; the scores from this run are not a measurement.'],
+      violations: vs,
+    };
+  }
   const reasons = [];
   const mustFix = [];
   if (!agg || agg.n === 0) {
@@ -118,7 +136,7 @@ export function formatHoldoutVerdict(scored, gate) {
 }
 
 // raw: { skillId, scenarios: [{index, xIsTreatment, gradeX, gradeY, error?}] }
-export function scoreFromRaw(raw) {
+export function scoreFromRaw(raw, integrity) {
   const scenarios = (raw && Array.isArray(raw.scenarios) ? raw.scenarios : []).map((s) => {
     if (!s || s.error || !s.gradeX || !s.gradeY) {
       return { index: s ? s.index : null, error: (s && s.error) || 'missing-grade', absolute: null, delta: null };
@@ -131,8 +149,9 @@ export function scoreFromRaw(raw) {
     return { index: s.index, treatment: t, baseline: b, absolute: d.absolute, delta: d.delta };
   });
   const agg = aggregate(scenarios);
-  const gate = behavioralGate(agg);
+  const gate = behavioralGate(agg, integrity);
   const out = { skillId: (raw && raw.skillId) || null, scenarios, aggregate: agg, gate };
+  if (integrity) out.integrity = integrity;
   // Carried through untouched so the hold-out verdict can echo the fresh scenario for hand-audit.
   if (raw && raw.holdoutScenario) out.holdoutScenario = raw.holdoutScenario;
   return out;
@@ -143,7 +162,18 @@ export function formatScorecard(scored) {
   const lines = [];
   lines.push(`# Behavioral scorecard — ${skillId || '(unknown skill)'}`);
   lines.push('');
-  lines.push(`**Verdict:** ${gate.pass ? 'PASS ✅' : 'FAIL ❌'}  ·  absolute ${agg.absoluteScore == null ? 'n/a' : agg.absoluteScore}/10 (gate >= ${ABS_MIN})  ·  lift ${agg.lift == null ? 'n/a' : agg.lift} (gate >= ${LIFT_MIN})  ·  n=${agg.n}${agg.dropped ? ` (${agg.dropped} dropped)` : ''}`);
+  if (gate.blocked) {
+    // Deliberately NO absolute and NO lift here. Printing them beside a block invites reading them
+    // anyway, and they are not measurements — that is exactly what the block is saying.
+    lines.push(`**Verdict:** BLOCKED ⛔  ·  ${gate.reasons[0]}`);
+    lines.push('');
+    lines.push('The scores from this run are withheld: they are not a measurement of this skill.');
+    lines.push('');
+    lines.push('**Integrity violations:**');
+    for (const f of gate.mustFix) lines.push(`- ${f}`);
+    return lines.join('\n');
+  }
+  lines.push(`**Verdict:** ${gate.pass ? 'PASS ✅' : 'FAIL ❌'}  ·  absolute ${agg.absoluteScore == null ? 'n/a' : agg.absoluteScore}/10 (gate >= ${ABS_MIN})  ·  lift ${agg.lift == null ? 'n/a' : agg.lift} (gate >= ${LIFT_MIN})  ·  n=${agg.n}${agg.dropped ? ` (${agg.dropped} dropped)` : ''}${scored.integrity ? '  ·  integrity verified' : '  ·  integrity NOT CHECKED (pass --transcripts)'}`);
   lines.push('');
   lines.push('| Scenario | Treatment | Baseline | Delta |');
   lines.push('|---|---|---|---|');
