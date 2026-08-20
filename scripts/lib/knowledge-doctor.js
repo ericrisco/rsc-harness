@@ -27,7 +27,11 @@ export const CLASSES = { STALE: 'ya-no-aplica', MISPLACED: 'fuera-de-sitio', CON
 
 // Out of scope, named so their absence is not read as cleanliness.
 export const NOT_LOOKED_AT = [
-  'La PRIMERA instancia de una desviación de convención: las convenciones se derivan del wiki en cada corrida, así que un único fichero fuera de sitio define su propia ubicación como válida. Deliberado — hardcodear la tabla sería una segunda copia de la verdad que deriva de ella.',
+  // This entry described the PRE-FIX dead-code behaviour and survived the fix that removed it: a stale
+  // claim inside the tool built to find stale claims. Rewritten to name the mechanism that actually
+  // ships — the 75% dominant-share threshold — and its real blind spot.
+  'Un tipo con pocos documentos: una carpeta solo se reconoce como el hogar de un `type:` cuando concentra el 75% de sus documentos, así que un tipo con 3 o menos ejemplares no tiene hogar y su ubicación nunca se juzga. Deliberado — la alternativa es marcar trabajo correcto (`article` vive legítimamente en tres carpetas).',
+  'Documentos alcanzados por symlink: el recorrido usa `withFileTypes` y salta los enlaces, así que un `.md` enlazado dentro del wiki no se audita. Es el precio de impedir que el recorrido se escape de `02-DOCS/` siguiendo un enlace.',
   'Contradicción general entre documentos (exige comparación semántica; fuera por clarify 18-08).',
   'Obsolescencia semántica de prosa: si un párrafo sobre arquitectura sigue siendo cierto.',
   'La memoria del proyecto: drift-check ya resuelve sus rutas vía memoryDir(); su auditoría semántica queda fuera.',
@@ -58,9 +62,43 @@ export function parseFrontmatter(text) {
 }
 
 /** Does this document declare itself the single source of a fact? Matched on normalized prose. */
+/**
+ * Does this document declare ITSELF the single source of a fact?
+ *
+ * The first version matched `fuente única` / `single source of` anywhere in the file, and an adversarial
+ * review measured what that admits: on a 51-document wiki, **7 documents passed and only 1 actually
+ * declared single-sourcehood**. The other six were meta-documents merely DISCUSSING the concept — this
+ * detector's own spec, its own plan, and three verification records — and five of them had an unrelated
+ * first table sitting there as a denominator. One ordinary edit adding "probado 9 veces" to any of their
+ * descriptions would have fabricated a contradiction against a table with nothing to do with the number.
+ * That is over-firing on correct work, the direction P7 and the v1.0.17 rule both name as the dangerous
+ * one, and the whole narrow scope agreed in clarify rested on this gate being narrow.
+ *
+ * So the phrase must now be SELF-REFERENTIAL: the document has to point at itself ("esta tabla", "this
+ * table", "aquí") as the place the fact lives. Talking about single sources in the abstract no longer
+ * qualifies.
+ */
 export function declaresSingleSource(text) {
   const p = normalizeProse(text);
-  return /en ning[uú]n otro sitio|and nowhere else|fuente [uú]nica|single source of/i.test(p);
+  // A locator ("en esta tabla", "in this table", "aquí") within a short window of the exclusivity
+  // claim. The window keeps it one sentence: a doc that says "esta tabla" in one paragraph and
+  // "fuente única" three pages later is not declaring anything.
+  const claim = /(en esta (tabla|lista)|in this (table|list)|aqu[ií] y en ning|here and nowhere)/i;
+  const exclusive = /(en ning[uú]n otro sitio|and nowhere else|nowhere else|fuente [uú]nica de|single source of truth for)/i;
+  if (!claim.test(p) || !exclusive.test(p)) return false;
+  // And they must be near each other, or two unrelated sentences pass by coincidence.
+  const ci = p.search(claim);
+  const ei = p.search(exclusive);
+  if (Math.abs(ci - ei) > 160) return false;
+  // A QUOTED phrase is a citation, not a declaration. Measured: two documents still passed after the
+  // narrowing above, and both were quoting this repo's own pattern registry — a spec and a verification
+  // record. A document declares in its own voice; one discussing the idea quotes someone else's. Both
+  // are exactly the kind of document whose description naturally gains "probado 9 veces", which is how
+  // the fabricated contradiction would have arrived.
+  const around = p.slice(Math.max(0, ei - 60), ei + 60);
+  const quoted = /["«“][^"»”]{0,120}$/.test(p.slice(Math.max(0, ei - 120), ei))
+    && /^[^"«“]{0,120}["»”]/.test(p.slice(ei));
+  return !quoted || /\*\*/.test(around) === false ? !quoted : false;
 }
 
 const WORD_NUMBERS = {
@@ -72,9 +110,14 @@ const WORD_NUMBERS = {
  * A count asserted in the FRONTMATTER only. Body prose is not a usable signal: the live case's own
  * document contains "7 veces" inside a table cell describing something else entirely.
  */
+export const MAX_REFS_PER_DOC = 32;
+// A frontmatter value longer than this is not a title or a description. Bound before matching: the
+// digit-run pattern is quadratic, measured at 21.5s on an 160k-character value.
+const MAX_FM_VALUE = 2000;
+
 export function statedCountInFrontmatter(fields) {
   for (const key of ['description', 'title']) {
-    const v = String(fields[key] || '');
+    const v = String(fields[key] || '').slice(0, MAX_FM_VALUE);
     const digits = /(\d+)\s+(?:veces|times|apariciones|occurrences)/i.exec(v);
     if (digits) return { value: Number(digits[1]), source: key, literal: digits[0] };
     const words = new RegExp(`\\b(${Object.keys(WORD_NUMBERS).join('|')})\\s+(?:veces|times)`, 'i').exec(v);
@@ -83,9 +126,22 @@ export function statedCountInFrontmatter(fields) {
   return null;
 }
 
-/** Data rows of the first markdown table (header and separator excluded). */
+/**
+ * Blank out fenced code blocks, keeping the line count intact so reported line numbers stay true.
+ * Without this, an illustrative table inside ``` fences counted as the canonical one: a real 3-row
+ * table read as 1 row, and the report printed two wrong numbers as its evidence.
+ */
+export function stripFences(body) {
+  let inFence = false;
+  return String(body || '').split('\n').map((l) => {
+    if (/^\s*(```|~~~)/.test(l)) { inFence = !inFence; return ''; }
+    return inFence ? '' : l;
+  }).join('\n');
+}
+
+/** Data rows of the first markdown table (header and separator excluded), fences excluded. */
 export function firstTableRowCount(body) {
-  const lines = String(body || '').split('\n');
+  const lines = stripFences(body).split('\n');
   let i = lines.findIndex((l) => /^\s*\|.*\|/.test(l) && /\|/.test(l));
   if (i === -1) return null;
   if (!/^\s*\|[\s:|-]+\|/.test(lines[i + 1] || '')) return null; // header must be followed by a separator
@@ -107,9 +163,29 @@ export function findStaleClaims({ path, text, refExists }) {
   if (!status) return [];
   const out = [];
   const refs = new Set();
-  for (const m of status.matchAll(/\b([0-9a-f]{7,8})\b/g)) refs.add(m[1]);
-  for (const m of status.matchAll(/\bv?(\d+\.\d+\.\d+)\b/g)) refs.add(`v${m[1]}`);
-  for (const ref of refs) {
+  // A short hex run is only a commit if it is NOT all digits: `20260818` is a compact date, and the
+  // old pattern reported it as a missing commit. Verified: `status: implementada el 20260818` produced
+  // a candidate for a ref that never existed as a ref.
+  for (const m of status.matchAll(/\b([0-9a-f]{7,8})\b/g)) {
+    if (/^\d+$/.test(m[1])) continue;
+    refs.add(m[1]);
+  }
+  // A version is only a tag claim when the text presents it as one. `requiere node 18.0.0 y ajv 8.18.0`
+  // used to yield two candidates for tags `v18.0.0` and `v8.18.0` — dependency versions read as releases.
+  for (const m of status.matchAll(/\b(?:v|versión |version |publicada en |released in |released as )(\d+\.\d+\.\d+)\b/gi)) {
+    refs.add(`v${m[1]}`);
+  }
+  // Cap the spawns a single document can cause: one status: with 3000 distinct refs spawned 6002 git
+  // processes and took 76s. A document citing more than this is not making a traceable claim.
+  const capped = [...refs].slice(0, MAX_REFS_PER_DOC);
+  if (refs.size > MAX_REFS_PER_DOC) {
+    out.push({
+      path, line: lineOf(text, 'status:'), cls: CLASSES.STALE, uncertain: true,
+      signal: `status: cita ${refs.size} referencias; solo se comprobaron las primeras ${MAX_REFS_PER_DOC}`,
+      expected: `un status: con referencias acotadas`, found: `${refs.size} referencias`,
+    });
+  }
+  for (const ref of capped) {
     if (refExists(ref)) continue;
     out.push({
       path, line: lineOf(text, 'status:'), cls: CLASSES.STALE,
@@ -118,6 +194,21 @@ export function findStaleClaims({ path, text, refExists }) {
     });
   }
   return out;
+}
+
+/**
+ * Is there an actual index ROW for this path — a list item whose markdown link targets it?
+ *
+ * The first version was `indexText.includes(doc.rel)`, a substring test, so a path merely MENTIONED in
+ * prose silenced the check: "Borramos sdd/specs/x.md porque ya no aplica" counted as indexed. That is
+ * verbatim the mistake this repo recorded as having shipped twice in one day — "the path appears in the
+ * string" is not "the row exists" — and it fails in the under-firing direction, which is the quiet one.
+ */
+export function hasIndexRow(indexText, rel) {
+  if (!rel) return false;
+  const escaped = rel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const row = new RegExp(`^\\s*[-*]\\s.*\\]\\([^)]*${escaped}\\)`, 'm');
+  return row.test(String(indexText || ''));
 }
 
 /**
@@ -214,11 +305,49 @@ export function findMisplaced({ doc, conventions, indexText }) {
       });
     }
   }
-  if (indexText != null && doc.indexable && !indexText.includes(doc.rel)) {
+  if (indexText != null && doc.indexable && !hasIndexRow(indexText, doc.rel)) {
     out.push({
       path: doc.path, line: 1, cls: CLASSES.MISPLACED,
       signal: 'artefacto sin fila en el Knowledge map',
       expected: `una fila citando \`${doc.rel}\``, found: 'ninguna',
+    });
+  }
+  return out;
+}
+
+/**
+ * Class 2b — an entry in a canonical log that does not describe what that log says it contains.
+ *
+ * AC2 of the spec, and it was NOT implemented in the shipped version — found by two independent
+ * refuter lenses. It is not a nice-to-have: one of the three incidents that motivated the whole spec
+ * was four entries written into `decisions.md` by eval agents, about features nobody was building.
+ * Worse than absent, the disclosure list did not name it, so the report presented the canonical log as
+ * scanned and clean — affirming a check nobody performed.
+ *
+ * The signal has to be narrow or this becomes the noisiest detector in the tool. A canonical log
+ * declares its own subject in its opening prose ("Procedimientos que el asistente observó",
+ * "decisiones de alcance"). An entry is a candidate when its heading names a SLUG that exists nowhere
+ * in the project — because a decision about `magic-link-login` when no such spec, plan or artifact
+ * exists is either about someone else's work or about work nobody is doing.
+ */
+export function findLogIntruders({ path, text, knownSlugs }) {
+  if (!/decisions\.md$|automation-gaps\.md$/.test(path)) return [];
+  const out = [];
+  const lines = String(text || '').split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const h = /^##\s+\d{4}-\d{2}-\d{2}\s*[—·-]\s*(.+)$/.exec(lines[i]);
+    if (!h) continue;
+    // A slug-shaped token in the heading: lowercase words joined by hyphens, at least two parts.
+    const slugs = (h[1].match(/`?\b([a-z][a-z0-9]+(?:-[a-z0-9]+)+)\b`?/g) || [])
+      .map((s) => s.replace(/`/g, ''));
+    const orphans = slugs.filter((s) => !knownSlugs.has(s));
+    // Only flag when EVERY slug in the heading is unknown: a heading mixing known and unknown terms is
+    // ordinary prose, not an entry about work that does not exist.
+    if (!slugs.length || orphans.length !== slugs.length) continue;
+    out.push({
+      path, line: i + 1, cls: CLASSES.MISPLACED, uncertain: true,
+      signal: `entrada cuyo asunto (${orphans.map((s) => `\`${s}\``).join(', ')}) no corresponde a ningún artefacto del proyecto`,
+      expected: 'una entrada sobre trabajo que existe', found: 'asunto sin artefacto',
     });
   }
   return out;
@@ -253,13 +382,26 @@ export function rank(candidates) {
 }
 
 /** The whole pass, over already-read documents. Pure: no fs, no git — both are injected. */
-export function diagnose({ docs, indexText, refExists }) {
+export function diagnose({ docs, indexText, refExists, extraSlugs = [] }) {
   const cands = [];
   const conventions = deriveConventions(docs);
+  // Slugs the project actually has, derived from the documents themselves (P3: the content is the
+  // ledger). A log entry whose subject is not in here is about work that does not exist.
+  // extraSlugs comes from the CLI, which knows the repo: skill ids and script basenames are project
+  // artifacts too. Deriving only from wiki filenames flagged `drift-check` — a real script — as work
+  // that does not exist.
+  const knownSlugs = new Set(extraSlugs);
+  for (const doc of docs) {
+    const base = (doc.rel || doc.path).split('/').pop().replace(/\.md$/, '').replace(/\.plan$/, '');
+    knownSlugs.add(base);
+    const fmSlug = parseFrontmatter(doc.text).fields.slug;
+    if (fmSlug) knownSlugs.add(fmSlug);
+  }
   for (const doc of docs) {
     cands.push(...findStaleClaims({ path: doc.path, text: doc.text, refExists }));
     cands.push(...findMisplaced({ doc, conventions, indexText }));
     cands.push(...findContradictions({ path: doc.path, text: doc.text }));
+    cands.push(...findLogIntruders({ path: doc.path, text: doc.text, knownSlugs }));
   }
   return { candidates: rank(cands), scanned: docs.length, notLookedAt: NOT_LOOKED_AT };
 }

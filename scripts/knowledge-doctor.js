@@ -19,9 +19,16 @@ import { diagnose, CLASSES } from './lib/knowledge-doctor.js';
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..');
 const WIKI = join(REPO, '02-DOCS', 'wiki');
 
-const walk = (dir) => readdirSync(dir).flatMap((e) => {
-  const p = join(dir, e);
-  return statSync(p).isDirectory() ? walk(p) : (p.endsWith('.md') ? [p] : []);
+// withFileTypes, NOT statSync — this matches scripts/drift-check.js:167, the precedent the plan cited
+// as exact and then diverged from. statSync FOLLOWS symlinks, so a symlink under the wiki let the walk
+// read outside the declared zone (reporting the logical path, hiding the escape), a dangling symlink
+// crashed the whole report with ENOENT, and a symlink cycle crashed it with ELOOP. dirent.isDirectory()
+// does none of that: a symlink is neither a file nor a directory here, so it is skipped.
+const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+  const p = join(dir, e.name);
+  if (e.isDirectory()) return walk(p);
+  if (e.isFile() && p.endsWith('.md')) return [p];
+  return []; // symlinks, sockets, anything else: not our business, and not a crash
 });
 
 // Injected so the pure library never touches git. Cached: the same ref is asked about repeatedly.
@@ -48,19 +55,49 @@ function main() {
   const indexPath = join(WIKI, 'index.md');
   const indexText = existsSync(indexPath) ? readFileSync(indexPath, 'utf8') : null;
 
+  // AC7 says an unreadable document is a candidate with its reason, never a silent skip. The first
+  // version read "unreadable" as "frontmatter unparseable" only, so a chmod-000 file or a dangling
+  // symlink threw out of readFileSync and took the WHOLE report with it — worse than a silent skip.
+  const unreadable = [];
   const docs = files.map((p) => {
     const rel = relative(WIKI, p);
+    let text;
+    try {
+      text = readFileSync(p, 'utf8');
+    } catch (e) {
+      unreadable.push({
+        path: relative(REPO, p), line: 1, cls: 'fuera-de-sitio', uncertain: true,
+        signal: `no se pudo leer el fichero (${e.code || e.message})`,
+        expected: 'un documento legible', found: e.code || 'error de lectura',
+      });
+      return null;
+    }
     return {
       path: relative(REPO, p),
       rel,
       dir: dirname(rel) === '.' ? '' : dirname(rel),
-      text: readFileSync(p, 'utf8'),
+      text,
       // Only artifacts the chain consumes are expected in the Knowledge map; an article is not.
       indexable: rel.startsWith('sdd/specs/') || rel.startsWith('sdd/verifications/'),
     };
-  });
+  }).filter(Boolean);
 
-  const report = diagnose({ docs, indexText, refExists });
+  // Project artifacts outside the wiki: skill ids and script basenames. The library cannot read the
+  // repo (it is pure by design), so the caller that can, does.
+  const extraSlugs = [];
+  for (const [dir, strip] of [['skills', null], ['scripts', /\.(js|mjs|sh)$/], ['scripts/lib', /\.(js|mjs)$/]]) {
+    try {
+      for (const e of readdirSync(join(REPO, dir), { withFileTypes: true })) {
+        if (strip && e.isFile()) extraSlugs.push(e.name.replace(strip, ''));
+        else if (!strip && e.isDirectory()) extraSlugs.push(e.name);
+      }
+    } catch { /* a missing directory is not an error here */ }
+  }
+
+  const report = diagnose({ docs, indexText, refExists, extraSlugs });
+  // Unreadable files are candidates too, and they sort first: a document nobody can open is the one
+  // whose staleness nobody can check.
+  if (unreadable.length) report.candidates = [...unreadable, ...report.candidates];
   if (asJson) { console.log(JSON.stringify(report, null, 2)); process.exit(0); }
 
   const byClass = (c) => report.candidates.filter((x) => x.cls === c);
@@ -69,10 +106,15 @@ function main() {
     console.log('Sin candidatos. Nada que triar.\n');
   } else {
     console.log(`${report.candidates.length} candidato(s), ordenados por coste de equivocarse:\n`);
+    // Filenames are interpolated into markdown, and a filename may contain newlines and backticks. A
+    // crafted name rendered a structurally valid FORGED candidate while the tally below still read 0 —
+    // and the consumer of this report (knowledge-ops) archives and overwrites files. Neutralise the
+    // three characters that can break out of the line.
+    const safe = (s) => String(s).replace(/[\r\n]+/g, '⏎').replace(/`/g, "'");
     for (const c of report.candidates) {
-      console.log(`- **${c.cls}** · \`${c.path}:${c.line}\`${c.uncertain ? ' · _incierto_' : ''}`);
-      console.log(`  - señal: ${c.signal}`);
-      console.log(`  - esperado: ${c.expected} · encontrado: ${c.found}`);
+      console.log(`- **${c.cls}** · \`${safe(c.path)}:${c.line}\`${c.uncertain ? ' · _incierto_' : ''}`);
+      console.log(`  - señal: ${safe(c.signal)}`);
+      console.log(`  - esperado: ${safe(c.expected)} · encontrado: ${safe(c.found)}`);
     }
     console.log('');
     for (const [label, cls] of [['se contradice', CLASSES.CONTRADICTS], ['ya no aplica', CLASSES.STALE], ['fuera de sitio', CLASSES.MISPLACED]]) {

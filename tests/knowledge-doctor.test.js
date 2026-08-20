@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import {
   normalizeProse, parseFrontmatter, declaresSingleSource, statedCountInFrontmatter,
   firstTableRowCount, findStaleClaims, findMisplaced, findContradictions, deriveConventions,
@@ -20,8 +21,17 @@ import {
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const WIKI = join(ROOT, '02-DOCS', 'wiki');
 
+// `rel` and `path` are DELIBERATELY different, as the CLI makes them (path = repo-relative,
+// rel = wiki-relative). The first version set `rel: path`, so the single field distinction the
+// index-row check rests on was invisible to every test: swapping the field survived the suite and
+// took the real wiki from 7 candidates to 37 false ones.
 const doc = (path, text, extra = {}) => ({
-  path, rel: path, dir: dirname(path) === '.' ? '' : dirname(path), text, indexable: false, ...extra,
+  path: `02-DOCS/wiki/${path}`,
+  rel: path,
+  dir: dirname(path) === '.' ? '' : dirname(path),
+  text,
+  indexable: false,
+  ...extra,
 });
 const fm = (fields, body = '') =>
   `---\n${Object.entries(fields).map(([k, v]) => `${k}: ${v}`).join('\n')}\n---\n${body}`;
@@ -216,18 +226,119 @@ test('diagnose composes the three detectors and reports what it did not look at'
   const r = diagnose({ docs: [doc('harness/a.md', fm({ type: 'article' }))], indexText: '# i', refExists: () => true });
   assert.equal(r.scanned, 1);
   assert.ok(r.notLookedAt.length >= 4);
-  assert.ok(r.notLookedAt.some((n) => n.startsWith('La PRIMERA instancia')),
-    'the derived-convention blind spot must be declared verbatim, not hidden or mangled');
-  assert.deepEqual(r.notLookedAt, NOT_LOOKED_AT, 'the disclosure list must reach the report intact');
+  // NOT a deepEqual against NOT_LOOKED_AT: `diagnose` returns that very array, so the comparison was
+  // an identity check dressed as a content check — unfailable by construction. Pin the content instead.
+  assert.notEqual(r.notLookedAt.length, 0);
+  const disclosed = r.notLookedAt.join(' | ');
+  for (const must of ['75%', 'symlink', 'Contradicción general', 'memoria']) {
+    assert.ok(disclosed.includes(must), `the disclosure must still name: ${must}`);
+  }
+  assert.ok(
+    !disclosed.includes('define su propia ubicación como válida'),
+    'the pre-fix mechanism must not be described as the current blind spot — that was a stale claim inside the stale-claim detector',
+  );
 });
 
 // ----------------------------------------------------------------- against the real wiki
 
-test('on the real wiki: finds the live contradiction and nothing stale', () => {
-  if (!existsSync(WIKI)) return; // public checkout has no 02-DOCS (P9) — nothing to assert
-  const walk = (d) => readdirSync(d).flatMap((e) => {
-    const p = join(d, e);
-    return statSync(p).isDirectory() ? walk(p) : (p.endsWith('.md') ? [p] : []);
+test('diagnose COMPOSES all four detectors — each one is pinned by its own candidate', () => {
+  // The composition was unpinned: the only synthetic diagnose test asserted `scanned` and
+  // `notLookedAt`, never `candidates`. Removing findMisplaced took the real wiki from 7 candidates to
+  // 1, removing findStaleClaims silently deleted a whole class, and making it fabricate one candidate
+  // per document reported 54 — all three with the suite green.
+  const docs = [
+    doc('sdd/specs/stale.md', fm({ type: 'spec', status: 'implementada (deadbee)' })),
+    doc('harness/misplaced.md', fm({ type: 'verification' })),
+    doc('sdd/verifications/a.md', fm({ type: 'verification' })),
+    doc('sdd/verifications/b.md', fm({ type: 'verification' })),
+    doc('sdd/verifications/c.md', fm({ type: 'verification' })),
+    doc('harness/contra.md', fm({ description: 'encontrado diez veces' },
+      'vive en esta tabla y en ningún otro sitio\n\n| a |\n|---|\n| 1 |\n')),
+    doc('sdd/decisions.md', '# log\n\n## 2026-08-01 — sobre `un-slug-inexistente`\n\ntexto\n'),
+  ];
+  const r = diagnose({ docs, indexText: '# i', refExists: () => false });
+  const classes = new Set(r.candidates.map((c) => c.cls));
+  assert.ok(classes.has(CLASSES.STALE), 'findStaleClaims must reach the composed output');
+  assert.ok(classes.has(CLASSES.MISPLACED), 'findMisplaced must reach the composed output');
+  assert.ok(classes.has(CLASSES.CONTRADICTS), 'findContradictions must reach the composed output');
+  assert.ok(
+    r.candidates.some((c) => /decisions\.md/.test(c.path)),
+    'findLogIntruders must reach the composed output',
+  );
+  // And it must not fabricate: no candidate may name a document that is not in the input.
+  const known = new Set(docs.map((d) => d.path));
+  for (const c of r.candidates) assert.ok(known.has(c.path), `invented a candidate for ${c.path}`);
+});
+
+test('diagnose stays SILENT on a clean input — no candidate per document', () => {
+  // AC4 as a falsifiable procedure. A mutant that emits one candidate per doc reported 54 on the real
+  // wiki and survived, because nothing asserted the empty case at the composed level.
+  const docs = [
+    doc('harness/a.md', fm({ type: 'article' })),
+    doc('harness/b.md', fm({ type: 'article' })),
+    doc('harness/c.md', fm({ type: 'article' })),
+  ];
+  const r = diagnose({ docs, indexText: '# i', refExists: () => true });
+  assert.deepEqual(r.candidates, [], 'a clean input must produce nothing at all');
+});
+
+test('the index-row check needs the ROW, not the path mentioned in prose', () => {
+  // "the path appears in the string" is not "the row exists" — the mistake this repo recorded as having
+  // shipped twice in one day.
+  const d = doc('sdd/specs/x.md', fm({ type: 'spec' }), { indexable: true });
+  const conv = deriveConventions([d, doc('sdd/specs/y.md', fm({ type: 'spec' })), doc('sdd/specs/z.md', fm({ type: 'spec' }))]);
+  const mentioned = findMisplaced({ doc: d, conventions: conv, indexText: '# map\n\nBorramos sdd/specs/x.md porque ya no aplica.\n' });
+  assert.ok(
+    mentioned.some((c) => /sin fila/.test(c.signal)),
+    'a path mentioned as DELETED must not count as indexed',
+  );
+});
+
+test('the over-firing thresholds are pinned in the LOOSENING direction too', () => {
+  // They were pinned only against tightening: every mutant that made the tool NOISIER survived, which
+  // is the direction the change claims to protect against (P7, v1.0.17).
+  const twoDocs = [doc('brand/a.md', fm({ type: 'article' })), doc('brand/b.md', 'no frontmatter')];
+  assert.equal(
+    deriveConventions(twoDocs).typeRequiredDirs.has('brand'), false,
+    'a 2-document directory is too small to have a frontmatter convention (MIN_DOCS_FOR_TYPE_RULE)',
+  );
+  const twoDeviants = [
+    doc('sdd/specs/a.md', fm({ type: 'spec' })), doc('sdd/specs/b.md', fm({ type: 'spec' })),
+    doc('sdd/specs/c.md', 'none'), doc('sdd/specs/d.md', 'none'),
+  ];
+  assert.equal(
+    deriveConventions(twoDeviants).typeRequiredDirs.has('sdd/specs'), false,
+    'two deviants means the convention is not universal — at most ONE may deviate',
+  );
+  const thin = [doc('x/a.md', fm({ type: 't' })), doc('x/b.md', fm({ type: 't' })), doc('y/c.md', fm({ type: 't' }))];
+  assert.equal(
+    deriveConventions(thin).dominantHome.has('t'), false,
+    'a 2-in-A / 1-in-B type is 0.667 — below the dominant share, so nothing is out of place',
+  );
+});
+
+test('a document with valid frontmatter but no type: is flagged where the convention is universal', () => {
+  // This branch (the missing-`type:` one, distinct from unreadable frontmatter) had ZERO coverage:
+  // gutting it survived the suite.
+  const docs = [
+    doc('sdd/specs/a.md', fm({ type: 'spec' })), doc('sdd/specs/b.md', fm({ type: 'spec' })),
+    doc('sdd/specs/c.md', fm({ type: 'spec' })), doc('sdd/specs/d.md', fm({ title: 'sin tipo' })),
+  ];
+  const out = findMisplaced({ doc: docs[3], conventions: deriveConventions(docs), indexText: null });
+  assert.equal(out.length, 1);
+  assert.match(out[0].signal, /sin `type:`/);
+});
+
+test('on the real wiki: it does not fire on correct work, and STALE is genuinely silent', () => {
+  // DECOUPLED from the live defect. The previous version REQUIRED the contradiction in
+  // puertas-y-mecanismos.md to still exist, so curing the finding the report demands broke the suite —
+  // a gate that punishes fixing what it detects. And it injected refExists:()=>true, which makes STALE
+  // structurally incapable of firing, while its title claimed "and nothing stale".
+  if (!existsSync(WIKI)) return; // 02-DOCS is untracked (P9); in CI there is nothing to read
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+    const p = join(d, e.name);
+    if (e.isDirectory()) return walk(p);
+    return e.isFile() && p.endsWith('.md') ? [p] : [];
   });
   const docs = walk(WIKI).map((p) => {
     const rel = relative(WIKI, p);
@@ -238,17 +349,25 @@ test('on the real wiki: finds the live contradiction and nothing stale', () => {
     };
   });
   const indexPath = join(WIKI, 'index.md');
+  // refExists REAL, not stubbed: this is the only place the git-facing half of class 1 can be exercised.
+  const refExists = (ref) => {
+    try { execFileSync('git', ['cat-file', '-e', `${ref}^{commit}`], { cwd: ROOT, stdio: 'ignore' }); return true; }
+    catch { /* not a commit */ }
+    try { execFileSync('git', ['cat-file', '-e', `refs/tags/${ref}`], { cwd: ROOT, stdio: 'ignore' }); return true; }
+    catch { return false; }
+  };
   const r = diagnose({
-    docs, refExists: () => true,
+    docs, refExists,
     indexText: existsSync(indexPath) ? readFileSync(indexPath, 'utf8') : null,
   });
-  const contradictions = r.candidates.filter((c) => c.cls === CLASSES.CONTRADICTS);
-  assert.ok(
-    contradictions.some((c) => /puertas-y-mecanismos/.test(c.path)),
-    'the live stale counter must be found — it is why this exists',
-  );
-  // Over-firing check on real data: none of the phase standards may appear.
+  // The claim that CAN be asserted without depending on a defect persisting: no false fire on the
+  // documents we know are correct.
   for (const noisy of ['sdd/plan.md', 'sdd/tasks.md', 'sdd/analyze.md', 'wiki/index.md']) {
     assert.ok(!r.candidates.some((c) => c.path.endsWith(noisy)), `must not flag ${noisy}`);
   }
+  // And STALE really is silent — asserted, not implied by a stub. Every ref the wiki cites resolves.
+  assert.deepEqual(
+    r.candidates.filter((c) => c.cls === CLASSES.STALE), [],
+    'every commit and tag the wiki cites should resolve; a failure here is real drift, not a test bug',
+  );
 });
