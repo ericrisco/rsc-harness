@@ -184,7 +184,7 @@ cleanup). If a native `EnterWorktree`-style tool created it, exit through that t
 
 The commit is the durable record. Make it describe the change and tie it to the spec — and keep it Eric's.
 
-- **Subject:** `type: imperative summary (<spec-slug>)` — `feat:`, `fix:`, `refactor:`, etc. Under ~72 chars.
+- **Subject:** `<gitmoji> type: imperative summary (<spec-slug>)` — `✨ feat:`, `🐛 fix:`, `♻️ refactor:`, etc. Under ~72 chars. The gitmoji is **not optional**: on Claude Code a PreToolUse guard denies a `git commit -m` without one, and the refusal hands back the corrected message. Emoji → intention table: `../git-workflow/references/gitmoji.md`.
 - **Body:** *why*, not a restatement of the diff. Reference the spec slug and any decision logged in `decisions.md`.
 - **Footer:** issue/PR refs only. **No `Co-Authored-By` for any AI. No "generated with" line.** This is where the violation usually sneaks in — leave the footer clean.
 
@@ -212,6 +212,7 @@ Read the level from `02-DOCS/wiki/harness/user-profile.md`. It changes what you 
 | "The tree has a couple of stray edits, they're harmless" | A dirty tree means the merge is not the reviewed diff. Clean it or stash it first. |
 | "`main` is protected but I'll just force-merge, I'm sure" | Protected means PR. Don't bypass the gate the repo deliberately set. |
 | "I'll rebase and resolve conflicts during the merge" | Resolve before. A conflicted merge commit hides what actually shipped. |
+| "The gitmoji is decoration, the conventional type is what matters" | Both ship or neither does. The type is for tooling, the emoji for the human scanning `git log` — and the guard denies the commit either way. |
 | "This branch is dead, I'll just delete it" | Discard is destructive — confirm with the quoted branch name and log why first. |
 | "Squash everything, history doesn't matter" | Squash noise, preserve meaning. The history is the next reader's spec. |
 | "There's a key in the diff but it's a test key" | A secret in the diff is a blocker regardless. Pull it out before landing. |

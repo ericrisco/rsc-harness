@@ -451,6 +451,7 @@ test('every wired hook script is a managed path, so a backup can restore it', as
     'worklog-checkpoint.mjs',
     'ship-guard.mjs',
     'danger-guard.mjs',
+    'gitmoji-guard.mjs',
     'userprompt-gate.mjs',
     'hook-once.mjs',
   ]) {
@@ -779,6 +780,26 @@ test('claude: wires danger-guard on PreToolUse(Bash) alongside ship-guard, mater
   assert.equal(danger[0].matcher, 'Bash');
   assert.ok(danger[0].hooks[0].command.startsWith('node '));
   assert.ok(existsSync(join(cwd, '.rsc/danger-guard.mjs')), 'danger-guard.mjs materialized');
+});
+
+test('claude: wires gitmoji-guard on PreToolUse(Bash) as a third distinct guard, materialized + idempotent', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-cwd-'));
+  await applyInstall({ skillIds: ['suggest'], target: 'claude', cwd });
+  await applyInstall({ skillIds: ['suggest'], target: 'claude', cwd }); // re-install → no dupes
+
+  const settings = JSON.parse(readFileSync(join(cwd, '.claude/settings.json'), 'utf8'));
+  const gitmoji = settings.hooks.PreToolUse.filter((e) => JSON.stringify(e).includes('gitmoji-guard'));
+  assert.equal(gitmoji.length, 1, 'exactly one gitmoji-guard entry');
+  assert.equal(gitmoji[0].matcher, 'Bash');
+  assert.ok(gitmoji[0].hooks[0].command.startsWith('node '));
+  assert.ok(existsSync(join(cwd, '.rsc/gitmoji-guard.mjs')), 'gitmoji-guard.mjs materialized');
+  // The three Bash guards coexist; wiring one must never drop another.
+  for (const g of ['ship-guard', 'danger-guard']) {
+    assert.equal(
+      settings.hooks.PreToolUse.filter((e) => JSON.stringify(e).includes(g)).length, 1,
+      `${g} still wired`,
+    );
+  }
 });
 
 test('danger-guard: blocks foot-gun commands for a non-technical user', () => {

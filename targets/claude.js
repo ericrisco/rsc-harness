@@ -113,6 +113,21 @@ export function wireHook(paths) {
   );
   settings.hooks.PreToolUse.push({ matcher: 'Bash', hooks: [{ type: 'command', command: dgCmd }] });
 
+  // Gitmoji guard: a PreToolUse(Bash) hook that DENIES a `git commit` whose message
+  // carries no gitmoji (gitmoji.dev) in front of the Conventional Commits header. The
+  // convention lives in `git-workflow`; prose asks, this hook decides — at the one
+  // deterministic moment the message exists. Only fires when the message is inline and
+  // readable (-m / heredoc); editor commits, -F files and --amend --no-edit are allowed.
+  // Materialized + node-run (Windows-safe), idempotent, fail-open, opt-out via
+  // .rsc/.no-gitmoji.
+  const gmDest = join(paths.projectRoot, '.rsc', 'gitmoji-guard.mjs');
+  copyFileSync(join(HERE, 'gitmoji-guard.mjs'), gmDest);
+  const gmCmd = `node "${gmDest}" "${paths.projectRoot}"`;
+  settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
+    (e) => !JSON.stringify(e).includes('.rsc/gitmoji-guard.'),
+  );
+  settings.hooks.PreToolUse.push({ matcher: 'Bash', hooks: [{ type: 'command', command: gmCmd }] });
+
   // New-feature gate: a UserPromptSubmit hook that re-injects the SDD new-feature gate as
   // the most-recent instruction on every user turn. SessionStart injects the full gate (the
   // `suggest` body) once; this keeps the precedence rule salient regardless of how many
@@ -132,5 +147,5 @@ export function wireHook(paths) {
 
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
-  return [file, scriptDest, wlDest, sgDest, dgDest, fgDest];
+  return [file, scriptDest, wlDest, sgDest, dgDest, gmDest, fgDest];
 }

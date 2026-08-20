@@ -13,6 +13,10 @@ should_trigger:
     why: Spanish trigger covering history cleanup plus conventional-commit formatting.
   - prompt: "Name a branch for the OAuth PKCE work"
     why: Branch-naming convention — feat/ prefix plus kebab slug from intent.
+  - prompt: "Which gitmoji goes on this commit — I deleted a deprecated module"
+    why: Gitmoji selection by intention (🔥 remove code, not ♻️ refactor); the commit-grammar layer owns the emoji.
+  - prompt: "Mi commitlint rechaza el commit por el emoji delante del type"
+    why: Spanish; the strict-parser escape hatch (widen headerPattern or move the emoji behind the header) lives in this skill.
   - prompt: "Tag v2.1.0 and write the release notes"
     why: Release mechanics — annotated tag plus gh release create --generate-notes.
 
@@ -41,6 +45,7 @@ capability:
     must_include:
       - Collapses the two "wip" commits via squash or fixup and explains why (one meaningful entry in main).
       - Identifies a feat commit and a BREAKING CHANGE footer written in uppercase.
+      - Every proposed commit message opens with a gitmoji (✨ for the feature, 💥 for the breaking removal) before the conventional header.
       - Bump is MAJOR because of the breaking change, with a tag of the form vX.0.0.
       - Uses gh release create vX.0.0 --generate-notes (or an equivalent that produces notes).
       - Uses git push --force-with-lease (not bare --force) for the post-rebase push.
