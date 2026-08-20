@@ -7,9 +7,17 @@
 #      performance + accessibility audit and checks Core Web Vitals against the
 #      skill's hard thresholds (LCP < 2.5s, CLS < 0.1, INP proxy via TBT < 200ms,
 #      a11y score >= 0.9).
-#   2. Always runs static, network-free design-review grep checks (one <h1>,
-#      no `transition: all`, hardcoded hex vs tokens, missing image alt, missing
-#      prefers-reduced-motion, marketing ban-list words).
+#   2. Always runs static, network-free design-review checks, in three groups:
+#      - four judgement-shaped ones (more than one <h1>, image without alt,
+#        hardcoded hex despite a token system, animation with no reduced-motion
+#        guard) — see static_checks();
+#      - the tell registry: one row per checkable AI tell, iterated generically
+#        (dashes in rendered copy, scroll cues, numbered eyebrows, build stamps,
+#        unstable viewport heights, middot chains, transition-all, hype words)
+#        — see tell_table(); every row has a fixture in the repo's test suite;
+#      - three counters that need a ratio rather than a match (eyebrows against
+#        sections, double-bordered rows, radius scales) — see counter_checks().
+#      Everything here WARNS. Nothing here fails, unless --strict is passed.
 #   3. If Lighthouse did not run, prints the manual QA checklist. For a graded
 #      0-10 critique, use the visual-audit rubric in SKILL.md instead.
 #
@@ -203,9 +211,6 @@ run_tell_table() {
     globs="${rest%%"%%"*}"; rest="${rest#*"%%"}"
     pat="${rest%%"%%"*}";   msg="${rest#*"%%"}"
     exts="${globs//,/|}"
-    # Both engines print `path:line:content`, so anchoring the extension before the first
-    # colon filters identically under rg and grep (and never matches content that merely
-    # mentions a filename).
     # Two post-filters, both learned from a real run over this repo:
     #   1. keep only the extensions the row declares (anchored before the first colon, so it
     #      behaves the same under rg and grep and never matches content that names a file);
