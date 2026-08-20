@@ -234,6 +234,36 @@ img  { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
 
 Depth recipes, glass, noise, concentric math → `references/visual-system.md`.
 
+## The three locks, and who checks them
+
+A long page generated in passes drifts against itself. Three things must be **one** thing for
+the whole page, and they are not preferences — a page that breaks one of them is defective:
+
+1. **Theme lock.** One theme for the page (light, dark, or auto). No section flipping to
+   inverted halfway down because it looked good alone.
+2. **Accent lock.** One accent, used identically in every section. **This one is judgement**:
+   deciding which token is the accent needs to read the system's intent, so no script claims
+   to check it — you do, before you claim done.
+3. **Radius lock.** One radius system. Four different `rounded-*` scales in one tree means
+   there is no system, and `scripts/verify.sh` counts them.
+
+## The tells the script owns, and the ones you own
+
+`scripts/verify.sh` carries a **registry of mechanical tells** and reports each with file and
+line: dashes in rendered copy, scroll cues, numbered eyebrows, build stamps on marketing
+pages, unstable viewport heights, middot chains, hype words, plus counted ratios (eyebrows
+against sections, double-bordered rows, radius scales). Run it; do not re-derive that list
+from memory, and do not treat its silence as a design review.
+
+What it cannot see is the other half: fabricated substance (a product UI built from divs,
+invented photo credits, the Jane Doe cast), decoration posing as information, labels that say
+nothing, and composition habits like three identical feature cards. That half is
+`references/ai-tells.md`, and it is read with your eyes on the page.
+
+When the brief corresponds to an official, maintained design system rather than an aesthetic —
+UK or US public sector, Shopify admin, Carbon, Atlassian, Primer, Fluent — install the
+official package instead of approximating it: `references/design-systems.md`.
+
 ## Anti-patterns
 
 | Rationalization | Reality / Fix |
@@ -314,6 +344,6 @@ Score = Σ(dimension × weight), max 115 (normalize to /100 by ×100/115 if you 
 Two records, both indexed in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it), both read first on every use so outputs stay consistent with them:
 
 - The **brand study** at `02-DOCS/wiki/brand/` — the hard gate above: missing or incomplete → ask until complete before designing.
-- The **design-system decisions** at `02-DOCS/wiki/stack/design.md` — the chosen tokens (color/OKLCH, type scale, spacing, radius, shadow, motion), the 2026 direction picked, and the reference sites. Recorded, not gated; create/update it as decisions are made.
+- The **design-system decisions** at `02-DOCS/wiki/stack/design.md` — the chosen tokens (color/OKLCH, type scale, spacing, radius, shadow, motion), the 2026 direction picked, and the reference sites. Recorded, not gated; create/update it as decisions are made. **Read it before fixing type and palette on a new surface**, and either reuse what is there or state why you are departing — otherwise every surface of the project drifts into a different design. (Across *different* projects this record cannot help: it lives inside each one. Distrusting your own second default is the only guard there — see the repetition note in `references/ai-tells.md`.)
 
 The wiki article protocol both follow is `../harness/SKILL.md`'s.

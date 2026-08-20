@@ -49,7 +49,7 @@ capability:
   - scenario: "User asks: 'Here's our current pricing page — do a design review and tell me how good it actually is.'"
     must_include:
       - "Applies the design-review QA checklist (value prop in 5s, contrast >= 4.5:1, visible focus, one <h1>, semantic landmarks, LCP image priority, next/font, no transition: all, tokens not magic numbers, ban-list-clean copy, 360px fit, empty/loading/error states)."
-      - "Scores the 10-dimension visual-audit rubric 0-10 with weights and reports a weighted total out of 100, mapped to a band (<60 generic / 60-79 competent / 80-94 premium / 95+ award-tier)."
+      - "Scores the 11-dimension visual-audit rubric 0-10 with weights and reports the weighted total on its /115 scale, mapped to a band (<69 generic / 69-91 competent / 92-108 premium / 109+ award-tier)."
       - "For each dimension scoring below 8, gives a concrete actionable fix (e.g. exact spacing/token change), not a vague 'improve spacing'."
       - "Checks copy against the ban-list and flags hype/vague value props that fail the 5s test."
       - "Flags any transition: all, magic hex/px, cards-in-cards, or purple->blue everything gradient as defects, not preferences."
