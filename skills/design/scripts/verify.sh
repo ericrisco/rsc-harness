@@ -78,7 +78,10 @@ have() { command -v "$1" >/dev/null 2>&1; }
 SELF_NAME="$(basename "$0")"
 search() {
   [ "$#" -gt 0 ] || return 1
-  if have rg; then
+  # VERIFY_FORCE_GREP=1 pins the grep branch. It exists so the test suite can prove BOTH
+  # engines agree on the multibyte patterns (em-dash, middot) on any machine, instead of
+  # only exercising whichever one happens to be installed.
+  if have rg && [ -z "${VERIFY_FORCE_GREP:-}" ]; then
     # rg already ignores .gitignore'd paths (node_modules, .next, dist); also skip self.
     rg -n --no-heading --glob "!$SELF_NAME" "$@"
   else
@@ -165,6 +168,105 @@ run_lighthouse() {
   fi
 }
 
+# --- the tell registry ------------------------------------------------------
+# One row per checkable AI tell. A row is DATA, not code, so the test suite can enumerate
+# every row and demand a fixture for each: a check nobody has ever seen fire cannot ship.
+# Add a tell by adding a row plus tests/fixtures/design-tells/tells/<id>.tsx — nothing else.
+#
+# Columns, delimited by %% (the pattern column needs `|` for ERE alternation):
+#   id %% sev %% extensions %% POSIX-ERE pattern %% what to do instead / the legit exception
+#
+# Patterns are POSIX ERE: no lookahead, no \b, no \s — they must behave identically under rg
+# and under grep -E. Part of the corpus is adapted from Leonxlnx/taste-skill (MIT).
+tell_table() {
+  cat <<'TELLS'
+em-dash%%warn%%tsx,jsx,html,vue,svelte,mdx%%—|–%%em-dash or en-dash in rendered copy is the loudest AI tell. Use a period, a comma, a colon or parentheses instead
+scroll-cue%%warn%%tsx,jsx,html,vue,svelte%%[Ss]croll to (explore|walk|discover|see|begin)|↓ *[Ss]croll%%a scroll cue explains scrolling to someone already looking at the hero. Delete it, or use a real anchor link instead
+numbered-eyebrow%%warn%%tsx,jsx,html,vue,svelte%%(^|[^0-9A-Za-z])[0-9]{2,3} +(·|/) +[A-Za-z]%%numbered section eyebrow (001 · Capabilities). Name the topic in plain language instead
+version-stamp%%warn%%tsx,jsx,html,vue,svelte%%v[0-9]+\.[0-9]+\.[0-9]+|Build [0-9]{3,4}%%a build or version stamp is devtool furniture on a marketing page. Delete it. Legitimate exception: a real devtool footer, a changelog or a release page
+viewport-unit%%warn%%tsx,jsx,html,vue,svelte,css%%h-screen%%h-screen jumps when mobile browser chrome slides away. Use min-h-[100dvh] instead
+middot-chain%%warn%%tsx,jsx,html,vue,svelte%%·[^·]*·%%more than one middot on a line is decoration pretending to be metadata. Use line breaks, columns or a hairline instead
+transition-all%%warn%%tsx,jsx,css,html,vue,svelte%%transition:[[:space:]]*all|transition-all%%transition-all animates layout properties and janks. List the exact properties instead
+ban-list%%warn%%tsx,jsx,html,md,mdx%%revolutionary|game-?changer|cutting-edge|supercharge|seamless|unlock%%hype words carry no value prop. Use the concrete benefit and a real number instead
+TELLS
+}
+
+run_tell_table() {
+  local line id sev globs pat msg hits exts rest
+  # NOT `IFS='%%'`: IFS is a set of characters, so it would split on a single `%` and put an
+  # empty field between every pair. Parameter expansion splits on the two-character
+  # delimiter exactly, which is what the pattern column needs to keep its ERE `|`.
+  while IFS= read -r line; do
+    case "$line" in ''|'#'*) continue ;; esac
+    id="${line%%"%%"*}";    rest="${line#*"%%"}"
+    sev="${rest%%"%%"*}";   rest="${rest#*"%%"}"
+    globs="${rest%%"%%"*}"; rest="${rest#*"%%"}"
+    pat="${rest%%"%%"*}";   msg="${rest#*"%%"}"
+    exts="${globs//,/|}"
+    # Both engines print `path:line:content`, so anchoring the extension before the first
+    # colon filters identically under rg and grep (and never matches content that merely
+    # mentions a filename).
+    # Two post-filters, both learned from a real run over this repo:
+    #   1. keep only the extensions the row declares (anchored before the first colon, so it
+    #      behaves the same under rg and grep and never matches content that names a file);
+    #   2. drop lines whose match sits in a code comment. A dash in `/* tokens — lifted */`
+    #      is not rendered copy, and flagging it trains the reader to ignore the tool.
+    hits="$(search "$pat" 2>/dev/null \
+      | grep -E "^[^:]*\.($exts):" \
+      | grep -vE "^[^:]*:[0-9]+:[[:space:]]*(//|/\*|\*[^a-zA-Z]|#|<!--|\{/\*)" || true)"
+    if [ -n "$hits" ]; then
+      # The sev column is real, not decoration: anything other than `warn` breaks the build.
+      case "$sev" in
+        warn) warn "$id: $msg" ;;
+        *)    fail "$id: $msg" ;;
+      esac
+      printf '%s\n' "$hits" | head -n 5
+    fi
+  done <<EOF
+$(tell_table)
+EOF
+}
+
+# --- counters: the tells that are a ratio or a repetition, not a pattern -----
+# These cannot be table rows because one match proves nothing — it takes a count. Each one
+# carries its own named test instead of riding the generic row mechanism.
+counter_checks() {
+  local eyebrows sections ceiling hits variants v
+
+  # Eyebrow ceiling. Threshold ceil(sections/3) is BORROWED from taste-skill and has never
+  # been calibrated against a page of ours — the warning says so rather than implying rigour.
+  eyebrows="$(search 'uppercase[^"]*tracking|tracking[^"]*uppercase' 2>/dev/null | grep -cE '^[^:]*\.(tsx|jsx|html|vue|svelte):' || true)"
+  sections="$(search '<section' 2>/dev/null | grep -cE '^[^:]*\.(tsx|jsx|html|vue|svelte):' || true)"
+  [ -z "$eyebrows" ] && eyebrows=0
+  [ -z "$sections" ] && sections=0
+  if [ "$sections" -eq 0 ]; then
+    if [ "$eyebrows" -gt 0 ]; then
+      skip "eyebrow ceiling: no <section> found, so there is no denominator — not guessing one"
+    fi
+  else
+    ceiling=$(( (sections + 2) / 3 ))
+    if [ "$eyebrows" -gt "$ceiling" ]; then
+      warn "eyebrow count $eyebrows exceeds the ceiling $ceiling for $sections sections (uncalibrated threshold, borrowed): drop the uppercase micro-labels, or let the headline carry it instead"
+    fi
+  fi
+
+  # A hairline above AND below every row of a long list is the laziest possible layout.
+  hits="$(search 'border-t[^"]*border-b|border-b[^"]*border-t' 2>/dev/null | grep -cE '^[^:]*\.(tsx|jsx|html|vue|svelte):' || true)"
+  [ -z "$hits" ] && hits=0
+  if [ "$hits" -gt 3 ]; then
+    warn "double border on $hits list rows: pick one edge, or use spacing instead of hairlines"
+  fi
+
+  # More than two radius scales in one tree means no radius system at all.
+  variants=0
+  for v in none sm md lg xl 2xl 3xl full; do
+    if search "rounded-$v" >/dev/null 2>&1; then variants=$((variants + 1)); fi
+  done
+  if [ "$variants" -gt 2 ]; then
+    warn "$variants different radius scales in use: one radius system per project — use a --radius-* token instead"
+  fi
+}
+
 # --- static design-review checks (always run, no network) -------------------
 static_checks() {
   local hits
@@ -182,9 +284,8 @@ static_checks() {
     done < <(grep -rl --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next '<h1' . 2>/dev/null || true)
   fi
 
-  # 2. transition: all / transition-all  ([[:space:]] is POSIX; \s is not portable in ERE)
-  hits="$(search 'transition:[[:space:]]*all|transition-all' 2>/dev/null || true)"
-  if [ -n "$hits" ]; then warn "transition: all / transition-all found:"; printf '%s\n' "$hits" | head -n 5; fi
+  # 2. (moved) `transition: all` is now a row in tell_table() — it is a plain pattern, so it
+  #    gets the generic mechanism and its fixture for free.
 
   # 3. hardcoded hex when a token system exists (\b is not portable in ERE; a
   #    3-8 char hex run after # is a sufficient heuristic without the boundary).
@@ -209,9 +310,7 @@ static_checks() {
     fi
   fi
 
-  # 6. ban-list marketing words in copy
-  hits="$(search 'revolutionary|game-?changer|cutting-edge|supercharge|seamless|unlock' 2>/dev/null | grep -iE '\.(tsx|jsx|html|md|mdx)' || true)"
-  if [ -n "$hits" ]; then warn "ban-list marketing words found in copy:"; printf '%s\n' "$hits" | head -n 5; fi
+  # 6. (moved) the marketing ban-list is now a row in tell_table(), same reason as #2.
 }
 
 # --- fallback manual checklist ----------------------------------------------
@@ -239,6 +338,8 @@ EOF
 # --- run --------------------------------------------------------------------
 run_lighthouse
 static_checks
+run_tell_table
+counter_checks
 [ "$LH_RAN" -eq 0 ] && print_checklist
 
 printf '\nok=%d skip=%d warn=%d fail=%d\n' "$ok_count" "$skip_count" "$warn_count" "$fail_count"

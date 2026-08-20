@@ -174,6 +174,41 @@ export function Toast({ open, message }: { open: boolean; message: string }) {
 
 Once you are in `motion/react`, defer the mechanics (spring config, variants, `layoutId` shared transitions) to the external *motion-foundations* and *motion-ui* references.
 
+## Escalating past the native path
+
+Native `animation-timeline: view()` covers reveals, progress rails and parallax. Two effects it
+cannot express are **pinning** (a section holds still while its content advances) and a
+**horizontal pan** driven by vertical scroll. Those need a scroll library, and the improvised
+version is always wrong in the same three ways. Escalate deliberately:
+
+**Never listen to scroll directly.** `window.addEventListener('scroll')` fires off the main
+thread's budget, blows INP, and never gets a passive-listener or cleanup story right. The
+allowed inputs are `IntersectionObserver`, a scroll-driven CSS timeline, `useScroll()` from
+`motion/react`, or GSAP's ScrollTrigger. Nothing else.
+
+**Sticky stack** (pin a section, advance its layers):
+
+```ts
+// 'use client' leaf only. One trigger per pinned section, killed on unmount.
+const st = ScrollTrigger.create({
+  trigger: sectionRef.current,
+  start: "top top",          // pin the moment the section's top reaches the viewport top
+  end: () => `+=${panels.length * window.innerHeight}`,
+  pin: true,
+  pinSpacing: true,          // without this the next section slides under the pin
+  scrub: 1,                  // 1 = follow scroll with a 1s catch-up, not a hard 1:1 jump
+  invalidateOnRefresh: true, // recompute on resize, or the end point is stale on rotate
+});
+// cleanup is not optional: return () => st.kill();
+```
+
+**Horizontal pan** is the same trigger with `end: () => "+=" + track.scrollWidth` and the
+track moved via `x`, not `left` — `transform` is compositor-only, `left` triggers layout.
+
+Both are opt-in above a motion budget, both stay inside
+`@media (prefers-reduced-motion: no-preference)`, and both collapse to a plain vertical stack
+below `768px` rather than pinning on a phone.
+
 ## See Also
 
 - `visual-system.md` — the easing and duration tokens these animations consume.
