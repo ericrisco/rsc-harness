@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import {
   normalizeProse, parseFrontmatter, declaresSingleSource, statedCountInFrontmatter,
-  firstTableRowCount, findStaleClaims, findMisplaced, findContradictions, deriveConventions,
+  firstTableRowCount, stripFences, findStaleClaims, findMisplaced, findContradictions, deriveConventions,
   rank, diagnose, CLASSES, SEVERITY_ORDER, NOT_LOOKED_AT,
 } from '../scripts/lib/knowledge-doctor.js';
 
@@ -199,6 +199,40 @@ test('CONTRADICTS flags a frontmatter count against its declared single-source t
   assert.match(c[0].found, /10/);
 });
 
+test('CONTRADICTS ignores a document that merely DISCUSSES single sources', () => {
+  // Measured on the real wiki: the first gate admitted 7 documents and only 1 declared anything. Five
+  // of the six false passes were this project's own spec, plan and verification records — exactly the
+  // documents whose description naturally gains "probado 9 veces".
+  const discussing = fm({ description: 'el patrón aparece 4 veces' },
+    'Este documento explica por qué conviene una fuente única de la verdad para los contadores.\n\n| a |\n|---|\n| 1 |\n');
+  assert.deepEqual(findContradictions({ path: 'p.md', text: discussing }), [],
+    'talking about single sources is not declaring oneself one');
+
+  const quoting = fm({ description: 'encontrado diez veces' },
+    'La regla dice: *"el número vive en esta tabla y en ningún otro sitio"*, y por eso se aplica.\n\n| a |\n|---|\n| 1 |\n');
+  assert.deepEqual(findContradictions({ path: 'q.md', text: quoting }), [],
+    'quoting the declaration is a citation, not a declaration');
+
+  const declaring = fm({ description: 'encontrado diez veces' },
+    'El contador vive en esta tabla y en ningún otro sitio.\n\n| a |\n|---|\n| 1 |\n');
+  assert.equal(findContradictions({ path: 'r.md', text: declaring }).length, 1,
+    'and a genuine declaration must still be caught');
+});
+
+test('a table inside a code fence is not the canonical table', () => {
+  // A real 3-row table read as 1 row, and the report printed two wrong numbers as its evidence.
+  const body = 'vive en esta tabla y en ningún otro sitio\n\n```\n| ejemplo |\n|---|\n| 1 |\n```\n\n| real | x |\n|---|---|\n| a | b |\n| c | d |\n| e | f |\n';
+  assert.equal(firstTableRowCount(body).rows, 3, 'the fenced illustration must not be counted');
+  assert.equal(stripFences('a\n```\n| x |\n```\nb').split('\n').length, 5, 'line count must survive so reported lines stay true');
+});
+
+test('STALE does not read ordinary status prose as git refs', () => {
+  const probe = (s) => findStaleClaims({ path: 'p.md', text: fm({ status: s }), refExists: () => false });
+  assert.deepEqual(probe('implementada el 20260818'), [], 'a compact date is not a commit');
+  assert.deepEqual(probe('requiere node 18.0.0 y ajv 8.18.0'), [], 'dependency versions are not release tags');
+  assert.ok(probe('implementada (deadbee, publicada en 9.9.9)').length >= 2, 'a real sha and a release claim still fire');
+});
+
 test('CONTRADICTS does NOT flag when the count matches — the positive control', () => {
   const text = fm({ description: 'encontrado dos veces' },
     'en ningún otro sitio\n\n| a |\n|---|\n| 1 |\n| 2 |\n');
@@ -259,7 +293,12 @@ test('diagnose COMPOSES all four detectors — each one is pinned by its own can
   const r = diagnose({ docs, indexText: '# i', refExists: () => false });
   const classes = new Set(r.candidates.map((c) => c.cls));
   assert.ok(classes.has(CLASSES.STALE), 'findStaleClaims must reach the composed output');
-  assert.ok(classes.has(CLASSES.MISPLACED), 'findMisplaced must reach the composed output');
+  // By SIGNAL, not by class: findLogIntruders also emits MISPLACED, so asserting the class alone let a
+  // mutant delete findMisplaced entirely and stay green.
+  assert.ok(
+    r.candidates.some((c) => /type: verification/.test(c.signal)),
+    'findMisplaced must reach the composed output — its own signal, not just its class',
+  );
   assert.ok(classes.has(CLASSES.CONTRADICTS), 'findContradictions must reach the composed output');
   assert.ok(
     r.candidates.some((c) => /decisions\.md/.test(c.path)),
