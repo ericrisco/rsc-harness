@@ -1,6 +1,6 @@
 {
   "name": "@ericrisco/rsc",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "Eric Risco's agent-skills catalog as a granular, self-recommending CLI installer.",
   "type": "module",
   "bin": {
