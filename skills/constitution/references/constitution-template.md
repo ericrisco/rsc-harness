@@ -40,7 +40,7 @@ version: v1.0.0
 
 7. Naming & structure: <directory layout, module boundaries, file naming>.
 8. API & errors: <error shape, status codes, response envelope> where applicable.
-9. Commit messages: <format, e.g. Conventional Commits>.
+9. Commit messages: <format, e.g. gitmoji + Conventional Commits — `✨ feat(scope): subject`>.
 
 ## 4. Branching & shipping
 

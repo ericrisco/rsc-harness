@@ -1,7 +1,7 @@
 ---
 name: git-workflow
-description: "Use when naming or scoping a branch, writing or fixing a commit message, untangling history (rebase versus merge versus squash), or cutting a versioned release — the portable git-convention layer for any repo. Covers Conventional Commits, SemVer tags, branch hygiene, force-push safety and gh pr/release mechanics. NOT the land-it decision and pre-ship checklist (that is `ship`), NOT an isolated checkout before coding (that is `worktrees`), NOT CI/CD release automation (that is `deployment`)."
-tags: [git, version-control, conventional-commits, semver, pull-request]
+description: "Use when naming or scoping a branch, writing or fixing a commit message, picking the gitmoji for a commit, untangling history (rebase versus merge versus squash), or cutting a versioned release — the portable git-convention layer for any repo. Covers gitmoji + Conventional Commits, SemVer tags, branch hygiene, force-push safety and gh pr/release mechanics. NOT the land-it decision and pre-ship checklist (that is `ship`), NOT an isolated checkout before coding (that is `worktrees`), NOT CI/CD release automation (that is `deployment`)."
+tags: [git, version-control, conventional-commits, gitmoji, semver, pull-request]
 recommends: [ship, worktrees, deployment, github-actions]
 origin: risco
 ---
@@ -44,12 +44,12 @@ Good  fix/expired-refresh-token-401
 Good  chore/bump-node-22
 ```
 
-## Conventional Commits grammar
+## Commit grammar — gitmoji + Conventional Commits
 
-Write every commit to **Conventional Commits 1.0.0**. The structure:
+Write every commit to **Conventional Commits 1.0.0**, opened by a **gitmoji**. The structure:
 
 ```text
-type(scope)!: subject
+<gitmoji> type(scope)!: subject
 
 body — what changed and why, wrapped, optional
 
@@ -57,6 +57,8 @@ BREAKING CHANGE: description of the incompatible change
 Fixes #123
 ```
 
+- The **gitmoji is mandatory** and comes first — the intention of the change, readable in one glyph
+  when you scan `git log --oneline`. `type` is what tooling reads; the emoji is what humans read.
 - `type` is mandatory. `scope` in parentheses is optional. `!` before the colon marks a breaking change.
 - Subject: imperative mood ("add", not "added"/"adds"), ≤72 chars, no trailing period.
 - Body explains *why*, not *what the diff already shows*. Separate from subject by a blank line.
@@ -74,22 +76,43 @@ Type → SemVer effect:
 `BREAKING CHANGE` **must be uppercase** in the footer; the type/scope units are case-insensitive but
 write them lowercase by convention.
 
+Type → gitmoji, the everyday set (the full 75-emoji table, and *why* the emoji never replaces the
+type, are in **`references/gitmoji.md`**):
+
+| Type       | gitmoji | Type       | gitmoji | Type      | gitmoji |
+|------------|---------|------------|---------|-----------|---------|
+| `feat`     | ✨      | `refactor` | ♻️      | `build`   | 📦️      |
+| `fix`      | 🐛      | `test`     | ✅      | `style`   | 🎨      |
+| `docs`     | 📝      | `perf`     | ⚡️      | `revert`  | ⏪️      |
+| `chore`    | 🔧      | `ci`       | 👷      | breaking  | 💥      |
+
+Pick by **intention**, not by which file changed, and prefer the specific one: 🚑️ for a production
+hotfix, 🩹 for a trivial non-critical fix, 🔥 for a deletion, 🚚 for a rename, ⬆️ for a dep bump,
+🔖 for a release commit.
+
 ```text
 Bad   fix stuff
 Bad   updates
 Bad   Fixed the login bug.            (past tense, capitalized, trailing period)
-Good  fix(auth): reject expired refresh tokens
-Good  feat(api): add /v2/search endpoint with cursor paging
-Good  refactor(parser): extract token scanner, no behavior change
+Bad   fix(auth): reject expired refresh tokens        (no gitmoji)
+Bad   ✨ added a search endpoint                       (gitmoji but no type → no derivable bump)
+Good  🐛 fix(auth): reject expired refresh tokens
+Good  ✨ feat(api): add /v2/search endpoint with cursor paging
+Good  ♻️ refactor(parser): extract token scanner, no behavior change
 ```
 
 A breaking change, both forms equivalent:
 
 ```text
-feat(api)!: drop the legacy /v1 search endpoint
+💥 feat(api)!: drop the legacy /v1 search endpoint
 
 BREAKING CHANGE: /v1/search is removed; callers must migrate to /v2/search.
 ```
+
+If the repo runs a **strict** conventional parser (commitlint, semantic-release) it anchors the type
+at position 0 and rejects the emoji prefix. Either widen its `headerPattern` — the config is in
+`references/gitmoji.md` — or move the emoji behind the header (`feat(api): ✨ add cursor paging`),
+which every parser accepts. Both forms satisfy this convention; dropping the gitmoji does not.
 
 **Authorship is always Eric.** Never add a `Co-Authored-By: Claude` trailer, never a
 "Generated with" footer, never any line crediting an AI tool — in a commit *or* a PR body. The work
@@ -103,7 +126,7 @@ Decide by who else has the commits. The lease rule below is non-negotiable.
 |------------------------------------------------------|------------------------------------------------------|------------------------------------------------------------|
 | Private branch, only you have it, want linear history | `git rebase main`, then `git push --force-with-lease`| rebase rewrites hashes; safe because nobody built on them  |
 | Branch others have pulled / built on                  | `git merge main` — **never** rebase it               | rebase changes every hash; collaborators' work diverges    |
-| Noisy PR (many `wip` commits)                         | squash-merge into one conventional commit            | `main` gets one meaningful entry, not 9 scratch commits    |
+| Noisy PR (many `wip` commits)                         | squash-merge into one gitmoji + conventional commit            | `main` gets one meaningful entry, not 9 scratch commits    |
 | Already pushed, shared, *and* you rewrote it          | **STOP** — coordinate, or `git revert` instead       | force-pushing shared history breaks everyone downstream     |
 
 After a rebase, push with `--force-with-lease`, never bare `--force`:
@@ -168,7 +191,8 @@ enough to hand over. Setting up the isolated checkout *before* you start coding 
 | Anti-pattern                                          | Why it hurts                                              | Instead                                              |
 |-------------------------------------------------------|-----------------------------------------------------------|------------------------------------------------------|
 | `git push --force` on a shared branch                 | silently erases teammates' commits                        | `--force-with-lease`, or don't rewrite shared history |
-| `git commit -m "wip"` / `"fix"` / `"updates"`         | the log carries zero signal for the next reader           | conventional `type(scope): imperative subject`        |
+| `git commit -m "wip"` / `"fix"` / `"updates"`         | the log carries zero signal for the next reader           | `<gitmoji> type(scope): imperative subject`           |
+| Commit message with no gitmoji                         | `git log --oneline` reads as a wall of undifferentiated text | pick the intention's emoji (`references/gitmoji.md`) |
 | Mixing unrelated changes in one commit                | can't revert or review one concern in isolation           | one logical change per commit                         |
 | Long-lived branch (weeks)                             | diverges from `main`, merge becomes a battle              | short-lived; rebase or merge `main` in often          |
 | Hand-computing the semver bump                        | breaking change shipped as a MINOR → broken downstream    | derive the bump from the commit log                   |
@@ -183,7 +207,7 @@ enough to hand over. Setting up the isolated checkout *before* you start coding 
 
 - [ ] Working tree clean (`git status`), no stray or generated files staged.
 - [ ] Branch rebased on / merged with current `main`; no avoidable conflicts.
-- [ ] Every commit is conventional; `wip`/scratch commits squashed away.
+- [ ] Every commit carries its gitmoji **and** a conventional header; `wip`/scratch commits squashed away.
 - [ ] No secrets, no AI-attribution trailers.
 - [ ] PR body explains the why and links the issue (`Fixes #`).
 - [ ] (Release) version bump **derived from the commit log**, tag is `vX.Y.Z`, annotated.

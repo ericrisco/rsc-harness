@@ -60,6 +60,7 @@ function generatedHookFiles({ target, cwd }) {
     join(cwd, '.rsc', 'worklog-checkpoint.mjs'),
     join(cwd, '.rsc', 'ship-guard.mjs'),
     join(cwd, '.rsc', 'danger-guard.mjs'),
+    join(cwd, '.rsc', 'gitmoji-guard.mjs'),
     join(cwd, '.rsc', 'userprompt-gate.mjs'),
     join(cwd, '.rsc', 'hook-once.mjs'),
     join(cwd, '.rsc', 'sello.mjs'),

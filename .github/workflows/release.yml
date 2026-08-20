@@ -75,7 +75,7 @@ jobs:
           if [ "$HIGHEST" != "$LOCAL" ]; then
             npm version "$HIGHEST" --no-git-tag-version --allow-same-version
             git add package.json package-lock.json manifest.json
-            git commit -m "chore: realign version with the registry ($LOCAL -> $HIGHEST) [skip ci]"
+            git commit -m "🔧 chore: realign version with the registry ($LOCAL -> $HIGHEST) [skip ci]"
           fi
 
       # No tag here on purpose. The tag is created after the commit is pushed (see below), so
@@ -87,7 +87,7 @@ jobs:
           VERSION="$(node -p "require('./package.json').version")"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           git add package.json package-lock.json manifest.json
-          git commit -m "chore(release): $VERSION [skip ci]"
+          git commit -m "🔖 chore(release): $VERSION [skip ci]"
 
       # --- publish + push the bump back ----------------------------------------
       - name: Publish to npm
@@ -118,7 +118,7 @@ jobs:
       - name: Tag the released commit
         run: |
           V="v${{ steps.bump.outputs.version }}"
-          git tag -a "$V" -m "chore(release): ${{ steps.bump.outputs.version }}"
+          git tag -a "$V" -m "🔖 chore(release): ${{ steps.bump.outputs.version }}"
           git push origin "$V"
 
       # --- cut a GitHub Release for the new tag --------------------------------

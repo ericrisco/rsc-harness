@@ -119,6 +119,11 @@ also wires a `SessionStart` hook (so your assistant proposes new skills on its
 own) and a `UserPromptSubmit` hook that re-asserts the **SDD new-feature gate**
 on every turn — so a feature request, in any language, routes through `specify`
 first, before any skill writes code. Opt out per project with `.rsc/.no-feature-gate`.
+It also wires a `PreToolUse` **gitmoji guard**: a `git commit` whose message carries no
+[gitmoji](https://gitmoji.dev) is denied, with the corrected message inside the refusal
+(`✨ feat(api): add cursor paging`) — so `git log --oneline` stays readable at a glance instead of
+depending on the agent remembering a convention. It only judges messages it can actually read
+(`-m`, heredoc), never an editor commit or `--amend --no-edit`. Opt out with `.rsc/.no-gitmoji`.
 
 Everything stays **in the project**, and the real skill files are written
 **once** to `.rsc/skills/<id>/`. Each assistant you pick gets a lightweight
