@@ -146,18 +146,50 @@ export function basesFor(docPath, { mode, root }) {
   return [dirname(docPath), root, join(root, '02-DOCS'), join(root, '02-DOCS', 'wiki'), join(root, 'skills')];
 }
 
-const resolves = (target, bases) => bases.some((b) => existsSync(resolve(b, target)));
+// `existsSync` asks the filesystem, and on APFS/HFS+ (macOS) and NTFS (Windows) the filesystem
+// ignores case. So a link to `AUDIT.md` resolves against a file named `audit.md` and this gate goes
+// GREEN on the maintainer's machine while Linux CI — and every installed user — sees a broken link.
+// That is P2 in its most expensive form: the gate fails open exactly where the work is done. It
+// happened for real (the motion-craft port moved references and one link kept its old casing).
+//
+// So existence is checked one path segment at a time against the parent's actual directory listing,
+// which is byte-exact on every filesystem. The walk starts at `root`, which is real by
+// construction; the declared hole is a target that resolves OUTSIDE the repo, where there is no
+// listing we can trust — the repo's own path may sit under a differently-cased volume or behind a
+// symlink, and a false positive in a blocking gate costs more than a named gap.
+// Spec: 02-DOCS/wiki/sdd/specs/drift-check-case.md
+function existsExact(absTarget, root, cache) {
+  const rel = relative(root, absTarget);
+  // Outside the repo (or the root itself): keep the old behaviour, and say so rather than guess.
+  if (rel === '' || rel.startsWith('..') || rel.startsWith('/')) return existsSync(absTarget);
+
+  let dir = root;
+  for (const segment of rel.split('/')) {
+    let entries = cache.get(dir);
+    if (entries === undefined) {
+      // An unreadable directory is not evidence of drift; fall back rather than accuse.
+      try { entries = new Set(readdirSync(dir)); } catch { return existsSync(absTarget); }
+      cache.set(dir, entries);
+    }
+    if (!entries.has(segment)) return false;
+    dir = join(dir, segment);
+  }
+  return true;
+}
+
+const resolves = (target, bases, root, cache) =>
+  bases.some((b) => existsExact(resolve(b, target), root, cache));
 
 // Knowledge mode only. The authoring standards write per-skill paths generically — "every skill
 // carries `evals/cases.yaml`" — which is a claim about a shape shared by 258 directories, not a
 // location. Resolving it against any one skill is the honest reading; treating it as drift
 // produced five findings that were never wrong.
-function resolvesInAnySkill(target, root) {
+function resolvesInAnySkill(target, root, cache) {
   if (target.startsWith('.') || target.startsWith('/')) return false;
   const skillsDir = join(root, 'skills');
   if (!existsSync(skillsDir)) return false;
   for (const e of readdirSync(skillsDir, { withFileTypes: true })) {
-    if (e.isDirectory() && existsSync(join(skillsDir, e.name, target))) return true;
+    if (e.isDirectory() && existsExact(join(skillsDir, e.name, target), root, cache)) return true;
   }
   return false;
 }
@@ -186,6 +218,9 @@ export function scanTree(dir, { mode, root = REPO, label = null } = {}) {
   const findings = [];
   let claims = 0;
   let skipped = 0;
+  // Directory listings, memoized per scan rather than per module: 824 claims share a few hundred
+  // directories, and a cache that outlived the scan would answer from a stale listing.
+  const cache = new Map();
   for (const doc of markdownFiles(dir)) {
     const text = readFileSync(doc, 'utf8');
     const raw = mode === 'catalog'
@@ -199,8 +234,8 @@ export function scanTree(dir, { mode, root = REPO, label = null } = {}) {
         continue;
       }
       claims++;
-      if (mode === 'knowledge' && resolvesInAnySkill(c.target, root)) continue;
-      if (!resolves(c.target, bases)) {
+      if (mode === 'knowledge' && resolvesInAnySkill(c.target, root, cache)) continue;
+      if (!resolves(c.target, bases, root, cache)) {
         findings.push({
           doc: relative(root, doc),
           line: c.line,
