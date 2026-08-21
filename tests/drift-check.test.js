@@ -337,3 +337,72 @@ test('drift-check: extraction helpers are exported and behave in isolation', () 
   assert.deepEqual(extractInlinePaths('`scripts/a.js`').map((c) => c.target), ['scripts/a.js']);
   assert.deepEqual(extractInlinePaths('```\n`scripts/a.js`\n```'), [], 'fences win over inline');
 });
+
+// ── case sensitivity ─────────────────────────────────────────────────────────────────────
+// The gate failed OPEN on the maintainer's own machine. `existsSync` is case-insensitive on
+// APFS/HFS+, so a link to `AUDIT.md` resolved against a file named `audit.md` and drift-check said
+// PASS locally while Linux CI said FAIL. It happened for real: the motion-craft port moved skill
+// references into references/, one link kept the old casing, local was green, CI caught it.
+//
+// These tests must be able to FAIL on macOS, which is the whole point — a test that only proves
+// the fix on Linux proves it where the bug never was.
+// Spec: 02-DOCS/wiki/sdd/specs/drift-check-case.md
+test('a link that differs from the real file only in case does NOT resolve', () => {
+  const root = tree({
+    'skills/a/SKILL.md': 'Pull the values from [AUDIT.md](AUDIT.md).\n',
+    'skills/a/audit.md': '# the real file, lowercase\n',
+  });
+  const r = checkCatalog({ root });
+  assert.deepEqual(
+    r.findings.map((f) => `${f.doc} → ${f.target}`),
+    ['skills/a/SKILL.md → AUDIT.md'],
+    'a case-mismatched link resolved — the gate is failing open on this filesystem',
+  );
+});
+
+test('the same link with exact casing resolves', () => {
+  // The other half: a checker that reports everything is as useless as one that reports nothing.
+  const root = tree({
+    'skills/a/SKILL.md': 'Pull the values from [audit.md](audit.md).\n',
+    'skills/a/audit.md': '# the real file, lowercase\n',
+  });
+  assert.deepEqual(checkCatalog({ root }).findings, []);
+});
+
+test('a miscased DIRECTORY segment does not resolve either', () => {
+  // The basename is not the only place case can drift. Checking only the last segment would let
+  // `References/audit.md` through on macOS.
+  const root = tree({
+    'skills/a/SKILL.md': 'See [it](References/audit.md).\n',
+    'skills/a/references/audit.md': '# real\n',
+  });
+  assert.deepEqual(
+    checkCatalog({ root }).findings.map((f) => f.target),
+    ['References/audit.md'],
+  );
+});
+
+test('a link that climbs out of its own directory still resolves when the case is exact', () => {
+  // `../sibling/SKILL.md` is the single most common shape in this catalog. If the exactness walk
+  // broke on `..`, hundreds of real links would turn into findings.
+  const root = tree({
+    'skills/a/SKILL.md': 'Hand off to [sibling](../b/SKILL.md).\n',
+    'skills/b/SKILL.md': '# sibling\n',
+  });
+  assert.deepEqual(checkCatalog({ root }).findings, []);
+});
+
+test('a miscased link is caught even when it climbs out of its own directory', () => {
+  const root = tree({
+    'skills/a/SKILL.md': 'Hand off to [sibling](../B/SKILL.md).\n',
+    'skills/b/SKILL.md': '# sibling\n',
+  });
+  assert.deepEqual(checkCatalog({ root }).findings.map((f) => f.target), ['../B/SKILL.md']);
+});
+
+test('the real catalog does not depend on case-insensitive resolution', () => {
+  // Measured before the change: 0 of 1117 markdown files in the catalog resolved a link only
+  // because macOS ignores case. This pins that, so the hardening cannot silently start reporting
+  // pre-existing links as broken.
+  assert.deepEqual(checkCatalog({ root: REPO }).findings, []);
+});
