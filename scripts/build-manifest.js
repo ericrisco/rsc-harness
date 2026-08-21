@@ -3,14 +3,15 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv from 'ajv';
 import { parseFrontmatter } from './lib/frontmatter.js';
+import { fenceBalance } from './lib/skill-lint.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILLS = join(ROOT, 'skills');
 
-function skillDirs() {
-  return readdirSync(SKILLS).filter((d) => {
+function skillDirs(base = SKILLS) {
+  return readdirSync(base).filter((d) => {
     try {
-      return statSync(join(SKILLS, d)).isDirectory() && statSync(join(SKILLS, d, 'SKILL.md')).isFile();
+      return statSync(join(base, d)).isDirectory() && statSync(join(base, d, 'SKILL.md')).isFile();
     } catch {
       return false;
     }
@@ -47,6 +48,20 @@ export function validateFrontmatter() {
   return errors;
 }
 
+// A skill body whose code-block delimiters do not pair renders half its content as one code block,
+// and every other gate stays green while it happens. Deterministic defect, deterministic check —
+// and it lives here so `prepublishOnly` can never ship one.
+export function validateBodies(base = SKILLS) {
+  const errors = [];
+  for (const id of skillDirs(base)) {
+    const r = fenceBalance(readFileSync(join(base, id, 'SKILL.md'), 'utf8'));
+    if (!r.balanced) {
+      errors.push(`${id}: unbalanced code-block delimiter opened at line ${r.opened} (${r.fences} found)`);
+    }
+  }
+  return errors;
+}
+
 // A skill's `description` is in context on every turn it is installed, invoked or not, so the
 // catalog's total description weight is the one number that scales with the catalog itself.
 // The hard failure stays at the schema limit; this reports the soft ceiling the rubric asks for,
@@ -67,9 +82,10 @@ function main() {
   const arg = process.argv[2];
   const out = join(ROOT, 'manifest.json');
   if (arg === '--validate') {
-    const errs = validateFrontmatter();
+    const errs = [...validateFrontmatter(), ...validateBodies()];
     if (errs.length) { console.error(errs.join('\n')); process.exit(1); }
     console.log('frontmatter OK');
+    console.log('skill bodies OK (code-block delimiters balanced)');
     const w = descriptionWeight();
     console.log(
       `description weight: ${(w.total / 1024).toFixed(1)} KB across ${w.count} skills `
