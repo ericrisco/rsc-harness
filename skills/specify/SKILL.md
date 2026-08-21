@@ -1,6 +1,6 @@
 ---
 name: specify
-description: "Use when a feature, change, or product idea is still fuzzy and must become an approved WHAT/WHY spec before any planning or code — the brainstorming front door of SDD. Turns a one-line intent into problem, goals, users, scope, behaviour and acceptance criteria, via one-question-at-a-time dialogue and 2-3 approaches with a recommendation, carrying zero implementation detail. Fires whenever someone jumps to HOW before WHAT is agreed, in any language. NOT the technical plan (that is `plan`), NOT the de-risking ambiguity sweep (that is `clarify`), NOT project-wide principles (that is `constitution`)."
+description: "Use when a feature, change, or product idea is still fuzzy and must become an approved WHAT/WHY spec before any planning or code — the brainstorming front door of SDD. Turns a one-line intent into problem, goals, users, scope, behaviour and acceptance criteria, via frontier-round dialogue and 2-3 approaches with a recommendation, carrying zero implementation detail. Fires whenever someone jumps to HOW before WHAT is agreed, in any language. NOT the technical plan (that is `plan`), NOT the de-risking ambiguity sweep (that is `clarify`), NOT project-wide principles (that is `constitution`)."
 tags: [sdd, spec, requirements]
 recommends: [clarify, plan]
 profiles: [core, full]
@@ -29,9 +29,11 @@ A **yes engages autopilot** (`../sdd/SKILL.md`): you still write the spec and ev
 
 ## The one rule that defines this skill
 
-**No implementation leaks.** The moment the spec names a framework, a table schema, a library, an endpoint shape, a file path, or an algorithm, it has stopped being a spec. Those decisions belong to `plan` and the stack skills. Specify describes the *observable behaviour and the reason for it*; the system that delivers it is deliberately left open.
+A spec is a **contract**: what the system will observably do, and why that matters. Every line either belongs in the contract or belongs to how the contract gets honoured — and the second kind is `plan`'s, not yours. Framework, table schema, library, endpoint shape, file path, algorithm: all of them are how, so the moment one appears the document has stopped being a contract.
 
-If you cannot describe a requirement without naming the technology, you have found a real question — record it as a point to clarify, do not guess the answer.
+One question settles every judgement call in this skill: **is this a clause of the contract, or a detail of how it gets met?**
+
+If you cannot state a requirement without naming the technology, that is a real open question — record it as a typed point to clarify, do not guess the answer.
 
 ## Model tier — `balanced` (opt-in routing)
 
@@ -41,23 +43,25 @@ This phase's default model tier is **`balanced`** — it drafts the what/why spe
 
 Before asking anything, read `02-DOCS/wiki/harness/user-profile.md` for the technical level and accompaniment level, and adapt:
 
-- **L0 "cavernícola"** — infer aggressively from the intent and any existing wiki/constitution. Ask only the questions whose answer would change the spec's scope. Draft, show, move on.
+- **L0 "cavernícola"** — infer aggressively from the intent and any existing wiki/constitution. Ask only the questions whose answer would change the contract. Draft, show, move on.
 - **L1 "breve"** — one line of *why* per question; ask the few that genuinely matter.
 - **L2 "explica decisiones"** — justify each requirement as you record it; surface the trade-offs you inferred.
-- **L3 "acompañamiento total"** — explain what a spec is and is not, walk every section, ask freely (still one question at a time), confirm each answer before recording it. Ideal for non-technical users.
+- **L3 "acompañamiento total"** — explain what a spec is and is not, walk every section, ask freely (still one round per frontier, never crossing a dependency), confirm each answer before recording it. Ideal for non-technical users.
 
 If no profile exists, default to non-technical framing and keep questions plain. Never assume fluency.
 
-## Questioning discipline — one at a time, only where you can't infer
+## Questioning discipline — ask the frontier, never cross a dependency
 
-The failure mode of specs is the wall of twenty questions. Avoid it:
+The failure mode of specs is the wall of twenty questions. The cure is not one question per turn: that spends a turn of the user's time per question even when the questions do not touch each other. The cure is the **frontier**.
 
 1. **Infer first.** Read the `constitution` (`02-DOCS/wiki/sdd/constitution.md`), the existing wiki, and sibling specs. Fill every section you reasonably can from what already exists.
-2. **Ask only the gaps that change the spec.** A question earns its place only if a different answer would change scope, a goal, a user, or an acceptance criterion. Cosmetic gaps become *points to clarify*, not questions.
-3. **One focused question per turn.** Ask, wait, record, then ask the next. Never batch. Phrase in the user's technical register.
-4. **When inference and asking both fail, mark it.** Anything you cannot resolve in this pass becomes an explicit entry in *Points to clarify* — that list is the handoff contract to the `clarify` phase, not a defect.
+2. **Ask only the gaps that change the contract.** A gap earns a question only if a different answer would move scope, a goal, a user, or an acceptance criterion. Cosmetic gaps become typed *points to clarify*, not questions.
+3. **Ask the whole frontier in one round.** The frontier is every remaining gap whose prerequisites are already settled — the questions you can ask *now* without guessing at answers you have not heard yet. Number them, give each your recommended answer, then wait. Where the harness offers a native question selector, use it; where it does not, emit the same round as numbered text.
+4. **Never cross a dependency.** A gap whose answer depends on another question open in *this* round belongs to a later round. Recompute the frontier after every set of answers: settled decisions push it outward and unblock what waited on them. If an answer redefines a question you already emitted in the same round, discard that question out loud and re-ask it next round rather than using an answer given under a premise that just moved.
+5. **Facts are your job; decisions are the user's.** When a frontier question needs a fact from the environment, go find it — and do not block on it. A running search is an unsettled prerequisite, so only the questions downstream of it wait; ask the rest of the frontier now.
+6. **When inference and asking both fail, type it.** Anything unresolved becomes a typed entry in *Points to clarify* — the handoff contract to `clarify`, not a defect.
 
-Stop asking when the WHAT and WHY are complete enough to plan against. Remaining unknowns live in *Points to clarify*; you do not need every answer before writing the file.
+A frontier of one is one question, and needs no apology. A frontier of zero is no question at all: never invent one to look diligent.
 
 ## What a good spec contains
 
@@ -71,7 +75,7 @@ Write these sections into `02-DOCS/wiki/sdd/specs/<slug>.md` using `references/s
 | Users & context | Who acts, their context, what they're trying to achieve | An imagined user no one asked for |
 | Behaviour | What the system does, in observable terms, incl. main + edge + error paths | A verb that's actually a HOW ("queries", "caches") |
 | Acceptance criteria | Testable, binary checks that say "done" | Vague critera ("works well", "is fast") |
-| Points to clarify | Open questions, assumptions made, decisions deferred | Pretending there are none |
+| Points to clarify | The typed handoff to `clarify` — see the four types below | An untyped list, or pretending there are none |
 
 ### Acceptance criteria carry the weight
 
@@ -85,6 +89,33 @@ Then they see an empty-cart message and the "pay" button is disabled
 
 A criterion that needs a human to "decide if it's good enough" is not done yet — sharpen it or move the soft part to *Points to clarify*.
 
+### Points to clarify carry a type
+
+*Points to clarify* is the handoff to `clarify`, and it holds four different objects that need four
+different actions. An untyped list makes `clarify` treat all of them as questions, so it re-asks what
+you already decided and touches what you deliberately deferred. Type every entry:
+
+| Type | What it is | What `clarify` does with it |
+| --- | --- | --- |
+| **pregunta abierta** | Formulable with precision right now, unanswered | Asks it |
+| **suposición tomada** | You decided it; the basis is written down | Validates it — does it still hold? |
+| **decisión diferida** | Sharp, out of this cycle on purpose | Leaves it alone |
+| **área no formulable** | Known to be coming, not yet sharp enough to phrase | Notes it; it graduates when it sharpens |
+
+The test that separates the last two from a question is **sharpness, not difficulty**: *can you state
+the question precisely now?* — not *can you answer it?* Sharp → **pregunta abierta**. Not sharp →
+**área no formulable**. Beyond what this change is for → `Non-goals`, where it never graduates.
+
+Write the type in bold at the head of the entry, and give a `suposición tomada` its basis:
+
+```text
+- **suposición tomada** — el enlace caduca en minutos, no en horas. *Base:* el patrón de los
+  proveedores que ya usamos. *Riesgo:* si el soporte pide horas, el criterio de aceptación cambia.
+```
+
+An entry with no type is read as **pregunta abierta**, the costliest of the four. The default never
+saves you work.
+
 ## The pass, end to end
 
 Run these in order. It is a collaborative dialogue, not a form you fill in silence — and **you do not skip to a design dump.** Track the steps with a todo list so none is dropped.
@@ -94,22 +125,39 @@ Run these in order. It is a collaborative dialogue, not a form you fill in silen
 2. SCOPE check            → if the request is several independent subsystems, DECOMPOSE into sub-specs first,
                             then brainstorm the FIRST one; each gets its own spec → plan → build cycle
 3. RESTATE in one sentence→ confirm you understood the intent before anything else
-4. ASK, one at a time     → only the gaps that change scope; multiple-choice when you can; wait, record, repeat
+4. ASK the frontier       → only gaps that change the contract; whole frontier per round, numbered, each
+                            with your recommendation; never cross a dependency; wait, record, recompute
 5. PROPOSE 2-3 approaches → distinct directions with honest trade-offs; lead with your recommendation and why
 6. PRESENT the design     → section by section (problem, users, behaviour, acceptance), scaled to complexity;
                             after EACH section ask "does this look right?" and adjust before moving on
 7. WRITE the spec         → 02-DOCS/wiki/sdd/specs/<slug>.md (WHAT/WHY), index it in 02-DOCS/wiki/index.md
                             (the Knowledge map; root CLAUDE.md keeps only a short pointer), commit if a repo
-8. SELF-REVIEW            → scan for TODO/placeholder, contradictions, ambiguity, scope creep; fix inline.
-                            On L2/L3 or a high-risk spec, also dispatch a FRESH-EYES review (below)
+8. SELF-REVIEW            → run the EXIT GATE (below) until green; scan for contradictions, ambiguity,
+                            scope creep; fix inline. On L2/L3 or high risk, add a FRESH-EYES review
 9. USER APPROVES          → ask them to read the written spec and confirm; loop on changes until they approve
 10. HAND OFF              → only now, result envelope → clarify/plan. NEVER to implement.
 ```
 
-**The gate is steps 5-9, and it is the point of this skill.** Implementation does not begin — not `plan`-to-code, not a stack skill, not "just a quick version" — until the user has approved the design at step 9. This holds for **every** feature, including ones that feel too small to design; "too simple to spec" is exactly where unexamined assumptions cost the most. The only thing that skips the loop is a literal one-line, zero-risk change (a typo, a copy tweak) — name it as such and do it.
-```
+**Steps 5-9 are the gate**, stated once under *Detect the moment* above and not restated here: approval at step 9 is what unlocks implementation.
 
 `<slug>` is a short kebab-case name derived from the feature (e.g. `bulk-csv-import`, `magic-link-login`). If a spec with that slug exists, read it and update rather than overwrite.
+
+### Exit gate — checked, not felt
+
+"Complete enough to plan against" cannot tell done from not-done, and the write/review/approve steps
+are visible while you are still asking, pulling attention toward being finished. So the bound is a
+property of the **file**, not of your confidence:
+
+> Every template section carries content or an explicit typed open point, and no section holds an
+> unmarked assumption.
+
+Run `npm run spec:gate <path>` on the spec you just wrote (no path: the whole corpus). It reports the
+missing and the empty sections by name, and it prints what it does **not** check — the unmarked
+assumption is yours to catch, because no parser can. A red gate means the spec is not closed: name
+the section that failed and fix it before step 9.
+
+A gate that has never been seen fail is not known to work, so this one ships with the test that
+watches it fail and pass (`tests/spec-gate.test.js`).
 
 ### Fresh-eyes spec review (step 8, scaled to the dial)
 
@@ -191,8 +239,12 @@ A returning user on a new device who does not remember a password.
   link can be requested.
 
 ## Points to clarify
-- Link validity window? (assumed: short, exact value deferred to clarify)
-- Rate-limit on requests per email? (deferred)
+- **pregunta abierta** — ¿cuánto vale la ventana de validez del enlace?
+- **suposición tomada** — la ventana es corta, en minutos. *Base:* el patrón de los proveedores que
+  ya usamos. *Riesgo:* si soporte pide horas, cambia el criterio de aceptación.
+- **decisión diferida** — límite de peticiones por email; fuera de este ciclo.
+- **área no formulable** — qué pasa con las cuentas compartidas; sospecho que hay una pregunta y
+  todavía no sé enunciarla.
 ```
 
 Note what is *absent*: no token format, no table, no email provider, no framework. Those are `plan`'s job.
@@ -226,17 +278,16 @@ The proposal is allowed to mention options and tradeoffs; the spec that follows 
 
 ## Anti-patterns → STOP
 
+Only failures with no positive statement elsewhere in this skill. The rules about the frontier, the
+constitution, the 2-3 approaches, the gate, and answer-is-not-approval are stated positively above
+(§Questioning discipline, §Detect the moment, the pass, §Approval is its own exchange) and are not
+repeated here as prohibitions: naming a behaviour makes it more available, not less.
+
 | If you're about to… | Reality / Fix |
 | --- | --- |
 | Name a framework, table, endpoint, or library | That's HOW. Strip it; describe the behaviour instead, or log the open question. |
-| Dump 12 questions in one message | One focused question per turn. Infer the rest from the constitution and wiki. |
-| Ask a question you could answer from the constitution | Read it first. Only ask what genuinely changes the spec. |
 | Write "it should work well / be fast / be intuitive" | Not testable. Make it a binary Given/When/Then or move it to Points to clarify. |
-| Skip the whole loop because "this is too simple to design" | That's the rationalization that wastes the most work. Every feature gets the loop; only a literal one-line, zero-risk change skips. |
-| Present one approach as the answer | Offer 2-3 distinct directions with trade-offs and a recommendation; let the user choose before you write the spec. |
 | Hand to `plan`/`implement` before the user approved the written spec | The approval at step 9 is the gate. No design approved → nothing gets built. |
-| Treat the answer to your question as the approval of the spec | They answered the question, and the answer *changed* the spec. Fold it in, say what changed, show it, ask again. |
-| Write `status: aprobada` after a blanket "just run it" | That is autopilot. Record it as such — the record must not overstate the strongest gate in the chain. |
 | Skip non-goals because "it's obvious" | Unsaid scope becomes assumed scope. State what you are *not* doing. |
 | Resolve every ambiguity yourself to look finished | Inventing answers is worse than naming gaps. List them in Points to clarify. |
 | Start designing the solution because it's clearer | Stay on WHAT/WHY. The plan is a later, separate phase. |
@@ -287,7 +338,7 @@ If `clarify` surfaces answers, they get baked back into this same spec file. Onl
 - `../plan/SKILL.md` — turns the de-risked spec into a technical implementation plan (the HOW).
 - `../harness/SKILL.md` — the 02-DOCS wiki + accompaniment dial + decisions log this skill honors.
 - `references/spec-template.md` — the exact section template written to `02-DOCS/wiki/sdd/specs/<slug>.md`.
-- `references/eliciting-requirements.md` — inference checklist + the one-question-at-a-time elicitation patterns.
+- `references/eliciting-requirements.md` — inference checklist + the frontier-round elicitation pattern.
 
 ## Orientación (siempre)
 

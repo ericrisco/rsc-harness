@@ -28,11 +28,35 @@ This is the fourth phase of the rsc SDD chain (`constitution` → `specify` → 
 
 Clarify never works blind. Before asking a single question, load three things:
 
-1. **The spec.** Read the target spec under `02-DOCS/wiki/sdd/specs/<slug>.md` end to end. If the path wasn't given, find the most recently touched spec or ask which one.
+1. **The spec.** Read the target spec under `02-DOCS/wiki/sdd/specs/<slug>.md` end to end. If the path wasn't given, find the most recently touched spec or ask which one. Its *Points to clarify* is a **typed** handoff, not a question list — read the types before you plan a single question (below).
 2. **The constitution.** Read `02-DOCS/wiki/sdd/constitution.md` if it exists. Its principles (stack canon, quality bars, conventions) resolve a surprising number of "ambiguities" without bothering the user — if the constitution already fixes the auth method or the data region, that's answered, not open.
 3. **The harness profile.** `02-DOCS/wiki/harness/user-profile.md`, for the dial above.
 
 Citing what you read ("checked the constitution — auth is already fixed to OAuth, so that's not an open question") shows your work and prevents re-litigating settled decisions.
+
+## The typed handoff — what `specify` already decided
+
+*Points to clarify* holds four different objects, and each one gets a different action from you.
+Treating all four as questions is how clarify re-asks what was already decided and disturbs what was
+deliberately deferred:
+
+| Type in the spec | What it means | Your action |
+| --- | --- | --- |
+| **pregunta abierta** | Formulable, unanswered | Ask it — this is your queue |
+| **suposición tomada** | `specify` decided it; the basis is written | **Validate**, don't re-ask: state the assumption and its basis back, and ask only whether it still holds |
+| **decisión diferida** | Sharp, out of this cycle on purpose | Leave it. Do not reopen scope the author closed |
+| **área no formulable** | Known to be coming, not yet phrasable | Note it. If your pass sharpens it into a real question, it graduates — say that it did |
+
+**Declare what you did with each entry.** Close the pass with one line per point: asked, validated
+(held / broke), left deferred, or graduated. An entry you silently dropped is the gap that comes back
+at implementation time.
+
+**An untyped entry** (an older spec, or a hurried one) is read as **pregunta abierta** — the
+costliest reading, so nothing gets skipped by accident. Type it as you go, so the spec improves on
+the way through.
+
+Sharpness, not difficulty, is what separates a question from an unformulable area: *can you state it
+precisely now?* Not *can you answer it?*
 
 ## The ambiguity taxonomy — where specs hide their gaps
 
@@ -111,7 +135,7 @@ After baking back, the spec line becomes a bounded, testable behavior with accep
 
 ## Exit gate
 
-The gate is passed when the spec, constitution and profile were all read (settled questions cited, not re-asked); all ten taxonomy categories were considered; only the build-changing gaps were put to the user, as dial-sized decisions with recommendations; every answer is baked into the spec body with observable acceptance criteria, logged under `## Clarifications` and bounded under `## Out of scope`; and the final re-read opened no new gap.
+The gate is passed when the spec, constitution and profile were all read (settled questions cited, not re-asked); **every typed point in the handoff has its declared outcome** (asked / validated / left deferred / graduated), with nothing silently dropped; all ten taxonomy categories were considered; only the build-changing gaps were put to the user, as dial-sized decisions with recommendations; every answer is baked into the spec body with observable acceptance criteria, logged under `## Clarifications` and bounded under `## Out of scope`; and the final re-read opened no new gap.
 
 ## Result envelope
 

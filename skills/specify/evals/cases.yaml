@@ -63,20 +63,20 @@ should_not_trigger:
 capability:
   - scenario: "A user says: 'I want to add magic-link (passwordless) login.' There is a constitution at 02-DOCS/wiki/sdd/constitution.md but no spec yet. Produce the spec."
     must_include:
-      - "Reads the accompaniment level from 02-DOCS/wiki/harness/user-profile.md and the constitution first, inferring everything it can before asking, then asks only scope-changing questions ONE at a time (not a batch of ten)."
+      - "Reads the accompaniment level from 02-DOCS/wiki/harness/user-profile.md and the constitution first, inferring everything it can before asking, then asks only contract-changing gaps — the whole FRONTIER in one numbered round, each with its recommendation, and nothing whose answer depends on another question open in that same round."
       - "Stays strictly WHAT/WHY: no framework, token format, database table, endpoint shape, email provider, library, or file path appears in the spec — implementation-laden answers are flagged as points to clarify instead of guessed."
       - "Produces the spec sections: Problem & why, Goals, Non-goals / out of scope, Users & context, Behaviour (main + edge + error paths), Acceptance criteria, Points to clarify."
       - "Writes testable acceptance criteria in Given/When/Then form that verify could later check (e.g. expired-link refusal, unknown-email revealing nothing)."
       - "Writes the file to 02-DOCS/wiki/sdd/specs/<slug>.md (kebab-case slug), indexes it in the root CLAUDE.md Knowledge map under sdd/specs, and logs the spec creation to the canonical SDD decisions log at 02-DOCS/wiki/sdd/decisions.md."
-      - "Lists honest Points to clarify (e.g. link validity window, rate-limiting) as the handoff rather than inventing those values."
+      - "Lists honest Points to clarify as the handoff rather than inventing values, and TYPES each one (pregunta abierta / suposición tomada / decisión diferida / área no formulable) so clarify knows whether to ask it, validate it, or leave it alone; a suposición carries its basis."
       - "Ends by pointing to the clarify phase as the next step in the SDD chain."
 
   - scenario: "A user pastes a rough one-liner: 'Let users export all their data as a download.' Show how you'd elicit and capture this without over-asking."
     must_include:
       - "Recovers the underlying problem/why rather than treating the feature request as the problem, and inherits any relevant constraints from the constitution."
-      - "Applies the 'would a different answer change the spec?' test and asks only the genuinely scope-changing question(s), one at a time, in the user's register."
+      - "Applies the 'would a different answer change the contract?' test, then splits what is left by dependency: independent gaps go out together in one round with recommendations, and any gap whose answer hinges on another still-open one is held for the next round rather than asked blind."
       - "Captures observable behaviour (what the user sees/can do) and explicit non-goals / out-of-scope rather than implementation (no file format library, storage, or job-queue detail)."
-      - "Turns answers into binary acceptance criteria and defers unresolved items (e.g. data scope, retention, format) to Points to clarify instead of fabricating decisions."
+      - "Turns answers into binary acceptance criteria and defers unresolved items (e.g. data scope, retention, format) to typed Points to clarify instead of fabricating decisions, and checks the written file against the phase's exit gate before calling it done."
       - "Notes that the spec is complete-enough-to-plan with open points remaining, and hands off to clarify — not to plan or implementation."
       - "After the user answers a question, folds the answer in, states what changed, shows the revised spec, and asks for approval AGAIN — it does not treat the answer as approval of the spec, including when the user picked the recommended option."
       - "If told to run the whole chain up front, records the approval as autopilot rather than item-by-item, and says the spec is the artifact to review after the fact."

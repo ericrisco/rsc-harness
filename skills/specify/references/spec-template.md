@@ -50,16 +50,30 @@ checkable by `verify` and convertible to a `tasks` done-check.>
 - Given <state>, When <action>, Then <observable outcome>.
 
 ## Points to clarify
-<The handoff to the `clarify` phase. Open questions, assumptions you made and
-on what basis, decisions deferred. This list being non-empty is normal.>
-- [ ] <Open question> — (assumption made: <…>, basis: <…>)
-- [ ] <Deferred decision>
+<The typed handoff to `clarify`. Every entry declares which of the four it is,
+because each one gets a different action from the next phase. Non-empty is
+normal; untyped is not — an untyped entry is read as `pregunta abierta`, the
+costliest of the four.>
+- **pregunta abierta** — <formulable now, unanswered. clarify asks it.>
+- **suposición tomada** — <what you decided.> *Base:* <why.> *Riesgo:* <what
+  changes if it turns out wrong.> clarify validates it rather than re-asking.
+- **decisión diferida** — <sharp, out of this cycle on purpose. clarify leaves
+  it.>
+- **área no formulable** — <you can tell something is coming and cannot phrase
+  the question yet. clarify notes it; it graduates when it sharpens.>
 ```
 
 ## Field notes
 
 - **Status** moves `draft` → `clarified` (after the `clarify` phase) → `planned`
-  (once `plan` exists). Don't invent other states.
+  (once `plan` exists). Don't invent other states. An approval obtained as a
+  blanket "just run it" is recorded as **approved in autopilot**, not flat.
+- **Before you call it written**, run `npm run spec:gate <path>`. It checks that
+  every section here carries content or an explicit open point, and prints the
+  clauses it cannot check (the unmarked assumption is yours).
+- **Sharpness, not difficulty**, sorts the last two types from the first: *can
+  you state the question precisely now?* Not *can you answer it?* Anything past
+  what this change is for goes to **Non-goals**, where it never graduates.
 - **Behaviour** is where HOW leaks in most. Audit every verb: "queries",
   "caches", "calls", "stores in" are implementation. Replace with the observable
   effect ("shows", "lets the user", "prevents", "remembers across visits").
