@@ -67,7 +67,7 @@ Audit against the eight categories in [references/audit.md](references/audit.md)
 7. Cohesion & tokens
 8. Missed opportunities
 
-For anything beyond a small repo, fan out read-only subagents — one per category (or per app area for large monorepos). Each subagent prompt must include: the absolute path to AUDIT.md and its section heading, the recon facts (stack, motion libraries, token conventions, frequency map), an instruction to return findings only (file:line + evidence, no fixes), and Hard Rule 4 verbatim.
+For anything beyond a small repo, fan out read-only subagents — one per category (or per app area for large monorepos). Each subagent prompt must include: the absolute path to `references/audit.md` and its section heading, the recon facts (stack, motion libraries, token conventions, frequency map), an instruction to return findings only (file:line + evidence, no fixes), and Hard Rule 4 verbatim.
 
 Depth follows effort level (default `standard`):
 
@@ -96,7 +96,7 @@ Then **stop and wait for the user to select** which findings become plans. If ru
 
 One plan per selected finding, using [references/plan-template.md](references/plan-template.md), written into `plans/` as `NNN-short-slug.md` (monotonic numbering; respect existing plans). Stamp each plan with the current commit (`git rev-parse --short HEAD`).
 
-Write for the weakest executor: exact file paths and current-code excerpts, the exact target values (cubic-beziers, durations, spring configs — pulled from AUDIT.md, never approximated), the repo's own conventions with an exemplar, ordered steps, hard scope boundaries, and a verification section including how to *feel-check* the result (slow motion, frame-by-frame, real device for gestures).
+Write for the weakest executor: exact file paths and current-code excerpts, the exact target values (cubic-beziers, durations, spring configs — pulled from `references/audit.md`, never approximated), the repo's own conventions with an exemplar, ordered steps, hard scope boundaries, and a verification section including how to *feel-check* the result (slow motion, frame-by-frame, real device for gestures).
 
 Finish by creating or updating `plans/README.md`: recommended execution order, dependencies between plans, and a status column.
 
