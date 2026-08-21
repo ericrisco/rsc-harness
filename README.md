@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc — your agent needs a memory (02-DOCS/, or it invents what it cannot remember), arms (01-TOOLS/, or it never touches your database), a trade (264 skills, or it guesses how the job is done), and reflexes (deterministic hooks, or it forgets the rule mid-session). One meta-harness for 17 coding assistants." width="960">
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc — your agent needs a memory (02-DOCS/, or it invents what it cannot remember), arms (01-TOOLS/, or it never touches your database), a trade (276 skills, or it guesses how the job is done), and reflexes (deterministic hooks, or it forgets the rule mid-session). One meta-harness for 17 coding assistants." width="960">
 
-# `rsc` — 264 agent skills, one CLI, zero bloat
+# `rsc` — 276 agent skills, one CLI, zero bloat
 
 [![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
 [![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
@@ -344,11 +344,11 @@ Train and adapt open models end to end: classic ML, deep learning, NLP, fine-tun
 
 ### 🗣️ Languages
 
-[typescript](skills/typescript/) · [python](skills/python/) · [java](skills/java/) · [csharp-dotnet](skills/csharp-dotnet/) · [php](skills/php/) · [ruby](skills/ruby/) · [cpp](skills/cpp/) · [elixir](skills/elixir/) · [bash-scripting](skills/bash-scripting/) · [sql](skills/sql/) · [go](skills/go/)
+[typescript](skills/typescript/) · [python](skills/python/) · [java](skills/java/) · [csharp-dotnet](skills/csharp-dotnet/) · [php](skills/php/) · [ruby](skills/ruby/) · [cpp](skills/cpp/) · [elixir](skills/elixir/) · [bash-scripting](skills/bash-scripting/) · [sql](skills/sql/) · [go](skills/go/) · [write-swift](skills/write-swift/)
 
 ### 🏗️ Frameworks & app stacks
 
-[fastapi](skills/fastapi/) · [nextjs](skills/nextjs/) · [react](skills/react/) · [react-native](skills/react-native/) · [vue-nuxt](skills/vue-nuxt/) · [angular](skills/angular/) · [svelte](skills/svelte/) · [astro](skills/astro/) · [solid-js](skills/solid-js/) · [htmx](skills/htmx/) · [nodejs](skills/nodejs/) · [nestjs](skills/nestjs/) · [django](skills/django/) · [laravel](skills/laravel/) · [rails](skills/rails/) · [spring-boot](skills/spring-boot/) · [phoenix](skills/phoenix/) · [flutter](skills/flutter/) · [swift-ios](skills/swift-ios/) · [kotlin-android](skills/kotlin-android/) · [compose-multiplatform](skills/compose-multiplatform/) · [expo](skills/expo/) · [tauri](skills/tauri/) · [electron](skills/electron/) · [rust](skills/rust/) · [wordpress](skills/wordpress/) · [shopify](skills/shopify/) · [no-code-app](skills/no-code-app/) · [chrome-extension](skills/chrome-extension/) · [api-design](skills/api-design/)
+[fastapi](skills/fastapi/) · [nextjs](skills/nextjs/) · [react](skills/react/) · [react-native](skills/react-native/) · [vue-nuxt](skills/vue-nuxt/) · [angular](skills/angular/) · [svelte](skills/svelte/) · [astro](skills/astro/) · [solid-js](skills/solid-js/) · [htmx](skills/htmx/) · [nodejs](skills/nodejs/) · [nestjs](skills/nestjs/) · [django](skills/django/) · [laravel](skills/laravel/) · [rails](skills/rails/) · [spring-boot](skills/spring-boot/) · [phoenix](skills/phoenix/) · [flutter](skills/flutter/) · [swift-ios](skills/swift-ios/) · [kotlin-android](skills/kotlin-android/) · [compose-multiplatform](skills/compose-multiplatform/) · [expo](skills/expo/) · [tauri](skills/tauri/) · [electron](skills/electron/) · [rust](skills/rust/) · [wordpress](skills/wordpress/) · [shopify](skills/shopify/) · [no-code-app](skills/no-code-app/) · [chrome-extension](skills/chrome-extension/) · [api-design](skills/api-design/) · [pick-ui-library](skills/pick-ui-library/) · [ask-sonner](skills/ask-sonner/)
 
 ### 🎮 Game development
 
@@ -371,6 +371,10 @@ Three engines + engine-agnostic disciplines. Every engine skill pins the current
 ### 🔒 Ship & operate — quality & security
 
 [code-review](skills/code-review/) · [security-scan](skills/security-scan/) · [secure-coding](skills/secure-coding/) · [testing-py](skills/testing-py/) · [testing-web](skills/testing-web/) · [testing-go](skills/testing-go/) · [e2e-testing](skills/e2e-testing/) · [accessibility](skills/accessibility/) · [performance](skills/performance/) · [error-handling](skills/error-handling/) · [observability](skills/observability/)
+
+### 🌀 Motion & interface craft
+
+[design-eng](skills/design-eng/) · [animate](skills/animate/) · [animate-expo](skills/animate-expo/) · [review-animations](skills/review-animations/) · [improve-animations](skills/improve-animations/) · [find-animation-opportunities](skills/find-animation-opportunities/) · [animation-vocabulary](skills/animation-vocabulary/) · [apple-design](skills/apple-design/) · [prototype](skills/prototype/)
 
 ### 🎨 Design & content craft
 
@@ -454,6 +458,20 @@ the rubric to hold it to is `scripts/skill-rubric.md`.
 
 This is a personal catalog. Bug reports welcome via GitHub issues; PRs fixing
 detector patterns, provider endpoints, or typos are appreciated.
+
+## Third-party skills
+
+Most of this catalog is written here. These are not, and they keep their author's credit:
+
+| Skills | Source | License |
+| --- | --- | --- |
+| `design-eng` · `animate` · `animate-expo` · `review-animations` · `improve-animations` · `find-animation-opportunities` · `animation-vocabulary` · `apple-design` · `prototype` · `pick-ui-library` · `write-swift` · `ask-sonner` | [emilkowalski/skills](https://github.com/emilkowalski/skills) by Emil Kowalski, commit `d23d7f8` | MIT |
+| part of the AI-tell corpus in `design` | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | MIT |
+
+Adapted, not mirrored: each one carries rsc frontmatter, routing evals, hand-offs to its siblings
+and — where it declares a binding rule — a checker with a test. The craft bar in them is the
+original author's. If you want the source of the motion material rather than this adaptation, go to
+[animations.dev](https://animations.dev/).
 
 ## License
 

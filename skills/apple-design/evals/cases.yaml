@@ -1,0 +1,33 @@
+skill: apple-design
+
+should_trigger:
+  - prompt: "How do I make this drag-to-dismiss sheet feel like iOS — the way it carries momentum when you flick it?"
+    why: "Velocity handoff and momentum projection, the skill's core subject."
+  - prompt: "What spring damping and response should I use so this doesn't overshoot?"
+    why: "Apple's two-parameter spring model with concrete shipped values."
+  - prompt: "Add rubber-banding so dragging past the edge resists instead of stopping dead."
+    why: "Named technique with the exact function in the body."
+  - prompt: "Build a translucent toolbar with a blur that content scrolls underneath, like Apple does."
+    why: "Translucent materials, material weight and scroll edge effects."
+  - prompt: "This animation jumps when the user grabs it mid-flight. How do I make it interruptible?"
+    why: "Interruptibility and animating from the presentation value — called the single most important principle here."
+  - prompt: "Should letter-spacing change with font size? Our big headings look loose."
+    why: "Optical sizing and size-specific tracking, an explicit section."
+
+should_not_trigger:
+  - prompt: "Which cubic-bezier and duration should this dropdown use?"
+    route_to: "animate"
+    why: "Curve and duration tables belong to animate; this skill owns springs, gestures and materials."
+  - prompt: "Pick our brand palette and the landing page composition."
+    route_to: "design"
+    why: "Visual system and brand grounding, not interface physics."
+  - prompt: "Implement this settings screen in SwiftUI with NavigationStack."
+    route_to: "swift-ios"
+    why: "Native platform implementation; this skill is the web translation of Apple's design talks."
+  - prompt: "Fix the data race in this actor."
+    route_to: "write-swift"
+    why: "Swift language semantics, unrelated to interface feel."
+
+capability:
+  - scenario: "User asks for an iOS-style sheet on the web and the project has no motion library installed."
+    expect: "Names what genuinely needs a spring (the gesture release, the interruption) versus what CSS can do, projects the landing point from release velocity rather than snapping from the release position, hands the velocity to the spring, and ships prefers-reduced-motion plus prefers-reduced-transparency variants with it."

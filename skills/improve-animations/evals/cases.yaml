@@ -1,0 +1,31 @@
+skill: improve-animations
+
+should_trigger:
+  - prompt: "Audit all the animations in this codebase and give me a prioritized list of what to fix."
+    why: "Whole-codebase motion audit: the skill's core object."
+  - prompt: "Improve the animations across the whole app — where's the highest leverage?"
+    why: "'Improve the animations' with the app as the object; leverage ordering is this skill's output."
+  - prompt: "Give me a roadmap of animation fixes that a cheaper model can execute without my help."
+    why: "Self-contained plans for another agent are the explicit deliverable."
+  - prompt: "Make this app feel better overall — I don't want a review, I want a plan."
+    why: "Names the plan-not-verdict distinction that separates this from review-animations."
+  - prompt: "Survey our motion code and write up the findings by severity."
+    why: "Survey plus prioritized findings, read-only."
+
+should_not_trigger:
+  - prompt: "Review the motion in this one pull request before I merge it."
+    route_to: "review-animations"
+    why: "One diff, a verdict, not a codebase survey producing plans."
+  - prompt: "Just fix the animations for me, don't write me a plan."
+    route_to: "animate"
+    why: "This skill never modifies source; building the fix belongs to animate."
+  - prompt: "What could we animate here that we're not animating?"
+    route_to: "find-animation-opportunities"
+    why: "Absent motion, not existing motion."
+  - prompt: "Plan the technical approach for the new billing feature."
+    route_to: "plan"
+    why: "General SDD planning, nothing to do with motion."
+
+capability:
+  - scenario: "A monorepo with three apps, Framer Motion in one and plain CSS in the others, and an existing design doc that documents a deliberate slow drawer animation."
+    expect: "Recons stack and tokens first, respects the documented tradeoff instead of reporting it, writes plans that inline exact curves and file paths rather than referring to 'the easing discussed above', and puts them where the harness keeps plans when 02-DOCS exists. Never edits source."

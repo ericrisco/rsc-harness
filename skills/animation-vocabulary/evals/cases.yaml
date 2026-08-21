@@ -1,0 +1,31 @@
+skill: animation-vocabulary
+
+should_trigger:
+  - prompt: "What's it called when a popover seems to grow out of the button you clicked instead of from its middle?"
+    why: "A naming question answered by a specific glossary term (origin-aware animation)."
+  - prompt: "What's the name for that iOS scroll that resists and snaps back when you pull too far?"
+    why: "Rubber-banding; a feel-based description mapped to the exact term."
+  - prompt: "What do you call it when items appear one after another with a small delay?"
+    why: "Stagger; the canonical reverse-lookup case."
+  - prompt: "I want to describe an effect to a designer but I don't know the right word for it."
+    why: "The skill's stated purpose: give the user the vocabulary to prompt with."
+  - prompt: "Is the thing where one image turns into another called a morph or a crossfade?"
+    why: "Disambiguation between two close terms, which the skill handles explicitly."
+
+should_not_trigger:
+  - prompt: "Build me that origin-aware popover animation."
+    route_to: "animate"
+    why: "Naming is done; this is implementation."
+  - prompt: "Explain the physics of springs — damping, response, velocity handoff."
+    route_to: "apple-design"
+    why: "The mechanism and its values, not the name of an effect."
+  - prompt: "Review whether the stagger delay in this list is right."
+    route_to: "review-animations"
+    why: "A judgement on existing motion, not a naming question."
+  - prompt: "Translate our UI copy into Catalan."
+    route_to: "translation-l10n"
+    why: "Also a words-and-terms request, but a different domain entirely."
+
+capability:
+  - scenario: "User describes an effect that is not in the glossary: 'the thing where the whole page melts into liquid when you click'."
+    expect: "Says plainly that no glossary term matches rather than inventing one, then describes the effect using the glossary's own vocabulary (for example a morph plus a mask reveal), and stays inside the curated list."

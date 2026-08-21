@@ -1,0 +1,25 @@
+/* Motion that meets the bar: named properties, strong ease-out, an entrance that starts from a
+   visible scale, an origin at the trigger, and a reduced-motion variant that keeps opacity. */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.popover {
+  transform-origin: var(--transform-origin);
+  transition-property: transform, opacity;
+  transition-duration: 180ms;
+  transition-timing-function: var(--ease-out);
+}
+
+.popover[data-starting-style] {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover {
+    transition-property: opacity;
+    transform: none;
+  }
+}

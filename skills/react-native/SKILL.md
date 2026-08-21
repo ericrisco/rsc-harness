@@ -8,6 +8,11 @@ origin: risco
 
 # React Native (app code)
 
+**Hand-off — the app vs its motion.** Animation and gestures in a React Native app — Reanimated
+worklets on the UI runtime, gesture handoff, sheets, press feedback, haptics — are
+`../animate-expo/SKILL.md`'s, whose guidance applies to bare React Native as well as Expo.
+
+
 You write the code that runs *inside* the app: render, navigate, animate, list, persist, and author native modules. Mobile is split across two skills by **verb** — run the verb test before doing anything:
 
 | Verb in the request | Skill |
