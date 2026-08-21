@@ -1,0 +1,8 @@
+.dropdown {
+  transition: all 300ms ease-in;
+  transform-origin: center;
+}
+
+.dropdown[data-closed] {
+  transform: scale(0);
+}

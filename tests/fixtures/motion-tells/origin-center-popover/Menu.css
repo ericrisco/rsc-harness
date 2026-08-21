@@ -1,0 +1,5 @@
+.menu {
+  transform-origin: center;
+  transition-property: transform, opacity;
+  transition-duration: 180ms;
+}

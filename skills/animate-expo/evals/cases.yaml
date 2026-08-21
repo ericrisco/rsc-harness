@@ -1,0 +1,36 @@
+skill: animate-expo
+
+should_trigger:
+  - prompt: "Animate this bottom sheet in our Expo app so the drag feels native on Android."
+    why: "Expo gesture-driven motion; the skill's core use case."
+  - prompt: "Add press feedback and haptics to the buttons in our React Native app."
+    why: "Press feedback plus expo-haptics, both named in the description."
+  - prompt: "This animation stutters on a real device but looks fine in the simulator."
+    why: "The named symptom of motion crossing to the React Native runtime instead of staying on the UI runtime."
+  - prompt: "Set up a swipe-to-dismiss gesture with Reanimated and Gesture Handler."
+    why: "Reanimated and Gesture Handler are this skill's tools by name."
+  - prompt: "Make the screen transitions in our Expo Router app feel smoother."
+    why: "Screen transitions with Expo Router, explicitly in scope."
+  - prompt: "Our list scroll drops frames on a three-year-old Android phone."
+    why: "The mobile performance failure mode the skill exists to prevent (main-thread animation)."
+
+should_not_trigger:
+  - prompt: "Animate this dropdown on our marketing site so it opens with the right easing."
+    route_to: "animate"
+    why: "Web motion: hover exists, CSS is the default engine."
+  - prompt: "Set up EAS Build and submit the app to the App Store with an OTA update channel."
+    route_to: "expo"
+    why: "Platform and shipping concerns, not motion."
+  - prompt: "Restructure the navigation and offline state in our React Native screens."
+    route_to: "react-native"
+    why: "App code and architecture, not animation."
+  - prompt: "Explain how momentum projection and velocity handoff work as a discipline."
+    route_to: "apple-design"
+    why: "The physics as a subject belongs to apple-design; this skill applies it in Expo."
+  - prompt: "Write the Swift concurrency layer for the native module this app calls."
+    route_to: "write-swift"
+    why: "Swift language work, not React Native motion."
+
+capability:
+  - scenario: "User asks to animate a tab bar that users tap dozens of times per session, in an Expo app."
+    expect: "Applies the frequency gate before choosing tools: a tens-of-times-a-day action gets near-imperceptible motion or none, and the answer says so. If it does animate, the work stays on the UI runtime (worklets, not setState per frame) and ships reduced-motion handling with it."

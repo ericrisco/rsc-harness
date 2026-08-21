@@ -1,13 +1,39 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
+// What counts as a frontend, and which stack skill owns it. Before this table, "frontend" meant
+// React or Next and nothing else, so a Vue/Svelte/Astro/Angular/Solid repo got no design skill at
+// all — even though the catalog ships a skill for each of them. Every entry here also earns the
+// `design-eng` umbrella, which is the one skill that routes a UI request to the sibling that owns
+// it. Kept as a table, not a chain of `if`s, so adding a framework is one line and the test
+// iterates it. Spec: 02-DOCS/wiki/sdd/specs/motion-craft-skills.md
+const FRONTEND_DEPS = [
+  ['next', 'nextjs'],
+  ['react', 'nextjs'],
+  ['vue', 'vue-nuxt'],
+  ['nuxt', 'vue-nuxt'],
+  ['svelte', 'svelte'],
+  ['@sveltejs/kit', 'svelte'],
+  ['astro', 'astro'],
+  ['@angular/core', 'angular'],
+  ['solid-js', 'solid-js'],
+];
+
 export function detectRepo(dir = process.cwd()) {
   const found = new Set();
   const has = (f) => existsSync(join(dir, f));
   const pkg = has('package.json') ? safeJson(join(dir, 'package.json')) : null;
   if (pkg) {
     const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-    if (deps.next || deps.react) { found.add('nextjs'); found.add('design'); }
+    for (const [dep, stack] of FRONTEND_DEPS) {
+      if (!deps[dep]) continue;
+      found.add(stack);
+      found.add('design');
+      // The umbrella, not a motion skill: it decides which of the craft siblings answers. A repo
+      // that never animates anything still benefits from the routing, and one that does gets sent
+      // to the right place instead of having `design` guess.
+      found.add('design-eng');
+    }
   }
   if (has('pubspec.yaml')) { found.add('flutter'); found.add('design'); }
   if (has('requirements.txt') || has('pyproject.toml')) found.add('fastapi');

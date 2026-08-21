@@ -9,6 +9,13 @@ origin: risco
 
 # swift-ios
 
+**Hand-off — the language vs the platform.** This skill owns the **platform**: SwiftUI/UIKit views,
+app lifecycle, Xcode, iOS APIs, App Store shipping. Language-level Swift — Swift 6 data-race safety
+and approachable concurrency, actors and task groups, `some` vs `any`, ARC and performance, Swift
+Testing, macros — is `../write-swift/SKILL.md`'s. A concurrency error, a hang, a data race or a
+retain cycle goes there, not here. Interface feel, springs and materials: `../apple-design/SKILL.md`.
+
+
 Native Apple-platform apps: the code is `.swift`, the UI is SwiftUI, and the compiler enforces actor isolation. If the answer is a `@MainActor`, `@Observable`, `async let`, `#expect`, `NavigationStack`, or `@Model`, you are in the right place.
 
 ## First move: match the project before you write a line

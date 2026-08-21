@@ -8,6 +8,14 @@ origin: risco
 
 # Design — Product UI, Landing Pages & Conversion Copy
 
+**Hand-off — the visual system vs the craft of motion.** This skill owns the visual system and page
+composition, and sets motion *intent + budget* only. The **implementation** of an animation is
+`../animate/SKILL.md`'s; reviewing motion is `../review-animations/SKILL.md`'s; gesture physics and
+translucent materials are `../apple-design/SKILL.md`'s. When a frontend request could belong to
+several of those, `../design-eng/SKILL.md` is the umbrella that routes it. The motion reference in
+this skill defers its mechanics to them rather than restating them.
+
+
 *Research the best current work, then ship a premium, accessible, fast, high-converting interface.*
 
 > **SDD gate.** If this fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, hand off to `../specify/SKILL.md` first — it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build straight from here only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.

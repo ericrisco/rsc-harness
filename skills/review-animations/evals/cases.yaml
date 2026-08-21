@@ -1,0 +1,34 @@
+skill: review-animations
+
+should_trigger:
+  - prompt: "Review the animations in this pull request and tell me what's wrong with them."
+    why: "Reviewing motion in a diff: the skill's core object."
+  - prompt: "Is the easing and duration on this modal transition right?"
+    why: "A judgement call against the easing and duration standards."
+  - prompt: "Check this component's motion against a strict craft bar before I merge it."
+    why: "The bar and the merge gate are what this skill provides."
+  - prompt: "Critique the transitions I just wrote — be harsh."
+    why: "Default-to-flagging posture; approval is earned."
+  - prompt: "Did I get the transform-origin and the reduced-motion handling right on this popover?"
+    why: "Two of the ten non-negotiable standards, named directly."
+
+should_not_trigger:
+  - prompt: "Audit the animations across the whole app and give me a prioritized roadmap of fixes."
+    route_to: "improve-animations"
+    why: "Whole-codebase audit producing plans, not a verdict on one diff."
+  - prompt: "Animate this dropdown for me with the right curve and duration."
+    route_to: "animate"
+    why: "Building the animation, not reviewing one."
+  - prompt: "Review this pull request for SQL injection and missing authorization checks."
+    route_to: "code-review"
+    why: "Non-motion code review; this skill declines and points there."
+  - prompt: "What could be animated in this settings page that isn't animated today?"
+    route_to: "find-animation-opportunities"
+    why: "Looking for absent motion, not judging present motion."
+  - prompt: "Pick a library for the command palette instead of the div-based one we have."
+    route_to: "pick-ui-library"
+    why: "A dependency choice, not a motion review."
+
+capability:
+  - scenario: "A diff adds `transition: all 400ms ease-in` and a `transform: scale(0)` entrance to a popover with `transform-origin: center`, and no reduced-motion handling anywhere in the project."
+    expect: "Runs scripts/verify.sh first so the countable findings come from the checker (transition-all, ease-in-ui, scale-zero-entrance, origin-center-popover, reduced-motion-missing) and spends judgement on frequency, purpose and cohesion. Blocks rather than approves, and every finding carries the exact replacement value."

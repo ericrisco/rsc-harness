@@ -193,9 +193,10 @@ The canonical Tailwind v4 `@theme` block — colors, type, spacing, radius, shad
   /* radius + shadow */
   --radius-card: 0.875rem;
   --shadow-card: 0 1px 2px oklch(0 0 0 / 0.06), 0 8px 24px oklch(0 0 0 / 0.08);
-  /* easing */
-  --ease-out:   cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-sharp: cubic-bezier(0.4, 0, 0.2, 1);
+  /* easing — same values as references/motion-and-interaction.md; two definitions that drift
+     is worse than one, so change them together */
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 ```
 

@@ -16,11 +16,22 @@ Define duration and easing as tokens; never hand-tune per element.
   --dur-fast:   180ms;   /* hover, small state changes */
   --dur-normal: 280ms;   /* entrances, panel open */
   --dur-slow:   600ms;   /* large hero / staged sequences */
-  --ease-out:   cubic-bezier(0.22, 1, 0.36, 1);   /* standard decelerate */
-  --ease-sharp: cubic-bezier(0.4, 0, 0.2, 1);     /* enter/exit symmetric */
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);    /* decelerate; the default for UI */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);   /* on-screen movement, A to B */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);    /* iOS-like drawer / sheet (Ionic) */
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* playful overshoot, sparingly */
 }
 ```
+
+**Never `ease-in` on UI.** It starts slow, delaying the exact moment the user is watching most, so
+the interface feels sluggish — `ease-out` at 200ms *feels* faster than `ease-in` at 200ms. And the
+built-in CSS easings are too weak to read as intentional; the curves above are the ones to reach for.
+Need one that is not here? Take it from [easing.dev](https://easing.dev/), do not hand-roll it.
+
+The choice, in decision order: entering or exiting → `ease-out`; moving on screen → `ease-in-out`;
+hover or color → `ease`; constant motion (marquee, progress) → `linear`; unsure → `ease-out`.
+`../../animate/SKILL.md` owns the full build sequence and the per-element duration table, and
+`../../review-animations/scripts/verify.sh` flags an `ease-in` that slips through.
 
 - **Enter vs exit asymmetry:** entrances are slower and softer (`--dur-normal`, `--ease-out`); exits are quicker and quieter (~150ms) so dismissals feel responsive.
 - **Press feedback:** `scale(0.97)` on `:active` gives a tactile button without distracting movement.
@@ -30,7 +41,7 @@ Define duration and easing as tokens; never hand-tune per element.
 .button {
   transition-property: transform, background-color, box-shadow;
   transition-duration: 150ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-timing-function: var(--ease-out);
 }
 .button:active { transform: scale(0.97); }
 ```
