@@ -146,9 +146,20 @@ function safeRelative(cwd, absPath) {
   return rel.split(sep).join('/');
 }
 
+// A manifest path is split on BOTH separators, because the input is file content — readManifest()
+// reads it off disk — and not every manifest was written by safeRelative() on this platform. A path
+// stored with Windows separators (`..\..\somewhere`) has no '/' to split on, so the old check saw a
+// single segment, found no '..', and handed the raw string to join() — which honours backslashes on
+// Windows. The guard only guarded on POSIX.
+//
+// Splitting into real segments does both jobs at once: `..` becomes visible to the check, and the
+// path is rebuilt by join() rather than passed through, so the separator the manifest happened to
+// use stops mattering. Found while fixing the Windows hook-duplication bug: same family.
+const pathSegments = (value) => value.split(/[/\\]+/).filter(Boolean);
+
 function safeJoin(cwd, relPath) {
-  if (!relPath || isAbsolute(relPath) || relPath.split('/').includes('..')) {
+  if (!relPath || isAbsolute(relPath) || pathSegments(relPath).includes('..')) {
     throw new Error(`path is outside project root: ${relPath}`);
   }
-  return join(cwd, ...relPath.split('/'));
+  return join(cwd, ...pathSegments(relPath));
 }
