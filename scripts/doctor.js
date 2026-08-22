@@ -93,30 +93,140 @@ function alwaysOnBytesFor(scopeRoot, settingsRaw) {
   return bytesOf(join(scopeRoot, '.rsc', 'skills', 'suggest', 'SKILL.md'));
 }
 
+// Every hook rsc wires, as a table rather than a chain of `if`s: adding one is a row, and
+// tests/doctor-hook-counts.test.js iterates it, so a hook added without a row fails the suite instead
+// of shipping uncounted. `needle` is the SCRIPT PATH, never the bare `.rsc` — a user's own hook that
+// merely mentions the directory must not be counted as ours.
+//
+// `injects` marks the two hooks that put text into the conversation. It matters because a duplicated
+// guard costs processes, not bytes, and conflating the two is how this report lied in the first place.
+export const RSC_HOOKS = [
+  { id: 'session-start', label: 'session-start', needle: '.rsc/session-start.', injects: 'sessionStart' },
+  { id: 'userprompt-gate', label: 'userprompt-gate', needle: '.rsc/userprompt-gate.', injects: 'perTurn' },
+  { id: 'worklog-checkpoint', label: 'worklog-checkpoint', needle: '.rsc/worklog-checkpoint.', injects: null },
+  { id: 'ship-guard', label: 'ship-guard', needle: '.rsc/ship-guard.', injects: null },
+  { id: 'danger-guard', label: 'danger-guard', needle: '.rsc/danger-guard.', injects: null },
+  { id: 'gitmoji-guard', label: 'gitmoji-guard', needle: '.rsc/gitmoji-guard.', injects: null },
+  // The bash-era form, still retired by unwireHook. If uninstall knows how to remove it, the report
+  // has to know how to count it.
+  { id: 'legacy-cat-form', label: 'legacy suggest hook', needle: 'skills/rsc/suggest', injects: 'sessionStart' },
+];
+
+// Separators come from whatever platform installed: JSON escapes a Windows backslash as a pair, so
+// the haystack is normalized before comparing. Same lesson as targets/claude.js, same one-liner.
+const entryWiring = (entry) => JSON.stringify(entry).replace(/\\\\/g, '/');
+
+/**
+ * How many times each rsc hook is wired, per event.
+ * @returns {{perEvent: Object<string, Object<string, number>>, indeterminate: string[]}}
+ */
+export function countHookEntries(settings) {
+  const perEvent = {};
+  const indeterminate = [];
+  const hooks = settings && typeof settings === 'object' ? settings.hooks : null;
+  if (!hooks || typeof hooks !== 'object') return { perEvent, indeterminate };
+
+  for (const [event, entries] of Object.entries(hooks)) {
+    // A hand-edited file can put anything here. An event we cannot read is REPORTED, never counted as
+    // zero — a silent zero is exactly the "all clear" this whole delivery exists to stop.
+    if (!Array.isArray(entries)) { indeterminate.push(event); continue; }
+    for (const entry of entries) {
+      const wiring = entryWiring(entry);
+      for (const hook of RSC_HOOKS) {
+        if (!wiring.includes(hook.needle)) continue;
+        perEvent[event] ||= {};
+        perEvent[event][hook.id] = (perEvent[event][hook.id] || 0) + 1;
+      }
+    }
+  }
+  return { perEvent, indeterminate };
+}
+
+// The most copies any one hook has, per injection channel — that is the multiplier that channel pays.
+function maxCopies(perEvent, channel) {
+  let most = 1;
+  for (const byHook of Object.values(perEvent)) {
+    for (const [id, n] of Object.entries(byHook)) {
+      const hook = RSC_HOOKS.find((h) => h.id === id);
+      if (hook && hook.injects === channel && n > most) most = n;
+    }
+  }
+  return most;
+}
+
 function readScope(scopeRoot, label) {
   const settingsPath = join(scopeRoot, '.claude', 'settings.json');
   if (!existsSync(settingsPath)) {
     return { label, root: scopeRoot, wired: false, status: 'ok', alwaysOnBytes: 0, perTurnBytes: 0, version: null };
   }
   let raw;
+  let settings;
   try {
     raw = readFileSync(settingsPath, 'utf8');
-    JSON.parse(raw); // a scope we cannot parse is reported, not guessed at
+    settings = JSON.parse(raw); // a scope we cannot parse is reported, not guessed at
   } catch {
     return { label, root: scopeRoot, wired: true, status: 'unknown', alwaysOnBytes: 0, perTurnBytes: 0, version: null };
   }
   const wired = raw.includes('.rsc/') || raw.includes('.rsc\\\\');
   let version = null;
   try { version = readFileSync(join(scopeRoot, '.rsc', '.version'), 'utf8').trim() || null; } catch { /* unknown */ }
+
+  const { perEvent, indeterminate } = countHookEntries(settings);
+  // The context regime is a STATIC fact, not a caveat: the repeated body is suppressed because the
+  // hook calls the single-shot guard, and that guard is a file on disk. Present → the body lands once
+  // however many entries fire. Absent (an install older than the guard) → every entry injects.
+  //
+  // Measured during clarify: four entries sharing a session_id cost ~1.27× context, not 4×. A figure
+  // that multiplied unconditionally would be the same lie that started this spec, aimed the other way.
+  const dedupeGuard = existsSync(join(scopeRoot, '.rsc', 'hook-once.mjs'));
+  const bodyCopies = dedupeGuard ? 1 : maxCopies(perEvent, 'sessionStart');
+  const gateCopies = dedupeGuard ? 1 : maxCopies(perEvent, 'perTurn');
+
   return {
     label,
     root: scopeRoot,
     wired,
     status: 'ok',
     version,
-    alwaysOnBytes: wired ? alwaysOnBytesFor(scopeRoot, raw) : 0,
-    perTurnBytes: wired && raw.includes('userprompt-gate') ? Buffer.byteLength(SDD_GATE_TEXT) : 0,
+    hookCounts: perEvent,
+    hookCountsUnknown: indeterminate.length ? indeterminate : null,
+    dedupeGuard,
+    alwaysOnBytes: wired ? alwaysOnBytesFor(scopeRoot, raw) * bodyCopies : 0,
+    perTurnBytes: wired && raw.includes('userprompt-gate') ? Buffer.byteLength(SDD_GATE_TEXT) * gateCopies : 0,
   };
+}
+
+// One finding per scope that has any hook wired more than once. Both costs are named, because they
+// are different quantities: processes are 4× unconditionally, bytes only when the guard is missing.
+function duplicateEntryFindings(scopes) {
+  const out = [];
+  for (const scope of scopes) {
+    if (scope.status !== 'ok' || !scope.hookCounts) continue;
+    const repeated = [];
+    for (const [event, byHook] of Object.entries(scope.hookCounts)) {
+      for (const [id, n] of Object.entries(byHook)) {
+        if (n > 1) repeated.push({ event, id, n, label: RSC_HOOKS.find((h) => h.id === id)?.label || id });
+      }
+    }
+    if (!repeated.length) continue;
+    const worst = Math.max(...repeated.map((r) => r.n));
+    const list = repeated.map((r) => `${r.event}/${r.label} ×${r.n}`).join(', ');
+    const contextNote = scope.dedupeGuard
+      ? 'Context cost stays near 1× — the single-shot guard suppresses the repeated always-on body '
+        + '(the residue is the banners printed outside it).'
+      : `Context cost is the full ${worst}× — this scope has no single-shot guard materialized, so every `
+        + 'entry injects the always-on body again.';
+    out.push({
+      id: 'duplicate-hook-entries',
+      severity: 'high',
+      summary: `The ${scope.label} scope wires the same hook more than once: ${list}. `
+        + `Execution cost is ${worst}× processes per event — every session start, every turn, and every `
+        + `Bash command spawns that many. ${contextNote}`,
+      action: 'Re-run an install or sync with a current rsc (`npx @ericrisco/rsc@latest`); one pass '
+        + 'collapses the extra copies. No need to hand-edit settings.json.',
+    });
+  }
+  return out;
 }
 
 // Frontmatter `description` of an installed skill — the part of a skill that is ALWAYS in
@@ -165,7 +275,18 @@ export function contextBudget({ target, home = homedir(), cwd = process.cwd() } 
         + 'root, or update both to a version that de-duplicates at runtime.',
     });
   }
+  findings.push(...duplicateEntryFindings(scopes));
   for (const s of scopes) {
+    if (s.hookCountsUnknown) {
+      findings.push({
+        id: 'indeterminate-hook-event',
+        severity: 'low',
+        summary: `In the ${s.label} scope, ${s.hookCountsUnknown.join(', ')} is not a list of hook entries, `
+          + 'so its copies cannot be counted. A count this report cannot make is said out loud, never '
+          + 'reported as zero.',
+        action: 'Fix that entry in settings.json (or remove it), then re-run `rsc doctor`.',
+      });
+    }
     if (s.status === 'unknown') {
       findings.push({
         id: 'unreadable-scope',
