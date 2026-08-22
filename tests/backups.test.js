@@ -120,3 +120,51 @@ test('restoreBackup rejects manifest paths outside the project root', () => {
 
   assert.throws(() => restoreBackup({ cwd, id: 'bad-snapshot', dryRun: true }), /outside project root/);
 });
+
+// --- path-traversal guard: both separators ---------------------------------
+// safeJoin's traversal check split the manifest path on '/' only, then handed the raw string to
+// join(). A manifest entry written with Windows separators — `..\..\somewhere` — has no '/' to split
+// on, so the check saw a single segment, found no '..', and passed it straight to join(), which DOES
+// honour backslashes on Windows. A guard that only guards on POSIX is the P2 pattern pointed at
+// restore, and the input is file content (readManifest), not in-process data.
+//
+// Found while fixing the Windows hook-duplication bug: same family, different subsystem.
+function manifestWith(cwd, entryPath) {
+  const snap = createBackup({
+    cwd, operation: 'install', target: 'claude',
+    paths: [join(cwd, 'AGENTS.md')], cliVersion: '0.0.0-test',
+  });
+  const file = join(backupsDir(cwd), snap.id, 'manifest.json');
+  const manifest = JSON.parse(readFileSync(file, 'utf8'));
+  manifest.entries = [{ path: entryPath, existed: false, kind: 'missing' }];
+  writeFileSync(file, JSON.stringify(manifest, null, 2) + '\n');
+  return snap.id;
+}
+
+for (const evil of ['../../escaped.txt', '..\\..\\escaped.txt', 'a/../../escaped.txt', 'a\\..\\..\\escaped.txt']) {
+  test(`restoreBackup refuses a manifest path that climbs out: ${JSON.stringify(evil)}`, () => {
+    const cwd = tmp();
+    writeFileSync(join(cwd, 'AGENTS.md'), 'x\n');
+    const id = manifestWith(cwd, evil);
+    assert.throws(
+      () => restoreBackup({ cwd, id, dryRun: true }),
+      /outside project root/,
+      `a manifest path with '..' was accepted: ${evil}`,
+    );
+  });
+}
+
+test('a legitimate nested manifest path still restores, on either separator', () => {
+  // The other half: a guard that rejects everything is as useless as one that rejects nothing.
+  for (const good of ['.claude/settings.json', '.claude\\settings.json']) {
+    const cwd = tmp();
+    writeFileSync(join(cwd, 'AGENTS.md'), 'x\n');
+    const id = manifestWith(cwd, good);
+    const r = restoreBackup({ cwd, id, dryRun: true });
+    assert.equal(r.changed.length, 1, `rejected a legitimate path: ${good}`);
+    assert.ok(
+      r.changed[0].endsWith(join('.claude', 'settings.json')),
+      `resolved to the wrong place: ${r.changed[0]}`,
+    );
+  }
+});

@@ -14,6 +14,31 @@ export function writeSkill(id, fromDir, toPath) {
   return linkOrCopy(fromDir, toPath);
 }
 
+// A hook entry, stringified with its path separators normalized to `/`.
+//
+// This exists because of a Windows bug that cost real users 4× the context budget. `join()` yields
+// `.rsc\session-start.mjs` on Windows, `JSON.stringify` escapes that to `.rsc\\session-start.mjs`,
+// and all seven dedup filters below searched for a forward-slash needle (`.rsc/session-start.`).
+// The needle never matched, so every `install` / `add` / `sync` APPENDED a hook instead of replacing
+// it: a real Windows box reported every hook present four times, which means the `suggest` always-on
+// body was injected 4× per session start and all six guards ran 4× per command.
+//
+// Worse, and unreported: `unwireHook` uses the same needles, so on Windows `uninstall` and `purge`
+// removed NONE of the hooks they claim to remove — a cleanup that silently cleans nothing.
+//
+// ONE replacement, and only the JSON-escaped form. `JSON.stringify` escapes every backslash as
+// `\\`, so a separator always arrives doubled and a LONE backslash in the JSON text is never a
+// separator — it is some other escape (`\"`, `\n`, `\uXXXX`). Collapsing those too would mangle
+// them for no gain, which is why the second `.replace(/\\/g, '/')` this started with is gone: a
+// mutation pass showed nothing depended on it.
+//
+// Normalizing the HAYSTACK (never the needle) keeps every call site readable as a plain POSIX path,
+// and keeps a user's own `C:\...\my-own-hook.mjs` from ever looking like an rsc hook.
+// `scripts/doctor.js` already handled both forms; this is that knowledge, shared.
+export function hookWiringOf(entry) {
+  return JSON.stringify(entry).replace(/\\\\/g, '/');
+}
+
 // Inverse of wireHook: drop every rsc-wired hook entry (any command pointing at a
 // .rsc/ script — session-start, worklog-checkpoint, ship-guard, danger-guard, … —
 // plus the legacy cat-form) from settings.json, across all events. User hooks and
@@ -27,7 +52,7 @@ export function unwireHook(paths) {
   if (!settings.hooks) return [];
   for (const event of Object.keys(settings.hooks)) {
     settings.hooks[event] = (settings.hooks[event] || []).filter((e) => {
-      const s = JSON.stringify(e);
+      const s = hookWiringOf(e);
       return !s.includes('.rsc/') && !s.includes('skills/rsc/suggest');
     });
     if (settings.hooks[event].length === 0) delete settings.hooks[event];
@@ -61,7 +86,7 @@ export function wireHook(paths) {
   settings.hooks ||= {};
   settings.hooks.SessionStart ||= [];
   settings.hooks.SessionStart = settings.hooks.SessionStart.filter((e) => {
-    const s = JSON.stringify(e);
+    const s = hookWiringOf(e);
     // drop legacy cat-form and any prior session-start script (.sh from the bash era, or .mjs)
     return !s.includes('skills/rsc/suggest') && !s.includes('.rsc/session-start.');
   });
@@ -78,7 +103,7 @@ export function wireHook(paths) {
   for (const event of ['PreCompact', 'SessionEnd']) {
     settings.hooks[event] ||= [];
     settings.hooks[event] = settings.hooks[event].filter(
-      (e) => !JSON.stringify(e).includes('.rsc/worklog-checkpoint.'),
+      (e) => !hookWiringOf(e).includes('.rsc/worklog-checkpoint.'),
     );
     settings.hooks[event].push({ hooks: [{ type: 'command', command: wlCmd }] });
   }
@@ -96,7 +121,7 @@ export function wireHook(paths) {
   const sgCmd = `node "${sgDest}" "${paths.projectRoot}"`;
   settings.hooks.PreToolUse ||= [];
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
-    (e) => !JSON.stringify(e).includes('.rsc/ship-guard.'),
+    (e) => !hookWiringOf(e).includes('.rsc/ship-guard.'),
   );
   settings.hooks.PreToolUse.push({ matcher: 'Bash', hooks: [{ type: 'command', command: sgCmd }] });
 
@@ -109,7 +134,7 @@ export function wireHook(paths) {
   copyFileSync(join(HERE, 'danger-guard.mjs'), dgDest);
   const dgCmd = `node "${dgDest}" "${paths.projectRoot}"`;
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
-    (e) => !JSON.stringify(e).includes('.rsc/danger-guard.'),
+    (e) => !hookWiringOf(e).includes('.rsc/danger-guard.'),
   );
   settings.hooks.PreToolUse.push({ matcher: 'Bash', hooks: [{ type: 'command', command: dgCmd }] });
 
@@ -124,7 +149,7 @@ export function wireHook(paths) {
   copyFileSync(join(HERE, 'gitmoji-guard.mjs'), gmDest);
   const gmCmd = `node "${gmDest}" "${paths.projectRoot}"`;
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
-    (e) => !JSON.stringify(e).includes('.rsc/gitmoji-guard.'),
+    (e) => !hookWiringOf(e).includes('.rsc/gitmoji-guard.'),
   );
   settings.hooks.PreToolUse.push({ matcher: 'Bash', hooks: [{ type: 'command', command: gmCmd }] });
 
@@ -141,7 +166,7 @@ export function wireHook(paths) {
   const fgCmd = `node "${fgDest}" "${paths.projectRoot}"`;
   settings.hooks.UserPromptSubmit ||= [];
   settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit.filter(
-    (e) => !JSON.stringify(e).includes('.rsc/userprompt-gate.'),
+    (e) => !hookWiringOf(e).includes('.rsc/userprompt-gate.'),
   );
   settings.hooks.UserPromptSubmit.push({ hooks: [{ type: 'command', command: fgCmd }] });
 
