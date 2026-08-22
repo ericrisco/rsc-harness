@@ -144,6 +144,11 @@ function printContextBudget(b) {
   }
   for (const s of b.scopes.filter((x) => x.wired)) {
     say(`  Scope ${s.label.padEnd(8)}: ${s.root}${s.version ? ` (${s.version})` : ''}${s.status === 'unknown' ? ' — UNREADABLE' : ''}`);
+    // Copies are printed only when there is something to see. A line saying "×1" on every healthy
+    // box is noise, and noise is what gets a report skimmed instead of read.
+    const repeated = Object.entries(s.hookCounts || {})
+      .flatMap(([event, byHook]) => Object.entries(byHook).filter(([, n]) => n > 1).map(([id, n]) => `${event}/${id} ×${n}`));
+    if (repeated.length) say(`  Hook copies     : ${repeated.join(' · ')}`);
   }
   for (const f of b.findings) {
     say(`\n  [${f.severity.toUpperCase()}] ${f.summary}`);
