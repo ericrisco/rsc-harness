@@ -54,11 +54,62 @@ if (typeof cmd !== 'string' || !cmd) allow();
 // High-signal, low-false-positive. Each rule: what it catches and the plain why.
 const noWhere = (verbRe) => verbRe.test(cmd) && !/\bwhere\b/i.test(cmd);
 
+// A flag is a whitespace-separated token that BEGINS with a dash. That sounds obvious, and the
+// first version of this rule got it wrong in a way that cost real trust: it tested
+// /-[a-z]*r[a-z]*\b/ and /-[a-z]*f[a-z]*\b/ against the ENTIRE command string, so any hyphenated
+// path segment carrying an "r" and an "f" read as the flags -r and -f. The segment `-fixture` alone
+// satisfies both (f-i-x-t-u-r-e), so `rm skills/zz-case-fixture/SKILL.md` and `rm my-draft.md` were
+// DENIED with the reason "rm with -r and -f" — a claim that was false about the command in front of
+// it. It also denied commands that merely QUOTED a dangerous one, which is the same mistake the
+// gitmoji guard had to fix: blocking the conversation about a command, not the command.
+//
+// That is worse than a nuisance. The deny message ends by telling the user how to switch this guard
+// OFF, so crying wolf on a single-file delete is an active instruction to disable the thing that
+// stops a real recursive wipe. Friction has to stay proportional to risk or the protection gets
+// turned off (P7), and a denial's stated reason has to be true (P6).
+//
+// Flags are also scoped to the segment that actually runs rm: `rm notes.md && ls -lrtF` carries an
+// r and an F, but they belong to ls.
+function rmFlagsIn(segment) {
+  return segment.split(/\s+/).filter((t) => /^--?[A-Za-z]/.test(t));
+}
+
+// Wrappers that stand in front of the real command without being it. A shell with -c is included
+// deliberately: `bash -c "rm -rf /"` DOES run the delete, and dropping it would have been the hole
+// this rewrite opened while fixing the over-fire.
+const WRAPPERS = /^(sudo|doas|env|command|time|nohup|xargs)$/i;
+const SHELLS = /^(bash|sh|zsh|dash|ksh)$/i;
+
+// `rm` has to be the command being EXECUTED, not a word inside someone else's argument. Without
+// this, `echo "never run rm -rf /"` was denied — the guard blocking the conversation about a
+// command instead of the command, exactly the defect the gitmoji guard had to fix with its own
+// RUNS_GIT check. A guard that argues with you about a sentence is a guard you turn off.
+function runsRm(segment) {
+  const tokens = segment.trim().split(/\s+/).filter(Boolean);
+  let i = 0;
+  while (i < tokens.length) {
+    const bare = tokens[i].replace(/^['"]/, '');
+    if (WRAPPERS.test(bare)) { i += 1; continue; }
+    if (SHELLS.test(bare)) {
+      i += 1;
+      while (i < tokens.length && /^-/.test(tokens[i])) i += 1; // skip -c and friends
+      continue;
+    }
+    return bare === 'rm' || bare.endsWith('/rm');
+  }
+  return false;
+}
+
 function isRmRecursiveForce() {
   if (!/\brm\b/.test(cmd)) return false;
-  const hasR = /(-[a-z]*r[a-z]*|--recursive)\b/i.test(cmd);
-  const hasF = /(-[a-z]*f[a-z]*|--force)\b/i.test(cmd);
-  return hasR && hasF; // -rf / -fr / -r -f / --recursive --force
+  for (const segment of cmd.split(/\|\||&&|[|;&]/)) {
+    if (!runsRm(segment)) continue;
+    const flags = rmFlagsIn(segment);
+    const hasR = flags.some((f) => /^--recursive$/i.test(f) || /^-[A-Za-z]*r/i.test(f));
+    const hasF = flags.some((f) => /^--force$/i.test(f) || /^-[A-Za-z]*f/i.test(f));
+    if (hasR && hasF) return true; // -rf / -fr / -Rf / -r -f / --recursive --force
+  }
+  return false;
 }
 
 const RULES = [
