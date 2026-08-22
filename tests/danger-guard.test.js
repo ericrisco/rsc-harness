@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -153,11 +153,25 @@ test('the guard only judges Bash', () => {
   assert.equal(r.stdout.trim(), '', 'a non-Bash tool call must pass through untouched');
 });
 
-test('the shipped copy and the source copy of the guard stay identical', () => {
-  // .rsc/danger-guard.mjs is the materialized copy targets/claude.js wires as the hook. If the two
-  // drift, this repo runs a different guard than the one under test — the tested-thing-is-not-the-
-  // shipped-thing failure P2 keeps finding here.
-  const src = readFileSync(GUARD, 'utf8');
-  const shipped = readFileSync(join(HERE, '..', '.rsc', 'danger-guard.mjs'), 'utf8');
-  assert.equal(shipped, src, 'run `npx rsc sync` (or re-copy) — .rsc/ is running stale guard code');
+test('the materialized copy of the guard has not drifted from the source', (t) => {
+  // .rsc/danger-guard.mjs is the copy targets/claude.js wires as the actual hook. If it drifts from
+  // targets/, this WORKSPACE runs a different guard than the one these tests exercise — the
+  // tested-thing-is-not-the-shipped-thing failure P2 keeps finding here. It is exactly how the fix
+  // in this PR could pass its tests and still leave the developer blocked.
+  //
+  // `.rsc/` is gitignored (it is per-workspace install state, not repo content), so a fresh clone
+  // and CI have nothing to compare — and nothing that can drift. The check therefore runs precisely
+  // where the risk lives: a workspace with rsc installed. It SKIPS elsewhere, loudly, rather than
+  // passing vacuously — a green that means "there was nothing to check" is the decorative gate this
+  // repo has paid for repeatedly.
+  const materialized = join(HERE, '..', '.rsc', 'danger-guard.mjs');
+  if (!existsSync(materialized)) {
+    t.skip('no .rsc/danger-guard.mjs in this checkout (gitignored install state) — nothing to drift');
+    return;
+  }
+  assert.equal(
+    readFileSync(materialized, 'utf8'),
+    readFileSync(GUARD, 'utf8'),
+    'run `npx rsc sync` — this workspace is running stale guard code, not the code under test',
+  );
 });
