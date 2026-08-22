@@ -57,7 +57,18 @@ function versionAt(scopeRoot) {
 }
 
 function isWiredScope(scopeRoot) {
-  try { return readFileSync(join(scopeRoot, '.claude', 'settings.json'), 'utf8').includes('.rsc/'); } catch { return false; }
+  // settings.json stores the wired command with the separator the installing platform produced, and
+  // JSON escapes a Windows backslash as a pair. Looking only for `.rsc/` therefore answered "not
+  // wired" for every Windows scope — which made THIS detector, the one that warns about a duplicated
+  // always-on body, blind on the exact platform where the body was being injected four times.
+  //
+  // Normalized inline rather than imported: hooks are materialized file by file, so this script can
+  // only import a sibling in `.rsc/`. `targets/claude.js` (hookWiringOf) and `scripts/doctor.js`
+  // carry the same one-liner for the same reason; the duplication is the price of the hook layout.
+  try {
+    const raw = readFileSync(join(scopeRoot, '.claude', 'settings.json'), 'utf8');
+    return raw.replace(/\\\\/g, '/').includes('.rsc/');
+  } catch { return false; }
 }
 
 function olderThan(a, b) {
