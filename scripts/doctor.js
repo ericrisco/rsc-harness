@@ -7,6 +7,7 @@ import { loadManifest } from './lib/manifest.js';
 import { listBackups } from './lib/backups.js';
 import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
 import { isEnabled, checkSello, readSello, countFindings, readEffectiveConfig, validateRiskConfig } from '../targets/sello.mjs';
+import { designIdentity } from './lib/design-identity.js';
 import { countGaps } from './lib/capabilities.js';
 
 // The sello's health, surfaced where the user already looks (spec: non-blocking
@@ -57,6 +58,10 @@ export function doctor({ target, home, cwd }) {
     },
     contextBudget: contextBudget({ target, home, cwd }),
     sello: selloStatus(root),
+    // Whether this harness has a design identity at all. `design` has always DECLARED that it
+    // stops without one; until lib/design-identity.js nothing checked it (P2). Reported here,
+    // never nagged about and never blocking: a missing identity is low risk (P7).
+    designIdentity: designIdentity(root),
     // An inert gate must never read as an armed one (the same rule the sello follows):
     // the gitmoji guard has a per-project kill switch, so say which state it is in.
     gitmojiGuard: existsSync(join(root, '.rsc', '.no-gitmoji')) ? 'opted-out' : 'armed',

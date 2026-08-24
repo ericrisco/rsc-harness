@@ -1409,7 +1409,9 @@
         "nextjs",
         "marketing"
       ],
-      "profiles": []
+      "profiles": [
+        "full"
+      ]
     },
     {
       "id": "design-dna",

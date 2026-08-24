@@ -63,6 +63,25 @@ Run `PROMPT.md` as written. It is the operative artefact and it is self-containe
       example/          one worked output, the canonical proof
       scripts/check.py  the auto tests, exits non-zero on failure
 
+### The record is the harness's design identity
+
+The folder above makes the style **reusable**. Writing the record into the harness is what makes it
+**this project's identity** rather than a loose folder in a global directory:
+
+- Write the record as an article under `02-DOCS/wiki/brand/`, beside the brand study, and link it
+  from `02-DOCS/wiki/index.md` and the root `CLAUDE.md` `## Brand & voice` section — the same
+  convention `design` follows, and the same place `marketing`, `presentations`, `brand-voice` and
+  `content-engine` already read.
+- **It does not replace the brand study.** The study is the judgement and the direction — why this
+  identity, what it refuses. The record is the measurable contract that can fail a test. They share
+  only a few fields; each carries what the other cannot.
+- **One harness, one design identity.** If a second appears, name the conflict. The average of two
+  good designs is a bad design.
+- A style captured before this convention still works from its folder. To bring it into the harness,
+  write its record as the article above; nothing needs re-deriving.
+
+`rsc doctor` reports whether this harness has an identity, so the rule is not just prose.
+
 Scaffold from `templates/` and validate before you claim it works:
 
     python3 ~/.claude/skills/design-dna/scripts/emit.py <slug>            # scaffold + validate

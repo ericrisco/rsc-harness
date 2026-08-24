@@ -46,6 +46,11 @@ A check, not a question. Run it before any work and report in one block.
   render for a doc.
 - **Name the generation tools the goal needs** (image, video, voice) and confirm they are connected.
 - **Confirm the input files exist**: design system, brand doc, script.
+- **Read the harness identity if it exists** — `02-DOCS/wiki/brand/`, reached from the root
+  `CLAUDE.md` `## Brand & voice` section, the same place `design`, `marketing` and
+  `presentations` read. A bar from outside cannot silently overrule the identity this project
+  already committed to: if the reference contradicts it, say which rule conflicts and let the
+  user decide which one wins. If no identity exists yet, say so — this run is what creates it.
 
 Then print what is working, what is missing, and **which critic goes blind** if something is
 missing. Never carry on quietly with a critic that cannot see — a verdict from a judge who cannot
@@ -64,7 +69,8 @@ Mechanisms, not adjectives. "Feels premium" is useless. These are useful:
 - whitespace above the fold is at least 40% of the frame
 
 Every line must be something a critic can check by looking. Show `bar.md` to the user before
-continuing.
+continuing — and where a mechanism contradicts the harness identity, mark the conflict rather
+than resolving it silently in favour of the reference.
 
 ## Phase 4 — Loop
 
