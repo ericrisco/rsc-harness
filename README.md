@@ -378,7 +378,7 @@ Three engines + engine-agnostic disciplines. Every engine skill pins the current
 
 ### 🎨 Design & content craft
 
-[design](skills/design/) · [presentations](skills/presentations/) · [course-storytelling](skills/course-storytelling/) · [course-builder](skills/course-builder/) · [technical-writing](skills/technical-writing/) · [translation-l10n](skills/translation-l10n/)
+[design-loop](skills/design-loop/) · [design](skills/design/) · [design-dna](skills/design-dna/) · [presentations](skills/presentations/) · [course-storytelling](skills/course-storytelling/) · [course-builder](skills/course-builder/) · [technical-writing](skills/technical-writing/) · [translation-l10n](skills/translation-l10n/)
 
 ### 🧠 Knowledge & meta
 

@@ -11,6 +11,8 @@ const OUTCOMES = {
   go: 'Your Go backend service',
   postgresdb: 'Store your data reliably',
   design: 'Make it look good and convert',
+  'design-loop': 'Make it as good as the site you admire',
+  'design-dna': 'Keep every page looking like yours',
   marketing: 'Copy that sells',
   presentations: 'On-brand presentations',
   'course-storytelling': 'Teach so it actually lands',

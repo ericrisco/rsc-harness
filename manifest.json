@@ -1,7 +1,7 @@
 {
   "version": "1.0.33",
   "counts": {
-    "skills": 276
+    "skills": 278
   },
   "skills": [
     {
@@ -1404,6 +1404,27 @@
         "conversion"
       ],
       "recommends": [
+        "design-loop",
+        "design-dna",
+        "nextjs",
+        "marketing"
+      ],
+      "profiles": []
+    },
+    {
+      "id": "design-dna",
+      "description": "Use when a design has won and its look must survive: codify it into a permanent style skill with measured ratios, bans and tests that can fail, then build new pieces in that exact look. Fires on 'turn this into a skill', 'keep the same style', 'my output drifted'. NOT finding the winner (that is `design-loop`), NOT the words (that is `marketing`).",
+      "tags": [
+        "design",
+        "style",
+        "dna",
+        "codify",
+        "skill-factory",
+        "consistency"
+      ],
+      "recommends": [
+        "design-loop",
+        "design",
         "nextjs",
         "marketing"
       ],
@@ -1420,6 +1441,7 @@
         "craft"
       ],
       "recommends": [
+        "design-loop",
         "animate",
         "review-animations",
         "apple-design",
@@ -1429,6 +1451,25 @@
         "core",
         "full"
       ]
+    },
+    {
+      "id": "design-loop",
+      "description": "Use when something must be built well and there is a real reference it should beat: turn what makes the reference good into measured mechanisms, then run a builder and three fresh-context critics until all three pass. Fires on 'design loop', 'make it as good as <site>', 'it looks generic'. NOT keeping an already-won look (that is `design-dna`).",
+      "tags": [
+        "design",
+        "critique",
+        "loop",
+        "reference",
+        "quality",
+        "convergence"
+      ],
+      "recommends": [
+        "design",
+        "design-dna",
+        "marketing",
+        "nextjs"
+      ],
+      "profiles": []
     },
     {
       "id": "digitalocean",

@@ -2,7 +2,7 @@
 name: design-eng
 description: "Umbrella for frontend craft: routes a UI request to the sibling that owns it — build motion, review it, audit it, find where it is missing, name an effect, gesture physics, prototype variants, pick a library. Use when an app works but feels cheap or unpolished, or when a frontend request could belong to several of them."
 tags: [design, frontend, ui, routing, craft]
-recommends: [animate, review-animations, apple-design, design]
+recommends: [design-loop, animate, review-animations, apple-design, design]
 profiles: [core, full]
 origin: emilkowalski (MIT, adapted)
 ---
@@ -34,6 +34,8 @@ siblings. Name the sibling, hand over, and stop — do not do their work here.
 | "show me a few versions of this and let me pick" | `../prototype/SKILL.md` | — |
 | "what should I use for toasts / drag and drop / a command menu?" | `../pick-ui-library/SKILL.md` | not hand-rolling the component |
 | Sonner specifically — setup, styling, toasts misbehaving | `../ask-sonner/SKILL.md` | — |
+| "make it as good as <site>", a named reference to beat, "it looks generic" | `../design-loop/SKILL.md` | not `design` — the bar and the critics are the method, not the visual system |
+| "keep this style", "make more like this", output drifted from a look that once worked | `../design-dna/SKILL.md` | not `design-loop` — the winner already exists; this keeps it |
 | visual system, brand grounding, landing composition, a whole page | `../design/SKILL.md` | not here — this skill owns craft and motion, not the visual system |
 | the App Router / React build itself | `../nextjs/SKILL.md` | — |
 | Swift language work (concurrency, generics) | `../write-swift/SKILL.md` | not `swift-ios`, which owns the platform |
