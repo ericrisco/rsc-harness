@@ -25,6 +25,10 @@ Nobody wrote down **why** the winner was beautiful. Next time you ask for "the s
 
 If a `dna.json` already exists for the style named, you are in REUSE. Never re-derive a style that has a record.
 
+To find out which records exist — in either scope, without guessing at paths — run
+`npx @ericrisco/rsc doctor --json` and read `designStartingPoint`. A record it reports as `unreadable`
+is **not** a record you can reuse: say what is missing, do not use half of one.
+
 ## Hard rules (these are the skill)
 
 1. **A specification that cannot fail is not a specification.** If every rule you wrote is one a bad output could still satisfy, you wrote a mood board.
