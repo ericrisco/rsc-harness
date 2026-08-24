@@ -1,0 +1,42 @@
+---
+name: __SLUG__
+description: "Use when building anything in the __NAME__ style: __ONE_LINE__ Fires on '__SLUG__', 'in the __NAME__ style', 'another one like <reference>', 'same look as before'. Captured from __MEDIUM__; drives any format. NOT inventing a new direction (that is `design`), NOT re-deriving this style (its record already exists in dna.json)."
+tags: [style, design-dna, __SLUG__]
+recommends: [design-dna, nextjs, marketing]
+origin: design-dna
+---
+
+# __NAME__
+
+*__ONE_LINE__*
+
+Captured __CAPTURED__ from __MEDIUM__. Reference kept in `reference/`. Worked proof in `example/`.
+
+## How to use this
+
+1. Load **`PROMPT.md` only**, and attach `reference/__REF__`. Never paste `dna.json` into a prompt: it is the record, not the payload, and its size is exactly what breaks compliance.
+2. Pick an archetype by name before writing a line. Structure first, or piece 8 will not sit beside piece 1 as a set.
+3. Build. Web build goes to `../nextjs/SKILL.md`, words to `../marketing/SKILL.md`; the identity stays here.
+4. Run the self-check. Name every test and its result:
+
+       python3 scripts/check.py <output files or a rendered PNG>
+
+   Non-zero exit means do not ship. Answer the MANUAL tests out loud.
+
+## What this style is, in one screen
+
+__SUMMARY__
+
+## Do not
+
+__BANS__
+
+## Known drift risks
+
+__CONFIDENCE__
+
+These are the values that were inferred rather than measured. If output starts feeling off, re-measure these first.
+
+## Maintenance
+
+Re-capture only when the reference itself changes. To extend the style, edit `dna.json`, then recompile `PROMPT.md` under the 2KB cap: adding a signature means deleting one. Method and rationale: `../design-dna/SKILL.md`.

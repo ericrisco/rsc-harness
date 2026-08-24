@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Design DNA",
+  "description": "The exhaustive record of one visual identity. Written for you and for build tools, never pasted into a prompt. The prompt payload is compiled from this file into PROMPT.md under a 2KB cap.",
+  "type": "object",
+  "required": ["meta", "soul", "palette", "type", "space", "signatures", "weird_move", "bans", "tests", "reconstruction"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Provenance. What this is, where it came from, and what must never be reproduced.",
+      "required": ["name", "slug", "source", "captured", "not_copied", "medium_of_origin"],
+      "properties": {
+        "name": { "type": "string", "description": "Human name of the style, e.g. 'Cold Press Editorial'." },
+        "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "kebab-case. Becomes the emitted skill folder name and its slash command." },
+        "source": { "type": "array", "items": { "type": "string" }, "description": "Paths or URLs of the reference artefacts this was measured from." },
+        "captured": { "type": "string", "description": "ISO date the capture was made. Styles age; a dated record tells you when to re-measure." },
+        "not_copied": { "type": "array", "items": { "type": "string" }, "description": "Real logos, wordmarks, licensed photographs, proprietary typefaces. Reproduce the SYSTEM, never the MARKS. Name the substitute used for each." },
+        "medium_of_origin": { "type": "string", "description": "What the reference actually was: website, poster, carousel, deck, motion graphic. The format is an output, not the subject." },
+        "confidence_notes": { "type": "array", "items": { "type": "string" }, "description": "Step 7 output: every value inferred rather than measured, and every rule under 70% confidence. This is where the style drifts first." }
+      }
+    },
+    "soul": {
+      "type": "object",
+      "description": "The compression key. Read this alone and you are most of the way there.",
+      "required": ["one_line", "adjectives", "lineage", "read_distance", "energy"],
+      "properties": {
+        "one_line": { "type": "string", "maxLength": 160, "description": "Max 160 chars. Concrete nouns only. No marketing words, no 'premium', no 'clean'." },
+        "adjectives": { "type": "array", "minItems": 3, "maxItems": 5, "items": { "type": "string" } },
+        "lineage": { "type": "string", "description": "The family tree: Swiss editorial, 90s rave flyer, brutalist web, Memphis, ECM sleeve." },
+        "read_distance": { "enum": ["thumb", "arms-length", "desk", "room", "street"], "description": "How far away it is read from. This sets the minimum type size, so it is a functional field, not a poetic one." },
+        "energy": {
+          "type": "object",
+          "description": "Each 1-10. A fingerprint that catches drift no single value does.",
+          "required": ["density", "variance", "contrast", "warmth"],
+          "properties": {
+            "density": { "type": "integer", "minimum": 1, "maximum": 10, "description": "How much of the canvas is occupied." },
+            "variance": { "type": "integer", "minimum": 1, "maximum": 10, "description": "How much elements differ from each other. Low = systematic, high = collaged." },
+            "contrast": { "type": "integer", "minimum": 1, "maximum": 10 },
+            "warmth": { "type": "integer", "minimum": 1, "maximum": 10 }
+          }
+        }
+      }
+    },
+    "palette": {
+      "type": "object",
+      "description": "Colour AND its proportions. The same three hex codes at 60/30/10 and at 90/8/2 are two unrelated designs.",
+      "required": ["colors", "coverage", "banned"],
+      "properties": {
+        "colors": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["role", "hex", "name"],
+            "properties": {
+              "role": { "type": "string", "description": "ground, ink, accent, secondary, hairline." },
+              "hex": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "description": "Sampled, never guessed." },
+              "name": { "type": "string", "description": "Descriptive, not systematic. 'dusty plum' travels to an image model; 'accent-500' does not." }
+            }
+          }
+        },
+        "coverage": { "type": "object", "description": "Percentage of canvas per role, summing to roughly 100. The most-skipped and most-decisive field in the whole document.", "additionalProperties": { "type": "number" } },
+        "mode": { "type": "string", "description": "light, dark, or duotone-on-stock." },
+        "banned": { "type": "array", "items": { "type": "string" }, "description": "Colour behaviours forbidden: gradients, two accents in one frame, pure #000000." }
+      }
+    },
+    "type": {
+      "type": "object",
+      "description": "Families, and above all the ratio between them. 8-to-1 and 2-to-1 are different designs with identical fonts.",
+      "required": ["families", "scale", "treatment"],
+      "properties": {
+        "families": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role", "family", "fallback"],
+            "properties": {
+              "role": { "enum": ["display", "body", "mono", "caption", "ui"] },
+              "family": { "type": "string" },
+              "fallback": { "type": "string", "description": "REQUIRED. Silent Arial substitution is the most common way a reproduction dies quietly." },
+              "weights": { "type": "array", "items": { "type": "integer" } },
+              "licence_risk": { "type": "string", "description": "free / webfont-ok / proprietary-substitute-needed." }
+            }
+          }
+        },
+        "scale": {
+          "type": "object",
+          "required": ["display_to_body_ratio", "max_sizes_per_frame"],
+          "properties": {
+            "display_to_body_ratio": { "type": "number", "description": "The typographic signature. Record it as a floor too ('8x, never under 6x')." },
+            "ratio_floor": { "type": "number" },
+            "steps": { "type": "array", "items": { "type": "number" }, "description": "Relative steps, not pixels." },
+            "max_sizes_per_frame": { "type": "integer", "description": "Usually 2 or 3. A testable ceiling." }
+          }
+        },
+        "treatment": {
+          "type": "object",
+          "properties": {
+            "display_tracking": { "type": "string", "description": "e.g. '-0.03em'." },
+            "body_leading": { "type": "string", "description": "As a multiple of size." },
+            "case": { "type": "string" },
+            "measure": { "type": "string", "description": "Characters per line. Under 65 for body is the usual bound." },
+            "numerals": { "type": "string", "description": "lining / oldstyle / tabular." }
+          }
+        }
+      }
+    },
+    "space": {
+      "type": "object",
+      "description": "USE PERCENTAGES. One spec must drive a 1080x1350 carousel and a 1920x1080 slide without a rewrite. Pixel values here are the reason a spec works on a slide and breaks on a carousel.",
+      "required": ["grid", "margin_pct", "alignment", "negative_space"],
+      "properties": {
+        "grid": { "type": "string" },
+        "margin_pct": { "type": "number" },
+        "gutter_pct": { "type": "number" },
+        "alignment": { "type": "string", "description": "Where things line up, and what is deliberately never centred." },
+        "rhythm": { "type": "string", "description": "The spacing progression, e.g. 'x1.5 geometric off a 8px base'." },
+        "negative_space": { "type": "string", "description": "Where the emptiness is and how big. Emptiness is a placed element, not leftover." },
+        "safe_area": { "type": "object", "description": "Per platform, in percentages.", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "description": "What the thing is physically made of.",
+      "properties": {
+        "texture": { "type": "object", "properties": { "kind": { "type": "string" }, "opacity": { "type": "number" }, "scale": { "type": "string" }, "stacking_order": { "type": "string" } } },
+        "edges": { "type": "string", "description": "Radii, hairline weights, whether anything bleeds off canvas." },
+        "elevation": { "type": "string", "description": "Often the honest answer is 'none'. Record the absence." },
+        "imagery": { "type": "string", "description": "Treatment: duotone, grain, crop discipline, subject distance." },
+        "iconography": { "type": "string", "description": "Or the absence of it." }
+      }
+    },
+    "signatures": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 9,
+      "description": "The payload. Carry these and nothing else and it is still recognisable. To add a tenth you must delete one; the cap forces a decision instead of shipping indecision.",
+      "items": {
+        "type": "object",
+        "required": ["move", "how", "when", "never"],
+        "properties": {
+          "move": { "type": "string", "description": "Name it like a technique, so it can be referred to in one word." },
+          "how": { "type": "string", "description": "AS A RATIO OR RELATIONSHIP. Style is formally the correlation between features, not the features." },
+          "when": { "type": "string", "description": "Where in a piece or a sequence it appears." },
+          "never": { "type": "string", "description": "How it gets used wrong. The failure mode, written down." }
+        }
+      }
+    },
+    "weird_move": {
+      "type": "object",
+      "description": "The single deliberate break in the system. Its own key, deliberately, so it can never get buried in the middle of a document. Highest-information element present and the first thing a mechanical extraction loses.",
+      "required": ["what", "how", "why"],
+      "properties": {
+        "what": { "type": "string" },
+        "how": { "type": "string", "description": "Reproducible instruction, as a relationship." },
+        "why": { "type": "string" },
+        "frequency": { "type": "string", "default": "exactly once per piece" }
+      }
+    },
+    "archetypes": {
+      "type": "array",
+      "description": "Named layouts. Without these you get consistent styling and inconsistent structure, which reads as sloppiness: output #8 will not sit beside output #1 as a set.",
+      "items": {
+        "type": "object",
+        "required": ["id", "purpose", "anatomy"],
+        "properties": {
+          "id": { "type": "string" },
+          "purpose": { "type": "string", "description": "Its job in a sequence: opener, proof, quote, closer." },
+          "anatomy": { "type": "string", "description": "Slot-by-slot structure in percentages." },
+          "content_shape": { "type": "string", "description": "The content budget: max words per slot." }
+        }
+      }
+    },
+    "motion": {
+      "type": "object",
+      "description": "Omit entirely for static work. Restraint is a signature too, which is why never_moves is required when this key exists.",
+      "required": ["never_moves"],
+      "properties": {
+        "easing": { "type": "string" },
+        "durations": { "type": "object", "additionalProperties": { "type": "string" } },
+        "entrances": { "type": "string" },
+        "never_moves": { "type": "array", "items": { "type": "string" } },
+        "reduced_motion": { "type": "string", "description": "The prefers-reduced-motion fallback. Not optional in shipped work." }
+      }
+    },
+    "voice": {
+      "type": "object",
+      "description": "Copy is part of the design. Right layout, wrong sentence, broken look.",
+      "properties": {
+        "register": { "type": "string" },
+        "sentence_length": { "type": "string" },
+        "headline_shape": { "type": "string" },
+        "banned_words": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "bans": {
+      "type": "array",
+      "minItems": 5,
+      "items": { "type": "string" },
+      "description": "Written as absolutes, starting with 'Never'. A positive instruction has to out-vote the training average; a ban deletes the landslide from the options. One ban can rule out an entire space in one line. Bans should outnumber positive style rules."
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 8,
+      "description": "8 to 12. Binary and measurable. If two people could disagree about the answer, it is not a test. A spec with no failing test is a mood board with better formatting.",
+      "items": {
+        "type": "object",
+        "required": ["id", "check", "fail_looks_like", "auto"],
+        "properties": {
+          "id": { "type": "string" },
+          "check": { "type": "string", "description": "Stated so the answer is yes or no, or a number against a bound." },
+          "fail_looks_like": { "type": "string" },
+          "auto": { "type": "boolean", "description": "True if a script could decide it. Those go into tools/check.py." }
+        }
+      }
+    },
+    "reconstruction": {
+      "type": "object",
+      "description": "Step 5. A spec that has never been used to rebuild its own source has never been tested at all.",
+      "required": ["attempted", "gaps_found", "passes"],
+      "properties": {
+        "attempted": { "type": "boolean" },
+        "passes": { "type": "integer", "description": "Expect 2 or 3." },
+        "gaps_found": { "type": "array", "items": { "type": "string" }, "description": "Every difference found between rebuild and original, and the field added to close it. Expect these to be things you were sure were obvious." },
+        "stranger_test": { "type": "string", "description": "Whether a stranger could still pick the copy from the original, and how you checked." }
+      }
+    }
+  }
+}

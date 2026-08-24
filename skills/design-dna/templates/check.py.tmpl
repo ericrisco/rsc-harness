@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""Auto tests for the __NAME__ style. Exits non-zero on any failure.
+
+    python3 scripts/check.py <output.html|output.css|output.png> [more files...]
+
+Reads dna.json and runs every test marked "auto": true that carries a "probe".
+Tests without a probe are reported as MANUAL and never silently pass.
+A probe handed no artefact it can read is reported as SKIP with its reason -
+never as PASS or FAIL.
+
+Probe kinds
+-----------
+regex_absent        {"kind":"regex_absent","pattern":"..."}                 fails if the pattern appears
+regex_count         {"kind":"regex_count","pattern":"...","exactly":1}      or "min"/"max"
+distinct_css        {"kind":"distinct_css","property":"font-size","max":3}  distinct declared values
+css_ratio           {"kind":"css_ratio","property":"font-size","min":6.0}   largest / smallest declared
+min_unit            {"kind":"min_unit","property":"font-size","min_px":28}  smallest declared value
+color_coverage      {"kind":"color_coverage","hex":"#ff4d00","max_pct":8,
+                     "tolerance":24}                                        needs an image file + Pillow
+"""
+import json, os, re, sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+DNA_PATH = os.path.join(HERE, "..", "dna.json")
+if not os.path.isfile(DNA_PATH):
+    sys.exit("no dna.json beside this script, so there is nothing to check against.\n"
+             "This style skill was scaffolded and never finished. Fix:\n"
+             "  write dna.json, then validate it with\n"
+             "  python3 ../design-dna/scripts/emit.py <slug> --validate")
+DNA = json.load(open(DNA_PATH))
+
+TEXT_EXT = {".html", ".htm", ".css", ".scss", ".jsx", ".tsx", ".svg", ".md", ".js", ".ts"}
+IMG_EXT = {".png", ".jpg", ".jpeg", ".webp"}
+
+
+def load(paths):
+    text, images = "", []
+    for p in paths:
+        ext = os.path.splitext(p)[1].lower()
+        if ext in IMG_EXT:
+            images.append(p)
+        elif ext in TEXT_EXT or os.path.isfile(p):
+            text += "\n" + open(p, encoding="utf-8", errors="replace").read()
+    return text, images
+
+
+def css_values(text, prop):
+    out = []
+    for raw in re.findall(rf"{re.escape(prop)}\s*:\s*([^;}}\"']+)", text, re.I):
+        m = re.match(r"\s*(-?[\d.]+)\s*(px|rem|em|pt|%)?", raw)
+        if not m:
+            continue
+        n = float(m.group(1))
+        unit = (m.group(2) or "px").lower()
+        out.append(n * 16 if unit in ("rem", "em") else n)
+    return out
+
+
+def coverage(path, hex_target, tol):
+    try:
+        from PIL import Image
+    except ImportError:
+        return None, "Pillow not installed (pip install pillow)"
+    tr, tg, tb = (int(hex_target.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
+    im = Image.open(path).convert("RGB")
+    im.thumbnail((400, 400))
+    px = list(im.get_flattened_data()) if hasattr(im, "get_flattened_data") else list(im.getdata())
+    hit = sum(1 for r, g, b in px if abs(r - tr) <= tol and abs(g - tg) <= tol and abs(b - tb) <= tol)
+    return 100.0 * hit / max(1, len(px)), None
+
+
+# Probes that read declared values. Handed no text they must SKIP: a regex over an empty
+# string is not a check, and calling it PASS or FAIL is the gate lying in one direction
+# or the other.
+TEXT_PROBES = ("regex_absent", "regex_count", "distinct_css", "css_ratio", "min_unit")
+
+
+def run(test, text, images):
+    pr = test.get("probe")
+    if not pr:
+        return "MANUAL", "no probe declared"
+    k = pr.get("kind")
+    if k in TEXT_PROBES and not text.strip():
+        return "SKIP", "no text artefact passed; this probe reads declarations, not pixels"
+    if k == "regex_absent":
+        hits = re.findall(pr["pattern"], text, re.I)
+        return ("FAIL" if hits else "PASS"), f"{len(hits)} match(es)"
+    if k == "regex_count":
+        n = len(re.findall(pr["pattern"], text, re.I))
+        ok = (n == pr["exactly"]) if "exactly" in pr else (pr.get("min", 0) <= n <= pr.get("max", 10 ** 9))
+        return ("PASS" if ok else "FAIL"), f"found {n}"
+    if k == "distinct_css":
+        vals = sorted(set(css_values(text, pr["property"])))
+        return ("PASS" if len(vals) <= pr["max"] else "FAIL"), f"{len(vals)} distinct: {vals}"
+    if k == "css_ratio":
+        vals = [v for v in css_values(text, pr["property"]) if v > 0]
+        if not vals:
+            return "SKIP", f"no {pr['property']} declarations found"
+        r = max(vals) / min(vals)
+        return ("PASS" if r >= pr["min"] else "FAIL"), f"ratio {r:.2f}:1"
+    if k == "min_unit":
+        vals = [v for v in css_values(text, pr["property"]) if v > 0]
+        if not vals:
+            return "SKIP", f"no {pr['property']} declarations found"
+        return ("PASS" if min(vals) >= pr["min_px"] else "FAIL"), f"smallest {min(vals)}px"
+    if k == "color_coverage":
+        if not images:
+            return "SKIP", "no image passed; render the output to PNG to check coverage"
+        pct, err = coverage(images[0], pr["hex"], pr.get("tolerance", 24))
+        if err:
+            return "SKIP", err
+        lo, hi = pr.get("min_pct", 0), pr.get("max_pct", 100)
+        return ("PASS" if lo <= pct <= hi else "FAIL"), f"{pct:.1f}% of canvas"
+    return "SKIP", f"unknown probe kind {k!r}"
+
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        return 2
+    text, images = load(sys.argv[1:])
+    failed = manual = 0
+    print(f"design-dna check: {DNA['meta']['name']}\n")
+    for t in DNA.get("tests", []):
+        if not t.get("auto"):
+            status, detail = "MANUAL", "human judgement"
+        else:
+            status, detail = run(t, text, images)
+        failed += status == "FAIL"
+        manual += status == "MANUAL"
+        print(f"  [{status:6}] {t['id']:28} {t['check']}")
+        if detail:
+            print(f"            {detail}")
+        if status == "FAIL":
+            print(f"            fail looks like: {t['fail_looks_like']}")
+    print(f"\n{failed} failed, {manual} need human judgement.")
+    if manual:
+        print("Answer the MANUAL tests out loud before you call this done.")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
