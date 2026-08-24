@@ -35,6 +35,8 @@ Follow the harness 02-DOCS convention (brand study = wiki articles under `02-DOC
 
 The completeness checklist spans visual identity (OKLCH color system, type pairing & scale, logo, imagery/illustration mood, density, radius/shadow/motion personality), reference/inspiration sites the user loves, layout preferences, dark-mode stance, accessibility & performance constraints, and brand voice/positioning (so copy and design agree). Full checklist + exact question script → `references/brand-grounding.md`.
 
+**When a dimension has no answer** — the non-technical default, and the reason this gate used to be impassable: do not invent one and do not wave the STOP through. `references/starting-point.md` is how a starting point gets proposed instead: what the project already owns is checked first, the value comes from a reference you opened and measured, and it is written marked `propuesto` — which does **not** count as complete until the user confirms it.
+
 The order is: **brand grounding → trend research → build.**
 
 ## Pick a direction first
@@ -66,7 +68,7 @@ Then map the project type to composition, density, and motion budget. Density an
 Trends churn quarterly and your built-in aesthetic prior is the median of every AI template ever scraped. Never prescribe from stale memory; counter it with a loop:
 
 1. Define 2–3 reference archetypes from the DIRECTION BRIEF (e.g. "Linear-grade dev tool, dark, type-led").
-2. WebSearch award galleries and tier-1 product sites: `awwwards.com`, `godly.website`, `land-book.com`, `mobbin.com`, Refactoring UI, and the tier-1 sites (Linear, Stripe, Vercel, Cursor, Resend).
+2. Browse the dated registry in `references/inspiration-sources.md` — whole pages to beat, SaaS and conversion surfaces, real product flows (Mobbin, Page Flows), single patterns, and the design systems that are specification rather than inspiration — plus the tier-1 sites (Linear, Stripe, Vercel, Cursor, Resend). Every entry there carries a verification date; `godly.website` now redirects to `recent.design`, which is exactly why the list is dated and not inline.
 3. WebFetch 3–5 exemplars, prompting each for type, color, layout, motion, and copy voice — concrete details, not adjectives.
 4. Extract a pattern table from what they share and where they differ.
 5. Synthesize a one-paragraph DESIGN DIRECTION with citations (which URL contributed what).

@@ -34,7 +34,15 @@ website", "good SaaS design"), push once for the specific page or file: a critic
 reference invents the comparison and approves everything on round one.
 
 On *skip*, propose three candidate bars, one line each on why, and wait. No answer → take the
-hardest one and say so.
+hardest one and say so. **Where they come from:** `../design/references/starting-point.md` — run its
+step 0 first, because a bar the project already owns outranks anything you would pick from outside,
+and proposing from memory is how this promise used to resolve to the AI-template median.
+
+**Where to go looking.** For a whole page to beat, and for the flows and single patterns behind it:
+`../design/references/inspiration-sources.md`. For a component idea rather than a whole reference:
+`../pick-ui-library/references/component-galleries.md`. Browse for the technique, never to clone a
+competitor's exact grid — and come back with **a specific page you can open**, because a gallery
+is not a bar.
 
 ## Phase 2 — Preflight
 

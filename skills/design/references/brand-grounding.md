@@ -96,7 +96,7 @@ Ask **one batch at a time**. Send the batch, wait for the answer, persist what y
     extend rather than replace?
 ```
 
-If the user can't answer a question, that dimension stays incomplete — note the gap, keep the STOP in place for that dimension, and offer to propose a researched default (from the research-first protocol / `trends-2026.md`) they can confirm, rather than silently defaulting to your generic prior.
+If the user can't answer a question, that dimension stays incomplete — note the gap, keep the STOP in place for that dimension, and offer to propose a researched default they can confirm, rather than silently defaulting to your generic prior. **How to actually propose one: `starting-point.md`.** It is the difference between offering something and improvising something: what the project already owns is checked first, the value comes from a reference you opened and measured, and it is written marked `propuesto`. A proposed-and-unconfirmed dimension does **not** count as complete against the checklist above — the STOP stays up until the user confirms it.
 
 ## Persistence format
 
