@@ -39,3 +39,11 @@ Everything in `../SKILL.md` that is not styling: the brand gate, the accessibili
 the Core Web Vitals budget, the 5-second value-prop test, and the tell registry in
 `../scripts/verify.sh`. An official design system settles which components you use. It does
 not settle whether the page says anything.
+
+## Where to browse for component ideas
+
+When a surface needs an idea rather than a primitive, `../../pick-ui-library/references/component-galleries.md`
+names where to go — Aceternity for marketing effects, 21st.dev for breadth, React Bits for tunable
+animation — and what each is good for. Take the technique and rebuild it in this project's tokens;
+check the brand study for what it refuses first, because a component that contradicts a stated ban
+makes the page look less designed, not more.
