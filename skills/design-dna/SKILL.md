@@ -3,7 +3,7 @@ name: design-dna
 description: "Use when a design has won and its look must survive: codify it into a permanent style skill with measured ratios, bans and tests that can fail, then build new pieces in that exact look. Fires on 'turn this into a skill', 'keep the same style', 'my output drifted'. NOT finding the winner (that is `design-loop`), NOT the words (that is `marketing`)."
 tags: [design, style, dna, codify, skill-factory, consistency]
 recommends: [design-loop, design, nextjs, marketing]
-origin: external (Notion "Design DNA" doc, adapted; source names no author or licence)
+origin: risco
 ---
 
 # Design DNA - one beautiful design into a permanent skill

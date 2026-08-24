@@ -467,7 +467,6 @@ Most of this catalog is written here. These are not, and they keep their author'
 | --- | --- | --- |
 | `design-eng` · `animate` · `animate-expo` · `review-animations` · `improve-animations` · `find-animation-opportunities` · `animation-vocabulary` · `apple-design` · `prototype` · `pick-ui-library` · `write-swift` · `ask-sonner` | [emilkowalski/skills](https://github.com/emilkowalski/skills) by Emil Kowalski, commit `d23d7f8` | MIT |
 | part of the AI-tell corpus in `design` | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | MIT |
-| `design-loop` · `design-dna` | Two shared documents: a Notion page, "Design DNA: One beautiful design into a permanent skill", and a `design-loop` skill. **Neither names an author or a licence.** | not stated |
 
 Adapted, not mirrored: each one carries rsc frontmatter, routing evals, hand-offs to its siblings
 and — where it declares a binding rule — a checker with a test. The craft bar in them is the

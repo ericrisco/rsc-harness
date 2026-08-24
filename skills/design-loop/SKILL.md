@@ -3,7 +3,7 @@ name: design-loop
 description: "Use when something must be built well and there is a real reference it should beat: turn what makes the reference good into measured mechanisms, then run a builder and three fresh-context critics until all three pass. Fires on 'design loop', 'make it as good as <site>', 'it looks generic'. NOT keeping an already-won look (that is `design-dna`)."
 tags: [design, critique, loop, reference, quality, convergence]
 recommends: [design, design-dna, marketing, nextjs]
-origin: external (design-loop doc, adapted; source names no author or licence)
+origin: risco
 ---
 
 # Design Loop — the front door of the design area
