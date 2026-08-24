@@ -145,3 +145,10 @@ When the direction changes mid-project (new competitor, pivot), re-run the loop 
 - `visual-system.md` — turn the filled direction into tokens.
 - `../../nextjs/SKILL.md` — implement the chosen direction on the App Router stack.
 - *frontend-design-direction* — product-domain direction judgment (external reference, not a repo skill).
+
+## Where to look
+
+`inspiration-sources.md` is the dated registry of where to browse: whole pages to beat, SaaS and
+conversion surfaces, real product flows (Mobbin, Page Flows — the bucket most people skip), single
+patterns like footers and empty states, and the design systems that are specification rather than
+inspiration. Extract principles, not pixels, and come back with a named page rather than a gallery.
