@@ -9,7 +9,7 @@
 //
 // A lift measured against a control that read the answer key is a lower bound of unknown size.
 // Publishing it as a number is the claim-without-evidence this repo keeps paying for (P2), and it
-// feeds skill-harden's --holdout, which decides what enters a 264-skill catalog.
+// feeds skill-harden's --holdout, which decides what enters a 281-skill catalog.
 //
 // This module answers the question deterministically, from the transcripts themselves — never from
 // what an agent says about its own behaviour, which is the way this fails open.

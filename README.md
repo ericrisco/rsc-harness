@@ -6,7 +6,7 @@
 
 [![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
 [![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
-[![skills](https://img.shields.io/badge/skills-264-63d68a?labelColor=12161c)](#the-catalog)
+[![skills](https://img.shields.io/badge/skills-281-63d68a?labelColor=12161c)](#the-catalog)
 [![license](https://img.shields.io/badge/license-MIT-63d68a?labelColor=12161c)](LICENSE)
 [![stars](https://img.shields.io/github/stars/ericrisco/rsc-harness?color=63d68a&labelColor=12161c)](https://github.com/ericrisco/rsc-harness/stargazers)
 
@@ -17,7 +17,7 @@ skills that fit — one at a time — into every assistant you pick, and keeps t
 equipped as you work.
 
 From *"document my company"* to *"ship a FastAPI service"* to *"grow my YouTube
-channel"* — **264 skills across 21 domains**, every one researched against live
+channel"* — **281 skills across 23 domains**, every one researched against live
 2025-2026 sources and **adversarially scored ≥ 8.5/10** before it shipped.
 
 ```bash
@@ -26,7 +26,7 @@ npx @ericrisco/rsc            # plain-language wizard — no jargon, installs wh
 
 <br>
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc — the model (Claude, GPT, Gemini) is the brain your coding agent rents, and you already have that. Claude Code, Codex and opencode sit in the middle. Below them the rsc meta-harness adds everything the model lacks: memory (02-DOCS/) so it stops inventing, arms (01-TOOLS/) so it can execute, a trade (264 skills) so it stops guessing, and reflexes (deterministic hooks) so it cannot forget the rule mid-session." width="960">
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc — the model (Claude, GPT, Gemini) is the brain your coding agent rents, and you already have that. Claude Code, Codex and opencode sit in the middle. Below them the rsc meta-harness adds everything the model lacks: memory (02-DOCS/) so it stops inventing, arms (01-TOOLS/) so it can execute, a trade (281 skills) so it stops guessing, and reflexes (deterministic hooks) so it cannot forget the rule mid-session." width="960">
 
 **The model is the only part your agent already has.** `rsc` is the meta-harness that adds
 the rest: a **memory** so it stops inventing, **arms** so it can execute, a **trade** so it stops
@@ -139,7 +139,7 @@ $ rsc
  ██████╗ ███████╗ ██████╗     ← animated gradient wordmark
  ██╔══██╗██╔════╝██╔════╝
  ██████╔╝███████╗██║
-  264 skills · one CLI · zero bloat
+  281 skills · one CLI · zero bloat
 
 What do you want to do?          ↑↓ move · enter select
 ❯ Base install — the essentials (8 skills)
@@ -187,7 +187,7 @@ rsc add youtube-api remotion-video   # …grow a channel, edit with Remotion
 rsc add fastapi --target claude,codex   # install into several assistants at once
 rsc install --profile minimal        # the base: orient + suggest + bro + unslop + show-me + eli5 + harness + init
 rsc install --profile core           # floor + the full SDD workflow
-rsc install --profile full           # everything (all 264)
+rsc install --profile full           # everything (all 281 skills)
 rsc install --profile full --without go
 rsc consult "I want to launch a SaaS"  # recommend only, no install
 rsc registry refresh                 # write .rsc/skill-registry.{json,md}
@@ -253,7 +253,7 @@ just asks in plain language.
 
 ## The catalog
 
-264 skills, grouped by what you're trying to do. Click any skill to read its
+281 skills, grouped by what you're trying to do. Click any skill to read its
 `SKILL.md`. It fires on its own when a task matches.
 
 ### 🧭 Core & control plane
