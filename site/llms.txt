@@ -4,7 +4,7 @@
 > configures AI coding agents for a project. It reads the repository, asks which
 > assistants to target and what the user wants to build or manage, then installs only
 > the skills that fit — one at a time, so nothing unused touches the model's context.
-> 264 skills across 21 domains, each cleared an adversarial >= 8.5/10 quality gate.
+> 281 skills across 23 domains, each cleared an adversarial >= 8.5/10 quality gate.
 
 ## For AI agents: install rsc into the user's project
 
