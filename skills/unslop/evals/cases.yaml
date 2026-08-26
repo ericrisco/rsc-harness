@@ -1,0 +1,60 @@
+skill: unslop
+
+# `unslop` is the named-tell audit of a text that already exists, run before it
+# ships. `bro` is the register pass: sound like a person, in the user's language,
+# fitted to the channel. A bare "bro" is always `bro`; "check this for AI tells
+# before I publish it" is always this skill.
+should_trigger:
+  - prompt: "Revisa este README antes de publicarlo y quítale todo lo que huela a IA."
+    why: "A pre-publication audit of an existing text is the exact contract, in the user's own words."
+
+  - prompt: "Unslop this."
+    why: "The bare skill name over a text in context is the shortest form of the request."
+
+  - prompt: "Can you go through this post and tell me which bits read as AI-written, then fix them?"
+    why: "Named findings plus a fix is what distinguishes this from a general tone rewrite."
+
+  - prompt: "Este texto está lleno de guiones largos y de 'no solo X, sino Y'. Límpialo."
+    why: "The user names two catalogued tells outright; the fix is the enumerated pass."
+
+  - prompt: "I keep getting told my docs sound like ChatGPT wrote them. What exactly am I doing?"
+    why: "The user wants the tells named, which no other writing skill in the catalog does."
+
+  - prompt: "Before this goes to the client, strip the puffery and the hedging but keep every number exact."
+    why: "A ship gate over existing prose with a preserve-the-facts constraint."
+
+should_not_trigger:
+  - prompt: "Bro."
+    route_to: "bro"
+    why: "A bare bro after an answer is the register pass over the last message, not an audit of a supplied text."
+
+  - prompt: "Haz que este correo suene más cercano y menos formal para un cliente de confianza."
+    route_to: "bro"
+    why: "Choosing a warmer register for a specific relationship is bro's job; no tell is being audited."
+
+  - prompt: "Define how our company should sound across the blog, support replies and job ads."
+    route_to: "brand-voice"
+    why: "A standing voice system across channels is brand-voice, not a one-text audit."
+
+  - prompt: "Split this mixed README into a tutorial and an API reference with runnable examples."
+    route_to: "technical-writing"
+    why: "Document structure is technical-writing; unslop edits words, it does not decide document modes."
+
+  - prompt: "Write the hero headline, the offer and the CTA for our pricing page."
+    route_to: "landing-copy"
+    why: "Conversion architecture and net-new copy belong to landing-copy; the audit comes after."
+
+  - prompt: "Translate this announcement into Catalan and adapt the date formats."
+    route_to: "translation-l10n"
+    why: "Translation and locale adaptation are owned elsewhere, even though good prose matters there too."
+
+capability:
+  - scenario: "A 400-word product-launch blog post that opens with 'In today's rapidly evolving landscape', uses four em dashes, three bold-label bullets whose labels restate their lines, 'not just faster, but smarter', 'experts agree', two stacked hedges, and closes with 'the future looks bright'. It also contains a code block, a pricing figure of EUR 39/month and two URLs."
+    must_include:
+      - "names the tells it found by category rather than reporting a general impression"
+      - "removes every em dash without substituting parentheses or en dashes"
+      - "converts the bold-label bullets whose label restates the line into prose, and leaves any bold lead-in that adds new detail"
+      - "replaces 'experts agree' with a named source or cuts the claim"
+      - "keeps the code block, the EUR 39/month figure and both URLs byte for byte"
+      - "leaves the text with a voice: at least one specific, opinionated sentence rather than sterile neutrality"
+      - "returns the cleaned text as the artifact, with the findings list kept outside it"

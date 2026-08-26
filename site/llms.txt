@@ -41,7 +41,7 @@ self-driving: an always-on detector proposes the next skill as tasks appear.
 
 ## Facts (verifiable)
 
-- 264 skills; profiles: minimal (5), core (27), full (264).
+- 281 skills; profiles: minimal (8), core (31), full (281).
 - 17 supported coding assistants; skill files written once and symlinked per assistant.
 - Quality gate: every skill scored >= 8.5/10 on an adversarial behavioral rubric before shipping.
 - No global install and no API key required; runs via `npx`.

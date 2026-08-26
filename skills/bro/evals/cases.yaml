@@ -46,6 +46,10 @@ should_not_trigger:
     route_to: "simplify-code"
     why: "The requested source-code simplification is owned by simplify-code; 'rewrite' does not make it a prose task."
 
+  - prompt: "Revisa este README antes de publicarlo y dime qué frases suenan a IA, una por una."
+    route_to: "unslop"
+    why: "A named, per-phrase audit of an existing text before shipping is unslop's contract; bro rewrites the register instead of enumerating tells."
+
 capability:
   - scenario: "The previous assistant answer is a long Spanish status update full of headings, repeated summaries, corporate jargon and fake enthusiasm. Rewrite it for a client while preserving a June 30 deadline, a EUR 2,400 price, one unresolved risk, two URLs and the original uncertainty."
     must_include:

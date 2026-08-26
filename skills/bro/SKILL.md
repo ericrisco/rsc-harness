@@ -2,7 +2,7 @@
 name: bro
 description: "Use whenever the user asks to make an answer or draft sound human, natural, plain-spoken or less AI-written — including a terse bro after the last response. Rewrites or drafts in the same language while preserving meaning, facts and channel. NOT a reusable brand voice (that is `brand-voice`), NOT translation (that is `translation-l10n`)."
 tags: [bro, human-writing, humano, plain-language, natural-language, rewrite, no-jargon]
-recommends: [brand-voice, technical-writing, translation-l10n]
+recommends: [unslop, brand-voice, technical-writing, translation-l10n]
 profiles: [minimal, core, full]
 origin: risco
 ---
@@ -56,6 +56,14 @@ plain language instead of deleting precision.
 | Use the same “casual” voice for every audience | A client email, README and condolence need different registers | Infer the room before choosing the cadence |
 | Promise the result is undetectable as AI | No rewrite can honestly guarantee that | Promise clarity and naturalness, not detector outcomes |
 | Announce and justify every edit | The preamble becomes the same friction the user asked to remove | Lead with the finished words |
+
+## Where this ends
+
+`unslop` owns the other half of this job: the **named** audit of a text that already exists, tell by
+catalogued tell (puffery, `not just X but Y`, em dashes, bold-label lists, hedging), run before the
+text ships. This skill owns the **register**: which language, which relationship, which channel, and
+the cadence that fits them. A bare "bro" is always this skill. "Check this for AI tells before I
+publish it" is `unslop`. When a text needs both, audit first, register last.
 
 ## Output boundary
 
