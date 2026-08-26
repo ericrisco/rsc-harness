@@ -1,7 +1,7 @@
 {
   "version": "1.1.1",
   "counts": {
-    "skills": 278
+    "skills": 281
   },
   "skills": [
     {
@@ -565,6 +565,7 @@
         "no-jargon"
       ],
       "recommends": [
+        "unslop",
         "brand-voice",
         "technical-writing",
         "translation-l10n"
@@ -1710,6 +1711,29 @@
         "secure-coding"
       ],
       "profiles": []
+    },
+    {
+      "id": "eli5",
+      "description": "Use when a topic must be explained from zero to someone who knows nothing about it: one page, big pictures, very few words, everyday analogies, no jargon and nothing assumed. NOT the smallest in-conversation visual for someone already following (that is `show-me`), NOT a course with exercises (that is `course-builder`).",
+      "tags": [
+        "eli5",
+        "explain",
+        "beginner",
+        "simple",
+        "analogy",
+        "no-jargon",
+        "explicame"
+      ],
+      "recommends": [
+        "show-me",
+        "technical-writing",
+        "course-builder"
+      ],
+      "profiles": [
+        "minimal",
+        "core",
+        "full"
+      ]
     },
     {
       "id": "elixir",
@@ -4688,6 +4712,31 @@
       "profiles": []
     },
     {
+      "id": "show-me",
+      "description": "Use when the user needs to see how something works instead of reading about it: picks the smallest visual that carries the point — pseudocode, call tree, file tree, component tree, Mermaid, a shaped diff, or one HTML page. NOT visual identity (that is `design-loop`), NOT slides (that is `presentations`), NOT a from-zero explainer (that is `eli5`).",
+      "tags": [
+        "show-me",
+        "explain",
+        "diagram",
+        "visual",
+        "mermaid",
+        "diff",
+        "call-tree",
+        "ensename"
+      ],
+      "recommends": [
+        "eli5",
+        "presentations",
+        "technical-writing",
+        "codebase-onboarding"
+      ],
+      "profiles": [
+        "minimal",
+        "core",
+        "full"
+      ]
+    },
+    {
       "id": "simplify-code",
       "description": "Use when correct working code is unnecessarily hard to read, change or verify and needs behaviour-preserving simplification in a bounded scope. Characterizes the observable contract, removes accidental complexity one concept at a time and proves equivalence. NOT fixing a failure (`debug`), NOT read-only diff judgment (`review`/`code-review`).",
       "tags": [
@@ -5359,6 +5408,29 @@
         "unity"
       ],
       "profiles": [
+        "full"
+      ]
+    },
+    {
+      "id": "unslop",
+      "description": "Use when a written text must be audited against a named catalogue of AI tells before it ships: puffery, `not just X but Y`, the rule of three, em dashes, filler, hedging, abstract metaphor nouns. Names each hit and fixes it. NOT the register rewrite in the user's own voice (that is `bro`), NOT a reusable voice guide (that is `brand-voice`).",
+      "tags": [
+        "unslop",
+        "ai-tells",
+        "editing",
+        "audit",
+        "slop",
+        "publish-check",
+        "revisar-texto"
+      ],
+      "recommends": [
+        "bro",
+        "brand-voice",
+        "technical-writing"
+      ],
+      "profiles": [
+        "minimal",
+        "core",
         "full"
       ]
     },

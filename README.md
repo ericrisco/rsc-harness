@@ -142,7 +142,7 @@ $ rsc
   264 skills · one CLI · zero bloat
 
 What do you want to do?          ↑↓ move · enter select
-❯ Base install — the essentials (orient + suggest + bro + harness + init)
+❯ Base install — the essentials (8 skills)
   Base + Spec-Driven Development — specify → plan → implement → ship
   Pick skills by hand, by area
 ```
@@ -185,7 +185,7 @@ rsc                                  # plain-language wizard (recommended) — p
 rsc add fastapi postgresdb           # install specific skills, by name
 rsc add youtube-api remotion-video   # …grow a channel, edit with Remotion
 rsc add fastapi --target claude,codex   # install into several assistants at once
-rsc install --profile minimal        # the floor: orient + suggest + bro + harness + init
+rsc install --profile minimal        # the base: orient + suggest + bro + unslop + show-me + eli5 + harness + init
 rsc install --profile core           # floor + the full SDD workflow
 rsc install --profile full           # everything (all 264)
 rsc install --profile full --without go
@@ -259,7 +259,7 @@ just asks in plain language.
 ### 🧭 Core & control plane
 The front door and the workspace brain.
 
-[init](skills/init/) · [harness](skills/harness/) · [orient](skills/orient/) · [suggest](skills/suggest/) · [bro](skills/bro/) · [author-skill](skills/author-skill/) · [sdd-init](skills/sdd-init/)
+[init](skills/init/) · [harness](skills/harness/) · [orient](skills/orient/) · [suggest](skills/suggest/) · [bro](skills/bro/) · [unslop](skills/unslop/) · [author-skill](skills/author-skill/) · [sdd-init](skills/sdd-init/)
 
 > **harness** is the Karpathy *chaos→knowledge* engine — a `01-TOOLS/` layer (one
 > folder per provider, each with a working `test_connection`) and a `02-DOCS/`
@@ -382,7 +382,7 @@ Three engines + engine-agnostic disciplines. Every engine skill pins the current
 
 ### 🧠 Knowledge & meta
 
-[knowledge-ops](skills/knowledge-ops/) · [codebase-onboarding](skills/codebase-onboarding/) · [research-ops](skills/research-ops/) · [decision-records](skills/decision-records/) · [continuous-learning](skills/continuous-learning/) · [skill-scout](skills/skill-scout/) · [context-budget](skills/context-budget/) · [roast-me](skills/roast-me/) · [fable-operator](skills/fable-operator/)
+[knowledge-ops](skills/knowledge-ops/) · [codebase-onboarding](skills/codebase-onboarding/) · [research-ops](skills/research-ops/) · [decision-records](skills/decision-records/) · [continuous-learning](skills/continuous-learning/) · [skill-scout](skills/skill-scout/) · [context-budget](skills/context-budget/) · [roast-me](skills/roast-me/) · [show-me](skills/show-me/) · [eli5](skills/eli5/) · [fable-operator](skills/fable-operator/)
 
 ---
 

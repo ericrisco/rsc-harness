@@ -161,17 +161,21 @@ async function wizard() {
   const m = loadManifest();
   await banner(m.counts.skills);
   say('  the skill catalog for your assistant (Claude Code · Codex · Cursor · Gemini · Antigravity)\n');
+  // The base set is READ from the manifest, never enumerated here: a hand-kept list in a menu
+  // label is parallel accounting (P3), and it silently starts lying the day a skill's profiles
+  // change. The exact ids are printed before the install confirmation either way.
+  const baseIds = skillsForProfile(m, 'minimal');
   // Navigable loop: esc / "← Back" / "no" all return here instead of quitting.
   for (;;) {
     const choice = await select('What do you want to do?', [
-      { key: 'base', label: 'Base install — the essentials (orient + suggest + bro + harness + init)' },
+      { key: 'base', label: `Base install — the essentials (${baseIds.length} skills)` },
       { key: 'sdd', label: 'Base + Spec-Driven Development — the specify → plan → implement → ship flow' },
       { key: 'manual', label: 'Pick skills by hand, by area' },
     ]);
     if (choice === null) { say('\nOK — nothing installed. Anytime: npx @ericrisco/rsc'); return; }
 
     let ids;
-    if (choice === 'base') ids = skillsForProfile(m, 'minimal');
+    if (choice === 'base') ids = baseIds;
     else if (choice === 'sdd') ids = skillsForProfile(m, 'core');
     else if (choice === 'manual') {
       const picked = await manualSelect();

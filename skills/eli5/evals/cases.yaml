@@ -1,0 +1,54 @@
+skill: eli5
+
+# `eli5` owns one move: a from-zero explanation of one topic, as a page of big
+# pictures and few words, for someone with no background at all. It does not own
+# in-conversation diagrams for someone already following, curricula, or docs.
+should_trigger:
+  - prompt: "Explícame qué es una API como si tuviera cinco años."
+    why: "The canonical from-zero request, named outright, in the user's own language."
+
+  - prompt: "My mum asked me what a VPN is. I need something she can actually look at."
+    why: "A named audience with zero background and an explicit ask for something visual."
+
+  - prompt: "eli5 how a blockchain works"
+    why: "The bare skill name plus a topic is the shortest form of the same request."
+
+  - prompt: "No tengo ni idea de esto. Empieza por lo más básico, sin palabras raras."
+    why: "Zero background plus an explicit no-jargon constraint, with no topic named: the topic is the current one."
+
+  - prompt: "Can you explain what an index is in a database, but for someone who has never programmed?"
+    why: "A technical topic aimed at a non-technical reader is the audience this skill is written for."
+
+  - prompt: "Necesito explicarle a mi cliente, que no es técnico, qué es un webhook. Que lo entienda de una."
+    why: "Explaining to a named non-technical third party is the same job, one step removed."
+
+should_not_trigger:
+  - prompt: "Show me the call order when the form is submitted, I'm lost in the code."
+    route_to: "show-me"
+    why: "The user is already inside the topic and needs one mechanism drawn, not a from-zero page."
+
+  - prompt: "Build a four-week course on SQL with exercises and a final project."
+    route_to: "course-builder"
+    why: "Curriculum, progression and assessment are course-builder; eli5 is a single explanation."
+
+  - prompt: "Write the getting-started docs for our SDK, with runnable examples."
+    route_to: "technical-writing"
+    why: "Reference and tutorial documentation is technical-writing, even when it must be beginner-friendly."
+
+  - prompt: "Make this paragraph sound less robotic before I send it."
+    route_to: "bro"
+    why: "A register and tone pass over existing text is bro; nothing here needs explaining from zero."
+
+  - prompt: "Design the hero section for our homepage so it feels premium."
+    route_to: "design-loop"
+    why: "Visual identity is the design area; eli5's visuals serve comprehension, not brand."
+
+capability:
+  - scenario: "A non-technical business owner asks what a webhook is, after two failed explanations that used the words 'endpoint', 'payload' and 'HTTP POST'."
+    must_include:
+      - "produces one self-contained page with three to five large visuals, not a wall of text"
+      - "uses an everyday physical analogy the reader has handled, not another abstraction"
+      - "introduces no term without showing the thing first, and never uses endpoint, payload or POST unexplained"
+      - "keeps the explanation true, and names in one line whatever was left out"
+      - "stays adult in tone: no baby talk, no emoji, no exclamation marks"
+      - "opens the page for the user instead of only writing the file"

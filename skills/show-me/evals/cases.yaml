@@ -1,0 +1,61 @@
+skill: show-me
+
+# `show-me` owns one move: the smallest visual that answers the question being
+# asked, placed inside the conversation. It does not own visual identity, decks,
+# teaching material for a beginner, or restructuring a document.
+should_trigger:
+  - prompt: "No entiendo cómo funciona el login. Enséñamelo."
+    why: "An explicit ask to be shown rather than told, about a mechanism that has a shape to draw."
+
+  - prompt: "Can you show me visually how these three services talk to each other?"
+    why: "Interaction between pieces over time is the canonical Mermaid sequence case."
+
+  - prompt: "Draw me the component tree of this page so I can see which component owns the form state."
+    why: "UI structure with an ownership question is the component-tree form, named outright."
+
+  - prompt: "Antes de tocar nada, qué archivo es responsable de qué en src/?"
+    why: "File responsibility maps to the shallow file tree; the user wants the shape before editing."
+
+  - prompt: "I read your explanation twice and still don't get the order things happen in. Picture?"
+    why: "A second failed prose attempt is the trigger this skill exists for; runtime order is a call tree."
+
+  - prompt: "Show me what would change in the folder layout if we split transport.ts into a module."
+    why: "A change to an existing shape is the shaped-diff case, with the diff in the topic's own form."
+
+  - prompt: "Explícame con un diagrama qué pasa cuando el usuario cancela a mitad del pago."
+    why: "An edge path through a flow, explicitly requested as a diagram."
+
+should_not_trigger:
+  - prompt: "Design the landing page for our new pricing tier, it should look premium."
+    route_to: "design-loop"
+    why: "Visual identity and composition are owned by the design area; show-me explains, it does not design."
+
+  - prompt: "Build me a 12-slide deck to present the roadmap to the board on Thursday."
+    route_to: "presentations"
+    why: "A deck someone presents from is presentations; this skill draws inside the conversation."
+
+  - prompt: "Explain how a database index works to someone who has never programmed, like they're five."
+    route_to: "eli5"
+    why: "Zero prior knowledge with big pictures and few words is eli5's contract, not the smallest in-context visual."
+
+  - prompt: "Reorganise this README into a proper tutorial and an API reference."
+    route_to: "technical-writing"
+    why: "Restructuring a document is technical-writing; a diagram inside it would be at most one paragraph of the job."
+
+  - prompt: "Walk me through this whole unfamiliar repo: what it does, how it's built, where to start."
+    route_to: "codebase-onboarding"
+    why: "A guided tour of an unknown codebase is its own skill; show-me only draws the pieces once they are known."
+
+  - prompt: "Build a dashboard with our monthly revenue and churn charts."
+    route_to: "dashboard"
+    why: "A standing analytics surface is dashboard; this is not an explanation of a mechanism."
+
+capability:
+  - scenario: "The user asks, after a dense prose answer, why saving a document sometimes does not trigger a re-render. The real cause is a cache check inside the save handler plus a subscription set up after navigation. Show them."
+    must_include:
+      - "picks one form rather than stacking several, and the form matches the topic (control flow or call tree, not a file tree)"
+      - "uses the real handler, cache and subscription names from the discussion instead of placeholders"
+      - "shows only the path involved in the bug, not the whole module"
+      - "puts at most two lines of prose beside the visual, with no 'here is a diagram of' preamble"
+      - "marks what changes with a diff in the topic's own shape if it proposes a fix"
+      - "does not produce an HTML page for something a text diagram already carries"
