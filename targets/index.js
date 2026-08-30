@@ -4,6 +4,7 @@ import { homedir } from 'node:os';
 import * as claudeAdapter from './claude.js';
 import * as cursorAdapter from './cursor.js';
 import * as mdAdapter from './_md-block.js';
+import { readManifest } from '../scripts/lib/manifest-file.js';
 
 // Project-local single source of truth. Real skill files live here exactly once;
 // every assistant gets a lightweight pointer (symlink) back to it — no duplication.
@@ -141,6 +142,10 @@ export function resolveTargets({ cwd = process.cwd(), flagValue } = {}) {
     const ids = flagValue.split(',').map((s) => s.trim()).filter(Boolean);
     return { ids, ambiguous: null, source: 'flag' };
   }
+  // The committed manifest is what the team decided, so it outranks what happens to be
+  // on this machine. Two targets here is not ambiguity — it is the team saying "both".
+  const declared = readManifest(cwd)?.targets || [];
+  if (declared.length) return { ids: declared, ambiguous: null, source: 'manifest' };
   const found = installedTargets(cwd);
   if (found.length === 1) return { ids: found, ambiguous: null, source: 'evidence' };
   if (found.length > 1) return { ids: [], ambiguous: found, source: 'evidence' };

@@ -53,3 +53,18 @@ test('a hookless target is unaffected — it has no scripts to lose', () => {
   const r = doctor({ target: 'codex', home: d, cwd: d });
   assert.equal(r.hookWired, true);
 });
+
+// The project variable is expanded by the client, not by us. Checking the literal
+// string would report every healthy install as broken — the mirror image of the bug
+// this whole check exists to fix, and worse, because it fires on everyone.
+test('a wired script named through the project variable is found, not reported missing', () => {
+  const d = tmp();
+  mkdirSync(join(d, '.claude', 'skills'), { recursive: true });
+  mkdirSync(join(d, '.rsc'), { recursive: true });
+  writeFileSync(join(d, '.claude', 'skills', '.rsc-state.json'), JSON.stringify({ skills: {} }));
+  writeFileSync(join(d, '.rsc', 'session-start.mjs'), '// present');
+  writeFileSync(join(d, '.claude', 'settings.json'), JSON.stringify({
+    hooks: { SessionStart: [{ hooks: [{ type: 'command', command: 'node "${CLAUDE_PROJECT_DIR}/.rsc/session-start.mjs"' }] }] },
+  }));
+  assert.equal(doctor({ target: 'claude', home: d, cwd: d }).hookWired, true);
+});

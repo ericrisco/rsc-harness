@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import { rmSync, existsSync, cpSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { rmSync, existsSync, cpSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
 import { targetHasAgents, writeAgents, removeAgents, agentPath, agentNames } from '../targets/agents.js';
 import { readState, writeState } from './lib/state.js';
+import { readManifest, writeManifest } from './lib/manifest-file.js';
 import { createBackup } from './lib/backups.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -82,6 +83,40 @@ function managedPathsForInstall({ skillIds, target, home, cwd }) {
   return [...new Set(out)];
 }
 
+// The opt-outs a team disarmed and the developer tier live as marker files under .rsc/,
+// which is machine-local and therefore lost on every clone: a team that disarmed the
+// gitmoji guard found it armed again on the next checkout, with nobody having decided
+// that. They are decisions, so they belong in the committed declaration.
+function localDecisions(cwd) {
+  const dir = join(cwd, '.rsc');
+  let optOuts = [];
+  try {
+    optOuts = readdirSync(dir).filter((f) => f.startsWith('.no-')).map((f) => f.slice(4)).sort();
+  } catch { /* no .rsc yet */ }
+  let tier = null;
+  try { tier = JSON.parse(readFileSync(join(dir, 'developer.json'), 'utf8')).tier ?? null; } catch { /* unset */ }
+  return { optOuts, tier };
+}
+
+// Record the decision, merging so a second assistant never erases the first: installing
+// into codex on a machine that already had claude is adding, not replacing. Union, sorted
+// where order carries no meaning, so the file stays diffable and a merge conflict stays
+// readable.
+export function recordInManifest({ cwd, target, skillIds, catalogVersion = CLI_VERSION }) {
+  const prev = readManifest(cwd) || { targets: [], skills: [], ownSkills: [], optOuts: [] };
+  const { optOuts, tier } = localDecisions(cwd);
+  const union = (a, b) => [...new Set([...(a || []), ...(b || [])])].sort();
+  return writeManifest(cwd, {
+    version: 1,
+    targets: union(prev.targets, [target]),
+    skills: union(prev.skills, skillIds),
+    ownSkills: prev.ownSkills || [],
+    catalogVersion,
+    tier: tier ?? prev.tier ?? null,
+    optOuts: optOuts.length ? optOuts : (prev.optOuts || []),
+  });
+}
+
 export async function applyInstall({ skillIds, target, home, cwd = process.cwd(), operation = 'install', dryRun = false }) {
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd });
@@ -120,6 +155,7 @@ export async function applyInstall({ skillIds, target, home, cwd = process.cwd()
   writeState(paths.stateFile, state);
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
   writeFileSync(versionFile(cwd), CLI_VERSION + '\n');
+  recordInManifest({ cwd, target, skillIds });
   ignoreLocalState(cwd);
   return { ...state, backup };
 }

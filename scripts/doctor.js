@@ -60,7 +60,12 @@ export function missingHookScripts({ target, home = homedir(), cwd = process.cwd
     }
   }
   const seen = new Set();
-  for (const cmd of commands) {
+  // Commands name the project through ${CLAUDE_PROJECT_DIR}, which only the client
+  // expands. Resolve it here or every wired script reads as missing and the report
+  // calls a healthy install broken — the mirror image of the bug this check fixes.
+  const expand = (c) => c.split('${CLAUDE_PROJECT_DIR}').join(cwd);
+  for (const raw of commands) {
+    const cmd = expand(raw);
     for (const m of cmd.matchAll(/["']?([^"'\s]*[\\/]\.rsc[\\/][^"'\s]+\.mjs)["']?/g)) {
       const script = m[1];
       if (!existsSync(script)) seen.add(script);
