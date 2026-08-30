@@ -17,8 +17,8 @@
 // and discarded — as drifted.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { spawnSync, execFileSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 
@@ -179,13 +179,41 @@ test('an incomplete spec exits non-zero and is counted as a failure', () => {
   } finally { rmSync(dirname(d), { recursive: true, force: true }); }
 });
 
-test('a status contradicted by the repo is reported, and counted', () => {
-  const d = tmpSpec(GOOD.replace('status: implementada', 'status: implementada (PR #99999999)'));
+// Built against a repository this test creates, never against the ambient one. The first version of
+// this test asserted STALE and passed locally purely because the dev machine happens to have an
+// `origin/main`; CI checks out detached with neither `origin/main` nor `main`, the probe fell back to
+// "no repository to ask", and the verdict became UNVERIFIABLE. A test that depends on the machine it
+// runs on is a coincidence, not a test — and it was hiding the fact that `gitProbe`, the one piece
+// that touches git, had no coverage at all.
+function tmpRepo() {
+  // realpath: macOS puts tmp behind a symlink, and git resolves it — a mismatch there has already
+  // cost this repo five silent CLI passes once.
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'rsc-specgit-')));
+  const git = (...a) => execFileSync('git', a, { cwd: dir, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  git('init', '-q', '-b', 'main');
+  git('config', 'user.email', 't@t');
+  git('config', 'user.name', 'T');
+  writeFileSync(join(dir, 'f'), 'x');
+  git('add', '-A');
+  git('commit', '-qm', 'landed for real (#4242)');
+  git('tag', 'v9.9.9');
+  return { dir, sha: git('rev-parse', 'HEAD'), git };
+}
+
+test('against a real repository: a merged PR holds and an unmerged one is stale', () => {
+  const { dir, sha } = tmpRepo();
+  const d = join(dir, 'fixture.md');
   try {
-    const { out } = run([d]);
-    assert.match(out, /status STALE: PR #99999999/);
-    assert.match(out, /1 status claim\(s\) contradicted/);
-  } finally { rmSync(dirname(d), { recursive: true, force: true }); }
+    writeFileSync(d, GOOD.replace('status: implementada', `status: implementada (PR #4242 → ${sha}, publicada en 9.9.9)`));
+    const held = run([d]);
+    assert.equal(held.code, 0);
+    assert.doesNotMatch(held.out, /status (STALE|UNVERIFIABLE)/, `a wholly true status must print nothing:\n${held.out}`);
+
+    writeFileSync(d, GOOD.replace('status: implementada', 'status: implementada (PR #99999999)'));
+    const drift = run([d]);
+    assert.match(drift.out, /status STALE: PR #99999999/);
+    assert.match(drift.out, /1 status claim\(s\) contradicted/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('every run declares what it does not check', () => {

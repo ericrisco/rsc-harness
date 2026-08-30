@@ -30,9 +30,14 @@ function gitProbe(root) {
   let main;
   try {
     git(['rev-parse', '--git-dir']);
-    // Prefer the remote tip: a stale local `main` would report merged work as missing.
-    main = (() => { try { git(['rev-parse', '--verify', 'origin/main']); return 'origin/main'; } catch { return 'main'; } })();
-    git(['rev-parse', '--verify', main]);
+    // Prefer the remote tip — a stale local `main` reports merged work as missing. But CI checks out
+    // detached with no `origin/main` and no local `main`, and falling through to "no repository to
+    // ask" there means the check silently stops checking exactly where it runs unattended. HEAD is
+    // the honest last resort: on CI it IS the branch under test.
+    main = ['origin/main', 'main', 'HEAD'].find((ref) => {
+      try { git(['rev-parse', '--verify', ref]); return true; } catch { return false; }
+    });
+    if (!main) throw new Error('no ref to compare against');
   } catch {
     return null;
   }
@@ -57,7 +62,17 @@ function main() {
 
   let failed = 0;
   let drifted = 0;
-  const probe = gitProbe(ROOT);
+  // One probe per repository, not one for the tool's own. A spec's claims are about the history of
+  // the project the spec belongs to — checking them against wherever this script happens to live
+  // gives the right answer only by coincidence, and the wrong one the moment the gate is pointed at
+  // another checkout.
+  const probes = new Map();
+  const probeFor = (path) => {
+    const dir = dirname(path);
+    if (!probes.has(dir)) probes.set(dir, gitProbe(dir));
+    return probes.get(dir);
+  };
+  let anyProbe = false;
   for (const path of targets) {
     const text = readFileSync(path, 'utf8');
     const r = specCompleteness(text);
@@ -77,6 +92,8 @@ function main() {
     }
     // A status that still matches the repository prints nothing: the report grows only where there
     // is something to act on (P5).
+    const probe = probeFor(path);
+    anyProbe = anyProbe || Boolean(probe);
     for (const v of checkClaims(statusClaims(statusOf(text)), probe)) {
       if (v.verdict === 'holds') continue;
       if (v.verdict === 'stale') drifted += 1;
@@ -86,7 +103,7 @@ function main() {
 
   // A green here is narrower than the rule it enforces, so it says so every run rather than
   // letting the reader assume the gate covered more than it did.
-  console.log(`\n${targets.length - failed}/${targets.length} pass, ${drifted} status claim(s) contradicted by the repo${probe ? '' : ' (no repository to ask)'}. Not checked by this gate:`);
+  console.log(`\n${targets.length - failed}/${targets.length} pass, ${drifted} status claim(s) contradicted by the repo${anyProbe ? '' : ' (no repository to ask)'}. Not checked by this gate:`);
   for (const u of specCompleteness('').unchecked) console.log(`  - ${u}`);
   if (failed) process.exit(1);
 }
