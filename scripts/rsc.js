@@ -4,7 +4,7 @@ import { detectTarget, resolveTargets, TARGETS } from '../targets/index.js';
 import { detectRepo } from './detect-repo.js';
 import { rank } from './consult.js';
 import { expandRecommends, toOutcomes, hasOutcome } from './lib/recommend.js';
-import { applyInstall, listInstalled, uninstall, syncInstalled, purge } from './install-apply.js';
+import { applyInstall, listInstalled, uninstall, syncInstalled, purge, collisions } from './install-apply.js';
 import { doctor } from './doctor.js';
 import { say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
 import { refreshRegistry, registryStatus } from './lib/registry.js';
@@ -218,6 +218,24 @@ async function wizard(flagTargets) {
   }
 }
 
+// Installing replaces whatever sits where a skill goes. If that is something the user
+// wrote by hand, it is the one thing an install can destroy — so it is named first and
+// they decide. Silence here is what made someone lose three months of work with a backup
+// they never knew to restore.
+async function guardCollisions(targets, ids) {
+  const hit = [...new Set(targets.flatMap((t) => collisions({ target: t, skillIds: ids })))];
+  if (!hit.length) return true;
+  say(`\n⚠️  These are already here and rsc did not put them — they look like your own work:`);
+  for (const id of hit) say(`     ${id}`);
+  say('   Installing would replace them. A backup is kept, but you would have to know to restore it.');
+  if (!isInteractive()) {
+    console.error('rsc: refusing to overwrite hand-written skills. Rename them, or re-run with --force.');
+    process.exitCode = 1;
+    return false;
+  }
+  return confirm('Replace them anyway?');
+}
+
 async function main() {
   // One resolution for every command, doctor included: `doctor` used to resolve on its
   // own and could report a different assistant than the one just installed into.
@@ -256,6 +274,7 @@ async function main() {
         requested.push(argv[i]);
       }
       const ids = withDefaultSkillFloor(requested);
+      if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
       for (const t of targets) await applyInstall({ skillIds: ids, target: t });
       say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
@@ -265,6 +284,7 @@ async function main() {
       const without = argv.filter((a, i) => argv[i - 1] === '--without');
       let ids = skillsForProfile(loadManifest(), profile);
       ids = withDefaultSkillFloor(ids).filter((id) => !without.includes(id));
+      if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
       for (const t of targets) await applyInstall({ skillIds: ids, target: t });
       say(`✅ Profile '${profile}' installed for ${targets.join(', ')} (${ids.length} skills)`);
       printAgentHandoff();

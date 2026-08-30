@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { targetPaths, TARGET_IDS } from '../targets/index.js';
 import { readState } from './lib/state.js';
+import { divergence } from './lib/divergence.js';
 import { loadManifest } from './lib/manifest.js';
 import { listBackups } from './lib/backups.js';
 import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
@@ -331,6 +332,24 @@ export function contextBudget({ target, home = homedir(), cwd = process.cwd() } 
         + 'fail every time they fire. This is what a fresh clone looks like: the settings travelled, the '
         + 'scripts did not.',
       action: 'Rebuild them with `npx @ericrisco/rsc sync` from this project root.',
+    });
+  }
+  const drift = divergence({ cwd, target, home });
+  if (drift.missing.length || drift.extra.length || drift.ownMissing.length) {
+    // The day-two case: a teammate changed the harness and this checkout has not caught
+    // up. Reported always, even after someone declines to align — the divergence does not
+    // stop being true because they said no.
+    const parts = [];
+    if (drift.missing.length) parts.push(`missing ${drift.missing.join(', ')}`);
+    if (drift.ownMissing.length) parts.push(`${drift.ownMissing.join(', ')} declared by the team but not in this repo`);
+    if (drift.extra.length) parts.push(`${drift.extra.join(', ')} installed but no longer declared`);
+    findings.push({
+      id: 'manifest-divergence',
+      severity: 'medium',
+      summary: `This checkout does not match what .rsc.json declares: ${parts.join('; ')}.`,
+      action: drift.ownMissing.length && !drift.missing.length && !drift.extra.length
+        ? 'Those come from the repo, not from rsc — pull, or ask whoever wrote them.'
+        : 'Align with `npx @ericrisco/rsc sync`. Nothing is written until you run it.',
     });
   }
   findings.push(...duplicateEntryFindings(scopes));

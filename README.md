@@ -52,6 +52,7 @@ user wants**, reads the repo, then installs the floor (`orient` + `rsc-suggest` 
 `init`) plus only the skills that fit — one at a time. No global install and no API key needed.
 
 - **Choose assistants non-interactively:** `npx @ericrisco/rsc@latest --target claude` (comma-separate for several).
+- **Two assistants already installed?** rsc asks instead of guessing. `--target` settles it in one word.
 - **Already installed, just refreshing skills + hooks:** `rsc sync` (or re-run the command above).
 - **Add one skill by id:** `rsc add <id>` · **browse the catalog:** `rsc consult "<what you want>"` or `rsc list`.
 
@@ -202,6 +203,44 @@ rsc uninstall postgresdb --dry-run   # preview a removal
 ```
 
 ---
+
+
+## 👥 Sharing a harness with your team
+
+The harness travels by git, but not all of it — and the split is the point.
+
+**Commit these:**
+
+| | |
+| --- | --- |
+| `.rsc.json` | The decision: which assistants, which skills, **which catalog version**, the developer tier, which gates you disarmed |
+| `01-TOOLS/` · `02-DOCS/` | Your tooling and your wiki, if you use them |
+| Skills and agents you wrote by hand | They are yours. rsc does not claim them, does not count them as drift, and does not touch them |
+
+**Do not commit these** — rsc adds them to `.gitignore` for you:
+
+| | Why |
+| --- | --- |
+| `.rsc/` | Machine state: hook scripts, seals, logs |
+| The skill entries rsc manages | Symlinks on macOS/Linux, real copies on Windows — two incompatible shapes of one thing |
+
+Whoever clones runs **one command** and ends up with the same harness:
+
+```bash
+npx @ericrisco/rsc@latest sync
+```
+
+Same skills, same version — `.rsc.json` pins the catalog, so a teammate who clones in three
+months gets what you had, not what shipped since. Upgrading is a deliberate act, never a side
+effect of rebuilding.
+
+When someone changes the harness and you `git pull`, `rsc doctor` tells you what no longer
+matches. **Nothing is ever written to your machine by a pull** — you are told, and you decide.
+
+**Own skills.** A skill your team wrote lives in the repo and already works for whoever clones,
+with no command at all. Declare it in `.rsc.json` under `ownSkills` and `doctor` will also say
+when someone is missing it — that is all declaring does. rsc never installs, updates or
+overwrites it: its version is the commit.
 
 ## Update
 

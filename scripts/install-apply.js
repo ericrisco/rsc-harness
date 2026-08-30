@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { rmSync, existsSync, cpSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
-import { join, dirname, basename } from 'node:path';
+import { join, dirname, basename, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
@@ -156,7 +156,7 @@ export async function applyInstall({ skillIds, target, home, cwd = process.cwd()
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
   writeFileSync(versionFile(cwd), CLI_VERSION + '\n');
   recordInManifest({ cwd, target, skillIds });
-  ignoreLocalState(cwd);
+  ignoreLocalState(cwd, target);
   return { ...state, backup };
 }
 
@@ -168,21 +168,52 @@ export async function applyInstall({ skillIds, target, home, cwd = process.cwd()
 // Additive and idempotent by construction: append one line to an existing
 // .gitignore, never rewrite or reorder it, and never create the file in a directory
 // that is not a git repository.
-export function ignoreLocalState(cwd = process.cwd()) {
+export function ignoreLocalState(cwd = process.cwd(), target) {
   if (!existsSync(join(cwd, '.git'))) return null;
   const gi = join(cwd, '.gitignore');
   let text = '';
   try { text = existsSync(gi) ? readFileSync(gi, 'utf8') : ''; } catch { return null; }
-  const already = text.split('\n').some((l) => {
-    const s = l.trim().replace(/\/$/, '');
-    return s === '.rsc' || s === '/.rsc';
-  });
-  if (already) return null;
+
+  // `.rsc/` is machine state. The per-target skill entries are derived: symlinks here,
+  // real copies on Windows, so committing either shape puts two incompatible forms of the
+  // same thing into one repo.
+  //
+  // But `claude` writes into `.claude/skills/` and `cursor` into `.cursor/rules/`, which
+  // are SHARED with the user — their own skills and rules live there too. Excluding the
+  // whole directory would quietly stop versioning their work, which is the same sin this
+  // release exists to fix: treating what is theirs as if it were ours. So shared
+  // directories are excluded entry by entry, and only the entries rsc manages.
+  const wanted = ['.rsc/'];
+  if (target) {
+    const paths = targetPaths(target, undefined, cwd);
+    const rel = (abs) => relative(cwd, abs).split(sep).join('/');
+    for (const id of Object.keys(readState(paths.stateFile).skills || {})) wanted.push(rel(paths.skillDir(id)));
+    // The per-file ledger is derived AND platform-shaped (symlink here, real copy on
+    // Windows), so committing it puts two incompatible inventories of one thing in one
+    // repo. The declaration that does travel is .rsc.json, in the root.
+    wanted.push(rel(paths.stateFile));
+    // Subagents are catalog content, re-materialised by every install and sync.
+    for (const f of agentNames()) wanted.push(rel(agentPath(target, cwd, f)));
+  }
+  // `.rsc`, `/.rsc` and `.rsc/` are the same rule to git. Normalising both ends is what
+  // keeps this idempotent against a .gitignore a human wrote in their own spelling.
+  const norm = (l) => l.trim().replace(/^\//, '').replace(/\/$/, '');
+  const present = new Set(text.split('\n').map(norm));
+  const add = wanted.filter((w) => !present.has(norm(w)));
+  if (!add.length) return null;
+
+  // Append only. Never rewrite, never reorder: the rest of that file is theirs.
   const prefix = text === '' ? '' : (text.endsWith('\n') ? '' : '\n');
   try {
-    appendFileSync(gi, `${prefix}\n# rsc local state (hooks, seals, logs) — machine-local, never committed\n.rsc/\n`);
+    appendFileSync(gi, `${prefix}\n# rsc local state (hooks, seals, logs) and managed skill links — machine-local\n${add.join('\n')}\n`);
     return gi;
   } catch { return null; }
+}
+
+export function collisions({ cwd = process.cwd(), target, home, skillIds = [] }) {
+  const paths = targetPaths(target, home, cwd);
+  const managed = new Set(Object.keys(readState(paths.stateFile).skills || {}));
+  return skillIds.filter((id) => !managed.has(id) && existsSync(paths.skillDir(id)));
 }
 
 export function listInstalled({ target, home, cwd = process.cwd() }) {
@@ -221,17 +252,22 @@ export async function uninstall({ skillIds, target, home, cwd = process.cwd(), d
 export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun = false }) {
   const paths = targetPaths(target, home, cwd);
   const state = readState(paths.stateFile);
+  // The per-target state is machine wiring and does not travel, so a fresh clone has
+  // none of it: sync found zero skills and did nothing, leaving someone with a repo that
+  // declares a harness and has none. The committed manifest is exactly the declaration
+  // to rebuild from, and it is sitting right there.
   const ids = Object.keys(state.skills || {});
-  if (!ids.length) return dryRun ? { dryRun: true, synced: [], paths: [] } : { synced: [], backup: null };
+  const declared = ids.length ? ids : (readManifest(cwd)?.skills || []);
+  if (!declared.length) return dryRun ? { dryRun: true, synced: [], paths: [] } : { synced: [], backup: null };
   if (dryRun) {
     return {
       dryRun: true,
-      synced: ids,
-      paths: managedPathsForInstall({ skillIds: ids, target, home, cwd }),
+      synced: declared,
+      paths: managedPathsForInstall({ skillIds: declared, target, home, cwd }),
     };
   }
-  const nextState = await applyInstall({ skillIds: ids, target, home, cwd, operation: 'sync' });
-  return { synced: ids, backup: nextState.backup };
+  const nextState = await applyInstall({ skillIds: declared, target, home, cwd, operation: 'sync' });
+  return { synced: declared, backup: nextState.backup };
 }
 
 // Remove EVERYTHING rsc put in this project: installed skills across all targets,
