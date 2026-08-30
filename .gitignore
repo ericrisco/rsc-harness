@@ -28,3 +28,6 @@ docs/
 
 node_modules/
 coverage/
+
+# Worktrees created for isolated feature work — the directory is scratch, never content.
+.worktrees/

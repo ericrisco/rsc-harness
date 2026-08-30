@@ -7,7 +7,8 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { specCompleteness } from './lib/spec-gate.js';
+import { execFileSync } from 'node:child_process';
+import { specCompleteness, statusClaims, checkClaims } from './lib/spec-gate.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_DIR = join(ROOT, '02-DOCS', 'wiki', 'sdd', 'specs');
@@ -22,6 +23,30 @@ function defaultTargets() {
   }
 }
 
+// The repository, asked instead of assumed. Returns null when there is nothing to ask — a
+// report-only instrument that crashes where it cannot look is worse than one that says so.
+function gitProbe(root) {
+  const git = (args) => execFileSync('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  let main;
+  try {
+    git(['rev-parse', '--git-dir']);
+    // Prefer the remote tip: a stale local `main` would report merged work as missing.
+    main = (() => { try { git(['rev-parse', '--verify', 'origin/main']); return 'origin/main'; } catch { return 'main'; } })();
+    git(['rev-parse', '--verify', main]);
+  } catch {
+    return null;
+  }
+  return {
+    hasCommit: (sha) => { try { git(['cat-file', '-e', `${sha}^{commit}`]); return true; } catch { return false; } },
+    isAncestor: (sha) => { try { git(['merge-base', '--is-ancestor', sha, main]); return true; } catch { return false; } },
+    // The squash-merge subject carries `(#N)`; --fixed-strings so the parens are not a regex.
+    hasPr: (n) => { try { return git(['log', main, '--grep', `(#${n})`, '--fixed-strings', '-1', '--format=%H']) !== ''; } catch { return false; } },
+    hasTag: (v) => { try { return git(['tag', '-l', `v${v}`]) !== ''; } catch { return false; } },
+  };
+}
+
+const statusOf = (text) => (/^status:[ \t]*(.*)$/m.exec(text) || [, ''])[1];
+
 function main() {
   const args = process.argv.slice(2);
   const targets = args.length ? args : defaultTargets();
@@ -31,8 +56,11 @@ function main() {
   }
 
   let failed = 0;
+  let drifted = 0;
+  const probe = gitProbe(ROOT);
   for (const path of targets) {
-    const r = specCompleteness(readFileSync(path, 'utf8'));
+    const text = readFileSync(path, 'utf8');
+    const r = specCompleteness(text);
     const name = basename(path);
     if (r.ok) {
       const typed = r.openPoints.length - r.untyped.length;
@@ -40,17 +68,25 @@ function main() {
       if (r.untyped.length) {
         console.log(`      untyped (treated as open questions): ${r.untyped.length}`);
       }
-    } else {
+    }
+    if (!r.ok) {
       failed += 1;
       console.log(`FAIL  ${name}`);
       if (r.missing.length) console.log(`      missing section(s): ${r.missing.join(', ')}`);
       if (r.empty.length) console.log(`      section(s) with no content: ${r.empty.join(', ')}`);
     }
+    // A status that still matches the repository prints nothing: the report grows only where there
+    // is something to act on (P5).
+    for (const v of checkClaims(statusClaims(statusOf(text)), probe)) {
+      if (v.verdict === 'holds') continue;
+      if (v.verdict === 'stale') drifted += 1;
+      console.log(`      status ${v.verdict.toUpperCase()}: ${v.raw} — ${v.reason}`);
+    }
   }
 
   // A green here is narrower than the rule it enforces, so it says so every run rather than
   // letting the reader assume the gate covered more than it did.
-  console.log(`\n${targets.length - failed}/${targets.length} pass. Not checked by this gate:`);
+  console.log(`\n${targets.length - failed}/${targets.length} pass, ${drifted} status claim(s) contradicted by the repo${probe ? '' : ' (no repository to ask)'}. Not checked by this gate:`);
   for (const u of specCompleteness('').unchecked) console.log(`  - ${u}`);
   if (failed) process.exit(1);
 }
