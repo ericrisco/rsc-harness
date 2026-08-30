@@ -40,6 +40,35 @@ function selloStatus(root) {
   } catch { return { enabled: false }; }
 }
 
+// A wired hook is a promise to run a file. `settings.json` existing only proves the
+// promise was made — and a fresh clone brings that file (committed) without .rsc/
+// (ignored), so every session start fails while the report says all-clear. Read the
+// commands we wired and check the files they name actually exist.
+//
+// Hookless targets get an empty list by construction: their always-on surface is a
+// markdown block with no script behind it, so there is nothing that can go missing.
+export function missingHookScripts({ target, home = homedir(), cwd = process.cwd() } = {}) {
+  if (HOOKLESS_TARGETS.has(target)) return [];
+  const file = targetPaths(target, home, cwd).hookTarget;
+  let settings;
+  try { settings = JSON.parse(readFileSync(file, 'utf8')); } catch { return []; }
+  const commands = [];
+  for (const entries of Object.values(settings?.hooks || {})) {
+    if (!Array.isArray(entries)) continue;
+    for (const entry of entries) for (const h of entry?.hooks || []) {
+      if (typeof h?.command === 'string') commands.push(h.command);
+    }
+  }
+  const seen = new Set();
+  for (const cmd of commands) {
+    for (const m of cmd.matchAll(/["']?([^"'\s]*[\\/]\.rsc[\\/][^"'\s]+\.mjs)["']?/g)) {
+      const script = m[1];
+      if (!existsSync(script)) seen.add(script);
+    }
+  }
+  return [...seen];
+}
+
 export function doctor({ target, home, cwd }) {
   const root = cwd || process.cwd();
   const paths = targetPaths(target, home, cwd);
@@ -50,7 +79,8 @@ export function doctor({ target, home, cwd }) {
     target,
     installed: Object.keys(state.skills),
     missing: [],
-    hookWired: existsSync(paths.hookTarget),
+    // Wired means it can actually run, not merely that the file declaring it is there.
+    hookWired: existsSync(paths.hookTarget) && missingHookScripts({ target, home, cwd }).length === 0,
     manifestSkills: manifest.counts.skills,
     backups: {
       exists: existsSync(join(root, '.rsc', 'backups')),
@@ -283,6 +313,19 @@ export function contextBudget({ target, home = homedir(), cwd = process.cwd() } 
         + `injected block lands ${wired.length} times — about ${doubled} wasted bytes per session.`,
       action: 'Keep ONE scope. Remove the other with `npx @ericrisco/rsc uninstall --all` run from that '
         + 'root, or update both to a version that de-duplicates at runtime.',
+    });
+  }
+  const orphanScripts = missingHookScripts({ target, home, cwd });
+  if (orphanScripts.length) {
+    // ONE finding, not one per file: a clone is missing all eight at once, and a list of
+    // eight paths buries the single thing the reader has to do (principle 5).
+    findings.push({
+      id: 'hook-scripts-missing',
+      severity: 'high',
+      summary: `${orphanScripts.length} hook script(s) named by the wiring are not on disk, so those hooks `
+        + 'fail every time they fire. This is what a fresh clone looks like: the settings travelled, the '
+        + 'scripts did not.',
+      action: 'Rebuild them with `npx @ericrisco/rsc sync` from this project root.',
     });
   }
   findings.push(...duplicateEntryFindings(scopes));

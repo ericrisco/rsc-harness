@@ -29,6 +29,11 @@ function interactive() {
   return Boolean(stdin.isTTY && stdout.isTTY);
 }
 
+// The one criterion for "is a human here to answer". Exported so target resolution
+// asks the same question the TUI already asks — two criteria for one question is how
+// a terminal run and a CI run drift apart.
+export const isInteractive = interactive;
+
 const C = {
   dim: (s) => `\x1b[2m${s}\x1b[22m`,
   bold: (s) => `\x1b[1m${s}\x1b[22m`,
