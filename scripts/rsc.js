@@ -1,21 +1,31 @@
 #!/usr/bin/env node
 import { loadManifest, skillsForProfile } from './lib/manifest.js';
-import { detectTarget, TARGETS } from '../targets/index.js';
+import { detectTarget, resolveTargets, TARGETS } from '../targets/index.js';
 import { detectRepo } from './detect-repo.js';
 import { rank } from './consult.js';
 import { expandRecommends, toOutcomes, hasOutcome } from './lib/recommend.js';
-import { applyInstall, listInstalled, uninstall, syncInstalled, purge } from './install-apply.js';
+import { applyInstall, listInstalled, uninstall, syncInstalled, purge, collisions } from './install-apply.js';
 import { doctor } from './doctor.js';
-import { say, select, pickFrom, banner, confirm } from './lib/ui.js';
+import { say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
 import { refreshRegistry, registryStatus } from './lib/registry.js';
 import { audit, writeAuditReport } from './audit.js';
 import { DOMAINS } from './lib/domains.js';
 import { listBackups, restoreBackup } from './lib/backups.js';
 import { runUpgrade } from './lib/upgrade.js';
+import { diagnose, repair } from './lib/repair.js';
 import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-floor.js';
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
+
+const targetLabel = (id) => TARGETS.find((t) => t.id === id)?.label || id;
+
+// Commands that act ON one assistant. Only these stop when two are installed and no
+// flag says which: `purge` sweeps every target by design, and the catalog/consult
+// side barely touches one, so blocking them would be a regression, not a safeguard.
+const NEEDS_TARGET = new Set([
+  'add', 'install', 'list', 'doctor', 'sync', 'uninstall', 'capabilities', 'catalog', 'registry',
+]);
 
 function flag(name) {
   const i = argv.indexOf(`--${name}`);
@@ -157,7 +167,7 @@ function printContextBudget(b) {
   say('════════════════════════════════════════════════\n');
 }
 
-async function wizard() {
+async function wizard(flagTargets) {
   const m = loadManifest();
   await banner(m.counts.skills);
   say('  the skill catalog for your assistant (Claude Code · Codex · Cursor · Gemini · Antigravity)\n');
@@ -190,7 +200,7 @@ async function wizard() {
       continue;
     }
 
-    const targets = await selectAgents();
+    const targets = flagTargets || await selectAgents();
     if (targets === null) continue;           // esc in the assistant picker → back to menu
     say(`\nI'll install ${ids.length} skills for: ${targets.join(', ')}`);
     say('   ' + ids.join(', '));
@@ -209,16 +219,54 @@ async function wizard() {
   }
 }
 
+// Installing replaces whatever sits where a skill goes. If that is something the user
+// wrote by hand, it is the one thing an install can destroy — so it is named first and
+// they decide. Silence here is what made someone lose three months of work with a backup
+// they never knew to restore.
+async function guardCollisions(targets, ids) {
+  const hit = [...new Set(targets.flatMap((t) => collisions({ target: t, skillIds: ids })))];
+  if (!hit.length) return true;
+  say(`\n⚠️  These are already here and rsc did not put them — they look like your own work:`);
+  for (const id of hit) say(`     ${id}`);
+  say('   Installing would replace them. A backup is kept, but you would have to know to restore it.');
+  if (!isInteractive()) {
+    console.error('rsc: refusing to overwrite hand-written skills. Rename them, or re-run with --force.');
+    process.exitCode = 1;
+    return false;
+  }
+  return confirm('Replace them anyway?');
+}
+
 async function main() {
-  // --target accepts one id or a comma list (e.g. --target claude,codex). No flag → detect.
+  // One resolution for every command, doctor included: `doctor` used to resolve on its
+  // own and could report a different assistant than the one just installed into.
+  // --target accepts one id or a comma list (e.g. --target claude,codex).
   const f = flag('target');
-  const targets = typeof f === 'string'
-    ? f.split(',').map((s) => s.trim()).filter(Boolean)
-    : [detectTarget()];
+  const resolved = resolveTargets({ flagValue: typeof f === 'string' ? f : undefined });
+  let targets = resolved.ids;
+  if (resolved.ambiguous && NEEDS_TARGET.has(cmd)) {
+    // Two installations, no flag: the whole point of this release is that we do NOT pick.
+    if (isInteractive()) {
+      const picked = await pickFrom(
+        'Two assistants are installed here. Which one do you mean?',
+        resolved.ambiguous.map((id) => ({ id, label: `${targetLabel(id)}  (${listInstalled({ target: id }).length} skills)` })),
+      );
+      if (!picked || !picked.length) return void say('Cancelled — nothing was touched.');
+      targets = picked;
+    } else {
+      console.error(
+        `rsc: ${resolved.ambiguous.join(' and ')} are both installed here, so I will not guess.\n` +
+        `     Say which one:  npx @ericrisco/rsc ${cmd} --target ${resolved.ambiguous[0]}`,
+      );
+      process.exitCode = 1;
+      return;
+    }
+  }
+  if (!targets.length) targets = [detectTarget()];
   const target = targets[0];
   switch (cmd) {
     case undefined:
-      return wizard();
+      return wizard(f ? targets : null);
     case 'add': {
       // Positional args = skill ids; skip flags and any flag value (the token after a --flag).
       const requested = [];
@@ -227,6 +275,7 @@ async function main() {
         requested.push(argv[i]);
       }
       const ids = withDefaultSkillFloor(requested);
+      if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
       for (const t of targets) await applyInstall({ skillIds: ids, target: t });
       say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
@@ -236,6 +285,7 @@ async function main() {
       const without = argv.filter((a, i) => argv[i - 1] === '--without');
       let ids = skillsForProfile(loadManifest(), profile);
       ids = withDefaultSkillFloor(ids).filter((id) => !without.includes(id));
+      if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
       for (const t of targets) await applyInstall({ skillIds: ids, target: t });
       say(`✅ Profile '${profile}' installed for ${targets.join(', ')} (${ids.length} skills)`);
       printAgentHandoff();
@@ -577,11 +627,34 @@ async function main() {
       const removed = await uninstall({ skillIds: ids, target, dryRun: dry });
       return void say((dry ? 'Would remove:\n' : 'Removed:\n') + (removed.join('\n') || '(nothing)'));
     }
+    case 'repair': {
+      // One command, no flags, for someone who does not know what is wrong. Restorations
+      // happen on their own; anything that changes a decision is asked, one by one.
+      const dry = argv.includes('--dry-run');
+      const yes = argv.includes('--yes');
+      const found = diagnose({ target, invoked: true });
+      if (!found.length) return void say('Nothing to repair — this harness is healthy.');
+      say(`\nFound ${found.length} thing(s):\n`);
+      for (const f of found) say(`  [${f.class === 'restore' ? 'fix' : 'ask'}] ${f.summary}\n      → ${f.action}`);
+      const accept = async (f) => {
+        if (yes) return true;
+        if (!isInteractive()) return false;
+        return confirm(`\nApply: ${f.summary}`);
+      };
+      const r = await repair({ target, dryRun: dry, invoked: true, accept });
+      say('');
+      if (dry) return void say(`Dry run — nothing written. Would apply ${r.applied.length}.`);
+      say(`Repaired ${r.applied.length} thing(s).${r.backup ? ' A copy of the previous state was kept.' : ''}`);
+      for (const p of r.pending) say(`  still pending (your call): ${p.summary}\n      → ${p.action}`);
+      return void say('   ↻ Reload/restart your assistant.');
+    }
     case 'purge':
       return void (await runPurge(argv.includes('--dry-run'), argv.includes('--with-docs')));
     default:
       say(`rsc: unknown command '${cmd}'.`);
-      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | uninstall <id> | purge');
+      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
+      say('Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)');
+      say('   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.');
       process.exitCode = 1;
   }
 }

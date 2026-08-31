@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { targetPaths, TARGET_IDS } from '../targets/index.js';
 import { readState } from './lib/state.js';
+import { divergence } from './lib/divergence.js';
 import { loadManifest } from './lib/manifest.js';
 import { listBackups } from './lib/backups.js';
 import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
@@ -40,6 +41,40 @@ function selloStatus(root) {
   } catch { return { enabled: false }; }
 }
 
+// A wired hook is a promise to run a file. `settings.json` existing only proves the
+// promise was made — and a fresh clone brings that file (committed) without .rsc/
+// (ignored), so every session start fails while the report says all-clear. Read the
+// commands we wired and check the files they name actually exist.
+//
+// Hookless targets get an empty list by construction: their always-on surface is a
+// markdown block with no script behind it, so there is nothing that can go missing.
+export function missingHookScripts({ target, home = homedir(), cwd = process.cwd() } = {}) {
+  if (HOOKLESS_TARGETS.has(target)) return [];
+  const file = targetPaths(target, home, cwd).hookTarget;
+  let settings;
+  try { settings = JSON.parse(readFileSync(file, 'utf8')); } catch { return []; }
+  const commands = [];
+  for (const entries of Object.values(settings?.hooks || {})) {
+    if (!Array.isArray(entries)) continue;
+    for (const entry of entries) for (const h of entry?.hooks || []) {
+      if (typeof h?.command === 'string') commands.push(h.command);
+    }
+  }
+  const seen = new Set();
+  // Commands name the project through ${CLAUDE_PROJECT_DIR}, which only the client
+  // expands. Resolve it here or every wired script reads as missing and the report
+  // calls a healthy install broken — the mirror image of the bug this check fixes.
+  const expand = (c) => c.split('${CLAUDE_PROJECT_DIR}').join(cwd);
+  for (const raw of commands) {
+    const cmd = expand(raw);
+    for (const m of cmd.matchAll(/["']?([^"'\s]*[\\/]\.rsc[\\/][^"'\s]+\.mjs)["']?/g)) {
+      const script = m[1];
+      if (!existsSync(script)) seen.add(script);
+    }
+  }
+  return [...seen];
+}
+
 export function doctor({ target, home, cwd }) {
   const root = cwd || process.cwd();
   const paths = targetPaths(target, home, cwd);
@@ -50,7 +85,8 @@ export function doctor({ target, home, cwd }) {
     target,
     installed: Object.keys(state.skills),
     missing: [],
-    hookWired: existsSync(paths.hookTarget),
+    // Wired means it can actually run, not merely that the file declaring it is there.
+    hookWired: existsSync(paths.hookTarget) && missingHookScripts({ target, home, cwd }).length === 0,
     manifestSkills: manifest.counts.skills,
     backups: {
       exists: existsSync(join(root, '.rsc', 'backups')),
@@ -283,6 +319,37 @@ export function contextBudget({ target, home = homedir(), cwd = process.cwd() } 
         + `injected block lands ${wired.length} times — about ${doubled} wasted bytes per session.`,
       action: 'Keep ONE scope. Remove the other with `npx @ericrisco/rsc uninstall --all` run from that '
         + 'root, or update both to a version that de-duplicates at runtime.',
+    });
+  }
+  const orphanScripts = missingHookScripts({ target, home, cwd });
+  if (orphanScripts.length) {
+    // ONE finding, not one per file: a clone is missing all eight at once, and a list of
+    // eight paths buries the single thing the reader has to do (principle 5).
+    findings.push({
+      id: 'hook-scripts-missing',
+      severity: 'high',
+      summary: `${orphanScripts.length} hook script(s) named by the wiring are not on disk, so those hooks `
+        + 'fail every time they fire. This is what a fresh clone looks like: the settings travelled, the '
+        + 'scripts did not.',
+      action: 'Rebuild them with `npx @ericrisco/rsc repair` from this project root.',
+    });
+  }
+  const drift = divergence({ cwd, target, home });
+  if (drift.missing.length || drift.extra.length || drift.ownMissing.length) {
+    // The day-two case: a teammate changed the harness and this checkout has not caught
+    // up. Reported always, even after someone declines to align — the divergence does not
+    // stop being true because they said no.
+    const parts = [];
+    if (drift.missing.length) parts.push(`missing ${drift.missing.join(', ')}`);
+    if (drift.ownMissing.length) parts.push(`${drift.ownMissing.join(', ')} declared by the team but not in this repo`);
+    if (drift.extra.length) parts.push(`${drift.extra.join(', ')} installed but no longer declared`);
+    findings.push({
+      id: 'manifest-divergence',
+      severity: 'medium',
+      summary: `This checkout does not match what .rsc.json declares: ${parts.join('; ')}.`,
+      action: drift.ownMissing.length && !drift.missing.length && !drift.extra.length
+        ? 'Those come from the repo, not from rsc — pull, or ask whoever wrote them.'
+        : 'Align with `npx @ericrisco/rsc sync`. Nothing is written until you run it.',
     });
   }
   findings.push(...duplicateEntryFindings(scopes));

@@ -1,9 +1,10 @@
-import { existsSync, lstatSync, mkdirSync, rmSync, symlinkSync, cpSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, rmSync, symlinkSync, cpSync, readFileSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { homedir } from 'node:os';
 import * as claudeAdapter from './claude.js';
 import * as cursorAdapter from './cursor.js';
 import * as mdAdapter from './_md-block.js';
+import { readManifest } from '../scripts/lib/manifest-file.js';
 
 // Project-local single source of truth. Real skill files live here exactly once;
 // every assistant gets a lightweight pointer (symlink) back to it — no duplication.
@@ -83,26 +84,72 @@ export const TARGETS = [
   { id: 'aider', label: 'Aider', hint: 'CONVENTIONS.md' },
 ];
 
-// Best-effort default for the wizard's pre-mark. Unique config dirs win; the
-// shared AGENTS.md / GEMINI.md fall through to codex / gemini.
+// Which assistants are actually installed here, read from the state file each one
+// writes. This is evidence: only an install of ours writes it. Everything below
+// (detectTarget) is inference from files a human — or our own `harness` skill —
+// may have written for unrelated reasons. Order follows SPEC so the ambiguity
+// message is deterministic. A missing, empty or unreadable state means "not
+// installed", never an error: a half-written file must not break resolution.
+export function installedTargets(cwd = process.cwd()) {
+  return TARGET_IDS.filter((id) => {
+    try {
+      const state = JSON.parse(readFileSync(targetPaths(id, undefined, cwd).stateFile, 'utf8'));
+      return Object.keys(state.skills || {}).length > 0;
+    } catch { return false; }
+  });
+}
+
+// Inference, used only when there is no evidence. Unique config dirs win.
+//
+// Two rules here are scar tissue from issue #249. Claude Code had NO signal at
+// all — it was merely the final fallthrough — so any repo with a root AGENTS.md
+// resolved to codex even with .claude/ full of skills. And AGENTS.md is the
+// weakest signal on purpose: our own `harness` skill writes one into every repo
+// it equips, so treating it as a strong hint made the harness poison its own
+// detection the moment it ran once.
 export function detectTarget(cwd = process.cwd()) {
-  const dir = (d) => existsSync(join(cwd, d));
-  if (dir('.cursor')) return 'cursor';
-  if (dir('.windsurf')) return 'windsurf';
-  if (dir('.clinerules')) return 'cline';
-  if (dir('.roo')) return 'roo';
-  if (dir('.continue')) return 'continue';
-  if (dir('.junie')) return 'junie';
-  if (dir('.kiro')) return 'kiro';
-  if (dir('.zed')) return 'zed';
-  if (dir('.opencode')) return 'opencode';
-  if (dir('.amp')) return 'amp';
-  if (dir('.jules')) return 'jules';
-  if (dir('.antigravity')) return 'antigravity';
-  if (existsSync(join(cwd, '.github', 'copilot-instructions.md'))) return 'copilot';
-  if (dir('.codex') || dir('AGENTS.md')) return 'codex';
-  if (dir('.gemini') || dir('GEMINI.md')) return 'gemini';
+  const has = (p) => existsSync(join(cwd, p));
+  if (has('.cursor')) return 'cursor';
+  if (has('.windsurf')) return 'windsurf';
+  if (has('.clinerules')) return 'cline';
+  if (has('.roo')) return 'roo';
+  if (has('.continue')) return 'continue';
+  if (has('.junie')) return 'junie';
+  if (has('.kiro')) return 'kiro';
+  if (has('.zed')) return 'zed';
+  if (has('.opencode')) return 'opencode';
+  if (has('.amp')) return 'amp';
+  if (has('.jules')) return 'jules';
+  if (has('.antigravity')) return 'antigravity';
+  if (has(join('.github', 'copilot-instructions.md'))) return 'copilot';
+  if (has('.claude') || has('CLAUDE.md')) return 'claude';
+  if (has('.codex')) return 'codex';
+  if (has('.gemini') || has('GEMINI.md')) return 'gemini';
+  if (has('AGENTS.md')) return 'codex';       // weakest: our own harness writes this
   return 'claude';
+}
+
+// The single point of truth for "which assistant are we acting on". Every command
+// goes through here — including doctor, which used to resolve on its own and so
+// could report a different target than the one just installed into.
+//
+// Ambiguity is a distinct outcome, not a value the caller might mistake for an id:
+// returning a sentinel string would let a forgetful caller pass it to targetPaths()
+// and die with `unknown target`. `ids` empty + `ambiguous` set cannot be used by
+// accident.
+export function resolveTargets({ cwd = process.cwd(), flagValue } = {}) {
+  if (typeof flagValue === 'string' && flagValue.trim()) {
+    const ids = flagValue.split(',').map((s) => s.trim()).filter(Boolean);
+    return { ids, ambiguous: null, source: 'flag' };
+  }
+  // The committed manifest is what the team decided, so it outranks what happens to be
+  // on this machine. Two targets here is not ambiguity — it is the team saying "both".
+  const declared = readManifest(cwd)?.targets || [];
+  if (declared.length) return { ids: declared, ambiguous: null, source: 'manifest' };
+  const found = installedTargets(cwd);
+  if (found.length === 1) return { ids: found, ambiguous: null, source: 'evidence' };
+  if (found.length > 1) return { ids: [], ambiguous: found, source: 'evidence' };
+  return { ids: [detectTarget(cwd)], ambiguous: null, source: 'heuristic' };
 }
 
 export function targetPaths(target, home = homedir(), cwd = process.cwd()) {

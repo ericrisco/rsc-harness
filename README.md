@@ -52,6 +52,7 @@ user wants**, reads the repo, then installs the floor (`orient` + `rsc-suggest` 
 `init`) plus only the skills that fit — one at a time. No global install and no API key needed.
 
 - **Choose assistants non-interactively:** `npx @ericrisco/rsc@latest --target claude` (comma-separate for several).
+- **Two assistants already installed?** rsc asks instead of guessing. `--target` settles it in one word.
 - **Already installed, just refreshing skills + hooks:** `rsc sync` (or re-run the command above).
 - **Add one skill by id:** `rsc add <id>` · **browse the catalog:** `rsc consult "<what you want>"` or `rsc list`.
 
@@ -202,6 +203,75 @@ rsc uninstall postgresdb --dry-run   # preview a removal
 ```
 
 ---
+
+
+## 👥 Sharing a harness with your team
+
+The harness travels by git, but not all of it — and the split is the point.
+
+**Commit these:**
+
+| | |
+| --- | --- |
+| `.rsc.json` | The decision: which assistants, which skills, **which catalog version**, the developer tier, which gates you disarmed |
+| `01-TOOLS/` · `02-DOCS/` | Your tooling and your wiki, if you use them |
+| Skills and agents you wrote by hand | They are yours. rsc does not claim them, does not count them as drift, and does not touch them |
+
+**Do not commit these** — rsc adds them to `.gitignore` for you:
+
+| | Why |
+| --- | --- |
+| `.rsc/` | Machine state: hook scripts, seals, logs |
+| The skill entries rsc manages | Symlinks on macOS/Linux, real copies on Windows — two incompatible shapes of one thing |
+
+Whoever clones runs **one command** and ends up with the same harness:
+
+```bash
+npx @ericrisco/rsc@latest sync
+```
+
+Same skills, same version — `.rsc.json` pins the catalog, so a teammate who clones in three
+months gets what you had, not what shipped since. Upgrading is a deliberate act, never a side
+effect of rebuilding.
+
+When someone changes the harness and you `git pull`, `rsc doctor` tells you what no longer
+matches. **Nothing is ever written to your machine by a pull** — you are told, and you decide.
+
+**Own skills.** A skill your team wrote lives in the repo and already works for whoever clones,
+with no command at all. Declare it in `.rsc.json` under `ownSkills` and `doctor` will also say
+when someone is missing it — that is all declaring does. rsc never installs, updates or
+overwrites it: its version is the commit.
+
+
+## 🩹 Something's off? One command
+
+Recognise any of these? They are all the same fix.
+
+| What you see | |
+| --- | --- |
+| `"target": "codex"` when you work in Claude Code | |
+| `This target has no hook injection` and you did not expect that | |
+| Skills appear that you never asked for | |
+| You cloned a repo and your assistant sees no skills at all | |
+| A hook seems to run several times per turn | |
+| Template lines showed up inside your hand-written `AGENTS.md` | |
+
+```bash
+npx @ericrisco/rsc@latest repair
+```
+
+Safe in any folder: with no rsc there, it says so and writes nothing. It shows what it
+found before touching anything, keeps a recoverable copy, and running it twice changes
+nothing the second time. Add `--dry-run` to see the whole pass without a single write.
+
+**What it fixes on its own** — putting the harness back to what was already declared:
+dangling links from a clone, hooks wired several times, the 0.1 layout no assistant reads.
+
+**What it asks about** — anything that changes a decision: moving the harness to another
+assistant, or touching files you already committed.
+
+**What it never touches:** skills and agents you wrote by hand. rsc did not install them,
+so rsc does not repair, move or delete them — not even when rebuilding from scratch.
 
 ## Update
 

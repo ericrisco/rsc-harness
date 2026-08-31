@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, rmSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { linkOrCopy } from './index.js';
 
@@ -70,6 +70,15 @@ export function unwireHook(paths) {
 // entry (the old `cat …/suggest/SKILL.md` form, or a previous `.sh`/`.mjs` script
 // form) is dropped before we add the current one — idempotent, migrating legacy and
 // bash-era hooks in place. Other (non-rsc) SessionStart hooks are preserved.
+// Commands name the project through ${CLAUDE_PROJECT_DIR}, never through the absolute
+// path of the folder it happened to be installed in. Baking that path in is what made a
+// harness unshareable: a committed settings.json was broken in every other checkout, and
+// even renaming your own folder broke it. The variable is resolved by the client at run
+// time, so the same bytes work on every machine — which is the precondition for the
+// manifest being worth committing at all.
+const P = '${CLAUDE_PROJECT_DIR}';
+const at = (...seg) => `${P}/${seg.join('/')}`;
+
 export function wireHook(paths) {
   const scriptDest = join(paths.projectRoot, '.rsc', 'session-start.mjs');
   mkdirSync(dirname(scriptDest), { recursive: true });
@@ -79,7 +88,8 @@ export function wireHook(paths) {
   copyFileSync(join(HERE, 'session-start.mjs'), scriptDest);
 
   const suggestMd = `${paths.skillDir('suggest')}/SKILL.md`;
-  const cmd = `node "${scriptDest}" "${suggestMd}" "${paths.projectRoot}"`;
+  const suggestRel = at(relative(paths.projectRoot, paths.skillDir('suggest')).split(sep).join('/'), 'SKILL.md');
+  const cmd = `node "${at('.rsc', 'session-start.mjs')}" "${suggestRel}" "${P}"`;
 
   const file = paths.hookTarget;
   const settings = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
@@ -99,7 +109,7 @@ export function wireHook(paths) {
   // any prior rsc worklog-checkpoint entry (.sh or .mjs) dropped first.
   const wlDest = join(paths.projectRoot, '.rsc', 'worklog-checkpoint.mjs');
   copyFileSync(join(HERE, 'worklog-checkpoint.mjs'), wlDest);
-  const wlCmd = `node "${wlDest}" "${paths.projectRoot}"`;
+  const wlCmd = `node "${at('.rsc', 'worklog-checkpoint.mjs')}" "${P}"`;
   for (const event of ['PreCompact', 'SessionEnd']) {
     settings.hooks[event] ||= [];
     settings.hooks[event] = settings.hooks[event].filter(
@@ -118,7 +128,7 @@ export function wireHook(paths) {
   // sello.mjs is ship-guard's sibling import (hooks are materialized file-by-file,
   // so the deterministic sello core must land next to the guard that loads it).
   copyFileSync(join(HERE, 'sello.mjs'), join(paths.projectRoot, '.rsc', 'sello.mjs'));
-  const sgCmd = `node "${sgDest}" "${paths.projectRoot}"`;
+  const sgCmd = `node "${at('.rsc', 'ship-guard.mjs')}" "${P}"`;
   settings.hooks.PreToolUse ||= [];
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
     (e) => !hookWiringOf(e).includes('.rsc/ship-guard.'),
@@ -132,7 +142,7 @@ export function wireHook(paths) {
   // node-run (Windows-safe), idempotent, fail-open, opt-out via .rsc/.no-danger-guard.
   const dgDest = join(paths.projectRoot, '.rsc', 'danger-guard.mjs');
   copyFileSync(join(HERE, 'danger-guard.mjs'), dgDest);
-  const dgCmd = `node "${dgDest}" "${paths.projectRoot}"`;
+  const dgCmd = `node "${at('.rsc', 'danger-guard.mjs')}" "${P}"`;
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
     (e) => !hookWiringOf(e).includes('.rsc/danger-guard.'),
   );
@@ -147,7 +157,7 @@ export function wireHook(paths) {
   // .rsc/.no-gitmoji.
   const gmDest = join(paths.projectRoot, '.rsc', 'gitmoji-guard.mjs');
   copyFileSync(join(HERE, 'gitmoji-guard.mjs'), gmDest);
-  const gmCmd = `node "${gmDest}" "${paths.projectRoot}"`;
+  const gmCmd = `node "${at('.rsc', 'gitmoji-guard.mjs')}" "${P}"`;
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
     (e) => !hookWiringOf(e).includes('.rsc/gitmoji-guard.'),
   );
@@ -163,7 +173,7 @@ export function wireHook(paths) {
   // (non-rsc) UserPromptSubmit hooks are preserved.
   const fgDest = join(paths.projectRoot, '.rsc', 'userprompt-gate.mjs');
   copyFileSync(join(HERE, 'userprompt-gate.mjs'), fgDest);
-  const fgCmd = `node "${fgDest}" "${paths.projectRoot}"`;
+  const fgCmd = `node "${at('.rsc', 'userprompt-gate.mjs')}" "${P}"`;
   settings.hooks.UserPromptSubmit ||= [];
   settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit.filter(
     (e) => !hookWiringOf(e).includes('.rsc/userprompt-gate.'),
