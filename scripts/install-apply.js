@@ -68,7 +68,7 @@ function generatedHookFiles({ target, cwd }) {
   ];
 }
 
-function managedPathsForInstall({ skillIds, target, home, cwd }) {
+export function managedPathsForInstall({ skillIds, target, home, cwd }) {
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
@@ -102,13 +102,16 @@ function localDecisions(cwd) {
 // into codex on a machine that already had claude is adding, not replacing. Union, sorted
 // where order carries no meaning, so the file stays diffable and a merge conflict stays
 // readable.
-export function recordInManifest({ cwd, target, skillIds, catalogVersion = CLI_VERSION }) {
+export function recordInManifest({ cwd, target, skillIds, catalogVersion = CLI_VERSION, dropTarget }) {
   const prev = readManifest(cwd) || { targets: [], skills: [], ownSkills: [], optOuts: [] };
   const { optOuts, tier } = localDecisions(cwd);
   const union = (a, b) => [...new Set([...(a || []), ...(b || [])])].sort();
   return writeManifest(cwd, {
     version: 1,
-    targets: union(prev.targets, [target]),
+    // Union by default: installing into a second assistant is adding, not replacing.
+    // `dropTarget` is the one exception — a MOVE, where leaving the old one declared would
+    // have every clone rebuild a harness that was deliberately abandoned.
+    targets: union(prev.targets, [target]).filter((t) => t !== dropTarget),
     skills: union(prev.skills, skillIds),
     ownSkills: prev.ownSkills || [],
     catalogVersion,

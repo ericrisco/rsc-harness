@@ -12,6 +12,7 @@ import { audit, writeAuditReport } from './audit.js';
 import { DOMAINS } from './lib/domains.js';
 import { listBackups, restoreBackup } from './lib/backups.js';
 import { runUpgrade } from './lib/upgrade.js';
+import { diagnose, repair } from './lib/repair.js';
 import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-floor.js';
 
 const argv = process.argv.slice(2);
@@ -626,11 +627,32 @@ async function main() {
       const removed = await uninstall({ skillIds: ids, target, dryRun: dry });
       return void say((dry ? 'Would remove:\n' : 'Removed:\n') + (removed.join('\n') || '(nothing)'));
     }
+    case 'repair': {
+      // One command, no flags, for someone who does not know what is wrong. Restorations
+      // happen on their own; anything that changes a decision is asked, one by one.
+      const dry = argv.includes('--dry-run');
+      const yes = argv.includes('--yes');
+      const found = diagnose({ target, invoked: true });
+      if (!found.length) return void say('Nothing to repair — this harness is healthy.');
+      say(`\nFound ${found.length} thing(s):\n`);
+      for (const f of found) say(`  [${f.class === 'restore' ? 'fix' : 'ask'}] ${f.summary}\n      → ${f.action}`);
+      const accept = async (f) => {
+        if (yes) return true;
+        if (!isInteractive()) return false;
+        return confirm(`\nApply: ${f.summary}`);
+      };
+      const r = await repair({ target, dryRun: dry, invoked: true, accept });
+      say('');
+      if (dry) return void say(`Dry run — nothing written. Would apply ${r.applied.length}.`);
+      say(`Repaired ${r.applied.length} thing(s).${r.backup ? ' A copy of the previous state was kept.' : ''}`);
+      for (const p of r.pending) say(`  still pending (your call): ${p.summary}\n      → ${p.action}`);
+      return void say('   ↻ Reload/restart your assistant.');
+    }
     case 'purge':
       return void (await runPurge(argv.includes('--dry-run'), argv.includes('--with-docs')));
     default:
       say(`rsc: unknown command '${cmd}'.`);
-      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | uninstall <id> | purge');
+      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
       say('Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)');
       say('   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.');
       process.exitCode = 1;

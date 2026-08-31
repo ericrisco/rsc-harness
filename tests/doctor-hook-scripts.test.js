@@ -33,7 +33,7 @@ test('the missing scripts produce exactly one actionable finding, not one per fi
   const r = doctor({ target: 'claude', home: d, cwd: d });
   const hits = (r.contextBudget?.findings || []).filter((f) => f.id === 'hook-scripts-missing');
   assert.equal(hits.length, 1);
-  assert.match(hits[0].action, /sync/, 'the finding must carry its own way out');
+  assert.match(hits[0].action, /repair|sync/, 'the finding must carry its own way out (principle 6)');
 });
 
 test('hookWired stays true when the wired scripts are present', () => {

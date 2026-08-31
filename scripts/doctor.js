@@ -331,7 +331,7 @@ export function contextBudget({ target, home = homedir(), cwd = process.cwd() } 
       summary: `${orphanScripts.length} hook script(s) named by the wiring are not on disk, so those hooks `
         + 'fail every time they fire. This is what a fresh clone looks like: the settings travelled, the '
         + 'scripts did not.',
-      action: 'Rebuild them with `npx @ericrisco/rsc sync` from this project root.',
+      action: 'Rebuild them with `npx @ericrisco/rsc repair` from this project root.',
     });
   }
   const drift = divergence({ cwd, target, home });

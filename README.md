@@ -242,6 +242,37 @@ with no command at all. Declare it in `.rsc.json` under `ownSkills` and `doctor`
 when someone is missing it — that is all declaring does. rsc never installs, updates or
 overwrites it: its version is the commit.
 
+
+## 🩹 Something's off? One command
+
+Recognise any of these? They are all the same fix.
+
+| What you see | |
+| --- | --- |
+| `"target": "codex"` when you work in Claude Code | |
+| `This target has no hook injection` and you did not expect that | |
+| Skills appear that you never asked for | |
+| You cloned a repo and your assistant sees no skills at all | |
+| A hook seems to run several times per turn | |
+| Template lines showed up inside your hand-written `AGENTS.md` | |
+
+```bash
+npx @ericrisco/rsc@latest repair
+```
+
+Safe in any folder: with no rsc there, it says so and writes nothing. It shows what it
+found before touching anything, keeps a recoverable copy, and running it twice changes
+nothing the second time. Add `--dry-run` to see the whole pass without a single write.
+
+**What it fixes on its own** — putting the harness back to what was already declared:
+dangling links from a clone, hooks wired several times, the 0.1 layout no assistant reads.
+
+**What it asks about** — anything that changes a decision: moving the harness to another
+assistant, or touching files you already committed.
+
+**What it never touches:** skills and agents you wrote by hand. rsc did not install them,
+so rsc does not repair, move or delete them — not even when rebuilding from scratch.
+
 ## Update
 
 `rsc` is an npm package, so updating is two steps — bump the package, then
