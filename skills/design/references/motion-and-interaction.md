@@ -30,8 +30,8 @@ Need one that is not here? Take it from [easing.dev](https://easing.dev/), do no
 
 The choice, in decision order: entering or exiting → `ease-out`; moving on screen → `ease-in-out`;
 hover or color → `ease`; constant motion (marquee, progress) → `linear`; unsure → `ease-out`.
-`../../animate/SKILL.md` owns the full build sequence and the per-element duration table, and
-`../../review-animations/scripts/verify.sh` flags an `ease-in` that slips through.
+`../../motion-craft/SKILL.md` owns the duration ranges, the easing families and the never-animate list, and
+its diagnosis table maps the complaint — sluggish, cheap, janky — back to the cause.
 
 - **Enter vs exit asymmetry:** entrances are slower and softer (`--dur-normal`, `--ease-out`); exits are quicker and quieter (~150ms) so dismissals feel responsive.
 - **Press feedback:** `scale(0.97)` on `:active` gives a tactile button without distracting movement.

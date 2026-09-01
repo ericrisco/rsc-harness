@@ -30,7 +30,7 @@ should_not_trigger:
     route_to: "nextjs"
     why: "The build. The identity stays in the record; the framework work is the sibling's."
   - prompt: "Give me three different directions for this poster and I'll choose."
-    route_to: "prototype"
+    route_to: "variant-explorer"
     why: "Exploration among variants. One skill per style: merging two candidate identities into one spec produces the average of two good designs, which is a bad design."
 
 capability:

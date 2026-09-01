@@ -4,7 +4,7 @@
 > configures AI coding agents for a project. It reads the repository, asks which
 > assistants to target and what the user wants to build or manage, then installs only
 > the skills that fit — one at a time, so nothing unused touches the model's context.
-> 281 skills across 23 domains, each cleared an adversarial >= 8.5/10 quality gate.
+> 272 skills across 23 domains, each cleared an adversarial >= 8.5/10 quality gate.
 
 ## For AI agents: install rsc into the user's project
 
@@ -41,7 +41,7 @@ self-driving: an always-on detector proposes the next skill as tasks appear.
 
 ## Facts (verifiable)
 
-- 281 skills; profiles: minimal (8), core (31), full (281).
+- 272 skills; profiles: minimal (8), core (31), full (272).
 - 17 supported coding assistants; skill files written once and symlinked per assistant.
 - Quality gate: every skill scored >= 8.5/10 on an adversarial behavioral rubric before shipping.
 - No global install and no API key required; runs via `npx`.
