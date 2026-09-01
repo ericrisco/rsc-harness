@@ -11,9 +11,9 @@ origin: risco
 
 **Hand-off — the visual system vs the craft of motion.** This skill owns the visual system and page
 composition, and sets motion *intent + budget* only. The **implementation** of an animation is
-`../animate/SKILL.md`'s; reviewing motion is `../review-animations/SKILL.md`'s; gesture physics and
-translucent materials are `../apple-design/SKILL.md`'s. When a frontend request could belong to
-several of those, `../design-eng/SKILL.md` is the umbrella that routes it. The motion reference in
+`../motion-craft/SKILL.md`'s; how a piece of interface should be BUILT — boundaries, state, the
+loading and empty and error states — is `../ui-engineering/SKILL.md`'s. When a request could belong to
+several of those, start from the one that owns the decision, not the one that owns the file. The motion reference in
 this skill defers its mechanics to them rather than restating them.
 
 

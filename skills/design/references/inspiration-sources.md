@@ -59,7 +59,7 @@ these are for when a piece is "the footer" or "the empty state".
 | [Footer.design](https://www.footer.design) | Footers only. Narrow on purpose, and the narrowness is why it is good. |
 | [Collect UI](https://collectui.com) | Daily-UI-style collections by component and pattern. |
 | [UI Garage](https://uigarage.net) | Patterns tagged by element and by industry. |
-| [UI Movement](https://uimovement.com) | Motion and interaction specifically — pair with the frequency gate in `../../animate/SKILL.md` before copying anything. |
+| [UI Movement](https://uimovement.com) | Motion and interaction specifically — pair with the frequency gate in `../../motion-craft/SKILL.md` before copying anything. |
 | [Dark.design](https://dark.design) · [Dark Mode Design](https://darkmodedesign.com) | Dark interfaces done properly, which is a different problem from inverting a light one. |
 | [Scrnshts](https://scrnshts.club) | App Store screenshot design — a real discipline of its own. |
 
@@ -91,6 +91,6 @@ component", these outrank any gallery.
 - **[Bestfolios](https://www.bestfolios.com) returned 502 on 2026-08-24** and is excluded until it
   comes back. Do not cite it.
 - **Component ideas**, as opposed to whole pages, live in
-  `../../pick-ui-library/references/component-galleries.md` — Aceternity, 21st.dev, React Bits.
+  Component galleries — Aceternity, 21st.dev, React Bits.
 - **Identity outranks all of this.** Check `02-DOCS/wiki/brand/` for what the project refuses before
   bringing an idea back. A gallery cannot know what your brand vetoed.

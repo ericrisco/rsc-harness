@@ -40,7 +40,7 @@ and proposing from memory is how this promise used to resolve to the AI-template
 
 **Where to go looking.** For a whole page to beat, and for the flows and single patterns behind it:
 `../design/references/inspiration-sources.md`. For a component idea rather than a whole reference:
-`../pick-ui-library/references/component-galleries.md`. Browse for the technique, never to clone a
+a gallery of real products. Browse for the technique, never to clone a
 competitor's exact grid — and come back with **a specific page you can open**, because a gallery
 is not a bar.
 
@@ -152,8 +152,8 @@ how the look drifts back to generic by the fifth piece.
   this loop invokes; it stays reachable directly when there is no bar to beat and no loop to run.
 - **Codifying the winner into a permanent identity** → `../design-dna/SKILL.md`.
 - **The words** → `../marketing/SKILL.md`. **The build** → `../nextjs/SKILL.md`.
-- **Motion craft, and routing among the frontend craft siblings** → `../design-eng/SKILL.md`.
-- **"Show me a few versions and I'll pick"** → `../prototype/SKILL.md`. That is selection among
+- **Motion craft** → `../motion-craft/SKILL.md`. **How the interface should be built** → `../ui-engineering/SKILL.md`.
+- **"Show me a few versions and I'll pick"** → `../variant-explorer/SKILL.md`. That is selection among
   variants; this is convergence against a bar.
 - **SDD gate.** This skill runs a method; it does not outrank the chain. If the request is a new
   feature or a non-trivial behaviour change in a real app, `../specify/SKILL.md` runs first, then

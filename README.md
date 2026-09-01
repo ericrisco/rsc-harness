@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc — your agent needs a memory (02-DOCS/, or it invents what it cannot remember), arms (01-TOOLS/, or it never touches your database), a trade (276 skills, or it guesses how the job is done), and reflexes (deterministic hooks, or it forgets the rule mid-session). One meta-harness for 17 coding assistants." width="960">
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc — your agent needs a memory (02-DOCS/, or it invents what it cannot remember), arms (01-TOOLS/, or it never touches your database), a trade (272 skills, or it guesses how the job is done), and reflexes (deterministic hooks, or it forgets the rule mid-session). One meta-harness for 17 coding assistants." width="960">
 
-# `rsc` — 276 agent skills, one CLI, zero bloat
+# `rsc` — 272 agent skills, one CLI, zero bloat
 
 [![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
 [![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
-[![skills](https://img.shields.io/badge/skills-281-63d68a?labelColor=12161c)](#the-catalog)
+[![skills](https://img.shields.io/badge/skills-272-63d68a?labelColor=12161c)](#the-catalog)
 [![license](https://img.shields.io/badge/license-MIT-63d68a?labelColor=12161c)](LICENSE)
 [![stars](https://img.shields.io/github/stars/ericrisco/rsc-harness?color=63d68a&labelColor=12161c)](https://github.com/ericrisco/rsc-harness/stargazers)
 
@@ -17,7 +17,7 @@ skills that fit — one at a time — into every assistant you pick, and keeps t
 equipped as you work.
 
 From *"document my company"* to *"ship a FastAPI service"* to *"grow my YouTube
-channel"* — **281 skills across 23 domains**, every one researched against live
+channel"* — **272 skills across 23 domains**, every one researched against live
 2025-2026 sources and **adversarially scored ≥ 8.5/10** before it shipped.
 
 ```bash
@@ -26,7 +26,7 @@ npx @ericrisco/rsc            # plain-language wizard — no jargon, installs wh
 
 <br>
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc — the model (Claude, GPT, Gemini) is the brain your coding agent rents, and you already have that. Claude Code, Codex and opencode sit in the middle. Below them the rsc meta-harness adds everything the model lacks: memory (02-DOCS/) so it stops inventing, arms (01-TOOLS/) so it can execute, a trade (281 skills) so it stops guessing, and reflexes (deterministic hooks) so it cannot forget the rule mid-session." width="960">
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc — the model (Claude, GPT, Gemini) is the brain your coding agent rents, and you already have that. Claude Code, Codex and opencode sit in the middle. Below them the rsc meta-harness adds everything the model lacks: memory (02-DOCS/) so it stops inventing, arms (01-TOOLS/) so it can execute, a trade (272 skills) so it stops guessing, and reflexes (deterministic hooks) so it cannot forget the rule mid-session." width="960">
 
 **The model is the only part your agent already has.** `rsc` is the meta-harness that adds
 the rest: a **memory** so it stops inventing, **arms** so it can execute, a **trade** so it stops
@@ -140,7 +140,7 @@ $ rsc
  ██████╗ ███████╗ ██████╗     ← animated gradient wordmark
  ██╔══██╗██╔════╝██╔════╝
  ██████╔╝███████╗██║
-  281 skills · one CLI · zero bloat
+  272 skills · one CLI · zero bloat
 
 What do you want to do?          ↑↓ move · enter select
 ❯ Base install — the essentials (8 skills)
@@ -188,7 +188,7 @@ rsc add youtube-api remotion-video   # …grow a channel, edit with Remotion
 rsc add fastapi --target claude,codex   # install into several assistants at once
 rsc install --profile minimal        # the base: orient + suggest + bro + unslop + show-me + eli5 + harness + init
 rsc install --profile core           # floor + the full SDD workflow
-rsc install --profile full           # everything (all 281 skills)
+rsc install --profile full           # everything (all 272 skills)
 rsc install --profile full --without go
 rsc consult "I want to launch a SaaS"  # recommend only, no install
 rsc registry refresh                 # write .rsc/skill-registry.{json,md}
@@ -323,7 +323,7 @@ just asks in plain language.
 
 ## The catalog
 
-281 skills, grouped by what you're trying to do. Click any skill to read its
+272 skills, grouped by what you're trying to do. Click any skill to read its
 `SKILL.md`. It fires on its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -414,11 +414,11 @@ Train and adapt open models end to end: classic ML, deep learning, NLP, fine-tun
 
 ### 🗣️ Languages
 
-[typescript](skills/typescript/) · [python](skills/python/) · [java](skills/java/) · [csharp-dotnet](skills/csharp-dotnet/) · [php](skills/php/) · [ruby](skills/ruby/) · [cpp](skills/cpp/) · [elixir](skills/elixir/) · [bash-scripting](skills/bash-scripting/) · [sql](skills/sql/) · [go](skills/go/) · [write-swift](skills/write-swift/)
+[typescript](skills/typescript/) · [python](skills/python/) · [java](skills/java/) · [csharp-dotnet](skills/csharp-dotnet/) · [php](skills/php/) · [ruby](skills/ruby/) · [cpp](skills/cpp/) · [elixir](skills/elixir/) · [bash-scripting](skills/bash-scripting/) · [sql](skills/sql/) · [go](skills/go/)
 
 ### 🏗️ Frameworks & app stacks
 
-[fastapi](skills/fastapi/) · [nextjs](skills/nextjs/) · [react](skills/react/) · [react-native](skills/react-native/) · [vue-nuxt](skills/vue-nuxt/) · [angular](skills/angular/) · [svelte](skills/svelte/) · [astro](skills/astro/) · [solid-js](skills/solid-js/) · [htmx](skills/htmx/) · [nodejs](skills/nodejs/) · [nestjs](skills/nestjs/) · [django](skills/django/) · [laravel](skills/laravel/) · [rails](skills/rails/) · [spring-boot](skills/spring-boot/) · [phoenix](skills/phoenix/) · [flutter](skills/flutter/) · [swift-ios](skills/swift-ios/) · [kotlin-android](skills/kotlin-android/) · [compose-multiplatform](skills/compose-multiplatform/) · [expo](skills/expo/) · [tauri](skills/tauri/) · [electron](skills/electron/) · [rust](skills/rust/) · [wordpress](skills/wordpress/) · [shopify](skills/shopify/) · [no-code-app](skills/no-code-app/) · [chrome-extension](skills/chrome-extension/) · [api-design](skills/api-design/) · [pick-ui-library](skills/pick-ui-library/) · [ask-sonner](skills/ask-sonner/)
+[fastapi](skills/fastapi/) · [nextjs](skills/nextjs/) · [react](skills/react/) · [react-native](skills/react-native/) · [vue-nuxt](skills/vue-nuxt/) · [angular](skills/angular/) · [svelte](skills/svelte/) · [astro](skills/astro/) · [solid-js](skills/solid-js/) · [htmx](skills/htmx/) · [nodejs](skills/nodejs/) · [nestjs](skills/nestjs/) · [django](skills/django/) · [laravel](skills/laravel/) · [rails](skills/rails/) · [spring-boot](skills/spring-boot/) · [phoenix](skills/phoenix/) · [flutter](skills/flutter/) · [swift-ios](skills/swift-ios/) · [kotlin-android](skills/kotlin-android/) · [compose-multiplatform](skills/compose-multiplatform/) · [expo](skills/expo/) · [tauri](skills/tauri/) · [electron](skills/electron/) · [rust](skills/rust/) · [wordpress](skills/wordpress/) · [shopify](skills/shopify/) · [no-code-app](skills/no-code-app/) · [chrome-extension](skills/chrome-extension/) · [api-design](skills/api-design/)
 
 ### 🎮 Game development
 
@@ -444,7 +444,7 @@ Three engines + engine-agnostic disciplines. Every engine skill pins the current
 
 ### 🌀 Motion & interface craft
 
-[design-eng](skills/design-eng/) · [animate](skills/animate/) · [animate-expo](skills/animate-expo/) · [review-animations](skills/review-animations/) · [improve-animations](skills/improve-animations/) · [find-animation-opportunities](skills/find-animation-opportunities/) · [animation-vocabulary](skills/animation-vocabulary/) · [apple-design](skills/apple-design/) · [prototype](skills/prototype/)
+[motion-craft](skills/motion-craft/) · [ui-engineering](skills/ui-engineering/) · [variant-explorer](skills/variant-explorer/)
 
 ### 🎨 Design & content craft
 

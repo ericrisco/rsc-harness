@@ -42,7 +42,7 @@ not settle whether the page says anything.
 
 ## Where to browse for component ideas
 
-When a surface needs an idea rather than a primitive, `../../pick-ui-library/references/component-galleries.md`
+When a surface needs an idea rather than a primitive, a gallery of shipped products
 names where to go — Aceternity for marketing effects, 21st.dev for breadth, React Bits for tunable
 animation — and what each is good for. Take the technique and rebuild it in this project's tokens;
 check the brand study for what it refuses first, because a component that contradicts a stated ban

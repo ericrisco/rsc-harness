@@ -1,0 +1,38 @@
+skill: ui-engineering
+
+should_trigger:
+  - prompt: "Where should the filter state live — component, context or the URL?"
+    why: "The canonical case: the one rule this skill exists to apply."
+  - prompt: "How should I split these components? The file is getting big."
+    why: "Component boundaries, and the file-length premise is one this skill corrects."
+  - prompt: "We only render the loaded state. What else does this screen need?"
+    why: "The five states are the checklist this skill owns."
+  - prompt: "¿Valido el formulario mientras escribe o al salir del campo?"
+    why: "Form behaviour, in Spanish; the trigger is the decision, not the language."
+  - prompt: "Should I use a component library for the date picker or build it?"
+    why: "Build vs adopt, decided by who owns the behaviour's specification."
+  - prompt: "Can we show the delete as done immediately and roll back if it fails?"
+    why: "Optimistic updates, and this is the case where the answer is no."
+
+should_not_trigger:
+  - prompt: "Design the pricing page — layout, type scale, the colour system."
+    route_to: "design"
+    why: "The visual system is decided before this layer has anything to build."
+  - prompt: "My useEffect runs twice in development and I don't understand why."
+    route_to: "react"
+    why: "Framework mechanics. This skill decides what to build, not how the framework behaves."
+  - prompt: "The dropdown animation feels cheap, what duration should it use?"
+    route_to: "motion-craft"
+    why: "Once the component exists, how it moves is motion craft."
+  - prompt: "Grade this dashboard and tell me if it is actually good."
+    route_to: "design-loop"
+    why: "Judging a finished screen is the critique loop, not the build decisions."
+  - prompt: "Set up the Next.js App Router with server actions for this project."
+    route_to: "nextjs"
+    why: "Stack setup is the stack skill's; this one is framework-agnostic by construction."
+
+capability:
+  - prompt: "Our search page keeps its query and filters in component state. Users complain the back button loses everything. What is wrong and what is the fix?"
+    why: "The single most expensive instance of the one rule, stated as a real symptom rather than as theory."
+  - prompt: "This list screen shows a spinner, then rows. What states are we missing and why does each matter?"
+    why: "Forces the five-state checklist, including the empty state that a new user sees first."

@@ -1,0 +1,38 @@
+skill: motion-craft
+
+should_trigger:
+  - prompt: "The menu animation feels sluggish, can you make it feel snappier?"
+    why: "The canonical case: a complaint about feel, which this skill converts into a duration and an easing decision."
+  - prompt: "What duration and easing should this dropdown use?"
+    why: "Directly the numbers this skill owns, for an element entering in place."
+  - prompt: "My list animation stutters when it reflows."
+    why: "Jank is the symptom of animating layout properties, which is the one hard rule here."
+  - prompt: "Añade una animación al abrir el panel, pero que no quede cutre."
+    why: "Same ask in Spanish; the trigger is the intent, not the language."
+  - prompt: "Does this respect prefers-reduced-motion? I don't think we handled it."
+    why: "Reduced-motion is treated here as part of finishing the work, not as an edge case."
+  - prompt: "Everything on the page moves at once when I click one button."
+    why: "More than one thing moving per event is a named diagnosis in this skill."
+
+should_not_trigger:
+  - prompt: "Design a landing page for my analytics SaaS — hero, pricing, the works."
+    route_to: "design"
+    why: "Type, colour, spacing and composition are the visual system, which this skill only moves once it exists."
+  - prompt: "Review this checkout screen and tell me how good it actually is, with a grade."
+    route_to: "design-loop"
+    why: "Graded critique of a finished screen is the loop's job; this skill builds motion, it does not judge screens."
+  - prompt: "This design came out great — turn it into a style I can reuse everywhere."
+    route_to: "design-dna"
+    why: "Codifying a look into a permanent identity is capture, not motion craft."
+  - prompt: "Make the site keyboard navigable and fix the contrast failures."
+    route_to: "accessibility"
+    why: "Accessibility beyond reduced-motion is its own ground; only the motion half lives here."
+  - prompt: "Our React app re-renders too much and the profiler shows wasted renders."
+    route_to: "react"
+    why: "A rendering performance problem is framework work, even when the symptom looks like stutter."
+
+capability:
+  - prompt: "This modal slides in over 600ms with a linear curve and it feels cheap. Fix it and say why."
+    why: "Exercises the two most common defects at once — too slow, and linear on positional movement — and demands the reasoning, not just new numbers."
+  - prompt: "We animate width and height on the sidebar and it janks on mobile. What do we do instead?"
+    why: "The layout-vs-compositor rule is the load-bearing piece of technical content here."

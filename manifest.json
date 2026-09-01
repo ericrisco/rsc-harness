@@ -1,7 +1,7 @@
 {
   "version": "1.1.5",
   "counts": {
-    "skills": 281
+    "skills": 272
   },
   "skills": [
     {
@@ -183,62 +183,6 @@
       "profiles": []
     },
     {
-      "id": "animate",
-      "description": "Build a web animation: whether it should animate at all, the purpose, the tool, the properties, the easing curve, the duration, interruption and exit. Writes the CSS or Motion code for dropdowns, modals, toasts, tooltips, accordions, press feedback, stagger and scroll reveals. Use to animate something or make a component feel alive.",
-      "tags": [
-        "motion",
-        "animation",
-        "css",
-        "transitions",
-        "ui"
-      ],
-      "recommends": [
-        "review-animations",
-        "pick-ui-library",
-        "apple-design"
-      ],
-      "profiles": [
-        "full"
-      ]
-    },
-    {
-      "id": "animate-expo",
-      "description": "Build animation and gestures in React Native and Expo with Reanimated worklets on the UI thread — sheets, drawers, screen transitions, swipe, drag, press feedback, haptics. Use when adding gestures to an Expo app, or when motion stutters, janks or drops frames on a real Android or iOS device.",
-      "tags": [
-        "motion",
-        "animation",
-        "expo",
-        "react-native",
-        "gestures"
-      ],
-      "recommends": [
-        "expo",
-        "react-native",
-        "animate"
-      ],
-      "profiles": [
-        "full"
-      ]
-    },
-    {
-      "id": "animation-vocabulary",
-      "description": "Reverse glossary: turn a vague description of a motion effect into its exact name — a popover growing from its trigger is origin-aware, iOS overscroll is rubber-banding, items appearing one after another with a delay is a stagger. Use for \\\"what's it called when…\\\" or \\\"what do you call it when…\\\".",
-      "tags": [
-        "motion",
-        "animation",
-        "glossary",
-        "terminology",
-        "naming"
-      ],
-      "recommends": [
-        "animate",
-        "apple-design"
-      ],
-      "profiles": [
-        "full"
-      ]
-    },
-    {
       "id": "api-connector-builder",
       "description": "Use when writing a client for someone else's REST or GraphQL API: auth flow choice and token refresh, pagination to exhaustion, retry-with-jitter on transient failures only, rate-limit-aware throttling. NOT inbound callbacks (that is `webhooks`), NOT chaining services (that is `automation-flows`), NOT designing your own API (that is `api-design`).",
       "tags": [
@@ -290,25 +234,6 @@
       "profiles": []
     },
     {
-      "id": "apple-design",
-      "description": "Apple's fluid-interface craft on the web: spring damping and response, velocity handoff, momentum projection on a flick, rubber-banding at a boundary, interruptible motion the user can grab mid-flight, translucent materials and backdrop blur, letter-spacing and leading by size. Use for iOS-grade feel, sheets and drag.",
-      "tags": [
-        "design",
-        "motion",
-        "springs",
-        "gestures",
-        "apple"
-      ],
-      "recommends": [
-        "animate",
-        "design",
-        "swift-ios"
-      ],
-      "profiles": [
-        "full"
-      ]
-    },
-    {
       "id": "article-writing",
       "description": "Use when writing one long-form article end to end — answer-first lede, question-shaped headings, plus its on-page surface (title, meta, slug, FAQ, Article/FAQPage JSON-LD) — or fixing a draft that buries the answer or reads AI-padded. NOT keyword research or topic selection (that is `seo-geo`), NOT the editorial calendar (that is `content-engine`).",
       "tags": [
@@ -330,25 +255,6 @@
         "case-studies"
       ],
       "profiles": []
-    },
-    {
-      "id": "ask-sonner",
-      "description": "Sonner, the React toast library: mounting Toaster once, toast() calls, promise and loading toasts, updating, dismissing, styling, theming, dark mode, positioning. Use when toasts do not appear, appear twice, sit behind a modal, ignore Tailwind classes, or do nothing from a server action.",
-      "tags": [
-        "sonner",
-        "toasts",
-        "notifications",
-        "react",
-        "library"
-      ],
-      "recommends": [
-        "react",
-        "nextjs",
-        "pick-ui-library"
-      ],
-      "profiles": [
-        "full"
-      ]
     },
     {
       "id": "astro",
@@ -1434,28 +1340,6 @@
       "profiles": []
     },
     {
-      "id": "design-eng",
-      "description": "Umbrella for frontend craft: routes a UI request to the sibling that owns it — build motion, review it, audit it, find where it is missing, name an effect, gesture physics, prototype variants, pick a library. Use when an app works but feels cheap or unpolished, or when a frontend request could belong to several of them.",
-      "tags": [
-        "design",
-        "frontend",
-        "ui",
-        "routing",
-        "craft"
-      ],
-      "recommends": [
-        "design-loop",
-        "animate",
-        "review-animations",
-        "apple-design",
-        "design"
-      ],
-      "profiles": [
-        "core",
-        "full"
-      ]
-    },
-    {
       "id": "design-loop",
       "description": "Use when something must be built well and there is a real reference it should beat: turn what makes the reference good into measured mechanisms, then run a builder and three fresh-context critics until all three pass. Fires on 'design loop', 'make it as good as <site>', 'it looks generic'. NOT keeping an already-won look (that is `design-dna`).",
       "tags": [
@@ -1971,24 +1855,6 @@
         "fundraising"
       ],
       "profiles": []
-    },
-    {
-      "id": "find-animation-opportunities",
-      "description": "Sweep a UI for what does not animate but should, and reject what should not — each suggestion with an exact curve and duration, plus the rejected candidates. Read-only. Use for 'what could be animated here', 'where would motion help', or an interface that feels static and dead.",
-      "tags": [
-        "motion",
-        "animation",
-        "restraint",
-        "opportunities",
-        "ui"
-      ],
-      "recommends": [
-        "animate",
-        "improve-animations"
-      ],
-      "profiles": [
-        "full"
-      ]
     },
     {
       "id": "finetuning",
@@ -2580,25 +2446,6 @@
       ],
       "profiles": [
         "core",
-        "full"
-      ]
-    },
-    {
-      "id": "improve-animations",
-      "description": "Audit a whole codebase's animation and motion, then write prioritized findings and self-contained plans another agent can execute. Read-only. Use for 'improve the animations', 'make the app feel better', or a roadmap of motion fixes — rather than a verdict on one diff.",
-      "tags": [
-        "motion",
-        "animation",
-        "audit",
-        "plan",
-        "codebase"
-      ],
-      "recommends": [
-        "review-animations",
-        "animate",
-        "plan"
-      ],
-      "profiles": [
         "full"
       ]
     },
@@ -3277,6 +3124,23 @@
       "profiles": []
     },
     {
+      "id": "motion-craft",
+      "description": "Use when an interface moves and the movement has to feel right — durations and easing, what must never animate, fixing motion that reads sluggish, cheap or janky, and reduced-motion. Web and native. NOT the visual system (that is `design`), NOT the graded critique (that is `design-loop`).",
+      "tags": [
+        "motion",
+        "animation",
+        "interface",
+        "craft",
+        "frontend"
+      ],
+      "recommends": [
+        "design"
+      ],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
       "id": "mysql",
       "description": "Use when designing, querying, indexing or operating a MySQL or MariaDB database and engine-specific behaviour matters — schema and type choices, index design, reading EXPLAIN, online schema change, replication and replica lag, locking and InnoDB deadlocks, charset traps, and server config. NOT portable SELECT/JOIN/window-function craft (that is `sql`), NOT PostgreSQL engine behaviour like VACUUM or JSONB (that is `postgresdb`), NOT the PlanetScale/Vitess branch-and-deploy workflow (that is `planetscale`).",
       "tags": [
@@ -3678,25 +3542,6 @@
       "profiles": []
     },
     {
-      "id": "pick-ui-library",
-      "description": "Pick the frontend library for a task from a curated list: dialogs and popovers, command palette, toasts, one-time-password input, charts, virtualization, drag and drop, state, conditional classNames, variants, dark mode. Use instead of hand-rolling a component or installing an abandoned package.",
-      "tags": [
-        "frontend",
-        "libraries",
-        "dependencies",
-        "react",
-        "ui"
-      ],
-      "recommends": [
-        "react",
-        "nextjs",
-        "animate"
-      ],
-      "profiles": [
-        "full"
-      ]
-    },
-    {
       "id": "pitch-deck",
       "description": "Use when building or fixing an investor fundraising deck — the narrative arc, the slide-by-slide story, and the few numbers that actually move an investment decision, for a pre-seed, seed or Series A raise (or an accelerator application deck). Decides what goes on each slide, in what order, with which metric, sequenced the way an investor evaluates risk. NOT rendering, theming or exporting the slides into a designed PDF or PPTX (that is `presentations`), NOT the projection spreadsheet behind the numbers (that is `financial-model`).",
       "tags": [
@@ -3969,25 +3814,6 @@
         "brand-voice"
       ],
       "profiles": []
-    },
-    {
-      "id": "prototype",
-      "description": "Build several genuinely different versions — variants, takes, options, directions — of one UI piece behind a visual picker, so you flip through them live and promote the winner. Use to explore a look before committing, or when you do not yet know what you want something to look like.",
-      "tags": [
-        "design",
-        "variants",
-        "exploration",
-        "picker",
-        "ui"
-      ],
-      "recommends": [
-        "design",
-        "animate",
-        "nextjs"
-      ],
-      "profiles": [
-        "full"
-      ]
     },
     {
       "id": "python",
@@ -4314,25 +4140,6 @@
       ],
       "profiles": [
         "core",
-        "full"
-      ]
-    },
-    {
-      "id": "review-animations",
-      "description": "Review, critique or grade existing animation and motion code against a strict craft bar — easing, duration, transform-origin, interruptibility, GPU-only properties, reduced motion, enter/exit asymmetry, stagger. Default is to flag; approval is earned. Use on the transitions in a diff or a component.",
-      "tags": [
-        "motion",
-        "animation",
-        "review",
-        "craft",
-        "ui"
-      ],
-      "recommends": [
-        "animate",
-        "improve-animations",
-        "code-review"
-      ],
-      "profiles": [
         "full"
       ]
     },
@@ -5342,6 +5149,26 @@
       "profiles": []
     },
     {
+      "id": "ui-engineering",
+      "description": "Use when the question is how interface should be BUILT — component boundaries, state that belongs in the URL vs the component, loading/empty/error states, forms, optimistic updates, build vs adopt. NOT the visual system (`design`), NOT framework mechanics (`react`/`nextjs`).",
+      "tags": [
+        "interface",
+        "frontend",
+        "architecture",
+        "components",
+        "state",
+        "craft"
+      ],
+      "recommends": [
+        "design",
+        "motion-craft"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
+    },
+    {
       "id": "unit-economics",
       "description": "Use when computing or improving the per-customer economics of a business — CAC, LTV, CAC payback period and contribution margin — judging whether the ratios are healthy against current norms, and naming the one lever that fixes the worst number. Covers a blended CAC that hides a bleeding channel, and a model that shows profit while each customer loses money. NOT the multi-year P&L or scenario projection (that is `financial-model`).",
       "tags": [
@@ -5453,6 +5280,23 @@
         "huggingface"
       ],
       "profiles": []
+    },
+    {
+      "id": "variant-explorer",
+      "description": "Use when someone wants OPTIONS rather than an answer — 'show me a few versions', picking between approaches by seeing them. Genuinely different candidates, cheap to throw away, trade-off named. NOT the critique that judges one (`design-loop`), NOT the spec (`specify`).",
+      "tags": [
+        "prototyping",
+        "divergence",
+        "options",
+        "exploration",
+        "decision"
+      ],
+      "recommends": [
+        "design-loop"
+      ],
+      "profiles": [
+        "full"
+      ]
     },
     {
       "id": "vector-db",
@@ -5691,25 +5535,6 @@
       "recommends": [],
       "profiles": [
         "core",
-        "full"
-      ]
-    },
-    {
-      "id": "write-swift",
-      "description": "Modern Swift at the language level: structs and value types versus classes, Swift 6 data-race safety, actors, async/await and task groups, `some` versus `any`, ARC and retain cycles, Swift Testing, macros. Use for a deadlock, a hang, a data race, a concurrency error, or migrating to Swift 6.",
-      "tags": [
-        "swift",
-        "language",
-        "concurrency",
-        "generics",
-        "testing"
-      ],
-      "recommends": [
-        "swift-ios",
-        "apple-design",
-        "testing-web"
-      ],
-      "profiles": [
         "full"
       ]
     },

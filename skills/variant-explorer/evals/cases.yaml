@@ -1,0 +1,38 @@
+skill: variant-explorer
+
+should_trigger:
+  - prompt: "Show me a few versions of this onboarding and I'll pick one."
+    why: "The canonical phrasing: options to choose from, not an answer."
+  - prompt: "Give me three directions for how this could work before we commit."
+    why: "Explicit divergence ahead of an expensive decision."
+  - prompt: "Enséñame varias opciones de cómo montar el checkout, que ya elijo yo."
+    why: "Same request in Spanish; the trigger is the ask for options."
+  - prompt: "I can't decide between a wizard and a single page. Can I see both?"
+    why: "Two named approaches where seeing them is what settles it."
+  - prompt: "What are some different ways we could structure this dashboard?"
+    why: "Open-ended exploration of structural decisions, which is exactly divergence."
+  - prompt: "Before we build it, I want to compare a couple of approaches side by side."
+    why: "Comparability is the property this skill guarantees."
+
+should_not_trigger:
+  - prompt: "Review this checkout screen and grade it."
+    route_to: "design-loop"
+    why: "Judging one finished thing is critique, the opposite of divergence."
+  - prompt: "We need to agree what this feature is for before anyone builds it."
+    route_to: "specify"
+    why: "A missing WHAT/WHY is a spec problem; options would be premature."
+  - prompt: "Build the pricing page we agreed on last week."
+    route_to: "design"
+    why: "The decision is already made; manufacturing options would waste the time this skill is meant to save."
+  - prompt: "Which colour should the primary button be?"
+    route_to: "design"
+    why: "Cheap and reversible, and a detail rather than a decision — the explicit non-case here."
+  - prompt: "Run an A/B test to see which headline converts better."
+    route_to: "ab-testing"
+    why: "Measuring a winner with users is experimentation, not showing a human candidates to choose from."
+
+capability:
+  - prompt: "Give me three options for this signup flow. Make sure they are actually different, not the same thing restyled."
+    why: "Goes straight at the failure mode this skill exists to prevent, and demands the decision behind each be nameable."
+  - prompt: "Here are three variants I made. Are these real alternatives or the same idea three times?"
+    why: "Applies the one rule as a test on someone else's set, which is where it is hardest and most useful."
