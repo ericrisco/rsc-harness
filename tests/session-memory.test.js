@@ -42,6 +42,32 @@ test('an early boundary records real work before SessionEnd and a quiet session 
   assert.equal(afterCommit.record.head, git(cwd, ['rev-parse', 'HEAD']));
 });
 
+test('a quiet session does not claim dirty files that predate its start', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'README.md'), 'already dirty\n');
+  memory.capture({ cwd, sessionId: 'quiet-dirty', target: 'claude', event: 'start' });
+  const boundary = memory.capture({ cwd, sessionId: 'quiet-dirty', target: 'claude', event: 'request' });
+  assert.equal(boundary.record, null);
+  assert.deepEqual(readdirSync(join(memory.chooseMemoryRoot(cwd).root, 'sessions')), []);
+});
+
+test('a later edit to a file already dirty at session start is still recorded', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'README.md'), 'already dirty\n');
+  memory.capture({ cwd, sessionId: 'dirty-edited', target: 'claude', event: 'start' });
+  writeFileSync(join(cwd, 'README.md'), 'edited during session\n');
+  const boundary = memory.capture({ cwd, sessionId: 'dirty-edited', target: 'claude', event: 'request' });
+  assert.deepEqual(boundary.record.files, ['README.md']);
+});
+
+test('a rename records both repository paths', () => {
+  const cwd = repo();
+  memory.capture({ cwd, sessionId: 'rename', target: 'codex', event: 'start' });
+  git(cwd, ['mv', 'README.md', 'GUIDE.md']);
+  const result = memory.capture({ cwd, sessionId: 'rename', target: 'codex', event: 'boundary' });
+  assert.deepEqual(result.record.files, ['GUIDE.md', 'README.md']);
+});
+
 test('resume selects exact branch/worktree, labels nearby and flags parallel sessions', () => {
   const cwd = repo();
   memory.capture({ cwd, sessionId: 'one', target: 'claude', event: 'start', now: '2026-09-02T10:00:00.000Z' });
@@ -71,6 +97,8 @@ test('provider session-id namespaces cannot overwrite one another', () => {
   memory.capture({ cwd, sessionId: 'same-id', target: 'codex', event: 'edit', editDelta: 1 });
   const files = readdirSync(join(memory.chooseMemoryRoot(cwd).root, 'sessions')).filter((name) => name.endsWith('.json')).sort();
   assert.deepEqual(files, ['claude--same-id.json', 'codex--same-id.json']);
+  const codex = JSON.parse(readFileSync(join(memory.chooseMemoryRoot(cwd).root, 'sessions', 'codex--same-id.json'), 'utf8'));
+  assert.equal(codex.concurrent, true, 'same provider id does not make two assistants one session');
 });
 
 test('retention pruning, bounded rendering and compaction hints are deterministic', () => {

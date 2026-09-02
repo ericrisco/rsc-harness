@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 import { rmSync, existsSync, cpSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
-import { join, dirname, basename, relative, sep } from 'node:path';
+import { join, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
 import {
-  targetHasAgents, writeAgents, removeAgents, agentPath, agentNames,
-  allAgentNames, resolveAgentNames, agentByName, readDeveloperTier,
+  targetHasAgents, reconcileAgents, agentPath, agentNames,
+  resolveAgentNames, agentByName, readDeveloperTier,
 } from '../targets/agents.js';
 import { readState, writeState } from './lib/state.js';
 import { readManifest, writeManifest } from './lib/manifest-file.js';
 import { createBackup } from './lib/backups.js';
 import {
-  targetHasCommands, resolveCommands, reconcileCommands, commandPath, allPotentialCommandNames,
+  targetHasCommands, resolveCommands, reconcileCommands, commandPath,
 } from '../targets/commands.js';
 import {
   wireMemory, unwireMemory, memoryManagedPaths, memoryModeFor, memoryEnabledForProject, memoryArtifactsPresent,
@@ -183,11 +183,12 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   const desiredAgents = resolveAgentNames(Object.keys(state.skills || {}), explicit);
   const previousAgents = state.agents || [];
   if (targetHasAgents(target)) {
-    removeAgents(target, cwd, previousAgents.filter((name) => !desiredAgents.includes(name)));
-    const written = writeAgents(target, cwd, readDeveloperTier(cwd), desiredAgents);
-    state.agents = written.map((f) => basename(f).split('.')[0]);
+    const agentResult = reconcileAgents(target, cwd, readDeveloperTier(cwd), previousAgents, desiredAgents);
+    state.agents = agentResult.names;
+    state.agentCollisions = agentResult.collisions;
   } else {
     state.agents = [];
+    state.agentCollisions = [];
   }
   state.explicitAgents = explicit;
   const memoryResult = wireMemory(target, cwd);
@@ -331,9 +332,9 @@ export async function uninstall({ skillIds = [], agentIds = [], target, home, cw
     }
     delete state.skills[id];
   }
-  removeAgents(target, cwd, staleAgents);
-  if (targetHasAgents(target)) writeAgents(target, cwd, readDeveloperTier(cwd), desiredAgents);
-  state.agents = targetHasAgents(target) ? desiredAgents : [];
+  const agentResult = reconcileAgents(target, cwd, readDeveloperTier(cwd), state.agents || [], desiredAgents);
+  state.agents = agentResult.names;
+  state.agentCollisions = agentResult.collisions;
   state.explicitAgents = nextExplicit;
   const desiredCommands = resolveCommands({
     target,
@@ -403,6 +404,10 @@ export async function purge({ home, cwd = process.cwd(), withDocs = false, dryRu
         const file = commandPath(target, cwd, name);
         if (file) drop(file);
       }
+      for (const name of state.agents || []) {
+        const file = agentPath(target, cwd, name);
+        if (file) drop(file);
+      }
       drop(paths.stateFile);
     }
     // Unwiring mutates shared config files, so only run it for real (dry runs report
@@ -413,18 +418,8 @@ export async function purge({ home, cwd = process.cwd(), withDocs = false, dryRu
     } else {
       removed.push(...memoryArtifactsPresent(target, cwd));
     }
-    // Remove the subagents this catalog installed — and only those. An uninstaller that takes
-    // an agent the user wrote by hand is worse than one that leaves residue.
-    for (const n of allAgentNames()) {
-      const agentFile = agentPath(target, cwd, n);
-      if (agentFile) drop(agentFile);
-    }
-    // Legacy or interrupted installs may have lost their local state; remove only names
-    // this catalog can own, never enumerate and delete the whole shared command directory.
-    for (const name of allPotentialCommandNames()) {
-      const file = commandPath(target, cwd, name);
-      if (file) drop(file);
-    }
+    // A lost state file also loses proof of ownership. Leave same-named user files
+    // behind rather than guessing from a catalog id and deleting their work.
   }
   drop(join(cwd, '.rsc'), true);
   if (withDocs) drop(join(cwd, '02-DOCS'), true);

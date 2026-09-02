@@ -8,6 +8,7 @@ export { handleLifecycle, contextFromNativeOutput } from './session-memory-adapt
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const NEEDLE = '.rsc/session-memory-adapter.mjs';
+const PLUGIN_MARKER = 'rsc-memory:managed';
 
 export const MEMORY_TARGETS = Object.freeze({
   claude: 'full',
@@ -62,6 +63,13 @@ function readConfig(path) {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }
 
+function validHookConfig(config) {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) return false;
+  if (!Object.hasOwn(config, 'hooks')) return true;
+  if (!config.hooks || typeof config.hooks !== 'object' || Array.isArray(config.hooks)) return false;
+  return Object.values(config.hooks).every(Array.isArray);
+}
+
 function handler(target, event) {
   const unixScript = target === 'claude'
     ? '"${CLAUDE_PROJECT_DIR}/.rsc/session-memory-adapter.mjs"'
@@ -103,7 +111,7 @@ const cursorEvents = [
 ];
 
 function stripManaged(config) {
-  if (!config?.hooks) return config;
+  if (!validHookConfig(config) || !config.hooks) return config;
   for (const event of Object.keys(config.hooks)) {
     config.hooks[event] = (config.hooks[event] || []).filter((entry) => !JSON.stringify(entry).replaceAll('\\\\', '/').includes(NEEDLE));
     if (!config.hooks[event].length) delete config.hooks[event];
@@ -158,8 +166,9 @@ export function wireMemory(target, cwd = process.cwd()) {
   }
   const configPath = join(cwd, ...CONFIG[target].split('/'));
   if (tracked(cwd, configPath)) return { mode: 'degraded', reason: 'config-tracked', paths: [] };
-  if (target !== 'opencode' && readConfig(configPath) === null) return { mode: 'degraded', reason: 'config-invalid', paths: [] };
-  if (target === 'opencode' && existsSync(configPath) && !readFileSync(configPath, 'utf8').includes('RscMemoryPlugin')) {
+  const config = target === 'opencode' ? null : readConfig(configPath);
+  if (target !== 'opencode' && !validHookConfig(config)) return { mode: 'degraded', reason: 'config-invalid', paths: [] };
+  if (target === 'opencode' && existsSync(configPath) && !readFileSync(configPath, 'utf8').includes(PLUGIN_MARKER)) {
     return { mode: 'degraded', reason: 'plugin-collision', paths: [] };
   }
   const assistedRule = join(cwd, '.cursor', 'rules', 'rsc-memory.mdc');
@@ -177,7 +186,7 @@ export function wireMemory(target, cwd = process.cwd()) {
     mkdirSync(dirname(configPath), { recursive: true });
     copyFileSync(join(HERE, 'opencode-memory-plugin.js'), configPath);
   } else {
-    writeJsonWiring(target, configPath, readConfig(configPath) || {});
+    writeJsonWiring(target, configPath, config);
   }
   if (target === 'cursor') {
     mkdirSync(dirname(assistedRule), { recursive: true });
@@ -205,7 +214,17 @@ export function inspectMemoryWiring(target, cwd = process.cwd(), recorded = null
     return { supportedMode, mode, status: 'not-installed', reason: 'not-wired', missing: [], tracked: [] };
   }
   const paths = recorded?.paths?.length ? recorded.paths : memoryManagedPaths(target, cwd);
-  const missing = paths.filter((path) => !existsSync(path));
+  const configPath = join(cwd, ...CONFIG[target].split('/'));
+  const cursorRule = join(cwd, '.cursor', 'rules', 'rsc-memory.mdc');
+  const missing = paths.filter((path) => {
+    if (!existsSync(path)) return true;
+    if (path === configPath) {
+      const body = readFileSync(path, 'utf8').replaceAll('\\', '/');
+      return target === 'opencode' ? !body.includes(PLUGIN_MARKER) : !body.includes(NEEDLE);
+    }
+    if (target === 'cursor' && path === cursorRule) return !readFileSync(path, 'utf8').includes(PLUGIN_MARKER);
+    return false;
+  });
   const trackedPaths = paths.filter((path) => tracked(cwd, path));
   const status = mode === 'degraded' || mode === 'not-installed' || missing.length || trackedPaths.length ? 'degraded' : 'ready';
   return {
@@ -228,7 +247,7 @@ export function unwireMemory(target, cwd = process.cwd()) {
   const path = join(cwd, ...CONFIG[target].split('/'));
   const touched = [];
   if (target === 'opencode') {
-    if (existsSync(path) && readFileSync(path, 'utf8').includes('RscMemoryPlugin')) { rmSync(path, { force: true }); touched.push(path); }
+    if (existsSync(path) && readFileSync(path, 'utf8').includes(PLUGIN_MARKER)) { rmSync(path, { force: true }); touched.push(path); }
   } else {
     const raw = existsSync(path) ? readFileSync(path, 'utf8') : '';
     const config = raw.replaceAll('\\\\', '/').includes(NEEDLE) ? readConfig(path) : null;
@@ -247,7 +266,7 @@ export function memoryArtifactsPresent(target, cwd = process.cwd()) {
   const config = join(cwd, ...CONFIG[target].split('/'));
   if (existsSync(config)) {
     const body = readFileSync(config, 'utf8').replaceAll('\\\\', '/');
-    if (body.includes(NEEDLE) || body.includes('RscMemoryPlugin')) out.push(config);
+    if (body.includes(NEEDLE) || body.includes(PLUGIN_MARKER)) out.push(config);
   }
   if (target === 'cursor') {
     const rule = join(cwd, '.cursor', 'rules', 'rsc-memory.mdc');

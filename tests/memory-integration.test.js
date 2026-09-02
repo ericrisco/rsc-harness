@@ -90,6 +90,16 @@ test('doctor degrades a wired adapter whose local script disappears', async () =
   assert.match(memory.action, /sync/);
 });
 
+test('doctor degrades when the lifecycle config remains but its managed hook is removed', async () => {
+  const cwd = repo();
+  await applyInstall({ skillIds: ['plan'], target: 'claude', home: cwd, cwd });
+  writeFileSync(join(cwd, '.claude', 'settings.local.json'), '{}\n');
+  const memory = doctor({ target: 'claude', home: cwd, cwd }).memory;
+  assert.equal(memory.status, 'degraded');
+  assert.equal(memory.reason, 'memory-path-missing');
+  assert.ok(memory.missing.some((path) => path.endsWith('.claude/settings.local.json')));
+});
+
 test('one project option disables and re-enables every memory surface through the CLI', async () => {
   const cwd = repo();
   await applyInstall({ skillIds: ['plan'], target: 'claude', home: cwd, cwd });

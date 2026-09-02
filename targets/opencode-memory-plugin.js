@@ -1,3 +1,4 @@
+// rsc-memory:managed
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { capture, resume } from '../../.rsc/session-memory-core.mjs';

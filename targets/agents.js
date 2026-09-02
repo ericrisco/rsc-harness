@@ -197,6 +197,26 @@ export function writeAgents(target, cwd, tier = readDeveloperTier(cwd), names = 
   return written;
 }
 
+export function reconcileAgents(target, cwd, tier, previousNames = [], desiredNames = []) {
+  if (!targetHasAgents(target)) return { written: [], removed: [], collisions: [], names: [] };
+  const previous = new Set(previousNames);
+  const desired = new Set(desiredNames);
+  const removed = removeAgents(target, cwd, [...previous].filter((name) => !desired.has(name)));
+  const written = [];
+  const collisions = [];
+  const names = [];
+  for (const name of desiredNames) {
+    const path = agentPath(target, cwd, name);
+    if (existsSync(path) && !previous.has(name)) {
+      collisions.push(path);
+      continue;
+    }
+    written.push(...writeAgents(target, cwd, tier, [name]));
+    if (existsSync(path)) names.push(name);
+  }
+  return { written, removed, collisions, names };
+}
+
 /**
  * Remove only the agents this catalog ships. An uninstaller that takes an agent the user wrote by hand
  * is worse than one that leaves residue.

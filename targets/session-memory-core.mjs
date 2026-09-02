@@ -150,17 +150,28 @@ function parseStatus(output) {
     // three bytes; filenames must remain byte-for-byte identifiers, never content.
     const separator = entry.indexOf(' ');
     const status = separator === 1 ? entry.slice(0, 1) : entry.slice(0, 2);
-    let path = entry.slice(separator + 1).replace(/^ +/u, '');
-    if (/[RC]/u.test(status) && entries[index + 1]) path = entries[++index];
-    const clean = cleanString(path, 1000);
-    if (clean) files.push(clean);
+    const paths = [entry.slice(separator + 1).replace(/^ +/u, '')];
+    // In porcelain -z, rename/copy records carry the destination in this entry
+    // and the source in the next NUL-delimited entry. Both are touched paths.
+    if (/[RC]/u.test(status) && entries[index + 1]) paths.push(entries[++index]);
+    for (const path of paths) {
+      const clean = cleanString(path, 1000);
+      if (clean) files.push(clean);
+    }
   }
   return files;
 }
 
+function fingerprintFiles(worktree, files) {
+  return Object.fromEntries(files.map((path) => {
+    const result = git(worktree, ['hash-object', '--no-filters', '--', path]);
+    return [path, result.ok ? result.out : null];
+  }));
+}
+
 function snapshot(cwd, baselineHead = null) {
   const top = git(cwd, ['rev-parse', '--show-toplevel']);
-  if (!top.ok) return { git: false, branch: null, worktree: resolve(cwd), head: null, files: [], commits: [] };
+  if (!top.ok) return { git: false, branch: null, worktree: resolve(cwd), head: null, files: [], fingerprints: {}, commits: [] };
   const worktree = resolve(top.out);
   const branch = cleanString(git(cwd, ['symbolic-ref', '--quiet', '--short', 'HEAD']).out, 255);
   const head = cleanString(git(cwd, ['rev-parse', '--verify', 'HEAD']).out, 64);
@@ -171,7 +182,8 @@ function snapshot(cwd, baselineHead = null) {
     committed = git(cwd, ['diff', '--name-only', '-z', `${baselineHead}..${head}`]).out.split('\0').map((item) => cleanString(item, 1000)).filter(Boolean);
     commits = git(cwd, ['log', '--format=%H', `${baselineHead}..${head}`]).out.split('\n').map((item) => cleanString(item, 64)).filter(Boolean);
   }
-  return { git: true, branch, worktree, head, files: [...new Set([...dirty, ...committed])].sort(), commits };
+  const files = [...new Set([...dirty, ...committed])].sort();
+  return { git: true, branch, worktree, head, files, fingerprints: fingerprintFiles(worktree, dirty), commits };
 }
 
 function ledgerSnapshot(cwd) {
@@ -240,9 +252,9 @@ function finiteOrNull(value, integer = false) {
   return number;
 }
 
-function activeConcurrent(records, sessionId, worktree, now) {
+function activeConcurrent(records, sessionId, target, worktree, now) {
   const recent = new Date(now).getTime() - 2 * 60 * 60 * 1000;
-  return records.some((record) => record?.sessionId !== sessionId && record?.worktree === worktree
+  return records.some((record) => (record?.sessionId !== sessionId || record?.target !== target) && record?.worktree === worktree
     && !record?.timestamps?.completedAt && new Date(record?.timestamps?.updatedAt || 0).getTime() >= recent);
 }
 
@@ -289,14 +301,25 @@ export function capture(input = {}) {
   let existing = readJson(recordPath);
   const firstSnapshot = snapshot(cwd, null);
   if (!anchor) {
-    anchor = { sessionId, startedAt: now, baselineHead: cleanString(input.baselineHead, 64) || firstSnapshot.head };
+    anchor = {
+      sessionId,
+      startedAt: now,
+      baselineHead: cleanString(input.baselineHead, 64) || firstSnapshot.head,
+      baselineFiles: firstSnapshot.files,
+      baselineFingerprints: firstSnapshot.fingerprints,
+    };
     atomicJson(anchorPath, anchor);
   }
   if (input.event === 'start' && !existing) return { record: null, path: null, notice: null, compactionHint: false };
 
   const repo = snapshot(cwd, anchor.baselineHead);
   const editCount = Math.max(0, (existing?.editCount || 0) + (finiteOrNull(input.editDelta, true) || 0));
-  const hasWork = Boolean(input.force === true || existing || editCount || repo.files.length || repo.commits.length);
+  const baselineFiles = new Set(anchor.baselineFiles || []);
+  const newDirtyPath = repo.files.some((path) => !baselineFiles.has(path));
+  const baselineFingerprints = anchor.baselineFingerprints || {};
+  const dirtyChanged = Object.entries(baselineFingerprints)
+    .some(([path, fingerprint]) => repo.fingerprints[path] !== fingerprint);
+  const hasWork = Boolean(input.force === true || existing || editCount || newDirtyPath || dirtyChanged || repo.commits.length);
   if (!hasWork) return { record: null, path: null, notice: null, compactionHint: false };
 
   const records = readRecords(store.root);
@@ -323,7 +346,7 @@ export function capture(input = {}) {
     toolCalls,
     cost,
     editCount,
-    concurrent: activeConcurrent(records, sessionId, repo.worktree, now),
+    concurrent: activeConcurrent(records, sessionId, target, repo.worktree, now),
   };
   const errors = validateSessionRecord(record);
   if (errors.length) return { record: null, path: null, notice: null, compactionHint: false, errors };

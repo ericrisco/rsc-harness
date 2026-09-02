@@ -150,6 +150,7 @@ export function doctor({ target, home, cwd }) {
     automationGaps: countGaps(root),
     memory,
     missingAgents,
+    agentCollisions: state.agentCollisions || [],
     missingCommands,
     commandOrphans,
     commandCollisions: state.commandCollisions || [],

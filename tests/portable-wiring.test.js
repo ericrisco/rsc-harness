@@ -58,6 +58,31 @@ test('tracked or user-owned config is never overwritten to pretend local-only su
   assert.equal(readFileSync(config, 'utf8'), before);
 });
 
+test('a JSON config with a non-list hook event degrades without throwing or rewriting', () => {
+  const cwd = repo();
+  const config = join(cwd, '.gemini', 'settings.json');
+  mkdirSync(join(cwd, '.gemini'), { recursive: true });
+  writeFileSync(config, '{"hooks":{"SessionStart":{"command":"echo mine"}}}\n');
+  const before = readFileSync(config, 'utf8');
+  const result = adapters.wireMemory('gemini', cwd);
+  assert.equal(result.mode, 'degraded');
+  assert.equal(result.reason, 'config-invalid');
+  assert.equal(readFileSync(config, 'utf8'), before);
+});
+
+test('an OpenCode plugin with a coincidental export name is user-owned without the marker', () => {
+  const cwd = repo();
+  const plugin = join(cwd, '.opencode', 'plugins', 'rsc-memory.js');
+  mkdirSync(join(cwd, '.opencode', 'plugins'), { recursive: true });
+  writeFileSync(plugin, 'export const RscMemoryPlugin = () => ({ mine: true });\n');
+  const before = readFileSync(plugin, 'utf8');
+  const result = adapters.wireMemory('opencode', cwd);
+  assert.equal(result.mode, 'degraded');
+  assert.equal(result.reason, 'plugin-collision');
+  adapters.unwireMemory('opencode', cwd);
+  assert.equal(readFileSync(plugin, 'utf8'), before);
+});
+
 test('a user-owned Cursor memory rule is treated as a collision and survives unwire', () => {
   const cwd = repo();
   const rule = join(cwd, '.cursor', 'rules', 'rsc-memory.mdc');

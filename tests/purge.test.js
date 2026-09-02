@@ -4,6 +4,8 @@ import { mkdtempSync, existsSync, readFileSync, writeFileSync, mkdirSync } from 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { applyInstall, purge } from '../scripts/install-apply.js';
+import { agentPath } from '../targets/agents.js';
+import { commandPath } from '../targets/commands.js';
 
 test('purge removes installed skills, unwires rsc hooks, and deletes .rsc/', async () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-purge-'));
@@ -62,6 +64,24 @@ test('purge leaves colliding user-owned local memory files byte-identical', asyn
 
   assert.equal(readFileSync(localPath, 'utf8'), local);
   assert.equal(readFileSync(rulePath, 'utf8'), rule);
+});
+
+test('install and purge preserve user-owned files whose names collide with catalog entries', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-purge-'));
+  const agent = agentPath('cursor', cwd, 'go-reviewer');
+  const command = commandPath('cursor', cwd, 'go-review');
+  mkdirSync(join(cwd, '.cursor', 'agents'), { recursive: true });
+  mkdirSync(join(cwd, '.cursor', 'commands'), { recursive: true });
+  writeFileSync(agent, 'my reviewer\n');
+  writeFileSync(command, 'my command\n');
+
+  await applyInstall({ skillIds: ['go'], target: 'cursor', home: cwd, cwd });
+  assert.equal(readFileSync(agent, 'utf8'), 'my reviewer\n');
+  assert.equal(readFileSync(command, 'utf8'), 'my command\n');
+
+  await purge({ home: cwd, cwd });
+  assert.equal(readFileSync(agent, 'utf8'), 'my reviewer\n');
+  assert.equal(readFileSync(command, 'utf8'), 'my command\n');
 });
 
 test('purge strips the rsc block from AGENTS.md but keeps the rest (codex)', async () => {
