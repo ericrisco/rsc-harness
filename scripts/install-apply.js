@@ -11,6 +11,9 @@ import {
 import { readState, writeState } from './lib/state.js';
 import { readManifest, writeManifest } from './lib/manifest-file.js';
 import { createBackup } from './lib/backups.js';
+import {
+  targetHasCommands, resolveCommands, reconcileCommands, commandPath, allPotentialCommandNames,
+} from '../targets/commands.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CLI_VERSION = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
@@ -80,6 +83,18 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
     const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
     const desired = resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
     out.push(...[...new Set([...(state.agents || []), ...desired])].map((n) => agentPath(target, cwd, n)), join(cwd, '.rsc', 'developer.json'));
+  }
+  if (targetHasCommands(target)) {
+    const state = readState(paths.stateFile);
+    const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
+    const desiredAgents = resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
+    const desiredCommands = resolveCommands({
+      target,
+      skills: [...new Set([...Object.keys(state.skills || {}), ...skillIds])],
+      agents: desiredAgents,
+      memoryMode: state.memory?.mode || 'unsupported',
+    });
+    out.push(...[...new Set([...(state.commands || []), ...desiredCommands.map((command) => command.name)])].map((name) => commandPath(target, cwd, name)));
   }
   for (const step of plan) {
     if (step.kind === 'skill') {
@@ -170,6 +185,15 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
     state.agents = [];
   }
   state.explicitAgents = explicit;
+  const desiredCommands = resolveCommands({
+    target,
+    skills: Object.keys(state.skills || {}),
+    agents: state.agents,
+    memoryMode: state.memory?.mode || 'unsupported',
+  });
+  const commandResult = reconcileCommands(target, cwd, state.commands || [], desiredCommands);
+  state.commands = commandResult.names;
+  state.commandCollisions = commandResult.collisions;
   state.version = CLI_VERSION;
   writeState(paths.stateFile, state);
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
@@ -214,6 +238,10 @@ export function ignoreLocalState(cwd = process.cwd(), target) {
     // Subagents are catalog content, re-materialised by every install and sync.
     for (const name of readState(paths.stateFile).agents || []) {
       const file = agentPath(target, cwd, name);
+      if (file) wanted.push(rel(file));
+    }
+    for (const name of readState(paths.stateFile).commands || []) {
+      const file = commandPath(target, cwd, name);
       if (file) wanted.push(rel(file));
     }
   }
@@ -294,6 +322,16 @@ export async function uninstall({ skillIds = [], agentIds = [], target, home, cw
   if (targetHasAgents(target)) writeAgents(target, cwd, readDeveloperTier(cwd), desiredAgents);
   state.agents = targetHasAgents(target) ? desiredAgents : [];
   state.explicitAgents = nextExplicit;
+  const desiredCommands = resolveCommands({
+    target,
+    skills: remainingSkillIds,
+    agents: state.agents,
+    memoryMode: state.memory?.mode || 'unsupported',
+  });
+  const commandResult = reconcileCommands(target, cwd, state.commands || [], desiredCommands);
+  removed.push(...commandResult.removed);
+  state.commands = commandResult.names;
+  state.commandCollisions = commandResult.collisions;
   writeState(paths.stateFile, state);
   const manifest = readManifest(cwd);
   if (manifest) writeManifest(cwd, {
@@ -348,6 +386,10 @@ export async function purge({ home, cwd = process.cwd(), withDocs = false, dryRu
       for (const id of Object.keys(state.skills || {})) {
         for (const f of state.skills[id].files || []) drop(f, true);
       }
+      for (const name of state.commands || []) {
+        const file = commandPath(target, cwd, name);
+        if (file) drop(file);
+      }
       drop(paths.stateFile);
     }
     // unwireHook mutates files, so only run it for real (dry runs skip it).
@@ -357,6 +399,12 @@ export async function purge({ home, cwd = process.cwd(), withDocs = false, dryRu
     for (const n of allAgentNames()) {
       const agentFile = agentPath(target, cwd, n);
       if (agentFile) drop(agentFile);
+    }
+    // Legacy or interrupted installs may have lost their local state; remove only names
+    // this catalog can own, never enumerate and delete the whole shared command directory.
+    for (const name of allPotentialCommandNames()) {
+      const file = commandPath(target, cwd, name);
+      if (file) drop(file);
     }
   }
   drop(join(cwd, '.rsc'), true);
