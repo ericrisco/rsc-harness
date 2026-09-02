@@ -279,8 +279,12 @@ export function capture(input = {}) {
   const now = iso(input.now);
   prune(store.root, now, config);
   const sessionId = cleanId(input.sessionId, 'session');
-  const anchorPath = join(store.root, 'anchors', `${sessionId}.json`);
-  const recordPath = join(store.root, 'sessions', `${sessionId}.json`);
+  const target = cleanId(input.target || 'unknown', 'target');
+  // Providers own their session-id namespaces. Prefixing the storage key prevents
+  // an identical id from two local assistants overwriting the other journal.
+  const storageId = `${target}--${sessionId}`;
+  const anchorPath = join(store.root, 'anchors', `${storageId}.json`);
+  const recordPath = join(store.root, 'sessions', `${storageId}.json`);
   let anchor = readJson(anchorPath);
   let existing = readJson(recordPath);
   const firstSnapshot = snapshot(cwd, null);
@@ -292,7 +296,7 @@ export function capture(input = {}) {
 
   const repo = snapshot(cwd, anchor.baselineHead);
   const editCount = Math.max(0, (existing?.editCount || 0) + (finiteOrNull(input.editDelta, true) || 0));
-  const hasWork = Boolean(existing || editCount || repo.files.length || repo.commits.length);
+  const hasWork = Boolean(input.force === true || existing || editCount || repo.files.length || repo.commits.length);
   if (!hasWork) return { record: null, path: null, notice: null, compactionHint: false };
 
   const records = readRecords(store.root);
@@ -356,8 +360,8 @@ function truncateUtf8(text, maxBytes) {
 }
 
 function renderContext(record, match, lessons, config) {
-  if (!record) return '';
-  const lines = [
+  if (!record && !lessons.length) return '';
+  const lines = record ? [
     `[rsc local ${match} continuation]`,
     `source: ${record.target}/${record.sessionId}`,
     `branch: ${record.branch || 'unavailable'}`,
@@ -365,10 +369,10 @@ function renderContext(record, match, lessons, config) {
     `head: ${record.head || 'unavailable'}`,
     `files: ${record.files.join(', ') || 'none'}`,
     `commits: ${record.commits.join(', ') || 'none'}`,
-  ];
-  if (record.ledger.length) lines.push(`ledger: ${record.ledger.map((item) => `${item.path}=${item.status}/${item.openItems}`).join(', ')}`);
-  lines.push(`metrics: cost=${record.cost ?? 'unknown'} toolCalls=${record.toolCalls ?? 'unknown'}`);
-  if (record.concurrent) lines.push('parallel sessions detected; this record was not merged with them.');
+  ] : ['[rsc local approved lessons]'];
+  if (record?.ledger.length) lines.push(`ledger: ${record.ledger.map((item) => `${item.path}=${item.status}/${item.openItems}`).join(', ')}`);
+  if (record) lines.push(`metrics: cost=${record.cost ?? 'unknown'} toolCalls=${record.toolCalls ?? 'unknown'}`);
+  if (record?.concurrent) lines.push('parallel sessions detected; this record was not merged with them.');
   for (const lesson of lessons) lines.push(`approved lesson (${lesson.confidence}): ${lesson.text}`);
   return truncateUtf8(`${lines.join('\n')}\n`, config.contextBytes);
 }
@@ -429,8 +433,8 @@ export function metricsSummary(input = {}) {
     toolCalls: sessions.reduce((sum, row) => sum + (row.toolCalls ?? 0), 0),
   };
   const total = {
-    cost: unknown.cost ? null : knownTotal.cost,
-    toolCalls: unknown.toolCalls ? null : knownTotal.toolCalls,
+    cost: !sessions.length || unknown.cost ? null : knownTotal.cost,
+    toolCalls: !sessions.length || unknown.toolCalls ? null : knownTotal.toolCalls,
   };
   return { sessions, total, knownTotal, unknown };
 }

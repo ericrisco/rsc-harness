@@ -10,7 +10,11 @@ import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
 import { isEnabled, checkSello, readSello, countFindings, readEffectiveConfig, validateRiskConfig } from '../targets/sello.mjs';
 import { designIdentity } from './lib/design-identity.js';
 import { startingPointSummary } from './lib/starting-point.js';
-import { countGaps } from './lib/capabilities.js';
+import { countGaps, listSkills, listAgents } from './lib/capabilities.js';
+import { resolveCommands, commandPath, targetHasCommands } from '../targets/commands.js';
+import { inspectMemoryWiring } from '../targets/memory.js';
+import { metricsSummary } from '../targets/session-memory-core.mjs';
+import { agentPath } from '../targets/agents.js';
 
 // The sello's health, surfaced where the user already looks (spec: non-blocking
 // findings live in the project and are SUMMARIZED here, never nagged about).
@@ -81,6 +85,42 @@ export function doctor({ target, home, cwd }) {
   const state = readState(paths.stateFile);
   const manifest = loadManifest();
   const backups = listBackups({ cwd: root });
+  const memory = inspectMemoryWiring(
+    target,
+    root,
+    state.memory,
+    Boolean(Object.keys(state.skills || {}).length || state.agents?.length || state.commands?.length),
+  );
+  if (state.memory && !['unsupported', 'disabled'].includes(memory.mode)) {
+    const hasStore = existsSync(join(root, '.rsc', 'memory', 'sessions'))
+      || existsSync(join(root, '02-DOCS', 'raw', 'worklog', '.rsc-memory', 'sessions'));
+    try {
+      memory.metrics = hasStore
+        ? metricsSummary({ cwd: root })
+        : { sessions: [], total: { cost: null, toolCalls: null }, knownTotal: { cost: 0, toolCalls: 0 }, unknown: { cost: 0, toolCalls: 0 } };
+    } catch { memory.metrics = { sessions: [], total: { cost: null, toolCalls: null }, knownTotal: { cost: 0, toolCalls: 0 }, unknown: { cost: 0, toolCalls: 0 } }; }
+  }
+  const actualSkills = listSkills({ target, home, cwd: root }).map((entry) => entry.id);
+  const actualAgents = listAgents({ target, home, cwd: root }).agents.map((entry) => entry.id);
+  const desiredCommands = new Set(resolveCommands({
+    target,
+    skills: actualSkills,
+    agents: actualAgents,
+    memoryMode: memory.status === 'ready' ? memory.mode : 'degraded',
+  }).map((command) => command.name));
+  const missingCommands = [];
+  const commandOrphans = [];
+  if (targetHasCommands(target)) {
+    for (const id of state.commands || []) {
+      const path = commandPath(target, root, id);
+      if (!path || !existsSync(path)) missingCommands.push({ id, path, action: 'Run `npx @ericrisco/rsc sync` to restore this managed command.' });
+      else if (!desiredCommands.has(id)) commandOrphans.push({ id, path, action: 'Restore its backing skill/agent with `rsc add`, or run `rsc sync` to reconcile it.' });
+    }
+  }
+  const missingAgents = (state.agents || []).filter((id) => {
+    const path = agentPath(target, root, id);
+    return path && !existsSync(path);
+  }).map((id) => ({ id, action: 'Run `npx @ericrisco/rsc sync` to restore this managed agent.' }));
   const report = {
     target,
     installed: Object.keys(state.skills),
@@ -108,6 +148,11 @@ export function doctor({ target, home, cwd }) {
     gitmojiGuard: existsSync(join(root, '.rsc', '.no-gitmoji')) ? 'opted-out' : 'armed',
     // Counted, never interpreted — by spec, the gap log's reader is the user.
     automationGaps: countGaps(root),
+    memory,
+    missingAgents,
+    missingCommands,
+    commandOrphans,
+    commandCollisions: state.commandCollisions || [],
   };
   for (const [id, e] of Object.entries(state.skills)) {
     for (const f of e.files) if (!existsSync(f)) report.missing.push(`${id}:${f}`);

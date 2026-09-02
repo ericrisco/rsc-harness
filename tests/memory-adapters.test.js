@@ -49,6 +49,16 @@ test('capture adapters ignore prompt, response, tool output and file content fie
   assert.ok(!readFileSync(result.capture.path, 'utf8').includes(sentinel));
 });
 
+test('a later boundary without metrics does not erase an observed metric', () => {
+  const cwd = repo();
+  adapters.handleLifecycle({ target: 'codex', event: 'start', native: { session_id: 'metrics-adapter', cwd }, cwd });
+  writeFileSync(join(cwd, 'file.txt'), 'changed\n');
+  adapters.handleLifecycle({ target: 'codex', event: 'edit', native: { session_id: 'metrics-adapter', cwd, cost: 1.5, tool_calls: 3 }, cwd });
+  const later = adapters.handleLifecycle({ target: 'codex', event: 'turn', native: { session_id: 'metrics-adapter', cwd }, cwd });
+  assert.equal(later.capture.record.cost, 1.5);
+  assert.equal(later.capture.record.toolCalls, 3);
+});
+
 test('disabled memory and Cursor background agents produce zero context and zero writes', () => {
   const cwd = repo();
   const off = adapters.handleLifecycle({ target: 'claude', event: 'start', native: { session_id: 'off', cwd }, cwd, settings: { enabled: false } });

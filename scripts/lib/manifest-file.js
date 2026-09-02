@@ -15,7 +15,7 @@ import { join } from 'node:path';
 export const MANIFEST = '.rsc.json';
 export const manifestPath = (cwd = process.cwd()) => join(cwd, MANIFEST);
 
-const KEYS = ['version', 'targets', 'skills', 'agents', 'ownSkills', 'catalogVersion', 'tier', 'optOuts'];
+const KEYS = ['version', 'targets', 'skills', 'agents', 'ownSkills', 'catalogVersion', 'tier', 'optOuts', 'memory'];
 
 export function readManifest(cwd = process.cwd()) {
   const file = manifestPath(cwd);
@@ -37,6 +37,7 @@ export function readManifest(cwd = process.cwd()) {
     catalogVersion: raw.catalogVersion ?? null,
     tier: raw.tier ?? null,
     optOuts: raw.optOuts || [],
+    memory: raw.memory ?? undefined,
   };
 }
 

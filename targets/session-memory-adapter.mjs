@@ -80,16 +80,17 @@ export function handleLifecycle({ target, event, native = {}, cwd, settings } = 
         degraded: false,
       };
     }
-    const captured = capture({
+    const captureInput = {
       cwd: project,
       sessionId: id,
       target,
       event: event === 'end' ? 'sessionEnd' : event,
       editDelta: event === 'edit' ? 1 : 0,
-      cost: typeof native.cost === 'number' ? native.cost : undefined,
-      toolCalls: Number.isInteger(native.tool_calls) ? native.tool_calls : undefined,
       settings: config,
-    });
+    };
+    if (typeof native.cost === 'number') captureInput.cost = native.cost;
+    if (Number.isInteger(native.tool_calls)) captureInput.toolCalls = native.tool_calls;
+    const captured = capture(captureInput);
     return {
       output: nativeOutput(target, eventName, '', captured.notice, captured.compactionHint),
       capture: captured,

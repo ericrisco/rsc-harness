@@ -50,17 +50,17 @@ const FIXED_COMMANDS = Object.freeze([
   {
     name: 'learn', kind: 'memory', backing: 'memory:learn',
     description: 'Propose one local lesson; saving still requires individual explicit approval.',
-    body: `Invoke memory:learn for exactly one proposed lesson: {{ARGS}}\nRequire its evidence, scope, confidence, and individual explicit approval. Without that approval, write nothing.`,
+    body: `Invoke memory:learn for exactly one proposed lesson: {{ARGS}}\nAfter individual explicit approval, run \`npx @ericrisco/rsc memory learn\` with its text, evidence, scope, confidence and \`--approve\`. Without that approval, write nothing.`,
   },
   {
     name: 'save-session', kind: 'memory', backing: 'memory:save',
     description: 'Force a local deterministic session checkpoint.',
-    body: `Invoke memory:save with the current local session identifiers: {{ARGS}}\nPersist only allowed git and SDD ledger metadata; never include conversation or file content.`,
+    body: `Invoke memory:save with the current local session identifiers: {{ARGS}}\nRun \`npx @ericrisco/rsc memory save --session <id>\`. Persist only allowed git and SDD ledger metadata; never include conversation or file content.`,
   },
   {
     name: 'resume-session', kind: 'memory', backing: 'memory:resume',
     description: 'Read the bounded local continuation record for this branch and worktree.',
-    body: `Invoke memory:resume for the current branch and worktree: {{ARGS}}\nLabel a nearby branch result as nearby; never merge it silently into the exact continuation.`,
+    body: `Invoke memory:resume for the current branch and worktree: {{ARGS}}\nRun \`npx @ericrisco/rsc memory resume\`. Label a nearby branch result as nearby; never merge it silently into the exact continuation.`,
   },
 ]);
 

@@ -4,7 +4,7 @@ import { detectTarget, resolveTargets, TARGETS } from '../targets/index.js';
 import { detectRepo } from './detect-repo.js';
 import { rank } from './consult.js';
 import { expandRecommends, toOutcomes, hasOutcome } from './lib/recommend.js';
-import { applyInstall, listInstalled, listInstalledAgents, uninstall, syncInstalled, purge, collisions } from './install-apply.js';
+import { applyInstall, listInstalled, listInstalledAgents, listInstalledCommands, uninstall, syncInstalled, purge, collisions } from './install-apply.js';
 import { stackAgentNames } from '../targets/agents.js';
 import { doctor } from './doctor.js';
 import { say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
@@ -162,6 +162,8 @@ function printNextSteps(targets, ids) {
   say('\n   Add something by hand anytime:    npx @ericrisco/rsc add <skill>');
   say('   Browse the catalog / get picks:   npx @ericrisco/rsc consult "whatever you need"');
   say('────────────────────────────────────────────────────────');
+  if (targets.includes('codex')) say('   Codex: review and trust the project lifecycle hook once with `/hooks`; until then memory is reported as requiring trust.');
+  if (targets.includes('cursor')) say('   Cursor: startup memory is assisted because its sessionStart hook is fire-and-forget; the installed always-on rule performs the read-before-action fallback.');
   printAgentHandoff();
 }
 
@@ -377,13 +379,62 @@ async function main() {
     case 'list': {
       const skills = listInstalled({ target }).map((id) => `skill\t${id}`);
       const agents = listInstalledAgents({ target }).map((agent) => `agent\t${agent.id}\t${agent.source}${agent.skills.length ? `:${agent.skills.join(',')}` : ''}`);
-      return void say([...skills, ...agents].join('\n') || '(nothing installed)');
+      const commands = listInstalledCommands({ target }).map((command) => `command\t${command.id}\t${command.path}`);
+      return void say([...skills, ...agents, ...commands].join('\n') || '(nothing installed)');
     }
     case 'doctor': {
       const report = doctor({ target });
       if (argv.includes('--json')) return void say(JSON.stringify(report, null, 2));
       printContextBudget(report.contextBudget);
       return void say(JSON.stringify({ ...report, contextBudget: undefined }, null, 2));
+    }
+    case 'memory': {
+      const sub = argv[1] || 'status';
+      const root = process.cwd();
+      if (sub === 'on' || sub === 'off') {
+        const { readManifest, writeManifest } = await import('./lib/manifest-file.js');
+        const current = readManifest(root) || { version: 1, targets: targets || [], skills: [], agents: [], ownSkills: [], optOuts: [] };
+        writeManifest(root, { ...current, memory: sub === 'off' ? false : { enabled: true } });
+        for (const t of targets) await syncInstalled({ target: t, cwd: root });
+        say(`rsc memory ${sub}: ${sub === 'on' ? 'enabled' : 'disabled'} for this project (${targets.join(', ') || 'declaration only'}).`);
+        return;
+      }
+      const M = await import('../targets/session-memory-core.mjs');
+      if (sub === 'status') {
+        const reports = targets.map((t) => doctor({ target: t, cwd: root }).memory);
+        return void say(JSON.stringify(reports.length === 1 ? reports[0] : reports, null, 2));
+      }
+      if (sub === 'resume') {
+        const result = M.resume({ cwd: root });
+        return void say(argv.includes('--json') ? JSON.stringify(result, null, 2) : (result.context || '(no local continuation for this branch/worktree)'));
+      }
+      if (sub === 'save') {
+        const result = M.capture({
+          cwd: root,
+          sessionId: typeof flag('session') === 'string' ? flag('session') : `manual-${Date.now()}`,
+          target: target || 'manual',
+          event: 'save',
+          force: true,
+        });
+        return void say(JSON.stringify(result, null, 2));
+      }
+      if (sub === 'learn') {
+        const value = (name) => { const v = flag(name); return typeof v === 'string' && !v.startsWith('--') ? v : undefined; };
+        const result = M.learn({
+          cwd: root,
+          text: value('text'),
+          evidence: value('evidence'),
+          scope: value('scope') || 'project',
+          confidence: value('confidence'),
+          approved: argv.includes('--approve'),
+        });
+        if (!result.saved) process.exitCode = 1;
+        return void say(JSON.stringify(result, null, 2));
+      }
+      if (sub === 'metrics') return void say(JSON.stringify(M.metricsSummary({ cwd: root }), null, 2));
+      say('Use: npx @ericrisco/rsc memory on|off|status|save [--session id]|resume [--json]|learn --text "…" --evidence "…" --scope project|global --confidence 0..1 --approve|metrics');
+      process.exitCode = 1;
+      return;
     }
     case 'sync': {
       const dry = argv.includes('--dry-run');
@@ -495,6 +546,13 @@ async function main() {
         } else {
           say(`# ${caps.target} has no file-based agents — the agent option does not apply here`);
         }
+        if (caps.commandsSupported) {
+          for (const command of caps.commands) say(`command\t${command.id}\tproject\t${command.path}`);
+          if (!caps.commands.length) say('# no managed command files found (this target supports them)');
+        } else {
+          say(`# ${caps.target} has no supported project command surface`);
+        }
+        say(`memory\t${caps.memory.mode}\t${caps.memory.status}\t${caps.memory.reason}`);
       }
       if (!full) say('# catalog shown as ids; add --full for descriptions, or use `catalog --available` to match by meaning');
       return;
@@ -702,7 +760,7 @@ async function main() {
       return void (await runPurge(argv.includes('--dry-run'), argv.includes('--with-docs')));
     default:
       say(`rsc: unknown command '${cmd}'.`);
-      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
+      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
       say('Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)');
       say('   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.');
       process.exitCode = 1;

@@ -29,6 +29,10 @@ const CONFIG = Object.freeze({
 
 export const memoryModeFor = (target) => MEMORY_TARGETS[target] || 'unsupported';
 
+export function memoryEnabledForProject(cwd = process.cwd()) {
+  try { return JSON.parse(readFileSync(join(cwd, '.rsc.json'), 'utf8')).memory !== false; } catch { return true; }
+}
+
 function git(cwd, args) {
   try { return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; }
 }
@@ -148,6 +152,10 @@ export function memoryManagedPaths(target, cwd = process.cwd()) {
 export function wireMemory(target, cwd = process.cwd()) {
   const mode = memoryModeFor(target);
   if (mode === 'unsupported') return { mode, reason: 'no-local-lifecycle', paths: [] };
+  if (!memoryEnabledForProject(cwd)) {
+    unwireMemory(target, cwd);
+    return { mode: 'disabled', reason: 'project-disabled', paths: [] };
+  }
   const configPath = join(cwd, ...CONFIG[target].split('/'));
   if (tracked(cwd, configPath)) return { mode: 'degraded', reason: 'config-tracked', paths: [] };
   if (target !== 'opencode' && readConfig(configPath) === null) return { mode: 'degraded', reason: 'config-invalid', paths: [] };
@@ -156,6 +164,9 @@ export function wireMemory(target, cwd = process.cwd()) {
   }
   const assistedRule = join(cwd, '.cursor', 'rules', 'rsc-memory.mdc');
   if (target === 'cursor' && tracked(cwd, assistedRule)) return { mode: 'degraded', reason: 'rule-tracked', paths: [] };
+  if (target === 'cursor' && existsSync(assistedRule) && !readFileSync(assistedRule, 'utf8').includes('rsc-memory:managed')) {
+    return { mode: 'degraded', reason: 'rule-collision', paths: [] };
+  }
 
   const [core, adapter, cli] = commonPaths(cwd);
   mkdirSync(dirname(core), { recursive: true });
@@ -170,7 +181,7 @@ export function wireMemory(target, cwd = process.cwd()) {
   }
   if (target === 'cursor') {
     mkdirSync(dirname(assistedRule), { recursive: true });
-    writeFileSync(assistedRule, `---\ndescription: Read rsc local continuation before the first action in a new desktop session.\nalwaysApply: true\n---\nOn the first turn of a local desktop session, run \`node .rsc/session-memory.mjs resume\` and read its \`context\` field before acting. Skip this rule for background or cloud agents.\n`);
+    writeFileSync(assistedRule, `---\ndescription: Read rsc local continuation before the first action in a new desktop session.\nalwaysApply: true\n---\n<!-- rsc-memory:managed -->\nOn the first turn of a local desktop session, run \`node .rsc/session-memory.mjs resume\` and read its \`context\` field before acting. Skip this rule for background or cloud agents.\n`);
   }
   const paths = memoryManagedPaths(target, cwd);
   for (const path of paths) exclude(cwd, path);
@@ -181,6 +192,37 @@ export function wireMemory(target, cwd = process.cwd()) {
   };
 }
 
+export function inspectMemoryWiring(target, cwd = process.cwd(), recorded = null, installed = false) {
+  const supportedMode = memoryModeFor(target);
+  if (supportedMode === 'unsupported') return { supportedMode, mode: 'unsupported', status: 'unsupported', reason: 'no-local-lifecycle', missing: [], tracked: [] };
+  const mode = recorded?.mode || 'not-installed';
+  if (mode === 'disabled' || !memoryEnabledForProject(cwd)) {
+    return { supportedMode, mode: 'disabled', status: 'disabled', reason: 'project-disabled', missing: [], tracked: [] };
+  }
+  // A capability that has never been installed is absent, not broken. Keep the
+  // degraded state for pre-memory installs so `sync` can repair those projects.
+  if (!recorded && !installed) {
+    return { supportedMode, mode, status: 'not-installed', reason: 'not-wired', missing: [], tracked: [] };
+  }
+  const paths = recorded?.paths?.length ? recorded.paths : memoryManagedPaths(target, cwd);
+  const missing = paths.filter((path) => !existsSync(path));
+  const trackedPaths = paths.filter((path) => tracked(cwd, path));
+  const status = mode === 'degraded' || mode === 'not-installed' || missing.length || trackedPaths.length ? 'degraded' : 'ready';
+  return {
+    supportedMode,
+    mode,
+    status,
+    reason: mode === 'degraded' ? (recorded?.reason || 'adapter-degraded')
+      : trackedPaths.length ? 'memory-path-tracked'
+        : missing.length ? 'memory-path-missing'
+          : recorded?.reason || 'wired',
+    missing,
+    tracked: trackedPaths,
+    action: status === 'degraded' ? 'Run `npx @ericrisco/rsc sync`; if a config is tracked, move memory hooks to an untracked local config first.' : null,
+    trustRequired: target === 'codex' && status === 'ready',
+  };
+}
+
 export function unwireMemory(target, cwd = process.cwd()) {
   if (!MEMORY_TARGETS[target]) return [];
   const path = join(cwd, ...CONFIG[target].split('/'));
@@ -188,12 +230,28 @@ export function unwireMemory(target, cwd = process.cwd()) {
   if (target === 'opencode') {
     if (existsSync(path) && readFileSync(path, 'utf8').includes('RscMemoryPlugin')) { rmSync(path, { force: true }); touched.push(path); }
   } else {
-    const config = readConfig(path);
+    const raw = existsSync(path) ? readFileSync(path, 'utf8') : '';
+    const config = raw.replaceAll('\\\\', '/').includes(NEEDLE) ? readConfig(path) : null;
     if (config) { stripManaged(config); writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`); touched.push(path); }
   }
   if (target === 'cursor') {
     const rule = join(cwd, '.cursor', 'rules', 'rsc-memory.mdc');
-    if (existsSync(rule)) { rmSync(rule, { force: true }); touched.push(rule); }
+    if (existsSync(rule) && readFileSync(rule, 'utf8').includes('rsc-memory:managed')) { rmSync(rule, { force: true }); touched.push(rule); }
   }
   return touched;
+}
+
+export function memoryArtifactsPresent(target, cwd = process.cwd()) {
+  if (!MEMORY_TARGETS[target]) return [];
+  const out = commonPaths(cwd).filter(existsSync);
+  const config = join(cwd, ...CONFIG[target].split('/'));
+  if (existsSync(config)) {
+    const body = readFileSync(config, 'utf8').replaceAll('\\\\', '/');
+    if (body.includes(NEEDLE) || body.includes('RscMemoryPlugin')) out.push(config);
+  }
+  if (target === 'cursor') {
+    const rule = join(cwd, '.cursor', 'rules', 'rsc-memory.mdc');
+    if (existsSync(rule) && readFileSync(rule, 'utf8').includes('rsc-memory:managed')) out.push(rule);
+  }
+  return out;
 }

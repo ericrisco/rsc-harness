@@ -58,6 +58,18 @@ test('tracked or user-owned config is never overwritten to pretend local-only su
   assert.equal(readFileSync(config, 'utf8'), before);
 });
 
+test('a user-owned Cursor memory rule is treated as a collision and survives unwire', () => {
+  const cwd = repo();
+  const rule = join(cwd, '.cursor', 'rules', 'rsc-memory.mdc');
+  mkdirSync(join(cwd, '.cursor', 'rules'), { recursive: true });
+  writeFileSync(rule, 'my own memory rule\n');
+  const result = adapters.wireMemory('cursor', cwd);
+  assert.equal(result.mode, 'degraded');
+  assert.equal(result.reason, 'rule-collision');
+  adapters.unwireMemory('cursor', cwd);
+  assert.equal(readFileSync(rule, 'utf8'), 'my own memory rule\n');
+});
+
 test('unwire removes only rsc entries and preserves a neighboring user hook', () => {
   const cwd = repo();
   mkdirSync(join(cwd, '.codex'), { recursive: true });

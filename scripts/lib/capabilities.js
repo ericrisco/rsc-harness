@@ -25,6 +25,9 @@ import { homedir } from 'node:os';
 import { loadManifest } from './manifest.js';
 import { targetPaths } from '../../targets/index.js';
 import { developerAgentPath, targetHasAgents } from '../../targets/agents.js';
+import { targetHasCommands, commandPath } from '../../targets/commands.js';
+import { inspectMemoryWiring } from '../../targets/memory.js';
+import { readState } from './state.js';
 
 // AGENT_TARGETS is not exported, so derive dir + extension from the one path helper
 // that owns it — duplicating that table is how two copies drift apart. The extension
@@ -101,6 +104,14 @@ export function listSkills({ target, home, cwd = process.cwd() } = {}) {
   return out.sort((a, b) => a.id.localeCompare(b.id) || a.scope.localeCompare(b.scope));
 }
 
+export function listCommands({ target, cwd = process.cwd() } = {}) {
+  if (!targetHasCommands(target)) return { supported: false, commands: [] };
+  const state = readState(targetPaths(target, undefined, cwd).stateFile);
+  const commands = (state.commands || []).map((id) => ({ id, path: commandPath(target, cwd, id) }))
+    .filter((entry) => entry.path && existsSync(entry.path));
+  return { supported: true, commands };
+}
+
 // Keep the discriminator: a description's value is its `NOT x (that is y)` boundary,
 // so never cut it off. Trim the middle instead when the whole thing is long.
 export function shortDesc(d, limit = 220) {
@@ -124,6 +135,8 @@ export function capabilities({ target, home, cwd = process.cwd(), full = false }
   const skills = listSkills({ target, home, cwd });
   const installedIds = new Set(skills.map((s) => s.id));
   const { supported, agents } = listAgents({ target, home, cwd });
+  const commandReport = listCommands({ target, cwd });
+  const state = readState(targetPaths(target, home, cwd).stateFile);
   return {
     target,
     agentsSupported: supported,
@@ -133,6 +146,14 @@ export function capabilities({ target, home, cwd = process.cwd(), full = false }
       .map((s) => (full ? { id: s.id, description: shortDesc(s.description) } : { id: s.id }))
       .sort((a, b) => a.id.localeCompare(b.id)),
     agents,
+    commandsSupported: commandReport.supported,
+    commands: commandReport.commands,
+    memory: inspectMemoryWiring(
+      target,
+      cwd,
+      state.memory,
+      Boolean(Object.keys(state.skills || {}).length || state.agents?.length || state.commands?.length),
+    ),
   };
 }
 

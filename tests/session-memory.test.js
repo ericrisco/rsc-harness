@@ -62,6 +62,17 @@ test('resume selects exact branch/worktree, labels nearby and flags parallel ses
   assert.match(nearby.context, /nearby continuation/);
 });
 
+test('provider session-id namespaces cannot overwrite one another', () => {
+  const cwd = repo();
+  memory.capture({ cwd, sessionId: 'same-id', target: 'claude', event: 'start' });
+  writeFileSync(join(cwd, 'README.md'), 'changed\n');
+  memory.capture({ cwd, sessionId: 'same-id', target: 'claude', event: 'edit', editDelta: 1 });
+  memory.capture({ cwd, sessionId: 'same-id', target: 'codex', event: 'start' });
+  memory.capture({ cwd, sessionId: 'same-id', target: 'codex', event: 'edit', editDelta: 1 });
+  const files = readdirSync(join(memory.chooseMemoryRoot(cwd).root, 'sessions')).filter((name) => name.endsWith('.json')).sort();
+  assert.deepEqual(files, ['claude--same-id.json', 'codex--same-id.json']);
+});
+
 test('retention pruning, bounded rendering and compaction hints are deterministic', () => {
   const cwd = repo();
   memory.capture({ cwd, sessionId: 'old', target: 'cursor', event: 'start', now: '2026-07-01T00:00:00.000Z' });
@@ -75,7 +86,7 @@ test('retention pruning, bounded rendering and compaction hints are deterministi
   });
   assert.equal(current.compactionHint, true);
   const root = memory.chooseMemoryRoot(cwd).root;
-  assert.deepEqual(readdirSync(join(root, 'sessions')).filter((name) => name.endsWith('.json')), ['new.json']);
+  assert.deepEqual(readdirSync(join(root, 'sessions')).filter((name) => name.endsWith('.json')), ['cursor--new.json']);
   const resumed = memory.resume({ cwd, settings: { contextBytes: 180 }, now: '2026-09-02T00:02:00.000Z' });
   assert.ok(Buffer.byteLength(resumed.context) <= 180);
 });
@@ -98,6 +109,15 @@ test('approved lessons cross targets above threshold; unapproved lessons never w
   assert.equal(result.lessons[0].text, 'Prefer table-driven tests.');
 });
 
+test('approved lessons inject even before the project has a session journal', () => {
+  const cwd = repo();
+  memory.learn({ cwd, text: 'Keep migrations reversible.', evidence: 'Approved architecture review', scope: 'project', confidence: 0.95, approved: true });
+  const result = memory.resume({ cwd, target: 'claude' });
+  assert.equal(result.match, 'none');
+  assert.match(result.context, /approved lessons/);
+  assert.match(result.context, /Keep migrations reversible/);
+});
+
 test('metrics preserve unknown as null and never invent zero totals', () => {
   const cwd = repo();
   for (const [sessionId, cost, toolCalls, minute] of [['a', null, null, '01'], ['b', 1.25, 4, '02'], ['c', 2.75, null, '03']]) {
@@ -110,6 +130,12 @@ test('metrics preserve unknown as null and never invent zero totals', () => {
   assert.deepEqual(summary.knownTotal, { cost: 4, toolCalls: 4 });
   assert.deepEqual(summary.unknown, { cost: 1, toolCalls: 2 });
   assert.equal(summary.sessions.find((row) => row.sessionId === 'a').cost, null);
+});
+
+test('an empty metrics ledger reports unknown totals, not synthetic zero cost', () => {
+  const cwd = repo();
+  const summary = memory.metricsSummary({ cwd });
+  assert.deepEqual(summary.total, { cost: null, toolCalls: null });
 });
 
 test('without git the record is useful but explicitly has no branch or commits', () => {

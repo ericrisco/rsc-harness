@@ -14,6 +14,9 @@ import { createBackup } from './lib/backups.js';
 import {
   targetHasCommands, resolveCommands, reconcileCommands, commandPath, allPotentialCommandNames,
 } from '../targets/commands.js';
+import {
+  wireMemory, unwireMemory, memoryManagedPaths, memoryModeFor, memoryEnabledForProject, memoryArtifactsPresent,
+} from '../targets/memory.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CLI_VERSION = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
@@ -78,6 +81,7 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
+  out.push(...memoryManagedPaths(target, cwd));
   if (targetHasAgents(target)) {
     const state = readState(paths.stateFile);
     const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
@@ -92,7 +96,7 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
       target,
       skills: [...new Set([...Object.keys(state.skills || {}), ...skillIds])],
       agents: desiredAgents,
-      memoryMode: state.memory?.mode || 'unsupported',
+      memoryMode: memoryEnabledForProject(cwd) ? memoryModeFor(target) : 'disabled',
     });
     out.push(...[...new Set([...(state.commands || []), ...desiredCommands.map((command) => command.name)])].map((name) => commandPath(target, cwd, name)));
   }
@@ -141,6 +145,7 @@ export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalog
     catalogVersion,
     tier: tier ?? prev.tier ?? null,
     optOuts: optOuts.length ? optOuts : (prev.optOuts || []),
+    memory: prev.memory,
   });
 }
 
@@ -185,6 +190,8 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
     state.agents = [];
   }
   state.explicitAgents = explicit;
+  const memoryResult = wireMemory(target, cwd);
+  state.memory = { mode: memoryResult.mode, reason: memoryResult.reason, paths: memoryResult.paths };
   const desiredCommands = resolveCommands({
     target,
     skills: Object.keys(state.skills || {}),
@@ -282,6 +289,12 @@ export function listInstalledAgents({ target, home, cwd = process.cwd() }) {
       skills: agent?.skills || [],
     };
   });
+}
+
+export function listInstalledCommands({ target, home, cwd = process.cwd() }) {
+  const state = readState(targetPaths(target, home, cwd).stateFile);
+  return (state.commands || []).map((id) => ({ id, path: commandPath(target, cwd, id) }))
+    .filter((entry) => entry.path && existsSync(entry.path));
 }
 
 export async function uninstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), dryRun }) {
@@ -392,8 +405,14 @@ export async function purge({ home, cwd = process.cwd(), withDocs = false, dryRu
       }
       drop(paths.stateFile);
     }
-    // unwireHook mutates files, so only run it for real (dry runs skip it).
-    if (!dryRun) removed.push(...unwireHook(target, paths));
+    // Unwiring mutates shared config files, so only run it for real (dry runs report
+    // those files without touching them).
+    if (!dryRun) {
+      removed.push(...unwireHook(target, paths));
+      removed.push(...unwireMemory(target, cwd));
+    } else {
+      removed.push(...memoryArtifactsPresent(target, cwd));
+    }
     // Remove the subagents this catalog installed — and only those. An uninstaller that takes
     // an agent the user wrote by hand is worse than one that leaves residue.
     for (const n of allAgentNames()) {
@@ -409,7 +428,7 @@ export async function purge({ home, cwd = process.cwd(), withDocs = false, dryRu
   }
   drop(join(cwd, '.rsc'), true);
   if (withDocs) drop(join(cwd, '02-DOCS'), true);
-  return removed;
+  return [...new Set(removed)];
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
