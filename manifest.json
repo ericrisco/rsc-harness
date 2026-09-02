@@ -1,7 +1,10 @@
 {
   "version": "1.1.6",
   "counts": {
-    "skills": 272
+    "skills": 272,
+    "agents": 33,
+    "commands": 53,
+    "fixedCommands": 20
   },
   "skills": [
     {
@@ -5664,6 +5667,835 @@
       ],
       "profiles": [
         "full"
+      ]
+    }
+  ],
+  "agents": [
+    {
+      "id": "cpp-build-resolver",
+      "description": "C++ build resolver: reproduces a failing build and applies the minimum verified repair. NOT ownership review or build-system modernization.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "cpp"
+      ]
+    },
+    {
+      "id": "cpp-reviewer",
+      "description": "C++ reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT Rust review or compiler/linker repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "cpp"
+      ]
+    },
+    {
+      "id": "csharp-reviewer",
+      "description": "C# and .NET reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT Java review or dotnet build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "csharp-dotnet"
+      ]
+    },
+    {
+      "id": "developer",
+      "description": "Implementation worker: turns an approved spec+plan into working, tested code under strict TDD (red->green->refactor), one task at a time. The rsc SDD fan-out/implementation hand.",
+      "role": "developer",
+      "tier": "balanced",
+      "tools": null,
+      "skills": []
+    },
+    {
+      "id": "django-build-resolver",
+      "description": "Django build resolver: reproduces a failing build and applies the minimum verified repair. NOT ORM performance review or feature refactoring.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "django"
+      ]
+    },
+    {
+      "id": "django-reviewer",
+      "description": "Django reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT general Python review or build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "django"
+      ]
+    },
+    {
+      "id": "fastapi-reviewer",
+      "description": "FastAPI reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT generic Python review or environment repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "fastapi"
+      ]
+    },
+    {
+      "id": "flutter-build-resolver",
+      "description": "Flutter build resolver: reproduces a failing build and applies the minimum verified repair. NOT widget review or package modernization.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "flutter"
+      ]
+    },
+    {
+      "id": "flutter-reviewer",
+      "description": "Flutter reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT native Android review or Flutter build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "flutter"
+      ]
+    },
+    {
+      "id": "go-build-resolver",
+      "description": "Go build resolver: reproduces a failing build and applies the minimum verified repair. NOT concurrency review or module-wide upgrades.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "go"
+      ]
+    },
+    {
+      "id": "go-reviewer",
+      "description": "Go reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT generic service review or Go build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "go"
+      ]
+    },
+    {
+      "id": "java-build-resolver",
+      "description": "Java and Spring build resolver: reproduces a failing build and applies the minimum verified repair. NOT code review or broad dependency upgrades.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "java",
+        "spring-boot"
+      ]
+    },
+    {
+      "id": "java-reviewer",
+      "description": "Java and Spring reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT Android/Kotlin review or generic build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "java",
+        "spring-boot"
+      ]
+    },
+    {
+      "id": "kotlin-build-resolver",
+      "description": "Kotlin Android build resolver: reproduces a failing build and applies the minimum verified repair. NOT UI/coroutine review or project modernization.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "kotlin-android"
+      ]
+    },
+    {
+      "id": "kotlin-reviewer",
+      "description": "Kotlin Android reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT Java server review or Gradle repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "kotlin-android"
+      ]
+    },
+    {
+      "id": "mle-reviewer",
+      "description": "production ML reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT notebook style review or model training implementation.",
+      "role": "reviewer",
+      "tier": "heavy",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "machine-learning"
+      ]
+    },
+    {
+      "id": "php-reviewer",
+      "description": "PHP and Laravel reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT Django review or Composer/build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "laravel",
+        "php"
+      ]
+    },
+    {
+      "id": "postgres-reviewer",
+      "description": "PostgreSQL reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT application ORM review or migration execution.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "postgresdb"
+      ]
+    },
+    {
+      "id": "python-reviewer",
+      "description": "Python reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT FastAPI/Django-specific review or environment repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "python"
+      ]
+    },
+    {
+      "id": "pytorch-build-resolver",
+      "description": "PyTorch build resolver: reproduces a failing build and applies the minimum verified repair. NOT model-quality review or training redesign.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "machine-learning"
+      ]
+    },
+    {
+      "id": "rag-reviewer",
+      "description": "RAG reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT general ML training review or retrieval implementation.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "rag"
+      ]
+    },
+    {
+      "id": "react-build-resolver",
+      "description": "React and Next.js build resolver: reproduces a failing build and applies the minimum verified repair. NOT UI review or broad package upgrades.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "react",
+        "nextjs"
+      ]
+    },
+    {
+      "id": "react-reviewer",
+      "description": "React and Next.js reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT Vue review or frontend build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "react",
+        "nextjs"
+      ]
+    },
+    {
+      "id": "refuter-correctness",
+      "description": "Adversarial reviewer, correctness lens: attacks a green diff for boundary and error-path defects, and demands that any home-grown gate prove it can both fail and pass. Fresh context, mandate to refute.",
+      "role": "refuter",
+      "tier": "balanced",
+      "tools": null,
+      "skills": []
+    },
+    {
+      "id": "refuter-security",
+      "description": "Adversarial reviewer, security and privacy lens: hunts untrusted input reaching a sink, authz gaps, leaked secrets and data escaping where it should not. Fresh context, mandate to refute.",
+      "role": "refuter",
+      "tier": "balanced",
+      "tools": null,
+      "skills": []
+    },
+    {
+      "id": "refuter-tests",
+      "description": "Adversarial reviewer, tests-as-evidence lens: tries to make the suite pass wrongly, invents mutants the builder did not choose, and checks the spec-to-test mapping in both directions. Fresh context, mandate to refute.",
+      "role": "refuter",
+      "tier": "balanced",
+      "tools": null,
+      "skills": []
+    },
+    {
+      "id": "rust-build-resolver",
+      "description": "Rust build resolver: reproduces a failing build and applies the minimum verified repair. NOT unsafe-code review or dependency modernization.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "rust"
+      ]
+    },
+    {
+      "id": "rust-reviewer",
+      "description": "Rust reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT C++ review or Cargo build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "rust"
+      ]
+    },
+    {
+      "id": "spec-miner",
+      "description": "Brownfield spec miner: extracts an anchored SDD draft from existing code under a bounded read budget. NOT feature planning or overwriting an approved spec.",
+      "role": "spec-miner",
+      "tier": "heavy",
+      "tools": [
+        "read",
+        "search",
+        "edit"
+      ],
+      "skills": []
+    },
+    {
+      "id": "swift-build-resolver",
+      "description": "Swift iOS build resolver: reproduces a failing build and applies the minimum verified repair. NOT concurrency review or signing-policy changes.",
+      "role": "build-resolver",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "shell"
+      ],
+      "skills": [
+        "swift-ios"
+      ]
+    },
+    {
+      "id": "swift-reviewer",
+      "description": "Swift iOS reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT Kotlin review or Xcode build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "swift-ios"
+      ]
+    },
+    {
+      "id": "typescript-reviewer",
+      "description": "TypeScript reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT framework-specific UI review or TypeScript build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "typescript"
+      ]
+    },
+    {
+      "id": "vue-reviewer",
+      "description": "Vue and Nuxt reviewer: inspects changed code for stack-specific failure modes and reports evidence without editing. NOT React review or Vue build repair.",
+      "role": "reviewer",
+      "tier": "balanced",
+      "tools": [
+        "read",
+        "search"
+      ],
+      "skills": [
+        "vue-nuxt"
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "id": "analyze",
+      "description": "Run the analyze skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "analyze"
+    },
+    {
+      "id": "build-fix",
+      "description": "Route a build failure to the installed stack resolver without guessing.",
+      "kind": "resolver-selector",
+      "backing": "build-resolver"
+    },
+    {
+      "id": "checkpoint",
+      "description": "Freeze the current candidate for review and seal it only after the required lenses approve.",
+      "kind": "capability",
+      "backing": "sello"
+    },
+    {
+      "id": "clarify",
+      "description": "Run the clarify skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "clarify"
+    },
+    {
+      "id": "cpp-build",
+      "description": "Delegate cpp build work to the installed cpp-build-resolver agent.",
+      "kind": "agent",
+      "backing": "cpp-build-resolver"
+    },
+    {
+      "id": "cpp-review",
+      "description": "Delegate cpp review work to the installed cpp-reviewer agent.",
+      "kind": "agent",
+      "backing": "cpp-reviewer"
+    },
+    {
+      "id": "csharp-dotnet-review",
+      "description": "Delegate csharp-dotnet review work to the installed csharp-reviewer agent.",
+      "kind": "agent",
+      "backing": "csharp-reviewer"
+    },
+    {
+      "id": "debug",
+      "description": "Run the debug skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "debug"
+    },
+    {
+      "id": "django-build",
+      "description": "Delegate django build work to the installed django-build-resolver agent.",
+      "kind": "agent",
+      "backing": "django-build-resolver"
+    },
+    {
+      "id": "django-review",
+      "description": "Delegate django review work to the installed django-reviewer agent.",
+      "kind": "agent",
+      "backing": "django-reviewer"
+    },
+    {
+      "id": "fastapi-review",
+      "description": "Delegate fastapi review work to the installed fastapi-reviewer agent.",
+      "kind": "agent",
+      "backing": "fastapi-reviewer"
+    },
+    {
+      "id": "flutter-build",
+      "description": "Delegate flutter build work to the installed flutter-build-resolver agent.",
+      "kind": "agent",
+      "backing": "flutter-build-resolver"
+    },
+    {
+      "id": "flutter-review",
+      "description": "Delegate flutter review work to the installed flutter-reviewer agent.",
+      "kind": "agent",
+      "backing": "flutter-reviewer"
+    },
+    {
+      "id": "go-build",
+      "description": "Delegate go build work to the installed go-build-resolver agent.",
+      "kind": "agent",
+      "backing": "go-build-resolver"
+    },
+    {
+      "id": "go-review",
+      "description": "Delegate go review work to the installed go-reviewer agent.",
+      "kind": "agent",
+      "backing": "go-reviewer"
+    },
+    {
+      "id": "harness-audit",
+      "description": "Run the harness skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "harness"
+    },
+    {
+      "id": "implement",
+      "description": "Run the implement skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "implement"
+    },
+    {
+      "id": "java-build",
+      "description": "Delegate java build work to the installed java-build-resolver agent.",
+      "kind": "agent",
+      "backing": "java-build-resolver"
+    },
+    {
+      "id": "java-review",
+      "description": "Delegate java review work to the installed java-reviewer agent.",
+      "kind": "agent",
+      "backing": "java-reviewer"
+    },
+    {
+      "id": "kotlin-android-build",
+      "description": "Delegate kotlin-android build work to the installed kotlin-build-resolver agent.",
+      "kind": "agent",
+      "backing": "kotlin-build-resolver"
+    },
+    {
+      "id": "kotlin-android-review",
+      "description": "Delegate kotlin-android review work to the installed kotlin-reviewer agent.",
+      "kind": "agent",
+      "backing": "kotlin-reviewer"
+    },
+    {
+      "id": "laravel-review",
+      "description": "Delegate laravel review work to the installed php-reviewer agent.",
+      "kind": "agent",
+      "backing": "php-reviewer"
+    },
+    {
+      "id": "learn",
+      "description": "Propose one local lesson; saving still requires individual explicit approval.",
+      "kind": "memory",
+      "backing": "memory:learn"
+    },
+    {
+      "id": "machine-learning-build",
+      "description": "Delegate machine-learning build work to the installed pytorch-build-resolver agent.",
+      "kind": "agent",
+      "backing": "pytorch-build-resolver"
+    },
+    {
+      "id": "machine-learning-review",
+      "description": "Delegate machine-learning review work to the installed mle-reviewer agent.",
+      "kind": "agent",
+      "backing": "mle-reviewer"
+    },
+    {
+      "id": "nextjs-build",
+      "description": "Delegate nextjs build work to the installed react-build-resolver agent.",
+      "kind": "agent",
+      "backing": "react-build-resolver"
+    },
+    {
+      "id": "nextjs-review",
+      "description": "Delegate nextjs review work to the installed react-reviewer agent.",
+      "kind": "agent",
+      "backing": "react-reviewer"
+    },
+    {
+      "id": "php-review",
+      "description": "Delegate php review work to the installed php-reviewer agent.",
+      "kind": "agent",
+      "backing": "php-reviewer"
+    },
+    {
+      "id": "plan",
+      "description": "Run the plan skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "plan"
+    },
+    {
+      "id": "postgresdb-review",
+      "description": "Delegate postgresdb review work to the installed postgres-reviewer agent.",
+      "kind": "agent",
+      "backing": "postgres-reviewer"
+    },
+    {
+      "id": "python-review",
+      "description": "Delegate python review work to the installed python-reviewer agent.",
+      "kind": "agent",
+      "backing": "python-reviewer"
+    },
+    {
+      "id": "rag-review",
+      "description": "Delegate rag review work to the installed rag-reviewer agent.",
+      "kind": "agent",
+      "backing": "rag-reviewer"
+    },
+    {
+      "id": "react-build",
+      "description": "Delegate react build work to the installed react-build-resolver agent.",
+      "kind": "agent",
+      "backing": "react-build-resolver"
+    },
+    {
+      "id": "react-review",
+      "description": "Delegate react review work to the installed react-reviewer agent.",
+      "kind": "agent",
+      "backing": "react-reviewer"
+    },
+    {
+      "id": "refactor-clean",
+      "description": "Run the simplify-code skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "simplify-code"
+    },
+    {
+      "id": "resume-session",
+      "description": "Read the bounded local continuation record for this branch and worktree.",
+      "kind": "memory",
+      "backing": "memory:resume"
+    },
+    {
+      "id": "review",
+      "description": "Run the review skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "review"
+    },
+    {
+      "id": "rust-build",
+      "description": "Delegate rust build work to the installed rust-build-resolver agent.",
+      "kind": "agent",
+      "backing": "rust-build-resolver"
+    },
+    {
+      "id": "rust-review",
+      "description": "Delegate rust review work to the installed rust-reviewer agent.",
+      "kind": "agent",
+      "backing": "rust-reviewer"
+    },
+    {
+      "id": "save-session",
+      "description": "Force a local deterministic session checkpoint.",
+      "kind": "memory",
+      "backing": "memory:save"
+    },
+    {
+      "id": "security-scan",
+      "description": "Run the security-scan skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "security-scan"
+    },
+    {
+      "id": "ship",
+      "description": "Run the ship skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "ship"
+    },
+    {
+      "id": "specify",
+      "description": "Run the specify skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "specify"
+    },
+    {
+      "id": "spring-boot-build",
+      "description": "Delegate spring-boot build work to the installed java-build-resolver agent.",
+      "kind": "agent",
+      "backing": "java-build-resolver"
+    },
+    {
+      "id": "spring-boot-review",
+      "description": "Delegate spring-boot review work to the installed java-reviewer agent.",
+      "kind": "agent",
+      "backing": "java-reviewer"
+    },
+    {
+      "id": "swift-ios-build",
+      "description": "Delegate swift-ios build work to the installed swift-build-resolver agent.",
+      "kind": "agent",
+      "backing": "swift-build-resolver"
+    },
+    {
+      "id": "swift-ios-review",
+      "description": "Delegate swift-ios review work to the installed swift-reviewer agent.",
+      "kind": "agent",
+      "backing": "swift-reviewer"
+    },
+    {
+      "id": "tasks",
+      "description": "Run the tasks skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "tasks"
+    },
+    {
+      "id": "test-coverage",
+      "description": "Delegate coverage work to the installed stack testing skill.",
+      "kind": "testing-skill",
+      "backing": "testing-go"
+    },
+    {
+      "id": "typescript-review",
+      "description": "Delegate typescript review work to the installed typescript-reviewer agent.",
+      "kind": "agent",
+      "backing": "typescript-reviewer"
+    },
+    {
+      "id": "update-docs",
+      "description": "Run the knowledge-ops skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "knowledge-ops"
+    },
+    {
+      "id": "verify",
+      "description": "Run the verify skill through a short, non-duplicating entry point.",
+      "kind": "skill",
+      "backing": "verify"
+    },
+    {
+      "id": "vue-nuxt-review",
+      "description": "Delegate vue-nuxt review work to the installed vue-reviewer agent.",
+      "kind": "agent",
+      "backing": "vue-reviewer"
+    }
+  ],
+  "sourceReceipts": [
+    {
+      "agent": "go-reviewer",
+      "researchedAt": "2026-09-02",
+      "sources": [
+        {
+          "url": "https://go.dev/wiki/CodeReviewComments",
+          "coverage": [
+            "error identity and wrapping",
+            "goroutine lifetime",
+            "interface values",
+            "receiver and API review"
+          ]
+        },
+        {
+          "url": "https://go.dev/doc/comment",
+          "coverage": [
+            "public API comments",
+            "package and symbol contracts"
+          ]
+        },
+        {
+          "url": "https://go.dev/doc/contribute",
+          "coverage": [
+            "review evidence and change scope"
+          ]
+        }
+      ]
+    },
+    {
+      "agent": "cpp-reviewer",
+      "researchedAt": "2026-09-02",
+      "sources": [
+        {
+          "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines.html",
+          "coverage": [
+            "RAII and ownership",
+            "lifetime and bounds safety",
+            "concurrency",
+            "exception guarantees"
+          ]
+        }
+      ]
+    },
+    {
+      "agent": "python-reviewer",
+      "researchedAt": "2026-09-02",
+      "sources": [
+        {
+          "url": "https://docs.python.org/3.14/library/asyncio-dev.html",
+          "coverage": [
+            "un-awaited coroutines",
+            "blocking async code",
+            "thread boundaries"
+          ]
+        },
+        {
+          "url": "https://docs.python.org/3.14/library/asyncio-task.html",
+          "coverage": [
+            "TaskGroup failure propagation",
+            "cancellation",
+            "task lifetime"
+          ]
+        },
+        {
+          "url": "https://docs.python.org/3.14/reference/datamodel.html",
+          "coverage": [
+            "descriptors and protocols",
+            "object and iterator lifetime"
+          ]
+        }
       ]
     }
   ]

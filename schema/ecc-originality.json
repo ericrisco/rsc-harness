@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "source": "https://github.com/affaan-m/everything-claude-code",
+  "revision": "90430ab3a716e12a9c6770802efa352098735f24",
+  "generatedAt": "2026-09-02",
+  "included": [
+    "agents/**",
+    "commands/**"
+  ],
+  "ngramSize": 8,
+  "normalization": "NFKC lowercase; Unicode letters/numbers plus _+.#/-; whitespace joined",
+  "fingerprintFormat": "first 64 bits of SHA-256, sorted big-endian; collisions fail closed",
+  "fingerprintCount": 93337,
+  "dataSha256": "2025038e308e097c1d478c6eeeabf34dd35e6affa7abb20c3b31cf0fdde63463",
+  "exemptions": []
+}

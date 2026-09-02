@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc — your agent needs a memory (02-DOCS/, or it invents what it cannot remember), arms (01-TOOLS/, or it never touches your database), a trade (272 skills, or it guesses how the job is done), and reflexes (deterministic hooks, or it forgets the rule mid-session). One meta-harness for 17 coding assistants." width="960">
 
-# `rsc` — 272 agent skills, one CLI, zero bloat
+# `rsc` — 272 skills, 33 agents, one CLI
 
 [![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
 [![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
@@ -75,6 +75,12 @@ one is the opposite bet:
 - **Not code-only.** First-class support for running a *company*: bookkeeping,
   invoicing, hiring, GDPR, pitch decks, SEO, a YouTube/TikTok/LinkedIn presence —
   each wired to a `02-DOCS/` knowledge loop that learns from your own results.
+- **Specialists follow the stack.** The four base agents stay small; installing a
+  supported stack adds only its reviewer and build resolver. `rsc add go`, for
+  example, adds the Go pair without pulling reviewers for every other language.
+- **A new local session continues the old one.** Claude Code, Codex, Gemini CLI
+  and OpenCode load a bounded checkpoint for the current branch and worktree at
+  session start. Cursor desktop uses an assisted read-before-action fallback.
 - **Honestly good.** Every skill was built by a research → spec → implement →
   *adversarial review* pipeline and had to clear an objective rubric
   (`scripts/skill-rubric.md`, written *before* any skill existed). The bar was
@@ -82,6 +88,30 @@ one is the opposite bet:
 
 `skills/<name>/` is the single source of truth. There are no bundles to argue
 over: you start with a tiny floor and grow one piece at a time.
+
+---
+
+## New sessions pick up the latest local work
+
+On supported local targets, rsc checkpoints observable repository state at safe
+boundaries: branch, worktree, HEAD, changed paths, commits and SDD ledger status.
+When a new session opens in the same checkout, that state is injected before the
+first agent action. A completed edit is preserved even if the previous client
+closed before its normal session-end event.
+
+- **Full:** Claude Code, Codex, Gemini CLI and OpenCode. Codex asks you to inspect
+  and trust the project hook once with `/hooks`; until then `doctor` reports that
+  trust is still required.
+- **Assisted:** Cursor desktop. Its start hook is fire-and-forget, so rsc also
+  installs a local always-on rule that performs the read before acting.
+- **Never cloud:** Cursor Cloud, Codex Cloud, remote agents, cloud storage and
+  synchronization are intentionally unsupported. The memory runtime makes no
+  network request.
+
+The journal never stores prompts, responses, tool output, file contents or
+secrets. It stays in a git-excluded project-local path, retains 30 days, and
+injects at most 4,096 bytes. Disable every memory surface for a project with
+`rsc memory off`; re-enable it with `rsc memory on`.
 
 ---
 
@@ -130,6 +160,9 @@ Everything stays **in the project**, and the real skill files are written
 **once** to `.rsc/skills/<id>/`. Each assistant you pick gets a lightweight
 symlink back to that shared base — no copy is duplicated across IDEs. (If the
 filesystem can't symlink, it falls back to a real copy automatically.)
+On targets with file-based agents, the four base agents are installed too;
+stack specialists remain selective. Native command targets receive only entry
+points whose backing skill, agent or local-memory capability actually exists.
 
 ---
 
@@ -192,8 +225,14 @@ rsc install --profile full           # everything (all 272 skills)
 rsc install --profile full --without go
 rsc consult "I want to launch a SaaS"  # recommend only, no install
 rsc registry refresh                 # write .rsc/skill-registry.{json,md}
-rsc list                             # what rsc has installed
-rsc doctor                           # health check (state, hook, counts)
+rsc list                             # installed skills, agents and commands
+rsc capabilities                    # installed/available surfaces + memory mode
+rsc doctor                           # health, missing backing, hooks and local memory
+rsc memory status                    # full / assisted / unsupported / degraded
+rsc memory save --session handoff    # force a deterministic local checkpoint
+rsc memory resume                    # print this branch/worktree continuation
+rsc memory learn --text "…" --evidence "…" --confidence 0.8 --approve
+rsc memory off                       # disable hooks, commands and injection project-wide
 rsc sync --target claude,codex       # refresh managed skills/hooks from the current package version
 rsc backups                          # list project-local snapshots
 rsc restore latest --dry-run         # preview restoring the newest snapshot
@@ -221,7 +260,8 @@ The harness travels by git, but not all of it — and the split is the point.
 
 | | Why |
 | --- | --- |
-| `.rsc/` | Machine state: hook scripts, seals, logs |
+| `.rsc/` | Machine state: hook scripts, seals, logs and fallback session memory |
+| `02-DOCS/raw/worklog/.rsc-memory/` | Preferred session journal when a local wiki exists; protected with git's local exclude |
 | The skill entries rsc manages | Symlinks on macOS/Linux, real copies on Windows — two incompatible shapes of one thing |
 
 Whoever clones runs **one command** and ends up with the same harness:
@@ -485,6 +525,24 @@ duplicated. The wizard asks which ones; `--target a,b` does it non-interactively
 
 > `codex`, `zed`, `amp`, `opencode` and `jules` all share the one root
 > `AGENTS.md`; the block is idempotent, so picking several writes it once.
+
+The richer surfaces are intentionally narrower than skill support:
+
+| Targets | Stack agents | Native commands | Local session continuation |
+| --- | --- | --- | --- |
+| Claude Code | yes | agent + memory entries; skills already invoke natively | full |
+| Codex | yes | no separate project-command surface | full after `/hooks` trust |
+| Cursor desktop | yes | yes | assisted |
+| Gemini CLI, OpenCode | yes | yes | full |
+| GitHub Copilot | yes | yes | unsupported |
+| Junie, Kiro | yes | unsupported | unsupported |
+| Windsurf, Cline, Roo | unsupported | yes | unsupported |
+| Antigravity, Zed, Continue, Amp, Jules, Aider | unsupported | unsupported | unsupported |
+
+`manifest.json` is the generated public inventory: 33 agents (4 base + 29
+selective specialists) and 53 command entries (20 fixed + 33 stack aliases).
+Unsupported means rsc writes nothing for that surface; it does not emulate a
+provider feature with an unverified file.
 
 ---
 

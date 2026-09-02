@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import Ajv from 'ajv';
 import { parseFrontmatter } from './lib/frontmatter.js';
 import { fenceBalance } from './lib/skill-lint.js';
+import { allAgentNames, agentByName } from '../targets/agents.js';
+import { fixedCommands, resolveCommands } from '../targets/commands.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILLS = join(ROOT, 'skills');
@@ -32,7 +34,45 @@ export function buildManifest() {
       profiles: fm.profiles || [],
     };
   }).sort((a, b) => a.id.localeCompare(b.id));
-  return { version, counts: { skills: skills.length }, skills };
+  const agents = allAgentNames().map((id) => {
+    const agent = agentByName(id);
+    return {
+      id,
+      description: agent.desc,
+      role: agent.role || (id === 'developer' ? 'developer' : 'refuter'),
+      tier: agent.tier || 'balanced',
+      tools: agent.tools || null,
+      skills: agent.skills || [],
+    };
+  }).sort((a, b) => a.id.localeCompare(b.id));
+  // Cursor exposes every command kind, so resolving the complete catalog through
+  // that target gives the target-neutral public inventory: fixed entries plus all
+  // stack aliases, without introducing a second alias table.
+  const commands = resolveCommands({
+    target: 'cursor',
+    skills: ids,
+    agents: allAgentNames(),
+    memoryMode: 'full',
+  }).map((command) => ({
+    id: command.name,
+    description: command.description,
+    kind: command.kind,
+    backing: command.backing,
+  }));
+  const sourceReceipts = JSON.parse(readFileSync(join(ROOT, 'targets', 'agent-sources.json'), 'utf8'));
+  return {
+    version,
+    counts: {
+      skills: skills.length,
+      agents: agents.length,
+      commands: commands.length,
+      fixedCommands: fixedCommands().length,
+    },
+    skills,
+    agents,
+    commands,
+    sourceReceipts,
+  };
 }
 
 export function validateFrontmatter() {
@@ -102,11 +142,11 @@ function main() {
     let current = '';
     try { current = readFileSync(out, 'utf8'); } catch { /* missing */ }
     if (current !== json) { console.error('manifest.json is stale — run `npm run manifest`'); process.exit(1); }
-    console.log(`manifest OK (${manifest.counts.skills} skills)`);
+    console.log(`manifest OK (${manifest.counts.skills} skills, ${manifest.counts.agents} agents, ${manifest.counts.commands} commands)`);
     return;
   }
   writeFileSync(out, json);
-  console.log(`wrote manifest.json (${manifest.counts.skills} skills)`);
+  console.log(`wrote manifest.json (${manifest.counts.skills} skills, ${manifest.counts.agents} agents, ${manifest.counts.commands} commands)`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) main();
