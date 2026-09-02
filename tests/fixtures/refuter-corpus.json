@@ -1,0 +1,44 @@
+[
+  {
+    "agent": "refuter-correctness",
+    "realDefect": {
+      "attack": "boundary and twin path",
+      "line": "scripts/check.js:41",
+      "failureMode": "With a valid mixed-case path on a case-insensitive filesystem, string equality rejects the entry although the directory segment exists.",
+      "severity": "HIGH"
+    },
+    "temptingFalsePositive": {
+      "attack": "equivalent mutant",
+      "reasonToOmit": "No concrete input makes the original and mutant disagree."
+    },
+    "requiredSignals": ["exact changed line", "concrete input and state", "equivalent mutant"]
+  },
+  {
+    "agent": "refuter-security",
+    "realDefect": {
+      "attack": "data egress path",
+      "line": "scripts/session.js:88",
+      "failureMode": "A prompt sentinel reaches a persisted JSON field and is later included in a package backup.",
+      "severity": "CRITICAL"
+    },
+    "temptingFalsePositive": {
+      "attack": "secret-shaped test fixture",
+      "reasonToOmit": "The value is a documented dummy, remains inside the ignored test directory, and never reaches a sink."
+    },
+    "requiredSignals": ["exact changed line", "concrete input and state", "dummy value"]
+  },
+  {
+    "agent": "refuter-tests",
+    "realDefect": {
+      "attack": "assertion that cannot fail",
+      "line": "tests/gate.test.js:27",
+      "failureMode": "The assertion examines the fixture input rather than the gate output, so the broken gate still passes.",
+      "severity": "HIGH"
+    },
+    "temptingFalsePositive": {
+      "attack": "missing test for equivalent branch",
+      "reasonToOmit": "The proposed branch has no observable input where its result differs from the original."
+    },
+    "requiredSignals": ["exact changed line", "concrete input and state", "equivalent mutant"]
+  }
+]

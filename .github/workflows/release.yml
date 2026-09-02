@@ -55,6 +55,8 @@ jobs:
         run: npm test
       - name: eval-lint
         run: bash scripts/eval-lint.sh
+      - name: originality
+        run: npm run originality:check
 
       # --- bump version (auto-patch on push; chosen bump on manual run) ---------
       - name: Configure git identity

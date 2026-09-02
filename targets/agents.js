@@ -10,6 +10,10 @@
 // written by `init` at onboarding and read here so re-syncs honor it.
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import {
+  stackAgents, stackAgentNames, stackAgentByName,
+  resolveStackAgentNames, validateAgentCatalog,
+} from './agent-catalog.js';
 
 // Concrete model per provider per tier. June 2026 defaults — EDIT to your account's
 // models; the TIER is the contract, the id is yours to change. `light` is deliberately
@@ -42,19 +46,31 @@ export function targetHasAgents(target) { return Boolean(AGENT_TARGETS[target]);
 // (decided in clarify 2026-08-18: a lens passed as a parameter reintroduces the
 // does-anyone-remember dependency this whole spec exists to remove) — but P5 says length is a cost,
 // so the contract they share is composed, not written three times.
-const REFUTER_CONTRACT = `Your mandate is to **refute readiness**, not confirm it. A reviewer looking for confirmation finds confirmation; the asymmetry is the point.
-
-**You get exactly four inputs, and nothing else:**
+export const REFUTER_FOUR_INPUTS = `**You get exactly four inputs, and nothing else:**
 1. The task contract — the original request **plus every scope change a human explicitly approved since**. Without the approved changes, a legitimate scope revision reads as a spec gap and you will report a confident false positive.
 2. The approved spec.
 3. The exact source state (commit SHA, or a tree hash when git is absent). A verdict attaches to the state you saw, not to the project.
-4. The entry point — the one command that reruns the checks.
+4. The entry point — the one command that reruns the checks.`;
+
+const REFUTER_CONTRACT = `Your mandate is to **refute readiness**, not confirm it. A reviewer looking for confirmation finds confirmation; the asymmetry is the point.
+
+${REFUTER_FOUR_INPUTS}
 
 **You do NOT get** the builder's conversation, reasoning, defences, or draft verdict. If a claim needs the builder's justification to stand, it is not proven.
 
 **Blind first, compare second.** Record what you attacked and what you found BEFORE you are shown the builder's conclusions. Only then may you compare and add findings; the blind record is append-only after that, never rewritten. Skip this and your fresh context is spent confirming their framing, which is the one thing it was bought to avoid.
 
 **The attack list is the deliverable, not just the findings.** "Nothing found" without saying where you looked is indistinguishable from not having looked.
+
+**Before reporting any finding, answer all four questions:**
+1. Can you cite the **exact changed line**?
+2. Can you state the **concrete input, state, and wrong result**? The concrete input and state must be explicit.
+3. Did you inspect the relevant **caller, import, and relevant test**?
+4. Can the severity survive the **existing guards** you verified?
+
+If an answer is no, lower the severity or omit the finding. Every **HIGH or CRITICAL** needs the line and failure mode in the report. **Zero findings with an attack list is valid.**
+
+**Common false positives to reject:** an equivalent mutant with no diverging input; a documented dummy value that never reaches a sink; a deliberate boundary already enforced by a caller; generated/vendor code outside the change; style preference presented as correctness; and a theoretical race with no shared state or overlapping lifetime.
 
 **A finding blocks only if it is caused by this change, is severe, and carries evidence** — a repro or a concrete failure scenario. A suspicion without one is a question, and questions do not block. You fix nothing: findings return through the normal loop, and a SPEC gap goes to the human, never to the builder to self-amend.`;
 
@@ -112,11 +128,18 @@ ${REFUTER_CONTRACT}
   },
 ];
 
+export const BASE_AGENT_NAMES = Object.freeze(AGENTS.map((agent) => agent.name));
+export { stackAgents, stackAgentNames, validateAgentCatalog };
+export const allAgentNames = () => [...BASE_AGENT_NAMES, ...stackAgentNames()];
+export function resolveAgentNames(skillIds = [], explicitAgentIds = []) {
+  return [...BASE_AGENT_NAMES, ...resolveStackAgentNames(skillIds, explicitAgentIds)];
+}
+
 // Back-compat: the tier file and its reader are named for `developer` because that is what they
 // configure. The refuters run at the same tier — a deliberate, reversible default: nobody has measured
 // whether a heavier model finds more here, and silently tripling tier-2 cost on an unmeasured hunch is
 // the wrong way to find out.
-const byName = (name) => AGENTS.find((a) => a.name === name);
+const byName = (name) => AGENTS.find((a) => a.name === name) || stackAgentByName(name);
 export const agentNames = () => AGENTS.map((a) => a.name);
 
 // `.rsc/developer.json` — the chosen tier (balanced default; never light). `init` writes
@@ -137,14 +160,16 @@ export function writeDeveloperTier(cwd, tier) {
 function renderMd(spec, model, agent) {
   const fm = ['---', `name: ${agent.name}`, `description: "${agent.desc}"`, `model: ${model}`];
   if (spec.mode) fm.push(`mode: ${spec.mode}`);
+  if (agent.tools) fm.push(`tools: [${agent.tools.join(', ')}]`);
   fm.push('---', '');
   return `${fm.join('\n')}${agent.body}\n`;
 }
-const renderJson = (model, agent) => `${JSON.stringify({ name: agent.name, description: agent.desc, model, prompt: agent.body }, null, 2)}\n`;
+const renderJson = (model, agent) => `${JSON.stringify({ name: agent.name, description: agent.desc, model, ...(agent.tools ? { tools: agent.tools } : {}), prompt: agent.body }, null, 2)}\n`;
 function renderToml(model, agent) {
   const esc = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   // body as a TOML multiline LITERAL string ('''…''') — no escape processing.
-  return `name = "${agent.name}"\ndescription = "${esc(agent.desc)}"\nmodel = "${model}"\ndeveloper_instructions = '''\n${agent.body}\n'''\n`;
+  const tools = agent.tools ? `tools = [${agent.tools.map((tool) => `"${tool}"`).join(', ')}]\n` : '';
+  return `name = "${agent.name}"\ndescription = "${esc(agent.desc)}"\nmodel = "${model}"\n${tools}developer_instructions = '''\n${agent.body}\n'''\n`;
 }
 
 export function agentPath(target, cwd, name = 'developer') {
@@ -152,12 +177,15 @@ export function agentPath(target, cwd, name = 'developer') {
   return spec ? join(cwd, ...spec.dir.split('/'), `${name}${spec.ext}`) : null;
 }
 
-export function writeAgents(target, cwd, tier = readDeveloperTier(cwd)) {
+export function writeAgents(target, cwd, tier = readDeveloperTier(cwd), names = agentNames()) {
   const spec = AGENT_TARGETS[target];
   if (!spec) return [];
-  const model = spec.model(tier);
   const written = [];
-  for (const agent of AGENTS) {
+  for (const name of names) {
+    const agent = byName(name);
+    if (!agent) continue;
+    const effectiveTier = agent.tier === 'heavy' ? 'heavy' : tier;
+    const model = spec.model(effectiveTier);
     const content = spec.format === 'json' ? renderJson(model, agent)
       : spec.format === 'toml' ? renderToml(model, agent)
         : renderMd(spec, model, agent);
@@ -169,14 +197,34 @@ export function writeAgents(target, cwd, tier = readDeveloperTier(cwd)) {
   return written;
 }
 
+export function reconcileAgents(target, cwd, tier, previousNames = [], desiredNames = []) {
+  if (!targetHasAgents(target)) return { written: [], removed: [], collisions: [], names: [] };
+  const previous = new Set(previousNames);
+  const desired = new Set(desiredNames);
+  const removed = removeAgents(target, cwd, [...previous].filter((name) => !desired.has(name)));
+  const written = [];
+  const collisions = [];
+  const names = [];
+  for (const name of desiredNames) {
+    const path = agentPath(target, cwd, name);
+    if (existsSync(path) && !previous.has(name)) {
+      collisions.push(path);
+      continue;
+    }
+    written.push(...writeAgents(target, cwd, tier, [name]));
+    if (existsSync(path)) names.push(name);
+  }
+  return { written, removed, collisions, names };
+}
+
 /**
  * Remove only the agents this catalog ships. An uninstaller that takes an agent the user wrote by hand
  * is worse than one that leaves residue.
  */
-export function removeAgents(target, cwd) {
+export function removeAgents(target, cwd, names = allAgentNames()) {
   const removed = [];
-  for (const agent of AGENTS) {
-    const path = agentPath(target, cwd, agent.name);
+  for (const name of names) {
+    const path = agentPath(target, cwd, name);
     if (path && existsSync(path)) { rmSync(path, { force: true }); removed.push(path); }
   }
   return removed;

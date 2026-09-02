@@ -86,6 +86,14 @@ test('capabilities: catalog descriptions are opt-in, keeping the default cheap (
   assert.ok(bytes(lean) * 3 < bytes(full), `lean=${bytes(lean)} full=${bytes(full)} — the default must be substantially cheaper`);
 });
 
+test('capabilities: memory that was never installed is absent rather than degraded', () => {
+  const cwd = tmp(); const home = tmp();
+  const memory = capabilities({ target: 'claude', home, cwd }).memory;
+  assert.equal(memory.status, 'not-installed');
+  assert.deepEqual(memory.missing, []);
+  assert.equal(memory.action, undefined);
+});
+
 test('shortDesc: keeps the NOT boundary, which is the whole discriminator', () => {
   // M11: returning '' always used to keep the suite green, and the old first-sentence
   // split rendered both always-on skills as the useless string "Always-on".

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -156,6 +156,33 @@ test('rsc add nudges to reload so the new skill activates', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.ok(/reload|restart/i.test(result.stdout), `add reminds to reload:\n${result.stdout}`);
   assert.ok(existsSync(join(cwd, '.claude/skills/bro/SKILL.md')), 'direct add also keeps bro in the default floor');
+});
+
+test('rsc add/uninstall accepts an agent id as a first-class unit', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-agent-'));
+  const add = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'go-reviewer', '--target', 'claude'], {
+    cwd, encoding: 'utf8',
+  });
+  assert.equal(add.status, 0, add.stderr);
+  assert.ok(existsSync(join(cwd, '.claude/agents/go-reviewer.md')));
+  const manifest = JSON.parse(readFileSync(join(cwd, '.rsc.json'), 'utf8'));
+  assert.deepEqual(manifest.agents, ['go-reviewer']);
+
+  const remove = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'uninstall', 'go-reviewer', '--target', 'claude'], {
+    cwd, encoding: 'utf8',
+  });
+  assert.equal(remove.status, 0, remove.stderr);
+  assert.ok(!existsSync(join(cwd, '.claude/agents/go-reviewer.md')));
+});
+
+test('rsc add suggests close agent ids instead of exposing a raw skill error', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-agent-typo-'));
+  const result = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'go-reviwer', '--target', 'claude'], {
+    cwd, encoding: 'utf8',
+  });
+  assert.equal(result.status, 1);
+  assert.match(`${result.stdout}\n${result.stderr}`, /go-reviewer/);
+  assert.doesNotMatch(`${result.stdout}\n${result.stderr}`, /ENOENT|no such file/i);
 });
 
 test('rsc upgrade --dry-run prints npm upgrade command', () => {

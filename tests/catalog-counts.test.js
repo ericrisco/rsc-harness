@@ -12,6 +12,7 @@ import { DOMAINS } from '../scripts/lib/domains.js';
 // agree with it. P3: the content is the ledger, so read the ledger.
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILLS = JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8')).counts.skills;
+const MANIFEST = JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8'));
 
 const DOCS = [
   'README.md',
@@ -48,6 +49,16 @@ test('every "N domains" claim matches the domain map', () => {
     }
   }
   assert.deepEqual(wrong, [], `stale domain counts:\n  ${wrong.join('\n  ')}`);
+});
+
+test('README agent and command inventory claims match the generated manifest', () => {
+  const body = text('README.md');
+  const agents = [...body.matchAll(/(\d+)\s+agents\b/gi)].map((match) => Number(match[1]));
+  const commands = [...body.matchAll(/(\d+)\s+command entries\b/gi)].map((match) => Number(match[1]));
+  assert.ok(agents.length > 0, 'README must publish the agent count');
+  assert.ok(commands.length > 0, 'README must publish the command count');
+  assert.ok(agents.every((count) => count === MANIFEST.counts.agents));
+  assert.ok(commands.every((count) => count === MANIFEST.counts.commands));
 });
 
 // NOT checked here, on purpose: composed sentences where the number is not next to its noun

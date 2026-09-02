@@ -1,0 +1,6 @@
+{
+  "session_id": "gemini-destination",
+  "cwd": "/fixture/project",
+  "hook_event_name": "SessionStart",
+  "source": "startup"
+}

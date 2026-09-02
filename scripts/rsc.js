@@ -4,7 +4,8 @@ import { detectTarget, resolveTargets, TARGETS } from '../targets/index.js';
 import { detectRepo } from './detect-repo.js';
 import { rank } from './consult.js';
 import { expandRecommends, toOutcomes, hasOutcome } from './lib/recommend.js';
-import { applyInstall, listInstalled, uninstall, syncInstalled, purge, collisions } from './install-apply.js';
+import { applyInstall, listInstalled, listInstalledAgents, listInstalledCommands, uninstall, syncInstalled, purge, collisions } from './install-apply.js';
+import { stackAgentNames } from '../targets/agents.js';
 import { doctor } from './doctor.js';
 import { say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
 import { refreshRegistry, registryStatus } from './lib/registry.js';
@@ -19,6 +20,54 @@ const argv = process.argv.slice(2);
 const cmd = argv[0];
 
 const targetLabel = (id) => TARGETS.find((t) => t.id === id)?.label || id;
+
+function requestedIds(start = 1) {
+  const valueFlags = new Set(['--target', '--profile', '--without']);
+  const ids = [];
+  for (let i = start; i < argv.length; i++) {
+    if (valueFlags.has(argv[i])) { i++; continue; }
+    if (argv[i].startsWith('--')) continue;
+    ids.push(argv[i]);
+  }
+  return ids;
+}
+
+function editDistance(a, b) {
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let diagonal = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const above = prev[j];
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diagonal = above;
+    }
+  }
+  return prev[b.length];
+}
+
+function classifyRequested(ids) {
+  const skills = new Set(loadManifest().skills.map((skill) => skill.id));
+  const agents = new Set(stackAgentNames());
+  const out = { skills: [], agents: [], unknown: [] };
+  for (const id of ids) {
+    if (skills.has(id)) out.skills.push(id);
+    else if (agents.has(id)) out.agents.push(id);
+    else out.unknown.push(id);
+  }
+  return out;
+}
+
+function reportUnknown(ids) {
+  if (!ids.length) return false;
+  const candidates = [...loadManifest().skills.map((skill) => skill.id), ...stackAgentNames()];
+  for (const id of ids) {
+    const close = [...candidates].sort((a, b) => editDistance(id, a) - editDistance(id, b) || a.localeCompare(b)).slice(0, 3);
+    console.error(`rsc: unknown skill or agent '${id}'. Closest: ${close.join(', ')}`);
+  }
+  process.exitCode = 1;
+  return true;
+}
 
 // Commands that act ON one assistant. Only these stop when two are installed and no
 // flag says which: `purge` sweeps every target by design, and the catalog/consult
@@ -113,6 +162,8 @@ function printNextSteps(targets, ids) {
   say('\n   Add something by hand anytime:    npx @ericrisco/rsc add <skill>');
   say('   Browse the catalog / get picks:   npx @ericrisco/rsc consult "whatever you need"');
   say('────────────────────────────────────────────────────────');
+  if (targets.includes('codex')) say('   Codex: review and trust the project lifecycle hook once with `/hooks`; until then memory is reported as requiring trust.');
+  if (targets.includes('cursor')) say('   Cursor: startup memory is assisted because its sessionStart hook is fire-and-forget; the installed always-on rule performs the read-before-action fallback.');
   printAgentHandoff();
 }
 
@@ -268,15 +319,12 @@ async function main() {
     case undefined:
       return wizard(f ? targets : null);
     case 'add': {
-      // Positional args = skill ids; skip flags and any flag value (the token after a --flag).
-      const requested = [];
-      for (let i = 1; i < argv.length; i++) {
-        if (argv[i].startsWith('--')) { i++; continue; }
-        requested.push(argv[i]);
-      }
-      const ids = withDefaultSkillFloor(requested);
+      const requested = requestedIds();
+      const selected = classifyRequested(requested);
+      if (reportUnknown(selected.unknown)) return;
+      const ids = withDefaultSkillFloor(selected.skills);
       if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
-      for (const t of targets) await applyInstall({ skillIds: ids, target: t });
+      for (const t of targets) await applyInstall({ skillIds: ids, agentIds: selected.agents, target: t });
       say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
     }
@@ -328,13 +376,65 @@ async function main() {
       else say('\n(no harness wiki here — printed above only; run `harness` to keep a written record)');
       return;
     }
-    case 'list':
-      return void say(listInstalled({ target }).join('\n') || '(nothing installed)');
+    case 'list': {
+      const skills = listInstalled({ target }).map((id) => `skill\t${id}`);
+      const agents = listInstalledAgents({ target }).map((agent) => `agent\t${agent.id}\t${agent.source}${agent.skills.length ? `:${agent.skills.join(',')}` : ''}`);
+      const commands = listInstalledCommands({ target }).map((command) => `command\t${command.id}\t${command.path}`);
+      return void say([...skills, ...agents, ...commands].join('\n') || '(nothing installed)');
+    }
     case 'doctor': {
       const report = doctor({ target });
       if (argv.includes('--json')) return void say(JSON.stringify(report, null, 2));
       printContextBudget(report.contextBudget);
       return void say(JSON.stringify({ ...report, contextBudget: undefined }, null, 2));
+    }
+    case 'memory': {
+      const sub = argv[1] || 'status';
+      const root = process.cwd();
+      if (sub === 'on' || sub === 'off') {
+        const { readManifest, writeManifest } = await import('./lib/manifest-file.js');
+        const current = readManifest(root) || { version: 1, targets: targets || [], skills: [], agents: [], ownSkills: [], optOuts: [] };
+        writeManifest(root, { ...current, memory: sub === 'off' ? false : { enabled: true } });
+        for (const t of targets) await syncInstalled({ target: t, cwd: root });
+        say(`rsc memory ${sub}: ${sub === 'on' ? 'enabled' : 'disabled'} for this project (${targets.join(', ') || 'declaration only'}).`);
+        return;
+      }
+      const M = await import('../targets/session-memory-core.mjs');
+      if (sub === 'status') {
+        const reports = targets.map((t) => doctor({ target: t, cwd: root }).memory);
+        return void say(JSON.stringify(reports.length === 1 ? reports[0] : reports, null, 2));
+      }
+      if (sub === 'resume') {
+        const result = M.resume({ cwd: root });
+        return void say(argv.includes('--json') ? JSON.stringify(result, null, 2) : (result.context || '(no local continuation for this branch/worktree)'));
+      }
+      if (sub === 'save') {
+        const result = M.capture({
+          cwd: root,
+          sessionId: typeof flag('session') === 'string' ? flag('session') : `manual-${Date.now()}`,
+          target: target || 'manual',
+          event: 'save',
+          force: true,
+        });
+        return void say(JSON.stringify(result, null, 2));
+      }
+      if (sub === 'learn') {
+        const value = (name) => { const v = flag(name); return typeof v === 'string' && !v.startsWith('--') ? v : undefined; };
+        const result = M.learn({
+          cwd: root,
+          text: value('text'),
+          evidence: value('evidence'),
+          scope: value('scope') || 'project',
+          confidence: value('confidence'),
+          approved: argv.includes('--approve'),
+        });
+        if (!result.saved) process.exitCode = 1;
+        return void say(JSON.stringify(result, null, 2));
+      }
+      if (sub === 'metrics') return void say(JSON.stringify(M.metricsSummary({ cwd: root }), null, 2));
+      say('Use: npx @ericrisco/rsc memory on|off|status|save [--session id]|resume [--json]|learn --text "…" --evidence "…" --scope project|global --confidence 0..1 --approve|metrics');
+      process.exitCode = 1;
+      return;
     }
     case 'sync': {
       const dry = argv.includes('--dry-run');
@@ -446,6 +546,13 @@ async function main() {
         } else {
           say(`# ${caps.target} has no file-based agents — the agent option does not apply here`);
         }
+        if (caps.commandsSupported) {
+          for (const command of caps.commands) say(`command\t${command.id}\tproject\t${command.path}`);
+          if (!caps.commands.length) say('# no managed command files found (this target supports them)');
+        } else {
+          say(`# ${caps.target} has no supported project command surface`);
+        }
+        say(`memory\t${caps.memory.mode}\t${caps.memory.status}\t${caps.memory.reason}`);
       }
       if (!full) say('# catalog shown as ids; add --full for descriptions, or use `catalog --available` to match by meaning');
       return;
@@ -623,8 +730,9 @@ async function main() {
       const dry = argv.includes('--dry-run');
       // `uninstall --all` is an alias for a full purge.
       if (argv.includes('--all')) return void (await runPurge(dry, argv.includes('--with-docs')));
-      const ids = argv.slice(1).filter((a) => !a.startsWith('--'));
-      const removed = await uninstall({ skillIds: ids, target, dryRun: dry });
+      const selected = classifyRequested(requestedIds());
+      if (reportUnknown(selected.unknown)) return;
+      const removed = await uninstall({ skillIds: selected.skills, agentIds: selected.agents, target, dryRun: dry });
       return void say((dry ? 'Would remove:\n' : 'Removed:\n') + (removed.join('\n') || '(nothing)'));
     }
     case 'repair': {
@@ -652,7 +760,7 @@ async function main() {
       return void (await runPurge(argv.includes('--dry-run'), argv.includes('--with-docs')));
     default:
       say(`rsc: unknown command '${cmd}'.`);
-      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
+      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
       say('Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)');
       say('   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.');
       process.exitCode = 1;

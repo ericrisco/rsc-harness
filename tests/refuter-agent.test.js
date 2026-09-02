@@ -188,7 +188,7 @@ test('install records EVERY agent it wrote, derived from the files not a hardcod
   const home = mkdtempSync(join(tmpdir(), 'ra-home-'));
   await applyInstall({ skillIds: ['fastapi'], target: 'claude', home, cwd });
   const state = JSON.parse(readFileSync(targetPaths('claude', home, cwd).stateFile, 'utf8'));
-  assert.deepEqual([...state.agents].sort(), [...agentNames()].sort(),
+  assert.deepEqual([...state.agents].sort(), [...agentNames(), 'fastapi-reviewer'].sort(),
     'the recorded agents must match what was written');
   for (const n of state.agents) {
     assert.ok(existsSync(agentPath('claude', cwd, n)), `${n} is recorded but its file is not there`);
