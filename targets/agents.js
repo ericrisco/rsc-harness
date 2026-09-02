@@ -130,6 +130,7 @@ ${REFUTER_CONTRACT}
 
 export const BASE_AGENT_NAMES = Object.freeze(AGENTS.map((agent) => agent.name));
 export { stackAgents, stackAgentNames, validateAgentCatalog };
+export const allAgentNames = () => [...BASE_AGENT_NAMES, ...stackAgentNames()];
 export function resolveAgentNames(skillIds = [], explicitAgentIds = []) {
   return [...BASE_AGENT_NAMES, ...resolveStackAgentNames(skillIds, explicitAgentIds)];
 }
@@ -200,10 +201,10 @@ export function writeAgents(target, cwd, tier = readDeveloperTier(cwd), names = 
  * Remove only the agents this catalog ships. An uninstaller that takes an agent the user wrote by hand
  * is worse than one that leaves residue.
  */
-export function removeAgents(target, cwd) {
+export function removeAgents(target, cwd, names = allAgentNames()) {
   const removed = [];
-  for (const agent of AGENTS) {
-    const path = agentPath(target, cwd, agent.name);
+  for (const name of names) {
+    const path = agentPath(target, cwd, name);
     if (path && existsSync(path)) { rmSync(path, { force: true }); removed.push(path); }
   }
   return removed;

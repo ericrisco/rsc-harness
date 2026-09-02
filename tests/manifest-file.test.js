@@ -29,12 +29,13 @@ test('round-trips the team decision, and only the team decision', () => {
   const d = tmp();
   writeManifest(d, {
     targets: ['claude'], skills: ['orient', 'harness'], ownSkills: ['nuestra-skill'],
-    catalogVersion: '1.1.3', tier: 'balanced', optOuts: ['gitmoji'],
+    agents: ['go-reviewer'], catalogVersion: '1.1.3', tier: 'balanced', optOuts: ['gitmoji'],
   });
   const m = readManifest(d);
   assert.deepEqual(m.targets, ['claude']);
   assert.deepEqual(m.skills, ['orient', 'harness']);
   assert.deepEqual(m.ownSkills, ['nuestra-skill']);
+  assert.deepEqual(m.agents, ['go-reviewer']);
   assert.equal(m.catalogVersion, '1.1.3');
   assert.equal(m.tier, 'balanced');
   assert.deepEqual(m.optOuts, ['gitmoji']);

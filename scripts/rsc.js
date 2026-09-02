@@ -4,7 +4,8 @@ import { detectTarget, resolveTargets, TARGETS } from '../targets/index.js';
 import { detectRepo } from './detect-repo.js';
 import { rank } from './consult.js';
 import { expandRecommends, toOutcomes, hasOutcome } from './lib/recommend.js';
-import { applyInstall, listInstalled, uninstall, syncInstalled, purge, collisions } from './install-apply.js';
+import { applyInstall, listInstalled, listInstalledAgents, uninstall, syncInstalled, purge, collisions } from './install-apply.js';
+import { stackAgentNames } from '../targets/agents.js';
 import { doctor } from './doctor.js';
 import { say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
 import { refreshRegistry, registryStatus } from './lib/registry.js';
@@ -19,6 +20,54 @@ const argv = process.argv.slice(2);
 const cmd = argv[0];
 
 const targetLabel = (id) => TARGETS.find((t) => t.id === id)?.label || id;
+
+function requestedIds(start = 1) {
+  const valueFlags = new Set(['--target', '--profile', '--without']);
+  const ids = [];
+  for (let i = start; i < argv.length; i++) {
+    if (valueFlags.has(argv[i])) { i++; continue; }
+    if (argv[i].startsWith('--')) continue;
+    ids.push(argv[i]);
+  }
+  return ids;
+}
+
+function editDistance(a, b) {
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let diagonal = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const above = prev[j];
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diagonal = above;
+    }
+  }
+  return prev[b.length];
+}
+
+function classifyRequested(ids) {
+  const skills = new Set(loadManifest().skills.map((skill) => skill.id));
+  const agents = new Set(stackAgentNames());
+  const out = { skills: [], agents: [], unknown: [] };
+  for (const id of ids) {
+    if (skills.has(id)) out.skills.push(id);
+    else if (agents.has(id)) out.agents.push(id);
+    else out.unknown.push(id);
+  }
+  return out;
+}
+
+function reportUnknown(ids) {
+  if (!ids.length) return false;
+  const candidates = [...loadManifest().skills.map((skill) => skill.id), ...stackAgentNames()];
+  for (const id of ids) {
+    const close = [...candidates].sort((a, b) => editDistance(id, a) - editDistance(id, b) || a.localeCompare(b)).slice(0, 3);
+    console.error(`rsc: unknown skill or agent '${id}'. Closest: ${close.join(', ')}`);
+  }
+  process.exitCode = 1;
+  return true;
+}
 
 // Commands that act ON one assistant. Only these stop when two are installed and no
 // flag says which: `purge` sweeps every target by design, and the catalog/consult
@@ -268,15 +317,12 @@ async function main() {
     case undefined:
       return wizard(f ? targets : null);
     case 'add': {
-      // Positional args = skill ids; skip flags and any flag value (the token after a --flag).
-      const requested = [];
-      for (let i = 1; i < argv.length; i++) {
-        if (argv[i].startsWith('--')) { i++; continue; }
-        requested.push(argv[i]);
-      }
-      const ids = withDefaultSkillFloor(requested);
+      const requested = requestedIds();
+      const selected = classifyRequested(requested);
+      if (reportUnknown(selected.unknown)) return;
+      const ids = withDefaultSkillFloor(selected.skills);
       if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
-      for (const t of targets) await applyInstall({ skillIds: ids, target: t });
+      for (const t of targets) await applyInstall({ skillIds: ids, agentIds: selected.agents, target: t });
       say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
     }
@@ -328,8 +374,11 @@ async function main() {
       else say('\n(no harness wiki here — printed above only; run `harness` to keep a written record)');
       return;
     }
-    case 'list':
-      return void say(listInstalled({ target }).join('\n') || '(nothing installed)');
+    case 'list': {
+      const skills = listInstalled({ target }).map((id) => `skill\t${id}`);
+      const agents = listInstalledAgents({ target }).map((agent) => `agent\t${agent.id}\t${agent.source}${agent.skills.length ? `:${agent.skills.join(',')}` : ''}`);
+      return void say([...skills, ...agents].join('\n') || '(nothing installed)');
+    }
     case 'doctor': {
       const report = doctor({ target });
       if (argv.includes('--json')) return void say(JSON.stringify(report, null, 2));
@@ -623,8 +672,9 @@ async function main() {
       const dry = argv.includes('--dry-run');
       // `uninstall --all` is an alias for a full purge.
       if (argv.includes('--all')) return void (await runPurge(dry, argv.includes('--with-docs')));
-      const ids = argv.slice(1).filter((a) => !a.startsWith('--'));
-      const removed = await uninstall({ skillIds: ids, target, dryRun: dry });
+      const selected = classifyRequested(requestedIds());
+      if (reportUnknown(selected.unknown)) return;
+      const removed = await uninstall({ skillIds: selected.skills, agentIds: selected.agents, target, dryRun: dry });
       return void say((dry ? 'Would remove:\n' : 'Removed:\n') + (removed.join('\n') || '(nothing)'));
     }
     case 'repair': {

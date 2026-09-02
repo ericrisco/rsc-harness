@@ -4,7 +4,10 @@ import { join, dirname, basename, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
-import { targetHasAgents, writeAgents, removeAgents, agentPath, agentNames } from '../targets/agents.js';
+import {
+  targetHasAgents, writeAgents, removeAgents, agentPath, agentNames,
+  allAgentNames, resolveAgentNames, agentByName, readDeveloperTier,
+} from '../targets/agents.js';
 import { readState, writeState } from './lib/state.js';
 import { readManifest, writeManifest } from './lib/manifest-file.js';
 import { createBackup } from './lib/backups.js';
@@ -68,11 +71,16 @@ function generatedHookFiles({ target, cwd }) {
   ];
 }
 
-export function managedPathsForInstall({ skillIds, target, home, cwd }) {
+export function managedPathsForInstall({ skillIds, agentIds = [], target, home, cwd }) {
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
-  if (targetHasAgents(target)) out.push(...agentNames().map((n) => agentPath(target, cwd, n)), join(cwd, '.rsc', 'developer.json'));
+  if (targetHasAgents(target)) {
+    const state = readState(paths.stateFile);
+    const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
+    const desired = resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
+    out.push(...[...new Set([...(state.agents || []), ...desired])].map((n) => agentPath(target, cwd, n)), join(cwd, '.rsc', 'developer.json'));
+  }
   for (const step of plan) {
     if (step.kind === 'skill') {
       out.push(step.to, baseDir(step.id, cwd));
@@ -102,8 +110,8 @@ function localDecisions(cwd) {
 // into codex on a machine that already had claude is adding, not replacing. Union, sorted
 // where order carries no meaning, so the file stays diffable and a merge conflict stays
 // readable.
-export function recordInManifest({ cwd, target, skillIds, catalogVersion = CLI_VERSION, dropTarget }) {
-  const prev = readManifest(cwd) || { targets: [], skills: [], ownSkills: [], optOuts: [] };
+export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalogVersion = CLI_VERSION, dropTarget }) {
+  const prev = readManifest(cwd) || { targets: [], skills: [], agents: [], ownSkills: [], optOuts: [] };
   const { optOuts, tier } = localDecisions(cwd);
   const union = (a, b) => [...new Set([...(a || []), ...(b || [])])].sort();
   return writeManifest(cwd, {
@@ -113,6 +121,7 @@ export function recordInManifest({ cwd, target, skillIds, catalogVersion = CLI_V
     // have every clone rebuild a harness that was deliberately abandoned.
     targets: union(prev.targets, [target]).filter((t) => t !== dropTarget),
     skills: union(prev.skills, skillIds),
+    agents: union(prev.agents, agentIds),
     ownSkills: prev.ownSkills || [],
     catalogVersion,
     tier: tier ?? prev.tier ?? null,
@@ -120,11 +129,11 @@ export function recordInManifest({ cwd, target, skillIds, catalogVersion = CLI_V
   });
 }
 
-export async function applyInstall({ skillIds, target, home, cwd = process.cwd(), operation = 'install', dryRun = false }) {
+export async function applyInstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), operation = 'install', dryRun = false }) {
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd });
-  const managedPaths = managedPathsForInstall({ skillIds, target, home, cwd });
-  if (dryRun) return { dryRun: true, skills: skillIds, paths: managedPaths };
+  const managedPaths = managedPathsForInstall({ skillIds, agentIds, target, home, cwd });
+  if (dryRun) return { dryRun: true, skills: skillIds, agents: agentIds, paths: managedPaths };
   const state = readState(paths.stateFile);
   const backup = createBackup({ cwd, operation, target, paths: managedPaths, cliVersion: CLI_VERSION });
   // Decide base refresh per skill (see baseVersionsFile): a base is re-materialized when
@@ -150,15 +159,22 @@ export async function applyInstall({ skillIds, target, home, cwd = process.cwd()
   //
   // The recorded names come from what was WRITTEN, not from a hardcoded list: a state entry
   // naming an agent whose file never landed answers "you have it" for something absent.
+  const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])].sort();
+  const desiredAgents = resolveAgentNames(Object.keys(state.skills || {}), explicit);
+  const previousAgents = state.agents || [];
   if (targetHasAgents(target)) {
-    const written = writeAgents(target, cwd);
+    removeAgents(target, cwd, previousAgents.filter((name) => !desiredAgents.includes(name)));
+    const written = writeAgents(target, cwd, readDeveloperTier(cwd), desiredAgents);
     state.agents = written.map((f) => basename(f).split('.')[0]);
+  } else {
+    state.agents = [];
   }
+  state.explicitAgents = explicit;
   state.version = CLI_VERSION;
   writeState(paths.stateFile, state);
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
   writeFileSync(versionFile(cwd), CLI_VERSION + '\n');
-  recordInManifest({ cwd, target, skillIds });
+  recordInManifest({ cwd, target, skillIds, agentIds });
   ignoreLocalState(cwd, target);
   return { ...state, backup };
 }
@@ -196,7 +212,10 @@ export function ignoreLocalState(cwd = process.cwd(), target) {
     // repo. The declaration that does travel is .rsc.json, in the root.
     wanted.push(rel(paths.stateFile));
     // Subagents are catalog content, re-materialised by every install and sync.
-    for (const f of agentNames()) wanted.push(rel(agentPath(target, cwd, f)));
+    for (const name of readState(paths.stateFile).agents || []) {
+      const file = agentPath(target, cwd, name);
+      if (file) wanted.push(rel(file));
+    }
   }
   // `.rsc`, `/.rsc` and `.rsc/` are the same rule to git. Normalising both ends is what
   // keeps this idempotent against a .gitignore a human wrote in their own spelling.
@@ -224,7 +243,20 @@ export function listInstalled({ target, home, cwd = process.cwd() }) {
   return Object.keys(readState(paths.stateFile).skills);
 }
 
-export async function uninstall({ skillIds, target, home, cwd = process.cwd(), dryRun }) {
+export function listInstalledAgents({ target, home, cwd = process.cwd() }) {
+  const state = readState(targetPaths(target, home, cwd).stateFile);
+  const explicit = new Set(state.explicitAgents || []);
+  return (state.agents || []).map((id) => {
+    const agent = agentByName(id);
+    return {
+      id,
+      source: agentNames().includes(id) ? 'base' : explicit.has(id) ? 'explicit' : 'skill',
+      skills: agent?.skills || [],
+    };
+  });
+}
+
+export async function uninstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), dryRun }) {
   const paths = targetPaths(target, home, cwd);
   const state = readState(paths.stateFile);
   const removed = [];
@@ -237,9 +269,19 @@ export async function uninstall({ skillIds, target, home, cwd = process.cwd(), d
       removed.push(f);
     }
   }
-  if (!removed.length) return removed;
-  if (dryRun) return removed;
-  createBackup({ cwd, operation: 'uninstall', target, paths: managedPaths, cliVersion: CLI_VERSION });
+  const previousExplicit = state.explicitAgents || readManifest(cwd)?.agents || [];
+  const nextExplicit = previousExplicit.filter((id) => !agentIds.includes(id));
+  const remainingSkillIds = Object.keys(state.skills || {}).filter((id) => !skillIds.includes(id));
+  const desiredAgents = resolveAgentNames(remainingSkillIds, nextExplicit);
+  const staleAgents = (state.agents || []).filter((id) => !desiredAgents.includes(id));
+  for (const id of staleAgents) {
+    const file = agentPath(target, cwd, id);
+    if (file) { managedPaths.push(file); removed.push(file); }
+  }
+  const explicitChanged = nextExplicit.length !== previousExplicit.length;
+  if (!removed.length && !explicitChanged) return removed;
+  if (dryRun) return [...new Set(removed)];
+  createBackup({ cwd, operation: 'uninstall', target, paths: [...new Set(managedPaths)], cliVersion: CLI_VERSION });
   for (const id of skillIds) {
     const entry = state.skills[id];
     if (!entry) continue;
@@ -248,8 +290,18 @@ export async function uninstall({ skillIds, target, home, cwd = process.cwd(), d
     }
     delete state.skills[id];
   }
+  removeAgents(target, cwd, staleAgents);
+  if (targetHasAgents(target)) writeAgents(target, cwd, readDeveloperTier(cwd), desiredAgents);
+  state.agents = targetHasAgents(target) ? desiredAgents : [];
+  state.explicitAgents = nextExplicit;
   writeState(paths.stateFile, state);
-  return removed;
+  const manifest = readManifest(cwd);
+  if (manifest) writeManifest(cwd, {
+    ...manifest,
+    skills: manifest.skills.filter((id) => !skillIds.includes(id)),
+    agents: manifest.agents.filter((id) => !agentIds.includes(id)),
+  });
+  return [...new Set(removed)];
 }
 
 export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun = false }) {
@@ -260,17 +312,20 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
   // declares a harness and has none. The committed manifest is exactly the declaration
   // to rebuild from, and it is sitting right there.
   const ids = Object.keys(state.skills || {});
-  const declared = ids.length ? ids : (readManifest(cwd)?.skills || []);
-  if (!declared.length) return dryRun ? { dryRun: true, synced: [], paths: [] } : { synced: [], backup: null };
+  const manifest = readManifest(cwd);
+  const declared = ids.length ? ids : (manifest?.skills || []);
+  const declaredAgents = state.explicitAgents?.length ? state.explicitAgents : (manifest?.agents || []);
+  if (!declared.length && !declaredAgents.length) return dryRun ? { dryRun: true, synced: [], syncedAgents: [], paths: [] } : { synced: [], syncedAgents: [], backup: null };
   if (dryRun) {
     return {
       dryRun: true,
       synced: declared,
-      paths: managedPathsForInstall({ skillIds: declared, target, home, cwd }),
+      syncedAgents: declaredAgents,
+      paths: managedPathsForInstall({ skillIds: declared, agentIds: declaredAgents, target, home, cwd }),
     };
   }
-  const nextState = await applyInstall({ skillIds: declared, target, home, cwd, operation: 'sync' });
-  return { synced: declared, backup: nextState.backup };
+  const nextState = await applyInstall({ skillIds: declared, agentIds: declaredAgents, target, home, cwd, operation: 'sync' });
+  return { synced: declared, syncedAgents: declaredAgents, backup: nextState.backup };
 }
 
 // Remove EVERYTHING rsc put in this project: installed skills across all targets,
@@ -299,7 +354,7 @@ export async function purge({ home, cwd = process.cwd(), withDocs = false, dryRu
     if (!dryRun) removed.push(...unwireHook(target, paths));
     // Remove the subagents this catalog installed — and only those. An uninstaller that takes
     // an agent the user wrote by hand is worse than one that leaves residue.
-    for (const n of agentNames()) {
+    for (const n of allAgentNames()) {
       const agentFile = agentPath(target, cwd, n);
       if (agentFile) drop(agentFile);
     }
