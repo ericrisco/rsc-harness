@@ -1,0 +1,48 @@
+[
+  {
+    "agent": "go-reviewer",
+    "researchedAt": "2026-09-02",
+    "sources": [
+      {
+        "url": "https://go.dev/wiki/CodeReviewComments",
+        "coverage": ["error identity and wrapping", "goroutine lifetime", "interface values", "receiver and API review"]
+      },
+      {
+        "url": "https://go.dev/doc/comment",
+        "coverage": ["public API comments", "package and symbol contracts"]
+      },
+      {
+        "url": "https://go.dev/doc/contribute",
+        "coverage": ["review evidence and change scope"]
+      }
+    ]
+  },
+  {
+    "agent": "cpp-reviewer",
+    "researchedAt": "2026-09-02",
+    "sources": [
+      {
+        "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines.html",
+        "coverage": ["RAII and ownership", "lifetime and bounds safety", "concurrency", "exception guarantees"]
+      }
+    ]
+  },
+  {
+    "agent": "python-reviewer",
+    "researchedAt": "2026-09-02",
+    "sources": [
+      {
+        "url": "https://docs.python.org/3.14/library/asyncio-dev.html",
+        "coverage": ["un-awaited coroutines", "blocking async code", "thread boundaries"]
+      },
+      {
+        "url": "https://docs.python.org/3.14/library/asyncio-task.html",
+        "coverage": ["TaskGroup failure propagation", "cancellation", "task lifetime"]
+      },
+      {
+        "url": "https://docs.python.org/3.14/reference/datamodel.html",
+        "coverage": ["descriptors and protocols", "object and iterator lifetime"]
+      }
+    ]
+  }
+]

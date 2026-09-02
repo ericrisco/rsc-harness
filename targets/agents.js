@@ -10,6 +10,10 @@
 // written by `init` at onboarding and read here so re-syncs honor it.
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import {
+  stackAgents, stackAgentNames, stackAgentByName,
+  resolveStackAgentNames, validateAgentCatalog,
+} from './agent-catalog.js';
 
 // Concrete model per provider per tier. June 2026 defaults — EDIT to your account's
 // models; the TIER is the contract, the id is yours to change. `light` is deliberately
@@ -112,11 +116,17 @@ ${REFUTER_CONTRACT}
   },
 ];
 
+export const BASE_AGENT_NAMES = Object.freeze(AGENTS.map((agent) => agent.name));
+export { stackAgents, stackAgentNames, validateAgentCatalog };
+export function resolveAgentNames(skillIds = [], explicitAgentIds = []) {
+  return [...BASE_AGENT_NAMES, ...resolveStackAgentNames(skillIds, explicitAgentIds)];
+}
+
 // Back-compat: the tier file and its reader are named for `developer` because that is what they
 // configure. The refuters run at the same tier — a deliberate, reversible default: nobody has measured
 // whether a heavier model finds more here, and silently tripling tier-2 cost on an unmeasured hunch is
 // the wrong way to find out.
-const byName = (name) => AGENTS.find((a) => a.name === name);
+const byName = (name) => AGENTS.find((a) => a.name === name) || stackAgentByName(name);
 export const agentNames = () => AGENTS.map((a) => a.name);
 
 // `.rsc/developer.json` — the chosen tier (balanced default; never light). `init` writes
