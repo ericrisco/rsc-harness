@@ -109,39 +109,47 @@ git switch -c feat/<slug> origin/<default-branch>
 ```
 
 ```bash
-# when the work is done and merged (or abandoned) — clean up the worktree
-git worktree remove ../<repo>-<slug>      # refuses if dirty; resolve first, don't force blindly
-git branch -d feat/<slug>                  # -d (safe) not -D, unless the user confirms discarding
+# when the work has landed — the cleanup is the default, and it is a command, not a judgement call
+npx @ericrisco/rsc worktrees reap
 ```
 
 Either way, the contract is identical: **after this step, the cwd is an isolated branch off a clean
 base, and the default-branch checkout is exactly as it was.** Confirm that out loud (at the dial's
 level) before handing to `implement`.
 
-### Provenance-aware cleanup (don't remove a workspace you didn't create)
+### Cleanup is the default, and it is not yours to judge
 
-Removing the wrong worktree leaves phantom state and can destroy someone else's in-progress work.
-Before any `git worktree remove`, clear these guards:
+A worktree whose work is already in the trunk is retired **by default** — you do not decide that by
+reading the situation, because "is this safe to delete?" is a deterministic question and a wrong
+answer costs a directory that cannot be brought back. Ask the command:
 
 ```bash
-# 1) Are we even inside a linked worktree? (GIT_DIR != GIT_COMMON_DIR ⇒ yes)
-[ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ] && echo "linked worktree"
-# 2) Submodule false-positive guard — never treat a submodule as a worktree to remove
-git rev-parse --show-superproject-working-tree   # non-empty ⇒ this is a submodule; STOP
-# 3) cd to the MAIN working tree before removing (you cannot remove the worktree you stand in)
-cd "$(git rev-parse --git-common-dir)/.."
-git worktree remove <path>
-git worktree prune                                # self-heal stale administrative entries
+npx @ericrisco/rsc worktrees        # every landed worktree, with a verdict and a reason
+npx @ericrisco/rsc worktrees reap   # retire the ones that are safe with nothing to lose
+npx @ericrisco/rsc worktrees reap <path>   # retire one the user has just confirmed
 ```
 
-- **Only remove worktrees rsc/you created** — those under `.worktrees/` or `worktrees/`, or the
-  `../<repo>-<slug>` this skill made. A worktree the user or a native tool owns is **not yours to
-  delete**; leave it and say so.
-- **Native tool owns its own lifecycle.** If you isolated via a native `EnterWorktree`-style tool,
-  exit through that tool's `remove`/`keep` — do **not** hand-run `git worktree remove` on a workspace
-  the native tool created; let it clean up so its tracking stays consistent.
-- **`git worktree prune`** after a remove clears stale metadata when a directory vanished out from
-  under git — cheap self-healing, safe to run.
+Three things have to hold before a worktree is retired without asking, and each fails towards
+**keeping** it:
+
+- **rsc created it** — location *and* branch shape both match. Only one matches → it might be the
+  user's, so it is asked about, never removed silently. Neither → foreign; not touched, not offered.
+- **The branch adds nothing the trunk does not have** — asked about *content*, so a squash-merged
+  pull request counts as landed. Its branch is kept even so: git will not delete it safely, and while
+  it exists the commits survive a wrong call.
+- **Nothing inside would be lost** — not just "no pending changes": untracked and ignored files count,
+  because a worktree that git calls clean can still hold the only copy of a `.env` or a local
+  database. Installed dependencies and build output are the one carve-out.
+
+Anything else is reported with the reason and the way out. A refusal you cannot act on is not safety.
+
+**The native tool owns its own lifecycle.** If you isolated via a native `EnterWorktree`-style tool,
+exit through that tool's `remove`/`keep`; the reaper is for worktrees git alone knows about.
+
+**When the command is unavailable** (no rsc in this project), the manual equivalent is: confirm it is
+a linked worktree (`git rev-parse --git-dir` ≠ `--git-common-dir`), rule out a submodule
+(`git rev-parse --show-superproject-working-tree` must be empty), `cd` to the main working tree, then
+`git worktree remove` and `git worktree prune`. Never `-D` a branch to make the cleanup succeed.
 
 ## Model tier — `light` (opt-in routing)
 
