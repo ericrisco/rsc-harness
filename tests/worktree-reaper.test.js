@@ -376,3 +376,118 @@ test('16c · the reaper travels with the hook that imports it', async () => {
   assert.match(claude, /copyFileSync\(join\(HERE, 'worktree-reaper\.mjs'\)/,
     'session-start imports it as a sibling, so the installer must materialize it as one');
 });
+
+// ── 17-20. what the adversarial security pass found: three ways this destroyed or leaked data ──
+
+test('17 · a file NAMED like a build dir is not a build dir (config/env holds credentials)', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'tau');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: tau');
+  mergeIntoTrunk(root, wt.branch);
+  // Matching the regenerable table against the BASENAME made every one of these disposable.
+  write(wt.path, 'config/env', 'DB_PASSWORD=hunter2\n');
+  write(wt.path, 'deploy/build', '#!/bin/sh\n');
+  write(wt.path, 'notes/out', 'private\n');
+
+  const v = verdictFor(root, wt.path);
+  assert.equal(v.verdict, 'ask', 'these are three never-committed files, not build output');
+  assert.ok(v.details.outside.includes('config/env'), `expected config/env, got ${v.details.outside}`);
+});
+
+test('17b · a real build directory is still regenerable, and so is junk at any depth', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'upsilon');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: upsilon');
+  mergeIntoTrunk(root, wt.branch);
+  write(wt.path, 'dist/assets/deep/bundle.js', 'built\n');
+  write(wt.path, 'sub/.DS_Store', 'junk');
+
+  assert.equal(verdictFor(root, wt.path).verdict, 'safe');
+});
+
+test('18 · a refusal names every reason, not just the first one it happened to record', async () => {
+  const { refusal } = await import(MOD);
+  const root = repo();
+  const wt = rscWorktree(root, 'phi');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: phi');
+  mergeIntoTrunk(root, wt.branch);
+  write(wt.path, 'feature.txt', 'edited\n');           // dirty, and merely annoying
+  write(wt.path, 'production.env', 'STRIPE=sk_live\n'); // untracked, and irreplaceable
+
+  const message = refusal(verdictFor(root, wt.path));
+  assert.match(message, /feature\.txt/);
+  assert.match(message, /production\.env/,
+    'confirming against a description of the tracked nuisance is how the untracked secret gets deleted');
+});
+
+test('18b · and a worktree holding one is never reaped without confirmation', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'chi');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: chi');
+  mergeIntoTrunk(root, wt.branch);
+  write(wt.path, 'production.env', 'STRIPE=sk_live\n');
+
+  assert.equal(reapWorktree(root, wt.path).removed, false);
+  assert.equal(existsSync(join(wt.path, 'production.env')), true);
+});
+
+test('19 · the sweep leaks neither machine paths nor the names of files at risk', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'psi');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: psi');
+  mergeIntoTrunk(root, wt.branch);
+  write(wt.path, '.env', 'SECRET=1\n');                // ignored: the user marked it private
+  write(wt.path, 'salary-notes.md', 'confidential\n'); // untracked
+
+  const out = sweep(root);
+  assert.doesNotMatch(out, /salary-notes/, 'these names enter the model context unprompted');
+  assert.ok(!out.includes(realpathSync.native(root)), 'P9: nothing distributed carries machine paths');
+  assert.match(out, /psi/, 'it must still be identifiable enough to act on');
+});
+
+test('19b · and it stays bounded when a worktree holds thousands of stray files', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'omega');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: omega');
+  mergeIntoTrunk(root, wt.branch);
+  for (let i = 0; i < 400; i++) write(wt.path, `artifacts/f${i}.bin`, 'x');
+
+  const out = sweep(root);
+  assert.ok(out.length < 4000, `the startup block must not balloon the context; got ${out.length} bytes`);
+});
+
+test('20 · a reap target outside the project is refused', () => {
+  const root = repo();
+  const outsider = mkdtempSync(join(tmpdir(), 'rsc-outside-'));
+  TMP.push(outsider);
+  writeFileSync(join(outsider, 'tax-returns.pdf'), 'precious');
+
+  const out = reapWorktree(root, outsider, { confirmed: true });
+  assert.equal(out.removed, false);
+  assert.equal(existsSync(join(outsider, 'tax-returns.pdf')), true);
+});
+
+test('21 · a path crafted to forge a second porcelain entry produces no candidate', () => {
+  const root = repo();
+  const decoy = join(root, 'DECOY');
+  mkdirSync(decoy, { recursive: true });
+  writeFileSync(join(decoy, 'precious.txt'), 'keep me');
+
+  // `git worktree list --porcelain` is newline-delimited and does not quote paths.
+  const evil = join(root, '.worktrees', `x\nworktree ${decoy}`);
+  try {
+    git(root, 'worktree', 'add', '-q', '-b', 'feat/evil', evil);
+  } catch {
+    return; // git refused the name outright — the forgery never gets off the ground here
+  }
+  const paths = listWorktrees(root).map((w) => w.path);
+  assert.ok(!paths.includes(realpathSync.native(decoy)), 'a fabricated entry must never be listed');
+  assert.ok(!classifyWorktrees(root).some((c) => c.path === realpathSync.native(decoy)));
+  assert.equal(existsSync(join(decoy, 'precious.txt')), true);
+});

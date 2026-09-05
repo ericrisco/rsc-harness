@@ -161,6 +161,8 @@ Implements `02-DOCS/wiki/sdd/specs/<slug>.md`. <the user-facing reason>
 
 Then either let the gate run (team/CI) or self-merge once green: `gh pr merge --squash --delete-branch` (or `--merge` to preserve the history). Squash when the branch history is noisy; preserve when each commit is meaningful.
 
+Once it is merged, pull the trunk and reap — `git switch main && git pull --ff-only && npx @ericrisco/rsc worktrees reap`. A squashed pull request is exactly the case the reaper judges by content rather than by commit identity, so it is recognised as landed; the local branch is kept, because git will not delete a squashed branch safely and while it exists the work is recoverable.
+
 For stacked PRs, create each PR against the previous branch or against a feature-track branch, with bodies that name their dependency:
 
 ```markdown

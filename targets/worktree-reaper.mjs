@@ -17,7 +17,7 @@
 // Imported by `.rsc/session-start.mjs` (the sweep) and by `scripts/rsc.js` (`rsc worktrees`), so the
 // rule exists once and both entry points cannot drift apart. Same shape as `sello.mjs`.
 import { existsSync, realpathSync } from 'node:fs';
-import { join, resolve, dirname, basename, sep } from 'node:path';
+import { join, resolve, dirname, basename, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 // git reports worktree paths with every symlink resolved; callers hand us whatever they were given.
@@ -40,8 +40,15 @@ export const REGENERABLE = [
   'venv', '.venv', 'env', '.tox', '__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache',
   'dist', 'build', 'out', 'target', 'bin', 'obj', '.next', '.nuxt', '.svelte-kit', '.astro',
   '.turbo', '.parcel-cache', '.cache', '.gradle', '.dart_tool', 'Pods', 'vendor',
-  'coverage', '.coverage', '.nyc_output', '.DS_Store', 'Thumbs.db',
+  'coverage', '.nyc_output',
 ];
+
+// Junk that is disposable wherever it appears, matched by filename. Kept SEPARATE from the table
+// above, and deliberately tiny, because the two cannot share a matching rule: the first entries are
+// directory names, and matching them against a *filename* is what made `config/env` — a dotenv file
+// full of live credentials — read as build output and get deleted with no confirmation at all. A
+// directory name means something only as a directory.
+export const REGENERABLE_FILES = ['.DS_Store', 'Thumbs.db', '.coverage'];
 
 // Trunk candidates, most authoritative first. The remote tip beats a local branch that may be stale.
 const TRUNKS = ['origin/main', 'main', 'origin/master', 'master'];
@@ -97,7 +104,22 @@ export function listWorktrees(root) {
     else if (line.startsWith('HEAD ')) cur.head = line.slice('HEAD '.length);
     else if (line.startsWith('branch ')) cur.branch = line.slice('branch '.length).replace(/^refs\/heads\//, '');
   }
-  return trees;
+  // `git worktree list --porcelain` does not quote paths and has no -z form, so a directory whose name
+  // contains a newline fabricates an extra entry that inherits the real one's HEAD and branch. It can
+  // never be deleted (git refuses a path that is not a working tree), but it would be displayed, and
+  // `status --ignored` would be run against whatever it points at. Ask git whether each parsed path
+  // really belongs to this repository; a forgery does not.
+  const home = git(root, ['rev-parse', '--path-format=absolute', '--git-common-dir']);
+  if (!home.ok || !home.out) return trees;
+  return trees.filter((wt) => {
+    if (wt.isMain) return true;
+    const mine = git(wt.path, ['rev-parse', '--path-format=absolute', '--git-common-dir']);
+    if (!mine.ok || real(mine.out) !== real(home.out)) return false;
+    // Belonging to this repository is not enough: any directory *inside* the checkout answers the
+    // same. A genuine worktree is its own root, so git's toplevel from there is the path itself.
+    const top = git(wt.path, ['rev-parse', '--show-toplevel']);
+    return top.ok && real(top.out) === wt.path;
+  });
 }
 
 /**
@@ -172,7 +194,7 @@ export function contentOutsideHistory(wtPath) {
 
 function isRegenerable(path) {
   const parts = path.split('/').filter(Boolean);
-  return REGENERABLE.includes(parts[0]) || REGENERABLE.includes(parts[parts.length - 1]);
+  return REGENERABLE.includes(parts[0]) || REGENERABLE_FILES.includes(parts[parts.length - 1]);
 }
 
 /**
@@ -269,36 +291,76 @@ export function reapWorktree(root, targetPath, { confirmed = false } = {}) {
   };
 }
 
-/** Every refusal carries the way out, because the person receiving it may not be able to deduce one (P6). */
+/**
+ * Every refusal carries the way out, because the person receiving it may not be able to deduce one (P6).
+ *
+ * EVERY reason, not the first one recorded. A worktree that is both dirty and holding an untracked
+ * file used to be described by the dirty half alone — so the user read "uncommitted changes in
+ * README.md", judged that a nuisance, confirmed, and the confirmation landed on a `production.env`
+ * the message never mentioned. The module knew. It just did not say.
+ */
 export function refusal(candidate) {
   const d = candidate.details || {};
-  switch (candidate.reasons[0]) {
-    case 'foreign':
-      return 'not created by rsc — it is not ours to delete. Remove it yourself with `git worktree remove` if you want it gone.';
-    case 'not-integrated':
-      return `\`${candidate.branch}\` still carries work that is not in the trunk. Land it (\`ship\`) or discard it deliberately first.`;
-    case 'unknown':
-      return `could not tell whether \`${candidate.branch}\` is integrated (old git, or no comparable trunk). Check with \`git log --oneline <trunk>..${candidate.branch}\` and remove it by hand if you are satisfied.`;
-    case 'submodule':
-      return 'that is a submodule, not a worktree.';
-    case 'unreadable':
-      return 'git could not report the state of that directory; nothing was touched.';
-    case 'dirty':
-      return `uncommitted changes inside: ${d.dirty.join(', ')}. Commit, stash or discard them first.`;
-    case 'content-outside-history':
-      return `holds files that are in no commit and would be lost: ${d.outside.join(', ')}. Move or copy them out first.`;
-    case 'provenance-ambiguous':
-      return `only half of the rsc convention matches (${candidate.branch} at ${candidate.path}), so it may be yours rather than ours. Confirm before it is removed.`;
-    default:
-      return 'nothing was removed.';
-  }
+  const parts = (candidate.reasons || []).map((reason) => {
+    switch (reason) {
+      case 'foreign':
+        return 'it was not created by rsc, so it is not ours to delete. Remove it yourself with `git worktree remove` if you want it gone.';
+      case 'not-integrated':
+        return `\`${candidate.branch}\` still carries work that is not in the trunk. Land it (\`ship\`) or discard it deliberately first.`;
+      case 'unknown':
+        return `whether \`${candidate.branch}\` is integrated could not be determined (old git, or no comparable trunk). Check with \`git log --oneline <trunk>..${candidate.branch}\` and remove it by hand if you are satisfied.`;
+      case 'submodule':
+        return 'it is a submodule, not a worktree.';
+      case 'unreadable':
+        return 'git could not report the state of that directory; nothing was touched.';
+      case 'dirty':
+        return `it has uncommitted changes: ${list(d.dirty)}. Commit, stash or discard them first.`;
+      case 'content-outside-history':
+        return `it holds files that are in no commit and would be lost: ${list(d.outside)}. Move or copy them out first.`;
+      case 'provenance-ambiguous':
+        return `only half of the rsc convention matches (\`${candidate.branch}\`), so it may be yours rather than ours. Confirm before it is removed.`;
+      default:
+        return null;
+    }
+  }).filter(Boolean);
+  return parts.length ? parts.join(' Also: ') : 'nothing was removed.';
 }
 
-/** One line per candidate, for the session-start sweep and the CLI. */
+// Naming what is at risk is the point; naming ten thousand of them is a denial of service against the
+// reader and against the context window. Show enough to recognise, then say how many are left.
+const SHOWN = 5;
+function list(items = []) {
+  if (!items.length) return 'none';
+  const head = items.slice(0, SHOWN).join(', ');
+  return items.length > SHOWN ? `${head} and ${items.length - SHOWN} more` : head;
+}
+
+/** One line per candidate, for someone who asked — the CLI names what is at risk. */
 export function describe(candidate) {
-  const where = candidate.path;
-  if (candidate.verdict === 'safe') return `  safe  ${where} (${candidate.branch}) — landed and empty of anything unsaved`;
-  return `  ask   ${where} (${candidate.branch}) — ${refusal(candidate)}`;
+  if (candidate.verdict === 'safe') return `  safe  ${candidate.path} (${candidate.branch}) — landed and empty of anything unsaved`;
+  return `  ask   ${candidate.path} (${candidate.branch}) — ${refusal(candidate)}`;
+}
+
+/**
+ * One line per candidate for the session-start sweep, which nobody asked for.
+ *
+ * That block is injected into the model's context on every startup, so it is held to a stricter rule
+ * than the CLI: paths relative to the repository (P9 — nothing distributed carries machine paths) and
+ * **counts instead of filenames**. The files this would otherwise enumerate are, by construction, the
+ * ones outside git: the .env, the private key, the client folder — exactly what the user marked as
+ * not-for-sharing. Enough to decide whether to look; nothing that leaks by being read.
+ */
+export function summarize(candidate, root) {
+  const where = relative(real(root), candidate.path) || candidate.path;
+  if (candidate.verdict === 'safe') return `  safe  ${where} (${candidate.branch}) — landed, nothing unsaved inside`;
+  const d = candidate.details || {};
+  const why = candidate.reasons.map((r) => {
+    if (r === 'dirty') return `${d.dirty.length} uncommitted change(s)`;
+    if (r === 'content-outside-history') return `${d.outside.length} file(s) in no commit`;
+    if (r === 'provenance-ambiguous') return 'provenance unclear';
+    return r;
+  }).join(', ');
+  return `  ask   ${where} (${candidate.branch}) — ${why}; ask before removing`;
 }
 
 // CLI: `node worktree-reaper.mjs <root> [reap [path]]`. `scripts/rsc.js` is the public entry point;

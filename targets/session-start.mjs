@@ -224,7 +224,7 @@ if (has('.git')) {
         process.stdout.write(`
 ===== rsc worktree cleanup =====
 ${candidates.length} worktree(s) hold work that is already in the trunk:
-${candidates.map(W.describe).join('\n')}
+${candidates.map((c) => W.summarize(c, root)).join('\n')}
 ACTION: offer to retire them in ONE line and wait for a yes. On a yes run:
   npx @ericrisco/rsc worktrees reap          (the ones marked safe)
   npx @ericrisco/rsc worktrees reap <path>   (one the user confirmed by name)
