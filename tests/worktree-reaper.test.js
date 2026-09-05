@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // The reaper decides whether a worktree can be removed WITHOUT asking. That makes it the most
@@ -51,6 +51,10 @@ function rscWorktree(root, slug = 'thing', { location = 'rsc', branch = 'rsc' } 
   const path = location === 'rsc'
     ? join(root, '.worktrees', slug)
     : join(root, '..', `stray-${slug}-${Math.random().toString(36).slice(2, 7)}`);
+  // A sibling path lives OUTSIDE the repo, so cleaning the repo does not clean it. Left unregistered,
+  // these accumulated in the temp dir across runs — 303 of them — and turned this suite intermittent.
+  // Evidence that only holds when the machine happens to be tidy is not evidence.
+  if (location !== 'rsc') TMP.push(path);
   const ref = branch === 'rsc' ? `feat/${slug}` : `wip-${slug}`;
   git(root, 'worktree', 'add', '-q', '-b', ref, path);
   // git reports the real path; on macOS the temp dir arrives here through two symlinks.
@@ -127,7 +131,8 @@ test('3 · a file that was never in the history blocks it too — this is the .e
 
   const v = verdictFor(root, wt.path);
   assert.equal(v.verdict, 'ask', 'a git-clean worktree holding the only copy of .env is NOT safe');
-  assert.ok(JSON.stringify(v).includes('.env'), 'the file at risk must be named');
+  assert.deepEqual(v.details.outside, ['.env'], 'and it is out-of-history content, not a pending edit');
+  assert.deepEqual(v.details.dirty, [], 'calling it dirty would give the user the wrong instruction');
 });
 
 test('4 · but installed dependencies and build output do not block it', () => {
@@ -259,7 +264,8 @@ test('12 · reaping an un-integrated worktree is refused even when asked directl
 
   const out = reapWorktree(root, wt.path, { confirmed: true });
   assert.equal(out.removed, false, 'confirmation does not upgrade "not integrated" into safe');
-  assert.ok(out.reason, 'a refusal must carry its reason');
+  assert.match(out.reason, /feat\/mu/, 'a refusal names what it is refusing');
+  assert.match(out.reason, /ship|discard/, 'and carries the way out (P6), not just a fact');
   assert.equal(existsSync(wt.path), true);
 });
 
@@ -319,8 +325,10 @@ test('15b · ship option 1 executes the cleanup instead of describing it afterwa
   const start = ship.indexOf('### Option 1');
   const end = ship.indexOf('### Option 2');
   assert.ok(start > 0 && end > start, 'the option-1 section must exist');
-  assert.match(ship.slice(start, end), /rsc worktrees/,
-    'the cleanup must live inside the block option 1 runs, not in a paragraph further down');
+  const runnable = ship.slice(start, end).split('\n')
+    .filter((l) => !l.trimStart().startsWith('#')).join('\n');
+  assert.match(runnable, /^npx @ericrisco\/rsc worktrees reap /m,
+    'a commented-out command satisfies /rsc worktrees/ too; the criterion is that option 1 RUNS it');
 });
 
 test('15c · the CLI classifies a real repository', () => {
@@ -332,8 +340,10 @@ test('15c · the CLI classifies a real repository', () => {
 
   const r = spawnSync('node', [CLI, 'worktrees'], { cwd: root, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /pi/);
-  assert.match(r.stdout, /safe/);
+  // `safe` also appears in the footer this command always prints, so pin it to the candidate's line.
+  const line = r.stdout.split('\n').find((l) => l.includes('feat/pi'));
+  assert.ok(line, `the candidate must be listed: ${r.stdout}`);
+  assert.match(line, /^\s*safe\s/, `classified, not just mentioned: ${line}`);
 });
 
 // ── 16. the sweep: it must speak when there is something to say, and only then ───────────────
@@ -357,7 +367,10 @@ test('16 · the session-start sweep names landed worktrees and tells the agent t
   const out = sweep(root);
   assert.match(out, /rsc worktree cleanup/);
   assert.match(out, /rho/);
-  assert.match(out, /wait for a yes/, 'the sweep offers; it must never remove on its own');
+  // Asserting the wording of the offer proves nothing: that string is a literal inside the block and
+  // stays true whether or not the sweep touched the disk. Ask the disk.
+  assert.equal(existsSync(wt.path), true, 'the sweep offers; it must never remove on its own');
+  assert.ok(git(root, 'branch', '--list', wt.branch), 'nor delete the branch behind the offer');
   assert.match(out, /no-worktree-cleanup/, 'a recurring notice must carry its permanent off switch (P6)');
 });
 
@@ -490,4 +503,265 @@ test('21 · a path crafted to forge a second porcelain entry produces no candida
   assert.ok(!paths.includes(realpathSync.native(decoy)), 'a fabricated entry must never be listed');
   assert.ok(!classifyWorktrees(root).some((c) => c.path === realpathSync.native(decoy)));
   assert.equal(existsSync(join(decoy, 'precious.txt')), true);
+});
+
+// ── 22-28. what the adversarial correctness pass found ──────────────────────────────────────
+
+test('22 · a freshly cut worktree that never produced a commit is NOT landed work', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'fresh');
+  write(wt.path, 'node_modules/dep/index.js', 'installed\n'); // npm install ran, nothing written yet
+
+  const v = verdictFor(root, wt.path);
+  assert.notEqual(v.verdict, 'safe',
+    'nothing landed from a branch that never carried a commit — this is a live workspace');
+  assert.ok(v.reasons.includes('nothing-landed'), `got ${v.reasons}`);
+});
+
+test('22b · and one cut from an older trunk, still with no commits, is not landed either', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'stale');
+  write(root, 'other.txt', 'trunk moved on\n');
+  git(root, 'add', '-A'); git(root, 'commit', '-qm', 'trunk work');
+
+  assert.notEqual(verdictFor(root, wt.path).verdict, 'safe');
+});
+
+test('23 · naming a path selects it — it does not accept the risk of removing it', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'named');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: named');
+  mergeIntoTrunk(root, wt.branch);
+  write(wt.path, 'production.env', 'STRIPE=sk_live\n');
+
+  const r = spawnSync('node', [CLI, 'worktrees', 'reap', wt.path], { cwd: root, encoding: 'utf8' });
+  assert.match(r.stdout, /production\.env/, 'the refusal must say what is at stake');
+  assert.equal(existsSync(join(wt.path, 'production.env')), true, 'a path is a selection, not a consent');
+
+  const ok = spawnSync('node', [CLI, 'worktrees', 'reap', wt.path, '--confirm'], { cwd: root, encoding: 'utf8' });
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.equal(existsSync(wt.path), false, 'and an explicit confirmation still works');
+});
+
+test('24 · the trunk branch is never deleted, whatever the user confirms', () => {
+  const root = repo();
+  // A sibling checkout of the trunk itself: location matches rsc's convention, branch does not.
+  const path = join(root, '..', `${basename(root)}-main`);
+  TMP.push(path);
+  git(root, 'checkout', '-qb', 'feat/elsewhere');   // free the trunk so it can be checked out elsewhere
+  git(root, 'worktree', 'add', '-q', path, 'main');
+
+  const out = reapWorktree(root, path, { confirmed: true });
+  assert.ok(git(root, 'rev-parse', '--verify', 'main'), 'deleting the trunk ref must never be a side effect');
+  if (out.removed) assert.equal(out.branchDeleted, false);
+});
+
+test('25 · a rename is parsed as one file, not as a truncated second one', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'renamed');
+  write(wt.path, 'original-document.md', 'text\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: renamed');
+  mergeIntoTrunk(root, wt.branch);
+  git(wt.path, 'mv', 'original-document.md', 'renamed-document.md');
+
+  const v = verdictFor(root, wt.path);
+  const named = JSON.stringify(v);
+  assert.ok(!/ginal-document/.test(named), `a refusal must name files that exist: ${named}`);
+  assert.ok(/renamed-document\.md/.test(named));
+});
+
+test('26 · a locked worktree is left alone and is never announced as removable', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'locked');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: locked');
+  mergeIntoTrunk(root, wt.branch);
+  git(root, 'worktree', 'lock', '--reason', 'external drive, do not remove', wt.path);
+
+  const v = verdictFor(root, wt.path);
+  assert.equal(v.verdict, 'skip', 'a lock is the strongest "do not touch" a user can express');
+  assert.ok(v.reasons.includes('locked'));
+});
+
+test('27 · reaping one worktree does not de-register another whose media is absent', () => {
+  const root = repo();
+  const a = rscWorktree(root, 'reapable');
+  write(a.path, 'a.txt', 'a\n'); git(a.path, 'add', '-A'); git(a.path, 'commit', '-qm', 'feat: a');
+  mergeIntoTrunk(root, a.branch);
+
+  const b = rscWorktree(root, 'absent');
+  write(b.path, 'precious.txt', 'never committed\n');
+  rmSync(b.path, { recursive: true, force: true }); // the volume went away, the work did not
+
+  assert.equal(reapWorktree(root, a.path).removed, true);
+  const admin = git(root, 'worktree', 'list', '--porcelain');
+  assert.ok(admin.includes('absent'), 'a temporarily missing worktree must keep its registration');
+});
+
+test('28 · a worktree too large for a 1 MiB pipe is still read, not called unreadable', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'huge');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: huge');
+  mergeIntoTrunk(root, wt.branch);
+  // ~2 MB of porcelain output: enough to kill git through node's default pipe budget.
+  for (let i = 0; i < 12000; i++) write(wt.path, `blob/${'n'.repeat(120)}${i}.bin`, 'x');
+
+  const v = verdictFor(root, wt.path);
+  assert.ok(!v.reasons.includes('unreadable'), 'node truncating the pipe is not git failing to report');
+  assert.equal(v.verdict, 'ask', 'and 12000 stray files are certainly something to ask about');
+});
+
+test('28b · but a genuinely unreadable worktree is skipped, never called safe', async () => {
+  const { classifyWorktrees: classify } = await import(MOD);
+  const root = repo();
+  const wt = rscWorktree(root, 'gone');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: gone');
+  mergeIntoTrunk(root, wt.branch);
+  rmSync(wt.path, { recursive: true, force: true });
+
+  const found = classify(root).find((c) => c.branch === wt.branch);
+  assert.ok(!found || found.verdict !== 'safe', 'a directory git cannot inspect is never safe to delete');
+});
+
+// ── 29-36. coverage the mutation pass proved was missing ────────────────────────────────────
+
+test('29 · the sibling <repo>-<slug> layout is recognised — it is the one `worktrees` documents', () => {
+  const root = repo();
+  const path = join(root, '..', `${basename(root)}-sib`);
+  TMP.push(path);
+  git(root, 'worktree', 'add', '-q', '-b', 'feat/sib', path);
+  const real = realpathSync.native(path);
+  write(real, 'f.txt', 'work\n'); git(real, 'add', '-A'); git(real, 'commit', '-qm', 'feat: sib');
+  mergeIntoTrunk(root, 'feat/sib');
+
+  assert.equal(verdictFor(root, real).verdict, 'safe');
+});
+
+test('29b · so is a bare worktrees/ directory', () => {
+  const root = repo();
+  const path = join(root, 'worktrees', 'plain');
+  git(root, 'worktree', 'add', '-q', '-b', 'feat/plain', path);
+  const real = realpathSync.native(path);
+  write(real, 'f.txt', 'work\n'); git(real, 'add', '-A'); git(real, 'commit', '-qm', 'feat: plain');
+  mergeIntoTrunk(root, 'feat/plain');
+
+  assert.equal(verdictFor(root, real).verdict, 'safe');
+});
+
+test('29c · and a feature/ prefix, which is what ship own examples write', () => {
+  const root = repo();
+  const path = join(root, '.worktrees', 'longform');
+  git(root, 'worktree', 'add', '-q', '-b', 'feature/longform', path);
+  const real = realpathSync.native(path);
+  write(real, 'f.txt', 'work\n'); git(real, 'add', '-A'); git(real, 'commit', '-qm', 'feat: longform');
+  mergeIntoTrunk(root, 'feature/longform');
+
+  assert.equal(verdictFor(root, real).verdict, 'safe');
+});
+
+test('30 · a monorepo keeps the carve-out: nested node_modules is still disposable', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'mono');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: mono');
+  mergeIntoTrunk(root, wt.branch);
+  write(wt.path, 'packages/app/node_modules/dep/index.js', 'installed\n');
+  write(wt.path, 'apps/web/dist/bundle.js', 'built\n');
+
+  assert.equal(verdictFor(root, wt.path).verdict, 'safe',
+    'workspaces are the common JS shape; sending every one of them to the prompt is how this gets turned off');
+});
+
+test('30b · but a FILE called env, deep in the tree, is still content to lose', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'deepenv');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: deepenv');
+  mergeIntoTrunk(root, wt.branch);
+  write(wt.path, 'services/api/config/env', 'AWS_SECRET=hunter2\n');
+
+  const v = verdictFor(root, wt.path);
+  assert.equal(v.verdict, 'ask');
+  assert.deepEqual(v.details.outside, ['services/api/config/env']);
+});
+
+test('31 · a detached worktree is left alone, and no message says "null"', async () => {
+  const root = repo();
+  const path = join(root, '.worktrees', 'floating');
+  git(root, 'worktree', 'add', '-q', '--detach', path);
+  const real = realpathSync.native(path);
+
+  const v = verdictFor(root, real);
+  assert.equal(v.verdict, 'skip');
+  assert.ok(v.reasons.includes('detached'));
+  const { refusal, summarize } = await import(MOD);
+  assert.ok(!refusal(v).includes('null'), 'a refusal that interpolates a branch which does not exist is not a message');
+  assert.ok(!summarize(v, root).includes('null'));
+});
+
+test('32 · a submodule is not a worktree of this repository', async () => {
+  const { classifyWorktrees: classify } = await import(MOD);
+  const root = repo();
+  const inner = repo();
+  git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', '-q', inner, 'vendor-lib');
+  git(root, 'commit', '-qm', 'add submodule');
+
+  assert.ok(!classify(root).some((c) => c.path.endsWith('vendor-lib')),
+    'it only looks like one, which is exactly why it needs the guard');
+});
+
+test('33 · from inside a worktree, home is the main checkout — not where you stand', async () => {
+  const { resolveMainRoot } = await import(MOD);
+  const root = repo();
+  const wt = rscWorktree(root, 'standing');
+
+  assert.equal(resolveMainRoot(wt.path), realpathSync.native(root),
+    'this is what the CLI calls, and it is why you can close a branch from the worktree you built it in');
+});
+
+test('34 · the remote tip wins over a stale local trunk', () => {
+  const root = repo();
+  const remote = mkdtempSync(join(tmpdir(), 'rsc-remote-'));
+  TMP.push(remote);
+  git(remote, 'init', '--bare', '-q', '-b', 'main');
+  git(root, 'remote', 'add', 'origin', remote);
+  git(root, 'push', '-q', 'origin', 'main');
+
+  const wt = rscWorktree(root, 'pushed');
+  write(wt.path, 'f.txt', 'work\n'); git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: pushed');
+  mergeIntoTrunk(root, wt.branch);
+
+  assert.equal(resolveTrunk(root), 'origin/main', 'a stale local main must not certify work as landed');
+  assert.equal(verdictFor(root, wt.path).verdict, 'skip',
+    'merged locally but never pushed: from the remote trunk nothing has landed yet');
+
+  git(root, 'push', '-q', 'origin', 'main');
+  assert.equal(verdictFor(root, wt.path).verdict, 'safe', 'once it is really on the trunk, it is landed');
+});
+
+test('35 · an integration question git cannot answer is never read as "landed"', async () => {
+  const { integrationOf, listWorktrees: list, refusal } = await import(MOD);
+  const root = repo();
+  const wt = rscWorktree(root, 'unanswerable');
+  write(wt.path, 'f.txt', 'work\n'); git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: u');
+
+  const entry = list(root).find((w) => w.branch === wt.branch);
+  assert.equal(integrationOf(root, entry, 'refs/heads/no-such-trunk'), 'unknown');
+  assert.match(refusal({ branch: wt.branch, reasons: ['unknown'], details: {} }), /git log/,
+    'and the refusal hands back a command to check it by hand (P6)');
+});
+
+test('36 · the sweep respects the opt-out, not only the library does', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'quiet');
+  write(wt.path, 'f.txt', 'work\n'); git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: q');
+  mergeIntoTrunk(root, wt.branch);
+  assert.match(sweep(root), /worktree cleanup/, 'precondition: it would speak');
+
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  writeFileSync(join(root, '.rsc', '.no-worktree-cleanup'), '');
+  assert.doesNotMatch(sweep(root), /worktree cleanup/, 'off means off at both entry points');
 });

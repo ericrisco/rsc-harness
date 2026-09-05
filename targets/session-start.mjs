@@ -217,8 +217,11 @@ Opt out with .rsc/.no-claudemd-check.
 // safeguard earns itself an opt-out. Silent when there is nothing to say. Off with .rsc/.no-worktree-cleanup.
 if (has('.git')) {
   try {
+    // No opt-out check here: `classifyWorktrees` returns nothing when the project turned the cleanup
+    // off, so a second check could never fail and would only look like protection (P2). Test 36 holds
+    // the behaviour end to end, through this hook.
     const W = await import('./worktree-reaper.mjs');
-    if (W.isCleanupEnabled(root)) {
+    {
       const candidates = W.classifyWorktrees(root).filter((c) => c.verdict !== 'skip');
       if (candidates.length) {
         process.stdout.write(`

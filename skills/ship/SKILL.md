@@ -116,14 +116,16 @@ Stacked PR / feature-track support still fits inside the three landing options: 
 git switch main && git pull --ff-only
 git merge --no-ff feature/<slug> -m "feat: <what shipped> (<spec-slug>)"   # no AI trailer
 git push origin main
-npx @ericrisco/rsc worktrees reap     # the worktree this lived in goes, with its merged branch
+npx @ericrisco/rsc worktrees reap <path-of-this-feature-worktree>   # by name: this one, not all of them
 git branch -d feature/<slug> 2>/dev/null || true   # no worktree involved? then the branch alone
 git push origin --delete feature/<slug> 2>/dev/null || true
 ```
 
 Use `--no-ff` so the feature is one legible merge commit tied to the spec. Confirm the trunk still builds after the merge if the repo has a local gate (defer the actual run to `verify`).
 
-`worktrees reap` is part of the landing, not an afterthought: it takes only worktrees rsc created whose work is already in the trunk and that hold nothing unsaved, and it prints what it kept and why for everything else. Run it from anywhere — including inside the worktree being retired, which is the usual place — it finds the main checkout itself.
+**Name the path.** Bare `worktrees reap` retires *every* worktree that currently qualifies, which is not what landing one branch means — with `parallel` running two streams, it is how shipping A deletes B. Pass the path of the worktree this branch lived in; capture it before you switch, since you are usually standing in it (`WT=$(pwd)`).
+
+Naming a path selects it, it does not accept the risk of removing it: a worktree holding anything unsaved is still refused, with the reason. Add `--confirm` only after the user has seen that reason and said yes. Run it from anywhere — it finds the main checkout itself.
 
 ### Option 2 — pull request
 
@@ -161,7 +163,7 @@ Implements `02-DOCS/wiki/sdd/specs/<slug>.md`. <the user-facing reason>
 
 Then either let the gate run (team/CI) or self-merge once green: `gh pr merge --squash --delete-branch` (or `--merge` to preserve the history). Squash when the branch history is noisy; preserve when each commit is meaningful.
 
-Once it is merged, pull the trunk and reap — `git switch main && git pull --ff-only && npx @ericrisco/rsc worktrees reap`. A squashed pull request is exactly the case the reaper judges by content rather than by commit identity, so it is recognised as landed; the local branch is kept, because git will not delete a squashed branch safely and while it exists the work is recoverable.
+Once it is merged, pull the trunk and reap the one you landed — `git switch main && git pull --ff-only && npx @ericrisco/rsc worktrees reap "$WT"`. A squashed pull request is exactly the case the reaper judges by content rather than by commit identity, so it is recognised as landed; the local branch is kept, because git will not delete a squashed branch safely and while it exists the work is recoverable.
 
 For stacked PRs, create each PR against the previous branch or against a feature-track branch, with bodies that name their dependency:
 

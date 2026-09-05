@@ -504,18 +504,21 @@ async function main() {
       const candidates = W.classifyWorktrees(root).filter((c) => c.verdict !== 'skip');
 
       if (sub === 'reap') {
-        const one = argv[2];
+        const one = argv[2] && !argv[2].startsWith('--') ? argv[2] : undefined;
+        // Naming a path SELECTS it; it does not accept the risk of removing it. Conflating the two
+        // meant the strongest refusal in the module — "holds files that are in no commit" — was
+        // defeated by an argument the sweep itself told the agent to type.
+        const confirmed = argv.includes('--confirm');
         const targets = one ? [one] : candidates.filter((c) => c.verdict === 'safe').map((c) => c.path);
         if (!targets.length) { say('nothing to clean up.'); return; }
         for (const t of targets) {
-          // Naming one is the confirmation; a bulk run only ever takes what was already safe, so a
-          // single yes can never launder a worktree that was being asked about for a reason.
-          const out = W.reapWorktree(root, t, { confirmed: Boolean(one) });
+          const out = W.reapWorktree(root, t, { confirmed });
           if (out.removed) {
             say(`✅ removed ${out.path}`);
             if (out.branchKept) say(`   branch ${out.branch} kept — git will not delete it safely, and while it exists the commits are recoverable.`);
           } else {
             say(`⏸  kept ${t} — ${out.reason}`);
+            if (one && !confirmed) say('   If that is acceptable and you want it gone anyway: add --confirm');
             process.exitCode = 1;
           }
         }
@@ -527,7 +530,7 @@ async function main() {
       for (const c of candidates) say(W.describe(c));
       say('');
       say('Remove the safe ones:  npx @ericrisco/rsc worktrees reap');
-      say('Remove one by name:    npx @ericrisco/rsc worktrees reap <path>');
+      say('Remove one by name:    npx @ericrisco/rsc worktrees reap <path> [--confirm]');
       return;
     }
     case 'capabilities': {
@@ -803,7 +806,7 @@ async function main() {
       return void (await runPurge(argv.includes('--dry-run'), argv.includes('--with-docs')));
     default:
       say(`rsc: unknown command '${cmd}'.`);
-      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | worktrees [reap [path]] | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
+      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
       say('Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)');
       say('   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.');
       process.exitCode = 1;
