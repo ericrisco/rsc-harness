@@ -487,6 +487,49 @@ async function main() {
       say('Use: npx @ericrisco/rsc registry refresh | registry status');
       return;
     }
+    case 'worktrees': {
+      // The deterministic half of "the cleanup is the default". `ship` and the `worktrees` skill call
+      // this instead of judging by eye, which is what turns a rule that was only ever written down
+      // into one that actually runs.
+      const W = await import('../targets/worktree-reaper.mjs');
+      // From inside a worktree, home is the main checkout — you cannot remove the floor you stand on.
+      const root = W.resolveMainRoot(process.cwd());
+      const sub = argv[1];
+
+      if (!W.isCleanupEnabled(root)) {
+        say(`worktree cleanup is off for this project (.rsc/${W.OPT_OUT}). Delete that file to turn it back on.`);
+        return;
+      }
+
+      const candidates = W.classifyWorktrees(root).filter((c) => c.verdict !== 'skip');
+
+      if (sub === 'reap') {
+        const one = argv[2];
+        const targets = one ? [one] : candidates.filter((c) => c.verdict === 'safe').map((c) => c.path);
+        if (!targets.length) { say('nothing to clean up.'); return; }
+        for (const t of targets) {
+          // Naming one is the confirmation; a bulk run only ever takes what was already safe, so a
+          // single yes can never launder a worktree that was being asked about for a reason.
+          const out = W.reapWorktree(root, t, { confirmed: Boolean(one) });
+          if (out.removed) {
+            say(`✅ removed ${out.path}`);
+            if (out.branchKept) say(`   branch ${out.branch} kept — git will not delete it safely, and while it exists the commits are recoverable.`);
+          } else {
+            say(`⏸  kept ${t} — ${out.reason}`);
+            process.exitCode = 1;
+          }
+        }
+        return;
+      }
+
+      if (!candidates.length) { say('No worktrees to clean up.'); return; }
+      say(`${candidates.length} worktree(s) whose work has landed:`);
+      for (const c of candidates) say(W.describe(c));
+      say('');
+      say('Remove the safe ones:  npx @ericrisco/rsc worktrees reap');
+      say('Remove one by name:    npx @ericrisco/rsc worktrees reap <path>');
+      return;
+    }
     case 'capabilities': {
       // "What do I already have that solves this?" — the deterministic step the
       // automation-gap rule requires BEFORE anyone proposes creating a skill or an

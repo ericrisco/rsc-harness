@@ -85,6 +85,9 @@ export function wireHook(paths) {
   // Shared by session-start + userprompt-gate. Hooks are materialized file by file, so a module
   // they import must be copied as their SIBLING — a subdirectory import would break once copied.
   copyFileSync(join(HERE, 'hook-once.mjs'), join(paths.projectRoot, '.rsc', 'hook-once.mjs'));
+  // Same reason: session-start imports the reaper for the landed-worktree sweep, so it travels as a
+  // sibling too. Missing it does not break startup — the sweep is wrapped — it just goes silent.
+  copyFileSync(join(HERE, 'worktree-reaper.mjs'), join(paths.projectRoot, '.rsc', 'worktree-reaper.mjs'));
   copyFileSync(join(HERE, 'session-start.mjs'), scriptDest);
 
   const suggestMd = `${paths.skillDir('suggest')}/SKILL.md`;

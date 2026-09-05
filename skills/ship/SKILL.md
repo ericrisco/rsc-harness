@@ -116,11 +116,14 @@ Stacked PR / feature-track support still fits inside the three landing options: 
 git switch main && git pull --ff-only
 git merge --no-ff feature/<slug> -m "feat: <what shipped> (<spec-slug>)"   # no AI trailer
 git push origin main
-git branch -d feature/<slug>          # delete merged branch; -D only if intentionally dropping unmerged work
+npx @ericrisco/rsc worktrees reap     # the worktree this lived in goes, with its merged branch
+git branch -d feature/<slug> 2>/dev/null || true   # no worktree involved? then the branch alone
 git push origin --delete feature/<slug> 2>/dev/null || true
 ```
 
 Use `--no-ff` so the feature is one legible merge commit tied to the spec. Confirm the trunk still builds after the merge if the repo has a local gate (defer the actual run to `verify`).
+
+`worktrees reap` is part of the landing, not an afterthought: it takes only worktrees rsc created whose work is already in the trunk and that hold nothing unsaved, and it prints what it kept and why for everything else. Run it from anywhere — including inside the worktree being retired, which is the usual place — it finds the main checkout itself.
 
 ### Option 2 — pull request
 
@@ -172,13 +175,13 @@ Never stack to hide review risk. Stack because each slice is independently revie
 - **Park:** leave the branch, push it so it's not lost (`git push -u origin feature/<slug>`), and log *why it's parked* to `02-DOCS/wiki/sdd/decisions.md`. Do not merge.
 - **Discard:** deletion is **destructive and unrecoverable** once the branch is gone from both sides, so it takes an explicit confirmation that quotes the branch name (the literal `yes, delete feature/<slug>`) before `git branch -D`. Anything ambiguous means keep it. Log the discard and the reason so the dead-end is remembered, not re-attempted.
 
-**If the work lived in a worktree, clean it up provenance-aware.** After the merge/park/discard, only
-remove a worktree **rsc created** (under `.worktrees/`/`worktrees/` or the `../<repo>-<slug>` dir),
-never one the user or a native tool owns. Guard first: confirm it's a linked worktree
-(`git rev-parse --git-dir` ≠ `--git-common-dir`), rule out a submodule
-(`git rev-parse --show-superproject-working-tree` is empty), `cd` to the main working tree before
-removing, and run `git worktree prune` after. Full procedure: `../worktrees/SKILL.md` (Provenance-aware
-cleanup). If a native `EnterWorktree`-style tool created it, exit through that tool, not raw git.
+**Park and discard do NOT reap.** The cleanup default acts only on work that is already in the trunk;
+a parked branch is the opposite of that, and `worktrees reap` refuses it by design. Leave the worktree
+where it is — the next `ship` that lands the branch will retire it. Discarding a worktree along with
+unmerged work stays what it always was: explicit, confirmed with the quoted branch name, and logged.
+
+If a native `EnterWorktree`-style tool created the workspace, exit through that tool rather than the
+reaper — it owns its own lifecycle and its tracking has to stay consistent.
 
 ## Commit message discipline
 

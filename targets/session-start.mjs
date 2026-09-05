@@ -209,6 +209,34 @@ Opt out with .rsc/.no-claudemd-check.
   } catch { /* no CLAUDE.md → nothing to check */ }
 }
 
+// Worktree sweep: a worktree whose work already reached the trunk is landed work wearing the same
+// clothes as live work, and the list stops being readable once a couple of them pile up. `ship`
+// retires the one it just landed; this is for the merge that happened somewhere else — a pull request
+// accepted in the forge, a merge by hand, a session that ended before ship. It only ever NAMES them:
+// at session start the user has asked for nothing, and acting on disk before they say a word is how a
+// safeguard earns itself an opt-out. Silent when there is nothing to say. Off with .rsc/.no-worktree-cleanup.
+if (has('.git')) {
+  try {
+    const W = await import('./worktree-reaper.mjs');
+    if (W.isCleanupEnabled(root)) {
+      const candidates = W.classifyWorktrees(root).filter((c) => c.verdict !== 'skip');
+      if (candidates.length) {
+        process.stdout.write(`
+===== rsc worktree cleanup =====
+${candidates.length} worktree(s) hold work that is already in the trunk:
+${candidates.map(W.describe).join('\n')}
+ACTION: offer to retire them in ONE line and wait for a yes. On a yes run:
+  npx @ericrisco/rsc worktrees reap          (the ones marked safe)
+  npx @ericrisco/rsc worktrees reap <path>   (one the user confirmed by name)
+A yes in bulk covers only the safe ones; anything marked \`ask\` is confirmed on its own.
+A no holds for this session. Permanent off: .rsc/.no-worktree-cleanup
+================================
+`);
+      }
+    }
+  } catch { /* reaper missing or git unhappy → say nothing; this is never worth breaking startup for */ }
+}
+
 // Update check: compare the installed version (.rsc/.version, written at install)
 // against the latest published on npm, and nudge the agent to offer an update.
 // Fail-silent (offline / missing baseline / parse error → nothing). Disable with
