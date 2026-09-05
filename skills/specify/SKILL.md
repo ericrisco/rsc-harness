@@ -22,6 +22,19 @@ Fire on the **faintest** sign the user is thinking about a new feature or change
 
 You are not slowing them down; you make the intent reviewable *before* code exists, which is far cheaper than discovering the misunderstanding in a PR. End every spec by handing to `clarify`/`plan` — never to `implement`.
 
+### Your first sentence is not a verdict on the idea
+
+Catching the intent eagerly, above, is right. What comes *after* catching it is where this phase has been failing: the opening line validates. "Great idea", "makes sense", "that would be really useful" — in any language — is a verdict you do not have the evidence for, delivered at the cheapest possible moment to be wrong, to someone who still believes you. A spec built on a validated premise is coherent, plannable, testable and pointed at the wrong thing; nothing downstream can catch that, because every later gate compares artifacts to each other and they all agree.
+
+So the first response to an intent carries exactly two things:
+
+1. **A restatement** of what you understood, in one sentence, so a misread surfaces now.
+2. **The strongest objection you can actually articulate** from what you already know or can cheaply check — why this might not be worth building, or might be the wrong shape.
+
+Never a judgement of the idea's quality, in either direction. And go look before you object: an objection sourced from the repo, the wiki or a prior spec is worth ten sourced from your priors.
+
+If, having looked, there is no real objection, **say so in one line and move on — silence is a valid result**. Manufacturing an objection to look rigorous is the same failure wearing the opposite coat, and a doubt that fires on every idea measures you, not the idea.
+
 **Offer autopilot once, right here.** At this boundary, propose how to run the rest of the chain:
 > *"¿Quieres que lo lleve hasta el final yo solo — spec → plan → código → verify, parando solo si algo es ambiguo — o prefieres que pare a que apruebes en cada fase?"*
 
@@ -49,6 +62,22 @@ Before asking anything, read `02-DOCS/wiki/harness/user-profile.md` for the tech
 - **L3 "acompañamiento total"** — explain what a spec is and is not, walk every section, ask freely (still one round per frontier, never crossing a dependency), confirm each answer before recording it. Ideal for non-technical users.
 
 If no profile exists, default to non-technical framing and keep questions plain. Never assume fluency.
+
+## FRAME before you ask anything — from `idea-refinement`
+
+Before the frontier round, write five lines. They are the FRAME block of `../idea-refinement/SKILL.md`, a skill this catalog ships and the README advertises, and that until now no phase invoked:
+
+- **Actor** — who is struggling, and in what situation?
+- **Current workaround** — what do they do today, *including doing nothing*?
+- **Desired progress** — what observable change would make this useful?
+- **Constraints** — time, money, trust, regulation, the product that already exists.
+- **Known vs assumed** — separate what you have actually seen from what merely sounds plausible.
+
+Then name the directions worth considering, and **"don't build it" is one of them** — enumerated, with its consequence, not offered as a courtesy. A direction you can dismiss in one line still had to be written down first; the ones that never get written are the ones that never get weighed.
+
+If the idea arrives phrased as a feature ("an AI dashboard"), FRAME is where it turns back into a problem and an outcome ("operators need to spot failed jobs before customers report them"). The original phrasing stays as one candidate, not as the conclusion.
+
+Ceremony scales with the stakes here as everywhere: FRAME earns its five lines on anything with real scope, and on a small change it collapses to the one line that matters.
 
 ## Questioning discipline — ask the frontier, never cross a dependency
 
@@ -124,7 +153,10 @@ Run these in order. It is a collaborative dialogue, not a form you fill in silen
 1. EXPLORE context        → profile + sdd config + constitution + existing specs + wiki + recent git
 2. SCOPE check            → if the request is several independent subsystems, DECOMPOSE into sub-specs first,
                             then brainstorm the FIRST one; each gets its own spec → plan → build cycle
-3. RESTATE in one sentence→ confirm you understood the intent before anything else
+3. RESTATE + OBJECT     → one sentence of what you understood, plus the strongest objection you can
+                            actually make. No verdict on the idea. No objection to make? Say so, one line
+3b. FRAME (idea-refinement)→ actor · current workaround incl. doing nothing · desired progress ·
+                            constraints · known vs assumed; "don't build it" enumerated as a direction
 4. ASK the frontier       → only gaps that change the contract; whole frontier per round, numbered, each
                             with your recommendation; never cross a dependency; wait, record, recompute
 5. PROPOSE 2-3 approaches → distinct directions with honest trade-offs; lead with your recommendation and why

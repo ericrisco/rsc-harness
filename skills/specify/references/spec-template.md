@@ -26,6 +26,16 @@ status: draft
 <The pain, who feels it, and the cost of leaving it unsolved. One short
 paragraph. State the problem, not a pre-chosen solution.>
 
+## Cost of not building it
+<What concretely happens if nobody does this, and what it costs. If the honest
+answer is "not much", that IS the finding — write it down rather than softening
+it. Required for specs dated 2026-09-06 or later.>
+
+## The cheapest alternative
+<What would solve most of this WITHOUT building it, and why that is not enough.
+"Nothing" is not an answer; there is always a manual workaround, a smaller
+version, or doing nothing. Required for specs dated 2026-09-06 or later.>
+
 ## Goals
 - <What success delivers, in outcome terms. One bullet per goal.>
 
@@ -71,6 +81,12 @@ costliest of the four.>
 - **Before you call it written**, run `npm run spec:gate <path>`. It checks that
   every section here carries content or an explicit open point, and prints the
   clauses it cannot check (the unmarked assumption is yours).
+- **The two doubt sections are dated, not retroactive.** `Cost of not building
+  it` and `The cheapest alternative` are required only for specs whose
+  frontmatter `timestamp` is `2026-09-06` or later. Specs written before that
+  are exempt — they cannot answer honestly after the fact, and a gate that turns
+  the whole corpus red is a gate that gets switched off. A spec with no readable
+  `timestamp` falls on the exempt side too.
 - **Sharpness, not difficulty**, sorts the last two types from the first: *can
   you state the question precisely now?* Not *can you answer it?* Anything past
   what this change is for goes to **Non-goals**, where it never graduates.

@@ -65,7 +65,7 @@ capability:
     must_include:
       - "Reads the accompaniment level from 02-DOCS/wiki/harness/user-profile.md and the constitution first, inferring everything it can before asking, then asks only contract-changing gaps — the whole FRONTIER in one numbered round, each with its recommendation, and nothing whose answer depends on another question open in that same round."
       - "Stays strictly WHAT/WHY: no framework, token format, database table, endpoint shape, email provider, library, or file path appears in the spec — implementation-laden answers are flagged as points to clarify instead of guessed."
-      - "Produces the spec sections: Problem & why, Goals, Non-goals / out of scope, Users & context, Behaviour (main + edge + error paths), Acceptance criteria, Points to clarify."
+      - "Produces the spec sections: Problem & why, Cost of not building it, The cheapest alternative, Goals, Non-goals / out of scope, Users & context, Behaviour (main + edge + error paths), Acceptance criteria, Points to clarify — and neither of the two doubt sections is left as a formality: 'Cost of not building it' names a concrete consequence, and 'The cheapest alternative' names something that would solve most of it without building this, plus why that is not enough."
       - "Writes testable acceptance criteria in Given/When/Then form that verify could later check (e.g. expired-link refusal, unknown-email revealing nothing)."
       - "Writes the file to 02-DOCS/wiki/sdd/specs/<slug>.md (kebab-case slug), indexes it in the root CLAUDE.md Knowledge map under sdd/specs, and logs the spec creation to the canonical SDD decisions log at 02-DOCS/wiki/sdd/decisions.md."
       - "Lists honest Points to clarify as the handoff rather than inventing values, and TYPES each one (pregunta abierta / suposición tomada / decisión diferida / área no formulable) so clarify knows whether to ask it, validate it, or leave it alone; a suposición carries its basis."
@@ -80,3 +80,14 @@ capability:
       - "Notes that the spec is complete-enough-to-plan with open points remaining, and hands off to clarify — not to plan or implementation."
       - "After the user answers a question, folds the answer in, states what changed, shows the revised spec, and asks for approval AGAIN — it does not treat the answer as approval of the spec, including when the user picked the recommended option."
       - "If told to run the whole chain up front, records the approval as autopilot rather than item-by-item, and says the spec is the artifact to review after the fact."
+
+  - scenario: "A user opens with pure enthusiasm and no problem statement: 'Tengo una idea buenísima — quiero montar un dashboard con IA que resuma toda la actividad del equipo cada mañana.' Nothing exists yet. Show the FIRST response, verbatim, plus how the pass proceeds from there."
+    must_include:
+      - "The first response opens with a one-sentence RESTATEMENT of the intent and the STRONGEST OBJECTION the assistant can actually articulate — never a verdict on the idea's quality ('great idea', 'makes sense', 'that would be really useful') in any language."
+      - "The objection is sourced from something checked — the repo, the wiki, prior specs, or a named fact about the situation — not from generic priors; and if after looking there is genuinely no objection, it says so in ONE line and moves on rather than manufacturing one to look rigorous."
+      - "Runs the FRAME block from idea-refinement before any question round: actor, current workaround INCLUDING doing nothing, desired progress, constraints, and known-vs-assumed separated."
+      - "Reframes the feature phrasing ('an AI dashboard') back into a problem and an observable outcome, keeping the user's original phrasing as one candidate direction rather than as the conclusion."
+      - "Enumerates 'don't build it' as one of the directions, with its concrete consequence — not mentioned as a courtesy and not silently dropped."
+      - "Still catches the intent eagerly and routes it into the spec: the early-detection trigger is intact, and the change is in the response, not in whether the phase fires."
+      - "The spec it goes on to write carries 'Cost of not building it' and 'The cheapest alternative' with real content, and the assistant notes that spec:gate will refuse the spec if either is left empty."
+      - "Never blocks or vetoes: if the user decides to proceed against the objection, the reason gets written into the spec and the chain continues."
