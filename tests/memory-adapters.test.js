@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -92,4 +92,46 @@ test('the command adapter consumes native stdin and emits only target-native JSO
     const output = JSON.parse(stdout);
     assert.ok(adapters.contextFromNativeOutput(target, output).includes('exact continuation'), target);
   }
+});
+
+// A container harness (the directory holding `.rsc.json`) governs child repos that have no harness of
+// their own. The hook payload's `cwd` is wherever the tool call happened to run — inside a child, often —
+// and that is not the project's identity. Anchoring the journal there scatters memory across children.
+function containerWithChild({ childHarness = false } = {}) {
+  const container = repo();
+  writeFileSync(join(container, '.rsc.json'), JSON.stringify({ version: 1, targets: ['claude'], skills: [] }));
+  const child = join(container, 'child');
+  execFileSync('git', ['init', '-q', child]);
+  git(child, ['config', 'user.name', 'Test']);
+  git(child, ['config', 'user.email', 'test@example.test']);
+  writeFileSync(join(child, 'file.txt'), 'child\n');
+  git(child, ['add', 'file.txt']);
+  git(child, ['commit', '-qm', 'child initial']);
+  if (childHarness) writeFileSync(join(child, '.rsc.json'), JSON.stringify({ version: 1, targets: ['claude'], skills: [] }));
+  return { container, child };
+}
+const anchorAt = (root, id) => join(root, '.rsc', 'memory', 'anchors', `claude--${id}.json`);
+
+test('a tool call inside a child repo anchors memory in the nearest harness, not in the child', () => {
+  const { container, child } = containerWithChild();
+  const id = 'container-governs-child';
+  const result = adapters.handleLifecycle({ target: 'claude', event: 'start', native: { session_id: id, cwd: child } });
+  assert.equal(result.degraded, false, result.error);
+  assert.ok(existsSync(anchorAt(container, id)), 'anchor belongs to the harness that owns the session');
+  assert.ok(!existsSync(join(child, '.rsc')), 'nothing is written into a child that has no harness');
+});
+
+test('a child with its own .rsc.json is its own project — the nearest harness wins', () => {
+  const { container, child } = containerWithChild({ childHarness: true });
+  const id = 'child-has-own-harness';
+  adapters.handleLifecycle({ target: 'claude', event: 'start', native: { session_id: id, cwd: child } });
+  assert.ok(existsSync(anchorAt(child, id)), 'the child harness is the project');
+  assert.ok(!existsSync(anchorAt(container, id)), 'the container is not consulted past a nearer harness');
+});
+
+test('with no .rsc.json anywhere above, the payload cwd is still the project (unchanged behaviour)', () => {
+  const cwd = repo();
+  const id = 'no-harness-anywhere';
+  adapters.handleLifecycle({ target: 'claude', event: 'start', native: { session_id: id, cwd } });
+  assert.ok(existsSync(anchorAt(cwd, id)));
 });
