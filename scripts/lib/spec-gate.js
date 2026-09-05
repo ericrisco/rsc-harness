@@ -9,6 +9,15 @@
 // the problem `specify` exists to solve, not something a parser can do, and a gate that implies
 // otherwise is worse than one that admits its edge.
 
+import { parseFrontmatter } from './frontmatter.js';
+
+// The two families below are NOT retroactive. The corpus is 34 specs written before this rule
+// existed, and none of them can answer "what if we don't build it" honestly after the fact; a gate
+// that turns 34 files red gets switched off within a week. So the requirement starts on a date, and
+// the date is derived from the file's own `timestamp:` — not from a list of exempted specs, which
+// would be exactly the parallel accounting P3 forbids.
+export const NEW_FAMILIES_SINCE = '2026-09-06';
+
 // The four states a point can be in. Order is the table's order in the skill body.
 export const OPEN_POINT_TYPES = [
   'pregunta abierta', // formulable now, unanswered → clarify asks it
@@ -21,13 +30,29 @@ export const OPEN_POINT_TYPES = [
 // ("Objetivos (resultado)", "Criterios de aceptación (binarios)"). Matching literal strings would
 // be useless, so each family is a set of normalised prefixes.
 const FAMILIES = {
-  problem: ['problema & por que', 'problema y por que', 'problem & why'],
-  goals: ['objetivos', 'goals'],
-  nongoals: ['no-objetivos', 'no objetivos', 'non-goals'],
-  users: ['usuarios & contexto', 'usuarios y contexto', 'users & context'],
-  behaviour: ['comportamiento', 'behaviour', 'behavior'],
-  acceptance: ['criterios de aceptacion', 'acceptance criteria'],
-  open: ['puntos a clarificar', 'puntos de clarify', 'puntos que siguen abiertos', 'points to clarify'],
+  problem: { prefixes: ['problema & por que', 'problema y por que', 'problem & why'] },
+  goals: { prefixes: ['objetivos', 'goals'] },
+  nongoals: { prefixes: ['no-objetivos', 'no objetivos', 'non-goals'] },
+  users: { prefixes: ['usuarios & contexto', 'usuarios y contexto', 'users & context'] },
+  behaviour: { prefixes: ['comportamiento', 'behaviour', 'behavior'] },
+  acceptance: { prefixes: ['criterios de aceptacion', 'acceptance criteria'] },
+  open: {
+    prefixes: ['puntos a clarificar', 'puntos de clarify', 'puntos que siguen abiertos', 'points to clarify'],
+  },
+  // A spec that cannot say what happens if nobody builds it has not been interrogated, only
+  // de-risked. `since` is what keeps that demand off the specs written before it existed.
+  inaction: {
+    prefixes: [
+      'que pasa si no lo construimos', '¿que pasa si no lo construimos',
+      'coste de no construirlo', 'el coste de no construirlo',
+      'cost of not building', 'the cost of not building',
+    ],
+    since: NEW_FAMILIES_SINCE,
+  },
+  cheapest: {
+    prefixes: ['la alternativa mas barata', 'alternativa mas barata', 'cheapest alternative', 'the cheapest alternative'],
+    since: NEW_FAMILIES_SINCE,
+  },
 };
 
 const UNCHECKED = [
@@ -38,6 +63,9 @@ const UNCHECKED = [
   // narrower than the rule it appears to enforce is the decorative gate all over again.
   'si una spec dice "implementada" sin nombrar commit, PR ni versión (no hay nada que ir a mirar)',
   'si el trabajo de una spec que se declara sin aterrizar llegó por otra vía (git no lo distingue)',
+  // Sin esta línea, el verde sería más estrecho que la regla que aparenta imponer — que es la
+  // definición de puerta decorativa, sólo que por omisión en vez de por ausencia.
+  `las specs anteriores a ${NEW_FAMILIES_SINCE} — quedan exentas de "qué pasa si no lo construimos" y de "la alternativa más barata", que no pueden rellenarse a posteriori`,
 ];
 
 function fold(s) {
@@ -50,7 +78,7 @@ function fold(s) {
 
 function familyOf(heading) {
   const h = fold(heading);
-  for (const [family, prefixes] of Object.entries(FAMILIES)) {
+  for (const [family, { prefixes }] of Object.entries(FAMILIES)) {
     if (prefixes.some((p) => h.startsWith(p))) return family;
   }
   return null;
@@ -65,6 +93,58 @@ function isSubstantive(line) {
   if (/^\*[^*].*\*$/.test(t) && t.length < 200) return false; // *italic guidance*
   if (/^(-|\*)\s*$/.test(t)) return false; // an empty bullet
   return true;
+}
+
+// The template's guidance does not fit on one line, and a section still holding it is a section
+// nobody filled in. The single-line check above never saw those: `<What concretely happens if` does
+// not end in `>`, so it read as content and an untouched template passed the gate green.
+//
+// Only a block that actually CLOSES counts as guidance. A stray `<` that never finds its `>` — a
+// latency budget written `<400ms`, a generic in a code sample — stays content, because guessing
+// wrong in that direction hides real prose.
+function guidanceLines(lines) {
+  const skip = new Set();
+  for (let i = 0; i < lines.length; i += 1) {
+    const t = lines[i].trim();
+    if (!t.startsWith('<') || t.endsWith('>')) continue;
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const u = lines[j].trim();
+      if (u === '' || u.startsWith('#')) break; // the block ended without closing: not guidance
+      if (u.endsWith('>')) {
+        for (let k = i; k <= j; k += 1) skip.add(k);
+        i = j;
+        break;
+      }
+    }
+  }
+  return skip;
+}
+
+function hasSubstance(lines) {
+  const guidance = guidanceLines(lines);
+  return lines.some((line, i) => !guidance.has(i) && isSubstantive(line));
+}
+
+// The day this spec was written, as YYYY-MM-DD, or null when there is nothing trustworthy to read.
+// Null always means EXEMPT: a spec we cannot date is not a spec we get to fail. Three ways to land
+// there, and all three are safe — the CLI itself calls specCompleteness('') to print `unchecked`,
+// and parseFrontmatter throws on that.
+function specDay(markdown) {
+  try {
+    const raw = parseFrontmatter(markdown).timestamp;
+    if (typeof raw !== 'string') return null;
+    const day = raw.slice(0, 10); // ISO order is lexicographic order; no timezone maths needed
+    return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
+  } catch {
+    return null;
+  }
+}
+
+function requiredFamilies(markdown) {
+  const day = specDay(markdown);
+  return Object.entries(FAMILIES)
+    .filter(([, { since }]) => !since || (day !== null && day >= since))
+    .map(([family]) => family);
 }
 
 function parseOpenPoints(lines) {
@@ -108,9 +188,9 @@ export function specCompleteness(markdown) {
     if (current && sections.has(current)) sections.get(current).push(line);
   }
 
-  const families = Object.keys(FAMILIES);
+  const families = requiredFamilies(markdown);
   const missing = families.filter((f) => !sections.has(f));
-  const empty = families.filter((f) => sections.has(f) && !sections.get(f).some(isSubstantive));
+  const empty = families.filter((f) => sections.has(f) && !hasSubstance(sections.get(f)));
 
   const openPoints = sections.has('open') ? parseOpenPoints(sections.get('open')) : [];
   const untyped = openPoints.filter((p) => !p.typed).map((p) => p.text);
