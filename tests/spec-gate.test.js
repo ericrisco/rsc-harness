@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { specCompleteness, OPEN_POINT_TYPES } from '../scripts/lib/spec-gate.js';
 
 const SPANISH = `---
@@ -194,4 +195,75 @@ test('the gate declares the retroactive exemption instead of hiding it', () => {
     unchecked.some((u) => /anteriores a|exent/i.test(u)),
     `unchecked no declara la exención: ${JSON.stringify(unchecked, null, 2)}`,
   );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Los cuatro huecos que encontró el panel de refutadores sobre 42fd4c6. Cada uno existe porque un
+// mutante sobrevivió, no porque pareciera buena idea añadirlo.
+
+// H1 — todos los fixtures post-corte usaban LITERALMENTE el día del corte, así que cambiar `>=` por
+// `===` pasaba 33/33. La región probada contenía cero specs reales; la región donde vivirán todas
+// las specs futuras no tenía ni un test. El borde inferior estaba clavado y la ventana entera libre.
+test('post-cut: a date well after the cut is required too, not just the boundary day', () => {
+  const r = specCompleteness(withTimestamp(toEnglish(SPANISH), '2027-01-01'));
+  assert.equal(r.ok, false, 'una spec de 2027 sigue sujeta a las dos secciones');
+  assert.ok(r.missing.includes('inaction'), `missing=${r.missing}`);
+  assert.ok(r.missing.includes('cheapest'), `missing=${r.missing}`);
+});
+
+// H2 — el fixture de la guía estaba reescrito a una línea para casar con la regex, mientras la
+// plantilla que este mismo cambio añade emite la guía en tres. Copiar la plantilla y no rellenarla
+// —el estado exacto que deja una pasada apresurada— salía VERDE. Este test lee el artefacto real.
+test('the template guidance, taken verbatim from the shipped template, does not count as content', () => {
+  const template = readFileSync(new URL('../skills/specify/references/spec-template.md', import.meta.url), 'utf8');
+  const section = (heading) => {
+    const from = template.indexOf(`## ${heading}`);
+    assert.notEqual(from, -1, `la plantilla ya no trae "${heading}" — arregla el test o la plantilla`);
+    const rest = template.slice(from + 3 + heading.length);
+    const to = rest.indexOf('\n## ');
+    return `## ${heading}${to === -1 ? rest : rest.slice(0, to)}`;
+  };
+  const untouched = withTimestamp(toEnglish(SPANISH), '2026-09-06')
+    + '\n' + section('Cost of not building it')
+    + '\n' + section('The cheapest alternative');
+  const r = specCompleteness(untouched);
+  assert.equal(r.ok, false, 'la plantilla sin rellenar no puede pasar la puerta');
+  assert.ok(r.empty.includes('inaction'), `empty=${r.empty}`);
+  assert.ok(r.empty.includes('cheapest'), `empty=${r.empty}`);
+});
+
+// El fallo simétrico del anterior: un `<` que nunca cierra es contenido, no guía. Adivinar en esa
+// dirección escondería prosa real.
+test('a stray unclosed angle bracket is content, not guidance', () => {
+  const spec = withTimestamp(SPANISH, '2026-09-06')
+    + '\n## Qué pasa si no lo construimos\nLa latencia se queda en <400ms y nadie lo nota.\n'
+    + '\n## La alternativa más barata\nUn cron. No basta.\n';
+  assert.equal(specCompleteness(spec).ok, true, 'no confundas un presupuesto de latencia con la guía');
+});
+
+// M7 del panel de corrección — borrar `typeof raw !== 'string'` dejaba la suite verde, y no es un
+// mutante equivalente: `['2026-09-06'].slice(0,10)` devuelve un ARRAY, la regex lo coacciona a
+// string y `array >= since` es true, así que un timestamp en forma de lista pasaba de exento a
+// exigido. La guarda es load-bearing.
+test('a non-string timestamp lands exempt instead of flipping to required', () => {
+  const arrayTs = SPANISH.replace('type: spec\n', 'type: spec\ntimestamp: [2027-01-01]\n');
+  const r = specCompleteness(arrayTs);
+  assert.equal(r.ok, true, `un timestamp que no es texto no puede exigir nada: missing=${r.missing}`);
+});
+
+// L1 — tres prefijos alias tenían cobertura cero: romperlos uno a uno dejaba la suite en 33/33.
+// Un alias que nadie ejerce es un alias que nadie sabe si funciona.
+test('every declared heading variant of the two new families actually matches', () => {
+  const variants = [
+    ['## Coste de no construirlo', '## Alternativa más barata'],
+    ['## El coste de no construirlo', '## La alternativa más barata'],
+    ['## Cost of not building it', '## Cheapest alternative'],
+    ['## The cost of not building it', '## The cheapest alternative'],
+    ['## ¿Qué pasa si no lo construimos?', '## La alternativa más barata'],
+  ];
+  for (const [a, b] of variants) {
+    const spec = `${withTimestamp(SPANISH, '2026-09-06')}\n${a}\nDuele.\n\n${b}\nUn cron. No basta.\n`;
+    const r = specCompleteness(spec);
+    assert.equal(r.ok, true, `no casa: ${a} / ${b} → missing=${r.missing} empty=${r.empty}`);
+  }
 });

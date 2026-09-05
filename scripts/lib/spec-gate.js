@@ -42,7 +42,11 @@ const FAMILIES = {
   // A spec that cannot say what happens if nobody builds it has not been interrogated, only
   // de-risked. `since` is what keeps that demand off the specs written before it existed.
   inaction: {
-    prefixes: ['que pasa si no lo construimos', 'coste de no construirlo', 'cost of not building'],
+    prefixes: [
+      'que pasa si no lo construimos', '¿que pasa si no lo construimos',
+      'coste de no construirlo', 'el coste de no construirlo',
+      'cost of not building', 'the cost of not building',
+    ],
     since: NEW_FAMILIES_SINCE,
   },
   cheapest: {
@@ -89,6 +93,36 @@ function isSubstantive(line) {
   if (/^\*[^*].*\*$/.test(t) && t.length < 200) return false; // *italic guidance*
   if (/^(-|\*)\s*$/.test(t)) return false; // an empty bullet
   return true;
+}
+
+// The template's guidance does not fit on one line, and a section still holding it is a section
+// nobody filled in. The single-line check above never saw those: `<What concretely happens if` does
+// not end in `>`, so it read as content and an untouched template passed the gate green.
+//
+// Only a block that actually CLOSES counts as guidance. A stray `<` that never finds its `>` — a
+// latency budget written `<400ms`, a generic in a code sample — stays content, because guessing
+// wrong in that direction hides real prose.
+function guidanceLines(lines) {
+  const skip = new Set();
+  for (let i = 0; i < lines.length; i += 1) {
+    const t = lines[i].trim();
+    if (!t.startsWith('<') || t.endsWith('>')) continue;
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const u = lines[j].trim();
+      if (u === '' || u.startsWith('#')) break; // the block ended without closing: not guidance
+      if (u.endsWith('>')) {
+        for (let k = i; k <= j; k += 1) skip.add(k);
+        i = j;
+        break;
+      }
+    }
+  }
+  return skip;
+}
+
+function hasSubstance(lines) {
+  const guidance = guidanceLines(lines);
+  return lines.some((line, i) => !guidance.has(i) && isSubstantive(line));
 }
 
 // The day this spec was written, as YYYY-MM-DD, or null when there is nothing trustworthy to read.
@@ -156,7 +190,7 @@ export function specCompleteness(markdown) {
 
   const families = requiredFamilies(markdown);
   const missing = families.filter((f) => !sections.has(f));
-  const empty = families.filter((f) => sections.has(f) && !sections.get(f).some(isSubstantive));
+  const empty = families.filter((f) => sections.has(f) && !hasSubstance(sections.get(f)));
 
   const openPoints = sections.has('open') ? parseOpenPoints(sections.get('open')) : [];
   const untyped = openPoints.filter((p) => !p.typed).map((p) => p.text);

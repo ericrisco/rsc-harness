@@ -24,7 +24,7 @@ You are not slowing them down; you make the intent reviewable *before* code exis
 
 ### Your first sentence is not a verdict on the idea
 
-Catching the intent eagerly, above, is right. What comes *after* catching it is where this phase has been failing: the opening line validates. "Great idea", "makes sense", "that would be really useful" — in any language — is a verdict you do not have the evidence for, delivered at the cheapest possible moment to be wrong, to someone who still believes you. A spec built on a validated premise is coherent, plannable, testable and pointed at the wrong thing; nothing downstream can catch that, because every later gate compares artifacts to each other and they all agree.
+Catching the intent eagerly, above, is right. What comes *after* catching it is where this phase has been failing: the opening line validates. "Great idea", "makes sense", "that would be really useful" — or, since half this catalog's work happens in Spanish, "buena idea", "qué gran idea", "me encanta", "tiene todo el sentido" — is a verdict you do not have the evidence for, delivered at the cheapest possible moment to be wrong, to someone who still believes you. The ban is on the **judgement**, in any language, not on any particular wording: the list above is what it looks like, not what it is limited to. A spec built on a validated premise is coherent, plannable, testable and pointed at the wrong thing; nothing downstream can catch that, because every later gate compares artifacts to each other and they all agree.
 
 So the first response to an intent carries exactly two things:
 
@@ -33,7 +33,9 @@ So the first response to an intent carries exactly two things:
 
 Never a judgement of the idea's quality, in either direction. And go look before you object: an objection sourced from the repo, the wiki or a prior spec is worth ten sourced from your priors.
 
-If, having looked, there is no real objection, **say so in one line and move on — silence is a valid result**. Manufacturing an objection to look rigorous is the same failure wearing the opposite coat, and a doubt that fires on every idea measures you, not the idea.
+If, having looked, there is no real objection, **say so in one line and move on — silence is a valid result**. Manufacturing an objection to look rigorous is the same failure wearing the opposite coat, and a doubt that fires on every idea measures you, not the idea. A typo fix does not get a restatement and an objection; it gets fixed.
+
+**And the objection never blocks.** It is a divergence, not a veto: the user often holds context you do not — a business reason, a conversation elsewhere, a constraint nobody wrote down. If they choose to proceed anyway, do not re-argue. **Write the reason into the spec** and continue. That is what keeps this from being decorative without giving it power it should not have: it cannot stop the decision, it can only stop the decision from being tacit. If the thing later goes wrong, the record says the doubt was raised and overridden — not that nobody looked.
 
 **Offer autopilot once, right here.** At this boundary, propose how to run the rest of the chain:
 > *"¿Quieres que lo lleve hasta el final yo solo — spec → plan → código → verify, parando solo si algo es ambiguo — o prefieres que pare a que apruebes en cada fase?"*
@@ -99,6 +101,8 @@ Write these sections into `02-DOCS/wiki/sdd/specs/<slug>.md` using `references/s
 | Section | Holds | Watch for |
 | --- | --- | --- |
 | Problem & why | The pain, the cost of not solving it, the trigger | A "solution" disguised as a problem |
+| Cost of not building it | What concretely happens if nobody does this, and what it costs | Softening a genuinely small cost — "not much" IS the finding |
+| The cheapest alternative | What would solve most of it without building this, and why that is not enough | "Nothing" — there is always a manual workaround or a smaller version |
 | Goals | What success delivers, in outcome terms | A "goal" that's actually a HOW |
 | Non-goals / out of scope | What is explicitly NOT done now — adjacent work, deferred features | Silence — unsaid scope becomes assumed scope |
 | Users & context | Who acts, their context, what they're trying to achieve | An imagined user no one asked for |
@@ -117,6 +121,8 @@ Then they see an empty-cart message and the "pay" button is disabled
 ```
 
 A criterion that needs a human to "decide if it's good enough" is not done yet — sharpen it or move the soft part to *Points to clarify*.
+
+**Two of those sections are enforced, not suggested.** For a spec dated 2026-09-06 or later, `spec:gate` refuses the file if *Cost of not building it* or *The cheapest alternative* is missing or still holding the template's guidance. Specs written before that date are exempt — they cannot answer honestly after the fact. The two exist because every other gate in the chain compares artifacts to each other, so a spec that is wrong-but-coherent passes all of them; these are the only two lines that ask whether the thing should exist at all.
 
 ### Points to clarify carry a type
 
@@ -247,6 +253,14 @@ ask → user answers → fold it in → say what changed → show the revised sp
 ## Problem & why
 Password resets are the #1 support ticket and a sign-up drop-off point.
 A passwordless email link removes the password entirely.
+
+## Cost of not building it
+Password resets stay the top support ticket — roughly N a week — and the
+sign-up funnel keeps leaking at the password step.
+
+## The cheapest alternative
+A better password-reset email. It removes some of the tickets and none of the
+drop-off, because the friction is the password itself, not the reset.
 
 ## Goals
 - A user can sign in with only their email, via a one-time link.

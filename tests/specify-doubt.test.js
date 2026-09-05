@@ -4,61 +4,127 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Las reglas que `specify` gana en la spec intent-scrutiny son prosa dentro de un cuerpo de skill, y
-// una regla de comportamiento sin aserción es la puerta decorativa que la constitución prohíbe (P2).
-// Ninguna aserción de aquí puede comprobar que el agente OBEDEZCA —eso es el caso de eval, que se
-// corre a mano y se declara no automático— pero sí que la instrucción esté escrita y que la
-// contraria no. Es el mismo trato que reciben las demás reglas declaradas de este repo.
+// Las reglas que `specify` gana con la spec intent-scrutiny son prosa dentro de un cuerpo de skill,
+// y una regla declarada sin comprobación es la puerta decorativa que la constitución prohíbe (P2).
 //
-// Se aseveran ANCLAS CORTAS, no párrafos: el cuerpo se reescribirá muchas veces y un test que exige
-// una redacción exacta da rojos falsos hasta que alguien lo borra.
+// La primera versión de este fichero ERA esa puerta decorativa. Un refutador sustituyó el cuerpo
+// entero de `specify` por catorce líneas que ordenaban elogiar la idea y no objetar, con las anclas
+// metidas en un comentario HTML rotulado «ninguna de estas líneas es una instrucción», y salió 7/7
+// verde. Un test que vigila una regla contra el teatro, siendo teatro.
+//
+// Lo que cambió, y por qué cada cosa:
+//   1. Se descartan los COMENTARIOS HTML. Un ancla dentro de un comentario no es una instrucción,
+//      y era el vector exacto del ataque. Las vallas de código NO se descartan: en esta skill la
+//      tabla del recorrido vive dentro de una, y es lo que un agente sigue de verdad.
+//   2. Las anclas son ESTRUCTURALES: no basta que la cadena aparezca en el fichero, tiene que
+//      aparecer bajo el encabezado que la posee. Una mención suelta ya no cuenta.
+//   3. La guarda negativa universal se retiró, y abajo se dice por qué en lugar de fingirla.
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const read = (...p) => readFileSync(join(HERE, '..', ...p), 'utf8');
 
-const BODY = read('skills', 'specify', 'SKILL.md');
+const RAW = read('skills', 'specify', 'SKILL.md');
 const CASES = read('skills', 'specify', 'evals', 'cases.yaml');
 
-test('the first response to an intent is not a verdict on the idea', () => {
-  assert.match(BODY, /not a verdict on the idea/i, 'falta la regla de registro');
-  assert.match(BODY, /restatement/i, 'la primera respuesta debe reformular');
-  assert.match(BODY, /strongest objection/i, 'la primera respuesta debe traer la objeción más fuerte');
+// Un comentario HTML no es una instrucción para nadie.
+const BODY = RAW.replace(/<!--[\s\S]*?-->/g, '');
+
+/** El cuerpo de la sección cuyo encabezado casa, hasta el siguiente encabezado. */
+function section(re) {
+  const chunks = BODY.split(/\n(?=#{2,4} )/);
+  const hit = chunks.find((c) => re.test(c.split('\n', 1)[0]));
+  assert.ok(hit, `no hay ninguna sección cuyo encabezado case con ${re}`);
+  return hit;
+}
+
+test('the register rule lives in its own section, not as a stray mention', () => {
+  const s = section(/not a verdict on the idea/i);
+  assert.match(s, /restatement/i, 'la primera respuesta debe reformular');
+  assert.match(s, /strongest objection/i, 'y traer la objeción más fuerte');
+  assert.match(s, /silence is a valid result/i, 'y poder no traer ninguna, sin inventarla');
 });
 
-test('an absent objection is a valid result, so the rule cannot manufacture one', () => {
-  // El fallo simétrico: una regla que exige objetar siempre produce objeciones de adorno, y una capa
-  // que dispara en todos los casos mide el modelo y no la spec.
-  assert.match(BODY, /silence is a valid result/i);
+test('the ban on praise is spelled out with concrete phrasings, in more than one language', () => {
+  const s = section(/not a verdict on the idea/i);
+  // El cuerpo es bilingüe y la spec exige «ni equivalentes en ningún idioma». Un agente obedece una
+  // prohibición que reconoce; una prohibición abstracta no la reconoce en su propio idioma.
+  assert.match(s, /"Great idea"|“Great idea”/, 'nombra el fraseo inglés prohibido');
+  assert.match(s, /buena idea|gran idea|idea buenísima/i, 'y el castellano, que es donde ocurre');
+  assert.match(s, /in any language|en cualquier idioma/i);
 });
 
-test('specify runs the FRAME block and names where it comes from', () => {
-  assert.match(BODY, /idea-refinement/, '`idea-refinement` está en el catálogo y nada la invocaba');
-  assert.match(BODY, /\bFRAME\b/, 'falta el paso FRAME antes de la ronda de preguntas');
-  assert.match(BODY, /current workaround/i, 'FRAME incluye qué se hace hoy, incluido no hacer nada');
+test('the objection never blocks, and overriding it costs writing the reason', () => {
+  // Spec §E. Vivía sólo en la spec: ni en el cuerpo, ni en un test, ni en ningún criterio numerado.
+  // Una regla declarada sin comprobación, dentro del ciclo que existe para atacar ese patrón.
+  const s = section(/not a verdict on the idea/i);
+  assert.match(s, /never blocks|not a veto/i, 'la objeción no puede vetar');
+  assert.match(s, /write the reason into the spec/i, 'proceder contra ella cuesta escribirla');
 });
 
-test('"do not build it" is an enumerated direction, not a courtesy', () => {
-  assert.match(BODY, /don't build it|do not build it/i);
+test('a trivial change does not pay for any of this', () => {
+  // AC10 para la maquinaria NUEVA. `specify-contract.test.js` cubre la regla vieja de saltarse la
+  // cadena y asevera que aparece exactamente una vez, así que esto se dice con otras palabras a
+  // propósito: duplicar las suyas pondría esa suite en rojo.
+  const s = section(/not a verdict on the idea/i);
+  assert.match(s, /typo fix/i);
 });
 
-// Esta pasa ya hoy y seguirá pasando: es una guarda de regresión, no un rojo de TDD. Se escribe
-// igual porque el defecto que originó la spec es exactamente éste, y el día que alguien lo
-// reintroduzca conviene que algo se entere.
-test('no instruction anywhere tells the agent to validate or praise the idea', () => {
-  const praise = /(tell|say to|let) the user (it|the idea) is (a )?(great|good|excellent)|praise the idea|validate the idea/i;
-  assert.doesNotMatch(BODY, praise);
+test('FRAME is a section of its own that names where it comes from', () => {
+  const s = section(/\bFRAME\b/);
+  assert.match(s, /idea-refinement/, '`idea-refinement` estaba en el catálogo y nada la invocaba');
+  assert.match(s, /current workaround/i, 'incluye qué se hace hoy, incluido no hacer nada');
+  assert.match(s, /don't build it|do not build it/i, '«no construirlo» es una dirección enumerada');
 });
 
-// El trigger NO se asevera ausente: `fire on the faintest sign` y `too eager to brainstorm is cheap`
-// son la instrucción de DISPARO, de la que dependen los siete `should_trigger` de la skill. Borrarla
-// habría cambiado el enrutado creyendo cambiar el tono (hallazgo F8 de la puerta `analyze`).
-test('the early-detection trigger survives untouched', () => {
-  assert.match(BODY, /fire on the \*\*faintest\*\* sign|fire on the faintest sign/i);
+test('FRAME scales with the stakes instead of taxing every one-line change', () => {
+  // Sin esta aserción, borrar la única frase que exime a un cambio pequeño dejaba la suite en 33/33.
+  const s = section(/\bFRAME\b/);
+  assert.match(s, /scales with the stakes|small change/i);
 });
 
-// eval-lint comprueba los mínimos de conteo y que `route_to` resuelva; NO mira `must_include`, así
-// que saldría 0 igual si el escenario no se hubiera escrito (hallazgo F7).
+test('the pass itself carries the two steps, not only the prose above it', () => {
+  // La tabla de pasos es lo que un agente sigue. Si la regla vive sólo en prosa y el recorrido no la
+  // nombra, el recorrido gana.
+  const pass = section(/The pass, end to end/i);
+  assert.match(pass, /RESTATE \+ OBJECT/);
+  assert.match(pass, /FRAME/);
+});
+
+test('the body names the two sections the gate now requires', () => {
+  // El defecto que esto cierra: la tabla «What a good spec contains» enumeraba 7 secciones mientras
+  // el comprobador exigía 9, así que la primera pasada de toda spec futura salía roja por culpa de
+  // la propia fase. Superficie de guía y superficie de aplicación, desincronizadas.
+  const table = section(/What a good spec contains/i);
+  assert.match(table, /Cost of not building it/i);
+  assert.match(table, /cheapest alternative/i);
+});
+
+test('the early-detection trigger survives, as an instruction and not as a memory of one', () => {
+  // Con la versión anterior de este test bastaba un comentario diciendo «esta skill SOLÍA decir
+  // faintest sign; ya no» para pasar en verde. Ahora se exige dentro de la sección que la posee, y
+  // los comentarios ya no cuentan.
+  const s = section(/Detect the moment/i);
+  assert.match(s, /fire on the \*\*faintest\*\* sign|fire on the faintest sign/i);
+});
+
 test('the eval suite carries a behavioural case for the register rule', () => {
-  assert.match(CASES, /strongest objection/i, 'el escenario del registro no está en cases.yaml');
-  assert.match(CASES, /Cost of not building it/i, 'el must_include de las dos secciones no está');
+  // eval-lint comprueba conteos y que `route_to` resuelva; NO mira `must_include`, así que saldría 0
+  // igual sin este escenario. Lo que lo ve es esta aserción, no el linter.
+  assert.match(CASES, /strongest objection/i);
+  assert.match(CASES, /Cost of not building it/i);
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lo que este fichero NO comprueba, declarado en vez de fingido.
+//
+// **Que en ninguna parte del cuerpo haya una instrucción de elogiar.** Se intentó con una expresión
+// regular y salió mal en las dos direcciones: fallaba 19 de 22 fraseos realistas —incluidos todos
+// los castellanos, que son los que originaron la spec— y a la vez se ponía ROJA si alguien
+// reforzaba la regla escribiendo «you must not validate the idea», porque la prohibición contiene
+// la frase que prohíbe. Un test que se pone rojo con la mejora y verde con el defecto es peor que
+// ninguno. El conjunto de formas de elogiar es abierto y multilingüe: no es reconocible por
+// coincidencia de texto. Lo que sí es comprobable —y es lo que queda arriba— es que la prohibición
+// esté escrita, nombrada con ejemplos concretos y en los dos idiomas del cuerpo.
+//
+// **Que el agente obedezca.** Eso es el caso de comportamiento de `evals/cases.yaml`, que nada en
+// este repo ejecuta: no hay runner de modelo. Se corre a mano y se declara no medido.
