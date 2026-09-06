@@ -24,8 +24,8 @@ test('fresh install and add cannot bypass onboarding or write files', () => {
   }
 });
 
-test('an empty or partial manifest is not an existing declared harness', () => {
-  for (const manifest of [{}, { version: 1, targets: [], skills: [], agents: [] }]) {
+test('a manifest without a verified receipt or installed state is not an existing harness', () => {
+  for (const manifest of [{}, { version: 1, targets: [], skills: [], agents: [] }, { version: 1, targets: ['codex'], skills: ['orient'], agents: [] }]) {
     const cwd = fresh();
     writeFileSync(join(cwd, '.rsc.json'), JSON.stringify(manifest));
     const result = run(cwd, ['add', 'fastapi', '--target', 'codex']);

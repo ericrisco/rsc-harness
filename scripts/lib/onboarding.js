@@ -139,8 +139,8 @@ export function scanProject(root = process.cwd()) {
 function selected(id, kind, reason, provenance = 'declared-intent') {
   return { kind, id, state: 'selected', reason, provenance, reevaluateWhen: [] };
 }
-function deferred(id, kind, reason, reevaluateWhen, provenance = 'proportionality-policy') {
-  return { kind, id, state: 'deferred', reason, provenance, reevaluateWhen };
+function deferred(id, kind, reason, reevaluateWhen, triggerRules = [], provenance = 'proportionality-policy') {
+  return { kind, id, state: 'deferred', reason, provenance, reevaluateWhen, triggerRules };
 }
 
 export function buildOnboardingPlan(record, evidence) {
@@ -171,23 +171,28 @@ export function buildOnboardingPlan(record, evidence) {
         : `Included in the development workflow for ${normalized.softwareScope} software.`)
       : `Included in the lightweight foundation for this ${normalized.projectKind} project.`));
   const sddTriggers = ['multiple related features', 'authentication or persistence', 'external integrations', 'cross-cutting changes'];
+  const softwareTriggers = [
+    { type: 'source-growth', atLeast: 5 },
+    { type: 'complexity-added', atLeast: 1 },
+    { type: 'manifest-with-implementation' },
+  ];
   if (!needsSdd) decisions.push(deferred('sdd', 'workflow', isSoftware
     ? 'The software scope is small, so specification overhead is not justified yet.'
-    : 'SDD applies to substantial software work, which is not the declared project purpose.', sddTriggers));
+    : 'SDD applies to substantial software work, which is not the declared project purpose.', sddTriggers, softwareTriggers));
   if (baseAgents) {
     for (const id of agents) decisions.push(selected(id, 'agent', 'The accepted substantial software workflow requires this implementation or review role.'));
   } else {
-    decisions.push(deferred('base-agents', 'agent', 'No substantial software implementation is planned.', ['substantial software implementation is introduced']));
+    decisions.push(deferred('base-agents', 'agent', 'No substantial software implementation is planned.', ['substantial software implementation is introduced'], softwareTriggers));
   }
   decisions.push(hooks
     ? selected('code-hooks', 'hook', 'The accepted software workflow needs its deterministic code gates.')
-    : deferred('code-hooks', 'hook', 'Code-only gates would add unrelated behavior to this project.', ['a substantial software workflow is accepted']));
+    : deferred('code-hooks', 'hook', 'Code-only gates would add unrelated behavior to this project.', ['a substantial software workflow is accepted'], softwareTriggers));
   decisions.push(gitmojiGuard
     ? selected('gitmoji-guard', 'guard', 'Claude Code supports the commit guard and the accepted code policy includes it.')
-    : deferred('gitmoji-guard', 'guard', 'No selected target and project policy justify this Claude-only commit guard.', ['Claude Code is selected and a governed software workflow adopts the convention']));
+    : deferred('gitmoji-guard', 'guard', 'No selected target and project policy justify this Claude-only commit guard.', ['Claude Code is selected and a governed software workflow adopts the convention'], [{ type: 'software-trigger-and-claude' }]));
   decisions.push(selected('memory', 'capability', 'Local bounded project memory supports continuity without an external account.'));
   decisions.push(selected('harness-documents', 'route', 'The accepted profile and plan are persisted under 02-DOCS/wiki/harness/.'));
-  decisions.push(deferred('context7', 'integration', 'No external MCP connection is installed without a specific need and separate consent.', ['a software task needs current third-party library documentation']));
+  decisions.push(deferred('context7', 'integration', 'No external MCP connection is installed without a specific need and separate consent.', ['a software task needs current third-party library documentation and the user separately consents'], [{ type: 'task-and-consent', task: 'third-party-library-docs', consent: 'context7' }]));
   decisions.sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`));
   const policy = {
     skills,
@@ -235,13 +240,21 @@ function canonical(value) {
 export const canonicalJson = (value) => JSON.stringify(canonical(value));
 export const identifyPlan = (plan) => createHash('sha256').update(canonicalJson(plan)).digest('hex');
 export const shellQuote = (value) => `'${String(value).replaceAll("'", `'"'"'`)}'`;
+export const encodeGoal = (value) => Buffer.from(String(value), 'utf8').toString('base64url');
+export const decodeGoal = (value) => {
+  try {
+    const decoded = Buffer.from(String(value), 'base64url').toString('utf8');
+    return encodeGoal(decoded) === String(value).replace(/=+$/, '') ? decoded : undefined;
+  } catch { return undefined; }
+};
 
-export function recommendDeferredComponents(acceptedPlan, currentEvidence) {
+export function recommendDeferredComponents(acceptedPlan, currentEvidence, context = {}) {
   const baseline = acceptedPlan?.evidence || {};
   const grewBy = (currentEvidence?.sourceFileCount || 0) - (baseline.sourceFileCount || 0);
   const addedManifests = (currentEvidence?.signals || []).filter((signal) => signal.startsWith('manifest:') && !(baseline.signals || []).includes(signal));
   const addedComplexity = (currentEvidence?.complexitySignals || []).filter((signal) => !(baseline.complexitySignals || []).includes(signal));
-  if (grewBy < 5 && !addedManifests.length && !addedComplexity.length) return [];
+  const manifestWithImplementation = addedManifests.length && grewBy > 0;
+  const facts = { grewBy, manifestWithImplementation: Boolean(manifestWithImplementation), addedComplexity: addedComplexity.length };
   const evidence = addedComplexity.length
     ? `The project added ${addedComplexity.join(', ')} evidence.`
     : grewBy >= 5
@@ -252,8 +265,16 @@ export function recommendDeferredComponents(acceptedPlan, currentEvidence) {
     projectKind: ['software', 'mixed'].includes(acceptedPlan.record.projectKind) ? acceptedPlan.record.projectKind : 'mixed',
     softwareScope: 'growing',
   };
+  const matches = (rule) => {
+    if (rule.type === 'source-growth') return facts.grewBy >= rule.atLeast;
+    if (rule.type === 'complexity-added') return facts.addedComplexity >= rule.atLeast;
+    if (rule.type === 'manifest-with-implementation') return facts.manifestWithImplementation;
+    if (rule.type === 'software-trigger-and-claude') return acceptedPlan.record.targets.includes('claude') && (facts.grewBy >= 5 || facts.addedComplexity > 0 || facts.manifestWithImplementation);
+    if (rule.type === 'task-and-consent') return context.taskSignal === rule.task && (context.consents || []).includes(rule.consent);
+    return false;
+  };
   return (acceptedPlan.decisions || [])
-    .filter((decision) => decision.state === 'deferred' && ['sdd', 'base-agents', 'code-hooks'].includes(decision.id))
+    .filter((decision) => decision.state === 'deferred' && (decision.triggerRules || []).some(matches))
     .map((decision) => ({
       kind: decision.kind,
       id: decision.id,

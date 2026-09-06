@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { loadManifest, skillsForProfile } from './lib/manifest.js';
-import { detectTarget, resolveTargets, TARGETS } from '../targets/index.js';
+import { detectTarget, installedTargets, resolveTargets, TARGETS } from '../targets/index.js';
 import { detectRepo } from './detect-repo.js';
 import { rank } from './consult.js';
 import { expandRecommends, toOutcomes, hasOutcome } from './lib/recommend.js';
@@ -18,13 +18,13 @@ import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-
 import { readManifest } from './lib/manifest-file.js';
 import {
   normalizeOnboarding, missingOnboardingFields, scanProject,
-  buildOnboardingPlan, identifyPlan, recommendDeferredComponents, shellQuote,
+  buildOnboardingPlan, decodeGoal, encodeGoal, identifyPlan, recommendDeferredComponents,
 } from './lib/onboarding.js';
-import { applyAcceptedOnboarding } from './lib/onboarding-apply.js';
+import { applyAcceptedOnboarding, verifyOnboarding } from './lib/onboarding-apply.js';
 
 const rawArgv = process.argv.slice(2);
 const GLOBAL_VALUE_FLAGS = new Set([
-  '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--software-scope', '--accept-plan',
+  '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--accept-plan',
 ]);
 const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'sello', 'repair', 'uninstall', 'purge']);
 function positionalTokens(input) {
@@ -65,7 +65,7 @@ function onboardingInput(targets) {
     technicalLevel: value('technical-level'),
     accompaniment: value('accompaniment'),
     projectKind: value('project-kind'),
-    goal: value('goal'),
+    goal: value('goal') || (value('goal-base64') ? decodeGoal(value('goal-base64')) : undefined),
     softwareScope: value('software-scope'),
     targets,
   };
@@ -83,9 +83,21 @@ function onboardingRequired(raw, action = 'onboard') {
 }
 
 function hasDeclaredHarness(manifest = readManifest()) {
-  return Boolean(manifest && manifest.version === 1 && Array.isArray(manifest.targets) && manifest.targets.length
-    && manifest.targets.every((target) => TARGETS.some((known) => known.id === target))
-    && Array.isArray(manifest.skills) && manifest.skills.length);
+  if (!manifest || manifest.version !== 1 || !Array.isArray(manifest.targets) || !manifest.targets.length
+    || !manifest.targets.every((target) => TARGETS.some((known) => known.id === target))
+    || !Array.isArray(manifest.skills) || !manifest.skills.length) return false;
+  const receipt = manifest.onboarding;
+  if (receipt) {
+    try {
+      return receipt.schemaVersion === 1
+        && identifyPlan(receipt.plan) === receipt.acceptedPlanId
+        && verifyOnboarding(process.cwd(), receipt.plan, receipt.acceptedPlanId).length === 0;
+    } catch { return false; }
+  }
+  // Backward compatibility is evidence-based: an actually installed pre-onboarding
+  // harness keeps its maintenance commands. A hand-written or merely committed
+  // declaration with no local state cannot bypass first contact.
+  return installedTargets(process.cwd()).some((target) => manifest.targets.includes(target));
 }
 
 function renderPlan(plan, planId) {
@@ -105,7 +117,7 @@ function renderPlan(plan, planId) {
     `--technical-level ${plan.record.technicalLevel}`,
     `--accompaniment ${plan.record.accompaniment}`,
     `--project-kind ${plan.record.projectKind}`,
-    `--goal ${shellQuote(plan.record.goal)}`,
+    `--goal-base64 ${encodeGoal(plan.record.goal)}`,
     ...(plan.record.softwareScope ? [`--software-scope ${plan.record.softwareScope}`] : []),
     `--target ${plan.record.targets.join(',')}`,
     `--accept-plan ${planId}`,
@@ -198,7 +210,7 @@ function runReassessment() {
     `--technical-level ${record.technicalLevel}`,
     `--accompaniment ${record.accompaniment}`,
     `--project-kind ${record.projectKind}`,
-    `--goal ${shellQuote(record.goal)}`,
+    `--goal-base64 ${encodeGoal(record.goal)}`,
     ...(record.softwareScope ? [`--software-scope ${record.softwareScope}`] : []),
     `--target ${record.targets.join(',')}`,
   ].join(' '));

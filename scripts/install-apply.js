@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { rmSync, existsSync, cpSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
-import { join, dirname, relative, sep } from 'node:path';
+import { rmSync, existsSync, cpSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
+import { join, dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
@@ -384,20 +384,62 @@ export async function uninstall({ skillIds = [], agentIds = [], target, home, cw
 export function removeTargetInstall({ target, home, cwd = process.cwd() }) {
   const paths = targetPaths(target, home, cwd);
   const state = readState(paths.stateFile);
+  const ignored = [paths.stateFile];
+  const owned = [
+    ...Object.values(state.skills || {}).flatMap((entry) => entry.files || []),
+    ...(state.agents || []).map((name) => agentPath(target, cwd, name)).filter(Boolean),
+    ...(state.commands || []).map((name) => commandPath(target, cwd, name)).filter(Boolean),
+    paths.stateFile,
+  ];
+  const root = resolve(cwd);
+  const safe = (file) => {
+    const absolute = resolve(file);
+    if (absolute !== root && !absolute.startsWith(`${root}${sep}`)) return false;
+    const parts = relative(root, dirname(absolute)).split(sep).filter(Boolean);
+    let cursor = root;
+    for (const part of parts) {
+      cursor = join(cursor, part);
+      if (!existsSync(cursor)) break;
+      if (lstatSync(cursor).isSymbolicLink()) {
+        const destination = realpathSync(cursor);
+        if (destination !== root && !destination.startsWith(`${root}${sep}`)) return false;
+      }
+    }
+    return true;
+  };
+  if (owned.some((file) => !safe(file))) throw new Error(`RSC_PREVIOUS_INSTALL_INCOMPATIBLE: ${target} state contains a path outside the project root`);
   for (const entry of Object.values(state.skills || {})) {
-    for (const file of entry.files || []) rmSync(file, { recursive: true, force: true });
+    for (const file of entry.files || []) { ignored.push(file); rmSync(file, { recursive: true, force: true }); }
   }
   for (const name of state.agents || []) {
     const file = agentPath(target, cwd, name);
-    if (file) rmSync(file, { recursive: true, force: true });
+    if (file) { ignored.push(file); rmSync(file, { recursive: true, force: true }); }
   }
   for (const name of state.commands || []) {
     const file = commandPath(target, cwd, name);
-    if (file) rmSync(file, { recursive: true, force: true });
+    if (file) { ignored.push(file); rmSync(file, { recursive: true, force: true }); }
   }
   unwireHook(target, paths);
   unwireMemory(target, cwd);
   rmSync(paths.stateFile, { force: true });
+  const gitignore = join(cwd, '.gitignore');
+  if (existsSync(gitignore)) {
+    const stale = new Set(ignored.map((path) => relative(cwd, path).split(sep).join('/').replace(/^\//, '').replace(/\/$/, '')));
+    const lines = readFileSync(gitignore, 'utf8').split('\n');
+    const kept = lines.filter((line) => !stale.has(line.trim().replace(/^\//, '').replace(/\/$/, '')));
+    writeFileSync(gitignore, kept.join('\n'));
+  }
+}
+
+export function pruneSharedBases({ cwd = process.cwd(), skillIds = [] }) {
+  const versions = readBaseVersions(cwd);
+  const wanted = new Set(skillIds);
+  for (const id of Object.keys(versions)) {
+    if (wanted.has(id)) continue;
+    rmSync(baseDir(id, cwd), { recursive: true, force: true });
+    delete versions[id];
+  }
+  writeBaseVersions(cwd, versions);
 }
 
 export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun = false }) {

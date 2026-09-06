@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, realpathSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
-import { applyInstall, removeTargetInstall } from '../install-apply.js';
+import { applyInstall, pruneSharedBases, removeTargetInstall } from '../install-apply.js';
 import { targetPaths } from '../../targets/index.js';
 import { readState } from './state.js';
 import { readManifest, writeManifest } from './manifest-file.js';
-import { identifyPlan, shellQuote } from './onboarding.js';
+import { encodeGoal, identifyPlan } from './onboarding.js';
 import { createBackup, restoreBackup } from './backups.js';
 
 const sameSet = (a = [], b = []) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
@@ -57,7 +57,7 @@ function recoveryCommand(plan, planId) {
     `--technical-level ${record.technicalLevel}`,
     `--accompaniment ${record.accompaniment}`,
     `--project-kind ${record.projectKind}`,
-    `--goal ${shellQuote(record.goal)}`,
+    `--goal-base64 ${encodeGoal(record.goal)}`,
     ...(record.softwareScope ? [`--software-scope ${record.softwareScope}`] : []),
     `--target ${record.targets.join(',')}`,
     `--accept-plan ${planId}`,
@@ -106,9 +106,28 @@ export function verifyOnboarding(cwd, plan, planId) {
   if (manifest?.onboarding?.acceptedPlanId !== planId) differences.push('manifest receipt differs from accepted plan');
   const expectedDigests = manifest?.onboarding?.artifactDigests;
   if (!expectedDigests) differences.push('manifest receipt has no governed artifact digests');
-  else for (const [path, expected] of Object.entries(expectedDigests)) {
-    if (digestPath(join(cwd, path.replace(/\/$/, ''))) !== expected) differences.push(`governed content differs at ${path}`);
+  else {
+    const expectedPaths = (plan.governedPaths || []).filter((path) => path !== '.rsc.json' && path !== '.rsc/backups/');
+    if (!sameSet(Object.keys(expectedDigests), expectedPaths)) differences.push('governed artifact digest inventory differs from accepted plan');
+    for (const path of expectedPaths) {
+      if (digestPath(join(cwd, path.replace(/\/$/, ''))) !== expectedDigests[path]) differences.push(`governed content differs at ${path}`);
+    }
   }
+  const docsDir = join(cwd, '02-DOCS', 'wiki', 'harness');
+  const profile = existsSync(join(docsDir, 'user-profile.md')) ? readFileSync(join(docsDir, 'user-profile.md'), 'utf8') : '';
+  for (const line of [
+    `technical_level: ${plan.record.technicalLevel}`,
+    `accompaniment: ${plan.record.accompaniment}`,
+    `project_kind: ${plan.record.projectKind}`,
+    `Goal: ${plan.record.goal}`,
+  ]) if (!profile.split('\n').includes(line)) differences.push(`profile content differs: ${line.split(':')[0]}`);
+  const installation = existsSync(join(docsDir, 'installation-plan.md')) ? readFileSync(join(docsDir, 'installation-plan.md'), 'utf8') : '';
+  if (!installation.includes(`Plan id: \`${planId}\``)) differences.push('installation plan identity differs');
+  for (const decision of plan.decisions || []) {
+    if (!installation.includes(`| ${decision.kind} | ${decision.id} | ${decision.state} |`)) differences.push(`installation plan omits ${decision.kind}/${decision.id}`);
+  }
+  const decisions = existsSync(join(docsDir, 'decisions.md')) ? readFileSync(join(docsDir, 'decisions.md'), 'utf8') : '';
+  if (!decisions.includes(`Accepted plan \`${planId}\``)) differences.push('decision ledger omits accepted plan');
   if (!sameSet(manifest?.targets || [], plan.policy.targets)) differences.push('manifest targets differ from accepted policy');
   if (!sameSet(manifest?.skills || [], plan.policy.skills)) differences.push('manifest skills differ from accepted policy');
   if (!sameSet(manifest?.agents || [], plan.policy.agents || [])) differences.push('manifest agents differ from accepted policy');
@@ -124,11 +143,12 @@ export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planI
     ...(plan.governedPaths || []),
     ...(previousPlan?.governedPaths || []),
     '.rsc.json',
-  ])].filter((path) => path !== '.rsc/backups/');
+  ])];
   assertManagedPathsStayInsideRoot(cwd, transactionPaths);
+  const snapshotPaths = transactionPaths.filter((path) => path !== '.rsc/backups/');
   const transaction = createBackup({
     cwd, operation: 'onboarding-transaction', target: plan.policy.targets.join('-'),
-    paths: transactionPaths.map((path) => join(cwd, path.replace(/\/$/, ''))), cliVersion: 'onboarding', now,
+    paths: snapshotPaths.map((path) => join(cwd, path.replace(/\/$/, ''))), cliVersion: 'onboarding', now,
   });
   const existed = Object.fromEntries((plan.governedPaths || []).map((path) => [path, existsSync(join(cwd, path.replace(/\/$/, '')))]));
   const receipt = {
@@ -159,28 +179,26 @@ export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planI
         operation: 'onboard',
       });
     }
+    pruneSharedBases({ cwd, skillIds: plan.policy.skills });
     writeOnboardingDocuments(cwd, plan, planId);
+    receipt.provenance.paths = Object.fromEntries((plan.governedPaths || []).map((path) => [
+      path,
+      existed[path] ? (previousReceipt ? 'conserved' : 'preexisting') : 'installed',
+    ]));
+    receipt.artifactDigests = digestGovernedPaths(cwd, plan.governedPaths);
+    const manifest = readManifest(cwd);
+    writeManifest(cwd, {
+      ...manifest,
+      targets: [...plan.policy.targets],
+      skills: [...plan.policy.skills],
+      agents: [...(plan.policy.agents || [])],
+      onboarding: receipt,
+    });
+    const differences = verifyOnboarding(cwd, plan, planId);
+    if (differences.length) throw new Error(differences.join('; '));
+    return receipt;
   } catch (error) {
     restoreBackup({ cwd, id: transaction.id });
     throw new Error(`RSC_ONBOARDING_INCOMPLETE: ${error.message}. Recover with: ${recoveryCommand(plan, planId)}`);
   }
-  receipt.provenance.paths = Object.fromEntries((plan.governedPaths || []).map((path) => [
-    path,
-    existed[path] ? (previousReceipt ? 'conserved' : 'preexisting') : 'installed',
-  ]));
-  receipt.artifactDigests = digestGovernedPaths(cwd, plan.governedPaths);
-  const manifest = readManifest(cwd);
-  writeManifest(cwd, {
-    ...manifest,
-    targets: [...plan.policy.targets],
-    skills: [...plan.policy.skills],
-    agents: [...(plan.policy.agents || [])],
-    onboarding: receipt,
-  });
-  const differences = verifyOnboarding(cwd, plan, planId);
-  if (differences.length) {
-    restoreBackup({ cwd, id: transaction.id });
-    throw new Error(`RSC_ONBOARDING_INCOMPLETE: ${differences.join('; ')}. Recover with: ${recoveryCommand(plan, planId)}`);
-  }
-  return receipt;
 }

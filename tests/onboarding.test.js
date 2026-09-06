@@ -11,6 +11,8 @@ import {
   canonicalJson,
   recommendDeferredComponents,
   shellQuote,
+  encodeGoal,
+  decodeGoal,
 } from '../scripts/lib/onboarding.js';
 
 const root = () => mkdtempSync(join(tmpdir(), 'rsc-onboarding-'));
@@ -110,6 +112,13 @@ test('POSIX shell quoting round-trips hostile goal text without executing it', a
   assert.equal(existsSync(marker), false);
 });
 
+test('generated goal transport is shell-neutral and round-trips arbitrary text', () => {
+  const goal = `it's A & B | 100% \"ready\" $(still inert)`;
+  const encoded = encodeGoal(goal);
+  assert.match(encoded, /^[A-Za-z0-9_-]+$/);
+  assert.equal(decodeGoal(encoded), goal);
+});
+
 test('a nested scan reads only the selected root and reports a parent marker path', () => {
   const parent = root();
   writeFileSync(join(parent, '.rsc.json'), '{"secret":"must-not-enter-evidence"}');
@@ -165,4 +174,30 @@ test('non-software growth recommends changing to a mixed plan that can actually 
   assert.ok(recommendations.some((item) => item.id === 'sdd'));
   assert.equal(recommendations[0].suggestedRecord.projectKind, 'mixed');
   assert.equal(recommendations[0].suggestedRecord.softwareScope, 'growing');
+});
+
+test('persisted trigger rules govern reassessment and a bare manifest is insufficient', () => {
+  const dir = root();
+  const accepted = buildOnboardingPlan(normalizeOnboarding(answers({ projectKind: 'operations', softwareScope: undefined })), scanProject(dir));
+  writeFileSync(join(dir, 'package.json'), '{}');
+  assert.deepEqual(recommendDeferredComponents(accepted, scanProject(dir)), []);
+  for (let i = 0; i < 6; i++) writeFileSync(join(dir, `work-${i}.js`), 'export {};');
+  assert.ok(recommendDeferredComponents(accepted, scanProject(dir)).some((item) => item.id === 'sdd'));
+  const disabled = structuredClone(accepted);
+  for (const decision of disabled.decisions) decision.triggerRules = [{ type: 'unknown' }];
+  assert.deepEqual(recommendDeferredComponents(disabled, scanProject(dir)), []);
+});
+
+test('research, content and mixed intent survive normalization and drive proportional policy', () => {
+  const evidence = scanProject(root());
+  for (const projectKind of ['research', 'content']) {
+    const plan = buildOnboardingPlan(normalizeOnboarding(answers({ projectKind, softwareScope: undefined })), evidence);
+    assert.equal(plan.record.projectKind, projectKind);
+    assert.equal(plan.policy.codeHooks, false);
+    assert.equal(plan.decisions.find((d) => d.id === 'sdd').state, 'deferred');
+  }
+  const mixed = buildOnboardingPlan(normalizeOnboarding(answers({ projectKind: 'mixed', softwareScope: 'growing' })), evidence);
+  assert.equal(mixed.record.projectKind, 'mixed');
+  assert.equal(mixed.policy.codeHooks, true);
+  assert.equal(mixed.decisions.find((d) => d.id === 'sdd').state, 'selected');
 });

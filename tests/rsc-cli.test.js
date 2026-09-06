@@ -1,15 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const adoptExistingHarness = (cwd) => writeFileSync(join(cwd, '.rsc.json'), `${JSON.stringify({
-  version: 1, targets: ['codex'], skills: ['orient'], agents: [], ownSkills: [], optOuts: [],
-}, null, 2)}\n`);
+const adoptExistingHarness = (cwd) => {
+  writeFileSync(join(cwd, '.rsc.json'), `${JSON.stringify({
+    version: 1, targets: ['codex'], skills: ['orient'], agents: [], ownSkills: [], optOuts: [],
+  }, null, 2)}\n`);
+  mkdirSync(join(cwd, '.codex', 'rsc'), { recursive: true });
+  writeFileSync(join(cwd, '.codex', 'rsc', '.rsc-state.json'), JSON.stringify({ skills: { orient: { files: [] } }, agents: [] }));
+};
 
 test('rsc registry refresh/status CLI writes project registry', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-'));
