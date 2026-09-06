@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -10,6 +10,7 @@ import {
   identifyPlan,
   canonicalJson,
   recommendDeferredComponents,
+  shellQuote,
 } from '../scripts/lib/onboarding.js';
 
 const root = () => mkdtempSync(join(tmpdir(), 'rsc-onboarding-'));
@@ -73,7 +74,8 @@ test('operations policy contains no SDD, base agents, code hooks or gitmoji guar
   const record = normalizeOnboarding(answers({ projectKind: 'operations', softwareScope: undefined }));
   const plan = buildOnboardingPlan(record, scanProject(root()));
   assert.equal(plan.policy.baseAgents, false);
-  assert.equal(plan.policy.hooks, false);
+  assert.equal(plan.policy.alwaysOn, true);
+  assert.equal(plan.policy.codeHooks, false);
   assert.equal(plan.policy.gitmojiGuard, false);
   assert.deepEqual(plan.policy.agents, []);
   assert.ok(!plan.policy.skills.includes('sdd'));
@@ -84,6 +86,28 @@ test('the plan does not claim a Claude-only gitmoji guard for Codex', () => {
   const plan = buildOnboardingPlan(normalizeOnboarding(answers({ softwareScope: 'growing' })), scanProject(root()));
   assert.equal(plan.policy.gitmojiGuard, false);
   assert.equal(plan.decisions.find((d) => d.id === 'gitmoji-guard').state, 'deferred');
+});
+
+test('detected stacks add their catalog skill with workspace evidence, without inventing FastAPI', () => {
+  const dir = root();
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { next: '1', react: '1' } }));
+  writeFileSync(join(dir, 'pyproject.toml'), '[project]\nname="x"');
+  writeFileSync(join(dir, 'go.mod'), 'module example.test/x');
+  const plan = buildOnboardingPlan(normalizeOnboarding(answers()), scanProject(dir));
+  for (const id of ['nextjs', 'react', 'python', 'go']) {
+    assert.ok(plan.policy.skills.includes(id), id);
+    assert.equal(plan.decisions.find((d) => d.id === id)?.provenance, 'workspace-evidence');
+  }
+  assert.ok(!plan.policy.skills.includes('fastapi'));
+});
+
+test('POSIX shell quoting round-trips hostile goal text without executing it', async () => {
+  const marker = join(root(), 'must-not-exist');
+  const goal = `it's $(touch ${marker}) and \`touch ${marker}\``;
+  const { execFileSync } = await import('node:child_process');
+  const output = execFileSync('sh', ['-c', `printf %s ${shellQuote(goal)}`], { encoding: 'utf8' });
+  assert.equal(output, goal);
+  assert.equal(existsSync(marker), false);
 });
 
 test('a nested scan reads only the selected root and reports a parent marker path', () => {

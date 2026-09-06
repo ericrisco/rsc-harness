@@ -79,7 +79,7 @@ export function unwireHook(paths) {
 const P = '${CLAUDE_PROJECT_DIR}';
 const at = (...seg) => `${P}/${seg.join('/')}`;
 
-export function wireHook(paths) {
+export function wireHook(paths, sourceMd, policy = {}) {
   const scriptDest = join(paths.projectRoot, '.rsc', 'session-start.mjs');
   mkdirSync(dirname(scriptDest), { recursive: true });
   // Shared by session-start + userprompt-gate. Hooks are materialized file by file, so a module
@@ -90,8 +90,12 @@ export function wireHook(paths) {
   copyFileSync(join(HERE, 'worktree-reaper.mjs'), join(paths.projectRoot, '.rsc', 'worktree-reaper.mjs'));
   copyFileSync(join(HERE, 'session-start.mjs'), scriptDest);
 
-  const suggestMd = `${paths.skillDir('suggest')}/SKILL.md`;
-  const suggestRel = at(relative(paths.projectRoot, paths.skillDir('suggest')).split(sep).join('/'), 'SKILL.md');
+  let suggestRel = at(relative(paths.projectRoot, paths.skillDir('suggest')).split(sep).join('/'), 'SKILL.md');
+  const operationsSuggest = join(paths.projectRoot, '.rsc', 'suggest-always-on.md');
+  if (policy.codeHooks === false) {
+    writeFileSync(operationsSuggest, '# rsc-suggest — always-on operations layer\n\nRead `02-DOCS/wiki/harness/user-profile.md` before acting. Use `orient` to keep the user situated and `suggest` to offer a missing skill only when the current task needs it. Close with the configured orientation block.\n');
+    suggestRel = at('.rsc', 'suggest-always-on.md');
+  } else if (existsSync(operationsSuggest)) rmSync(operationsSuggest, { force: true });
   const cmd = `node "${at('.rsc', 'session-start.mjs')}" "${suggestRel}" "${P}"`;
 
   const file = paths.hookTarget;
@@ -111,6 +115,7 @@ export function wireHook(paths) {
   // the workspace has no harness wiki. Registered idempotently on both events, with
   // any prior rsc worklog-checkpoint entry (.sh or .mjs) dropped first.
   const wlDest = join(paths.projectRoot, '.rsc', 'worklog-checkpoint.mjs');
+  const written = [paths.hookTarget, scriptDest, wlDest];
   copyFileSync(join(HERE, 'worklog-checkpoint.mjs'), wlDest);
   const wlCmd = `node "${at('.rsc', 'worklog-checkpoint.mjs')}" "${P}"`;
   for (const event of ['PreCompact', 'SessionEnd']) {
@@ -121,6 +126,7 @@ export function wireHook(paths) {
     settings.hooks[event].push({ hooks: [{ type: 'command', command: wlCmd }] });
   }
 
+  if (policy.codeHooks !== false) {
   // Ship guard: a PreToolUse(Bash) hook that DENIES switching to / merging the trunk
   // while the current feature branch has uncommitted or unpushed work — forcing the
   // commit → push → PR close (the `ship` skill). Materialized + node-run (Windows-safe),
@@ -182,8 +188,24 @@ export function wireHook(paths) {
     (e) => !hookWiringOf(e).includes('.rsc/userprompt-gate.'),
   );
   settings.hooks.UserPromptSubmit.push({ hooks: [{ type: 'command', command: fgCmd }] });
+  written.push(sgDest, dgDest, gmDest, fgDest, join(paths.projectRoot, '.rsc', 'sello.mjs'));
+  } else {
+    for (const event of ['PreToolUse', 'UserPromptSubmit']) {
+      if (!settings.hooks[event]) continue;
+      settings.hooks[event] = settings.hooks[event].filter((entry) => {
+        const body = hookWiringOf(entry);
+        return !body.includes('.rsc/ship-guard.') && !body.includes('.rsc/danger-guard.') &&
+          !body.includes('.rsc/gitmoji-guard.') && !body.includes('.rsc/userprompt-gate.');
+      });
+      if (!settings.hooks[event].length) delete settings.hooks[event];
+    }
+    for (const name of ['ship-guard.mjs', 'danger-guard.mjs', 'gitmoji-guard.mjs', 'userprompt-gate.mjs', 'sello.mjs']) {
+      rmSync(join(paths.projectRoot, '.rsc', name), { force: true });
+    }
+    written.push(operationsSuggest);
+  }
 
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
-  return [file, scriptDest, wlDest, sgDest, dgDest, gmDest, fgDest];
+  return written;
 }

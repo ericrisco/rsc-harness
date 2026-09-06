@@ -4,6 +4,7 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { TARGET_IDS } from '../../targets/index.js';
 import { resolveAgentNames } from '../../targets/agents.js';
 import { loadManifest, skillsForProfile } from './manifest.js';
+import { managedPathsForInstall } from '../install-apply.js';
 
 export const ONBOARDING_SCHEMA_VERSION = 1;
 export const ONBOARDING_VALUES = Object.freeze({
@@ -69,7 +70,17 @@ export function scanProject(root = process.cwd()) {
       if (rel === '02-DOCS/wiki/harness' || rel.startsWith('02-DOCS/wiki/harness/')) continue;
       if (entry.isDirectory()) { visit(path); continue; }
       if (!entry.isFile()) continue;
-      if (manifests.has(entry.name) || entry.name.endsWith('.md')) signals.push(rel);
+      let isSignal = manifests.has(entry.name) || entry.name.endsWith('.md');
+      // Codex stores the always-on layer in AGENTS.md. Ignore a file that contains
+      // only our managed block, while retaining a user's surrounding instructions
+      // as real project evidence across repair/re-onboarding.
+      if (entry.name === 'AGENTS.md') {
+        const human = readFileSync(path, 'utf8')
+          .replace(/\n*<!-- rsc-suggest:start -->[\s\S]*?<!-- rsc-suggest:end -->\n*/g, '')
+          .trim();
+        isSignal = Boolean(human);
+      }
+      if (isSignal) signals.push(rel);
       if (sourceExt.has(extension(entry.name))) sourceFileCount++;
       if (entry.name === 'package.json') {
         try {
@@ -95,13 +106,15 @@ export function scanProject(root = process.cwd()) {
     }
     cursor = dirname(cursor);
   }
-  return {
+  const evidence = {
     schemaVersion: 1,
     signals: [...new Set(signals)].sort(),
     stacks: [...stacks].sort(),
     sourceFileCount,
     parentHarness,
   };
+  Object.defineProperty(evidence, 'root', { value: absolute, enumerable: false });
+  return evidence;
 }
 
 function selected(id, kind, reason, provenance = 'declared-intent') {
@@ -116,14 +129,19 @@ export function buildOnboardingPlan(record, evidence) {
   const isSoftware = normalized.projectKind === 'software' || normalized.projectKind === 'mixed';
   const needsSdd = isSoftware && normalized.softwareScope !== 'small';
   const profile = needsSdd ? 'core' : 'minimal';
-  const skills = skillsForProfile(loadManifest(), profile).sort();
+  const catalog = loadManifest();
+  const catalogIds = new Set(catalog.skills.map((skill) => skill.id));
+  const detectedSkills = (evidence.stacks || []).filter((stack) => catalogIds.has(stack));
+  const skills = [...new Set([...skillsForProfile(catalog, profile), ...detectedSkills])].sort();
   const baseAgents = needsSdd;
   const hooks = needsSdd;
   const agents = baseAgents ? resolveAgentNames(skills, []).sort() : [];
   const gitmojiGuard = hooks && normalized.targets.includes('claude');
-  const decisions = skills.map((id) => selected(id, 'skill', needsSdd
-    ? `Included in the development workflow for ${normalized.softwareScope} software.`
-    : `Included in the lightweight foundation for this ${normalized.projectKind} project.`));
+  const decisions = skills.map((id) => detectedSkills.includes(id)
+    ? selected(id, 'skill', `Detected ${id} evidence inside the selected project root.`, 'workspace-evidence')
+    : selected(id, 'skill', needsSdd
+      ? `Included in the development workflow for ${normalized.softwareScope} software.`
+      : `Included in the lightweight foundation for this ${normalized.projectKind} project.`));
   const sddTriggers = ['multiple related features', 'authentication or persistence', 'external integrations', 'cross-cutting changes'];
   if (!needsSdd) decisions.push(deferred('sdd', 'workflow', isSoftware
     ? 'The software scope is small, so specification overhead is not justified yet.'
@@ -143,21 +161,37 @@ export function buildOnboardingPlan(record, evidence) {
   decisions.push(selected('harness-documents', 'route', 'The accepted profile and plan are persisted under 02-DOCS/wiki/harness/.'));
   decisions.push(deferred('context7', 'integration', 'No external MCP connection is installed without a specific need and separate consent.', ['a software task needs current third-party library documentation']));
   decisions.sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`));
+  const policy = {
+    skills,
+    targets: normalized.targets,
+    baseAgents,
+    agents,
+    alwaysOn: true,
+    codeHooks: needsSdd,
+    gitmojiGuard,
+    memory: true,
+  };
+  const root = evidence.root;
+  const governedPaths = root ? [...new Set([
+    '.rsc.json', '.rsc/backups/',
+    ...(existsSync(join(root, '.git')) ? ['.gitignore'] : []),
+    '02-DOCS/wiki/harness/user-profile.md',
+    '02-DOCS/wiki/harness/decisions.md',
+    '02-DOCS/wiki/harness/installation-plan.md',
+    ...normalized.targets.flatMap((target) => managedPathsForInstall({ skillIds: skills, target, cwd: root, policy })
+      .map((path) => relative(root, path).split(sep).join('/'))),
+  ])].sort() : ['.rsc.json', '.rsc/', '02-DOCS/wiki/harness/'];
   return {
     schemaVersion: 1,
     record: normalized,
-    evidence: structuredClone(evidence),
-    decisions,
-    policy: {
-      skills,
-      targets: normalized.targets,
-      baseAgents,
-      agents,
-      hooks,
-      gitmojiGuard,
-      memory: true,
+    evidence: {
+      schemaVersion: evidence.schemaVersion,
+      signals: [...evidence.signals], stacks: [...evidence.stacks],
+      sourceFileCount: evidence.sourceFileCount, parentHarness: evidence.parentHarness,
     },
-    governedPaths: ['.rsc.json', '.rsc/', '02-DOCS/wiki/harness/'],
+    decisions,
+    policy,
+    governedPaths,
   };
 }
 
@@ -171,6 +205,7 @@ function canonical(value) {
 
 export const canonicalJson = (value) => JSON.stringify(canonical(value));
 export const identifyPlan = (plan) => createHash('sha256').update(canonicalJson(plan)).digest('hex');
+export const shellQuote = (value) => `'${String(value).replaceAll("'", `'"'"'`)}'`;
 
 export function recommendDeferredComponents(acceptedPlan, currentEvidence) {
   const baseline = acceptedPlan?.evidence || {};

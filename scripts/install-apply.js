@@ -63,48 +63,49 @@ function ensureBase(id, cwd, baseVersions) {
 // reported by a --dry-run. Keep in sync with targets/claude.js wireHook(): a file it
 // writes but this omits is silently absent from the snapshot, so `rsc restore` cannot
 // bring it back.
-function generatedHookFiles({ target, cwd }) {
+export function generatedHookFiles({ target, cwd, policy }) {
   if (target !== 'claude') return [];
-  return [
+  const lifecycle = [
     join(cwd, '.rsc', 'session-start.mjs'),
     join(cwd, '.rsc', 'worklog-checkpoint.mjs'),
-    join(cwd, '.rsc', 'ship-guard.mjs'),
-    join(cwd, '.rsc', 'danger-guard.mjs'),
-    join(cwd, '.rsc', 'gitmoji-guard.mjs'),
-    join(cwd, '.rsc', 'userprompt-gate.mjs'),
     join(cwd, '.rsc', 'hook-once.mjs'),
-    join(cwd, '.rsc', 'sello.mjs'),
+    join(cwd, '.rsc', 'worktree-reaper.mjs'),
   ];
+  if (policy?.codeHooks === false) return [...lifecycle, join(cwd, '.rsc', 'suggest-always-on.md')];
+  return [...lifecycle,
+    join(cwd, '.rsc', 'ship-guard.mjs'), join(cwd, '.rsc', 'danger-guard.mjs'),
+    join(cwd, '.rsc', 'gitmoji-guard.mjs'), join(cwd, '.rsc', 'userprompt-gate.mjs'),
+    join(cwd, '.rsc', 'sello.mjs')];
 }
 
-export function managedPathsForInstall({ skillIds, agentIds = [], target, home, cwd }) {
+export function managedPathsForInstall({ skillIds, agentIds = [], target, home, cwd, policy }) {
   const paths = targetPaths(target, home, cwd);
-  const plan = planInstall({ skillIds, target, home, cwd });
+  const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.alwaysOn !== false });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
-  out.push(...memoryManagedPaths(target, cwd));
+  if (policy?.memory !== false) out.push(...memoryManagedPaths(target, cwd));
   if (targetHasAgents(target)) {
     const state = readState(paths.stateFile);
     const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
-    const desired = resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
-    out.push(...[...new Set([...(state.agents || []), ...desired])].map((n) => agentPath(target, cwd, n)), join(cwd, '.rsc', 'developer.json'));
+    const desired = policy?.agents || resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
+    out.push(...desired.map((n) => agentPath(target, cwd, n)));
   }
   if (targetHasCommands(target)) {
     const state = readState(paths.stateFile);
     const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
-    const desiredAgents = resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
+    const desiredAgents = policy?.agents || resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
     const desiredCommands = resolveCommands({
       target,
-      skills: [...new Set([...Object.keys(state.skills || {}), ...skillIds])],
+      skills: policy ? skillIds : [...new Set([...Object.keys(state.skills || {}), ...skillIds])],
       agents: desiredAgents,
       memoryMode: memoryEnabledForProject(cwd) ? memoryModeFor(target) : 'disabled',
     });
-    out.push(...[...new Set([...(state.commands || []), ...desiredCommands.map((command) => command.name)])].map((name) => commandPath(target, cwd, name)));
+    out.push(...desiredCommands.map((command) => commandPath(target, cwd, command.name)));
   }
   for (const step of plan) {
     if (step.kind === 'skill') {
       out.push(step.to, baseDir(step.id, cwd));
     } else if (step.kind === 'hook') {
-      out.push(step.to, ...generatedHookFiles({ target, cwd }));
+      out.push(step.to, ...generatedHookFiles({ target, cwd, policy }));
     }
   }
   return [...new Set(out)];
@@ -152,8 +153,8 @@ export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalog
 
 export async function applyInstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), operation = 'install', dryRun = false, policy, onboarding }) {
   const paths = targetPaths(target, home, cwd);
-  const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.hooks !== false });
-  const managedPaths = managedPathsForInstall({ skillIds, agentIds, target, home, cwd });
+  const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.alwaysOn !== false });
+  const managedPaths = managedPathsForInstall({ skillIds, agentIds, target, home, cwd, policy });
   if (dryRun) return { dryRun: true, skills: skillIds, agents: agentIds, paths: managedPaths };
   const state = readState(paths.stateFile);
   const backup = createBackup({ cwd, operation, target, paths: managedPaths, cliVersion: CLI_VERSION });
@@ -162,13 +163,20 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   // syncs — a single global marker would be bumped by the first target and make later
   // targets skip refreshing their exclusive skills' bases.
   const baseVersions = readBaseVersions(cwd);
+  if (policy) {
+    for (const id of Object.keys(state.skills || {})) {
+      if (skillIds.includes(id)) continue;
+      rmSync(paths.skillDir(id), { recursive: true, force: true });
+      delete state.skills[id];
+    }
+  }
   for (const step of plan) {
     if (step.kind === 'skill') {
       const base = ensureBase(step.id, cwd, baseVersions);
       const files = await writeSkill(target, step.id, base, step.to);
       state.skills[step.id] = { files, base };
     } else if (step.kind === 'hook') {
-      await wireHook(target, paths, join(ensureBase('suggest', cwd, baseVersions), 'SKILL.md'));
+      await wireHook(target, paths, join(ensureBase('suggest', cwd, baseVersions), 'SKILL.md'), policy);
     }
   }
   writeBaseVersions(cwd, baseVersions);
@@ -202,7 +210,8 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   state.memory = { mode: memoryResult.mode, reason: memoryResult.reason, paths: memoryResult.paths };
   state.policy = policy ? {
     baseAgents: policy.baseAgents !== false,
-    hooks: policy.hooks !== false,
+    alwaysOn: policy.alwaysOn !== false,
+    codeHooks: policy.codeHooks !== false,
     gitmojiGuard: policy.gitmojiGuard !== false,
     memory: policy.memory !== false,
   } : state.policy;
@@ -378,7 +387,8 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
   // to rebuild from, and it is sitting right there.
   const ids = Object.keys(state.skills || {});
   const manifest = readManifest(cwd);
-  const declared = ids.length ? ids : (manifest?.skills || []);
+  const governedSkills = manifest?.onboarding?.plan?.policy?.skills;
+  const declared = governedSkills || (ids.length ? ids : (manifest?.skills || []));
   const declaredAgents = state.explicitAgents?.length ? state.explicitAgents : (manifest?.agents || []);
   if (!declared.length && !declaredAgents.length) return dryRun ? { dryRun: true, synced: [], syncedAgents: [], paths: [] } : { synced: [], syncedAgents: [], backup: null };
   if (dryRun) {
@@ -386,7 +396,7 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
       dryRun: true,
       synced: declared,
       syncedAgents: declaredAgents,
-      paths: managedPathsForInstall({ skillIds: declared, agentIds: declaredAgents, target, home, cwd }),
+      paths: managedPathsForInstall({ skillIds: declared, agentIds: declaredAgents, target, home, cwd, policy: manifest?.onboarding?.plan?.policy }),
     };
   }
   const nextState = await applyInstall({

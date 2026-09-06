@@ -18,7 +18,7 @@ import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-
 import { readManifest } from './lib/manifest-file.js';
 import {
   normalizeOnboarding, missingOnboardingFields, scanProject,
-  buildOnboardingPlan, identifyPlan, recommendDeferredComponents,
+  buildOnboardingPlan, identifyPlan, recommendDeferredComponents, shellQuote,
 } from './lib/onboarding.js';
 import { applyAcceptedOnboarding } from './lib/onboarding-apply.js';
 
@@ -91,13 +91,15 @@ function renderPlan(plan, planId) {
   for (const decision of plan.decisions.filter((d) => d.state === 'selected')) say(`  + ${decision.kind}/${decision.id} — ${decision.reason}`);
   say('Deferred:');
   for (const decision of plan.decisions.filter((d) => d.state === 'deferred')) say(`  - ${decision.kind}/${decision.id} — ${decision.reason} Reevaluate: ${decision.reevaluateWhen.join('; ')}`);
+  say('Managed paths:');
+  for (const path of plan.governedPaths) say(`  ${path}`);
   if (plan.evidence.parentHarness) say(`Parent harness detected at ${plan.evidence.parentHarness}; it is not inherited by this plan.`);
   const pieces = [
     'npx @ericrisco/rsc@latest onboard',
     `--technical-level ${plan.record.technicalLevel}`,
     `--accompaniment ${plan.record.accompaniment}`,
     `--project-kind ${plan.record.projectKind}`,
-    `--goal ${JSON.stringify(plan.record.goal)}`,
+    `--goal ${shellQuote(plan.record.goal)}`,
     ...(plan.record.softwareScope ? [`--software-scope ${plan.record.softwareScope}`] : []),
     `--target ${plan.record.targets.join(',')}`,
     `--accept-plan ${planId}`,
@@ -191,7 +193,7 @@ function runReassessment() {
     `--technical-level ${record.technicalLevel}`,
     `--accompaniment ${record.accompaniment}`,
     `--project-kind ${record.projectKind}`,
-    `--goal ${JSON.stringify(record.goal)}`,
+    `--goal ${shellQuote(record.goal)}`,
     ...(nextScope ? [`--software-scope ${nextScope}`] : []),
     `--target ${record.targets.join(',')}`,
   ].join(' '));

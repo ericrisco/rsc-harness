@@ -62,14 +62,60 @@ test('acceptance recomputes the plan: wrong id writes nothing; exact id persists
   assert.equal(manifest.onboarding.plan.policy.baseAgents, false);
   assert.ok(existsSync(join(cwd, '02-DOCS/wiki/harness/user-profile.md')));
   assert.ok(!existsSync(join(cwd, '.codex/agents/developer.toml')));
-  assert.ok(!existsSync(join(cwd, 'AGENTS.md')));
+  assert.ok(existsSync(join(cwd, 'AGENTS.md')), 'operations retains the always-on profile/orient surface');
+  const instructions = readFileSync(join(cwd, 'AGENTS.md'), 'utf8');
+  assert.match(instructions, /user-profile|orient|suggest/);
+  assert.doesNotMatch(instructions, /feature intent goes through SDD|gitmoji/i);
 
   const sync = run(cwd, ['sync', '--target', 'codex']);
   assert.equal(sync.status, 0, sync.stderr);
   const afterSync = JSON.parse(readFileSync(join(cwd, '.rsc.json'), 'utf8'));
   assert.equal(afterSync.onboarding.acceptedPlanId, id);
   assert.ok(!existsSync(join(cwd, '.codex/agents/developer.toml')), 'sync preserves the no-base-agents policy');
-  assert.ok(!existsSync(join(cwd, 'AGENTS.md')), 'sync preserves the no-code-hooks policy');
+  assert.ok(existsSync(join(cwd, 'AGENTS.md')), 'sync preserves the always-on surface');
+});
+
+test('operations on Claude keeps SessionStart but omits feature, ship and gitmoji gates', () => {
+  const cwd = fresh();
+  const args = [
+    '--technical-level', 'mixed', '--accompaniment', 'L1', '--project-kind', 'operations',
+    '--goal', 'Run operations', '--target', 'claude',
+  ];
+  const preview = run(cwd, ['onboard', ...args]);
+  const id = preview.stdout.match(/Plan id: ([a-f0-9]{64})/)?.[1];
+  assert.equal(run(cwd, ['onboard', ...args, '--accept-plan', id]).status, 0);
+  const settings = JSON.parse(readFileSync(join(cwd, '.claude/settings.json'), 'utf8'));
+  assert.ok(settings.hooks.SessionStart?.length);
+  assert.equal(settings.hooks.UserPromptSubmit, undefined);
+  assert.equal(settings.hooks.PreToolUse, undefined);
+  for (const name of ['ship-guard.mjs', 'gitmoji-guard.mjs', 'userprompt-gate.mjs']) {
+    assert.ok(!existsSync(join(cwd, '.rsc', name)), name);
+  }
+});
+
+test('re-onboarding from software to operations unwires previously installed code hooks', () => {
+  const cwd = fresh();
+  const software = ['--technical-level', 'mixed', '--accompaniment', 'L1', '--project-kind', 'software', '--software-scope', 'growing', '--goal', 'Build product', '--target', 'claude'];
+  let preview = run(cwd, ['onboard', ...software]);
+  let id = preview.stdout.match(/Plan id: ([a-f0-9]{64})/)?.[1];
+  assert.equal(run(cwd, ['onboard', ...software, '--accept-plan', id]).status, 0);
+  const operations = ['--technical-level', 'mixed', '--accompaniment', 'L1', '--project-kind', 'operations', '--goal', 'Run operations', '--target', 'claude'];
+  preview = run(cwd, ['onboard', ...operations]);
+  id = preview.stdout.match(/Plan id: ([a-f0-9]{64})/)?.[1];
+  assert.equal(run(cwd, ['onboard', ...operations, '--accept-plan', id]).status, 0);
+  const settings = JSON.parse(readFileSync(join(cwd, '.claude/settings.json'), 'utf8'));
+  assert.equal(settings.hooks.PreToolUse, undefined);
+  assert.equal(settings.hooks.UserPromptSubmit, undefined);
+});
+
+test('preview inventories every RSC-owned applied route', () => {
+  const cwd = fresh();
+  const preview = run(cwd, ['onboard', ...complete]);
+  assert.match(preview.stdout, /Managed paths:/);
+  assert.match(preview.stdout, /\.rsc\.json/);
+  assert.match(preview.stdout, /AGENTS\.md/);
+  assert.match(preview.stdout, /02-DOCS\/wiki\/harness\/user-profile\.md/);
+  assert.doesNotMatch(preview.stdout, /\/Volumes\/|\/private\/tmp\//);
 });
 
 test('changing root evidence after preview invalidates acceptance', () => {
