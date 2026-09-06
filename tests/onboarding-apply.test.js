@@ -29,3 +29,16 @@ test('application refuses an identity that does not match the complete canonical
   const plan = buildOnboardingPlan(record, scanProject(cwd));
   await assert.rejects(applyAcceptedOnboarding({ cwd, plan, planId: 'f'.repeat(64) }), /RSC_PLAN_CHANGED/);
 });
+
+test('RSC-owned output does not change the accepted project-evidence identity', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-onboard-stable-'));
+  const record = normalizeOnboarding({
+    technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'operations',
+    goal: 'Run an operations desk', targets: ['codex'],
+  });
+  const before = buildOnboardingPlan(record, scanProject(cwd));
+  const id = identifyPlan(before);
+  await applyAcceptedOnboarding({ cwd, plan: before, planId: id });
+  const after = buildOnboardingPlan(record, scanProject(cwd));
+  assert.equal(identifyPlan(after), id);
+});

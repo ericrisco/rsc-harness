@@ -66,6 +66,7 @@ export function scanProject(root = process.cwd()) {
       const path = join(dir, entry.name);
       const rel = relative(absolute, path).split(sep).join('/');
       if (rel.startsWith('../') || rel === '..') throw new Error('project scan escaped the selected root');
+      if (rel === '02-DOCS/wiki/harness' || rel.startsWith('02-DOCS/wiki/harness/')) continue;
       if (entry.isDirectory()) { visit(path); continue; }
       if (!entry.isFile()) continue;
       if (manifests.has(entry.name) || entry.name.endsWith('.md')) signals.push(rel);
