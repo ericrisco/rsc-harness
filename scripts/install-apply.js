@@ -406,10 +406,20 @@ export function removeTargetInstall({ target, home, cwd = process.cwd() }) {
     ...(state.commands || []).map((name) => commandPath(target, cwd, name)).filter(Boolean),
     paths.stateFile,
   ];
+  const declaredLocationsAreExact = Object.entries(state.skills || {}).every(([id, entry]) =>
+    (entry.files || []).every((file) => resolve(file) === resolve(paths.skillDir(id))))
+    && (state.agents || []).every((name) => {
+      const file = agentPath(target, cwd, name);
+      return file && owned.some((candidate) => resolve(candidate) === resolve(file));
+    })
+    && (state.commands || []).every((name) => {
+      const file = commandPath(target, cwd, name);
+      return file && owned.some((candidate) => resolve(candidate) === resolve(file));
+    });
   const root = resolve(cwd);
   const safe = (file) => {
     const absolute = resolve(file);
-    if (absolute !== root && !absolute.startsWith(`${root}${sep}`)) return false;
+    if (absolute === root || !absolute.startsWith(`${root}${sep}`)) return false;
     const parts = relative(root, dirname(absolute)).split(sep).filter(Boolean);
     let cursor = root;
     for (const part of parts) {
@@ -422,7 +432,7 @@ export function removeTargetInstall({ target, home, cwd = process.cwd() }) {
     }
     return true;
   };
-  if (owned.some((file) => !safe(file))) throw new Error(`RSC_PREVIOUS_INSTALL_INCOMPATIBLE: ${target} state contains a path outside the project root`);
+  if (!declaredLocationsAreExact || owned.some((file) => !safe(file))) throw new Error(`RSC_PREVIOUS_INSTALL_INCOMPATIBLE: ${target} state contains a path outside its managed locations`);
   for (const entry of Object.values(state.skills || {})) {
     for (const file of entry.files || []) { ignored.push(file); rmSync(file, { recursive: true, force: true }); }
   }
