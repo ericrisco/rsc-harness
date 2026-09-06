@@ -6,13 +6,13 @@ import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
 import {
   targetHasAgents, reconcileAgents, agentPath, agentNames,
-  resolveAgentNames, agentByName, readDeveloperTier,
+  resolveAgentNames, agentByName, allAgentNames, readDeveloperTier,
 } from '../targets/agents.js';
 import { readState, writeState } from './lib/state.js';
 import { readManifest, writeManifest } from './lib/manifest-file.js';
 import { createBackup } from './lib/backups.js';
 import {
-  targetHasCommands, resolveCommands, reconcileCommands, commandPath,
+  targetHasCommands, resolveCommands, reconcileCommands, commandPath, allPotentialCommandNames,
 } from '../targets/commands.js';
 import {
   wireMemory, unwireMemory, memoryManagedPaths, memoryModeFor, memoryEnabledForProject, memoryArtifactsPresent,
@@ -407,12 +407,16 @@ export function removeTargetInstall({ target, home, cwd = process.cwd() }) {
     paths.stateFile,
   ];
   const declaredLocationsAreExact = Object.entries(state.skills || {}).every(([id, entry]) =>
-    (entry.files || []).every((file) => resolve(file) === resolve(paths.skillDir(id))))
+    /^[a-z0-9][a-z0-9._-]*$/i.test(id)
+    && existsSync(join(ROOT, 'skills', id))
+    && (entry.files || []).every((file) => resolve(file) === resolve(paths.skillDir(id))))
     && (state.agents || []).every((name) => {
+      if (!allAgentNames().includes(name)) return false;
       const file = agentPath(target, cwd, name);
       return file && owned.some((candidate) => resolve(candidate) === resolve(file));
     })
     && (state.commands || []).every((name) => {
+      if (!allPotentialCommandNames().includes(name)) return false;
       const file = commandPath(target, cwd, name);
       return file && owned.some((candidate) => resolve(candidate) === resolve(file));
     });

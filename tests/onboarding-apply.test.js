@@ -244,6 +244,26 @@ test('a corrupt prior target state cannot delete the project root or an unrelate
   }
 });
 
+test('state identifiers cannot use traversal to bless deletion of a user file', async () => {
+  for (const kind of ['skill', 'agent']) {
+    const cwd = mkdtempSync(join(tmpdir(), 'rsc-state-id-root-'));
+    const keep = join(cwd, 'KEEP.txt');
+    writeFileSync(keep, 'keep');
+    const bothRecord = normalizeOnboarding({ technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'software', softwareScope: 'growing', goal: 'Build product', targets: ['claude', 'codex'] });
+    const both = buildOnboardingPlan(bothRecord, scanProject(cwd));
+    await applyAcceptedOnboarding({ cwd, plan: both, planId: identifyPlan(both) });
+    const statePath = join(cwd, '.claude', 'skills', '.rsc-state.json');
+    const state = JSON.parse(readFileSync(statePath, 'utf8'));
+    if (kind === 'skill') state.skills['../../KEEP.txt'] = { files: [keep] };
+    else state.agents.push('../../KEEP');
+    writeFileSync(statePath, JSON.stringify(state));
+    const codexRecord = normalizeOnboarding({ ...bothRecord, targets: ['codex'] });
+    const codex = buildOnboardingPlan(codexRecord, scanProject(cwd));
+    await assert.rejects(applyAcceptedOnboarding({ cwd, plan: codex, planId: identifyPlan(codex) }), /PREVIOUS_INSTALL_INCOMPATIBLE/);
+    assert.equal(readFileSync(keep, 'utf8'), 'keep');
+  }
+});
+
 test('a repeated application records conserved provenance', async () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-provenance-'));
   const record = normalizeOnboarding({ technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'operations', goal: 'Ops', targets: ['codex'] });
