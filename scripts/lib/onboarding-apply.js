@@ -31,7 +31,7 @@ export function verifyOnboarding(cwd, plan, planId) {
   for (const target of plan.policy.targets) {
     const state = readState(targetPaths(target, undefined, cwd).stateFile);
     if (!sameSet(Object.keys(state.skills || {}), plan.policy.skills)) differences.push(`${target}: installed skills differ from accepted policy`);
-    if (plan.policy.baseAgents === false && (state.agents || []).length) differences.push(`${target}: agents were installed although policy disabled them`);
+    if (!sameSet(state.agents || [], plan.policy.agents || [])) differences.push(`${target}: installed agents differ from accepted policy`);
     if (state.policy?.hooks !== plan.policy.hooks) differences.push(`${target}: hook policy differs`);
     if (state.policy?.memory !== plan.policy.memory) differences.push(`${target}: memory policy differs`);
   }

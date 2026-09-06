@@ -63,6 +63,10 @@ test('small software defers SDD with observable triggers; growing software selec
   const growing = buildOnboardingPlan(normalizeOnboarding(answers({ softwareScope: 'growing' })), evidence);
   assert.equal(growing.decisions.find((d) => d.id === 'sdd').state, 'selected');
   assert.ok(growing.policy.skills.includes('specify'));
+  assert.deepEqual(growing.policy.agents.slice(0, 4).sort(), ['developer', 'refuter-correctness', 'refuter-security', 'refuter-tests'].sort());
+  assert.ok(growing.decisions.some((d) => d.id === 'developer' && d.state === 'selected'));
+  assert.ok(growing.decisions.some((d) => d.id === 'memory' && d.state === 'selected'));
+  assert.ok(growing.decisions.some((d) => d.id === 'context7' && d.state === 'deferred'));
 });
 
 test('operations policy contains no SDD, base agents, code hooks or gitmoji guard', () => {
@@ -71,8 +75,15 @@ test('operations policy contains no SDD, base agents, code hooks or gitmoji guar
   assert.equal(plan.policy.baseAgents, false);
   assert.equal(plan.policy.hooks, false);
   assert.equal(plan.policy.gitmojiGuard, false);
+  assert.deepEqual(plan.policy.agents, []);
   assert.ok(!plan.policy.skills.includes('sdd'));
   assert.equal(plan.decisions.find((d) => d.id === 'sdd').state, 'deferred');
+});
+
+test('the plan does not claim a Claude-only gitmoji guard for Codex', () => {
+  const plan = buildOnboardingPlan(normalizeOnboarding(answers({ softwareScope: 'growing' })), scanProject(root()));
+  assert.equal(plan.policy.gitmojiGuard, false);
+  assert.equal(plan.decisions.find((d) => d.id === 'gitmoji-guard').state, 'deferred');
 });
 
 test('a nested scan reads only the selected root and reports a parent marker path', () => {

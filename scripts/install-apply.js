@@ -181,9 +181,11 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   // The recorded names come from what was WRITTEN, not from a hardcoded list: a state entry
   // naming an agent whose file never landed answers "you have it" for something absent.
   const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])].sort();
-  const desiredAgents = policy?.baseAgents === false
-    ? explicit
-    : resolveAgentNames(Object.keys(state.skills || {}), explicit);
+  const desiredAgents = policy?.agents
+    ? [...new Set([...policy.agents, ...explicit])].sort()
+    : policy?.baseAgents === false
+      ? explicit
+      : resolveAgentNames(Object.keys(state.skills || {}), explicit);
   const previousAgents = state.agents || [];
   if (targetHasAgents(target)) {
     const agentResult = reconcileAgents(target, cwd, readDeveloperTier(cwd), previousAgents, desiredAgents);

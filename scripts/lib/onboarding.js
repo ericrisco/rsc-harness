@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { TARGET_IDS } from '../../targets/index.js';
+import { resolveAgentNames } from '../../targets/agents.js';
 import { loadManifest, skillsForProfile } from './manifest.js';
 
 export const ONBOARDING_SCHEMA_VERSION = 1;
@@ -117,6 +118,8 @@ export function buildOnboardingPlan(record, evidence) {
   const skills = skillsForProfile(loadManifest(), profile).sort();
   const baseAgents = needsSdd;
   const hooks = needsSdd;
+  const agents = baseAgents ? resolveAgentNames(skills, []).sort() : [];
+  const gitmojiGuard = hooks && normalized.targets.includes('claude');
   const decisions = skills.map((id) => selected(id, 'skill', needsSdd
     ? `Included in the development workflow for ${normalized.softwareScope} software.`
     : `Included in the lightweight foundation for this ${normalized.projectKind} project.`));
@@ -124,15 +127,20 @@ export function buildOnboardingPlan(record, evidence) {
   if (!needsSdd) decisions.push(deferred('sdd', 'workflow', isSoftware
     ? 'The software scope is small, so specification overhead is not justified yet.'
     : 'SDD applies to substantial software work, which is not the declared project purpose.', sddTriggers));
-  decisions.push(baseAgents
-    ? selected('base-agents', 'agent', 'Substantial software work benefits from implementation and independent review roles.')
-    : deferred('base-agents', 'agent', 'No substantial software implementation is planned.', ['substantial software implementation is introduced']));
+  if (baseAgents) {
+    for (const id of agents) decisions.push(selected(id, 'agent', 'The accepted substantial software workflow requires this implementation or review role.'));
+  } else {
+    decisions.push(deferred('base-agents', 'agent', 'No substantial software implementation is planned.', ['substantial software implementation is introduced']));
+  }
   decisions.push(hooks
     ? selected('code-hooks', 'hook', 'The accepted software workflow needs its deterministic code gates.')
     : deferred('code-hooks', 'hook', 'Code-only gates would add unrelated behavior to this project.', ['a substantial software workflow is accepted']));
-  decisions.push(hooks
-    ? selected('gitmoji-guard', 'guard', 'The selected code hook policy includes the repository commit convention.')
-    : deferred('gitmoji-guard', 'guard', 'No code commit convention was justified for this project.', ['a governed software repository adopts the convention']));
+  decisions.push(gitmojiGuard
+    ? selected('gitmoji-guard', 'guard', 'Claude Code supports the commit guard and the accepted code policy includes it.')
+    : deferred('gitmoji-guard', 'guard', 'No selected target and project policy justify this Claude-only commit guard.', ['Claude Code is selected and a governed software workflow adopts the convention']));
+  decisions.push(selected('memory', 'capability', 'Local bounded project memory supports continuity without an external account.'));
+  decisions.push(selected('harness-documents', 'route', 'The accepted profile and plan are persisted under 02-DOCS/wiki/harness/.'));
+  decisions.push(deferred('context7', 'integration', 'No external MCP connection is installed without a specific need and separate consent.', ['a software task needs current third-party library documentation']));
   decisions.sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`));
   return {
     schemaVersion: 1,
@@ -143,8 +151,9 @@ export function buildOnboardingPlan(record, evidence) {
       skills,
       targets: normalized.targets,
       baseAgents,
+      agents,
       hooks,
-      gitmojiGuard: hooks,
+      gitmojiGuard,
       memory: true,
     },
     governedPaths: ['.rsc.json', '.rsc/', '02-DOCS/wiki/harness/'],
