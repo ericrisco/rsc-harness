@@ -530,8 +530,9 @@ async function main() {
       if (reportUnknown(selected.unknown)) return;
       const ids = withDefaultSkillFloor(selected.skills);
       if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
-      const receipt = readManifest()?.onboarding;
-      const maintainedIds = receipt ? [...new Set([...(receipt.plan.policy.skills || []), ...ids])].sort() : ids;
+      const currentManifest = readManifest();
+      const receipt = currentManifest?.onboarding;
+      const maintainedIds = receipt ? [...new Set([...(currentManifest.skills || []), ...(receipt.plan.policy.skills || []), ...ids])].sort() : ids;
       const policy = receipt ? { ...receipt.plan.policy, skills: maintainedIds } : undefined;
       for (const t of targets) await applyInstall({ skillIds: maintainedIds, agentIds: selected.agents, target: t, policy });
       markMaintenanceDrift(`add ${requested.join(',')}`);

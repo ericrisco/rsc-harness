@@ -98,6 +98,8 @@ test('explicit maintenance remains usable and records drift without enabling def
   assert.equal(second.status, 0, second.stderr);
   const manifest = JSON.parse(readFileSync(join(cwd, '.rsc.json'), 'utf8'));
   assert.equal(manifest.onboarding.maintenanceDrift.requiresReassessment, true);
+  assert.ok(existsSync(join(cwd, '.codex', 'rsc', 'fastapi')));
+  assert.ok(existsSync(join(cwd, '.codex', 'rsc', 'postgresdb')));
   assert.equal(existsSync(join(cwd, '.codex', 'agents', 'developer.toml')), false);
 });
 
