@@ -145,7 +145,9 @@ export function doctor({ target, home, cwd }) {
     designStartingPoint: startingPointSummary(root),
     // An inert gate must never read as an armed one (the same rule the sello follows):
     // the gitmoji guard has a per-project kill switch, so say which state it is in.
-    gitmojiGuard: existsSync(join(root, '.rsc', '.no-gitmoji')) ? 'opted-out' : 'armed',
+    gitmojiGuard: state.policy?.gitmojiGuard === false
+      ? 'deferred'
+      : existsSync(join(root, '.rsc', '.no-gitmoji')) ? 'opted-out' : 'armed',
     // Counted, never interpreted — by spec, the gap log's reader is the user.
     automationGaps: countGaps(root),
     memory,

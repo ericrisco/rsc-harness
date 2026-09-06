@@ -20,6 +20,15 @@ test('post-apply verification names a missing managed artifact and prevents a re
   assert.ok(differences.some((difference) => difference.includes('user-profile.md')));
 });
 
+test('doctor reports a policy-deferred gitmoji guard as deferred', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-onboard-doctor-'));
+  const record = normalizeOnboarding({ technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'software', softwareScope: 'small', goal: 'Build calculator', targets: ['claude'] });
+  const plan = buildOnboardingPlan(record, scanProject(cwd));
+  await applyAcceptedOnboarding({ cwd, plan, planId: identifyPlan(plan) });
+  const { doctor } = await import('../scripts/doctor.js');
+  assert.equal(doctor({ cwd, target: 'claude' }).gitmojiGuard, 'deferred');
+});
+
 test('post-apply verification rejects changed governed file content', async () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-onboard-content-'));
   const record = normalizeOnboarding({ technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'operations', goal: 'Run ops', targets: ['codex'] });
