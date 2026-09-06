@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
 import { capture, resume } from './session-memory-core.mjs';
 
 const LOCAL_TARGETS = new Set(['claude', 'codex', 'cursor', 'gemini', 'opencode']);
@@ -12,6 +12,20 @@ function projectSettings(cwd) {
     return manifest.memory && typeof manifest.memory === 'object' ? manifest.memory : {};
   } catch {
     return {};
+  }
+}
+
+// The project is the nearest ancestor holding `.rsc.json` — the file that IS the harness's decision.
+// The hook payload's `cwd` is only where the tool call happened to run; inside a container of child
+// repos that is routinely a subdirectory with no harness of its own, and anchoring there scatters
+// one session's journal across children. With no harness anywhere above, the cwd stays the project.
+function nearestHarness(dir) {
+  let current = dir;
+  for (;;) {
+    if (existsSync(join(current, '.rsc.json'))) return current;
+    const parent = dirname(current);
+    if (parent === current) return dir;
+    current = parent;
   }
 }
 
@@ -63,7 +77,7 @@ export function handleLifecycle({ target, event, native = {}, cwd, settings } = 
   try {
     if (!LOCAL_TARGETS.has(target)) throw new Error(`unsupported memory target: ${target}`);
     if (isRemote(target, native)) return { output: {}, capture: null, remote: true, degraded: false };
-    const project = resolve(cwd || native.cwd || process.env.RSC_PROJECT_CWD || process.cwd());
+    const project = nearestHarness(resolve(cwd || native.cwd || process.env.RSC_PROJECT_CWD || process.cwd()));
     if (!existsSync(project)) throw new Error('project directory unavailable');
     const config = settings || projectSettings(project);
     if (config.enabled === false) return { output: {}, capture: null, remote: false, degraded: false };
