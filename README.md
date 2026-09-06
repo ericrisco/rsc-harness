@@ -200,6 +200,10 @@ accepted application it verifies the receipt and managed state before printing `
 
 ## The CLI
 
+Fresh projects enter through `rsc onboard`. The direct `add` and `install --profile` forms below
+are maintenance controls for projects that already carry an `.rsc.json` declaration; they cannot
+bypass onboarding in a new folder.
+
 ```bash
 rsc onboard                         # binding plain-language onboarding (recommended)
 rsc reassess                        # check persisted deferral triggers; never installs by itself
