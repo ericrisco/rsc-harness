@@ -1,12 +1,54 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { applyInstall } from '../install-apply.js';
+import { createHash } from 'node:crypto';
+import { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, realpathSync, writeFileSync } from 'node:fs';
+import { join, relative, resolve, sep } from 'node:path';
+import { applyInstall, removeTargetInstall } from '../install-apply.js';
 import { targetPaths } from '../../targets/index.js';
 import { readState } from './state.js';
 import { readManifest, writeManifest } from './manifest-file.js';
 import { identifyPlan, shellQuote } from './onboarding.js';
+import { createBackup, restoreBackup } from './backups.js';
 
 const sameSet = (a = [], b = []) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+
+function inside(root, path) {
+  return path === root || path.startsWith(`${root}${sep}`);
+}
+
+export function assertManagedPathsStayInsideRoot(cwd, paths) {
+  const root = realpathSync(resolve(cwd));
+  for (const rel of paths || []) {
+    const clean = rel.replace(/\/$/, '');
+    const absolute = resolve(root, clean);
+    if (!inside(root, absolute)) throw new Error(`RSC_ROOT_AMBIGUOUS: managed path escapes project root: ${rel}`);
+    const segments = relative(root, absolute).split(sep).filter(Boolean);
+    let cursor = root;
+    for (const segment of segments) {
+      cursor = join(cursor, segment);
+      if (!existsSync(cursor)) break;
+      if (lstatSync(cursor).isSymbolicLink()) {
+        const destination = realpathSync(cursor);
+        if (!inside(root, destination)) throw new Error(`RSC_ROOT_AMBIGUOUS: managed path follows a symlink outside project root: ${rel}`);
+      }
+    }
+  }
+}
+
+function digestPath(path) {
+  if (!existsSync(path)) return 'missing';
+  const stat = lstatSync(path);
+  if (stat.isSymbolicLink()) return createHash('sha256').update(`link:${readlinkSync(path)}`).digest('hex');
+  if (stat.isDirectory()) {
+    const rows = readdirSync(path).sort().map((name) => `${name}:${digestPath(join(path, name))}`);
+    return createHash('sha256').update(`dir:${rows.join('|')}`).digest('hex');
+  }
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
+
+function digestGovernedPaths(cwd, paths) {
+  return Object.fromEntries((paths || [])
+    .filter((path) => path !== '.rsc.json' && path !== '.rsc/backups/')
+    .map((path) => [path, digestPath(join(cwd, path.replace(/\/$/, '')))]));
+}
 
 function recoveryCommand(plan, planId) {
   const record = plan.record;
@@ -62,6 +104,14 @@ export function verifyOnboarding(cwd, plan, planId) {
   }
   const manifest = readManifest(cwd);
   if (manifest?.onboarding?.acceptedPlanId !== planId) differences.push('manifest receipt differs from accepted plan');
+  const expectedDigests = manifest?.onboarding?.artifactDigests;
+  if (!expectedDigests) differences.push('manifest receipt has no governed artifact digests');
+  else for (const [path, expected] of Object.entries(expectedDigests)) {
+    if (digestPath(join(cwd, path.replace(/\/$/, ''))) !== expected) differences.push(`governed content differs at ${path}`);
+  }
+  if (!sameSet(manifest?.targets || [], plan.policy.targets)) differences.push('manifest targets differ from accepted policy');
+  if (!sameSet(manifest?.skills || [], plan.policy.skills)) differences.push('manifest skills differ from accepted policy');
+  if (!sameSet(manifest?.agents || [], plan.policy.agents || [])) differences.push('manifest agents differ from accepted policy');
   return differences;
 }
 
@@ -69,6 +119,17 @@ export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planI
   if (identifyPlan(plan) !== planId) throw new Error('RSC_PLAN_CHANGED: regenerate the plan and ask the user to accept the new id');
   const previousManifest = readManifest(cwd);
   const previousReceipt = previousManifest?.onboarding;
+  const previousPlan = previousReceipt?.plan;
+  const transactionPaths = [...new Set([
+    ...(plan.governedPaths || []),
+    ...(previousPlan?.governedPaths || []),
+    '.rsc.json',
+  ])].filter((path) => path !== '.rsc/backups/');
+  assertManagedPathsStayInsideRoot(cwd, transactionPaths);
+  const transaction = createBackup({
+    cwd, operation: 'onboarding-transaction', target: plan.policy.targets.join('-'),
+    paths: transactionPaths.map((path) => join(cwd, path.replace(/\/$/, ''))), cliVersion: 'onboarding', now,
+  });
   const existed = Object.fromEntries((plan.governedPaths || []).map((path) => [path, existsSync(join(cwd, path.replace(/\/$/, '')))]));
   const receipt = {
     schemaVersion: 1,
@@ -86,6 +147,9 @@ export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planI
     },
   };
   try {
+    for (const target of previousPlan?.policy?.targets || []) {
+      if (!plan.policy.targets.includes(target)) removeTargetInstall({ cwd, target });
+    }
     for (const target of plan.policy.targets) {
       await apply({
         cwd,
@@ -97,16 +161,25 @@ export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planI
     }
     writeOnboardingDocuments(cwd, plan, planId);
   } catch (error) {
+    restoreBackup({ cwd, id: transaction.id });
     throw new Error(`RSC_ONBOARDING_INCOMPLETE: ${error.message}. Recover with: ${recoveryCommand(plan, planId)}`);
   }
   receipt.provenance.paths = Object.fromEntries((plan.governedPaths || []).map((path) => [
     path,
     existed[path] ? (previousReceipt ? 'conserved' : 'preexisting') : 'installed',
   ]));
+  receipt.artifactDigests = digestGovernedPaths(cwd, plan.governedPaths);
   const manifest = readManifest(cwd);
-  writeManifest(cwd, { ...manifest, onboarding: receipt });
+  writeManifest(cwd, {
+    ...manifest,
+    targets: [...plan.policy.targets],
+    skills: [...plan.policy.skills],
+    agents: [...(plan.policy.agents || [])],
+    onboarding: receipt,
+  });
   const differences = verifyOnboarding(cwd, plan, planId);
   if (differences.length) {
+    restoreBackup({ cwd, id: transaction.id });
     throw new Error(`RSC_ONBOARDING_INCOMPLETE: ${differences.join('; ')}. Recover with: ${recoveryCommand(plan, planId)}`);
   }
   return receipt;

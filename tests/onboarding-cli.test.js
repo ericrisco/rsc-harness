@@ -24,6 +24,17 @@ test('fresh install and add cannot bypass onboarding or write files', () => {
   }
 });
 
+test('an empty or partial manifest is not an existing declared harness', () => {
+  for (const manifest of [{}, { version: 1, targets: [], skills: [], agents: [] }]) {
+    const cwd = fresh();
+    writeFileSync(join(cwd, '.rsc.json'), JSON.stringify(manifest));
+    const result = run(cwd, ['add', 'fastapi', '--target', 'codex']);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr + result.stdout, /RSC_ONBOARDING_REQUIRED/);
+    assert.equal(existsSync(join(cwd, '.codex')), false);
+  }
+});
+
 test('non-interactive onboarding reports missing fields as JSON and writes nothing', () => {
   const cwd = fresh();
   const result = run(cwd, ['--target', 'codex']);

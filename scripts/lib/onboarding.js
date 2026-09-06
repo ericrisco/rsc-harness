@@ -14,7 +14,11 @@ export const ONBOARDING_VALUES = Object.freeze({
   softwareScope: ['small', 'growing', 'complex'],
 });
 
-const ignored = new Set(['.git', '.rsc', 'node_modules', '.venv', '.next', 'dist', 'build', 'coverage', '__pycache__', '.dart_tool']);
+const ignored = new Set([
+  '.git', '.rsc', 'node_modules', '.venv', '.next', 'dist', 'build', 'coverage', '__pycache__', '.dart_tool',
+  '.claude', '.codex', '.cursor', '.opencode', '.amp', '.jules', '.zed', '.gemini', '.antigravity',
+  '.windsurf', '.clinerules', '.roo', '.continue', '.junie', '.kiro', '.aider',
+]);
 const manifests = new Set(['package.json', 'pyproject.toml', 'go.mod', 'Cargo.toml', 'pubspec.yaml', 'requirements.txt']);
 const sourceExt = new Set(['.js', '.jsx', '.ts', '.tsx', '.py', '.go', '.rs', '.dart', '.java', '.kt', '.swift', '.php', '.rb']);
 
@@ -60,6 +64,8 @@ export function scanProject(root = process.cwd()) {
   const absolute = realpathSync(resolve(root));
   const signals = [];
   const stacks = new Set();
+  const complexitySignals = new Set();
+  let markdownCount = 0;
   let sourceFileCount = 0;
   const visit = (dir) => {
     for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -80,14 +86,25 @@ export function scanProject(root = process.cwd()) {
           .trim();
         isSignal = Boolean(human);
       }
-      if (isSignal) signals.push(rel);
+      if (isSignal && manifests.has(entry.name)) signals.push(`manifest:${entry.name}`);
+      else if (isSignal) markdownCount++;
       if (sourceExt.has(extension(entry.name))) sourceFileCount++;
+      const lowerRel = rel.toLowerCase();
+      if (/(^|[/_.-])(auth|login|oauth|session)([/_.-]|$)/.test(lowerRel)) complexitySignals.add('authentication');
+      if (/(^|[/_.-])(payment|billing|checkout)([/_.-]|$)/.test(lowerRel)) complexitySignals.add('payments');
+      if (/(^|[/_.-])(database|persistence|migration|schema)([/_.-]|$)/.test(lowerRel)) complexitySignals.add('persistence');
+      if (/(^|[/_.-])(integration|webhook|connector)([/_.-]|$)/.test(lowerRel)) complexitySignals.add('external-integrations');
       if (entry.name === 'package.json') {
         try {
           const pkg = JSON.parse(readFileSync(path, 'utf8'));
           const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
           for (const [name, stack] of [['next', 'nextjs'], ['react', 'react'], ['vue', 'vue'], ['svelte', 'svelte']]) if (deps[name]) stacks.add(stack);
           stacks.add('node');
+          const names = Object.keys(deps).join(' ').toLowerCase();
+          if (/(passport|auth0|clerk|next-auth|better-auth)/.test(names)) complexitySignals.add('authentication');
+          if (/(stripe|paypal|adyen|braintree)/.test(names)) complexitySignals.add('payments');
+          if (/(prisma|typeorm|sequelize|mongoose|postgres|mysql|sqlite|supabase|firebase)/.test(names)) complexitySignals.add('persistence');
+          if (/(webhook|octokit|twilio|sendgrid|slack)/.test(names)) complexitySignals.add('external-integrations');
         } catch { stacks.add('node'); }
       }
       if (entry.name === 'pyproject.toml' || entry.name === 'requirements.txt') stacks.add('python');
@@ -97,6 +114,7 @@ export function scanProject(root = process.cwd()) {
     }
   };
   visit(absolute);
+  if (markdownCount) signals.push(`markdown:${markdownCount}`);
   let parentHarness = null;
   let cursor = dirname(absolute);
   while (cursor !== dirname(cursor)) {
@@ -110,6 +128,7 @@ export function scanProject(root = process.cwd()) {
     schemaVersion: 1,
     signals: [...new Set(signals)].sort(),
     stacks: [...stacks].sort(),
+    complexitySignals: [...complexitySignals].sort(),
     sourceFileCount,
     parentHarness,
   };
@@ -127,7 +146,14 @@ function deferred(id, kind, reason, reevaluateWhen, provenance = 'proportionalit
 export function buildOnboardingPlan(record, evidence) {
   const normalized = normalizeOnboarding(record);
   const isSoftware = normalized.projectKind === 'software' || normalized.projectKind === 'mixed';
-  const needsSdd = isSoftware && normalized.softwareScope !== 'small';
+  const goalSignals = [];
+  const goal = normalized.goal.toLowerCase();
+  if (/auth|login|oauth|sesión|session/.test(goal)) goalSignals.push('authentication');
+  if (/payment|billing|checkout|pago|cobro/.test(goal)) goalSignals.push('payments');
+  if (/database|persistence|persistencia|base de datos/.test(goal)) goalSignals.push('persistence');
+  if (/integration|integración|webhook|third-party|tercero/.test(goal)) goalSignals.push('external-integrations');
+  const complexitySignals = [...new Set([...(evidence.complexitySignals || []), ...goalSignals])].sort();
+  const needsSdd = isSoftware && (normalized.softwareScope !== 'small' || complexitySignals.length > 0);
   const profile = needsSdd ? 'core' : 'minimal';
   const catalog = loadManifest();
   const catalogIds = new Set(catalog.skills.map((skill) => skill.id));
@@ -140,7 +166,9 @@ export function buildOnboardingPlan(record, evidence) {
   const decisions = skills.map((id) => detectedSkills.includes(id)
     ? selected(id, 'skill', `Detected ${id} evidence inside the selected project root.`, 'workspace-evidence')
     : selected(id, 'skill', needsSdd
-      ? `Included in the development workflow for ${normalized.softwareScope} software.`
+      ? (id === 'sdd' && complexitySignals.length
+        ? `Included because the accepted work has ${complexitySignals.join(', ')} complexity.`
+        : `Included in the development workflow for ${normalized.softwareScope} software.`)
       : `Included in the lightweight foundation for this ${normalized.projectKind} project.`));
   const sddTriggers = ['multiple related features', 'authentication or persistence', 'external integrations', 'cross-cutting changes'];
   if (!needsSdd) decisions.push(deferred('sdd', 'workflow', isSoftware
@@ -187,6 +215,7 @@ export function buildOnboardingPlan(record, evidence) {
     evidence: {
       schemaVersion: evidence.schemaVersion,
       signals: [...evidence.signals], stacks: [...evidence.stacks],
+      complexitySignals: [...(evidence.complexitySignals || [])],
       sourceFileCount: evidence.sourceFileCount, parentHarness: evidence.parentHarness,
     },
     decisions,
@@ -210,11 +239,19 @@ export const shellQuote = (value) => `'${String(value).replaceAll("'", `'"'"'`)}
 export function recommendDeferredComponents(acceptedPlan, currentEvidence) {
   const baseline = acceptedPlan?.evidence || {};
   const grewBy = (currentEvidence?.sourceFileCount || 0) - (baseline.sourceFileCount || 0);
-  const addedManifests = (currentEvidence?.signals || []).filter((signal) => manifests.has(signal.split('/').at(-1)) && !(baseline.signals || []).includes(signal));
-  if (grewBy < 5 && !addedManifests.length) return [];
-  const evidence = grewBy >= 5
+  const addedManifests = (currentEvidence?.signals || []).filter((signal) => signal.startsWith('manifest:') && !(baseline.signals || []).includes(signal));
+  const addedComplexity = (currentEvidence?.complexitySignals || []).filter((signal) => !(baseline.complexitySignals || []).includes(signal));
+  if (grewBy < 5 && !addedManifests.length && !addedComplexity.length) return [];
+  const evidence = addedComplexity.length
+    ? `The project added ${addedComplexity.join(', ')} evidence.`
+    : grewBy >= 5
     ? `The project grew by ${grewBy} source files since the accepted plan.`
     : `The project added software manifest evidence: ${addedManifests.join(', ')}.`;
+  const suggestedRecord = {
+    ...acceptedPlan.record,
+    projectKind: ['software', 'mixed'].includes(acceptedPlan.record.projectKind) ? acceptedPlan.record.projectKind : 'mixed',
+    softwareScope: 'growing',
+  };
   return (acceptedPlan.decisions || [])
     .filter((decision) => decision.state === 'deferred' && ['sdd', 'base-agents', 'code-hooks'].includes(decision.id))
     .map((decision) => ({
@@ -222,6 +259,7 @@ export function recommendDeferredComponents(acceptedPlan, currentEvidence) {
       id: decision.id,
       explanation: `${evidence} This matches: ${decision.reevaluateWhen.join('; ')}.`,
       requiresNewPlan: true,
+      suggestedRecord,
     }));
 }
 

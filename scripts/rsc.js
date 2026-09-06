@@ -82,6 +82,12 @@ function onboardingRequired(raw, action = 'onboard') {
   process.exitCode = 2;
 }
 
+function hasDeclaredHarness(manifest = readManifest()) {
+  return Boolean(manifest && manifest.version === 1 && Array.isArray(manifest.targets) && manifest.targets.length
+    && manifest.targets.every((target) => TARGETS.some((known) => known.id === target))
+    && Array.isArray(manifest.skills) && manifest.skills.length);
+}
+
 function renderPlan(plan, planId) {
   say('RSC_ONBOARDING_PLAN');
   say(`Plan id: ${planId}`);
@@ -185,8 +191,7 @@ function runReassessment() {
   if (!recommendations.length) return void say('RSC_REASSESSMENT_NO_CHANGE');
   say('RSC_REASSESSMENT_RECOMMENDED');
   for (const item of recommendations) say(`  ${item.kind}/${item.id}: ${item.explanation}`);
-  const record = plan.record;
-  const nextScope = record.softwareScope === 'small' ? 'growing' : record.softwareScope;
+  const record = recommendations[0].suggestedRecord || plan.record;
   say('Review a new plan; nothing has been installed:');
   say([
     'npx @ericrisco/rsc@latest onboard',
@@ -194,7 +199,7 @@ function runReassessment() {
     `--accompaniment ${record.accompaniment}`,
     `--project-kind ${record.projectKind}`,
     `--goal ${shellQuote(record.goal)}`,
-    ...(nextScope ? [`--software-scope ${nextScope}`] : []),
+    ...(record.softwareScope ? [`--software-scope ${record.softwareScope}`] : []),
     `--target ${record.targets.join(',')}`,
   ].join(' '));
   say('Show the new plan and ask the user to accept its id before applying it.');
@@ -485,13 +490,13 @@ async function main() {
   const target = targets[0];
   switch (cmd) {
     case undefined:
-      return readManifest() ? wizard(f ? targets : null) : runOnboarding(f ? targets : []);
+      return hasDeclaredHarness() ? wizard(f ? targets : null) : runOnboarding(f ? targets : []);
     case 'onboard':
       return runOnboarding(f ? targets : []);
     case 'reassess':
       return runReassessment();
     case 'add': {
-      if (!readManifest()) return onboardingRequired(onboardingInput(targets));
+      if (!hasDeclaredHarness()) return onboardingRequired(onboardingInput(targets));
       const requested = requestedIds();
       const selected = classifyRequested(requested);
       if (reportUnknown(selected.unknown)) return;
@@ -502,7 +507,7 @@ async function main() {
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
     }
     case 'install': {
-      if (!readManifest()) return onboardingRequired(onboardingInput(targets));
+      if (!hasDeclaredHarness()) return onboardingRequired(onboardingInput(targets));
       const profile = flag('profile') || 'minimal';
       const without = argv.filter((a, i) => argv[i - 1] === '--without');
       let ids = skillsForProfile(loadManifest(), profile);

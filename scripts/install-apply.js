@@ -378,6 +378,28 @@ export async function uninstall({ skillIds = [], agentIds = [], target, home, cw
   return [...new Set(removed)];
 }
 
+// Reconcile an accepted onboarding plan as a replacement, not an additive install.
+// Ownership comes only from the target state file; unrelated files in the assistant
+// directory are left untouched.
+export function removeTargetInstall({ target, home, cwd = process.cwd() }) {
+  const paths = targetPaths(target, home, cwd);
+  const state = readState(paths.stateFile);
+  for (const entry of Object.values(state.skills || {})) {
+    for (const file of entry.files || []) rmSync(file, { recursive: true, force: true });
+  }
+  for (const name of state.agents || []) {
+    const file = agentPath(target, cwd, name);
+    if (file) rmSync(file, { recursive: true, force: true });
+  }
+  for (const name of state.commands || []) {
+    const file = commandPath(target, cwd, name);
+    if (file) rmSync(file, { recursive: true, force: true });
+  }
+  unwireHook(target, paths);
+  unwireMemory(target, cwd);
+  rmSync(paths.stateFile, { force: true });
+}
+
 export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun = false }) {
   const paths = targetPaths(target, home, cwd);
   const state = readState(paths.stateFile);

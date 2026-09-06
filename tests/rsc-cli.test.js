@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const adoptExistingHarness = (cwd) => writeFileSync(join(cwd, '.rsc.json'), `${JSON.stringify({
-  version: 1, targets: [], skills: [], agents: [], ownSkills: [], optOuts: [],
+  version: 1, targets: ['codex'], skills: ['orient'], agents: [], ownSkills: [], optOuts: [],
 }, null, 2)}\n`);
 
 test('rsc registry refresh/status CLI writes project registry', () => {

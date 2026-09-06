@@ -121,7 +121,8 @@ test('a nested scan reads only the selected root and reports a parent marker pat
   assert.equal(evidence.parentHarness, '..');
   assert.ok(!canonicalJson(evidence).includes('must-not-enter-evidence'));
   assert.ok(!evidence.signals.includes('package.json'));
-  assert.ok(evidence.signals.includes('notes.md'));
+  assert.ok(evidence.signals.includes('markdown:1'));
+  assert.ok(!canonicalJson(evidence).includes('notes.md'));
 });
 
 test('deferred components stay quiet until evidence crosses a recorded trigger', () => {
@@ -134,4 +135,34 @@ test('deferred components stay quiet until evidence crosses a recorded trigger',
   assert.ok(sdd);
   assert.match(sdd.explanation, /source files|grew/i);
   assert.equal(sdd.requiresNewPlan, true);
+});
+
+test('managed assistant output never becomes project evidence after a partial install', () => {
+  const dir = root();
+  mkdirSync(join(dir, '.claude', 'agents'), { recursive: true });
+  mkdirSync(join(dir, '.codex', 'rsc'), { recursive: true });
+  writeFileSync(join(dir, '.claude', 'agents', 'developer.md'), '# generated agent');
+  writeFileSync(join(dir, '.codex', 'rsc', 'state.md'), '# generated state');
+  const evidence = scanProject(dir);
+  assert.deepEqual(evidence.signals, []);
+  assert.equal(evidence.sourceFileCount, 0);
+});
+
+test('declared auth, persistence, payments or integrations select SDD for small software', () => {
+  const dir = root();
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { stripe: '1', passport: '1', prisma: '1' } }));
+  const plan = buildOnboardingPlan(normalizeOnboarding(answers({ goal: 'Add login, payments and a database' })), scanProject(dir));
+  assert.equal(plan.decisions.find((d) => d.id === 'sdd').state, 'selected');
+  assert.match(plan.decisions.find((d) => d.id === 'sdd').reason, /auth|payment|persistence|integration/i);
+});
+
+test('non-software growth recommends changing to a mixed plan that can actually select SDD', () => {
+  const dir = root();
+  const operations = normalizeOnboarding(answers({ projectKind: 'operations', softwareScope: undefined, goal: 'Run operations' }));
+  const accepted = buildOnboardingPlan(operations, scanProject(dir));
+  for (let i = 0; i < 6; i++) writeFileSync(join(dir, `automation-${i}.js`), 'export {};');
+  const recommendations = recommendDeferredComponents(accepted, scanProject(dir));
+  assert.ok(recommendations.some((item) => item.id === 'sdd'));
+  assert.equal(recommendations[0].suggestedRecord.projectKind, 'mixed');
+  assert.equal(recommendations[0].suggestedRecord.softwareScope, 'growing');
 });
