@@ -15,7 +15,7 @@ import { listBackups, restoreBackup } from './lib/backups.js';
 import { runUpgrade } from './lib/upgrade.js';
 import { diagnose, repair } from './lib/repair.js';
 import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-floor.js';
-import { readManifest } from './lib/manifest-file.js';
+import { readManifest, writeManifest } from './lib/manifest-file.js';
 import {
   normalizeOnboarding, missingOnboardingFields, scanProject,
   buildOnboardingPlan, decodeGoal, encodeGoal, identifyPlan, recommendDeferredComponents,
@@ -89,15 +89,29 @@ function hasDeclaredHarness(manifest = readManifest()) {
   const receipt = manifest.onboarding;
   if (receipt) {
     try {
-      return receipt.schemaVersion === 1
+      const verified = receipt.schemaVersion === 1
         && identifyPlan(receipt.plan) === receipt.acceptedPlanId
         && verifyOnboarding(process.cwd(), receipt.plan, receipt.acceptedPlanId).length === 0;
+      if (verified) return true;
+      if (receipt.maintenanceDrift && installedTargets(process.cwd()).some((target) => manifest.targets.includes(target))) return true;
     } catch { return false; }
   }
   // Backward compatibility is evidence-based: an actually installed pre-onboarding
   // harness keeps its maintenance commands. A hand-written or merely committed
   // declaration with no local state cannot bypass first contact.
   return installedTargets(process.cwd()).some((target) => manifest.targets.includes(target));
+}
+
+function markMaintenanceDrift(action) {
+  const manifest = readManifest();
+  if (!manifest?.onboarding) return;
+  writeManifest(process.cwd(), {
+    ...manifest,
+    onboarding: {
+      ...manifest.onboarding,
+      maintenanceDrift: { action, recordedAt: new Date().toISOString(), requiresReassessment: true },
+    },
+  });
 }
 
 function renderPlan(plan, planId) {
@@ -109,6 +123,8 @@ function renderPlan(plan, planId) {
   for (const decision of plan.decisions.filter((d) => d.state === 'selected')) say(`  + ${decision.kind}/${decision.id} — ${decision.reason}`);
   say('Deferred:');
   for (const decision of plan.decisions.filter((d) => d.state === 'deferred')) say(`  - ${decision.kind}/${decision.id} — ${decision.reason} Reevaluate: ${decision.reevaluateWhen.join('; ')}`);
+  say('Excluded:');
+  for (const decision of plan.decisions.filter((d) => d.state === 'excluded')) say(`  × ${decision.kind}/${decision.id} — ${decision.reason}`);
   say('Managed paths:');
   for (const path of plan.governedPaths) say(`  ${path}`);
   if (plan.evidence.parentHarness) say(`Parent harness detected at ${plan.evidence.parentHarness}; it is not inherited by this plan.`);
@@ -514,7 +530,11 @@ async function main() {
       if (reportUnknown(selected.unknown)) return;
       const ids = withDefaultSkillFloor(selected.skills);
       if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
-      for (const t of targets) await applyInstall({ skillIds: ids, agentIds: selected.agents, target: t });
+      const receipt = readManifest()?.onboarding;
+      const maintainedIds = receipt ? [...new Set([...(receipt.plan.policy.skills || []), ...ids])].sort() : ids;
+      const policy = receipt ? { ...receipt.plan.policy, skills: maintainedIds } : undefined;
+      for (const t of targets) await applyInstall({ skillIds: maintainedIds, agentIds: selected.agents, target: t, policy });
+      markMaintenanceDrift(`add ${requested.join(',')}`);
       say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
     }
@@ -525,7 +545,10 @@ async function main() {
       let ids = skillsForProfile(loadManifest(), profile);
       ids = withDefaultSkillFloor(ids).filter((id) => !without.includes(id));
       if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
-      for (const t of targets) await applyInstall({ skillIds: ids, target: t });
+      const receipt = readManifest()?.onboarding;
+      const policy = receipt ? { ...receipt.plan.policy, skills: ids } : undefined;
+      for (const t of targets) await applyInstall({ skillIds: ids, target: t, policy });
+      markMaintenanceDrift(`install ${profile}`);
       say(`✅ Profile '${profile}' installed for ${targets.join(', ')} (${ids.length} skills)`);
       printAgentHandoff();
       return;

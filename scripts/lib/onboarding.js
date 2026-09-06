@@ -142,6 +142,9 @@ function selected(id, kind, reason, provenance = 'declared-intent') {
 function deferred(id, kind, reason, reevaluateWhen, triggerRules = [], provenance = 'proportionality-policy') {
   return { kind, id, state: 'deferred', reason, provenance, reevaluateWhen, triggerRules };
 }
+function excluded(id, kind, reason, provenance = 'separate-consent-boundary') {
+  return { kind, id, state: 'excluded', reason, provenance, reevaluateWhen: [], triggerRules: [] };
+}
 
 export function buildOnboardingPlan(record, evidence) {
   const normalized = normalizeOnboarding(record);
@@ -192,7 +195,7 @@ export function buildOnboardingPlan(record, evidence) {
     : deferred('gitmoji-guard', 'guard', 'No selected target and project policy justify this Claude-only commit guard.', ['Claude Code is selected and a governed software workflow adopts the convention'], [{ type: 'software-trigger-and-claude' }]));
   decisions.push(selected('memory', 'capability', 'Local bounded project memory supports continuity without an external account.'));
   decisions.push(selected('harness-documents', 'route', 'The accepted profile and plan are persisted under 02-DOCS/wiki/harness/.'));
-  decisions.push(deferred('context7', 'integration', 'No external MCP connection is installed without a specific need and separate consent.', ['a software task needs current third-party library documentation and the user separately consents'], [{ type: 'task-and-consent', task: 'third-party-library-docs', consent: 'context7' }]));
+  decisions.push(excluded('context7', 'integration', 'External MCP connections require a separate, provider-specific consent flow and are outside this local harness plan.'));
   decisions.sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`));
   const policy = {
     skills,
@@ -203,6 +206,7 @@ export function buildOnboardingPlan(record, evidence) {
     codeHooks: needsSdd,
     gitmojiGuard,
     memory: true,
+    context7: false,
   };
   const root = evidence.root;
   const governedPaths = root ? [...new Set([
@@ -211,6 +215,7 @@ export function buildOnboardingPlan(record, evidence) {
     '02-DOCS/wiki/harness/user-profile.md',
     '02-DOCS/wiki/harness/decisions.md',
     '02-DOCS/wiki/harness/installation-plan.md',
+    '.rsc/.no-context7',
     ...normalized.targets.flatMap((target) => managedPathsForInstall({ skillIds: skills, target, cwd: root, policy })
       .map((path) => relative(root, path).split(sep).join('/'))),
   ])].sort() : ['.rsc.json', '.rsc/', '02-DOCS/wiki/harness/'];
@@ -248,7 +253,7 @@ export const decodeGoal = (value) => {
   } catch { return undefined; }
 };
 
-export function recommendDeferredComponents(acceptedPlan, currentEvidence, context = {}) {
+export function recommendDeferredComponents(acceptedPlan, currentEvidence) {
   const baseline = acceptedPlan?.evidence || {};
   const grewBy = (currentEvidence?.sourceFileCount || 0) - (baseline.sourceFileCount || 0);
   const addedManifests = (currentEvidence?.signals || []).filter((signal) => signal.startsWith('manifest:') && !(baseline.signals || []).includes(signal));
@@ -270,7 +275,6 @@ export function recommendDeferredComponents(acceptedPlan, currentEvidence, conte
     if (rule.type === 'complexity-added') return facts.addedComplexity >= rule.atLeast;
     if (rule.type === 'manifest-with-implementation') return facts.manifestWithImplementation;
     if (rule.type === 'software-trigger-and-claude') return acceptedPlan.record.targets.includes('claude') && (facts.grewBy >= 5 || facts.addedComplexity > 0 || facts.manifestWithImplementation);
-    if (rule.type === 'task-and-consent') return context.taskSignal === rule.task && (context.consents || []).includes(rule.consent);
     return false;
   };
   return (acceptedPlan.decisions || [])

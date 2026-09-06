@@ -74,6 +74,7 @@ test('acceptance recomputes the plan: wrong id writes nothing; exact id persists
   assert.ok(existsSync(join(cwd, '02-DOCS/wiki/harness/user-profile.md')));
   assert.ok(!existsSync(join(cwd, '.codex/agents/developer.toml')));
   assert.ok(existsSync(join(cwd, 'AGENTS.md')), 'operations retains the always-on profile/orient surface');
+  assert.ok(existsSync(join(cwd, '.rsc', '.no-context7')), 'deferred external MCPs stay silent until a separate consent flow');
   const instructions = readFileSync(join(cwd, 'AGENTS.md'), 'utf8');
   assert.match(instructions, /user-profile|orient|suggest/);
   assert.doesNotMatch(instructions, /feature intent goes through SDD|gitmoji/i);
@@ -84,6 +85,20 @@ test('acceptance recomputes the plan: wrong id writes nothing; exact id persists
   assert.equal(afterSync.onboarding.acceptedPlanId, id);
   assert.ok(!existsSync(join(cwd, '.codex/agents/developer.toml')), 'sync preserves the no-base-agents policy');
   assert.ok(existsSync(join(cwd, 'AGENTS.md')), 'sync preserves the always-on surface');
+});
+
+test('explicit maintenance remains usable and records drift without enabling deferred code policy', () => {
+  const cwd = fresh();
+  const preview = run(cwd, ['onboard', ...complete]);
+  const id = preview.stdout.match(/Plan id: ([a-f0-9]{64})/)?.[1];
+  assert.equal(run(cwd, ['onboard', ...complete, '--accept-plan', id]).status, 0);
+  const first = run(cwd, ['add', 'fastapi', '--target', 'codex']);
+  assert.equal(first.status, 0, first.stderr);
+  const second = run(cwd, ['add', 'postgresdb', '--target', 'codex']);
+  assert.equal(second.status, 0, second.stderr);
+  const manifest = JSON.parse(readFileSync(join(cwd, '.rsc.json'), 'utf8'));
+  assert.equal(manifest.onboarding.maintenanceDrift.requiresReassessment, true);
+  assert.equal(existsSync(join(cwd, '.codex', 'agents', 'developer.toml')), false);
 });
 
 test('operations on Claude keeps SessionStart but omits feature, ship and gitmoji gates', () => {

@@ -43,6 +43,23 @@ test('artifact digest inventory must cover every governed path', async () => {
   assert.ok(verifyOnboarding(cwd, plan, id).some((d) => d.includes('digest inventory')));
 });
 
+test('verification requires every persisted decision reason and reevaluation condition', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-onboard-reasons-'));
+  const record = normalizeOnboarding({ technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'operations', goal: 'Run ops', targets: ['codex'] });
+  const plan = buildOnboardingPlan(record, scanProject(cwd));
+  const id = identifyPlan(plan);
+  await applyAcceptedOnboarding({ cwd, plan, planId: id });
+  const path = join(cwd, '02-DOCS/wiki/harness/installation-plan.md');
+  writeFileSync(path, readFileSync(path, 'utf8').replace(/\| ([^|]+) \| ([^|]+) \| (selected|deferred) \| [^|]+ \| [^|]+ \|/g, '| $1 | $2 | $3 | omitted | omitted |'));
+  const manifestPath = join(cwd, '.rsc.json');
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  // Simulate a faulty renderer that blessed its own output after writing it.
+  const { createHash } = await import('node:crypto');
+  manifest.onboarding.artifactDigests['02-DOCS/wiki/harness/installation-plan.md'] = createHash('sha256').update(readFileSync(path)).digest('hex');
+  writeFileSync(manifestPath, JSON.stringify(manifest));
+  assert.ok(verifyOnboarding(cwd, plan, id).some((d) => d.includes('installation plan content differs')));
+});
+
 test('onboarding refuses a governed path whose symlink leaves the project root', async () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-onboard-root-'));
   const outside = mkdtempSync(join(tmpdir(), 'rsc-onboard-outside-'));
@@ -162,6 +179,33 @@ test('accepting fewer targets removes the deselected RSC installation before REA
   assert.equal(existsSync(join(cwd, '.rsc', 'skills', 'specify')), false);
   assert.doesNotMatch(readFileSync(join(cwd, '.gitignore'), 'utf8'), /^\.claude\//m);
   assert.deepEqual(verifyOnboarding(cwd, codex, identifyPlan(codex)), []);
+});
+
+test('switching from Claude growing software to fresh Codex small software does not inherit agents', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-target-switch-'));
+  const claudeRecord = normalizeOnboarding({ technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'software', softwareScope: 'growing', goal: 'Build product', targets: ['claude'] });
+  const claude = buildOnboardingPlan(claudeRecord, scanProject(cwd));
+  await applyAcceptedOnboarding({ cwd, plan: claude, planId: identifyPlan(claude) });
+  const codexRecord = normalizeOnboarding({ ...claudeRecord, softwareScope: 'small', goal: 'Build calculator', targets: ['codex'] });
+  const codex = buildOnboardingPlan(codexRecord, scanProject(cwd));
+  await applyAcceptedOnboarding({ cwd, plan: codex, planId: identifyPlan(codex) });
+  assert.equal(existsSync(join(cwd, '.codex', 'agents', 'developer.toml')), false);
+  assert.deepEqual(verifyOnboarding(cwd, codex, identifyPlan(codex)), []);
+});
+
+test('removing a target preserves matching gitignore lines that predated RSC', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-ignore-owner-'));
+  mkdirSync(join(cwd, '.git'));
+  writeFileSync(join(cwd, '.gitignore'), '.claude/skills/orient\nkeep.tmp\n');
+  const claudeRecord = normalizeOnboarding({ technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'software', softwareScope: 'small', goal: 'Build calculator', targets: ['claude'] });
+  const claude = buildOnboardingPlan(claudeRecord, scanProject(cwd));
+  await applyAcceptedOnboarding({ cwd, plan: claude, planId: identifyPlan(claude) });
+  const codexRecord = normalizeOnboarding({ ...claudeRecord, targets: ['codex'] });
+  const codex = buildOnboardingPlan(codexRecord, scanProject(cwd));
+  await applyAcceptedOnboarding({ cwd, plan: codex, planId: identifyPlan(codex) });
+  const gitignore = readFileSync(join(cwd, '.gitignore'), 'utf8');
+  assert.match(gitignore, /^\.claude\/skills\/orient$/m);
+  assert.match(gitignore, /^keep\.tmp$/m);
 });
 
 test('a corrupt prior target state cannot delete a path outside the project', async () => {

@@ -95,6 +95,7 @@ export function verifyOnboarding(cwd, plan, planId) {
     if (state.policy?.alwaysOn !== plan.policy.alwaysOn) differences.push(`${target}: always-on policy differs`);
     if (state.policy?.codeHooks !== plan.policy.codeHooks) differences.push(`${target}: code-hook policy differs`);
     if (state.policy?.memory !== plan.policy.memory) differences.push(`${target}: memory policy differs`);
+    if (state.policy?.context7 !== plan.policy.context7) differences.push(`${target}: context7 policy differs`);
   }
   for (const name of ['user-profile.md', 'installation-plan.md', 'decisions.md']) {
     if (!existsSync(join(cwd, '02-DOCS', 'wiki', 'harness', name))) differences.push(`missing ${name}`);
@@ -124,7 +125,8 @@ export function verifyOnboarding(cwd, plan, planId) {
   const installation = existsSync(join(docsDir, 'installation-plan.md')) ? readFileSync(join(docsDir, 'installation-plan.md'), 'utf8') : '';
   if (!installation.includes(`Plan id: \`${planId}\``)) differences.push('installation plan identity differs');
   for (const decision of plan.decisions || []) {
-    if (!installation.includes(`| ${decision.kind} | ${decision.id} | ${decision.state} |`)) differences.push(`installation plan omits ${decision.kind}/${decision.id}`);
+    const row = `| ${decision.kind} | ${decision.id} | ${decision.state} | ${decision.reason} | ${decision.reevaluateWhen.join('; ') || '—'} |`;
+    if (!installation.split('\n').includes(row)) differences.push(`installation plan content differs for ${decision.kind}/${decision.id}`);
   }
   const decisions = existsSync(join(docsDir, 'decisions.md')) ? readFileSync(join(docsDir, 'decisions.md'), 'utf8') : '';
   if (!decisions.includes(`Accepted plan \`${planId}\``)) differences.push('decision ledger omits accepted plan');

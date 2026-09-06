@@ -82,6 +82,7 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.alwaysOn !== false });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
+  if (policy?.context7 === false) out.push(join(cwd, '.rsc', '.no-context7'));
   if (policy?.memory !== false) out.push(...memoryManagedPaths(target, cwd));
   if (targetHasAgents(target)) {
     const state = readState(paths.stateFile);
@@ -188,7 +189,8 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   //
   // The recorded names come from what was WRITTEN, not from a hardcoded list: a state entry
   // naming an agent whose file never landed answers "you have it" for something absent.
-  const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])].sort();
+  const inheritedExplicit = policy ? (state.explicitAgents || []) : (state.explicitAgents || readManifest(cwd)?.agents || []);
+  const explicit = [...new Set([...inheritedExplicit, ...agentIds])].sort();
   const desiredAgents = policy?.agents
     ? [...new Set([...policy.agents, ...explicit])].sort()
     : policy?.baseAgents === false
@@ -208,12 +210,18 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
     ? { mode: 'disabled', reason: 'onboarding-policy', paths: unwireMemory(target, cwd) }
     : wireMemory(target, cwd);
   state.memory = { mode: memoryResult.mode, reason: memoryResult.reason, paths: memoryResult.paths };
+  const context7OptOut = join(cwd, '.rsc', '.no-context7');
+  if (policy?.context7 === false) {
+    mkdirSync(dirname(context7OptOut), { recursive: true });
+    writeFileSync(context7OptOut, 'Managed by the accepted onboarding plan: external MCP connections require separate consent.\n');
+  }
   state.policy = policy ? {
     baseAgents: policy.baseAgents !== false,
     alwaysOn: policy.alwaysOn !== false,
     codeHooks: policy.codeHooks !== false,
     gitmojiGuard: policy.gitmojiGuard !== false,
     memory: policy.memory !== false,
+    context7: policy.context7 === true,
   } : state.policy;
   const desiredCommands = resolveCommands({
     target,
@@ -286,6 +294,12 @@ export function ignoreLocalState(cwd = process.cwd(), target) {
   const prefix = text === '' ? '' : (text.endsWith('\n') ? '' : '\n');
   try {
     appendFileSync(gi, `${prefix}\n# rsc local state (hooks, seals, logs) and managed skill links — machine-local\n${add.join('\n')}\n`);
+    if (target) {
+      const statePath = targetPaths(target, undefined, cwd).stateFile;
+      const state = readState(statePath);
+      state.ignoreEntriesAdded = [...new Set([...(state.ignoreEntriesAdded || []), ...add.map(norm)])].sort();
+      writeState(statePath, state);
+    }
     return gi;
   } catch { return null; }
 }
@@ -385,6 +399,7 @@ export function removeTargetInstall({ target, home, cwd = process.cwd() }) {
   const paths = targetPaths(target, home, cwd);
   const state = readState(paths.stateFile);
   const ignored = [paths.stateFile];
+  const ownedIgnoreEntries = new Set(state.ignoreEntriesAdded || []);
   const owned = [
     ...Object.values(state.skills || {}).flatMap((entry) => entry.files || []),
     ...(state.agents || []).map((name) => agentPath(target, cwd, name)).filter(Boolean),
@@ -424,7 +439,8 @@ export function removeTargetInstall({ target, home, cwd = process.cwd() }) {
   rmSync(paths.stateFile, { force: true });
   const gitignore = join(cwd, '.gitignore');
   if (existsSync(gitignore)) {
-    const stale = new Set(ignored.map((path) => relative(cwd, path).split(sep).join('/').replace(/^\//, '').replace(/\/$/, '')));
+    const stale = new Set(ignored.map((path) => relative(cwd, path).split(sep).join('/').replace(/^\//, '').replace(/\/$/, ''))
+      .filter((entry) => ownedIgnoreEntries.has(entry)));
     const lines = readFileSync(gitignore, 'utf8').split('\n');
     const kept = lines.filter((line) => !stale.has(line.trim().replace(/^\//, '').replace(/\/$/, '')));
     writeFileSync(gitignore, kept.join('\n'));
