@@ -60,7 +60,9 @@ npx @ericrisco/rsc@latest onboard --technical-level mixed --accompaniment L1 \
   --project-kind software --goal "small compound-interest website" \
   --software-scope small --target codex
 # After the user accepts the printed plan:
-npx @ericrisco/rsc@latest onboard <same-answers> --accept-plan <printed-id>
+npx @ericrisco/rsc@latest onboard --technical-level mixed --accompaniment L1 \
+  --project-kind software --goal "small compound-interest website" \
+  --software-scope small --target codex --accept-plan PRINTED_SHA256_ID
 ```
 
 - **Choose assistants non-interactively:** add `--target claude` (comma-separate for several) to `onboard`.
