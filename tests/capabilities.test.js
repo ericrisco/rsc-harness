@@ -381,6 +381,7 @@ test('install: the gap log cannot be committed after a real install', () => {
   const root = tmp('rsc-gi-');
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: root });
   writeFileSync(join(root, '.gitignore'), 'node_modules/\n');
+  writeFileSync(join(root, '.rsc.json'), `${JSON.stringify({ version: 1, targets: [], skills: [], agents: [], ownSkills: [], optOuts: [] }, null, 2)}\n`);
   const env = { ...process.env, HOME: tmp('rsc-caps-home-') };
   spawnSync('node', [RSC, 'add', 'suggest', '--target', 'claude'], { cwd: root, encoding: 'utf8', env });
   spawnSync('node', [RSC, 'capabilities', 'gap-log', '--procedure', 'rotate a client credential', '--verdict', 'proposed-accepted'], { cwd: root, encoding: 'utf8', env });

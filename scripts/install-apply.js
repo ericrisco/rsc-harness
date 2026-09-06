@@ -129,7 +129,7 @@ function localDecisions(cwd) {
 // into codex on a machine that already had claude is adding, not replacing. Union, sorted
 // where order carries no meaning, so the file stays diffable and a merge conflict stays
 // readable.
-export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalogVersion = CLI_VERSION, dropTarget }) {
+export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalogVersion = CLI_VERSION, dropTarget, onboarding }) {
   const prev = readManifest(cwd) || { targets: [], skills: [], agents: [], ownSkills: [], optOuts: [] };
   const { optOuts, tier } = localDecisions(cwd);
   const union = (a, b) => [...new Set([...(a || []), ...(b || [])])].sort();
@@ -146,12 +146,13 @@ export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalog
     tier: tier ?? prev.tier ?? null,
     optOuts: optOuts.length ? optOuts : (prev.optOuts || []),
     memory: prev.memory,
+    onboarding: onboarding ?? prev.onboarding,
   });
 }
 
-export async function applyInstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), operation = 'install', dryRun = false }) {
+export async function applyInstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), operation = 'install', dryRun = false, policy, onboarding }) {
   const paths = targetPaths(target, home, cwd);
-  const plan = planInstall({ skillIds, target, home, cwd });
+  const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.hooks !== false });
   const managedPaths = managedPathsForInstall({ skillIds, agentIds, target, home, cwd });
   if (dryRun) return { dryRun: true, skills: skillIds, agents: agentIds, paths: managedPaths };
   const state = readState(paths.stateFile);
@@ -180,7 +181,9 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   // The recorded names come from what was WRITTEN, not from a hardcoded list: a state entry
   // naming an agent whose file never landed answers "you have it" for something absent.
   const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])].sort();
-  const desiredAgents = resolveAgentNames(Object.keys(state.skills || {}), explicit);
+  const desiredAgents = policy?.baseAgents === false
+    ? explicit
+    : resolveAgentNames(Object.keys(state.skills || {}), explicit);
   const previousAgents = state.agents || [];
   if (targetHasAgents(target)) {
     const agentResult = reconcileAgents(target, cwd, readDeveloperTier(cwd), previousAgents, desiredAgents);
@@ -191,8 +194,16 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
     state.agentCollisions = [];
   }
   state.explicitAgents = explicit;
-  const memoryResult = wireMemory(target, cwd);
+  const memoryResult = policy?.memory === false
+    ? { mode: 'disabled', reason: 'onboarding-policy', paths: unwireMemory(target, cwd) }
+    : wireMemory(target, cwd);
   state.memory = { mode: memoryResult.mode, reason: memoryResult.reason, paths: memoryResult.paths };
+  state.policy = policy ? {
+    baseAgents: policy.baseAgents !== false,
+    hooks: policy.hooks !== false,
+    gitmojiGuard: policy.gitmojiGuard !== false,
+    memory: policy.memory !== false,
+  } : state.policy;
   const desiredCommands = resolveCommands({
     target,
     skills: Object.keys(state.skills || {}),
@@ -206,7 +217,7 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   writeState(paths.stateFile, state);
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
   writeFileSync(versionFile(cwd), CLI_VERSION + '\n');
-  recordInManifest({ cwd, target, skillIds, agentIds });
+  recordInManifest({ cwd, target, skillIds, agentIds, onboarding });
   ignoreLocalState(cwd, target);
   return { ...state, backup };
 }
@@ -376,7 +387,16 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
       paths: managedPathsForInstall({ skillIds: declared, agentIds: declaredAgents, target, home, cwd }),
     };
   }
-  const nextState = await applyInstall({ skillIds: declared, agentIds: declaredAgents, target, home, cwd, operation: 'sync' });
+  const nextState = await applyInstall({
+    skillIds: declared,
+    agentIds: declaredAgents,
+    target,
+    home,
+    cwd,
+    operation: 'sync',
+    policy: manifest?.onboarding?.plan?.policy,
+    onboarding: manifest?.onboarding,
+  });
   return { synced: declared, syncedAgents: declaredAgents, backup: nextState.backup };
 }
 
