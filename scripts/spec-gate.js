@@ -99,14 +99,14 @@ function resolveSubject(specPath, claims) {
       || (c.kind === 'pr' && p.hasPr(c.value))) ? p : null;
   };
 
-  // The declaration wins WHEN IT CAN ANSWER. Treating it as absolute looked cleaner and was wrong on
-  // the first real corpus: this workspace's config says `root: .`, which is a repository — just not
-  // the one the specs are about — so an authoritative reading would have kept every verdict wrong
-  // while appearing configured. A declaration that does not recognise a single claim in the file is
-  // not evidence about that file.
+  // The declaration is AUTHORITATIVE. Softening it to "wins when it can answer" fixed a wrong config
+  // and opened something worse: with sibling repos, a claim that is false where the spec belongs and
+  // true next door is handed to the neighbour, confirmed, and printed nowhere. A silent false negative
+  // is worse than the noisy false positive it replaced, and choosing the judge by who agrees with the
+  // claim is not a way to find out whether the claim is true. A wrong `project.root` is a wrong datum;
+  // fix the datum.
   const declared = declaredRoot(specPath);
-  const declaredProbe = declared && isRepo(declared) ? answers(declared) : null;
-  if (declaredProbe) return { probe: declaredProbe, from: 'config' };
+  if (declared && isRepo(declared)) return { probe: gitProbe(declared), from: 'config' };
 
   const here = gitProbe(dirname(specPath));
   const home = here && here.root;
@@ -119,6 +119,8 @@ function resolveSubject(specPath, claims) {
       return { probe: null, note: `several repositories here could answer it (${kids.map((k) => basename(k.dir)).join(', ')}) — say which one in project.root` };
     }
     if (kids.length === 1) return { probe: kids[0].probe, from: 'derived' };
+    // Nobody answered. Fall through to the floor rather than guessing: with no declaration and no
+    // recogniser, the spec's own repository is the only honest default.
   }
   // The floor is the old behaviour: a spec that lives beside its own code must keep the detection it
   // already had, or fixing the split layout would downgrade every caught lie to "could not check".
@@ -179,11 +181,14 @@ function main() {
   // gives the right answer only by coincidence, and the wrong one the moment the gate is pointed at
   // another checkout.
   const subjects = new Map();
+  const announced = new Set();
   const subjectFor = (path, claims) => {
     const dir = dirname(path);
-    // Cached per directory: every spec in a corpus shares a subject, and asking git once per spec
-    // instead of once per corpus is the kind of cost nobody notices until the corpus is big.
-    const key = `${dir}::${claims.map((c) => `${c.kind}:${c.value}`).join('|')}`;
+    // Keyed by directory alone. It used to include the claims, which meant a fresh resolution per
+    // spec — the opposite of what its own comment claimed, and measured at 0.8s → 10.3s over a
+    // 36-spec corpus, because every miss re-walks the children and re-runs git. A corpus shares a
+    // subject; that is the whole premise.
+    const key = dir;
     if (!subjects.has(key)) subjects.set(key, resolveSubject(path, claims));
     return subjects.get(key);
   };
@@ -209,6 +214,12 @@ function main() {
     // is something to act on (P5).
     const claims = statusClaims(statusOf(text));
     const subject = claims.length ? subjectFor(path, claims) : { probe: null };
+    // A subject nobody declared was inferred from the claims themselves, which is a guess. Say it
+    // once per run: silent inference is how a coincidence passes for a verdict.
+    if (subject.from === 'derived' && subject.probe && !announced.has(subject.probe.root)) {
+      announced.add(subject.probe.root);
+      console.log(`      note: subject derived (not declared) — asking ${subject.probe.root}; set project.root to settle it`);
+    }
     const probe = subject.probe;
     anyProbe = anyProbe || Boolean(probe);
     for (const v of checkClaims(claims, probe)) {

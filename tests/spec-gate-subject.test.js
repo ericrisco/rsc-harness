@@ -115,6 +115,14 @@ function runGate(path, cwd) {
   return { out: r.stdout + r.stderr, code: r.status };
 }
 
+// Most assertions here are of the form "no STALE line appeared", and empty output satisfies every one
+// of them: with the gate throwing before it prints, six of these tests passed. A negative assertion
+// needs an anchor proving the thing ran at all, or it is a test that cannot fail for its own reason.
+function ran(out) {
+  assert.match(out, /\d+\/\d+ pass, \d+ status claim\(s\)/,
+    `the gate did not get as far as reporting:\n${out}`);
+}
+
 test.after(() => {
   for (const d of TMP) { try { rmSync(d, { recursive: true, force: true }); } catch { /* best effort */ } }
 });
@@ -136,6 +144,7 @@ test('2 · with no config at all, derivation still finds the child', () => {
   const p = spec(ws.root, { status: `publicada en 9.9.9 (PR #7 → \`${ws.children.child.head}\`)` });
 
   const { out } = runGate(p);
+  ran(out);
   assert.doesNotMatch(out, /STALE|UNVERIFIABLE/,
     `whoever never ran sdd-init must still get an answer:\n${out}`);
 });
@@ -187,6 +196,7 @@ test('7 · config pointing at something that is not a repository falls through t
   const p = spec(ws.root, { status: `publicada en 9.9.9 (PR #7 → \`${ws.children.child.head}\`)` });
 
   const { out } = runGate(p);
+  ran(out);
   assert.doesNotMatch(out, /STALE/, `a misconfigured root must not turn true claims false:\n${out}`);
 });
 
@@ -197,6 +207,7 @@ test('8 · a PR landed with a merge commit is recognised', () => {
   const p = spec(ws.root, { status: 'publicada en 9.9.9 (PR #7)' });
 
   const { out } = runGate(p);
+  ran(out);
   assert.doesNotMatch(out, /PR #7/, `"Merge pull request #7 from …" is how a plain merge lands:\n${out}`);
 });
 
@@ -213,6 +224,7 @@ test('9 · and one landed with a squash still is', () => {
 
   const p = spec(ws.root, { slug: 'squashed', status: 'publicada en 9.9.9 (PR #8)' });
   const { out } = runGate(p);
+  ran(out);
   assert.doesNotMatch(out, /PR #8/, `the squash convention must keep working:\n${out}`);
 });
 
@@ -232,16 +244,11 @@ test('10 · a stale claim does not change the exit code', () => {
 
 // ── 11-12. the branch the first real corpus taught us about ─────────────────────────────────
 
-test('11 · a config naming a real repo that knows nothing about the claims falls through', () => {
-  // This workspace's own config says `root: .` — a repository, just not the one its specs describe.
-  // Read as authoritative, that keeps every verdict wrong while looking configured.
-  const ws = workspace({ config: '.' });
-  const p = spec(ws.root, { status: `publicada en 9.9.9 (PR #7 → \`${ws.children.child.head}\`)` });
-
-  const { out } = runGate(p);
-  assert.doesNotMatch(out, /STALE|UNVERIFIABLE/,
-    `a declaration that recognises nothing in the file is not evidence about the file:\n${out}`);
-});
+// Test 11 used to assert that a config naming a repo which cannot answer falls through to derivation.
+// That reading was written during implementation and is now retired: the adversarial pass showed it
+// lets a sibling repo that coincidentally answers a FALSE claim become the judge, and confirm it in
+// silence. The declaration is authoritative; a wrong `project.root` is a wrong datum, not a case for
+// the mechanism to route around. Tests 13 and 14 hold the replacement.
 
 test('12 · a repository and its own worktree are one candidate, not an ambiguity', () => {
   const ws = workspace({ config: null });
@@ -250,7 +257,112 @@ test('12 · a repository and its own worktree are one candidate, not an ambiguit
   const p = spec(ws.root, { status: 'publicada en 9.9.9 (PR #7)' });
 
   const { out } = runGate(p);
+  ran(out);
   assert.doesNotMatch(out, /several repositories/,
     `a worktree shares the history; counting it twice invents an ambiguity out of one repo:\n${out}`);
   assert.doesNotMatch(out, /STALE/, out);
+});
+
+// ── 13-17. what the adversarial pass found: a coincidence must never pass for a verdict ─────
+
+test('13 · a lie is not laundered by a sibling repo that happens to answer it', () => {
+  // The claim is about `two`, which never landed #7. `one` did. Selecting the subject by "who can
+  // answer" hands the judgement to the repo that confirms it — so the lie came back silent, which is
+  // strictly worse than the false positive it replaced.
+  const ws = workspace({ config: 'two', children: ['one', 'two'] });
+  const two = ws.children.two.path;
+  git(two, 'reset', '-q', '--hard', 'HEAD~1');   // `two` never merged #7
+  git(two, 'tag', '-d', 'v9.9.9');
+
+  const p = spec(ws.root, { status: 'implementada en two (PR #7)' });
+  const { out } = runGate(p);
+  assert.match(out, /STALE/, `the configured subject says no; a sibling saying yes is a coincidence:\n${out}`);
+  assert.match(out, /two/, 'and the verdict must name the repository it actually asked');
+});
+
+test('14 · the declared subject is authoritative even when it cannot answer', () => {
+  const ws = workspace({ config: 'two', children: ['one', 'two'] });
+  const two = ws.children.two.path;
+  git(two, 'reset', '-q', '--hard', 'HEAD~1');
+  git(two, 'tag', '-d', 'v9.9.9');
+
+  const p = spec(ws.root, { status: 'publicada en 9.9.9 (PR #7)' });
+  const { out } = runGate(p);
+  assert.doesNotMatch(out, /several repositories/, `a declaration settles it; there is no ambiguity to report:\n${out}`);
+  assert.match(out, /STALE/);
+});
+
+test('15 · when the subject is derived rather than declared, the run says so', () => {
+  const ws = workspace({ config: null });
+  const p = spec(ws.root, { status: `publicada en 9.9.9 (PR #7 → \`${ws.children.child.head}\`)` });
+
+  const { out } = runGate(p);
+  ran(out);
+  assert.match(out, /derived|derivad/i,
+    `a subject nobody declared is a guess, and a guess has to be visible to be checkable:\n${out}`);
+  assert.match(out, /child/);
+});
+
+test('16 · a status that claims nothing checkable prints no status line at all', () => {
+  const ws = workspace({ config: 'child' });
+  const p = spec(ws.root, { status: 'draft' });
+
+  const { out } = runGate(p);
+  assert.match(out, /^PASS/m, 'the gate must have actually run');
+  assert.doesNotMatch(out, /^\s+status /m, `nothing to act on, nothing to print (P5):\n${out}`);
+});
+
+test('17 · a commit that exists but never reached the trunk is STALE, end to end', () => {
+  const ws = workspace({ config: 'child' });
+  const child = ws.children.child.path;
+  git(child, 'checkout', '-qb', 'feat/side');
+  put(child, 'side.js', '// side\n');
+  git(child, 'add', '-A');
+  git(child, 'commit', '-qm', 'feat: side');
+  const side = git(child, 'rev-parse', '--short', 'HEAD');
+  git(child, 'checkout', '-q', 'main');
+
+  const p = spec(ws.root, { slug: 'side', status: `implementada (\`${side}\`)` });
+  const { out } = runGate(p);
+  assert.match(out, /STALE/, `"committed but never merged" is the drift this exists to catch:\n${out}`);
+  assert.match(out, new RegExp(side));
+});
+
+test('18 · a child that is itself a linked worktree still counts as a candidate', () => {
+  const outside = newRepo(mkdtempSync(join(tmpdir(), 'rsc-gate-out-')));
+  TMP.push(outside);
+  put(outside, 'a.js', '// a\n');
+  git(outside, 'add', '-A');
+  git(outside, 'commit', '-qm', 'work');
+  git(outside, 'checkout', '-qb', 'feat/x');
+  put(outside, 'b.js', '// b\n');
+  git(outside, 'add', '-A');
+  git(outside, 'commit', '-qm', 'feat: x');
+  git(outside, 'checkout', '-q', 'main');
+  git(outside, 'merge', '--no-ff', '-q', 'feat/x', '-m', 'Merge pull request #7 from eric/feat/x');
+
+  const ws = workspace({ config: null, children: [] });
+  git(outside, 'worktree', 'add', '-q', '-b', 'linked-side', join(ws.root, 'linked'), 'main');
+
+  const p = spec(ws.root, { status: 'publicada (PR #7)' });
+  const { out } = runGate(p);
+  ran(out);
+  assert.doesNotMatch(out, /STALE/, `a worktree has a .git FILE; missing that makes real repos invisible:\n${out}`);
+});
+
+test('19 · PR numbers do not match by prefix, and only the trunk counts', () => {
+  const ws = workspace({ config: 'child' });
+  const child = ws.children.child.path;
+  // #7 exists on main. #1 does not — and must not match "…#7…" by being a prefix of it.
+  const p = spec(ws.root, { slug: 'prefix', status: 'publicada (PR #1)' });
+  assert.match(runGate(p).out, /STALE/, 'PR #1 must not be satisfied by a merge of PR #7');
+
+  git(child, 'checkout', '-qb', 'release');
+  put(child, 'r.js', '// r\n');
+  git(child, 'add', '-A');
+  git(child, 'commit', '-qm', 'Merge pull request #55 from eric/thing');
+  git(child, 'checkout', '-q', 'main');
+
+  const q = spec(ws.root, { slug: 'offtrunk', status: 'publicada (PR #55)' });
+  assert.match(runGate(q).out, /STALE/, 'landed on some branch is not landed on the trunk');
 });
