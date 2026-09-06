@@ -162,6 +162,24 @@ function canonical(value) {
 export const canonicalJson = (value) => JSON.stringify(canonical(value));
 export const identifyPlan = (plan) => createHash('sha256').update(canonicalJson(plan)).digest('hex');
 
+export function recommendDeferredComponents(acceptedPlan, currentEvidence) {
+  const baseline = acceptedPlan?.evidence || {};
+  const grewBy = (currentEvidence?.sourceFileCount || 0) - (baseline.sourceFileCount || 0);
+  const addedManifests = (currentEvidence?.signals || []).filter((signal) => manifests.has(signal.split('/').at(-1)) && !(baseline.signals || []).includes(signal));
+  if (grewBy < 5 && !addedManifests.length) return [];
+  const evidence = grewBy >= 5
+    ? `The project grew by ${grewBy} source files since the accepted plan.`
+    : `The project added software manifest evidence: ${addedManifests.join(', ')}.`;
+  return (acceptedPlan.decisions || [])
+    .filter((decision) => decision.state === 'deferred' && ['sdd', 'base-agents', 'code-hooks'].includes(decision.id))
+    .map((decision) => ({
+      kind: decision.kind,
+      id: decision.id,
+      explanation: `${evidence} This matches: ${decision.reevaluateWhen.join('; ')}.`,
+      requiresNewPlan: true,
+    }));
+}
+
 export function missingOnboardingFields(raw = {}) {
   const missing = [];
   if (!clean(raw.technicalLevel)) missing.push('technical-level');

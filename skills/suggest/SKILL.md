@@ -42,6 +42,9 @@ request. If the user engaged **SDD autopilot**, that one consent covers the whol
 through the phases without re-asking.
 
 If `specify` / `sdd` are not installed, offer to add them (§2) before routing.
+When `.rsc.json` records SDD as deferred, first run `npx @ericrisco/rsc@latest reassess`.
+Stay silent on `RSC_REASSESSMENT_NO_CHANGE`. If it reports new evidence, explain what changed and
+show the new plan command; SDD still needs a newly accepted plan id and is never added silently.
 
 Method, phase map and full decision table: `../sdd/SKILL.md`. On Claude Code this rule also arrives
 as a per-turn hook; the brevity here is deduplication, not relaxation.

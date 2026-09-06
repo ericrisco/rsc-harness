@@ -18,7 +18,7 @@ import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-
 import { readManifest } from './lib/manifest-file.js';
 import {
   normalizeOnboarding, missingOnboardingFields, scanProject,
-  buildOnboardingPlan, identifyPlan,
+  buildOnboardingPlan, identifyPlan, recommendDeferredComponents,
 } from './lib/onboarding.js';
 import { applyAcceptedOnboarding } from './lib/onboarding-apply.js';
 
@@ -26,7 +26,7 @@ const rawArgv = process.argv.slice(2);
 const GLOBAL_VALUE_FLAGS = new Set([
   '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--software-scope', '--accept-plan',
 ]);
-const COMMANDS = new Set(['onboard', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'sello', 'repair', 'uninstall', 'purge']);
+const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'sello', 'repair', 'uninstall', 'purge']);
 function positionalTokens(input) {
   const out = [];
   for (let i = 0; i < input.length; i++) {
@@ -169,6 +169,33 @@ async function runOnboarding(targets) {
     console.error(error.message);
     process.exitCode = 4;
   }
+}
+
+function runReassessment() {
+  const manifest = readManifest();
+  const plan = manifest?.onboarding?.plan;
+  if (!plan) {
+    console.error('RSC_ONBOARDING_REQUIRED: no accepted onboarding receipt. Run npx @ericrisco/rsc@latest onboard');
+    process.exitCode = 2;
+    return;
+  }
+  const recommendations = recommendDeferredComponents(plan, scanProject(process.cwd()));
+  if (!recommendations.length) return void say('RSC_REASSESSMENT_NO_CHANGE');
+  say('RSC_REASSESSMENT_RECOMMENDED');
+  for (const item of recommendations) say(`  ${item.kind}/${item.id}: ${item.explanation}`);
+  const record = plan.record;
+  const nextScope = record.softwareScope === 'small' ? 'growing' : record.softwareScope;
+  say('Review a new plan; nothing has been installed:');
+  say([
+    'npx @ericrisco/rsc@latest onboard',
+    `--technical-level ${record.technicalLevel}`,
+    `--accompaniment ${record.accompaniment}`,
+    `--project-kind ${record.projectKind}`,
+    `--goal ${JSON.stringify(record.goal)}`,
+    ...(nextScope ? [`--software-scope ${nextScope}`] : []),
+    `--target ${record.targets.join(',')}`,
+  ].join(' '));
+  say('Show the new plan and ask the user to accept its id before applying it.');
 }
 
 function editDistance(a, b) {
@@ -459,6 +486,8 @@ async function main() {
       return readManifest() ? wizard(f ? targets : null) : runOnboarding(f ? targets : []);
     case 'onboard':
       return runOnboarding(f ? targets : []);
+    case 'reassess':
+      return runReassessment();
     case 'add': {
       if (!readManifest()) return onboardingRequired(onboardingInput(targets));
       const requested = requestedIds();

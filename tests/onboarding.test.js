@@ -9,6 +9,7 @@ import {
   buildOnboardingPlan,
   identifyPlan,
   canonicalJson,
+  recommendDeferredComponents,
 } from '../scripts/lib/onboarding.js';
 
 const root = () => mkdtempSync(join(tmpdir(), 'rsc-onboarding-'));
@@ -86,4 +87,16 @@ test('a nested scan reads only the selected root and reports a parent marker pat
   assert.ok(!canonicalJson(evidence).includes('must-not-enter-evidence'));
   assert.ok(!evidence.signals.includes('package.json'));
   assert.ok(evidence.signals.includes('notes.md'));
+});
+
+test('deferred components stay quiet until evidence crosses a recorded trigger', () => {
+  const dir = root();
+  const plan = buildOnboardingPlan(normalizeOnboarding(answers()), scanProject(dir));
+  assert.deepEqual(recommendDeferredComponents(plan, scanProject(dir)), []);
+  for (let i = 0; i < 8; i++) writeFileSync(join(dir, `feature-${i}.js`), 'export {};');
+  const recommendations = recommendDeferredComponents(plan, scanProject(dir));
+  const sdd = recommendations.find((item) => item.id === 'sdd');
+  assert.ok(sdd);
+  assert.match(sdd.explanation, /source files|grew/i);
+  assert.equal(sdd.requiresNewPlan, true);
 });

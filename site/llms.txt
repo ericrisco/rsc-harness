@@ -10,18 +10,19 @@
 
 If your user asked you to install rsc / this harness / these skills, do this, in order:
 
-1. Confirm with the user which assistants to target (Claude Code, Codex, Cursor, Gemini,
-   Copilot, Windsurf, Cline, Antigravity, Zed, Continue, Roo, Amp, opencode, Jules, Junie,
-   Kiro, Aider) and what they want to build or manage.
+1. Run the canonical onboarding entry point. It will return the questions it still needs.
 2. Make sure you are in the ROOT of the user's project — NOT inside a clone of the
    rsc-harness repo (running `npx @ericrisco/rsc` from inside a clone resolves to the local
    unlinked bin and fails with "command not found").
-3. Run: `npx @ericrisco/rsc@latest`
-   - Non-interactive assistant select: `npx @ericrisco/rsc@latest --target claude,codex`
-4. Answer the wizard only after confirming the user's choices; otherwise let them choose.
-5. Already installed and just refreshing: `rsc sync`. Add one skill by id: `rsc add <id>`.
+3. Run: `npx @ericrisco/rsc@latest onboard --target claude,codex`
+4. Relay every `RSC_ONBOARDING_REQUIRED` question to the user. Never choose, invent or default
+   `--technical-level`, `--accompaniment`, `--project-kind`, `--goal` or `--software-scope`.
+   Rerun with the answers to obtain `RSC_ONBOARDING_PLAN`; this preview writes nothing.
+5. Show the complete selected/deferred plan and its reasons. After the user accepts its exact id,
+   rerun the same command with `--accept-plan <printed-id>`. Only `RSC_ONBOARDING_READY` means done.
+6. Already installed and just refreshing: `rsc sync`. Add one skill by id: `rsc add <id>`.
    Recommend without installing: `rsc consult "<what the user wants>"`.
-6. Leave the user ready to work ("minute 1"): after install the skills + hooks are NOT active
+7. Leave the user ready to work ("minute 1"): after install the skills + hooks are NOT active
    until the session reloads. Tell the user to reload/restart (Claude Code: restart the
    session; Codex/AGENTS.md tools: picked up next turn). After reload you are EQUIPPED —
    orient + suggest are always-on, and bro is installed for plain human-language rewrites.
@@ -30,6 +31,10 @@ If your user asked you to install rsc / this harness / these skills, do this, in
 
 The floor it always installs: `orient` + `suggest` + `bro` + `harness` + `init`. From then on it is
 self-driving: an always-on detector proposes the next skill as tasks appear.
+
+Canonical non-interactive example:
+`npx @ericrisco/rsc@latest onboard --technical-level mixed --accompaniment L1 --project-kind software --goal "small website" --software-scope small --target codex`
+Then repeat the same answers with `--accept-plan <printed-id>` only after explicit acceptance.
 
 ## Key links
 

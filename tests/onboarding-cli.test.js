@@ -82,3 +82,24 @@ test('changing root evidence after preview invalidates acceptance', () => {
   assert.match(accepted.stderr + accepted.stdout, /RSC_PLAN_CHANGED/);
   assert.ok(!existsSync(join(cwd, '.rsc.json')));
 });
+
+test('reassess stays quiet until deferred evidence changes, then requires a new accepted plan', () => {
+  const cwd = fresh();
+  const software = [
+    '--technical-level', 'mixed', '--accompaniment', 'L1', '--project-kind', 'software',
+    '--software-scope', 'small', '--goal', 'Build one calculator', '--target', 'codex',
+  ];
+  const preview = run(cwd, ['onboard', ...software]);
+  const id = preview.stdout.match(/Plan id: ([a-f0-9]{64})/)?.[1];
+  assert.equal(run(cwd, ['onboard', ...software, '--accept-plan', id]).status, 0);
+  const quiet = run(cwd, ['reassess']);
+  assert.equal(quiet.status, 0, quiet.stderr);
+  assert.match(quiet.stdout, /NO_CHANGE/);
+  for (let i = 0; i < 6; i++) writeFileSync(join(cwd, `new-${i}.js`), 'export {};');
+  const changed = run(cwd, ['reassess']);
+  assert.equal(changed.status, 0, changed.stderr);
+  assert.match(changed.stdout, /RSC_REASSESSMENT_RECOMMENDED/);
+  assert.match(changed.stdout, /SDD|sdd/);
+  assert.match(changed.stdout, /--software-scope growing/);
+  assert.match(changed.stdout, /accept/i);
+});
