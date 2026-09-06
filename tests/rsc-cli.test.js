@@ -1,12 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+const adoptExistingHarness = (cwd) => {
+  writeFileSync(join(cwd, '.rsc.json'), `${JSON.stringify({
+    version: 1, targets: ['codex'], skills: ['orient'], agents: [], ownSkills: [], optOuts: [],
+  }, null, 2)}\n`);
+  mkdirSync(join(cwd, '.codex', 'rsc'), { recursive: true });
+  writeFileSync(join(cwd, '.codex', 'rsc', '.rsc-state.json'), JSON.stringify({ skills: { orient: { files: [] } }, agents: [] }));
+};
 
 test('rsc registry refresh/status CLI writes project registry', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-'));
@@ -69,6 +76,7 @@ test('rsc catalog dumps the full catalog with install state and descriptions', (
 
 test('rsc catalog --available hides skills already installed', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-catalog-'));
+  adoptExistingHarness(cwd);
   const install = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'fastapi', '--target', 'claude'], { cwd, encoding: 'utf8' });
   assert.equal(install.status, 0, install.stderr);
   const all = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'catalog', '--target', 'claude'], { cwd, encoding: 'utf8' });
@@ -79,6 +87,7 @@ test('rsc catalog --available hides skills already installed', () => {
 
 test('rsc backups lists project-local snapshots', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-backups-'));
+  adoptExistingHarness(cwd);
   const install = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'fastapi', '--target', 'claude'], {
     cwd,
     encoding: 'utf8',
@@ -97,6 +106,7 @@ test('rsc backups lists project-local snapshots', () => {
 
 test('rsc restore latest --dry-run reports planned restore paths without mutating', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-restore-'));
+  adoptExistingHarness(cwd);
   const install = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'fastapi', '--target', 'claude'], {
     cwd,
     encoding: 'utf8',
@@ -115,6 +125,7 @@ test('rsc restore latest --dry-run reports planned restore paths without mutatin
 
 test('rsc sync --dry-run reports installed skills', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-sync-'));
+  adoptExistingHarness(cwd);
   const install = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'fastapi', '--target', 'claude'], {
     cwd,
     encoding: 'utf8',
@@ -133,6 +144,7 @@ test('rsc sync --dry-run reports installed skills', () => {
 
 test('rsc install prints the agent handoff (reload → equipped → ready, no auto-task)', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-handoff-'));
+  adoptExistingHarness(cwd);
   const result = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'install', '--profile', 'minimal', '--target', 'claude'], {
     cwd,
     encoding: 'utf8',
@@ -149,6 +161,7 @@ test('rsc install prints the agent handoff (reload → equipped → ready, no au
 
 test('rsc add nudges to reload so the new skill activates', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-add-reload-'));
+  adoptExistingHarness(cwd);
   const result = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'fastapi', '--target', 'claude'], {
     cwd,
     encoding: 'utf8',
@@ -160,6 +173,7 @@ test('rsc add nudges to reload so the new skill activates', () => {
 
 test('rsc add/uninstall accepts an agent id as a first-class unit', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-agent-'));
+  adoptExistingHarness(cwd);
   const add = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'go-reviewer', '--target', 'claude'], {
     cwd, encoding: 'utf8',
   });
@@ -177,6 +191,7 @@ test('rsc add/uninstall accepts an agent id as a first-class unit', () => {
 
 test('rsc add suggests close agent ids instead of exposing a raw skill error', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-agent-typo-'));
+  adoptExistingHarness(cwd);
   const result = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'add', 'go-reviwer', '--target', 'claude'], {
     cwd, encoding: 'utf8',
   });

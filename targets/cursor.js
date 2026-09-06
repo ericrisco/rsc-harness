@@ -8,8 +8,11 @@ export function writeSkill(id, fromDir, toPath) {
   return [toPath];
 }
 
-export function wireHook(paths, sourceMd) {
-  const body = stripFrontmatter(readFileSync(sourceMd, 'utf8'));
+export function wireHook(paths, sourceMd, policy = {}) {
+  const full = stripFrontmatter(readFileSync(sourceMd, 'utf8'));
+  const body = policy.codeHooks === false
+    ? `# rsc-suggest — always-on operations layer\n\nRead \`02-DOCS/wiki/harness/user-profile.md\` before acting. Use \`orient\` and offer missing skills through \`suggest\` only when needed.\n`
+    : full;
   mkdirSync(dirname(paths.hookTarget), { recursive: true });
   writeFileSync(paths.hookTarget, `---\ndescription: rsc auto-suggest\nalwaysApply: true\n---\n${body}`);
   return [paths.hookTarget];

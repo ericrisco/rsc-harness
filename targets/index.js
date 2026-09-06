@@ -169,8 +169,8 @@ export function writeSkill(target, id, fromDir, toPath) {
   return ADAPTER[SPEC[target].adapter].writeSkill(id, fromDir, toPath);
 }
 
-export function wireHook(target, paths, sourceMd) {
-  return ADAPTER[SPEC[target].adapter].wireHook(paths, sourceMd);
+export function wireHook(target, paths, sourceMd, policy) {
+  return ADAPTER[SPEC[target].adapter].wireHook(paths, sourceMd, policy);
 }
 
 // Inverse of wireHook — remove rsc's always-on surface for a target (settings.json

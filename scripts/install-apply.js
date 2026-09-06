@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-import { rmSync, existsSync, cpSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
-import { join, dirname, relative, sep } from 'node:path';
+import { rmSync, existsSync, cpSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
+import { join, dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
 import {
   targetHasAgents, reconcileAgents, agentPath, agentNames,
-  resolveAgentNames, agentByName, readDeveloperTier,
+  resolveAgentNames, agentByName, allAgentNames, readDeveloperTier,
 } from '../targets/agents.js';
 import { readState, writeState } from './lib/state.js';
 import { readManifest, writeManifest } from './lib/manifest-file.js';
 import { createBackup } from './lib/backups.js';
 import {
-  targetHasCommands, resolveCommands, reconcileCommands, commandPath,
+  targetHasCommands, resolveCommands, reconcileCommands, commandPath, allPotentialCommandNames,
 } from '../targets/commands.js';
 import {
   wireMemory, unwireMemory, memoryManagedPaths, memoryModeFor, memoryEnabledForProject, memoryArtifactsPresent,
@@ -63,48 +63,50 @@ function ensureBase(id, cwd, baseVersions) {
 // reported by a --dry-run. Keep in sync with targets/claude.js wireHook(): a file it
 // writes but this omits is silently absent from the snapshot, so `rsc restore` cannot
 // bring it back.
-function generatedHookFiles({ target, cwd }) {
+export function generatedHookFiles({ target, cwd, policy }) {
   if (target !== 'claude') return [];
-  return [
+  const lifecycle = [
     join(cwd, '.rsc', 'session-start.mjs'),
     join(cwd, '.rsc', 'worklog-checkpoint.mjs'),
-    join(cwd, '.rsc', 'ship-guard.mjs'),
-    join(cwd, '.rsc', 'danger-guard.mjs'),
-    join(cwd, '.rsc', 'gitmoji-guard.mjs'),
-    join(cwd, '.rsc', 'userprompt-gate.mjs'),
     join(cwd, '.rsc', 'hook-once.mjs'),
-    join(cwd, '.rsc', 'sello.mjs'),
+    join(cwd, '.rsc', 'worktree-reaper.mjs'),
   ];
+  if (policy?.codeHooks === false) return [...lifecycle, join(cwd, '.rsc', 'suggest-always-on.md')];
+  return [...lifecycle,
+    join(cwd, '.rsc', 'ship-guard.mjs'), join(cwd, '.rsc', 'danger-guard.mjs'),
+    join(cwd, '.rsc', 'gitmoji-guard.mjs'), join(cwd, '.rsc', 'userprompt-gate.mjs'),
+    join(cwd, '.rsc', 'sello.mjs')];
 }
 
-export function managedPathsForInstall({ skillIds, agentIds = [], target, home, cwd }) {
+export function managedPathsForInstall({ skillIds, agentIds = [], target, home, cwd, policy }) {
   const paths = targetPaths(target, home, cwd);
-  const plan = planInstall({ skillIds, target, home, cwd });
+  const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.alwaysOn !== false });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
-  out.push(...memoryManagedPaths(target, cwd));
+  if (policy?.context7 === false) out.push(join(cwd, '.rsc', '.no-context7'));
+  if (policy?.memory !== false) out.push(...memoryManagedPaths(target, cwd));
   if (targetHasAgents(target)) {
     const state = readState(paths.stateFile);
     const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
-    const desired = resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
-    out.push(...[...new Set([...(state.agents || []), ...desired])].map((n) => agentPath(target, cwd, n)), join(cwd, '.rsc', 'developer.json'));
+    const desired = policy?.agents || resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
+    out.push(...desired.map((n) => agentPath(target, cwd, n)));
   }
   if (targetHasCommands(target)) {
     const state = readState(paths.stateFile);
     const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
-    const desiredAgents = resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
+    const desiredAgents = policy?.agents || resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
     const desiredCommands = resolveCommands({
       target,
-      skills: [...new Set([...Object.keys(state.skills || {}), ...skillIds])],
+      skills: policy ? skillIds : [...new Set([...Object.keys(state.skills || {}), ...skillIds])],
       agents: desiredAgents,
       memoryMode: memoryEnabledForProject(cwd) ? memoryModeFor(target) : 'disabled',
     });
-    out.push(...[...new Set([...(state.commands || []), ...desiredCommands.map((command) => command.name)])].map((name) => commandPath(target, cwd, name)));
+    out.push(...desiredCommands.map((command) => commandPath(target, cwd, command.name)));
   }
   for (const step of plan) {
     if (step.kind === 'skill') {
       out.push(step.to, baseDir(step.id, cwd));
     } else if (step.kind === 'hook') {
-      out.push(step.to, ...generatedHookFiles({ target, cwd }));
+      out.push(step.to, ...generatedHookFiles({ target, cwd, policy }));
     }
   }
   return [...new Set(out)];
@@ -129,7 +131,7 @@ function localDecisions(cwd) {
 // into codex on a machine that already had claude is adding, not replacing. Union, sorted
 // where order carries no meaning, so the file stays diffable and a merge conflict stays
 // readable.
-export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalogVersion = CLI_VERSION, dropTarget }) {
+export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalogVersion = CLI_VERSION, dropTarget, onboarding }) {
   const prev = readManifest(cwd) || { targets: [], skills: [], agents: [], ownSkills: [], optOuts: [] };
   const { optOuts, tier } = localDecisions(cwd);
   const union = (a, b) => [...new Set([...(a || []), ...(b || [])])].sort();
@@ -146,13 +148,14 @@ export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalog
     tier: tier ?? prev.tier ?? null,
     optOuts: optOuts.length ? optOuts : (prev.optOuts || []),
     memory: prev.memory,
+    onboarding: onboarding ?? prev.onboarding,
   });
 }
 
-export async function applyInstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), operation = 'install', dryRun = false }) {
+export async function applyInstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), operation = 'install', dryRun = false, policy, onboarding }) {
   const paths = targetPaths(target, home, cwd);
-  const plan = planInstall({ skillIds, target, home, cwd });
-  const managedPaths = managedPathsForInstall({ skillIds, agentIds, target, home, cwd });
+  const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.alwaysOn !== false });
+  const managedPaths = managedPathsForInstall({ skillIds, agentIds, target, home, cwd, policy });
   if (dryRun) return { dryRun: true, skills: skillIds, agents: agentIds, paths: managedPaths };
   const state = readState(paths.stateFile);
   const backup = createBackup({ cwd, operation, target, paths: managedPaths, cliVersion: CLI_VERSION });
@@ -161,13 +164,20 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   // syncs — a single global marker would be bumped by the first target and make later
   // targets skip refreshing their exclusive skills' bases.
   const baseVersions = readBaseVersions(cwd);
+  if (policy) {
+    for (const id of Object.keys(state.skills || {})) {
+      if (skillIds.includes(id)) continue;
+      rmSync(paths.skillDir(id), { recursive: true, force: true });
+      delete state.skills[id];
+    }
+  }
   for (const step of plan) {
     if (step.kind === 'skill') {
       const base = ensureBase(step.id, cwd, baseVersions);
       const files = await writeSkill(target, step.id, base, step.to);
       state.skills[step.id] = { files, base };
     } else if (step.kind === 'hook') {
-      await wireHook(target, paths, join(ensureBase('suggest', cwd, baseVersions), 'SKILL.md'));
+      await wireHook(target, paths, join(ensureBase('suggest', cwd, baseVersions), 'SKILL.md'), policy);
     }
   }
   writeBaseVersions(cwd, baseVersions);
@@ -179,8 +189,13 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   //
   // The recorded names come from what was WRITTEN, not from a hardcoded list: a state entry
   // naming an agent whose file never landed answers "you have it" for something absent.
-  const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])].sort();
-  const desiredAgents = resolveAgentNames(Object.keys(state.skills || {}), explicit);
+  const inheritedExplicit = policy ? (state.explicitAgents || []) : (state.explicitAgents || readManifest(cwd)?.agents || []);
+  const explicit = [...new Set([...inheritedExplicit, ...agentIds])].sort();
+  const desiredAgents = policy?.agents
+    ? [...new Set([...policy.agents, ...explicit])].sort()
+    : policy?.baseAgents === false
+      ? explicit
+      : resolveAgentNames(Object.keys(state.skills || {}), explicit);
   const previousAgents = state.agents || [];
   if (targetHasAgents(target)) {
     const agentResult = reconcileAgents(target, cwd, readDeveloperTier(cwd), previousAgents, desiredAgents);
@@ -191,8 +206,23 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
     state.agentCollisions = [];
   }
   state.explicitAgents = explicit;
-  const memoryResult = wireMemory(target, cwd);
+  const memoryResult = policy?.memory === false
+    ? { mode: 'disabled', reason: 'onboarding-policy', paths: unwireMemory(target, cwd) }
+    : wireMemory(target, cwd);
   state.memory = { mode: memoryResult.mode, reason: memoryResult.reason, paths: memoryResult.paths };
+  const context7OptOut = join(cwd, '.rsc', '.no-context7');
+  if (policy?.context7 === false) {
+    mkdirSync(dirname(context7OptOut), { recursive: true });
+    writeFileSync(context7OptOut, 'Managed by the accepted onboarding plan: external MCP connections require separate consent.\n');
+  }
+  state.policy = policy ? {
+    baseAgents: policy.baseAgents !== false,
+    alwaysOn: policy.alwaysOn !== false,
+    codeHooks: policy.codeHooks !== false,
+    gitmojiGuard: policy.gitmojiGuard !== false,
+    memory: policy.memory !== false,
+    context7: policy.context7 === true,
+  } : state.policy;
   const desiredCommands = resolveCommands({
     target,
     skills: Object.keys(state.skills || {}),
@@ -206,7 +236,7 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   writeState(paths.stateFile, state);
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
   writeFileSync(versionFile(cwd), CLI_VERSION + '\n');
-  recordInManifest({ cwd, target, skillIds, agentIds });
+  recordInManifest({ cwd, target, skillIds, agentIds, onboarding });
   ignoreLocalState(cwd, target);
   return { ...state, backup };
 }
@@ -264,6 +294,12 @@ export function ignoreLocalState(cwd = process.cwd(), target) {
   const prefix = text === '' ? '' : (text.endsWith('\n') ? '' : '\n');
   try {
     appendFileSync(gi, `${prefix}\n# rsc local state (hooks, seals, logs) and managed skill links — machine-local\n${add.join('\n')}\n`);
+    if (target) {
+      const statePath = targetPaths(target, undefined, cwd).stateFile;
+      const state = readState(statePath);
+      state.ignoreEntriesAdded = [...new Set([...(state.ignoreEntriesAdded || []), ...add.map(norm)])].sort();
+      writeState(statePath, state);
+    }
     return gi;
   } catch { return null; }
 }
@@ -356,6 +392,86 @@ export async function uninstall({ skillIds = [], agentIds = [], target, home, cw
   return [...new Set(removed)];
 }
 
+// Reconcile an accepted onboarding plan as a replacement, not an additive install.
+// Ownership comes only from the target state file; unrelated files in the assistant
+// directory are left untouched.
+export function removeTargetInstall({ target, home, cwd = process.cwd() }) {
+  const paths = targetPaths(target, home, cwd);
+  const state = readState(paths.stateFile);
+  const ignored = [paths.stateFile];
+  const ownedIgnoreEntries = new Set(state.ignoreEntriesAdded || []);
+  const owned = [
+    ...Object.values(state.skills || {}).flatMap((entry) => entry.files || []),
+    ...(state.agents || []).map((name) => agentPath(target, cwd, name)).filter(Boolean),
+    ...(state.commands || []).map((name) => commandPath(target, cwd, name)).filter(Boolean),
+    paths.stateFile,
+  ];
+  const declaredLocationsAreExact = Object.entries(state.skills || {}).every(([id, entry]) =>
+    /^[a-z0-9][a-z0-9._-]*$/i.test(id)
+    && existsSync(join(ROOT, 'skills', id))
+    && (entry.files || []).every((file) => resolve(file) === resolve(paths.skillDir(id))))
+    && (state.agents || []).every((name) => {
+      if (!allAgentNames().includes(name)) return false;
+      const file = agentPath(target, cwd, name);
+      return file && owned.some((candidate) => resolve(candidate) === resolve(file));
+    })
+    && (state.commands || []).every((name) => {
+      if (!allPotentialCommandNames().includes(name)) return false;
+      const file = commandPath(target, cwd, name);
+      return file && owned.some((candidate) => resolve(candidate) === resolve(file));
+    });
+  const root = resolve(cwd);
+  const safe = (file) => {
+    const absolute = resolve(file);
+    if (absolute === root || !absolute.startsWith(`${root}${sep}`)) return false;
+    const parts = relative(root, dirname(absolute)).split(sep).filter(Boolean);
+    let cursor = root;
+    for (const part of parts) {
+      cursor = join(cursor, part);
+      if (!existsSync(cursor)) break;
+      if (lstatSync(cursor).isSymbolicLink()) {
+        const destination = realpathSync(cursor);
+        if (destination !== root && !destination.startsWith(`${root}${sep}`)) return false;
+      }
+    }
+    return true;
+  };
+  if (!declaredLocationsAreExact || owned.some((file) => !safe(file))) throw new Error(`RSC_PREVIOUS_INSTALL_INCOMPATIBLE: ${target} state contains a path outside its managed locations`);
+  for (const entry of Object.values(state.skills || {})) {
+    for (const file of entry.files || []) { ignored.push(file); rmSync(file, { recursive: true, force: true }); }
+  }
+  for (const name of state.agents || []) {
+    const file = agentPath(target, cwd, name);
+    if (file) { ignored.push(file); rmSync(file, { recursive: true, force: true }); }
+  }
+  for (const name of state.commands || []) {
+    const file = commandPath(target, cwd, name);
+    if (file) { ignored.push(file); rmSync(file, { recursive: true, force: true }); }
+  }
+  unwireHook(target, paths);
+  unwireMemory(target, cwd);
+  rmSync(paths.stateFile, { force: true });
+  const gitignore = join(cwd, '.gitignore');
+  if (existsSync(gitignore)) {
+    const stale = new Set(ignored.map((path) => relative(cwd, path).split(sep).join('/').replace(/^\//, '').replace(/\/$/, ''))
+      .filter((entry) => ownedIgnoreEntries.has(entry)));
+    const lines = readFileSync(gitignore, 'utf8').split('\n');
+    const kept = lines.filter((line) => !stale.has(line.trim().replace(/^\//, '').replace(/\/$/, '')));
+    writeFileSync(gitignore, kept.join('\n'));
+  }
+}
+
+export function pruneSharedBases({ cwd = process.cwd(), skillIds = [] }) {
+  const versions = readBaseVersions(cwd);
+  const wanted = new Set(skillIds);
+  for (const id of Object.keys(versions)) {
+    if (wanted.has(id)) continue;
+    rmSync(baseDir(id, cwd), { recursive: true, force: true });
+    delete versions[id];
+  }
+  writeBaseVersions(cwd, versions);
+}
+
 export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun = false }) {
   const paths = targetPaths(target, home, cwd);
   const state = readState(paths.stateFile);
@@ -365,7 +481,8 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
   // to rebuild from, and it is sitting right there.
   const ids = Object.keys(state.skills || {});
   const manifest = readManifest(cwd);
-  const declared = ids.length ? ids : (manifest?.skills || []);
+  const governedSkills = manifest?.onboarding?.plan?.policy?.skills;
+  const declared = governedSkills || (ids.length ? ids : (manifest?.skills || []));
   const declaredAgents = state.explicitAgents?.length ? state.explicitAgents : (manifest?.agents || []);
   if (!declared.length && !declaredAgents.length) return dryRun ? { dryRun: true, synced: [], syncedAgents: [], paths: [] } : { synced: [], syncedAgents: [], backup: null };
   if (dryRun) {
@@ -373,10 +490,19 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
       dryRun: true,
       synced: declared,
       syncedAgents: declaredAgents,
-      paths: managedPathsForInstall({ skillIds: declared, agentIds: declaredAgents, target, home, cwd }),
+      paths: managedPathsForInstall({ skillIds: declared, agentIds: declaredAgents, target, home, cwd, policy: manifest?.onboarding?.plan?.policy }),
     };
   }
-  const nextState = await applyInstall({ skillIds: declared, agentIds: declaredAgents, target, home, cwd, operation: 'sync' });
+  const nextState = await applyInstall({
+    skillIds: declared,
+    agentIds: declaredAgents,
+    target,
+    home,
+    cwd,
+    operation: 'sync',
+    policy: manifest?.onboarding?.plan?.policy,
+    onboarding: manifest?.onboarding,
+  });
   return { synced: declared, syncedAgents: declaredAgents, backup: nextState.backup };
 }
 

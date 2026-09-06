@@ -21,7 +21,7 @@ channel"* — **272 skills across 23 domains**, every one researched against liv
 2025-2026 sources and **adversarially scored ≥ 8.5/10** before it shipped.
 
 ```bash
-npx @ericrisco/rsc            # plain-language wizard — no jargon, installs what your project needs
+npx @ericrisco/rsc@latest onboard   # interview → exact plan → explicit acceptance → verified install
 ```
 
 <br>
@@ -44,14 +44,28 @@ asked you to **install rsc / this harness / these skills**, run this in the **ro
 project they're equipping** — not inside a clone of this repo (see the note under *Install*):
 
 ```bash
-npx @ericrisco/rsc@latest
+npx @ericrisco/rsc@latest onboard
 ```
 
-That launches a plain-language wizard: it asks **which assistants** to target and **what the
-user wants**, reads the repo, then installs the floor (`orient` + `rsc-suggest` + `bro` + `harness` +
-`init`) plus only the skills that fit — one at a time. No global install and no API key needed.
+That launches the binding plain-language onboarding. It asks the user for technical level,
+accompaniment, project kind and goal **before it writes anything**, reads only the selected project
+root, and shows every selected or deferred skill, agent and hook with its reason. Relay those
+questions to the user; never invent or default their answers. The first pass writes nothing and
+prints a SHA-256 plan id. Only rerun with `--accept-plan <id>` after the user accepts that exact plan.
 
-- **Choose assistants non-interactively:** `npx @ericrisco/rsc@latest --target claude` (comma-separate for several).
+For a non-interactive agent, collect the answers and preview the same plan explicitly:
+
+```bash
+npx @ericrisco/rsc@latest onboard --technical-level mixed --accompaniment L1 \
+  --project-kind software --goal "small compound-interest website" \
+  --software-scope small --target codex
+# After the user accepts the printed plan:
+npx @ericrisco/rsc@latest onboard --technical-level mixed --accompaniment L1 \
+  --project-kind software --goal "small compound-interest website" \
+  --software-scope small --target codex --accept-plan PRINTED_SHA256_ID
+```
+
+- **Choose assistants non-interactively:** add `--target claude` (comma-separate for several) to `onboard`.
 - **Two assistants already installed?** rsc asks instead of guessing. `--target` settles it in one word.
 - **Already installed, just refreshing skills + hooks:** `rsc sync` (or re-run the command above).
 - **Add one skill by id:** `rsc add <id>` · **browse the catalog:** `rsc consult "<what you want>"` or `rsc list`.
@@ -118,7 +132,7 @@ injects at most 4,096 bytes. Disable every memory surface for a project with
 ## Install
 
 ```bash
-npx @ericrisco/rsc            # no install step — runs the latest published catalog
+npx @ericrisco/rsc@latest onboard
 ```
 
 Prefer the short `rsc` command? Install once, globally:
@@ -142,19 +156,12 @@ cd ~/rsc-skills && npm install && npm link
 > `node scripts/rsc.js …`, the `npm link` above, or pin the published build with
 > `npx @ericrisco/rsc@latest …`.
 
-The first run asks **which assistants** you want — Claude Code, Codex, Copilot,
-Cursor, Gemini, Windsurf, Cline and 11 more (pick any combination) — and installs
-the **floor**:
-`orient` + `rsc-suggest` (always-on) + `bro` (on request) + `harness` + `init`. In Claude Code it
-also wires a `SessionStart` hook (so your assistant proposes new skills on its
-own) and a `UserPromptSubmit` hook that re-asserts the **SDD new-feature gate**
-on every turn — so a feature request, in any language, routes through `specify`
-first, before any skill writes code. Opt out per project with `.rsc/.no-feature-gate`.
-It also wires a `PreToolUse` **gitmoji guard**: a `git commit` whose message carries no
-[gitmoji](https://gitmoji.dev) is denied, with the corrected message inside the refusal
-(`✨ feat(api): add cursor paging`) — so `git log --oneline` stays readable at a glance instead of
-depending on the agent remembering a convention. It only judges messages it can actually read
-(`-m`, heredoc), never an editor commit or `--amend --no-edit`. Opt out with `.rsc/.no-gitmoji`.
+The first run asks **how technical the conversation should be**, the accompaniment level, what the
+project is for, its goal and the assistants to target. It then presents the complete plan. A small
+website can defer SDD, agents and code guards; an operations harness does not receive them merely
+because it lives in a repository. Deferred components record the evidence that would make rsc
+recommend them later. `rsc reassess` reports that evidence but still cannot install anything
+without a newly accepted plan.
 
 Everything stays **in the project**, and the real skill files are written
 **once** to `.rsc/skills/<id>/`. Each assistant you pick gets a lightweight
@@ -169,53 +176,39 @@ points whose backing skill, agent or local-memory capability actually exists.
 ## 30-second tour
 
 ```
-$ rsc
+$ rsc onboard
  ██████╗ ███████╗ ██████╗     ← animated gradient wordmark
  ██╔══██╗██╔════╝██╔════╝
  ██████╔╝███████╗██║
   272 skills · one CLI · zero bloat
 
-What do you want to do?          ↑↓ move · enter select
-❯ Base install — the essentials (8 skills)
-  Base + Spec-Driven Development — specify → plan → implement → ship
-  Pick skills by hand, by area
+How technical should the conversation be?
+How much accompaniment do you want?
+What are you building or running?
+What do you want this project to achieve?
+
+RSC_ONBOARDING_PLAN
+Plan id: <sha256>
+Selected: …
+Deferred: …
+Accept this exact harness plan?
 ```
 
-Pick **by area** and you get a checkbox list — **↑↓ to move, space to toggle,
-enter to confirm**:
-
-```
-Languages:                       ↑↓ move · space toggle · a all · enter confirm
-❯ ◉ typescript
-  ◯ python
-  ◉ go
-  ◯ rust
-```
-
-Then it asks **which assistants** to install for — tick as many as you like:
-
-```
-Which assistants do you want to install for?   space toggle · a all · enter confirm
-❯ ◉ Claude Code      (.claude/skills/)   ⟵ detected here
-  ◉ Codex CLI        (AGENTS.md)
-  ◯ GitHub Copilot   (.github/copilot-instructions.md)
-  ◯ Cursor           (.cursor/rules/)
-  ◉ Windsurf         (.windsurf/rules/)
-  ◯ Cline            (.clinerules/)
-  …17 in total — Gemini, Antigravity, Zed, Continue, Roo, Amp, opencode, Jules, Junie, Kiro, Aider
-```
-
-It detects your stack, asks which assistants to install for (the one it found in
-your folder is pre-marked), installs only what you chose, then prints the exact
-next steps for **Claude Code / Codex / Cursor / Gemini / Antigravity** — and from
-there keeps proposing the skills a task needs.
+The terminal and chat adapters produce the same normalized answers and plan id. If project evidence
+changes between preview and acceptance, rsc returns `RSC_PLAN_CHANGED` and writes nothing. After an
+accepted application it verifies the receipt and managed state before printing `RSC_ONBOARDING_READY`.
 
 ---
 
 ## The CLI
 
+Fresh projects enter through `rsc onboard`. The direct `add` and `install --profile` forms below
+are maintenance controls for projects that already carry an `.rsc.json` declaration; they cannot
+bypass onboarding in a new folder.
+
 ```bash
-rsc                                  # plain-language wizard (recommended) — pick skills AND assistants
+rsc onboard                         # binding plain-language onboarding (recommended)
+rsc reassess                        # check persisted deferral triggers; never installs by itself
 rsc add fastapi postgresdb           # install specific skills, by name
 rsc add youtube-api remotion-video   # …grow a channel, edit with Remotion
 rsc add fastapi --target claude,codex   # install into several assistants at once

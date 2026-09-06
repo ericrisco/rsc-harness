@@ -17,8 +17,11 @@ export function writeSkill(id, fromDir, toPath) {
   return linkOrCopy(fromDir, toPath);
 }
 
-export function wireHook(paths, sourceMd) {
-  const body = stripFrontmatter(readFileSync(sourceMd, 'utf8'));
+export function wireHook(paths, sourceMd, policy = {}) {
+  const full = stripFrontmatter(readFileSync(sourceMd, 'utf8'));
+  const body = policy.codeHooks === false
+    ? `# rsc-suggest — always-on operations layer\n\nRead \`02-DOCS/wiki/harness/user-profile.md\` before acting. Use \`orient\` to keep the user situated and \`suggest\` to offer a missing skill only when the current task needs it. Close with the configured orientation block.\n`
+    : full;
   const block = `${MARK_START}\n${body}\n${MARK_END}`;
   let doc = existsSync(paths.hookTarget) ? readFileSync(paths.hookTarget, 'utf8') : '';
   if (doc.includes(MARK_START)) {

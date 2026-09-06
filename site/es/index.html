@@ -110,7 +110,7 @@
         <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">tu-proyecto — bash</span></div>
         <div class="term-body">
           <div class="copy-row">
-            <span class="cmd" id="cmd-hero"><span class="prompt">$ </span>npx @ericrisco/rsc@latest</span>
+            <span class="cmd" id="cmd-hero"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span>
             <button class="copy-btn" type="button" data-copy="#cmd-hero" data-done="Copiado ✓">Copiar</button>
           </div>
           <div class="out">? ¿Qué asistentes?  ◉ Claude Code  ◉ Codex  ◯ Cursor …</div>
@@ -130,11 +130,11 @@
         <h2 id="what-h" style="font-size:var(--step-2)">Cómo configurar Claude Code o Codex para un proyecto con rsc</h2>
         <p>
           rsc es un instalador gratuito de línea de comandos para agentes de código con IA.
-          Ejecuta <code>npx @ericrisco/rsc@latest</code> en la raíz de tu proyecto: te
-          pregunta qué asistentes usas y qué quieres construir o gestionar, lee tu
-          repositorio e instala solo las skills que encajan — de una en una, para que nada
-          que no uses ocupe el contexto del modelo. ¿Prefieres delegar? Pega la URL de esta
-          página a tu agente y él hace la configuración por ti.
+          Ejecuta <code>npx @ericrisco/rsc@latest onboard</code> en la raíz de tu proyecto: te
+          pregunta el nivel técnico, el acompañamiento, el tipo de proyecto, el objetivo y
+          los asistentes, y lee solo esa raíz. No escribe nada hasta mostrar el plan exacto
+          de componentes seleccionados y pospuestos y hasta que aceptes su id SHA-256 con
+          <code>--accept-plan</code>. Si pegas esta URL en el chat, ejecuta el mismo wizard vinculante.
         </p>
       </div>
       <div class="stats reveal">
@@ -154,8 +154,8 @@
         <h2 id="agent-h" style="font-size:var(--step-3)">No lo instales. Deja que tu agente lo haga.</h2>
         <p class="lead" style="margin-top:1rem">
           rsc está pensado para agentes. Dale la URL de esta página a Claude Code, Cursor,
-          Codex o Gemini y sigue las instrucciones de la página: confirma qué asistentes
-          usas y qué quieres, y lo instala todo en la raíz de tu proyecto.
+          Codex o Gemini y sigue las instrucciones de la página: transmite las preguntas,
+          muestra el plan completo y espera tu aceptación exacta antes de escribir.
         </p>
         <ul style="margin-top:1.25rem; padding-left:1.1rem; color:var(--muted); display:grid; gap:0.5rem">
           <li>Lee tu repo y elige las skills que encajan.</li>
@@ -194,15 +194,15 @@
       <div class="steps">
         <div class="step reveal">
           <h3>Ejecútalo en tu repo</h3>
-          <p>En la raíz de tu proyecto, ejecuta <code>npx @ericrisco/rsc@latest</code>. Sin instalación global, sin API key.</p>
+          <p>En la raíz de tu proyecto, ejecuta <code>npx @ericrisco/rsc@latest onboard</code>. Sin instalación global, sin API key.</p>
         </div>
         <div class="step reveal">
           <h3>Elige asistentes e intención</h3>
-          <p>Un asistente en lenguaje llano te pregunta cuáles de los 17 asistentes usar y qué quieres hacer.</p>
+          <p>El wizard pregunta nivel técnico, acompañamiento, tipo de proyecto, objetivo y asistentes.</p>
         </div>
         <div class="step reveal">
-          <h3>Solo lo que encaja, instalado</h3>
-          <p>rsc detecta tu stack e instala la base más las skills que encajan — de una en una, con un solo symlink.</p>
+          <h3>Acepta el plan exacto</h3>
+          <p>rsc muestra skills, agentes y hooks elegidos o pospuestos. No escribe nada antes de <code>--accept-plan &lt;id&gt;</code>.</p>
         </div>
       </div>
     </div>
@@ -219,15 +219,15 @@
       <div class="term" style="max-width:56rem">
         <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">agent-instructions</span></div>
         <div class="term-body" style="line-height:1.9">
-          <div class="out">1. Confirma con el usuario qué asistentes usar (Claude Code, Codex, Cursor, Gemini, …) y qué quiere construir o gestionar.</div>
+          <div class="out">1. Ejecuta onboarding y transmite cada pregunta al usuario. Nunca inventes sus respuestas.</div>
           <div class="out">2. Asegúrate de estar en la <span class="ok">raíz del proyecto del usuario</span> — no dentro de un clon del repo rsc-harness.</div>
           <div class="copy-row" style="margin:.4rem 0">
-            <span class="cmd" id="cmd-agent"><span class="prompt">$ </span>npx @ericrisco/rsc@latest</span>
+            <span class="cmd" id="cmd-agent"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span>
             <button class="copy-btn" type="button" data-copy="#cmd-agent" data-done="Copiado ✓">Copiar</button>
           </div>
-          <div class="out">3. Responde el asistente en nombre del usuario solo tras confirmar sus decisiones; si no, deja que elija él.</div>
-          <div class="out">4. Selección de target no interactiva: <span class="cmd">npx @ericrisco/rsc@latest --target claude,codex</span></div>
-          <div class="out">5. ¿Ya instalado? Refresca con <span class="cmd">rsc sync</span>. Añade una skill: <span class="cmd">rsc add &lt;id&gt;</span>.</div>
+          <div class="out">3. Campos no interactivos: <span class="cmd">--technical-level mixed --accompaniment L1 --project-kind software --goal "web pequeña" --software-scope small --target codex</span></div>
+          <div class="out">4. Muestra el plan. Solo cuando el usuario acepte su id exacto, repite con <span class="cmd">--accept-plan &lt;id-mostrado&gt;</span>.</div>
+          <div class="out">5. Solo <span class="ok">RSC_ONBOARDING_READY</span> confirma una instalación verificada.</div>
           <div class="out"><span class="ok">6. Deja al usuario listo para trabajar:</span> tras instalar, las skills + hooks no se activan hasta recargar la sesión. Dile que recargue/reinicie (Claude Code: reiniciar · Codex/AGENTS.md: siguiente turno). Tras el reload quedas <span class="ok">equipado</span> — orient + suggest siempre activos y bro lista cuando la pidas. Confirma que rsc está listo y deja que el usuario empiece con sus palabras; <span class="ok">no</span> auto-arranques una tarea.</div>
           <div class="out" style="color:var(--code-caret)">⚠ No ejecutes <span class="cmd">npx @ericrisco/rsc</span> dentro de un clon de este repo — resuelve al bin local sin linkar y falla con "command not found". Usa <span class="cmd">@latest</span> o <span class="cmd">node scripts/rsc.js</span>.</div>
         </div>
@@ -313,7 +313,7 @@
         <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">tu-proyecto — bash</span></div>
         <div class="term-body">
           <div class="copy-row">
-            <span class="cmd" id="cmd-final"><span class="prompt">$ </span>npx @ericrisco/rsc@latest</span>
+            <span class="cmd" id="cmd-final"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span>
             <button class="copy-btn" type="button" data-copy="#cmd-final" data-done="Copiado ✓">Copiar</button>
           </div>
         </div>

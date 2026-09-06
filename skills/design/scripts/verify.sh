@@ -91,7 +91,10 @@ search() {
   # only exercising whichever one happens to be installed.
   if have rg && [ -z "${VERIFY_FORCE_GREP:-}" ]; then
     # rg already ignores .gitignore'd paths (node_modules, .next, dist); also skip self.
-    rg -n --no-heading --glob "!$SELF_NAME" "$@"
+    # Always name the search root. run_tell_table feeds its registry through stdin;
+    # without an explicit path ripgrep treats that stdin as the search corpus and
+    # silently checks the registry text instead of the project files.
+    rg -n --no-heading --glob "!$SELF_NAME" "$@" .
   else
     # last arg is the pattern; everything before are paths/globs we ignore for grep.
     # `${*: -1}` (last positional) is supported on bash 3.2; the space before -1 is required.

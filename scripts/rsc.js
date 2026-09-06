@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { loadManifest, skillsForProfile } from './lib/manifest.js';
-import { detectTarget, resolveTargets, TARGETS } from '../targets/index.js';
+import { detectTarget, installedTargets, resolveTargets, TARGETS } from '../targets/index.js';
 import { detectRepo } from './detect-repo.js';
 import { rank } from './consult.js';
 import { expandRecommends, toOutcomes, hasOutcome } from './lib/recommend.js';
 import { applyInstall, listInstalled, listInstalledAgents, listInstalledCommands, uninstall, syncInstalled, purge, collisions } from './install-apply.js';
 import { stackAgentNames } from '../targets/agents.js';
 import { doctor } from './doctor.js';
-import { say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
+import { ask, say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
 import { refreshRegistry, registryStatus } from './lib/registry.js';
 import { audit, writeAuditReport } from './audit.js';
 import { DOMAINS } from './lib/domains.js';
@@ -15,9 +15,32 @@ import { listBackups, restoreBackup } from './lib/backups.js';
 import { runUpgrade } from './lib/upgrade.js';
 import { diagnose, repair } from './lib/repair.js';
 import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-floor.js';
+import { readManifest, writeManifest } from './lib/manifest-file.js';
+import {
+  normalizeOnboarding, missingOnboardingFields, scanProject,
+  buildOnboardingPlan, decodeGoal, encodeGoal, identifyPlan, recommendDeferredComponents,
+} from './lib/onboarding.js';
+import { applyAcceptedOnboarding, verifyOnboarding } from './lib/onboarding-apply.js';
 
-const argv = process.argv.slice(2);
-const cmd = argv[0];
+const rawArgv = process.argv.slice(2);
+const GLOBAL_VALUE_FLAGS = new Set([
+  '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--accept-plan',
+]);
+const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'sello', 'repair', 'uninstall', 'purge']);
+function positionalTokens(input) {
+  const out = [];
+  for (let i = 0; i < input.length; i++) {
+    if (GLOBAL_VALUE_FLAGS.has(input[i]) || input[i] === '--profile' || input[i] === '--without') { i++; continue; }
+    if (input[i].startsWith('--')) continue;
+    out.push(input[i]);
+  }
+  return out;
+}
+const candidate = positionalTokens(rawArgv)[0];
+const cmd = candidate || undefined;
+const argv = cmd && COMMANDS.has(cmd)
+  ? [cmd, ...rawArgv.filter((_, index) => index !== rawArgv.indexOf(cmd))]
+  : rawArgv;
 
 const targetLabel = (id) => TARGETS.find((t) => t.id === id)?.label || id;
 
@@ -30,6 +53,184 @@ function requestedIds(start = 1) {
     ids.push(argv[i]);
   }
   return ids;
+}
+
+function onboardingInput(targets) {
+  const value = (name) => {
+    const v = flag(name);
+    return typeof v === 'string' && !v.startsWith('--') ? v : undefined;
+  };
+  return {
+    schemaVersion: 1,
+    technicalLevel: value('technical-level'),
+    accompaniment: value('accompaniment'),
+    projectKind: value('project-kind'),
+    goal: value('goal') || (value('goal-base64') ? decodeGoal(value('goal-base64')) : undefined),
+    softwareScope: value('software-scope'),
+    targets,
+  };
+}
+
+function onboardingRequired(raw, action = 'onboard') {
+  const payload = {
+    code: 'RSC_ONBOARDING_REQUIRED',
+    schemaVersion: 1,
+    missing: missingOnboardingFields(raw),
+    recovery: `Run npx @ericrisco/rsc@latest ${action} --technical-level <non-technical|mixed|technical> --accompaniment <L0|L1|L2|L3> --project-kind <software|operations|research|content|mixed> --goal "<what you want>" --target <assistant>`,
+  };
+  console.error(`RSC_ONBOARDING_REQUIRED ${JSON.stringify(payload)}`);
+  process.exitCode = 2;
+}
+
+function hasDeclaredHarness(manifest = readManifest()) {
+  if (!manifest || manifest.version !== 1 || !Array.isArray(manifest.targets) || !manifest.targets.length
+    || !manifest.targets.every((target) => TARGETS.some((known) => known.id === target))
+    || !Array.isArray(manifest.skills) || !manifest.skills.length) return false;
+  const receipt = manifest.onboarding;
+  if (receipt) {
+    try {
+      const verified = receipt.schemaVersion === 1
+        && identifyPlan(receipt.plan) === receipt.acceptedPlanId
+        && verifyOnboarding(process.cwd(), receipt.plan, receipt.acceptedPlanId).length === 0;
+      if (verified) return true;
+      if (receipt.maintenanceDrift && installedTargets(process.cwd()).some((target) => manifest.targets.includes(target))) return true;
+    } catch { return false; }
+  }
+  // Backward compatibility is evidence-based: an actually installed pre-onboarding
+  // harness keeps its maintenance commands. A hand-written or merely committed
+  // declaration with no local state cannot bypass first contact.
+  return installedTargets(process.cwd()).some((target) => manifest.targets.includes(target));
+}
+
+function markMaintenanceDrift(action) {
+  const manifest = readManifest();
+  if (!manifest?.onboarding) return;
+  writeManifest(process.cwd(), {
+    ...manifest,
+    onboarding: {
+      ...manifest.onboarding,
+      maintenanceDrift: { action, recordedAt: new Date().toISOString(), requiresReassessment: true },
+    },
+  });
+}
+
+function renderPlan(plan, planId) {
+  say('RSC_ONBOARDING_PLAN');
+  say(`Plan id: ${planId}`);
+  say(`Project: ${plan.record.projectKind}${plan.record.softwareScope ? ` (${plan.record.softwareScope})` : ''}`);
+  say(`Targets: ${plan.policy.targets.join(', ')}`);
+  say('Selected:');
+  for (const decision of plan.decisions.filter((d) => d.state === 'selected')) say(`  + ${decision.kind}/${decision.id} — ${decision.reason}`);
+  say('Deferred:');
+  for (const decision of plan.decisions.filter((d) => d.state === 'deferred')) say(`  - ${decision.kind}/${decision.id} — ${decision.reason} Reevaluate: ${decision.reevaluateWhen.join('; ')}`);
+  say('Excluded:');
+  for (const decision of plan.decisions.filter((d) => d.state === 'excluded')) say(`  × ${decision.kind}/${decision.id} — ${decision.reason}`);
+  say('Managed paths:');
+  for (const path of plan.governedPaths) say(`  ${path}`);
+  if (plan.evidence.parentHarness) say(`Parent harness detected at ${plan.evidence.parentHarness}; it is not inherited by this plan.`);
+  const pieces = [
+    'npx @ericrisco/rsc@latest onboard',
+    `--technical-level ${plan.record.technicalLevel}`,
+    `--accompaniment ${plan.record.accompaniment}`,
+    `--project-kind ${plan.record.projectKind}`,
+    `--goal-base64 ${encodeGoal(plan.record.goal)}`,
+    ...(plan.record.softwareScope ? [`--software-scope ${plan.record.softwareScope}`] : []),
+    `--target ${plan.record.targets.join(',')}`,
+    `--accept-plan ${planId}`,
+  ];
+  say(`Accept exactly this plan: ${pieces.join(' ')}`);
+}
+
+async function runOnboarding(targets) {
+  const raw = onboardingInput(targets);
+  if (isInteractive() && missingOnboardingFields(raw).length) {
+    await banner(loadManifest().counts.skills);
+    say('Before rsc writes anything, it will learn how to help and show the exact harness plan.');
+    raw.technicalLevel ||= await select('How technical should the conversation be?', [
+      { key: 'non-technical', label: 'Plain language — explain terms and avoid code jargon' },
+      { key: 'mixed', label: 'Mixed — concise explanations with useful technical detail' },
+      { key: 'technical', label: 'Technical — assume I am comfortable with code and tooling' },
+    ]);
+    raw.accompaniment ||= await select('How much accompaniment do you want?', [
+      { key: 'L0', label: 'L0 — results only' },
+      { key: 'L1', label: 'L1 — brief reasons, questions only when needed' },
+      { key: 'L2', label: 'L2 — explain each relevant decision' },
+      { key: 'L3', label: 'L3 — guide me through everything' },
+    ]);
+    raw.projectKind ||= await select('What are you building or running?', [
+      { key: 'software', label: 'Software or a website' },
+      { key: 'operations', label: 'Operations, a company or a process' },
+      { key: 'research', label: 'Research or a knowledge base' },
+      { key: 'content', label: 'Content or publishing' },
+      { key: 'mixed', label: 'A combination of these' },
+    ]);
+    raw.goal ||= await ask('What do you want this project to achieve? > ');
+    if ((raw.projectKind === 'software' || raw.projectKind === 'mixed') && !raw.softwareScope) {
+      raw.softwareScope = await select('How much software work is expected now?', [
+        { key: 'small', label: 'Small — one focused tool or a few simple changes' },
+        { key: 'growing', label: 'Growing — several related features or integrations' },
+        { key: 'complex', label: 'Complex — multiple systems, teams or critical behavior' },
+      ]);
+    }
+    if (!raw.targets?.length) raw.targets = await selectAgents();
+    if (!raw.technicalLevel || !raw.accompaniment || !raw.projectKind || !raw.goal || !raw.targets?.length) {
+      say('Cancelled — nothing was touched.');
+      return;
+    }
+  }
+  if (missingOnboardingFields(raw).length) return onboardingRequired(raw);
+  let record;
+  try { record = normalizeOnboarding(raw); } catch (error) {
+    console.error(`RSC_ONBOARDING_INVALID: ${error.message}`);
+    process.exitCode = 2;
+    return;
+  }
+  const plan = buildOnboardingPlan(record, scanProject(process.cwd()));
+  const planId = identifyPlan(plan);
+  const accepted = flag('accept-plan');
+  if (!accepted) {
+    renderPlan(plan, planId);
+    if (!isInteractive()) return;
+    if (!(await confirm('Accept this exact harness plan?'))) return void say('Cancelled — nothing was touched.');
+  }
+  if (accepted && accepted !== planId) {
+    console.error(`RSC_PLAN_CHANGED: accepted ${accepted}, current plan is ${planId}. Regenerate the plan and ask the user to accept the new id.`);
+    process.exitCode = 3;
+    return;
+  }
+  try {
+    await applyAcceptedOnboarding({ cwd: process.cwd(), plan, planId });
+    say(`RSC_ONBOARDING_READY ${planId}`);
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 4;
+  }
+}
+
+function runReassessment() {
+  const manifest = readManifest();
+  const plan = manifest?.onboarding?.plan;
+  if (!plan) {
+    console.error('RSC_ONBOARDING_REQUIRED: no accepted onboarding receipt. Run npx @ericrisco/rsc@latest onboard');
+    process.exitCode = 2;
+    return;
+  }
+  const recommendations = recommendDeferredComponents(plan, scanProject(process.cwd()));
+  if (!recommendations.length) return void say('RSC_REASSESSMENT_NO_CHANGE');
+  say('RSC_REASSESSMENT_RECOMMENDED');
+  for (const item of recommendations) say(`  ${item.kind}/${item.id}: ${item.explanation}`);
+  const record = recommendations[0].suggestedRecord || plan.record;
+  say('Review a new plan; nothing has been installed:');
+  say([
+    'npx @ericrisco/rsc@latest onboard',
+    `--technical-level ${record.technicalLevel}`,
+    `--accompaniment ${record.accompaniment}`,
+    `--project-kind ${record.projectKind}`,
+    `--goal-base64 ${encodeGoal(record.goal)}`,
+    ...(record.softwareScope ? [`--software-scope ${record.softwareScope}`] : []),
+    `--target ${record.targets.join(',')}`,
+  ].join(' '));
+  say('Show the new plan and ask the user to accept its id before applying it.');
 }
 
 function editDistance(a, b) {
@@ -73,7 +274,7 @@ function reportUnknown(ids) {
 // flag says which: `purge` sweeps every target by design, and the catalog/consult
 // side barely touches one, so blocking them would be a regression, not a safeguard.
 const NEEDS_TARGET = new Set([
-  'add', 'install', 'list', 'doctor', 'sync', 'uninstall', 'capabilities', 'catalog', 'registry',
+  'onboard', 'add', 'install', 'list', 'doctor', 'sync', 'uninstall', 'capabilities', 'catalog', 'registry',
 ]);
 
 function flag(name) {
@@ -317,24 +518,38 @@ async function main() {
   const target = targets[0];
   switch (cmd) {
     case undefined:
-      return wizard(f ? targets : null);
+      return hasDeclaredHarness() ? wizard(f ? targets : null) : runOnboarding(f ? targets : []);
+    case 'onboard':
+      return runOnboarding(f ? targets : []);
+    case 'reassess':
+      return runReassessment();
     case 'add': {
+      if (!hasDeclaredHarness()) return onboardingRequired(onboardingInput(targets));
       const requested = requestedIds();
       const selected = classifyRequested(requested);
       if (reportUnknown(selected.unknown)) return;
       const ids = withDefaultSkillFloor(selected.skills);
       if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
-      for (const t of targets) await applyInstall({ skillIds: ids, agentIds: selected.agents, target: t });
+      const currentManifest = readManifest();
+      const receipt = currentManifest?.onboarding;
+      const maintainedIds = receipt ? [...new Set([...(currentManifest.skills || []), ...(receipt.plan.policy.skills || []), ...ids])].sort() : ids;
+      const policy = receipt ? { ...receipt.plan.policy, skills: maintainedIds } : undefined;
+      for (const t of targets) await applyInstall({ skillIds: maintainedIds, agentIds: selected.agents, target: t, policy });
+      markMaintenanceDrift(`add ${requested.join(',')}`);
       say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
     }
     case 'install': {
+      if (!hasDeclaredHarness()) return onboardingRequired(onboardingInput(targets));
       const profile = flag('profile') || 'minimal';
       const without = argv.filter((a, i) => argv[i - 1] === '--without');
       let ids = skillsForProfile(loadManifest(), profile);
       ids = withDefaultSkillFloor(ids).filter((id) => !without.includes(id));
       if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
-      for (const t of targets) await applyInstall({ skillIds: ids, target: t });
+      const receipt = readManifest()?.onboarding;
+      const policy = receipt ? { ...receipt.plan.policy, skills: ids } : undefined;
+      for (const t of targets) await applyInstall({ skillIds: ids, target: t, policy });
+      markMaintenanceDrift(`install ${profile}`);
       say(`✅ Profile '${profile}' installed for ${targets.join(', ')} (${ids.length} skills)`);
       printAgentHandoff();
       return;
@@ -806,7 +1021,7 @@ async function main() {
       return void (await runPurge(argv.includes('--dry-run'), argv.includes('--with-docs')));
     default:
       say(`rsc: unknown command '${cmd}'.`);
-      say('Use: npx @ericrisco/rsc | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
+      say('Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
       say('Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)');
       say('   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.');
       process.exitCode = 1;

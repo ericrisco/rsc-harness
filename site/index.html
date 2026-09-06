@@ -117,7 +117,7 @@
         <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">your-project — bash</span></div>
         <div class="term-body">
           <div class="copy-row">
-            <span class="cmd" id="cmd-hero"><span class="prompt">$ </span>npx @ericrisco/rsc@latest</span>
+            <span class="cmd" id="cmd-hero"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span>
             <button class="copy-btn" type="button" data-copy="#cmd-hero" data-done="Copied ✓">Copy</button>
           </div>
           <div class="out">? Which assistants?  ◉ Claude Code  ◉ Codex  ◯ Cursor …</div>
@@ -137,11 +137,11 @@
         <h2 id="what-h" style="font-size:var(--step-2)">How to set up Claude Code or Codex for a project with rsc</h2>
         <p>
           rsc is a free command-line installer for AI coding agents. Run
-          <code>npx @ericrisco/rsc@latest</code> in your project root: it asks which
-          assistants you use and what you want to build or manage, reads your repository,
-          then installs only the matching skills — one at a time, so nothing you don't use
-          touches the model's context. Prefer to delegate? Paste this page's URL into your
-          agent and it runs the setup for you.
+          <code>npx @ericrisco/rsc@latest onboard</code> in your project root: it asks which
+          technical level, accompaniment, project kind, goal and assistants, then reads only
+          that root. It writes nothing until it has shown the exact selected and deferred plan
+          and you accept its SHA-256 id with <code>--accept-plan</code>. Prefer to delegate?
+          Paste this page's URL into your agent; the same binding wizard runs through chat.
         </p>
       </div>
       <div class="stats reveal">
@@ -161,8 +161,8 @@
         <h2 id="agent-h" style="font-size:var(--step-3)">Don't install it. Let your agent do it.</h2>
         <p class="lead" style="margin-top:1rem">
           rsc is built for agents. Hand this page's link to Claude Code, Cursor, Codex or
-          Gemini and it follows the on-page instructions: it confirms which assistants you
-          use, what you want, then installs everything in your project root.
+          Gemini and it follows the on-page instructions. It relays the wizard questions,
+          shows the complete plan and waits for your exact acceptance before writing.
         </p>
         <ul style="margin-top:1.25rem; padding-left:1.1rem; color:var(--muted); display:grid; gap:0.5rem">
           <li>Reads your repo and picks the skills that match.</li>
@@ -201,15 +201,15 @@
       <div class="steps">
         <div class="step reveal">
           <h3>Run it in your repo</h3>
-          <p>In your project root, run <code>npx @ericrisco/rsc@latest</code>. No global install, no API key.</p>
+          <p>In your project root, run <code>npx @ericrisco/rsc@latest onboard</code>. No global install, no API key.</p>
         </div>
         <div class="step reveal">
           <h3>Pick assistants &amp; intent</h3>
-          <p>A plain-language wizard asks which of the 17 assistants to target and what you want to do.</p>
+          <p>A plain-language wizard asks technical level, accompaniment, project kind, goal and assistants.</p>
         </div>
         <div class="step reveal">
-          <h3>Only what fits, installed</h3>
-          <p>rsc detects your stack and installs the floor plus the matching skills — one at a time, symlinked once.</p>
+          <h3>Accept the exact plan</h3>
+          <p>rsc shows selected and deferred skills, agents and hooks. Nothing is written before <code>--accept-plan &lt;id&gt;</code>.</p>
         </div>
       </div>
     </div>
@@ -226,15 +226,15 @@
       <div class="term" style="max-width:56rem">
         <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">agent-instructions</span></div>
         <div class="term-body" style="line-height:1.9">
-          <div class="out">1. Confirm with the user which assistants to target (Claude Code, Codex, Cursor, Gemini, …) and what they want to build or manage.</div>
+          <div class="out">1. Run onboarding and relay every required question to the user. Never invent their answers.</div>
           <div class="out">2. Make sure you are in the <span class="ok">root of the user's project</span> — not inside a clone of the rsc-harness repo.</div>
           <div class="copy-row" style="margin:.4rem 0">
-            <span class="cmd" id="cmd-agent"><span class="prompt">$ </span>npx @ericrisco/rsc@latest</span>
+            <span class="cmd" id="cmd-agent"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span>
             <button class="copy-btn" type="button" data-copy="#cmd-agent" data-done="Copied ✓">Copy</button>
           </div>
-          <div class="out">3. Answer the wizard on the user's behalf only after confirming their choices; otherwise let them choose.</div>
-          <div class="out">4. Non-interactive target select: <span class="cmd">npx @ericrisco/rsc@latest --target claude,codex</span></div>
-          <div class="out">5. Already installed? Refresh with <span class="cmd">rsc sync</span>. Add one skill: <span class="cmd">rsc add &lt;id&gt;</span>.</div>
+          <div class="out">3. Non-interactive fields: <span class="cmd">--technical-level mixed --accompaniment L1 --project-kind software --goal "small website" --software-scope small --target codex</span></div>
+          <div class="out">4. Show the returned plan. Only after the user accepts its exact id, rerun with <span class="cmd">--accept-plan &lt;printed-id&gt;</span>.</div>
+          <div class="out">5. Only <span class="ok">RSC_ONBOARDING_READY</span> means the verified installation is complete.</div>
           <div class="out"><span class="ok">6. Leave the user ready to work:</span> after install, the skills + hooks are not active until the session reloads. Tell the user to reload/restart (Claude Code: restart · Codex/AGENTS.md: next turn). After reload you are <span class="ok">equipped</span> — orient + suggest are always-on and bro is ready on request. Confirm rsc is ready and let the user start in their own words; do <span class="ok">not</span> auto-start a task.</div>
           <div class="out" style="color:var(--code-caret)">⚠ Do not run <span class="cmd">npx @ericrisco/rsc</span> from inside a clone of this repo — it resolves to the local unlinked bin and fails with "command not found". Use <span class="cmd">@latest</span> or <span class="cmd">node scripts/rsc.js</span>.</div>
         </div>
@@ -320,7 +320,7 @@
         <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">your-project — bash</span></div>
         <div class="term-body">
           <div class="copy-row">
-            <span class="cmd" id="cmd-final"><span class="prompt">$ </span>npx @ericrisco/rsc@latest</span>
+            <span class="cmd" id="cmd-final"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span>
             <button class="copy-btn" type="button" data-copy="#cmd-final" data-done="Copied ✓">Copy</button>
           </div>
         </div>
