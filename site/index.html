@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Configure Claude Code &amp; Codex for your project — rsc</title>
-<meta name="description" content="One command sets up Claude Code, Codex, Cursor and 14 more AI coding agents for your project. rsc installs only the skills that fit — free, MIT.">
+<title>Build the right harness for your AI agent — rsc-harness</title>
+<meta name="description" content="You decide what to build. rsc-harness builds a minimal, verified AI-agent harness with strict best practices — free and open source.">
 <link rel="canonical" href="https://ericrisco.github.io/rsc-harness/">
 <link rel="alternate" hreflang="en" href="https://ericrisco.github.io/rsc-harness/">
 <link rel="alternate" hreflang="es" href="https://ericrisco.github.io/rsc-harness/es/">
@@ -15,8 +15,8 @@
 <!-- Open Graph / Twitter -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="rsc">
-<meta property="og:title" content="Configure Claude Code &amp; Codex for your project — rsc">
-<meta property="og:description" content="One command sets up 17 AI coding agents for your project. rsc reads your repo and installs only the skills that fit. Or paste this URL into your agent and it does it for you.">
+<meta property="og:title" content="You decide what to build. rsc-harness builds your agent’s harness.">
+<meta property="og:description" content="Avoid a Frankenstein harness. A guided wizard applies strict best practices and shows the exact plan before anything is installed.">
 <meta property="og:url" content="https://ericrisco.github.io/rsc-harness/">
 <meta property="og:image" content="https://ericrisco.github.io/rsc-harness/og.png">
 <meta property="og:image:width" content="1200">
@@ -24,8 +24,8 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Configure Claude Code &amp; Codex for your project — rsc">
-<meta name="twitter:description" content="One command sets up 17 AI coding agents for your project. Or paste this URL into your agent and it configures everything for you.">
+<meta name="twitter:title" content="Build the right harness for your AI agent — rsc-harness">
+<meta name="twitter:description" content="You state the goal. rsc-harness builds a minimal, verified harness instead of an improvised Frankenstein.">
 <meta name="twitter:image" content="https://ericrisco.github.io/rsc-harness/og.png">
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23151a21'/%3E%3Ctext x='50' y='68' font-family='monospace' font-size='46' font-weight='700' text-anchor='middle' fill='%23fdfdfb'%3Ersc%3C/text%3E%3C/svg%3E">
@@ -41,7 +41,7 @@
       "alternateName": "@ericrisco/rsc",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "macOS, Linux, Windows (Node.js >= 18)",
-      "description": "A command-line installer that configures AI coding agents — Claude Code, Codex, Cursor, Gemini and 13 more — by installing only the skills a project needs, one at a time.",
+      "description": "A guided harness builder that turns a human goal into a minimal, project-bound and verified AI-agent setup using strict best practices.",
       "url": "https://ericrisco.github.io/rsc-harness/",
       "downloadUrl": "https://www.npmjs.com/package/@ericrisco/rsc",
       "installUrl": "https://www.npmjs.com/package/@ericrisco/rsc",
@@ -77,8 +77,8 @@
     </a>
     <nav class="nav" aria-label="Primary">
       <a class="nav-hide" href="#how">How it works</a>
-      <a class="nav-hide" href="#agents">For agents</a>
-      <a class="nav-hide" href="#skills">Skills</a>
+      <a class="nav-hide" href="#practice">Best practices</a>
+      <a class="nav-hide" href="#skills">Catalog</a>
       <a href="https://github.com/ericrisco/rsc-harness" rel="noopener">GitHub</a>
       <span class="lang" role="group" aria-label="Language">
         <a href="./" aria-current="true" hreflang="en">EN</a>
@@ -94,150 +94,83 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <p class="eyebrow">One command · 17 assistants · zero config</p>
-        <h1>Configure <span class="hl">Claude Code</span> &amp; <span class="hl">Codex</span> for your project</h1>
-        <p class="lead">
-          Run one command and rsc reads your repo, asks what you want to build, and
-          installs only the skills that fit — into every AI coding agent you use.
-        </p>
+        <p class="eyebrow">Guided harness builder · 17 assistants · strict by design</p>
+        <h1>You build the project. <span class="hl">rsc-harness builds the harness.</span></h1>
+        <p class="lead">You decide what to build — software, operations, research, content, or a mix. The wizard turns that goal into a minimal, verified setup without improvising a Frankenstein harness.</p>
         <div class="hero-cta">
-          <button class="btn" type="button" data-copy="#cmd-hero" data-done="Copied ✓">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-            Copy install command
-          </button>
-          <a class="btn btn-ghost" href="#agents">Give it to your agent</a>
+          <button class="btn" type="button" data-copy="#agent-prompt" data-done="Prompt copied ✓">Copy prompt for my agent</button>
+          <a class="btn btn-ghost" href="#terminal">Use the terminal</a>
         </div>
-        <p class="hero-note">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-          No API key. No global install. <b>Free &amp; open source (MIT).</b>
-        </p>
+        <p class="hero-note">No harness expertise. No API key. <b>Free &amp; open source (MIT).</b></p>
       </div>
-
-      <div class="term reveal" aria-label="Terminal showing the install command">
-        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">your-project — bash</span></div>
-        <div class="term-body">
-          <div class="copy-row">
-            <span class="cmd" id="cmd-hero"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span>
-            <button class="copy-btn" type="button" data-copy="#cmd-hero" data-done="Copied ✓">Copy</button>
+      <div class="hero-stack">
+        <div class="agent-card reveal">
+          <div class="head"><span class="avatar" aria-hidden="true">rsc</span><span class="who">Give this to your agent <span>· it runs the wizard</span></span></div>
+          <div class="agent-prompt">
+            <p>Paste into Claude Code, Codex, Cursor, Gemini or another supported assistant:</p>
+            <div class="prompt-box" id="agent-prompt" data-copy-text="Read https://ericrisco.github.io/rsc-harness/ and set up rsc-harness for this project. Ask me the onboarding questions, show me the exact plan, and wait for my acceptance before writing anything."><span class="u">›</span> Read <b>this page</b> and set up rsc-harness for this project. Ask me the onboarding questions, show me the exact plan, and wait for my acceptance before writing anything.</div>
           </div>
-          <div class="out">? Which assistants?  ◉ Claude Code  ◉ Codex  ◯ Cursor …</div>
-          <div class="out">? What do you want to do?  › ship a FastAPI service</div>
-          <div class="out">✓ reading repo · matching skills…</div>
-          <div class="ok">✓ installed: orient · suggest · bro · harness · fastapi · postgresdb</div>
-          <div><span class="prompt">$ </span><span class="caret" aria-hidden="true"></span></div>
+          <div class="agent-actions"><button class="copy-btn" type="button" data-copy="#agent-prompt" data-done="Copied ✓">Copy prompt</button></div>
+        </div>
+        <div class="term compact-term" id="terminal" aria-label="Terminal alternative">
+          <div class="term-body"><div class="copy-row"><span class="cmd" id="cmd-hero"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span><button class="copy-btn" type="button" data-copy="#cmd-hero" data-done="Copied ✓">Copy</button></div></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ANSWER-FIRST INTRO + STATS -->
-  <section class="section-tint" aria-labelledby="what-h">
-    <div class="wrap">
-      <div class="section-head" style="max-width:56ch">
-        <h2 id="what-h" style="font-size:var(--step-2)">How to set up Claude Code or Codex for a project with rsc</h2>
-        <p>
-          rsc is a free command-line installer for AI coding agents. Run
-          <code>npx @ericrisco/rsc@latest onboard</code> in your project root: it asks which
-          technical level, accompaniment, project kind, goal and assistants, then reads only
-          that root. It writes nothing until it has shown the exact selected and deferred plan
-          and you accept its SHA-256 id with <code>--accept-plan</code>. Prefer to delegate?
-          Paste this page's URL into your agent; the same binding wizard runs through chat.
-        </p>
+  <!-- ANSWER-FIRST INTRO -->
+  <section class="section-tint" aria-labelledby="problem-h">
+    <div class="wrap problem-grid">
+      <div class="section-head">
+        <p class="eyebrow">The problem is the harness, not your goal</p>
+        <h2 id="problem-h">A powerful model can still end up inside a Frankenstein.</h2>
       </div>
-      <div class="stats reveal">
-        <div class="stat"><div class="n">272</div><div class="l">quality-gated skills</div></div>
-        <div class="stat"><div class="n">17</div><div class="l">coding assistants</div></div>
-        <div class="stat"><div class="n">≥ 8.5/10</div><div class="l">adversarial quality gate</div></div>
-        <div class="stat"><div class="n">1</div><div class="l">command to start</div></div>
+      <div class="prose-lg">
+        <p>An agent needs more than a brain: project memory, tools, knowledge, rules and repeatable workflows. Add them ad hoc and you get duplicated instructions, unrelated skills, premature hooks, unnecessary MCPs and no clear source of truth.</p>
+        <p>Open standards define individual parts — Agent Skills, MCP and AGENTS.md. What they do not decide is which complete harness your project needs. rsc-harness applies that missing method for you.</p>
       </div>
     </div>
   </section>
 
-  <!-- SIGNATURE: give it to your agent -->
-  <section id="agents" aria-labelledby="agent-h">
-    <div class="wrap hero-grid">
-      <div>
-        <p class="eyebrow">The agent-native way</p>
-        <h2 id="agent-h" style="font-size:var(--step-3)">Don't install it. Let your agent do it.</h2>
-        <p class="lead" style="margin-top:1rem">
-          rsc is built for agents. Hand this page's link to Claude Code, Cursor, Codex or
-          Gemini and it follows the on-page instructions. It relays the wizard questions,
-          shows the complete plan and waits for your exact acceptance before writing.
-        </p>
-        <ul style="margin-top:1.25rem; padding-left:1.1rem; color:var(--muted); display:grid; gap:0.5rem">
-          <li>Reads your repo and picks the skills that match.</li>
-          <li>Asks you the setup questions instead of guessing.</li>
-          <li>Keeps proposing the next skill as your work changes.</li>
-        </ul>
-      </div>
-
-      <div class="agent-card reveal">
-        <div class="head">
-          <span class="avatar" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
-          </span>
-          <span class="who">Your coding agent <span>· paste this in</span></span>
-        </div>
-        <div class="agent-prompt">
-          <p>Copy this prompt into Claude Code, Cursor, Codex or Gemini:</p>
-          <div class="prompt-box" id="agent-prompt" data-copy-text="Read https://ericrisco.github.io/rsc-harness/ and set up rsc for this project. Ask me which coding assistants I use and what I want to build or manage, then run the install in the project root.">
-            <span class="u">›</span> Read <b>https://ericrisco.github.io/rsc-harness/</b> and set up rsc for this project. Ask me which coding assistants I use and what I want to build or manage, then run the install in the project root.
-          </div>
-        </div>
-        <div class="agent-actions">
-          <button class="copy-btn" type="button" data-copy="#agent-prompt" data-done="Copied ✓">Copy prompt</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS (dark, rhythm) -->
+  <!-- HOW IT WORKS -->
   <section id="how" class="section-dark" aria-labelledby="how-h">
     <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">How it works</p>
-        <h2 id="how-h">From one command to an equipped project</h2>
-      </div>
+      <div class="section-head"><p class="eyebrow">One goal in, one coherent harness out</p><h2 id="how-h">The wizard makes every decision visible.</h2></div>
       <div class="steps">
-        <div class="step reveal">
-          <h3>Run it in your repo</h3>
-          <p>In your project root, run <code>npx @ericrisco/rsc@latest onboard</code>. No global install, no API key.</p>
-        </div>
-        <div class="step reveal">
-          <h3>Pick assistants &amp; intent</h3>
-          <p>A plain-language wizard asks technical level, accompaniment, project kind, goal and assistants.</p>
-        </div>
-        <div class="step reveal">
-          <h3>Accept the exact plan</h3>
-          <p>rsc shows selected and deferred skills, agents and hooks. Nothing is written before <code>--accept-plan &lt;id&gt;</code>.</p>
-        </div>
+        <div class="step reveal"><h3>State the outcome</h3><p>Say what you want to build or run and how much guidance you want. No harness vocabulary required.</p></div>
+        <div class="step reveal"><h3>Review the exact plan</h3><p>rsc reads only the project root and explains every selected, deferred and excluded component.</p></div>
+        <div class="step reveal"><h3>Accept, verify, evolve</h3><p>Nothing is written before acceptance. The result is verified and grows later only when evidence justifies it.</p></div>
+      </div>
+      <div class="term plan-term reveal">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">RSC_ONBOARDING_PLAN</span></div>
+        <div class="term-body"><div class="ok">✓ selected · project memory · orient · suggest</div><div class="out">○ deferred · SDD · when coordinated features appear</div><div class="out">○ excluded · Context7 · no library-doc need detected</div><div class="cmd">Plan id · sha256:… · waiting for your acceptance</div></div>
       </div>
     </div>
   </section>
 
-  <!-- FOR AI AGENTS — machine-readable, answer-first instructions -->
+  <!-- BEST PRACTICES -->
+  <section id="practice" aria-labelledby="practice-h">
+    <div class="wrap">
+      <div class="section-head"><p class="eyebrow">Strict best practices</p><h2 id="practice-h">The opposite of “install everything and hope.”</h2><p>Each rule is visible in the plan or enforced by a deterministic check.</p></div>
+      <div class="bento">
+        <div class="card"><h3>Minimal first</h3><p>Only what the current goal and project evidence justify. Knowledge loads progressively, never all at once.</p></div>
+        <div class="card"><h3>Separated by purpose</h3><p>Memory, tools, documentation, rules and specialists keep clear owners and one shared source of truth.</p></div>
+        <div class="card"><h3>Bound to the project</h3><p>Analysis stays inside the selected project root. Local state and memory stay private and local.</p></div>
+        <div class="card"><h3>Consent is exact</h3><p>You see the complete plan first. If it changes, the old acceptance no longer counts.</p></div>
+        <div class="card"><h3>Verified, not declared</h3><p>READY appears only after deterministic checks prove the installed harness matches the accepted plan.</p></div>
+        <div class="card"><h3>Growth follows evidence</h3><p>Deferred capabilities return only when observable changes make them useful, and still require a new plan.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOR AI AGENTS -->
   <section class="section-tint" aria-labelledby="inst-h">
     <div class="wrap">
-      <div class="section-head" style="max-width:60ch">
-        <p class="eyebrow">For AI agents reading this page</p>
-        <h2 id="inst-h" style="font-size:var(--step-2)">Instructions: install rsc into the user's project</h2>
-        <p>If you are an AI coding agent and your user asked you to install rsc / this harness / these skills, do the following, in order:</p>
-      </div>
-      <div class="term" style="max-width:56rem">
+      <div class="section-head"><p class="eyebrow">For AI agents reading this page</p><h2 id="inst-h">Build the user’s harness through the binding wizard</h2><p>Do not choose components or onboarding answers for the user.</p></div>
+      <div class="term">
         <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">agent-instructions</span></div>
-        <div class="term-body" style="line-height:1.9">
-          <div class="out">1. Run onboarding and relay every required question to the user. Never invent their answers.</div>
-          <div class="out">2. Make sure you are in the <span class="ok">root of the user's project</span> — not inside a clone of the rsc-harness repo.</div>
-          <div class="copy-row" style="margin:.4rem 0">
-            <span class="cmd" id="cmd-agent"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span>
-            <button class="copy-btn" type="button" data-copy="#cmd-agent" data-done="Copied ✓">Copy</button>
-          </div>
-          <div class="out">3. Non-interactive fields: <span class="cmd">--technical-level mixed --accompaniment L1 --project-kind software --goal "small website" --software-scope small --target codex</span></div>
-          <div class="out">4. Show the returned plan. Only after the user accepts its exact id, rerun with <span class="cmd">--accept-plan &lt;printed-id&gt;</span>.</div>
-          <div class="out">5. Only <span class="ok">RSC_ONBOARDING_READY</span> means the verified installation is complete.</div>
-          <div class="out"><span class="ok">6. Leave the user ready to work:</span> after install, the skills + hooks are not active until the session reloads. Tell the user to reload/restart (Claude Code: restart · Codex/AGENTS.md: next turn). After reload you are <span class="ok">equipped</span> — orient + suggest are always-on and bro is ready on request. Confirm rsc is ready and let the user start in their own words; do <span class="ok">not</span> auto-start a task.</div>
-          <div class="out" style="color:var(--code-caret)">⚠ Do not run <span class="cmd">npx @ericrisco/rsc</span> from inside a clone of this repo — it resolves to the local unlinked bin and fails with "command not found". Use <span class="cmd">@latest</span> or <span class="cmd">node scripts/rsc.js</span>.</div>
-        </div>
+        <div class="term-body"><div class="out">1. Work in the user’s project root, never in a clone of rsc-harness.</div><div class="out">2. Run <span class="cmd">npx @ericrisco/rsc@latest onboard</span> and relay every required question.</div><div class="out">3. Non-interactive fields include <span class="cmd">--technical-level --accompaniment --project-kind --goal --software-scope --target</span>.</div><div class="out">4. Show the selected, deferred and excluded plan. Never invent answers.</div><div class="out">5. Rerun with <span class="cmd">--accept-plan &lt;printed-id&gt;</span> only after exact acceptance.</div><div class="ok">6. Only RSC_ONBOARDING_READY means the harness is complete. Tell the user to reload the session.</div></div>
       </div>
     </div>
   </section>
@@ -246,9 +179,9 @@
   <section id="skills" aria-labelledby="feat-h">
     <div class="wrap">
       <div class="section-head">
-        <p class="eyebrow">Why rsc</p>
-        <h2 id="feat-h" style="font-size:var(--step-3)">Granular, honest, self-driving</h2>
-        <p>Most skill packs dump hundreds of files into your context. rsc is the opposite bet.</p>
+        <p class="eyebrow">Proof, not the promise</p>
+        <h2 id="feat-h" style="font-size:var(--step-3)">A catalog large enough to stay selective.</h2>
+        <p>272 quality-gated skills across 23 domains give the wizard options. You still install only what the plan justifies.</p>
       </div>
       <div class="bento">
         <div class="card reveal">
@@ -285,8 +218,8 @@
     <div class="wrap">
       <div class="section-head" style="max-width:52ch">
         <p class="eyebrow">Works with</p>
-        <h2 id="assist-h" style="font-size:var(--step-2)">17 coding assistants, one catalog</h2>
-        <p>Pick any combination. rsc pre-marks the one it detects in your folder.</p>
+        <h2 id="assist-h" style="font-size:var(--step-2)">17 assistants, one harness method</h2>
+        <p>Use the assistant you already have. The same planning discipline travels with the project.</p>
       </div>
       <div class="assist reveal">
         <div class="a pri"><span class="badge" aria-hidden="true"></span>Claude Code</div>
@@ -314,8 +247,8 @@
   <section class="section-dark cta-final" aria-labelledby="cta-h">
     <div class="wrap">
       <p class="eyebrow">Get started</p>
-      <h2 id="cta-h">Equip your agent in one command</h2>
-      <p>Run it in your project, or paste this page's link into your agent.</p>
+      <h2 id="cta-h">Start with what you want to build</h2>
+      <p>Paste the prompt into your agent, or use the terminal if you prefer.</p>
       <div class="term">
         <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">your-project — bash</span></div>
         <div class="term-body">

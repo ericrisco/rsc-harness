@@ -1,31 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#12161c"/>
-      <stop offset="1" stop-color="#0b0e12"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <!-- hairline grid accent -->
-  <g stroke="#1e242c" stroke-width="1">
-    <line x1="0" y1="157" x2="1200" y2="157"/>
-    <line x1="0" y1="473" x2="1200" y2="473"/>
-  </g>
-
-  <!-- logo chip -->
-  <rect x="80" y="86" width="72" height="72" rx="18" fill="#f7f7f4"/>
-  <text x="116" y="135" text-anchor="middle" font-size="30" font-weight="700" fill="#12161c">rsc</text>
-  <text x="176" y="134" font-size="30" font-weight="700" fill="#f7f7f4" font-family="ui-sans-serif, system-ui, sans-serif">rsc</text>
-
-  <!-- headline -->
-  <text x="80" y="290" font-size="66" font-weight="700" fill="#f7f7f4" font-family="ui-sans-serif, system-ui, sans-serif" letter-spacing="-2">Configure <tspan fill="#63d68a">Claude Code</tspan> &amp; <tspan fill="#63d68a">Codex</tspan></text>
-  <text x="80" y="360" font-size="66" font-weight="700" fill="#f7f7f4" font-family="ui-sans-serif, system-ui, sans-serif" letter-spacing="-2">for your project</text>
-
-  <!-- command -->
-  <rect x="80" y="410" width="640" height="64" rx="12" fill="#171c22" stroke="#2a323c"/>
-  <text x="104" y="450" font-size="26" fill="#63d68a">$</text>
-  <text x="130" y="450" font-size="26" fill="#e8ebee">npx @ericrisco/rsc@latest</text>
-
-  <!-- footer stats -->
-  <text x="80" y="556" font-size="24" fill="#9aa4b0" font-family="ui-sans-serif, system-ui, sans-serif">264 skills &#183; 17 coding assistants &#183; one command &#183; free &amp; MIT</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="rsc-harness builds a guided, verified agent harness from the user's goal">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#161c23"/><stop offset="1" stop-color="#101419"/></linearGradient><style>.sans{font-family:ui-sans-serif,system-ui,sans-serif}.mono{font-family:ui-monospace,Menlo,monospace}.ink{fill:#f4f5f2}.muted{fill:#9ca7b3}.green{fill:#63d68a}.amber{fill:#d8b76a}</style></defs>
+<rect width="1200" height="630" fill="url(#bg)"/><circle cx="1000" cy="90" r="330" fill="#173527" opacity=".58"/>
+<rect x="62" y="55" width="40" height="40" rx="11" fill="#f4f5f2"/><text x="82" y="81" text-anchor="middle" class="mono" font-size="14" font-weight="700" fill="#101419">rsc</text><text x="116" y="82" class="mono ink" font-size="20" font-weight="700">rsc-harness</text>
+<text x="62" y="205" class="sans ink" font-size="55" font-weight="750" letter-spacing="-2">You build the project.</text><text x="62" y="270" class="sans green" font-size="55" font-weight="750" letter-spacing="-2">rsc builds the harness.</text><text x="62" y="320" class="sans muted" font-size="20">A guided wizard. Strict best practices. No Frankenstein.</text>
+<rect x="62" y="370" width="1076" height="190" rx="20" fill="#171d24" stroke="#2d3742"/>
+<text x="88" y="409" class="mono muted" font-size="14">RSC_ONBOARDING_PLAN</text>
+<text x="88" y="458" class="mono green" font-size="17">✓ SELECTED</text><text x="235" y="458" class="mono muted" font-size="17">project memory · orient · suggest</text>
+<text x="88" y="500" class="mono amber" font-size="17">○ DEFERRED</text><text x="235" y="500" class="mono muted" font-size="17">SDD · when coordinated features appear</text>
+<text x="88" y="542" class="mono" fill="#71808f" font-size="17">○ EXCLUDED</text><text x="235" y="542" class="mono muted" font-size="17">Context7 · no library-doc need found</text>
 </svg>

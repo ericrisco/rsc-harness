@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc — your agent needs a memory (02-DOCS/, or it invents what it cannot remember), arms (01-TOOLS/, or it never touches your database), a trade (272 skills, or it guesses how the job is done), and reflexes (deterministic hooks, or it forgets the rule mid-session). One meta-harness for 17 coding assistants." width="960">
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/og.png" alt="rsc-harness — You decide what to build. rsc-harness builds your agent’s harness, following strict best practices instead of improvising a Frankenstein stack." width="960">
 
-# `rsc` — 272 skills, 33 agents, one CLI
+# `rsc-harness` — You decide what to build. It builds your agent's harness.
 
 [![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
 [![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
@@ -10,30 +10,49 @@
 [![license](https://img.shields.io/badge/license-MIT-63d68a?labelColor=12161c)](LICENSE)
 [![stars](https://img.shields.io/github/stars/ericrisco/rsc-harness?color=63d68a&labelColor=12161c)](https://github.com/ericrisco/rsc-harness/stargazers)
 
-**A self-recommending skill catalog for 17 coding assistants** — Claude Code,
-Codex, GitHub Copilot, Cursor, Gemini, Windsurf, Cline, Antigravity, Zed and more.
-Describe what you want in plain language. It reads your repo, installs *only* the
-skills that fit — one at a time — into every assistant you pick, and keeps them
-equipped as you work.
+**You decide what to build. rsc-harness builds your agent’s harness.** Tell it whether you are
+shipping software, running operations, researching, creating content, or mixing them. Its wizard
+reads the project, applies strict best practices, and shows the exact harness plan before writing.
 
-From *"document my company"* to *"ship a FastAPI service"* to *"grow my YouTube
-channel"* — **272 skills across 23 domains**, every one researched against live
-2025-2026 sources and **adversarially scored ≥ 8.5/10** before it shipped.
+Give this URL to your agent:
 
-```bash
-npx @ericrisco/rsc@latest onboard   # interview → exact plan → explicit acceptance → verified install
+```text
+Read https://ericrisco.github.io/rsc-harness/ and set up rsc for this project.
+Ask me the onboarding questions, show me the exact plan, and wait for my acceptance before writing.
 ```
 
-<br>
+Or start from the terminal:
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc — the model (Claude, GPT, Gemini) is the brain your coding agent rents, and you already have that. Claude Code, Codex and opencode sit in the middle. Below them the rsc meta-harness adds everything the model lacks: memory (02-DOCS/) so it stops inventing, arms (01-TOOLS/) so it can execute, a trade (272 skills) so it stops guessing, and reflexes (deterministic hooks) so it cannot forget the rule mid-session." width="960">
+```bash
+npx @ericrisco/rsc@latest onboard
+```
 
-**The model is the only part your agent already has.** `rsc` is the meta-harness that adds
-the rest: a **memory** so it stops inventing, **arms** so it can execute, a **trade** so it stops
-guessing, and **reflexes** so it cannot forget the rule mid-session — into whichever assistant
-you already use, and kept in sync as you work.
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc-harness wizard turns an outcome into a verified plan: memory, tools, knowledge and rules selected, deferred or excluded according to evidence." width="960">
 
 </div>
+
+## Your agent needs a harness. It should not improvise one.
+
+A model is only the brain. Real work also needs project memory, tools, domain knowledge, rules and
+repeatable workflows. Add those pieces ad hoc and the result becomes a **Frankenstein harness**:
+duplicated instructions, unrelated skills, premature hooks, unnecessary MCPs and no clear owner.
+
+Open standards already cover individual parts — [Agent Skills](https://agentskills.io/specification),
+[MCP](https://modelcontextprotocol.io/) and [AGENTS.md](https://agents.md/) — but they do not decide
+which complete harness this project needs. rsc-harness does that job through one guided flow:
+
+1. **You state the outcome.** No skill, hook or MCP vocabulary required.
+2. **The wizard reads only the project root** and asks technical level, accompaniment, project kind,
+   goal and assistants.
+3. **A proportional plan explains every choice.** Selected, deferred and excluded pieces all have a
+   reason. Nothing writes before you accept the exact plan.
+4. **The result is verified.** Shared sources prevent duplication; knowledge loads progressively;
+   local state stays local; deterministic checks prove the installed harness matches the plan.
+5. **It grows from evidence.** A deferred capability is proposed later only when the project actually
+   develops the need for it.
+
+That is what “best practices” means here: a small, separated, project-bound and auditable harness —
+not a pile of whatever an agent happened to install.
 
 ---
 
@@ -78,8 +97,8 @@ request routes through `specify` before any skill writes code.
 
 ## Why this exists
 
-Most skill packs dump hundreds of files into your context and call it a day. This
-one is the opposite bet:
+An improvised harness tends to grow by accumulation: more files, more context and more rules, with
+no method deciding whether each piece belongs. rsc-harness keeps that construction disciplined:
 
 - **Granular by default.** The unit of installation is *one skill*. Install
   `fastapi` without ever pulling `go`. Nothing you don't use touches your context.
