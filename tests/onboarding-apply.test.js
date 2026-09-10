@@ -556,3 +556,39 @@ test('floor: the minimum floor is both rows, and both are detected', () => {
   rmSync(join(cwd, '02-DOCS/wiki/harness'), { recursive: true });
   assert.ok(missingHarnessFloor(cwd, plan).some((m) => m.includes('02-DOCS/wiki/harness')));
 });
+
+// El bucle documentado, entero, y no sólo su primer paso. `llms.txt` manda: si sale INCOMPLETE,
+// ejecuta la acción y no digas que está listo hasta que imprima READY. Eso exige que reparar el
+// suelo NO cambie la identidad del plan — y la reparación consiste en escribir la constitución, que
+// es un `.md` y por tanto contaba como evidencia de proyecto.
+//
+// El carve-out anterior cubría `01-TOOLS/_TEMPLATE/`, así que arreglaba la contribución del
+// esqueleto y dejaba viva la del artefacto que la propia documentación pide crear. Se escapó porque
+// las puertas comprobaron la identidad tras el esqueleto, y nadie corrió el bucle completo.
+test('floor: repairing the floor never changes the plan identity — the whole documented loop', async () => {
+  const cwd = freshWorkspace('loop');
+  const record = softwareRecord('complex');
+  const plan = buildOnboardingPlan(record, scanProject(cwd));
+  const id = identifyPlan(plan);
+  await applyAcceptedOnboarding({ cwd, plan, planId: id });
+  ensureHarnessSkeleton(cwd);
+  assert.ok(missingHarnessFloor(cwd, plan).some((m) => m.includes('constitution.md')));
+
+  // Lo que el agente hace a continuación, obedeciendo a llms.txt.
+  mkdirSync(join(cwd, '02-DOCS/wiki/sdd'), { recursive: true });
+  writeFileSync(join(cwd, '02-DOCS/wiki/sdd/constitution.md'), '# Constitución\n\n## 1. Algo\nPorque sí.\n');
+
+  assert.deepEqual(missingHarnessFloor(cwd, plan), [], 'el suelo queda completo');
+  assert.equal(
+    identifyPlan(buildOnboardingPlan(record, scanProject(cwd))),
+    id,
+    'y el reintento tiene que poder aceptar el MISMO id, o no existe forma de llegar a READY',
+  );
+});
+
+// El camino que se reporta es un fichero, no un directorio: la barra final sobraba.
+test('floor: a missing file is named as a file, without a trailing slash', () => {
+  const cwd = freshWorkspace('slash');
+  const missing = missingHarnessFloor(cwd, { floorPaths: ['02-DOCS/wiki/sdd/constitution.md'] });
+  assert.deepEqual(missing, ['missing harness floor 02-DOCS/wiki/sdd/constitution.md']);
+});

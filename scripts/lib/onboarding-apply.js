@@ -335,7 +335,10 @@ export function missingHarnessFloor(cwd = process.cwd(), plan = {}) {
     // Un camino que no se puede usar se reporta como NO satisfecho, nunca como satisfecho, y sin
     // repetir su contenido: es dato ajeno y va a un canal que lee un agente.
     if (!usable) { missing.push('missing harness floor <invalid declaration>'); continue; }
-    if (!floorSatisfied(cwd, path)) missing.push(`missing harness floor ${floorKey(path)}/`);
+    // La barra sólo si el camino declarado la traía: el suelo condicional es un FICHERO, y decir
+    // `constitution.md/` invita a buscar un directorio que no existe.
+    const shown = String(path).endsWith('/') ? `${floorKey(path)}/` : floorKey(path);
+    if (!floorSatisfied(cwd, path)) missing.push(`missing harness floor ${shown}`);
   }
   return missing;
 }

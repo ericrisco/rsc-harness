@@ -80,6 +80,14 @@ export function scanProject(root = process.cwd()) {
       // con él el reintento que la documentación pide tras reparar el suelo. Los proveedores reales
       // que el usuario añada bajo `01-TOOLS/` sí siguen contando: son suyos, no nuestros.
       if (rel === '01-TOOLS/_TEMPLATE' || rel.startsWith('01-TOOLS/_TEMPLATE/')) continue;
+      // Y los artefactos de la propia cadena SDD, por el mismo invariante y por una razón que costó
+      // un release descubrir: la constitución es un `.md`, así que contaba como evidencia de
+      // proyecto. Eso movía la identidad del plan justo después de que el agente la escribiera —
+      // obedeciendo a `site/llms.txt`, que le manda reparar el suelo y reintentar hasta obtener
+      // READY— y hacía ese reintento imposible. Arreglar sólo `01-TOOLS/_TEMPLATE/` tapó la mitad
+      // del agujero: la que produce el instalador, no la que produce la reparación.
+      // `inbox/` y `raw/` NO se excluyen: eso es material del usuario y sí es evidencia.
+      if (rel === '02-DOCS/wiki/sdd' || rel.startsWith('02-DOCS/wiki/sdd/')) continue;
       if (entry.isDirectory()) { visit(path); continue; }
       if (!entry.isFile()) continue;
       let isSignal = manifests.has(entry.name) || entry.name.endsWith('.md');
