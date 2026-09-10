@@ -109,6 +109,9 @@ test('RSC-owned output does not change the accepted project-evidence identity', 
   const before = buildOnboardingPlan(record, scanProject(cwd));
   const id = identifyPlan(before);
   await applyAcceptedOnboarding({ cwd, plan: before, planId: id });
+  // El esqueleto también es salida de RSC, y este invariante escapaba sólo porque el paso nuevo no
+  // estaba aquí: sus dos `.md` entraban como evidencia de proyecto y movían la identidad del plan.
+  ensureHarnessSkeleton(cwd);
   const after = buildOnboardingPlan(record, scanProject(cwd));
   assert.equal(identifyPlan(after), id);
 });
@@ -447,4 +450,109 @@ test('floor: readiness reports what is missing and an action that can create it'
   assert.ok(report.action.length > 0, 'tiene que ofrecer algo');
   assert.doesNotMatch(report.action, /\bonboard\b/, 'reejecutar el onboarding no crea el suelo');
   assert.match(report.action, /harness/i, 'lo que crea el esqueleto es `harness`');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lo que el panel de refutadores encontró sobre 1bcf47e. Cada test de aquí abajo existe porque un
+// mutante sobrevivió o porque había una regresión medida, no porque pareciera prudente añadirlo.
+
+// HIGH-1, el peor del ciclo: los dos `.md` que copia el esqueleto entran como evidencia de proyecto
+// (`markdown:2`) y MUEVEN la identidad del plan. Medido: el segundo `onboard --accept-plan <id>` con
+// el mismo comando y directorio moría con RSC_PLAN_CHANGED, y con él quedaba inalcanzable el propio
+// contrato que este ciclo añade a `llms.txt` — el agente escribe la constitución, reejecuta para
+// obtener el READY que ese documento declara obligatorio, y no existía comando que lo imprimiera.
+// `scanProject` ya tenía el carve-out para `02-DOCS/wiki/harness/` y ninguno para `01-TOOLS/`.
+test('floor: the skeleton the installer writes never moves the project-evidence identity', async () => {
+  const cwd = freshWorkspace('identity');
+  const record = opsRecord();
+  const before = identifyPlan(buildOnboardingPlan(record, scanProject(cwd)));
+  ensureHarnessSkeleton(cwd);
+  const after = identifyPlan(buildOnboardingPlan(record, scanProject(cwd)));
+  assert.equal(after, before, 'lo que RSC escribe no puede contar como evidencia del usuario');
+});
+
+// HIGH-2: `existsSync` sigue los enlaces, así que un `01-TOOLS` o un `_TEMPLATE` que sea symlink
+// apuntaba el `copyFileSync` fuera de la raíz — y git guarda los symlinks, así que viaja en el clone.
+// El repo ya fija la política contraria en dos tests del camino viejo, con `readdirSync(outside)`
+// vacío. La guarda existe en este mismo fichero; simplemente no se llamaba.
+test('floor: the skeleton refuses to write through a symlink that leaves the root', () => {
+  for (const link of ['01-TOOLS', join('01-TOOLS', '_TEMPLATE')]) {
+    const cwd = freshWorkspace('escape');
+    const outside = mkdtempSync(join(tmpdir(), 'rsc-outside-'));
+    mkdirSync(join(cwd, link, '..'), { recursive: true });
+    symlinkSync(outside, join(cwd, link));
+    assert.throws(() => ensureHarnessSkeleton(cwd), /RSC_ROOT_AMBIGUOUS/, `${link} no puede escapar`);
+    assert.deepEqual(readdirSync(outside), [], 'nada se escribe fuera de la raíz');
+  }
+});
+
+// MEDIUM-3: npm NUNCA empaqueta un `.gitignore`, así que desde el tarball se copiaban 4 de 5
+// ficheros — y el que faltaba es justo el que evita comitear el `.env` que el README copiado le dice
+// al usuario que cree. La suite era ciega por construcción: aseveraba `>= 5` sobre el repo, cierto
+// ahí y falso en el artefacto publicado. El asset se llama ahora `gitignore` y se copia con punto.
+test('floor: the template protection travels in the published package', () => {
+  const assets = readdirSync(new URL('../skills/harness/assets/_TEMPLATE', import.meta.url));
+  assert.ok(!assets.includes('.gitignore'), 'un `.gitignore` no llegaría al paquete de npm');
+  assert.ok(assets.includes('gitignore'), 'tiene que viajar sin punto y copiarse con él');
+  const cwd = freshWorkspace('protect');
+  ensureHarnessSkeleton(cwd);
+  assert.ok(existsSync(join(cwd, '01-TOOLS/_TEMPLATE/.gitignore')), 'y aterrizar como `.gitignore`');
+  assert.ok(existsSync(join(cwd, '01-TOOLS/.gitignore')), 'la cobertura es de capa, no por proveedor');
+  const layer = readFileSync(join(cwd, '01-TOOLS/.gitignore'), 'utf8');
+  assert.match(layer, /\.env/, 'la capa donde viven las credenciales queda cubierta');
+});
+
+// MEDIUM-4: `templateAssets()` se comía cualquier error en `[]`, y con `assets.length > 0` eso
+// dejaba el suelo permanentemente insatisfacible con una acción que no podía arreglarlo, sin nombrar
+// nunca la causa real (el paquete roto). Y el mutante que quitaba esa guarda sobrevivía la suite.
+test('floor: an empty template directory is not a satisfied floor', () => {
+  const cwd = freshWorkspace('empty');
+  const plan = buildOnboardingPlan(opsRecord(), scanProject(cwd));
+  mkdirSync(join(cwd, '01-TOOLS/_TEMPLATE'), { recursive: true });
+  mkdirSync(join(cwd, '02-DOCS/wiki/harness'), { recursive: true });
+  assert.ok(
+    missingHarnessFloor(cwd, plan).some((m) => m.includes('_TEMPLATE')),
+    'un directorio que existe y está vacío no es suelo',
+  );
+});
+
+// MEDIUM-5: la comprobación por fichero colgaba de una igualdad de cadena exacta, así que
+// `01-TOOLS/_TEMPLATE` sin barra, o `./01-TOOLS/...`, la degradaban en silencio a existencia de
+// directorio. Es el mutante nº4 del constructor alcanzable con un carácter.
+test('floor: the per-file check survives a differently spelled path', () => {
+  const cwd = freshWorkspace('spelling');
+  ensureHarnessSkeleton(cwd);
+  rmSync(join(cwd, '01-TOOLS/_TEMPLATE', readdirSync(join(cwd, '01-TOOLS/_TEMPLATE'))[0]));
+  for (const spelling of ['01-TOOLS/_TEMPLATE/', '01-TOOLS/_TEMPLATE', './01-TOOLS/_TEMPLATE/', '01-TOOLS//_TEMPLATE/']) {
+    assert.equal(missingHarnessFloor(cwd, { floorPaths: [spelling] }).length, 1, `no detecta con: ${spelling}`);
+  }
+});
+
+// MEDIUM-6: `floorPaths` sale de `.rsc.json`, un fichero comiteado y propenso a conflictos de merge.
+// Un camino con `..` daba el suelo por satisfecho MIRANDO FUERA de la raíz, y un `null` o una cadena
+// en vez de un array tumbaban `rsc install` DESPUÉS de haber instalado.
+test('floor: a malformed or escaping floor declaration is named, never followed and never fatal', () => {
+  const cwd = freshWorkspace('malformed');
+  ensureHarnessSkeleton(cwd);
+  for (const floorPaths of [['../../../../etc/passwd'], ['/etc/passwd'], ['01-TOOLS/_TEMPLATE/', null], '01-TOOLS/_TEMPLATE/', 42]) {
+    const result = missingHarnessFloor(cwd, { floorPaths });
+    assert.ok(Array.isArray(result), `tiene que devolver un array para: ${JSON.stringify(floorPaths)}`);
+    assert.ok(!result.some((m) => m.includes('etc/passwd')), 'jamás mira fuera de la raíz');
+  }
+  assert.ok(
+    missingHarnessFloor(cwd, { floorPaths: ['../../../../etc/passwd'] }).length > 0,
+    'un camino que escapa se reporta como no satisfecho, no como satisfecho',
+  );
+});
+
+// Mutante superviviente: quitar `02-DOCS/wiki/harness/` del suelo. Es una de las dos filas del suelo
+// mínimo verbatim de §0 y nada aseveraba ni que estuviera ni que su ausencia se detectara.
+test('floor: the minimum floor is both rows, and both are detected', () => {
+  const cwd = freshWorkspace('minimum');
+  const plan = buildOnboardingPlan(opsRecord(), scanProject(cwd));
+  assert.ok(plan.floorPaths.includes('01-TOOLS/_TEMPLATE/'));
+  assert.ok(plan.floorPaths.includes('02-DOCS/wiki/harness/'));
+  ensureHarnessSkeleton(cwd);
+  rmSync(join(cwd, '02-DOCS/wiki/harness'), { recursive: true });
+  assert.ok(missingHarnessFloor(cwd, plan).some((m) => m.includes('02-DOCS/wiki/harness')));
 });

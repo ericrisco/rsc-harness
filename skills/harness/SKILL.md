@@ -151,7 +151,7 @@ Execute in this exact order. Each step writes to disk; abort and report on first
    - Same logic for `AGENTS.md`, rendered from `references/agents-md-template.md`.
 2. **Create `01-TOOLS/` skeleton.**
    - Create `01-TOOLS/` directory.
-   - Copy `assets/_TEMPLATE/` to `01-TOOLS/_TEMPLATE/`. This template is **generic boilerplate with placeholders (`<NOMBRE_TOOL>`, `<TOOL>_API_KEY`)**. The user copies it manually when adding a tool NOT in the catalog. The skill itself does NOT use `_TEMPLATE/` to generate the detected tools — those come from `providers.yaml`.
+   - Copy `assets/_TEMPLATE/` to `01-TOOLS/_TEMPLATE/`. The asset ships its ignore rules as `gitignore` (no leading dot, because npm never packages a `.gitignore`) and it must land as `.gitignore`; the installer already does this on every apply, so normally you will find the directory built. This template is **generic boilerplate with placeholders (`<NOMBRE_TOOL>`, `<TOOL>_API_KEY`)**. The user copies it manually when adding a tool NOT in the catalog. The skill itself does NOT use `_TEMPLATE/` to generate the detected tools — those come from `providers.yaml`.
 3. **Per detected tool** (in catalog order):
    - Create `01-TOOLS/<ID>/`.
    - Write every file from the provider entry's `files:` map verbatim (replacing template variables: `{{TOOL_ID}}`, `{{DASHBOARD_URL}}`, etc.).

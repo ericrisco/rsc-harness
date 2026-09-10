@@ -74,6 +74,12 @@ export function scanProject(root = process.cwd()) {
       const rel = relative(absolute, path).split(sep).join('/');
       if (rel.startsWith('../') || rel === '..') throw new Error('project scan escaped the selected root');
       if (rel === '02-DOCS/wiki/harness' || rel.startsWith('02-DOCS/wiki/harness/')) continue;
+      // Mismo motivo que la línea de arriba, y descubierto igual de tarde: el instalador escribe
+      // `01-TOOLS/_TEMPLATE/` y sus dos `.md` entraban como evidencia de proyecto, moviendo la
+      // identidad del plan. El segundo `onboard --accept-plan <id>` moría con RSC_PLAN_CHANGED, y
+      // con él el reintento que la documentación pide tras reparar el suelo. Los proveedores reales
+      // que el usuario añada bajo `01-TOOLS/` sí siguen contando: son suyos, no nuestros.
+      if (rel === '01-TOOLS/_TEMPLATE' || rel.startsWith('01-TOOLS/_TEMPLATE/')) continue;
       if (entry.isDirectory()) { visit(path); continue; }
       if (!entry.isFile()) continue;
       let isSignal = manifests.has(entry.name) || entry.name.endsWith('.md');

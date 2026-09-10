@@ -239,13 +239,25 @@ export const HARNESS_FLOOR_CONSTITUTION = '02-DOCS/wiki/sdd/constitution.md';
 
 // Los ficheros que la plantilla trae hoy. Se lee del asset en vez de codificar una lista, para que
 // añadir un fichero a la plantilla no deje el suelo comprobando de menos en silencio.
+//
+// Un error aquí NO se convierte en lista vacía. Comérselo dejaba el suelo permanentemente
+// insatisfacible, con un mensaje que ofrecía una acción que leía ese mismo asset ausente y que por
+// tanto no podía arreglarlo nunca — y sin nombrar jamás la causa real, que es un paquete roto.
 function templateAssets() {
-  try {
-    return readdirSync(TEMPLATE_SOURCE).sort();
-  } catch {
-    return [];
-  }
+  return readdirSync(TEMPLATE_SOURCE).sort();
 }
+
+// npm NUNCA empaqueta un fichero llamado `.gitignore`, así que el asset viaja sin punto y se copia
+// con él. Sin esto, desde el paquete publicado se copiaban 4 de 5 ficheros y el que faltaba era el
+// único que evita comitear el `.env` que el README —copiado por el propio instalador— manda crear.
+const DOTTED = { gitignore: '.gitignore' };
+const targetName = (asset) => DOTTED[asset] ?? asset;
+
+// La capa entera, no cada proveedor: el flujo documentado es copiar `_TEMPLATE/` a
+// `01-TOOLS/<PROVEEDOR>/`, y depender de que cada copia se lleve su propia protección es depender
+// de que nadie se salte un paso con credenciales de por medio.
+const LAYER_IGNORE = ['# Escrito por rsc: la capa de herramientas guarda credenciales.',
+  '*/.env', '*/.env.*', '!*/.env.example', '*/keys/', '*/out/', ''].join('\n');
 
 /**
  * Crea la parte determinista del esqueleto. Copiar ficheros estáticos es un algoritmo, así que por
@@ -259,38 +271,73 @@ function templateAssets() {
  * un fichero que el usuario haya tocado no se sobrescribe nunca.
  */
 export function ensureHarnessSkeleton(cwd = process.cwd()) {
+  // La guarda existía en este mismo fichero y no se llamaba. `existsSync` sigue los enlaces, así que
+  // un `01-TOOLS` o un `_TEMPLATE` que fuese symlink apuntaba el `copyFileSync` fuera de la raíz — y
+  // git guarda los symlinks, así que el vector viaja en un clone. El repo ya fija la política
+  // contraria para los caminos gobernados, con dos tests que exigen que nada se escriba fuera.
+  assertManagedPathsStayInsideRoot(cwd, ['01-TOOLS/', TEMPLATE_FLOOR, '02-DOCS/wiki/harness/']);
   const created = [];
   for (const dir of ['02-DOCS/wiki/harness', '01-TOOLS/_TEMPLATE']) {
     const absolute = join(cwd, dir);
-    if (existsSync(absolute)) continue;
+    // lstatSync y no existsSync: un enlace «existe» y nos habría hecho seguir escribiendo a través.
+    if (existsSync(absolute) && !lstatSync(absolute).isSymbolicLink()) continue;
     mkdirSync(absolute, { recursive: true });
     created.push(`${dir}/`);
   }
-  for (const name of templateAssets()) {
-    const target = join(cwd, '01-TOOLS', '_TEMPLATE', name);
+  for (const asset of templateAssets()) {
+    const target = join(cwd, '01-TOOLS', '_TEMPLATE', targetName(asset));
     if (existsSync(target)) continue;
-    copyFileSync(join(TEMPLATE_SOURCE, name), target);
-    created.push(`${TEMPLATE_FLOOR}${name}`);
+    copyFileSync(join(TEMPLATE_SOURCE, asset), target);
+    created.push(`${TEMPLATE_FLOOR}${targetName(asset)}`);
+  }
+  const layer = join(cwd, '01-TOOLS', '.gitignore');
+  if (!existsSync(layer)) {
+    writeFileSync(layer, LAYER_IGNORE);
+    created.push('01-TOOLS/.gitignore');
   }
   return { created };
 }
+
+// Un camino declarado se compara por su FORMA, no por su texto: `01-TOOLS/_TEMPLATE` sin barra, con
+// `./` delante o con doble barra degradaban la comprobación por fichero a simple existencia de
+// directorio, que es el modo de fallo que este suelo existe para evitar, alcanzable con un carácter.
+const floorSegments = (path) => String(path).split(/[/\\]+/).filter((part) => part && part !== '.');
+const floorKey = (path) => floorSegments(path).join('/');
+const TEMPLATE_KEY = floorKey(TEMPLATE_FLOOR);
 
 // Un directorio que existe y está vacío pasa cualquier comprobación de existencia y no sirve para
 // nada — el mismo modo de fallo por el que el suelo es `01-TOOLS/_TEMPLATE/` y no `01-TOOLS/`, un
 // nivel más abajo.
 function floorSatisfied(cwd, path) {
-  const absolute = join(cwd, path.replace(/\/$/, ''));
+  const key = floorKey(path);
+  const absolute = join(cwd, key);
   if (!existsSync(absolute)) return false;
-  if (path !== TEMPLATE_FLOOR) return true;
+  if (key !== TEMPLATE_KEY) return true;
   const assets = templateAssets();
-  return assets.length > 0 && assets.every((name) => existsSync(join(absolute, name)));
+  // `assets.length > 0` es cinturón y tirantes, y hoy es INALCANZABLE: `templateAssets()` lanza si no
+  // puede leer el asset, así que sólo daría cero con un asset legítimamente vacío — un paquete roto
+  // de otra forma. Se declara en vez de fingir que un test lo cubre: el mutante que la quita
+  // sobrevive la suite, y es equivalente, no un hueco.
+  return assets.length > 0 && assets.every((asset) => existsSync(join(absolute, targetName(asset))));
 }
 
 /** Qué falta del suelo. Puro, sólo existencia, y vacío para un recibo que no declara suelo. */
+// `floorPaths` sale del recibo persistido en `.rsc.json`: un fichero comiteado, propenso a
+// conflictos de merge, y que un repo clonado puede traer preparado. Así que se valida la forma antes
+// de mirar el disco: un `..` daba el suelo por satisfecho MIRANDO FUERA de la raíz, y un `null` o una
+// cadena en lugar de un array tumbaban `rsc install` después de haber instalado.
 export function missingHarnessFloor(cwd = process.cwd(), plan = {}) {
-  return (plan?.floorPaths ?? [])
-    .filter((path) => !floorSatisfied(cwd, path))
-    .map((path) => `missing harness floor ${path}`);
+  const declared = Array.isArray(plan?.floorPaths) ? plan.floorPaths : [];
+  const missing = [];
+  for (const path of declared) {
+    const segments = typeof path === 'string' ? floorSegments(path) : [];
+    const usable = segments.length > 0 && !segments.includes('..') && !String(path).startsWith('/');
+    // Un camino que no se puede usar se reporta como NO satisfecho, nunca como satisfecho, y sin
+    // repetir su contenido: es dato ajeno y va a un canal que lee un agente.
+    if (!usable) { missing.push('missing harness floor <invalid declaration>'); continue; }
+    if (!floorSatisfied(cwd, path)) missing.push(`missing harness floor ${floorKey(path)}/`);
+  }
+  return missing;
 }
 
 /**

@@ -24,7 +24,10 @@ If your user asked you to install rsc / rsc-harness / this harness, do this in o
    `RSC_ONBOARDING_INCOMPLETE`, the plan applied but the harness floor is missing: the output names
    every missing path and the action that creates it. Run that action — the `harness` skill scaffolds
    `01-TOOLS/` + `02-DOCS/`, and the `constitution` phase writes the constitution when SDD is
-   selected — and do not proceed as if the harness were ready.
+   selected — and do not proceed as if the harness were ready. `RSC_SKELETON_FAILED` on the same run
+   means rsc could not write part of the skeleton itself: the install still applied, and the line
+   names the obstacle (usually a file or a symlink sitting where a directory belongs). Clear that
+   obstacle first — no skill can, because it is not a missing file but an occupied path.
 7. Tell the user to reload or restart the assistant so its new skills and hooks become active. Then,
    **only if you saw `RSC_ONBOARDING_READY`**, confirm rsc is ready and wait for the user's own task.
    If you saw `RSC_ONBOARDING_INCOMPLETE`, say instead what is missing and that you are completing
