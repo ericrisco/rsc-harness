@@ -20,9 +20,16 @@ If your user asked you to install rsc / rsc-harness / this harness, do this in o
 4. Rerun with the answers to obtain `RSC_ONBOARDING_PLAN`. This preview writes nothing.
 5. Show every selected, deferred and excluded component with its reason. Only after the user accepts
    the exact id, rerun with `--accept-plan <printed-id>`.
-6. Only `RSC_ONBOARDING_READY` means the harness is installed and verified.
-7. Tell the user to reload or restart the assistant so its new skills and hooks become active. Then
-   confirm rsc is ready and wait for the user's own task.
+6. Only `RSC_ONBOARDING_READY` means the harness is installed and verified. If you get
+   `RSC_ONBOARDING_INCOMPLETE`, the plan applied but the harness floor is missing: the output names
+   every missing path and the action that creates it. Run that action — the `harness` skill scaffolds
+   `01-TOOLS/` + `02-DOCS/`, and the `constitution` phase writes the constitution when SDD is
+   selected — and do not proceed as if the harness were ready.
+7. Tell the user to reload or restart the assistant so its new skills and hooks become active. Then,
+   **only if you saw `RSC_ONBOARDING_READY`**, confirm rsc is ready and wait for the user's own task.
+   If you saw `RSC_ONBOARDING_INCOMPLETE`, say instead what is missing and that you are completing
+   it — never tell the user the harness is ready when it is not, because that is the one failure they
+   cannot diagnose: everything looks installed and nothing behaves as if it were.
 
 Already installed: `rsc sync`. Add one skill: `rsc add <id>`. Reassess deferred capabilities without
 installing: `rsc reassess`. Recommend without installing: `rsc consult "<what the user wants>"`.

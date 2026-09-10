@@ -216,6 +216,11 @@ Accept this exact harness plan?
 The terminal and chat adapters produce the same normalized answers and plan id. If project evidence
 changes between preview and acceptance, rsc returns `RSC_PLAN_CHANGED` and writes nothing. After an
 accepted application it verifies the receipt and managed state before printing `RSC_ONBOARDING_READY`.
+That verdict is not just about the receipt: it also requires the harness floor to exist —
+`01-TOOLS/_TEMPLATE/`, `02-DOCS/wiki/harness/`, and the constitution when the plan selects SDD.
+If the floor is missing, the install applied but prints `RSC_ONBOARDING_INCOMPLETE` with each
+missing path and the action that creates it, because a plan that promised little used to be able to
+report success with three markdown files.
 
 ---
 

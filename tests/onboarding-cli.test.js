@@ -177,3 +177,57 @@ test('reassess stays quiet until deferred evidence changes, then requires a new 
   assert.match(changed.stdout, /--software-scope growing/);
   assert.match(changed.stdout, /accept/i);
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// El suelo del arnés, desde el CLI. Spec: 02-DOCS/wiki/sdd/specs/install-completion-floor.md
+//
+// `rsc.js` imprimía RSC_ONBOARDING_READY justo después de aplicar, sin mirar si el arnés existía.
+// Con SDD elegido, la constitución la escribe una fase agéntica posterior, así que READY era falso.
+
+const sddComplete = [
+  '--technical-level', 'mixed', '--accompaniment', 'L1', '--project-kind', 'software',
+  '--software-scope', 'complex', '--goal', 'Build a substantial product', '--target', 'codex',
+];
+const onboardWithSdd = (cwd) => {
+  const preview = run(cwd, ['onboard', ...sddComplete]);
+  const id = preview.stdout.match(/Plan id: ([a-f0-9]{64})/)?.[1];
+  return { id, applied: run(cwd, ['onboard', ...sddComplete, '--accept-plan', id]) };
+};
+
+// AC7 — no decir «listo», nombrar lo que falta, y ofrecer una acción que pueda CREARLO. El
+// `Recover with:` que existía reejecutaba el onboarding, y el onboarding no monta el esqueleto:
+// una recuperación que no recupera consume el único intento del usuario.
+test('floor: an install whose plan selects SDD is reported incomplete, not ready', () => {
+  const cwd = fresh();
+  const { applied } = onboardWithSdd(cwd);
+  assert.equal(applied.status, 0, applied.stderr);
+  assert.doesNotMatch(applied.stdout, /RSC_ONBOARDING_READY/, 'sin constitución no está listo');
+  assert.match(applied.stdout, /RSC_ONBOARDING_INCOMPLETE/);
+  assert.match(applied.stdout, /constitution\.md/);
+  assert.match(applied.stdout, /harness/i, 'la acción tiene que nombrar lo que crea el esqueleto');
+  // Y el esqueleto determinista sí lo montó el binario, aunque falte la parte que exige juicio.
+  assert.ok(existsSync(join(cwd, '01-TOOLS/_TEMPLATE/.env.example')));
+  assert.ok(existsSync(join(cwd, '02-DOCS/wiki/harness')));
+});
+
+// AC7b — el suelo NO desactiva el arnés. Colgarlo de `hasDeclaredHarness` habría hecho que `add`
+// devolviera RSC_ONBOARDING_REQUIRED, que es justo la acción que la spec prohíbe, y habría
+// bloqueado la Fase 3 de `init`, que usa ese comando para instalar skills.
+test('floor: an incomplete floor never blocks the maintenance commands', () => {
+  const cwd = fresh();
+  onboardWithSdd(cwd);
+  const added = run(cwd, ['add', 'fastapi', '--target', 'codex']);
+  assert.doesNotMatch(added.stderr + added.stdout, /RSC_ONBOARDING_REQUIRED/, 'el suelo no bloquea');
+  assert.equal(added.status, 0, added.stderr);
+});
+
+// AC14 — había un segundo emisor. `printAgentHandoff` dice «Tell the user rsc is ready» desde el
+// wizard y desde `install`, sin mirar el suelo.
+test('floor: the agent handoff does not claim ready while the floor is incomplete', () => {
+  const cwd = fresh();
+  onboardWithSdd(cwd);
+  const installed = run(cwd, ['install', '--profile', 'minimal', '--target', 'codex']);
+  assert.equal(installed.status, 0, installed.stderr);
+  assert.doesNotMatch(installed.stdout, /Tell the user rsc is ready/, 'no puede afirmarlo');
+  assert.match(installed.stdout, /constitution\.md|floor is incomplete/i, 'y tiene que decir por qué');
+});

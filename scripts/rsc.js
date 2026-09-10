@@ -20,7 +20,7 @@ import {
   normalizeOnboarding, missingOnboardingFields, scanProject,
   buildOnboardingPlan, decodeGoal, encodeGoal, identifyPlan, recommendDeferredComponents,
 } from './lib/onboarding.js';
-import { applyAcceptedOnboarding, verifyOnboarding } from './lib/onboarding-apply.js';
+import { applyAcceptedOnboarding, verifyOnboarding, ensureHarnessSkeleton, harnessReadiness } from './lib/onboarding-apply.js';
 
 const rawArgv = process.argv.slice(2);
 const GLOBAL_VALUE_FLAGS = new Set([
@@ -200,11 +200,32 @@ async function runOnboarding(targets) {
   }
   try {
     await applyAcceptedOnboarding({ cwd: process.cwd(), plan, planId });
-    say(`RSC_ONBOARDING_READY ${planId}`);
   } catch (error) {
     console.error(error.message);
     process.exitCode = 4;
+    return;
   }
+  // A partir de aquí la transacción YA confirmó, así que nada de lo que siga puede reportarse como
+  // fallo de aplicación: decirlo mentiría en la otra dirección, sobre una instalación que sí está
+  // aplicada. Montar el esqueleto va fuera de la transacción por eso mismo — dentro dejaría residuo
+  // si el apply revirtiera, porque el suelo no está en `governedPaths` y por tanto no se snapshotea.
+  try {
+    ensureHarnessSkeleton(process.cwd());
+  } catch (error) {
+    say(`RSC_SKELETON_FAILED ${error.message}`);
+  }
+  emitHarnessReadiness(plan, planId);
+}
+
+// La única línea que afirmaba que el arnés estaba listo lo hacía sin mirar si existía: «completado»
+// estaba definido contra lo que el plan prometió, no contra un suelo, así que un plan que prometía
+// poco se cumplía entero. Spec: 02-DOCS/wiki/sdd/specs/install-completion-floor.md
+function emitHarnessReadiness(plan, planId) {
+  const readiness = harnessReadiness(process.cwd(), plan);
+  if (readiness.ready) return void say(`RSC_ONBOARDING_READY ${planId}`);
+  say(`RSC_ONBOARDING_INCOMPLETE ${planId}`);
+  for (const missing of readiness.missing) say(`  ${missing}`);
+  say(`  Next: ${readiness.action}`);
 }
 
 function runReassessment() {
@@ -380,8 +401,21 @@ function printAgentHandoff() {
   say('  1. Reload/restart this session so the new skills + hooks load');
   say('     (Claude Code: restart the session · Codex/AGENTS.md tools: next turn).');
   say('  2. After reload you are EQUIPPED — orient + suggest are always-on; bro is installed.');
-  say('  3. Tell the user rsc is ready; they can start in their own words.');
-  say('     Do NOT auto-start a task — wait for the user.');
+  const receipt = readManifest()?.onboarding;
+  const readiness = receipt?.plan
+    ? harnessReadiness(process.cwd(), receipt.plan)
+    : { ready: true, missing: [], action: '' };
+  if (readiness.ready) {
+    say('  3. Tell the user rsc is ready; they can start in their own words.');
+    say('     Do NOT auto-start a task — wait for the user.');
+  } else {
+    // El otro emisor. Decía «ready» desde el wizard y desde `install` sin mirar el suelo, así que
+    // corregir sólo el del onboarding habría dejado la mentira viva por el camino más usado.
+    say('  3. Do NOT tell the user rsc is ready — the harness floor is incomplete:');
+    for (const missing of readiness.missing) say(`     ${missing}`);
+    say(`     ${readiness.action}`);
+    say('     Then tell the user, and do NOT auto-start a task.');
+  }
   say('════════════════════════════════════════════════');
 }
 

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
-import { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, realpathSync, writeFileSync } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
+import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, realpathSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { applyInstall, pruneSharedBases, removeTargetInstall } from '../install-apply.js';
 import { targetPaths } from '../../targets/index.js';
 import { readState } from './state.js';
@@ -203,4 +204,109 @@ export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planI
     restoreBackup({ cwd, id: transaction.id });
     throw new Error(`RSC_ONBOARDING_INCOMPLETE: ${error.message}. Recover with: ${recoveryCommand(plan, planId)}`);
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// El suelo del arnés: qué tiene que existir para que decir «listo» sea verdad.
+//
+// «Completado» estaba definido de forma RELATIVA — el estado real coincide con lo que el plan
+// prometió — así que un plan que promete poco se cumplía entero, y una instalación podía imprimir
+// RSC_ONBOARDING_READY con tres markdown y un `.rsc.json`. `01-TOOLS/` no existía para el
+// instalador y la constitución no se mencionaba en ningún sitio.
+//
+// Spec: 02-DOCS/wiki/sdd/specs/install-completion-floor.md
+//
+// Tres cosas que este código NO hace, y cada una es una redacción del plan que se estrelló:
+//
+//   1. NO se comprueba dentro de `applyAcceptedOnboarding`. Ese camino revierte ante cualquier
+//      diferencia, y parte del suelo la produce una fase agéntica posterior: comprobarlo ahí
+//      convertía cada instalación nueva en un rollback. Medido, no razonado.
+//   2. NO cuelga de `hasDeclaredHarness`. Ese booleano enruta `add`, `install` y el wizard, así que
+//      un suelo incompleto habría devuelto RSC_ONBOARDING_REQUIRED y bloqueado la Fase 3 de `init`.
+//      El suelo impide AFIRMAR que el arnés está listo; no impide nada más.
+//   3. NO compara contenido. `01-TOOLS/` es la capa que el usuario modifica al añadir herramientas
+//      y donde viven los `.env`: fijar su contenido convertiría el uso normal en un fallo.
+//
+// Y la retro-compatibilidad no es una lista de exentos (P3): el suelo viaja DENTRO del plan, así
+// que un recibo aceptado por una versión anterior no lo trae y queda exento por construcción.
+
+const LIB_DIR = dirname(fileURLToPath(import.meta.url));
+const TEMPLATE_SOURCE = join(LIB_DIR, '..', '..', 'skills', 'harness', 'assets', '_TEMPLATE');
+const TEMPLATE_FLOOR = '01-TOOLS/_TEMPLATE/';
+
+export const HARNESS_FLOOR_MINIMUM = [TEMPLATE_FLOOR, '02-DOCS/wiki/harness/'];
+export const HARNESS_FLOOR_CONSTITUTION = '02-DOCS/wiki/sdd/constitution.md';
+
+// Los ficheros que la plantilla trae hoy. Se lee del asset en vez de codificar una lista, para que
+// añadir un fichero a la plantilla no deje el suelo comprobando de menos en silencio.
+function templateAssets() {
+  try {
+    return readdirSync(TEMPLATE_SOURCE).sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Crea la parte determinista del esqueleto. Copiar ficheros estáticos es un algoritmo, así que por
+ * P1 le toca al binario en vez de pedírsela a una fase agéntica que puede no llegar.
+ *
+ * Se llama DESPUÉS de que la transacción del apply confirme: el suelo no está en `governedPaths`
+ * —no debe estarlo, o se le calcularía digest— así que tampoco está en el snapshot, y crearlo dentro
+ * de la transacción dejaría residuo si el apply revirtiera.
+ *
+ * Idempotente y auto-reparadora POR FICHERO: un `_TEMPLATE/` a medias queda completo al reaplicar, y
+ * un fichero que el usuario haya tocado no se sobrescribe nunca.
+ */
+export function ensureHarnessSkeleton(cwd = process.cwd()) {
+  const created = [];
+  for (const dir of ['02-DOCS/wiki/harness', '01-TOOLS/_TEMPLATE']) {
+    const absolute = join(cwd, dir);
+    if (existsSync(absolute)) continue;
+    mkdirSync(absolute, { recursive: true });
+    created.push(`${dir}/`);
+  }
+  for (const name of templateAssets()) {
+    const target = join(cwd, '01-TOOLS', '_TEMPLATE', name);
+    if (existsSync(target)) continue;
+    copyFileSync(join(TEMPLATE_SOURCE, name), target);
+    created.push(`${TEMPLATE_FLOOR}${name}`);
+  }
+  return { created };
+}
+
+// Un directorio que existe y está vacío pasa cualquier comprobación de existencia y no sirve para
+// nada — el mismo modo de fallo por el que el suelo es `01-TOOLS/_TEMPLATE/` y no `01-TOOLS/`, un
+// nivel más abajo.
+function floorSatisfied(cwd, path) {
+  const absolute = join(cwd, path.replace(/\/$/, ''));
+  if (!existsSync(absolute)) return false;
+  if (path !== TEMPLATE_FLOOR) return true;
+  const assets = templateAssets();
+  return assets.length > 0 && assets.every((name) => existsSync(join(absolute, name)));
+}
+
+/** Qué falta del suelo. Puro, sólo existencia, y vacío para un recibo que no declara suelo. */
+export function missingHarnessFloor(cwd = process.cwd(), plan = {}) {
+  return (plan?.floorPaths ?? [])
+    .filter((path) => !floorSatisfied(cwd, path))
+    .map((path) => `missing harness floor ${path}`);
+}
+
+/**
+ * Lo que el instalador puede afirmar honestamente, y qué hacer si no.
+ *
+ * `action` tiene que poder CREAR lo que falta. Hoy el `Recover with:` del apply reejecuta el
+ * onboarding, y el onboarding no puede montar el esqueleto: una recuperación que no recupera
+ * consume el único intento que el usuario iba a hacer.
+ */
+export function harnessReadiness(cwd = process.cwd(), plan = {}) {
+  const missing = missingHarnessFloor(cwd, plan);
+  return {
+    ready: missing.length === 0,
+    missing,
+    action: missing.length
+      ? 'invoke the `harness` skill to scaffold 01-TOOLS/ + 02-DOCS/, and the `constitution` phase when SDD is selected'
+      : '',
+  };
 }

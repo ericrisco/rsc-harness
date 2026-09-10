@@ -219,6 +219,16 @@ export function buildOnboardingPlan(record, evidence) {
     ...normalized.targets.flatMap((target) => managedPathsForInstall({ skillIds: skills, target, cwd: root, policy })
       .map((path) => relative(root, path).split(sep).join('/'))),
   ])].sort() : ['.rsc.json', '.rsc/', '02-DOCS/wiki/harness/'];
+  // El suelo viaja dentro del plan a propósito: así un recibo aceptado por una versión anterior no
+  // lo trae y queda exento sin que exista ninguna lista de exentos (P3, el contenido es el ledger).
+  // La constitución entra SÓLO si el plan eligió SDD, porque los criterios 5 y 17 de la spec de
+  // onboarding la posponen a propósito en workspaces no-software y en software pequeño.
+  const floorPaths = [
+    '01-TOOLS/_TEMPLATE/',
+    '02-DOCS/wiki/harness/',
+    ...(decisions.some((decision) => decision.id === 'sdd' && decision.state === 'selected')
+      ? ['02-DOCS/wiki/sdd/constitution.md'] : []),
+  ].sort();
   return {
     schemaVersion: 1,
     record: normalized,
@@ -231,6 +241,7 @@ export function buildOnboardingPlan(record, evidence) {
     decisions,
     policy,
     governedPaths,
+    floorPaths,
   };
 }
 

@@ -173,13 +173,26 @@ means the user starts clean.
 
 ### Phase 5 — HANDOFF
 
-`init` stops here. It has set the profile, recorded the discovery, and installed the skills.
+The profile is set, the discovery recorded, the skills installed. What is missing is the workspace
+itself, and this is where onboarding used to end with a request: *"now run `harness`"*. Nothing ran
+it. Finishing depended on the user reading a line and typing something — and in a chat install that
+user has just delegated precisely so they would not have to know what to type.
 
-> "Tu perfil y lo que hemos hablado ya están guardados. Ahora ejecuta `harness` y monto el esqueleto
-> del proyecto (`01-TOOLS/` + `02-DOCS/`) leyendo todo lo que acabamos de decidir."
+So **invoke `harness` yourself, now**, as the last step of this phase. Say what you are doing in one
+line, then do it:
 
-Do not scaffold while you are here, however tempting — `harness` reads this same profile and owns
-that job.
+> "Tu perfil y lo que hemos hablado ya están guardados. Monto ahora el esqueleto del proyecto
+> (`01-TOOLS/` + `02-DOCS/`) leyendo todo lo que acabamos de decidir."
+
+`harness` still owns *how* the scaffold is built — you are calling it, not reimplementing it. Do not
+hand-roll directories here.
+
+**And if it does not happen, say so.** If `harness` cannot run, or stops half-way, **do not tell the
+user rsc is ready**: name what is missing and what will create it. The installer holds the same rule
+— it prints `RSC_ONBOARDING_INCOMPLETE` instead of `RSC_ONBOARDING_READY` when the harness floor is
+absent — and an agent that contradicts its own installer is worse than either alone. Claiming a
+harness that is not there is the one failure the user cannot diagnose, because everything looks
+installed and nothing behaves as if it were.
 
 ## Project grounding
 

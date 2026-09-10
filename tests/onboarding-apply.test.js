@@ -4,7 +4,7 @@ import { existsSync, lstatSync, mkdtempSync, mkdirSync, readdirSync, readFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { normalizeOnboarding, scanProject, buildOnboardingPlan, identifyPlan } from '../scripts/lib/onboarding.js';
-import { applyAcceptedOnboarding, verifyOnboarding } from '../scripts/lib/onboarding-apply.js';
+import { applyAcceptedOnboarding, verifyOnboarding, ensureHarnessSkeleton, missingHarnessFloor, harnessReadiness } from '../scripts/lib/onboarding-apply.js';
 
 test('post-apply verification names a missing managed artifact and prevents a ready verdict', async () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-onboard-verify-'));
@@ -315,4 +315,136 @@ test('a git project declares the gitignore route that onboarding modifies', () =
   const record = normalizeOnboarding({ technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'operations', goal: 'Ops', targets: ['codex'] });
   const plan = buildOnboardingPlan(record, scanProject(cwd));
   assert.ok(plan.governedPaths.includes('.gitignore'));
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// El suelo del arnés. Spec: 02-DOCS/wiki/sdd/specs/install-completion-floor.md
+//
+// Una instalación podía imprimir RSC_ONBOARDING_READY con tres markdown y un `.rsc.json`:
+// `01-TOOLS/` no existía para el instalador y la constitución no se mencionaba en ningún sitio.
+//
+// Tres cosas que estos tests fijan porque tres redacciones del plan se estrellaron contra ellas:
+//   · el suelo NO se comprueba dentro del apply, que revierte ante cualquier diferencia;
+//   · el suelo NO cuelga de `hasDeclaredHarness`, que es el enrutador de `add`/`install`;
+//   · la reparación y la comprobación son POR FICHERO — un `_TEMPLATE/` a medias es invisible
+//     a nivel de directorio.
+
+const softwareRecord = (scope) => normalizeOnboarding({
+  technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'software',
+  softwareScope: scope, goal: 'Build a thing', targets: ['claude'],
+});
+const opsRecord = () => normalizeOnboarding({
+  technicalLevel: 'mixed', accompaniment: 'L1', projectKind: 'operations',
+  goal: 'Run an operations desk', targets: ['codex'],
+});
+const freshWorkspace = (name) => mkdtempSync(join(tmpdir(), `rsc-floor-${name}-`));
+
+// AC1b — el CRITICAL de la primera redacción, convertido en guarda permanente. Si alguien vuelve a
+// comprobar el suelo dentro de la transacción, esto se pone rojo: el apply revierte ante cualquier
+// diferencia y nada determinista creaba el suelo antes de que se verificase.
+test('floor: applying never fails or reverts because of the harness floor', async () => {
+  for (const record of [softwareRecord('complex'), softwareRecord('small'), opsRecord()]) {
+    const cwd = freshWorkspace('apply');
+    const plan = buildOnboardingPlan(record, scanProject(cwd));
+    await applyAcceptedOnboarding({ cwd, plan, planId: identifyPlan(plan) });
+    assert.deepEqual(verifyOnboarding(cwd, plan, identifyPlan(plan)), [], 'el apply no puede autobloquearse');
+  }
+});
+
+// AC1 + AC8 — el instalador CREA la parte determinista, porque copiar ficheros estáticos es un
+// algoritmo y por P1 le toca al binario. Y es idempotente: la segunda pasada no crea nada.
+test('floor: the installer creates the deterministic skeleton, and does it once', async () => {
+  const cwd = freshWorkspace('skeleton');
+  const first = ensureHarnessSkeleton(cwd);
+  assert.ok(existsSync(join(cwd, '01-TOOLS/_TEMPLATE')), '01-TOOLS/_TEMPLATE/ tiene que existir');
+  assert.ok(existsSync(join(cwd, '02-DOCS/wiki/harness')), '02-DOCS/wiki/harness/ también');
+  assert.ok(readdirSync(join(cwd, '01-TOOLS/_TEMPLATE')).length >= 5, 'con su contenido, no vacío');
+  assert.ok(first.created.length > 0, 'la primera pasada crea');
+  assert.deepEqual(ensureHarnessSkeleton(cwd).created, [], 'la segunda no toca nada');
+});
+
+// AC7c — el modo de fallo por el que `clarify` rechazó `01-TOOLS/` a secas, un nivel más abajo: si
+// la comprobación es por directorio, un `_TEMPLATE/` al que le falta un fichero pasa en verde.
+test('floor: a half-copied template is detected and repaired, file by file', async () => {
+  const cwd = freshWorkspace('partial');
+  const plan = buildOnboardingPlan(opsRecord(), scanProject(cwd));
+  ensureHarnessSkeleton(cwd);
+  const victim = readdirSync(join(cwd, '01-TOOLS/_TEMPLATE'))[0];
+  rmSync(join(cwd, '01-TOOLS/_TEMPLATE', victim));
+  assert.ok(
+    missingHarnessFloor(cwd, plan).some((m) => m.includes('01-TOOLS/_TEMPLATE')),
+    'un directorio que existe pero está incompleto NO es suelo',
+  );
+  assert.ok(ensureHarnessSkeleton(cwd).created.length === 1, 'y se repara justo el que falta');
+  assert.deepEqual(missingHarnessFloor(cwd, plan), []);
+});
+
+// AC2 + AC3
+test('floor: a missing floor path is named, a complete floor is silent', async () => {
+  const cwd = freshWorkspace('names');
+  const plan = buildOnboardingPlan(opsRecord(), scanProject(cwd));
+  ensureHarnessSkeleton(cwd);
+  assert.deepEqual(missingHarnessFloor(cwd, plan), [], 'suelo completo');
+  rmSync(join(cwd, '01-TOOLS'), { recursive: true });
+  const missing = missingHarnessFloor(cwd, plan);
+  assert.equal(missing.length, 1);
+  assert.match(missing[0], /missing harness floor 01-TOOLS\/_TEMPLATE\//);
+});
+
+// AC4 + AC5 + AC10 — la constitución es vinculante SÓLO donde el plan elige SDD. Es lo que impide
+// contradecir los criterios 5 y 17 de la spec de onboarding enviada en 1.3.1.
+test('floor: the constitution is required only where the plan selects SDD', async () => {
+  const withSdd = freshWorkspace('sdd-yes');
+  const planWith = buildOnboardingPlan(softwareRecord('complex'), scanProject(withSdd));
+  assert.ok(planWith.decisions.some((d) => d.id === 'sdd' && d.state === 'selected'), 'fixture inválido');
+  assert.ok(planWith.floorPaths.includes('02-DOCS/wiki/sdd/constitution.md'));
+  ensureHarnessSkeleton(withSdd);
+  assert.ok(missingHarnessFloor(withSdd, planWith).some((m) => m.includes('constitution.md')));
+
+  const noSdd = freshWorkspace('sdd-no');
+  const planWithout = buildOnboardingPlan(softwareRecord('small'), scanProject(noSdd));
+  assert.ok(planWithout.decisions.some((d) => d.id === 'sdd' && d.state === 'deferred'), 'fixture inválido');
+  assert.ok(!planWithout.floorPaths.includes('02-DOCS/wiki/sdd/constitution.md'));
+  ensureHarnessSkeleton(noSdd);
+  assert.deepEqual(missingHarnessFloor(noSdd, planWithout), [], 'SDD pospuesto no paga constitución');
+});
+
+// Retro-compatibilidad. Misma forma que el corte de intent-scrutiny: el estado se deriva del
+// contenido del propio recibo, sin lista de exentos (P3). Un recibo de ≤1.3.3 no trae el campo.
+test('floor: a receipt from before this version carries no floor and is exempt', async () => {
+  const cwd = freshWorkspace('legacy');
+  const plan = buildOnboardingPlan(opsRecord(), scanProject(cwd));
+  const legacy = { ...plan };
+  delete legacy.floorPaths;
+  assert.deepEqual(missingHarnessFloor(cwd, legacy), [], 'nada de lo ya instalado se pone en rojo');
+  assert.deepEqual(missingHarnessFloor(cwd, { ...plan, floorPaths: [] }), []);
+});
+
+// AC6 — el suelo se comprueba por EXISTENCIA. Si se digiriese, añadir una herramienta —que es para
+// lo que existe `01-TOOLS/`— convertiría el uso normal en un fallo de verificación.
+test('floor: adding a tool under 01-TOOLS never breaks verification', async () => {
+  const cwd = freshWorkspace('tool');
+  const plan = buildOnboardingPlan(opsRecord(), scanProject(cwd));
+  const id = identifyPlan(plan);
+  await applyAcceptedOnboarding({ cwd, plan, planId: id });
+  ensureHarnessSkeleton(cwd);
+  mkdirSync(join(cwd, '01-TOOLS/STRIPE'), { recursive: true });
+  writeFileSync(join(cwd, '01-TOOLS/STRIPE/.env'), 'STRIPE_API_KEY=sk_test_x\n');
+  assert.deepEqual(verifyOnboarding(cwd, plan, id), [], 'el contenido de esa capa no está fijado');
+  assert.deepEqual(missingHarnessFloor(cwd, plan), []);
+});
+
+// AC7 — la acción que se ofrece tiene que poder CREAR lo que falta. Hoy el `Recover with:` del apply
+// reejecuta el onboarding, y el onboarding no puede crear el esqueleto: una recuperación que no
+// recupera consume el intento del usuario.
+test('floor: readiness reports what is missing and an action that can create it', async () => {
+  const cwd = freshWorkspace('readiness');
+  const plan = buildOnboardingPlan(softwareRecord('complex'), scanProject(cwd));
+  ensureHarnessSkeleton(cwd);
+  const report = harnessReadiness(cwd, plan);
+  assert.equal(report.ready, false, 'falta la constitución: no está listo');
+  assert.ok(report.missing.some((m) => m.includes('constitution.md')));
+  assert.ok(report.action.length > 0, 'tiene que ofrecer algo');
+  assert.doesNotMatch(report.action, /\bonboard\b/, 'reejecutar el onboarding no crea el suelo');
+  assert.match(report.action, /harness/i, 'lo que crea el esqueleto es `harness`');
 });
