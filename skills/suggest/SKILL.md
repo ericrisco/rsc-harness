@@ -117,6 +117,10 @@ Before handling the first request of a session, check the workspace:
   `.rsc/.no-harness`, confirm in one line, and never auto-start `init` in this repo again.
 - Once the profile exists, this gate is inert. Never re-onboard.
 
+## Explain without assuming
+
+Define a term at first use; never give a command, flag or path without saying what it does.
+
 ## Orientación (siempre)
 
 Cierra cada turno con el **bloque-brújula** (📍 dónde estás · ✅ qué hiciste · 🧭 por qué · ➡️ siguiente,
