@@ -24,9 +24,9 @@
 //
 // It never throws. A bootstrap that can crash is the bug it exists to remove.
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const PACKAGE = '@ericrisco/rsc';
 
@@ -115,7 +115,11 @@ export function composeOffer(manifest) {
  * wiring used to hand it directly — anything less and every hook would need to learn about us.
  */
 async function delegate(target, ownArgc) {
-  process.argv.splice(1, ownArgc + 1, target);
+  // `realpathSync` and not `target` as given: the delegate may run its own identity check, and
+  // `gitmoji-guard` does exactly that. Its `import.meta.url` comes back from the loader with
+  // symlinks resolved, so handing it the raw path makes its main block silently not run — the guard
+  // loads, denies nothing, and reports success. Same trap as `sameFile` below, one level down.
+  process.argv.splice(1, ownArgc + 1, realpathSync(target));
   await import(pathToFileURL(target).href);
 }
 
@@ -134,14 +138,44 @@ export async function bootstrap(target, root, announce, ownArgc = 3) {
   if (text) process.stdout.write(text);
 }
 
+/**
+ * "Was this file run directly?" — and the answer must survive a symlink.
+ *
+ * The idiomatic `import.meta.url === pathToFileURL(process.argv[1]).href` is wrong here, and wrong
+ * in the most expensive way: `import.meta.url` is what the ESM loader resolved (symlinks RESOLVED),
+ * while `process.argv[1]` is the raw string the client passed (symlinks INTACT). One symlinked
+ * component anywhere in the project path — `/tmp` and `/var` on macOS, or the ordinary
+ * `~/code -> /Volumes/external/code` — and they differ, this block never runs, node exits 0 having
+ * printed nothing, and ALL SEVEN hooks become silent no-ops. Including the danger guard.
+ *
+ * It would even look correct: "zero bytes in the healthy case" is satisfied, for entirely the wrong
+ * reason, while `doctor` keeps reporting every hook as properly wired. Before the wiring came
+ * through this file, six of the seven had no identity check at all and were immune; routing them
+ * all through one check is what makes getting it right load-bearing.
+ */
+function sameFile(a, b) {
+  if (!a || !b) return false;
+  try {
+    return realpathSync(a) === realpathSync(b);
+  } catch {
+    return a === b;
+  }
+}
+
 // Argument order is ours, then the delegate's untouched: <mode> <root> <target> [the real args…].
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (sameFile(fileURLToPath(import.meta.url), process.argv[1])) {
   const [mode, root, target] = process.argv.slice(2);
-  // Fail open, always and without exception. Whatever goes wrong here, the turn continues: this file
-  // exists to remove a crash, and a bootstrap that can crash has not removed it.
+  // Fail open on the exit code, always: the harness is a convenience and never costs someone their
+  // turn. But failing open is not the same as failing SILENT. A blanket catch here would swallow a
+  // genuine crash inside any of the six delegated scripts, and a guard that crashed would become
+  // indistinguishable from a guard that allowed — which is how a safety guard stops being one
+  // without anybody finding out. So: absence is expected and stays quiet; anything else says so on
+  // stderr and still exits 0.
   try {
     await bootstrap(target, root ?? process.cwd(), mode === 'announce');
-  } catch {
-    /* the harness is a convenience; it never costs someone their turn */
+  } catch (err) {
+    if (err?.code !== 'ERR_MODULE_NOT_FOUND') {
+      process.stderr.write(`rsc: hook failed and was ignored — ${err?.message ?? err}\n`);
+    }
   }
 }

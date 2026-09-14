@@ -45,6 +45,13 @@ export function hookWiringOf(entry) {
 // other settings are preserved. Empty event arrays (and an empty hooks object) are
 // pruned so we don't leave noise behind.
 export function unwireHook(paths) {
+  // The bootstrap lives in the COMMITTED tree, so leaving it behind does not just orphan a file the
+  // way a stray `.rsc/` entry would — it leaves an executable in something the user pushes. Nothing
+  // else removes it: uninstall and purge only ever knew about `.rsc/`.
+  try {
+    rmSync(join(paths.projectRoot, '.claude', 'rsc-bootstrap.mjs'), { force: true });
+  } catch { /* never let cleanup be the thing that fails */ }
+
   const file = paths.hookTarget;
   if (!existsSync(file)) return [];
   let settings;
