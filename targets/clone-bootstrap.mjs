@@ -24,8 +24,10 @@
 //
 // It never throws. A bootstrap that can crash is the bug it exists to remove.
 
-import { existsSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const PACKAGE = '@ericrisco/rsc';
@@ -63,6 +65,61 @@ export function readManifest(root) {
     catalogVersion: typeof parsed.catalogVersion === 'string' ? parsed.catalogVersion : null,
     targets: Array.isArray(parsed.targets) ? parsed.targets : [],
   };
+}
+
+/**
+ * Is what is installed still what the project declares?
+ *
+ * `.rsc/skills/<id>` is the canonical home of a skill's content on every assistant — the per-target
+ * directories (`.claude/skills/`, `.codex/rsc/`, …) are links into it — so one rule answers this for
+ * all seventeen without teaching this file a single target's layout.
+ *
+ * Only what is DECLARED AND MISSING is reported. Not the reverse: an extra directory could equally be
+ * a skill someone wrote by hand, and this repo has already broken a person's own work once by
+ * assuming otherwise. When it cannot be told apart, it is left alone.
+ */
+export function evaluateHarness(root, manifest) {
+  if (manifest.state !== 'declared') return { verdict: 'unknown', missing: [], ownMissing: [] };
+  const here = (id) => existsSync(join(root, '.rsc', 'skills', id));
+  const missing = manifest.skills.filter((id) => !here(id));
+  const ownMissing = manifest.own.filter((id) => !here(id));
+  if (!missing.length && !ownMissing.length) return { verdict: 'current', missing: [], ownMissing: [] };
+  return { verdict: 'behind', missing, ownMissing };
+}
+
+/**
+ * What to say when the harness works but no longer matches what the team decided — the other half of
+ * the feature: building a clone and bringing a stale one up to date are the same transaction, and
+ * both converge on the MANIFEST, never on the newest release.
+ *
+ * The own skills are named separately and deliberately kept out of the sentence that follows the
+ * command: rsc does not install them, their version is the commit, and listing them next to a thing
+ * that installs would be a promise nothing keeps.
+ */
+export function composeDivergence(manifest, evaluation) {
+  const command = manifest.catalogVersion
+    ? `npx ${PACKAGE}@${manifest.catalogVersion} sync`
+    : `npx ${PACKAGE} sync`;
+  let text =
+    '===== rsc =====\n' +
+    'This project declares a harness that no longer matches what is built here — someone changed\n' +
+    'it and git brought the change; nothing is broken.\n';
+  if (evaluation.missing.length) {
+    text += `MISSING, declared in .rsc.json: ${evaluation.missing.join(', ')}.\n`;
+  }
+  // Before the command, never after: anything sitting under the action reads as part of what the
+  // action installs, and these are the one thing rsc will not install. Their version is the commit.
+  if (evaluation.ownMissing.length) {
+    text +=
+      `ALSO DECLARED, written by the team: ${evaluation.ownMissing.join(', ')} — these arrive through\n` +
+      'git, not through any command, and rsc never installs or overwrites them.\n';
+  }
+  return (
+    text +
+    'ACTION: mention it in one line and carry on with what the user asked. To converge, run:\n' +
+    `  ${command}\n` +
+    '===============\n'
+  );
 }
 
 /**
@@ -106,7 +163,8 @@ export function composeOffer(manifest) {
       'It writes .rsc/ and the skill entries; it never touches anything written by hand.\n' +
       '\n' +
       'ACTION: ask the user whether to build it, in one line, and continue with their request\n' +
-      'either way — this must not hold up what they asked for. On a yes, run EXACTLY:\n' +
+      'either way — this must not hold up what they asked for. If there is nobody to ask (CI, an\n' +
+      'unattended run), do NOT install: say it is missing and carry on. On a yes, run EXACTLY:\n' +
       `  ${command}\n` +
       '(the version is the one this project pinned. Do not substitute `@latest`: a release nobody\n' +
       ' on this team adopted is not an upgrade, it is two people quietly drifting apart.)\n' +
@@ -136,16 +194,100 @@ async function delegate(target, ownArgc) {
  * @param {string} root the project root, as the client resolved it
  * @param {boolean} announce whether this hook is the one allowed to speak (SessionStart only)
  */
-export async function bootstrap(target, root, announce, ownArgc = 3) {
-  if (existsSync(target)) return delegate(target, ownArgc);
-  // Not mounted. Only one hook per session may speak, so the person is told once and not seven
-  // times — and that is settled by WHICH hook this is, with no marker file, because writing a
-  // marker before anyone consented is exactly what must not happen (spec AC#2).
-  if (!announce) return;
-  // Declining is a decision, and it is respected whole: no opening offer, and no risk reminder later
-  // either. Ignoring the offer is a different thing entirely — that leaves the door open. The marker
-  // is the one the three existing opt-outs already use, so a person who knows one knows all of them.
-  if (existsSync(join(root, '.rsc', '.no-harness'))) return;
+/**
+ * The protections a missing harness takes away, named by the thing a person is about to do rather
+ * than by the guard that is gone — "you are about to commit and the commit checks are not here" is
+ * actionable; "ship-guard is not installed" is not.
+ *
+ * RECOGNISING one of these is judgement and is declared NON-BINDING (P2): the list is deliberately
+ * short and will miss things, and missing one costs a reminder, never a failure. What IS binding,
+ * and what the tests hold, is everything around it — that it reminds at most once, that it never
+ * denies a tool call, and that it stays silent for ordinary work.
+ */
+const PROTECTED = [
+  { re: /\bgit\s+(commit|cz)\b/, what: 'commit' },
+  { re: /\bgit\s+push\b/, what: 'push' },
+  { re: /\bgit\s+merge\b/, what: 'merge' },
+  { re: /\bgit\s+(switch|checkout)\s+(main|master)\b/, what: 'switch to the trunk' },
+  { re: /\bnpm\s+publish\b/, what: 'publish' },
+  { re: /\brm\s+-rf\b/, what: 'delete files irreversibly' },
+];
+
+/**
+ * "Have we already reminded them in this project?" — kept in the OS temp directory, keyed by the
+ * project path, and NEVER inside the project. The user's tree stays untouched until they consent,
+ * which is the whole point of the first offer (spec AC#2); a note to ourselves about how many times
+ * we have spoken is not their file to carry.
+ */
+function alreadyReminded(root) {
+  const mark = join(tmpdir(), `rsc-offer-${createHash('sha256').update(root).digest('hex').slice(0, 16)}`);
+  if (existsSync(mark)) return true;
+  try {
+    mkdirSync(tmpdir(), { recursive: true });
+    writeFileSync(mark, '');
+  } catch { /* if we cannot remember, we would rather repeat than crash */ }
+  return false;
+}
+
+function readStdin() {
+  try {
+    return readFileSync(0, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+/** The second and last offer: only when they are about to do the thing the absent harness guarded. */
+function remindOnProtectedAction(root) {
+  let command = '';
+  try {
+    const payload = JSON.parse(readStdin() || '{}');
+    command = String(payload?.tool_input?.command ?? '');
+  } catch { return; }
+  const hit = PROTECTED.find(({ re }) => re.test(command));
+  if (!hit) return;
+  if (alreadyReminded(root)) return;
+  const manifest = readManifest(root);
+  if (manifest.state !== 'declared') return;
+  const pin = manifest.catalogVersion ? `@${manifest.catalogVersion}` : '';
+  process.stdout.write(
+    '===== rsc =====\n' +
+    `You are about to ${hit.what}, and this project's checks for that are not built on this\n` +
+    'machine. Nothing is being blocked — this is the last time it will be mentioned.\n' +
+    `To build them: npx ${PACKAGE}${pin} sync\n` +
+    '===============\n',
+  );
+}
+
+/**
+ * @param {string} target the real hook script the wiring would have called
+ * @param {string} root the project root, as the client resolved it
+ * @param {'announce'|'quiet'|'guard'} mode which hook this is, and therefore what it may say
+ */
+export async function bootstrap(target, root, mode, ownArgc = 3) {
+  const mounted = existsSync(target);
+
+  // Declining is a decision, and it is respected whole: no opening offer, no divergence note, and no
+  // risk reminder either. Ignoring the offer is a different thing entirely — that leaves the door open.
+  const declined = existsSync(join(root, '.rsc', '.no-harness'));
+
+  if (mounted) {
+    // The harness works. It may still be out of date, and a manifest that arrived by `git pull` is
+    // exactly the case that used to pass in silence — half the feature missing. Say it, then get out
+    // of the way: being behind is not a reason to stop working.
+    if (mode === 'announce' && !declined) {
+      const manifest = readManifest(root);
+      const evaluation = evaluateHarness(root, manifest);
+      if (evaluation.verdict === 'behind') process.stdout.write(composeDivergence(manifest, evaluation));
+    }
+    return delegate(target, ownArgc);
+  }
+
+  if (declined) return;
+  if (mode === 'guard') return remindOnProtectedAction(root);
+  // Only one hook per session opens with the offer, so the person is told once and not seven times —
+  // settled by WHICH hook this is, with no marker in their tree (spec AC#2).
+  if (mode !== 'announce') return;
   const { text } = composeOffer(readManifest(root));
   if (text) process.stdout.write(text);
 }
@@ -158,12 +300,10 @@ export async function bootstrap(target, root, announce, ownArgc = 3) {
  * while `process.argv[1]` is the raw string the client passed (symlinks INTACT). One symlinked
  * component anywhere in the project path — `/tmp` and `/var` on macOS, or the ordinary
  * `~/code -> /Volumes/external/code` — and they differ, this block never runs, node exits 0 having
- * printed nothing, and ALL SEVEN hooks become silent no-ops. Including the danger guard.
+ * printed nothing, and EVERY hook becomes a silent no-op. Including the danger guard.
  *
  * It would even look correct: "zero bytes in the healthy case" is satisfied, for entirely the wrong
- * reason, while `doctor` keeps reporting every hook as properly wired. Before the wiring came
- * through this file, six of the seven had no identity check at all and were immune; routing them
- * all through one check is what makes getting it right load-bearing.
+ * reason, while `doctor` keeps reporting every hook as properly wired.
  */
 function sameFile(a, b) {
   if (!a || !b) return false;
@@ -184,7 +324,7 @@ if (sameFile(fileURLToPath(import.meta.url), process.argv[1])) {
   // without anybody finding out. So: absence is expected and stays quiet; anything else says so on
   // stderr and still exits 0.
   try {
-    await bootstrap(target, root ?? process.cwd(), mode === 'announce');
+    await bootstrap(target, root ?? process.cwd(), mode);
   } catch (err) {
     if (err?.code !== 'ERR_MODULE_NOT_FOUND') {
       process.stderr.write(`rsc: hook failed and was ignored — ${err?.message ?? err}\n`);

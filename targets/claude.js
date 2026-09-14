@@ -95,6 +95,10 @@ const at = (...seg) => `${P}/${seg.join('/')}`;
 //
 // The script's own path stays in the command as an argument, so every dedup/unwire needle
 // (`.rsc/session-start.`, `.rsc/ship-guard.`, …) still matches and idempotency is untouched.
+// Three modes, because a hook's event decides what it is allowed to say. `announce` is the one hook
+// that may open with the offer (one per session, no marker needed). `guard` is a shell guard, and in
+// an unbuilt harness it is the only place that can notice someone is about to do the thing the
+// missing guard protected. `quiet` delegates and never speaks.
 const BOOTSTRAP = '.claude/rsc-bootstrap.mjs';
 const viaBootstrap = (mode, target, ...args) =>
   [`node "${at(...BOOTSTRAP.split('/'))}"`, `"${mode}"`, `"${P}"`, `"${target}"`, ...args].join(' ');
@@ -162,7 +166,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // sello.mjs is ship-guard's sibling import (hooks are materialized file-by-file,
   // so the deterministic sello core must land next to the guard that loads it).
   copyFileSync(join(HERE, 'sello.mjs'), join(paths.projectRoot, '.rsc', 'sello.mjs'));
-  const sgCmd = viaBootstrap('quiet', at('.rsc', 'ship-guard.mjs'), `"${P}"`);
+  const sgCmd = viaBootstrap('guard', at('.rsc', 'ship-guard.mjs'), `"${P}"`);
   settings.hooks.PreToolUse ||= [];
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
     (e) => !hookWiringOf(e).includes('.rsc/ship-guard.'),
@@ -176,7 +180,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // node-run (Windows-safe), idempotent, fail-open, opt-out via .rsc/.no-danger-guard.
   const dgDest = join(paths.projectRoot, '.rsc', 'danger-guard.mjs');
   copyFileSync(join(HERE, 'danger-guard.mjs'), dgDest);
-  const dgCmd = viaBootstrap('quiet', at('.rsc', 'danger-guard.mjs'), `"${P}"`);
+  const dgCmd = viaBootstrap('guard', at('.rsc', 'danger-guard.mjs'), `"${P}"`);
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
     (e) => !hookWiringOf(e).includes('.rsc/danger-guard.'),
   );
@@ -191,7 +195,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // .rsc/.no-gitmoji.
   const gmDest = join(paths.projectRoot, '.rsc', 'gitmoji-guard.mjs');
   copyFileSync(join(HERE, 'gitmoji-guard.mjs'), gmDest);
-  const gmCmd = viaBootstrap('quiet', at('.rsc', 'gitmoji-guard.mjs'), `"${P}"`);
+  const gmCmd = viaBootstrap('guard', at('.rsc', 'gitmoji-guard.mjs'), `"${P}"`);
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
     (e) => !hookWiringOf(e).includes('.rsc/gitmoji-guard.'),
   );

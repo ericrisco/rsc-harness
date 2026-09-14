@@ -372,3 +372,88 @@ test('AC#25 — the README describes the clone by symptom, and says the assistan
   assert.match(readme, /tells you, in the first message/i, 'a clone no longer needs the symptom recognised by hand');
   assert.match(readme, /naming the pinned version/i, 'what it hands you must be the pinned command');
 });
+
+// ── the other half of the ask: "si no está actualizado que lo actualice" (AC#7, #14) ─────────────
+//
+// Until now the bootstrap knew two states, mounted and not, and a `git pull` that brings a changed
+// manifest onto a mounted harness landed in "mounted" and went by in silence. That is half the
+// feature missing: building a clone worked, converging a stale one did not.
+//
+// `.rsc/skills/<id>` is the canonical location and it is the same on every assistant — the per-target
+// directories are links into it — so one rule covers all seventeen without teaching this file any
+// target's layout.
+
+function mountedWithSkills(installed, declared, own = []) {
+  const root = mkdtempSync(join(tmpdir(), 'rsc-diverge-'));
+  mkdirSync(join(root, '.rsc', 'skills'), { recursive: true });
+  mkdirSync(join(root, '.claude'), { recursive: true });
+  for (const id of installed) mkdirSync(join(root, '.rsc', 'skills', id), { recursive: true });
+  writeFileSync(join(root, '.rsc', 'probe.mjs'), 'process.stdout.write("DELEGATE SPOKE\\n");');
+  writeFileSync(join(root, '.rsc.json'), JSON.stringify({ version: 1, skills: declared, ownSkills: own, catalogVersion: '1.3.6' }));
+  copyFileSync(new URL('../targets/clone-bootstrap.mjs', import.meta.url), join(root, '.claude', 'rsc-bootstrap.mjs'));
+  return root;
+}
+
+test('AC#7 — a manifest that arrived by git pull and no longer matches is announced', () => {
+  const root = mountedWithSkills(['orient'], ['orient', 'verify', 'ship']);
+  const { stdout } = runBootstrap(root, 'announce', join(root, '.rsc', 'probe.mjs'));
+  assert.match(stdout, /verify/, 'the skills that are declared and missing must be named');
+  assert.match(stdout, /ship/, 'all of them, not just the first');
+  assert.match(stdout, /@ericrisco\/rsc@1\.3\.6 sync/, 'converging uses the pinned version, like building does');
+  assert.match(stdout, /DELEGATE SPOKE/, 'a harness that works must keep working while it is out of date');
+});
+
+test('AC#7 — a harness that matches its manifest still says nothing at all', () => {
+  const root = mountedWithSkills(['orient', 'verify'], ['orient', 'verify']);
+  const { stdout } = runBootstrap(root, 'announce', join(root, '.rsc', 'probe.mjs'));
+  assert.equal(stdout, 'DELEGATE SPOKE\n', 'agreement is silence; anything else is noise everyone pays for');
+});
+
+test('AC#14 — a missing own skill is named as the team\'s, and never offered from the catalog', () => {
+  const root = mountedWithSkills(['orient'], ['orient'], ['nuestra-skill']);
+  const { stdout } = runBootstrap(root, 'announce', join(root, '.rsc', 'probe.mjs'));
+  assert.match(stdout, /nuestra-skill/, 'it must be named');
+  assert.match(stdout, /written by the team|git/i, 'and named as something git brings, not something rsc installs');
+  // Position is not the claim. A mutant that moved the own skills above the command and said "and the
+  // sync above brings them too" passed the positional check — so assert what the text CLAIMS instead:
+  // that no command is presented as the thing that delivers them.
+  const flat = stdout.replace(/\s+/g, ' ');
+  assert.match(
+    flat,
+    /nuestra-skill[^.]*never installs or overwrites them/i,
+    'the sentence that names them must be the same sentence that says rsc will not install them',
+  );
+  assert.doesNotMatch(
+    flat,
+    /brings them too|sync above brings/i,
+    'nothing may claim a command delivers a skill whose version is the commit',
+  );
+});
+
+test('AC#16/#17 — a protected action reminds once more, and only once more', () => {
+  const { root } = clonedWorkspace();
+  const target = join(root, '.rsc', 'danger-guard.mjs');
+  const shellCall = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'git commit -m "x"' } });
+  const call = () => spawnSync('node', [join(root, '.claude', 'rsc-bootstrap.mjs'), 'guard', root, target], {
+    cwd: root, input: shellCall, encoding: 'utf8',
+  }).stdout ?? '';
+
+  const first = call();
+  assert.match(first, /commit/i, 'the reminder must name the protection that is missing, not the harness in the abstract');
+  assert.equal(call(), '', 'a second reminder would be nagging; two offers per session is the whole budget');
+});
+
+test('AC#16 — an ordinary shell call is never interrupted', () => {
+  const { root } = clonedWorkspace();
+  const target = join(root, '.rsc', 'danger-guard.mjs');
+  const r = spawnSync('node', [join(root, '.claude', 'rsc-bootstrap.mjs'), 'guard', root, target], {
+    cwd: root, input: JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'ls -la' } }), encoding: 'utf8',
+  });
+  assert.equal(r.stdout, '', 'listing a directory is not a protected action');
+  assert.notEqual(r.status, 2, 'and nothing here may ever deny a tool call');
+});
+
+test('AC#24 — the offer tells an unattended agent not to install on its own', () => {
+  const offer = composeOffer({ state: 'declared', skills: ['orient'], own: [], catalogVersion: '1.3.6', targets: [] });
+  assert.match(offer.text, /nobody to ask/i, 'CI and unattended agents have no user to consent, and must not consent for them');
+});
