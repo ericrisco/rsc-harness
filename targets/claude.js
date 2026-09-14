@@ -79,6 +79,19 @@ export function unwireHook(paths) {
 const P = '${CLAUDE_PROJECT_DIR}';
 const at = (...seg) => `${P}/${seg.join('/')}`;
 
+// Everything below points at `.rsc/`, which git does not carry — so in a clone every one of these
+// commands runs against a file that is not there and the client shows the module loader's stack
+// trace instead of a hook. The fix is not to make each script survive its own absence (it cannot:
+// the guards import only node builtins, so a missing entry file fails before a line of theirs runs).
+// The fix is to point the wiring at a file that IS committed, and let it decide: delegate when the
+// harness is mounted, speak once when it is not.
+//
+// The script's own path stays in the command as an argument, so every dedup/unwire needle
+// (`.rsc/session-start.`, `.rsc/ship-guard.`, …) still matches and idempotency is untouched.
+const BOOTSTRAP = '.claude/rsc-bootstrap.mjs';
+const viaBootstrap = (mode, target, ...args) =>
+  [`node "${at(...BOOTSTRAP.split('/'))}"`, `"${mode}"`, `"${P}"`, `"${target}"`, ...args].join(' ');
+
 export function wireHook(paths, sourceMd, policy = {}) {
   const scriptDest = join(paths.projectRoot, '.rsc', 'session-start.mjs');
   mkdirSync(dirname(scriptDest), { recursive: true });
@@ -89,6 +102,11 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // sibling too. Missing it does not break startup — the sweep is wrapped — it just goes silent.
   copyFileSync(join(HERE, 'worktree-reaper.mjs'), join(paths.projectRoot, '.rsc', 'worktree-reaper.mjs'));
   copyFileSync(join(HERE, 'session-start.mjs'), scriptDest);
+  // The one harness file that belongs in the committed tree rather than in `.rsc/`: it is the only
+  // thing standing between a clone and seven stack traces, so it has to survive `git clone`.
+  const bootstrapDest = join(paths.projectRoot, '.claude', 'rsc-bootstrap.mjs');
+  mkdirSync(dirname(bootstrapDest), { recursive: true });
+  copyFileSync(join(HERE, 'clone-bootstrap.mjs'), bootstrapDest);
 
   let suggestRel = at(relative(paths.projectRoot, paths.skillDir('suggest')).split(sep).join('/'), 'SKILL.md');
   const operationsSuggest = join(paths.projectRoot, '.rsc', 'suggest-always-on.md');
@@ -96,7 +114,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
     writeFileSync(operationsSuggest, '# rsc-suggest — always-on operations layer\n\nRead `02-DOCS/wiki/harness/user-profile.md` before acting. Use `orient` to keep the user situated and `suggest` to offer a missing skill only when the current task needs it. Close with the configured orientation block.\n');
     suggestRel = at('.rsc', 'suggest-always-on.md');
   } else if (existsSync(operationsSuggest)) rmSync(operationsSuggest, { force: true });
-  const cmd = `node "${at('.rsc', 'session-start.mjs')}" "${suggestRel}" "${P}"`;
+  const cmd = viaBootstrap('announce', at('.rsc', 'session-start.mjs'), `"${suggestRel}"`, `"${P}"`);
 
   const file = paths.hookTarget;
   const settings = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
@@ -117,7 +135,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   const wlDest = join(paths.projectRoot, '.rsc', 'worklog-checkpoint.mjs');
   const written = [paths.hookTarget, scriptDest, wlDest];
   copyFileSync(join(HERE, 'worklog-checkpoint.mjs'), wlDest);
-  const wlCmd = `node "${at('.rsc', 'worklog-checkpoint.mjs')}" "${P}"`;
+  const wlCmd = viaBootstrap('quiet', at('.rsc', 'worklog-checkpoint.mjs'), `"${P}"`);
   for (const event of ['PreCompact', 'SessionEnd']) {
     settings.hooks[event] ||= [];
     settings.hooks[event] = settings.hooks[event].filter(
@@ -137,7 +155,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // sello.mjs is ship-guard's sibling import (hooks are materialized file-by-file,
   // so the deterministic sello core must land next to the guard that loads it).
   copyFileSync(join(HERE, 'sello.mjs'), join(paths.projectRoot, '.rsc', 'sello.mjs'));
-  const sgCmd = `node "${at('.rsc', 'ship-guard.mjs')}" "${P}"`;
+  const sgCmd = viaBootstrap('quiet', at('.rsc', 'ship-guard.mjs'), `"${P}"`);
   settings.hooks.PreToolUse ||= [];
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
     (e) => !hookWiringOf(e).includes('.rsc/ship-guard.'),
@@ -151,7 +169,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // node-run (Windows-safe), idempotent, fail-open, opt-out via .rsc/.no-danger-guard.
   const dgDest = join(paths.projectRoot, '.rsc', 'danger-guard.mjs');
   copyFileSync(join(HERE, 'danger-guard.mjs'), dgDest);
-  const dgCmd = `node "${at('.rsc', 'danger-guard.mjs')}" "${P}"`;
+  const dgCmd = viaBootstrap('quiet', at('.rsc', 'danger-guard.mjs'), `"${P}"`);
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
     (e) => !hookWiringOf(e).includes('.rsc/danger-guard.'),
   );
@@ -166,7 +184,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // .rsc/.no-gitmoji.
   const gmDest = join(paths.projectRoot, '.rsc', 'gitmoji-guard.mjs');
   copyFileSync(join(HERE, 'gitmoji-guard.mjs'), gmDest);
-  const gmCmd = `node "${at('.rsc', 'gitmoji-guard.mjs')}" "${P}"`;
+  const gmCmd = viaBootstrap('quiet', at('.rsc', 'gitmoji-guard.mjs'), `"${P}"`);
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
     (e) => !hookWiringOf(e).includes('.rsc/gitmoji-guard.'),
   );
@@ -182,7 +200,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // (non-rsc) UserPromptSubmit hooks are preserved.
   const fgDest = join(paths.projectRoot, '.rsc', 'userprompt-gate.mjs');
   copyFileSync(join(HERE, 'userprompt-gate.mjs'), fgDest);
-  const fgCmd = `node "${at('.rsc', 'userprompt-gate.mjs')}" "${P}"`;
+  const fgCmd = viaBootstrap('quiet', at('.rsc', 'userprompt-gate.mjs'), `"${P}"`);
   settings.hooks.UserPromptSubmit ||= [];
   settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit.filter(
     (e) => !hookWiringOf(e).includes('.rsc/userprompt-gate.'),
