@@ -85,7 +85,13 @@ export function composeOffer(manifest) {
   // The version is named, never guessed: what gets installed is what the team pinned, and a person
   // accepting an install on a repo they just cloned is entitled to read the exact thing first
   // (spec AC#21). No pin is itself a fact worth showing, not a blank to fill in.
+  //
+  // And it has to be IN THE COMMAND, not only in the prose above it. `npx @ericrisco/rsc sync`
+  // resolves to the latest published package, so an offer phrased that way hands a clone whatever
+  // shipped since — the exact divergence the pin exists to prevent, introduced by the feature meant
+  // to honour it. Pinned, the command is reproducible three months from now (spec AC#6).
   const pin = manifest.catalogVersion ? `${PACKAGE}@${manifest.catalogVersion}` : `${PACKAGE} (no version pinned)`;
+  const command = manifest.catalogVersion ? `npx ${PACKAGE}@${manifest.catalogVersion} sync` : `npx ${PACKAGE} sync`;
   const count = manifest.skills.length;
   const own = manifest.own.length ? `, plus ${manifest.own.length} written by the team (never overwritten)` : '';
   return {
@@ -100,8 +106,10 @@ export function composeOffer(manifest) {
       'It writes .rsc/ and the skill entries; it never touches anything written by hand.\n' +
       '\n' +
       'ACTION: ask the user whether to build it, in one line, and continue with their request\n' +
-      'either way — this must not hold up what they asked for. On a yes, run:\n' +
-      `  npx ${PACKAGE} sync\n` +
+      'either way — this must not hold up what they asked for. On a yes, run EXACTLY:\n' +
+      `  ${command}\n` +
+      '(the version is the one this project pinned. Do not substitute `@latest`: a release nobody\n' +
+      ' on this team adopted is not an upgrade, it is two people quietly drifting apart.)\n' +
       "On a no, create .rsc/.no-harness so this is not offered again on this machine.\n" +
       '===============\n',
   };
@@ -134,6 +142,10 @@ export async function bootstrap(target, root, announce, ownArgc = 3) {
   // times — and that is settled by WHICH hook this is, with no marker file, because writing a
   // marker before anyone consented is exactly what must not happen (spec AC#2).
   if (!announce) return;
+  // Declining is a decision, and it is respected whole: no opening offer, and no risk reminder later
+  // either. Ignoring the offer is a different thing entirely — that leaves the door open. The marker
+  // is the one the three existing opt-outs already use, so a person who knows one knows all of them.
+  if (existsSync(join(root, '.rsc', '.no-harness'))) return;
   const { text } = composeOffer(readManifest(root));
   if (text) process.stdout.write(text);
 }

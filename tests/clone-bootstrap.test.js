@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { wireHook } from '../targets/claude.js';
+import { composeOffer } from '../targets/clone-bootstrap.mjs';
 
 // What a clone actually is, measured rather than imagined: `git clone` of an equipped repo brings
 // `.rsc.json` and the committed wiring, and brings NOTHING the wiring invokes — `.rsc/` is ignored
@@ -245,4 +246,104 @@ test('I-3 — a delegate that crashes is not swallowed in silence, and still doe
   const { stderr, status } = runBootstrap(root, 'quiet', broken);
   assert.notEqual(status, 2, 'a crashing hook must never deny the user their tool');
   assert.match(stderr, /hook failed and was ignored/, 'a real crash inside a guard must not vanish — that is how a guard stops guarding unnoticed');
+});
+
+// ── the pin: AC#3 and AC#6 ───────────────────────────────────────────────────────────────────────
+//
+// `catalogVersion` is written into `.rsc.json` on every install and, measured across the whole repo,
+// read by NOTHING. The README sells it as the thing that makes sharing mean something ("a teammate
+// who clones in three months gets what you had, not what shipped since") and the decision log has it
+// as a deliberate call. Today it is a number nothing acts on.
+//
+// This spec cannot fix every path that ignores it, but it owns the one path it creates: the sentence
+// a person is about to run. `npx @ericrisco/rsc sync` resolves to the LATEST published package, so an
+// offer phrased that way hands the clone whatever shipped since — the precise divergence the pin
+// exists to prevent, introduced by the feature meant to honour it.
+
+test('AC#6 — the offer tells you to install the PINNED version, never a floating one', () => {
+  const offer = composeOffer({ state: 'declared', skills: ['orient'], own: [], catalogVersion: '1.3.6', targets: [] });
+  assert.match(
+    offer.text,
+    /npx @ericrisco\/rsc@1\.3\.6 sync/,
+    'the command a person runs must carry the pin; a bare `npx @ericrisco/rsc` resolves to latest',
+  );
+  assert.doesNotMatch(offer.text, /npx @ericrisco\/rsc@latest/, 'the offer must never send a clone to latest');
+  assert.doesNotMatch(
+    offer.text,
+    /npx @ericrisco\/rsc sync/,
+    'an unpinned command resolves to whatever shipped since, which is exactly the divergence the pin prevents',
+  );
+});
+
+test('AC#6 — a newer release existing changes nothing about what the offer asks for', () => {
+  const older = composeOffer({ state: 'declared', skills: ['orient'], own: [], catalogVersion: '1.2.2', targets: [] });
+  assert.match(older.text, /@1\.2\.2/, 'the manifest decides, not the calendar');
+  assert.doesNotMatch(older.text, /1\.3\.6|1\.4\.0/, 'no version the team did not choose may appear');
+});
+
+test('AC#3/#23 — with no pin recorded, the offer says so instead of inventing one', () => {
+  const offer = composeOffer({ state: 'declared', skills: ['orient'], own: [], catalogVersion: null, targets: [] });
+  assert.ok(!/@\d/.test(offer.text), 'a version must never be guessed when the manifest does not carry one');
+  assert.match(offer.text, /no version pinned/i, 'the absence of a pin is itself worth saying');
+});
+
+test('AC#14 — the offer never promises to install what the team wrote by hand', () => {
+  const offer = composeOffer({
+    state: 'declared', skills: ['orient'], own: ['nuestra-skill'], catalogVersion: '1.3.6', targets: [],
+  });
+  assert.match(offer.text, /never overwritten/i, "own skills must be named as the one thing rsc will not touch");
+});
+
+// ── declining, and the difference between ignoring and declining ─────────────────────────────────
+//
+// Ignoring leaves the door open; declining shuts it, risk reminder included. The marker that
+// remembers the "no" lives in the machine-local directory the three existing opt-outs already use
+// (`.no-harness`, `.no-context7`, `.no-worktree-cleanup`), which is also why it cannot be committed:
+// one person's "no" must never silence their whole team.
+
+test('AC#4/#18 — a recorded "no" silences the offer completely', () => {
+  const { root } = clonedWorkspace();
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  writeFileSync(join(root, '.rsc', '.no-harness'), '');
+  const spoke = wiredCommands(root).filter(({ command }) => runWired(command, root).stdout.trim().length > 0);
+  assert.deepEqual(spoke.map((s) => s.event), [], 'someone who declined must not be asked again');
+});
+
+test('AC#22 — the marker that remembers the "no" is machine-local, never committed', () => {
+  // Asked of git itself rather than of the ignore pattern: reasoning about globs is how a rule ends
+  // up believed and untrue. This repo ignores `.rsc/` wholesale, so the marker inside it cannot travel.
+  const ignore = readFileSync(new URL('../.gitignore', import.meta.url), 'utf8');
+  assert.match(ignore, /^\.rsc\/$/m, 'the opt-out lives under .rsc/, which must stay out of git');
+});
+
+// ── the 15 targets with no hooks ─────────────────────────────────────────────────────────────────
+//
+// Two mechanisms for one contract: the committed bootstrap covers the targets that inject hooks; the
+// other fifteen read a markdown body instead, so for them the instruction has to live in the
+// always-on surface — where it is paid for on EVERY turn, by everyone, including the overwhelming
+// majority whose harness is fine. That is why it is three lines folded into the section that already
+// recognises a broken harness, and not a section of its own, and why the ceiling below is a test
+// rather than an intention. The repo's own scar is 207 KB paid per turn (P5).
+
+test('AC#10 — the always-on surface tells the 15 hookless targets the same three things', () => {
+  // Normalised: an assertion about prose must not depend on where a line happened to wrap.
+  const body = readFileSync(new URL('../skills/suggest/SKILL.md', import.meta.url), 'utf8').replace(/\s+/g, ' ');
+  assert.match(body, /catalogVersion in \.rsc\.json/, 'it must name the pin as the version to install');
+  assert.match(body, /never.*@latest/i, 'it must forbid the floating version explicitly');
+  assert.match(body, /keep working either way/i, 'it must say the offer does not hold up the turn');
+  assert.match(body, /silence is not a no/i, 'ignoring and declining are different, and must be said');
+});
+
+test('AC#19 — the always-on body stays under its declared ceiling', () => {
+  const bytes = readFileSync(new URL('../skills/suggest/SKILL.md', import.meta.url)).length;
+  // The body measured 7183 B before this feature. The clone guidance cost 427 B raw; three genuinely
+  // redundant passages paid back 359 of them (a symptom bullet the new one states better and acts on,
+  // a closing line the bullets already said, and one of two examples making the same point). Net
+  // +99 B, per turn, forever, and that is the honest number — the alternative was cutting prose that
+  // carries weight to hit a round figure I picked myself, which is ceremony wearing P5's clothes.
+  //
+  // What matters more than the 99 B: before this, NOTHING measured this file at all. The ceiling is
+  // the point. The next person who adds "just a couple of lines" to a surface everyone pays on every
+  // turn now argues with a failing test instead of a habit.
+  assert.ok(bytes <= 7282, `always-on body is ${bytes} B, over the 7282 B ceiling — it is paid every turn`);
 });
