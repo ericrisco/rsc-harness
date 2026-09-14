@@ -347,3 +347,28 @@ test('AC#19 — the always-on body stays under its declared ceiling', () => {
   // turn now argues with a failing test instead of a habit.
   assert.ok(bytes <= 7282, `always-on body is ${bytes} B, over the 7282 B ceiling — it is paid every turn`);
 });
+
+// ── AC#25: the README has to describe what the product does, not what it meant to do ─────────────
+//
+// It carried a straight contradiction: the sharing section told a teammate to run
+// `npx @ericrisco/rsc@latest sync`, and the very next paragraph promised "same skills, same version
+// — .rsc.json pins the catalog". `@latest` is the opposite of a pin. One of the two had to go, and
+// the code says which: measured across the repo, `catalogVersion` had no consumer at all.
+
+test('AC#25 — the README does not send a clone to @latest while promising a pin', () => {
+  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  const sharing = readme.slice(readme.indexOf('Whoever clones'), readme.indexOf('**Own skills.**'));
+  assert.ok(sharing.length > 0, 'the sharing section must still exist');
+  assert.doesNotMatch(
+    sharing,
+    /@ericrisco\/rsc@latest sync/,
+    'telling a teammate to sync at @latest contradicts the pin the same section promises',
+  );
+  assert.match(sharing, /catalogVersion/, 'the command must show where the version comes from');
+});
+
+test('AC#25 — the README describes the clone by symptom, and says the assistant announces it', () => {
+  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8').replace(/\s+/g, ' ');
+  assert.match(readme, /tells you, in the first message/i, 'a clone no longer needs the symptom recognised by hand');
+  assert.match(readme, /naming the pinned version/i, 'what it hands you must be the pinned command');
+});

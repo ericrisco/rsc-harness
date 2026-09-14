@@ -281,15 +281,21 @@ The harness travels by git, but not all of it — and the split is the point.
 | `02-DOCS/raw/worklog/.rsc-memory/` | Preferred session journal when a local wiki exists; protected with git's local exclude |
 | The skill entries rsc manages | Symlinks on macOS/Linux, real copies on Windows — two incompatible shapes of one thing |
 
-Whoever clones runs **one command** and ends up with the same harness:
+Whoever clones runs **one command** and ends up with the same harness — at the version the
+project pinned, which is the `catalogVersion` in its `.rsc.json`:
 
 ```bash
-npx @ericrisco/rsc@latest sync
+npx @ericrisco/rsc@<catalogVersion> sync
 ```
 
-Same skills, same version — `.rsc.json` pins the catalog, so a teammate who clones in three
-months gets what you had, not what shipped since. Upgrading is a deliberate act, never a side
-effect of rebuilding.
+**You do not have to know that, or find it.** Open the project and the assistant tells you, in
+the first message: what is missing, what would be installed, and the exact command, naming the
+pinned version. It asks; it does not install anything on its own and it does not hold up
+whatever you sat down to do. Say no and it stops asking on that machine.
+
+Not `@latest`, and the difference is the whole point of sharing: a teammate who clones in three
+months gets what you had, not what shipped since. Upgrading is something a person decides, writes
+into `.rsc.json`, and commits — and then it reaches everyone through git, like any other change.
 
 When someone changes the harness and you `git pull`, `rsc doctor` tells you what no longer
 matches. **Nothing is ever written to your machine by a pull** — you are told, and you decide.
@@ -309,9 +315,11 @@ Recognise any of these? They are all the same fix.
 | `"target": "codex"` when you work in Claude Code | |
 | `This target has no hook injection` and you did not expect that | |
 | Skills appear that you never asked for | |
-| You cloned a repo and your assistant sees no skills at all | |
 | A hook seems to run several times per turn | |
 | Template lines showed up inside your hand-written `AGENTS.md` | |
+
+(A *fresh* clone is not in this table any more: nothing is broken there, the harness was simply
+never built on that machine, and the assistant now says so itself — see **sharing by git** above.)
 
 ```bash
 npx @ericrisco/rsc@latest repair
