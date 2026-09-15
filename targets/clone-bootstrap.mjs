@@ -31,6 +31,17 @@ import { createHash } from 'node:crypto';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const PACKAGE = '@ericrisco/rsc';
+const SEMVER = /^\d+\.\d+\.\d+(?:-[0-9a-z.-]+)?$/i;
+
+/**
+ * Validated at the parse boundary AND again here, on purpose.
+ *
+ * These functions are exported and they are the ones that build the sentence a person is told to run
+ * EXACTLY. A single validation point is only as good as every caller reaching it, and the caller that
+ * skips it is the one nobody remembers writing. Checking again where the string is used costs one
+ * regex and removes the possibility entirely.
+ */
+const safeVersion = (v) => (typeof v === 'string' && SEMVER.test(v) ? v : null);
 
 /**
  * What the project declares, as a value — never as an exception.
@@ -59,7 +70,16 @@ export function readManifest(root) {
   // over a manifest someone hand-edited. This file is COMMITTED into user repos, which means old
   // copies of it live on forever in projects nobody will update; it has to be maximally suspicious of
   // the only input it gets.
-  const ids = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.length > 0) : []);
+  // An allowlist, not a type check. `.rsc.json` travels through `git pull`, so its contents are
+  // written by anyone who can open a pull request — and this feature now copies them into the text
+  // the model reads. A newline closes rsc's own `=====` frame and opens a forged one; a `;` turns the
+  // command we tell someone to run EXACTLY into two commands; a `..` walks out of the project and
+  // turns the divergence notice into an oracle for what exists on the reviewer's disk.
+  //
+  // None of that is what a skill id is. A skill id is a short lowercase name, so that is all that is
+  // accepted, and anything else is simply not there.
+  const ID = /^[a-z0-9][a-z0-9._-]{0,63}$/;
+  const ids = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && ID.test(x)) : []);
   const skills = ids(parsed.skills);
   const own = ids(parsed.ownSkills);
   // A manifest with nothing declared is not a clone waiting to be equipped; there is nothing to offer.
@@ -68,7 +88,10 @@ export function readManifest(root) {
     state: 'declared',
     skills,
     own,
-    catalogVersion: typeof parsed.catalogVersion === 'string' ? parsed.catalogVersion : null,
+    // Same reasoning, and it matters more here: this string is pasted into the command we tell a
+    // person to run *exactly*. A version, or nothing — "no version pinned" is a true and harmless
+    // thing to say, and it is what an unusable value becomes.
+    catalogVersion: SEMVER.test(String(parsed.catalogVersion ?? '')) ? parsed.catalogVersion : null,
     targets: Array.isArray(parsed.targets) ? parsed.targets : [],
   };
 }
@@ -117,9 +140,8 @@ export function evaluateHarness(root, manifest) {
  * that installs would be a promise nothing keeps.
  */
 export function composeDivergence(manifest, evaluation) {
-  const command = manifest.catalogVersion
-    ? `npx ${PACKAGE}@${manifest.catalogVersion} sync`
-    : `npx ${PACKAGE} sync`;
+  const version = safeVersion(manifest.catalogVersion);
+  const command = version ? `npx ${PACKAGE}@${version} sync` : `npx ${PACKAGE} sync`;
   let text =
     '===== rsc =====\n' +
     'This project declares a harness that no longer matches what is built here — someone changed\n' +
@@ -167,8 +189,9 @@ export function composeOffer(manifest) {
   // resolves to the latest published package, so an offer phrased that way hands a clone whatever
   // shipped since — the exact divergence the pin exists to prevent, introduced by the feature meant
   // to honour it. Pinned, the command is reproducible three months from now (spec AC#6).
-  const pin = manifest.catalogVersion ? `${PACKAGE}@${manifest.catalogVersion}` : `${PACKAGE} (no version pinned)`;
-  const command = manifest.catalogVersion ? `npx ${PACKAGE}@${manifest.catalogVersion} sync` : `npx ${PACKAGE} sync`;
+  const version = safeVersion(manifest.catalogVersion);
+  const pin = version ? `${PACKAGE}@${version}` : `${PACKAGE} (no version pinned)`;
+  const command = version ? `npx ${PACKAGE}@${version} sync` : `npx ${PACKAGE} sync`;
   const count = manifest.skills.length;
   const own = manifest.own.length ? `, plus ${manifest.own.length} written by the team (never overwritten)` : '';
   return {
@@ -247,18 +270,30 @@ const PROTECTED = [
  */
 function alreadyReminded(root) {
   // Keyed on the RESOLVED path: the same project reached through a symlinked alias is the same
-  // project, and keying on the raw string warned twice. `sameFile` learned this eighty lines down.
+  // project, and keying on the raw string warned twice.
   let key = root;
   try {
     key = realpathSync(root);
   } catch { /* unresolvable is still a usable key */ }
-  const mark = join(tmpdir(), `rsc-offer-${createHash('sha256').update(key).digest('hex').slice(0, 16)}`);
-  if (existsSync(mark)) return true;
+  // A per-user directory at 0700, not a bare name in a world-writable one. On Linux and in CI
+  // containers `os.tmpdir()` is `/tmp` at 1777: the sticky bit stops anyone deleting our file, but
+  // nothing stops them CREATING it first — and a planted empty file silences the one risk reminder
+  // this design promises, while a planted DANGLING symlink turns our write into a file created at a
+  // path they chose, owned by the person we were trying to help.
+  const dir = join(tmpdir(), `rsc-${process.getuid ? process.getuid() : 'u'}`);
+  const mark = join(dir, `offer-${createHash('sha256').update(key).digest('hex').slice(0, 16)}`);
   try {
-    mkdirSync(tmpdir(), { recursive: true });
-    writeFileSync(mark, '');
-  } catch { /* if we cannot remember, we would rather repeat than crash */ }
-  return false;
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
+  } catch { /* fall through: the write below is what actually decides */ }
+  try {
+    // `wx` is the whole fix: create-or-fail, and it refuses to follow a symlink. Success means WE
+    // made it and this is the first reminder. Failure means it already existed — planted or genuine,
+    // and either way the honest reading is "do not speak again".
+    writeFileSync(mark, '', { flag: 'wx' });
+    return false;
+  } catch {
+    return true;
+  }
 }
 
 function readStdin() {
@@ -284,7 +319,8 @@ function remindOnProtectedAction(root) {
   const manifest = readManifest(root);
   if (manifest.state !== 'declared') return;
   if (alreadyReminded(root)) return;
-  const pin = manifest.catalogVersion ? `@${manifest.catalogVersion}` : '';
+  const version = safeVersion(manifest.catalogVersion);
+  const pin = version ? `@${version}` : '';
   // The envelope, not bare stdout. A `PreToolUse` hook's plain stdout is transcript-only, so the one
   // message this path is allowed to send would have gone to a place nobody looks. Every sibling guard
   // in this repo already wraps its output this way. And no `permissionDecision`: informing someone is

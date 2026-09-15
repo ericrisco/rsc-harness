@@ -284,8 +284,14 @@ The harness travels by git, but not all of it — and the split is the point.
 Three files carry the harness through git: `.rsc.json` (what the team decided),
 `.claude/settings.json` (the wiring), and `.claude/rsc-bootstrap.mjs` — the small file that
 notices, in a clone, that the rest is not there yet. **Commit all three.** If your project
-ignores the assistant's directory wholesale, rsc adds the one negation that keeps the bootstrap
-versioned; without it a clone is silent instead of helpful.
+ignores the assistant's directory wholesale, rsc adds the lines that keep those files versioned —
+verified against git, not against the pattern.
+
+**And say it plainly, because committing it is the point:** `.claude/rsc-bootstrap.mjs` is code that
+runs on every session and every shell call, so a pull request that edits *that file* runs on the
+machine of whoever reviews the branch. That is true of `.claude/settings.json` already, and of any
+hook-based harness — but it is worth knowing before you agree to commit a third one. Review changes
+to it the way you would review a CI workflow.
 
 Whoever clones runs **one command** and ends up with the same harness — at the version the
 project pinned, which is the `catalogVersion` in its `.rsc.json`:
