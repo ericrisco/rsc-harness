@@ -61,7 +61,7 @@ name it and offer it. This runs mid-conversation, not only at project start.
    `id  available  short description`.
 2. Pick the single best fit **by meaning**, the way you would match a request to a teammate's
    expertise — "mandar emails de bienvenida" → an email/outreach skill, though not one keyword
-   overlaps; "login con Google" → an auth skill, not `flutter`. If nothing genuinely fits, say so
+   overlaps. If nothing genuinely fits, say so
    and move on: a tangential suggestion is worse than none.
 3. Ask once, plainly: "Para esto instalaría `<id>`, que aún no tienes. ¿La instalo? (sí/no)".
 4. On yes, run `npx @ericrisco/rsc add <id>`, then continue the original task.
@@ -88,7 +88,6 @@ You are injected into every session, so you are the only thing that can notice a
 harness before its owner does — and its owner usually cannot, because the symptoms name
 nothing they recognise. When any of these is true, act on it **once** in the session:
 
-- the assistant sees no skills in a project that clearly has a harness;
 - `.rsc.json` exists and what it declares is not what is installed;
 - the same hook seems to run several times;
 - the harness is wired for an assistant that is not the one running.
@@ -96,6 +95,10 @@ nothing they recognise. When any of these is true, act on it **once** in the ses
 Run `npx @ericrisco/rsc doctor`, and say in one line what is wrong **as a symptom**, not as
 a cause. Then:
 
+- **Nothing built** — `.rsc.json` without `.rsc/`: a clone. Name
+  `npx @ericrisco/rsc@<catalogVersion in .rsc.json> sync`, that exact version, **never** `@latest`
+  — a release nobody here adopted is drift. Ask in one line, **keep working either way**; silence
+  is not a no, `.rsc/.no-harness` is.
 - Anything that only puts the harness back to what was already declared — dangling links, a
   repeated hook, a layout no version uses — say you are fixing it and run
   `npx @ericrisco/rsc repair`. Restoring is not deciding, and a recoverable copy is kept.
@@ -103,8 +106,7 @@ a cause. Then:
   teammate added, disarming a gate — **ask first**. A `git pull` never rewrites someone's
   machine.
 
-Offer once. A "no" holds for the session; a new session may look again, because the problem
-has not gone away. Never mention it when the harness is healthy.
+Offer once per session. Never mention any of it when the harness is healthy.
 
 ## 4. First contact
 

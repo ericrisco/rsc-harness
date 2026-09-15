@@ -2,6 +2,7 @@
 import { rmSync, existsSync, cpSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
 import { join, dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
 import {
@@ -66,6 +67,9 @@ function ensureBase(id, cwd, baseVersions) {
 export function generatedHookFiles({ target, cwd, policy }) {
   if (target !== 'claude') return [];
   const lifecycle = [
+    // Committed, not machine state — and therefore the one entry here that, if omitted, leaves an
+    // executable behind in a tree the user pushes.
+    join(cwd, '.claude', 'rsc-bootstrap.mjs'),
     join(cwd, '.rsc', 'session-start.mjs'),
     join(cwd, '.rsc', 'worklog-checkpoint.mjs'),
     join(cwd, '.rsc', 'hook-once.mjs'),
@@ -287,6 +291,32 @@ export function ignoreLocalState(cwd = process.cwd(), target) {
   // keeps this idempotent against a .gitignore a human wrote in their own spelling.
   const norm = (l) => l.trim().replace(/^\//, '').replace(/\/$/, '');
   const present = new Set(text.split('\n').map(norm));
+  // `.rsc/` is machine state and stays ignored. The two files below are the opposite: they are the
+  // whole reason a clone can help itself, and a project that excluded the assistant's directory
+  // wholesale (rsc's own repo does exactly that, so copying the example is likely) swallows both with
+  // no symptom at all.
+  //
+  // Asked of GIT, not of the pattern. The first attempt at this reasoned about spellings and shipped
+  // a negation that was INERT in every case it fired: git does not descend into an excluded
+  // directory, so `!.claude/rsc-bootstrap.mjs` under `.claude/` rescues nothing. Measured, not
+  // argued — and the lesson is the one this repo keeps relearning, that a rule believed and untrue is
+  // worse than no rule.
+  const RESCUE = ['.claude/rsc-bootstrap.mjs', '.claude/settings.json'];
+  const swallowed = RESCUE.filter((f) => {
+    try {
+      return spawnSync('git', ['check-ignore', '-q', '--', f], { cwd }).status === 0;
+    } catch {
+      return false;
+    }
+  });
+  if (swallowed.length) {
+    // Append-only, and this exact order is what makes it work at all: re-include the directory so git
+    // will descend into it, exclude everything inside it again, then rescue by name. Verified against
+    // git itself — `settings.local.json` and the skill entries stay ignored.
+    const dir = swallowed[0].split('/')[0];
+    for (const line of [`!${dir}/`, `${dir}/*`, ...swallowed.map((f) => `!${f}`)]) wanted.push(line);
+  }
+
   const add = wanted.filter((w) => !present.has(norm(w)));
   if (!add.length) return null;
 
