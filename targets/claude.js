@@ -144,7 +144,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // the workspace has no harness wiki. Registered idempotently on both events, with
   // any prior rsc worklog-checkpoint entry (.sh or .mjs) dropped first.
   const wlDest = join(paths.projectRoot, '.rsc', 'worklog-checkpoint.mjs');
-  const written = [paths.hookTarget, scriptDest, wlDest];
+  const written = [paths.hookTarget, scriptDest, wlDest, bootstrapDest];
   copyFileSync(join(HERE, 'worklog-checkpoint.mjs'), wlDest);
   const wlCmd = viaBootstrap('quiet', at('.rsc', 'worklog-checkpoint.mjs'), `"${P}"`);
   for (const event of ['PreCompact', 'SessionEnd']) {

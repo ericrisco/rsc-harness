@@ -54,8 +54,14 @@ export function readManifest(root) {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     return { state: 'unreadable', reason: 'not an object' };
   }
-  const skills = Array.isArray(parsed.skills) ? parsed.skills : [];
-  const own = Array.isArray(parsed.ownSkills) ? parsed.ownSkills : [];
+  // Ids, and only ids. `skills: [{id:"orient"}]` is valid JSON and used to throw inside `join()` —
+  // before the delegate ran, so a mounted and perfectly healthy harness lost its whole always-on layer
+  // over a manifest someone hand-edited. This file is COMMITTED into user repos, which means old
+  // copies of it live on forever in projects nobody will update; it has to be maximally suspicious of
+  // the only input it gets.
+  const ids = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.length > 0) : []);
+  const skills = ids(parsed.skills);
+  const own = ids(parsed.ownSkills);
   // A manifest with nothing declared is not a clone waiting to be equipped; there is nothing to offer.
   if (!skills.length && !own.length) return { state: 'absent' };
   return {
@@ -80,9 +86,23 @@ export function readManifest(root) {
  */
 export function evaluateHarness(root, manifest) {
   if (manifest.state !== 'declared') return { verdict: 'unknown', missing: [], ownMissing: [] };
-  const here = (id) => existsSync(join(root, '.rsc', 'skills', id));
-  const missing = manifest.skills.filter((id) => !here(id));
-  const ownMissing = manifest.own.filter((id) => !here(id));
+  // Catalog skills: `.rsc/skills/<id>` is where their content lands, and it is the same on all
+  // seventeen assistants — the per-target directories are links into it.
+  const fromCatalog = (id) => existsSync(join(root, '.rsc', 'skills', id));
+  // Own skills are a different thing in a different place, and conflating them is how a healthy
+  // project ends up nagged every session about work that is already correct. `.rsc/skills/` is filled
+  // by copying FROM THE CATALOG, and an own skill is by definition not in the catalog, so it can never
+  // appear there — looking for it there reports it missing forever, and the `sync` we would prescribe
+  // could never fix it. They live where their assistant keeps skills, which is what this repo's own
+  // `divergence()` already checks.
+  const OWN_DIRS = [
+    ['.claude', 'skills'], ['.codex', 'rsc'], ['.cursor', 'rules'], ['.windsurf', 'rules'],
+    ['.clinerules'], ['.roo', 'rules'], ['.continue', 'rules'], ['.junie'], ['.kiro', 'steering'],
+    ['.antigravity'], ['.opencode'], ['.rsc', 'skills'],
+  ];
+  const fromTeam = (name) => OWN_DIRS.some((dir) => existsSync(join(root, ...dir, name)));
+  const missing = manifest.skills.filter((id) => !fromCatalog(id));
+  const ownMissing = manifest.own.filter((name) => !fromTeam(name));
   if (!missing.length && !ownMissing.length) return { verdict: 'current', missing: [], ownMissing: [] };
   return { verdict: 'behind', missing, ownMissing };
 }
@@ -177,7 +197,7 @@ export function composeOffer(manifest) {
  * Delegate to the real hook script, preserving what it believes about how it was invoked.
  * `gitmoji-guard` only runs its main block when `process.argv[1]` is its own path, so the splice is
  * load-bearing, not tidiness: without it the guard loads and silently does nothing. The four
- * three arguments this file owns are dropped in the same move, together with our own path, so the delegate sees exactly the argv the
+ * The three arguments this file owns are dropped in the same move, together with our own path, so the delegate sees exactly the argv the
  * wiring used to hand it directly — anything less and every hook would need to learn about us.
  */
 async function delegate(target, ownArgc) {
@@ -185,8 +205,12 @@ async function delegate(target, ownArgc) {
   // `gitmoji-guard` does exactly that. Its `import.meta.url` comes back from the loader with
   // symlinks resolved, so handing it the raw path makes its main block silently not run — the guard
   // loads, denies nothing, and reports success. Same trap as `sameFile` below, one level down.
-  process.argv.splice(1, ownArgc + 1, realpathSync(target));
-  await import(pathToFileURL(target).href);
+  // One resolved value for both: argv[1] and the import specifier must agree, or a delegate that
+  // checks its own identity loads and then does nothing — which under `--preserve-symlinks` is
+  // exactly what happened.
+  const resolved = realpathSync(target);
+  process.argv.splice(1, ownArgc + 1, resolved);
+  await import(pathToFileURL(resolved).href);
 }
 
 /**
@@ -205,10 +229,12 @@ async function delegate(target, ownArgc) {
  * denies a tool call, and that it stays silent for ordinary work.
  */
 const PROTECTED = [
-  { re: /\bgit\s+(commit|cz)\b/, what: 'commit' },
-  { re: /\bgit\s+push\b/, what: 'push' },
-  { re: /\bgit\s+merge\b/, what: 'merge' },
-  { re: /\bgit\s+(switch|checkout)\s+(main|master)\b/, what: 'switch to the trunk' },
+  // `git -C <path> commit` is not an edge case: it is the form this workspace's own CLAUDE.md
+  // mandates, so without it the reminder would essentially never fire where it was written.
+  { re: /\bgit\s+(-C\s+\S+\s+)?(commit|cz)\b/, what: 'commit' },
+  { re: /\bgit\s+(-C\s+\S+\s+)?push\b/, what: 'push' },
+  { re: /\bgit\s+(-C\s+\S+\s+)?merge\b/, what: 'merge' },
+  { re: /\bgit\s+(-C\s+\S+\s+)?(switch|checkout)\s+(main|master)\b/, what: 'switch to the trunk' },
   { re: /\bnpm\s+publish\b/, what: 'publish' },
   { re: /\brm\s+-rf\b/, what: 'delete files irreversibly' },
 ];
@@ -220,7 +246,13 @@ const PROTECTED = [
  * we have spoken is not their file to carry.
  */
 function alreadyReminded(root) {
-  const mark = join(tmpdir(), `rsc-offer-${createHash('sha256').update(root).digest('hex').slice(0, 16)}`);
+  // Keyed on the RESOLVED path: the same project reached through a symlinked alias is the same
+  // project, and keying on the raw string warned twice. `sameFile` learned this eighty lines down.
+  let key = root;
+  try {
+    key = realpathSync(root);
+  } catch { /* unresolvable is still a usable key */ }
+  const mark = join(tmpdir(), `rsc-offer-${createHash('sha256').update(key).digest('hex').slice(0, 16)}`);
   if (existsSync(mark)) return true;
   try {
     mkdirSync(tmpdir(), { recursive: true });
@@ -246,17 +278,26 @@ function remindOnProtectedAction(root) {
   } catch { return; }
   const hit = PROTECTED.find(({ re }) => re.test(command));
   if (!hit) return;
-  if (alreadyReminded(root)) return;
+  // Read BEFORE claiming the one reminder this project gets: a run with nothing to say must not spend
+  // it. Otherwise a project whose manifest arrives later by `git pull` has already used up its budget
+  // on a session where it could not have said anything.
   const manifest = readManifest(root);
   if (manifest.state !== 'declared') return;
+  if (alreadyReminded(root)) return;
   const pin = manifest.catalogVersion ? `@${manifest.catalogVersion}` : '';
-  process.stdout.write(
-    '===== rsc =====\n' +
-    `You are about to ${hit.what}, and this project's checks for that are not built on this\n` +
-    'machine. Nothing is being blocked — this is the last time it will be mentioned.\n' +
-    `To build them: npx ${PACKAGE}${pin} sync\n` +
-    '===============\n',
-  );
+  // The envelope, not bare stdout. A `PreToolUse` hook's plain stdout is transcript-only, so the one
+  // message this path is allowed to send would have gone to a place nobody looks. Every sibling guard
+  // in this repo already wraps its output this way. And no `permissionDecision`: informing someone is
+  // not denying them, and nothing here may ever cost a person their tool call.
+  process.stdout.write(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      additionalContext:
+        `rsc: you are about to ${hit.what}, and this project's checks for that are not built on ` +
+        'this machine. Nothing is blocked, and this is the last time it will be mentioned. ' +
+        `To build them: npx ${PACKAGE}${pin} sync`,
+    },
+  }));
 }
 
 /**

@@ -281,6 +281,12 @@ The harness travels by git, but not all of it — and the split is the point.
 | `02-DOCS/raw/worklog/.rsc-memory/` | Preferred session journal when a local wiki exists; protected with git's local exclude |
 | The skill entries rsc manages | Symlinks on macOS/Linux, real copies on Windows — two incompatible shapes of one thing |
 
+Three files carry the harness through git: `.rsc.json` (what the team decided),
+`.claude/settings.json` (the wiring), and `.claude/rsc-bootstrap.mjs` — the small file that
+notices, in a clone, that the rest is not there yet. **Commit all three.** If your project
+ignores the assistant's directory wholesale, rsc adds the one negation that keeps the bootstrap
+versioned; without it a clone is silent instead of helpful.
+
 Whoever clones runs **one command** and ends up with the same harness — at the version the
 project pinned, which is the `catalogVersion` in its `.rsc.json`:
 

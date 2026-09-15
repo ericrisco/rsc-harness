@@ -4,7 +4,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, copyFileSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { wireHook } from '../targets/claude.js';
+import { wireHook, unwireHook } from '../targets/claude.js';
+import { ignoreLocalState } from '../scripts/install-apply.js';
 import { composeOffer } from '../targets/clone-bootstrap.mjs';
 
 // What a clone actually is, measured rather than imagined: `git clone` of an equipped repo brings
@@ -479,4 +480,124 @@ test('AC#13 — skills landed but the hooks did not is ALSO not healthy', () => 
   rmSync(join(root, '.rsc', 'probe.mjs'), { force: true });
   const { stdout } = runBootstrap(root, 'announce', join(root, '.rsc', 'probe.mjs'));
   assert.match(stdout, /not built on this machine/i, 'the offer must come back rather than the turn passing in silence');
+});
+
+// ── C1: the over-blocking failure, caught by a refuter and not by any of the tests above ─────────
+//
+// Own skills are written by the team and live where that assistant keeps skills —
+// `.claude/skills/<name>`, which is what this repo's own `divergence()` checks. They are NOT in
+// `.rsc/skills/`: that directory is filled by `ensureBase`, which copies from the CATALOG, and an own
+// skill is by definition not in the catalog. So looking for them there made `ownMissing` permanently
+// non-empty, and a perfectly healthy project printed a "you are out of date" notice every single
+// session, offering a `sync` that could never clear it.
+//
+// That is the whole over-blocking pattern in one bug: a gate that fires on correct work, prescribes a
+// remedy that does nothing, and therefore gets muted — taking the real warnings with it.
+
+function projectWithOwnSkill({ ownPresent }) {
+  const root = mkdtempSync(join(tmpdir(), 'rsc-own-'));
+  mkdirSync(join(root, '.rsc', 'skills', 'orient'), { recursive: true });
+  mkdirSync(join(root, '.claude'), { recursive: true });
+  if (ownPresent) {
+    mkdirSync(join(root, '.claude', 'skills', 'nuestra'), { recursive: true });
+    writeFileSync(join(root, '.claude', 'skills', 'nuestra', 'SKILL.md'), '# nuestra\n');
+  }
+  writeFileSync(join(root, '.rsc', 'probe.mjs'), 'process.stdout.write("DELEGATE SPOKE\\n");');
+  writeFileSync(join(root, '.rsc.json'), JSON.stringify({
+    version: 1, targets: ['claude'], skills: ['orient'], ownSkills: ['nuestra'], catalogVersion: '1.3.6',
+  }));
+  copyFileSync(new URL('../targets/clone-bootstrap.mjs', import.meta.url), join(root, '.claude', 'rsc-bootstrap.mjs'));
+  return root;
+}
+
+test('C1 — a healthy project that declares an own skill says NOTHING', () => {
+  const root = projectWithOwnSkill({ ownPresent: true });
+  const { stdout } = runBootstrap(root, 'announce', join(root, '.rsc', 'probe.mjs'));
+  assert.equal(
+    stdout,
+    'DELEGATE SPOKE\n',
+    'an own skill that is present must not be reported as missing — it never lives in .rsc/skills/, ' +
+      'so looking for it there nags every session about work that is already correct',
+  );
+});
+
+test('C1 — an own skill that is genuinely absent is still named', () => {
+  const root = projectWithOwnSkill({ ownPresent: false });
+  const { stdout } = runBootstrap(root, 'announce', join(root, '.rsc', 'probe.mjs'));
+  assert.match(stdout, /nuestra/, 'a real absence must still be reported, or the fix has just muted the check');
+});
+
+// ── I1: a manifest that is valid JSON but the wrong shape ────────────────────────────────────────
+//
+// `readManifest` promised to turn a corrupt manifest into a state rather than a crash, and only ever
+// delivered that for JSON syntax. A `skills: [{id:"orient"}]` parses fine and then throws inside
+// `join()` — and because that happens BEFORE the delegate runs, the entire always-on layer (suggest,
+// session memory, orientation) silently stopped on a mounted, healthy harness. That is the same
+// failure the symlink fix was written to prevent, arriving through a different door.
+
+for (const [label, skills] of [
+  ['objects', [{ id: 'orient' }]],
+  ['nulls', [null]],
+  ['numbers', [7]],
+  ['nested arrays', [['orient']]],
+]) {
+  test(`I1 — a manifest with ${label} instead of ids never stops the harness`, () => {
+    const root = mountedWithSkills(['orient'], ['orient']);
+    writeFileSync(join(root, '.rsc.json'), JSON.stringify({ version: 1, skills, catalogVersion: '1.3.6' }));
+    const { stdout, stderr } = runBootstrap(root, 'announce', join(root, '.rsc', 'probe.mjs'));
+    assert.match(stdout, /DELEGATE SPOKE/, 'the always-on layer must keep running whatever the manifest says');
+    assert.doesNotMatch(stderr, /must be of type string|instance of Object/, 'and no raw runtime error may reach the user');
+  });
+}
+
+// ── I2/I3/I4: the file travels, is accounted for, and speaks on a channel that is heard ──────────
+
+test('I2 — the risk reminder uses the envelope PreToolUse actually surfaces', () => {
+  const { root } = clonedWorkspace();
+  const out = spawnSync('node', [join(root, '.claude', 'rsc-bootstrap.mjs'), 'guard', root, join(root, '.rsc', 'danger-guard.mjs')], {
+    cwd: root, input: JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'git commit -m x' } }), encoding: 'utf8',
+  }).stdout;
+  // Bare stdout from a PreToolUse hook is transcript-only; every sibling guard in this repo wraps its
+  // message in this envelope, and a message nobody sees is the same as no message.
+  const payload = JSON.parse(out);
+  assert.equal(payload.hookSpecificOutput.hookEventName, 'PreToolUse');
+  assert.match(payload.hookSpecificOutput.additionalContext, /about to commit/i);
+  assert.ok(!('permissionDecision' in payload.hookSpecificOutput), 'informing is not denying');
+});
+
+test('I3 — the committed bootstrap is reported as written, and removed on unwire', () => {
+  const root = mkdtempSync(join(tmpdir(), 'rsc-registry-'));
+  mkdirSync(join(root, '.claude', 'skills', 'suggest'), { recursive: true });
+  writeFileSync(join(root, '.claude', 'skills', 'suggest', 'SKILL.md'), SUGGEST_BODY);
+  writeFileSync(join(root, '.claude', 'settings.json'), '{}\n');
+  const paths = {
+    projectRoot: root, hookTarget: join(root, '.claude', 'settings.json'),
+    skillDir: (id) => join(root, '.claude', 'skills', id),
+  };
+  const written = wireHook(paths, join(root, '.claude', 'skills', 'suggest', 'SKILL.md'));
+  assert.ok(
+    written.some((p) => p.includes('rsc-bootstrap')),
+    'a file rsc writes but does not report is absent from the backup, so `restore` cannot bring it back',
+  );
+  unwireHook(paths);
+  assert.ok(!existsSync(join(root, '.claude', 'rsc-bootstrap.mjs')), 'uninstall must not orphan an executable in a committed tree');
+});
+
+test('I4 — the gitignore rsc writes protects the one file the feature depends on', () => {
+  const root = mkdtempSync(join(tmpdir(), 'rsc-ignore-'));
+  mkdirSync(join(root, '.git'), { recursive: true });
+  // A project that followed rsc's own example and ignored the assistant directory wholesale.
+  writeFileSync(join(root, '.gitignore'), '.claude/\n');
+  ignoreLocalState(root, 'claude');
+  const gi = readFileSync(join(root, '.gitignore'), 'utf8');
+  assert.match(
+    gi,
+    /^!\.claude\/rsc-bootstrap\.mjs$/m,
+    'without a negation, a repo that ignores .claude/ drops the bootstrap and the whole feature dies silently there',
+  );
+});
+
+test('I4 — the README names the bootstrap among the things to commit', () => {
+  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  assert.match(readme, /rsc-bootstrap\.mjs/, 'the file the feature depends on must be named where sharing is documented');
 });

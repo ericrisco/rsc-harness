@@ -66,6 +66,9 @@ function ensureBase(id, cwd, baseVersions) {
 export function generatedHookFiles({ target, cwd, policy }) {
   if (target !== 'claude') return [];
   const lifecycle = [
+    // Committed, not machine state — and therefore the one entry here that, if omitted, leaves an
+    // executable behind in a tree the user pushes.
+    join(cwd, '.claude', 'rsc-bootstrap.mjs'),
     join(cwd, '.rsc', 'session-start.mjs'),
     join(cwd, '.rsc', 'worklog-checkpoint.mjs'),
     join(cwd, '.rsc', 'hook-once.mjs'),
@@ -287,6 +290,17 @@ export function ignoreLocalState(cwd = process.cwd(), target) {
   // keeps this idempotent against a .gitignore a human wrote in their own spelling.
   const norm = (l) => l.trim().replace(/^\//, '').replace(/\/$/, '');
   const present = new Set(text.split('\n').map(norm));
+  // `.rsc/` is machine state and stays ignored. The bootstrap is the opposite: it is the only harness
+  // file that HAS to survive `git clone`, or a clone goes silent instead of helpful. Most projects
+  // need nothing here — but one that ignored the assistant's directory wholesale (rsc's own repo does
+  // exactly that, so following the example is likely) would swallow it with no symptom at all.
+  //
+  // So the negation is added only where it is actually needed. Adding it everywhere would be noise in
+  // every other project and would break the promise right below this line, that a second run writes
+  // nothing — a guarantee with a test older than this feature.
+  if (present.has('.claude') && !present.has('!.claude/rsc-bootstrap.mjs')) {
+    wanted.push('!.claude/rsc-bootstrap.mjs');
+  }
   const add = wanted.filter((w) => !present.has(norm(w)));
   if (!add.length) return null;
 
