@@ -457,3 +457,26 @@ test('AC#24 — the offer tells an unattended agent not to install on its own', 
   const offer = composeOffer({ state: 'declared', skills: ['orient'], own: [], catalogVersion: '1.3.6', targets: [] });
   assert.match(offer.text, /nobody to ask/i, 'CI and unattended agents have no user to consent, and must not consent for them');
 });
+
+// ── AC#13: the half-mounted harness ──────────────────────────────────────────────────────────────
+//
+// The dangerous outcome of an interrupted install is not failure, it is a directory that LOOKS
+// finished. `sync` needs no network of its own — it copies from the package npx already fetched — so
+// a lost connection means nothing was installed rather than half of it. What can still go wrong is
+// an interruption partway, and the state that leaves has to be recognisable as incomplete the next
+// time someone opens the project, not mistaken for health.
+
+test('AC#13 — a half-finished mount is recognised as incomplete, never as healthy', () => {
+  // Hooks landed, skills did not: exactly what an interrupted install leaves behind.
+  const root = mountedWithSkills(['orient'], ['orient', 'verify', 'ship']);
+  const { stdout } = runBootstrap(root, 'announce', join(root, '.rsc', 'probe.mjs'));
+  assert.notEqual(stdout, 'DELEGATE SPOKE\n', 'a half-mounted harness must not pass as a healthy one');
+  assert.match(stdout, /verify|ship/, 'and it must name what is still missing');
+});
+
+test('AC#13 — skills landed but the hooks did not is ALSO not healthy', () => {
+  const root = mountedWithSkills(['orient'], ['orient']);
+  rmSync(join(root, '.rsc', 'probe.mjs'), { force: true });
+  const { stdout } = runBootstrap(root, 'announce', join(root, '.rsc', 'probe.mjs'));
+  assert.match(stdout, /not built on this machine/i, 'the offer must come back rather than the turn passing in silence');
+});
