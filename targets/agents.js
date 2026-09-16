@@ -32,7 +32,7 @@ const AGENT_TARGETS = {
   claude: { dir: '.claude/agents', ext: '.md', format: 'md', model: (t) => (t === 'heavy' ? 'opus' : 'sonnet') },
   junie: { dir: '.junie/agents', ext: '.md', format: 'md', model: (t) => (t === 'heavy' ? 'opus' : 'sonnet') },
   cursor: { dir: '.cursor/agents', ext: '.md', format: 'md', model: (t) => TIER_MODEL.anthropic[t] },
-  opencode: { dir: '.opencode/agents', ext: '.md', format: 'md', mode: 'subagent', model: (t) => `anthropic/${TIER_MODEL.anthropic[t]}` },
+  opencode: { dir: '.opencode/agents', ext: '.md', format: 'md', mode: 'subagent', toolsFormat: 'map', model: (t) => `anthropic/${TIER_MODEL.anthropic[t]}` },
   gemini: { dir: '.gemini/agents', ext: '.md', format: 'md', model: (t) => TIER_MODEL.google[t] },
   copilot: { dir: '.github/agents', ext: '.agent.md', format: 'md', model: (t) => TIER_MODEL.anthropic[t] },
   kiro: { dir: '.kiro/agents', ext: '.json', format: 'json', model: (t) => (t === 'heavy' ? 'claude-opus-4' : 'claude-sonnet-4') },
@@ -160,7 +160,14 @@ export function writeDeveloperTier(cwd, tier) {
 function renderMd(spec, model, agent) {
   const fm = ['---', `name: ${agent.name}`, `description: "${agent.desc}"`, `model: ${model}`];
   if (spec.mode) fm.push(`mode: ${spec.mode}`);
-  if (agent.tools) fm.push(`tools: [${agent.tools.join(', ')}]`);
+  if (agent.tools) {
+    if (spec.toolsFormat === 'map') {
+      fm.push('tools:');
+      for (const tool of agent.tools) fm.push(`  ${tool}: true`);
+    } else {
+      fm.push(`tools: [${agent.tools.join(', ')}]`);
+    }
+  }
   fm.push('---', '');
   return `${fm.join('\n')}${agent.body}\n`;
 }

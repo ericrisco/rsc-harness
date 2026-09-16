@@ -101,6 +101,8 @@ test('a requested stack agent renders natively with its declared tools on all 8 
       assert.deepEqual(JSON.parse(text).tools, ['read', 'search']);
     } else if (path.endsWith('.toml')) {
       assert.match(text, /^tools = \["read", "search"\]$/m);
+    } else if (target === 'opencode') {
+      assert.match(text, /^tools:\n {2}read: true\n {2}search: true$/m);
     } else {
       assert.match(text, /^tools: \[read, search\]$/m);
     }
