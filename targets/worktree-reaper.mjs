@@ -16,7 +16,7 @@
 //
 // Imported by `.rsc/session-start.mjs` (the sweep) and by `scripts/rsc.js` (`rsc worktrees`), so the
 // rule exists once and both entry points cannot drift apart. Same shape as `sello.mjs`.
-import { existsSync, realpathSync } from 'node:fs';
+import { existsSync, realpathSync, mkdirSync, readFileSync, writeFileSync, renameSync, chmodSync } from 'node:fs';
 import { join, resolve, dirname, basename, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
@@ -407,6 +407,64 @@ export function autoReap(root) {
   return result;
 }
 
+export const HOOK_MARKER = '# rsc-managed worktree cleanup (post-merge) v1';
+
+// Every branch exits 0. That is the whole contract with git: this hook runs in the middle of
+// somebody's merge, and a cleanup that can turn a good merge into a failed one is a worse bug than
+// the accumulation it exists to fix. Missing node, missing reaper, broken reaper, unreadable repo —
+// all of them are "do nothing", never "fail".
+const HOOK_BODY = `#!/bin/sh
+${'# rsc-managed worktree cleanup (post-merge) v1'}
+# Retires worktrees whose work has just landed. Installed by rsc; safe to delete.
+# Turn it off for this project with: .rsc/.no-worktree-cleanup
+hook_dir=$(dirname "$0")
+if [ -x "$hook_dir/post-merge.rsc-local" ]; then
+  "$hook_dir/post-merge.rsc-local" "$@" || true
+fi
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$root/.rsc/worktree-reaper.mjs" ] || exit 0
+command -v node >/dev/null 2>&1 || exit 0
+node "$root/.rsc/worktree-reaper.mjs" "$root" auto 2>/dev/null || true
+exit 0
+`;
+
+/**
+ * Install the trigger. The judgement has existed and been tested for a while; what never existed was
+ * something that runs it at the moment work lands. `post-merge` is that moment, and it covers both
+ * of ship's landing paths — a local `merge --no-ff` and the `pull --ff-only` after a forge merge.
+ *
+ * A hook lives in `.git/hooks/`, which is not cloned. So this is called on install AND on repair,
+ * and `doctor` reports its absence: a trigger nobody re-installs is a trigger that quietly stops
+ * existing on every machine but the one that ran the installer.
+ *
+ * Somebody else's post-merge is moved aside and chained, never overwritten. Husky and lefthook put
+ * real work in there, and eating it to install a convenience would be indefensible.
+ */
+export function installMergeHook(root) {
+  try {
+    const dir = join(real(root), '.git', 'hooks');
+    const hook = join(dir, 'post-merge');
+    mkdirSync(dir, { recursive: true });
+    if (existsSync(hook)) {
+      const current = readFileSync(hook, 'utf8');
+      if (current.includes(HOOK_MARKER)) {
+        // Already ours. Rewrite so an older body converges, but never chain ourselves behind
+        // ourselves — repair runs this repeatedly and stacking would run the cleanup N times.
+        writeFileSync(hook, HOOK_BODY);
+        chmodSync(hook, 0o755);
+        return { installed: true, chained: existsSync(join(dir, 'post-merge.rsc-local')) };
+      }
+      renameSync(hook, join(dir, 'post-merge.rsc-local'));
+      chmodSync(join(dir, 'post-merge.rsc-local'), 0o755);
+    }
+    writeFileSync(hook, HOOK_BODY);
+    chmodSync(hook, 0o755);
+    return { installed: true, chained: existsSync(join(dir, 'post-merge.rsc-local')) };
+  } catch (err) {
+    return { installed: false, reason: err.message };
+  }
+}
+
 export function refusal(candidate) {
   const d = candidate.details || {};
   const parts = (candidate.reasons || []).map((reason) => {
@@ -483,7 +541,11 @@ export function summarize(candidate, root) {
 if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
   const root = resolve(process.argv[2] || process.cwd());
   const candidates = classifyWorktrees(root).filter((c) => c.verdict !== 'skip');
-  if (process.argv[3] === 'reap') {
+  if (process.argv[3] === 'auto') {
+    // The unattended entry point, called by the post-merge hook. Prints only what it actually did.
+    const out = autoReap(root);
+    for (const p of out.reaped) process.stdout.write(`rsc: retired worktree ${p}\n`);
+  } else if (process.argv[3] === 'reap') {
     const one = process.argv[4];
     const targets = one ? [resolve(one)] : candidates.filter((c) => c.verdict === 'safe').map((c) => c.path);
     for (const t of targets) {

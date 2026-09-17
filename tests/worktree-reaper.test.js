@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, realpathSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, realpathSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,7 +18,7 @@ const MOD = join(HERE, '..', 'targets', 'worktree-reaper.mjs');
 const CLI = join(HERE, '..', 'scripts', 'rsc.js');
 
 const {
-  classifyWorktrees, reapWorktree, isCleanupEnabled, resolveTrunk, listWorktrees, REGENERABLE, autoReap,
+  classifyWorktrees, reapWorktree, isCleanupEnabled, resolveTrunk, listWorktrees, REGENERABLE, autoReap, installMergeHook,
 } = await import(MOD);
 
 const TMP = [];
@@ -835,4 +835,104 @@ test('40 · autoReap never throws — it runs from a git hook, where throwing br
   let out;
   assert.doesNotThrow(() => { out = autoReap(root); });
   assert.deepEqual(out.reaped, []);
+});
+
+// ── 41-45. the trigger: git runs the cleanup, so no agent has to remember to ──────────────────
+//
+// The module header names the gap it was born with: "nothing at all fired when the merge happened
+// in the forge". The judgement got built and the trigger stayed prose. `post-merge` is the trigger,
+// and it was chosen because it fires on BOTH of ship's landing paths — verified empirically on
+// 2026-09-17: `git pull --ff-only` (the PR path) and `git merge --no-ff` (the local one).
+//
+// The hook must never fail. git happens to ignore post-merge's exit status, so a merge is safe from
+// it either way — but the script is also wired into repair and re-run on machines nobody watches, so
+// its own exit code is a contract worth holding. 43 asks the script directly, for that reason.
+
+// Give a repo what an installed project has: the reaper materialized under .rsc/.
+function materializeReaper(root) {
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  copyFileSync(MOD, join(root, '.rsc', 'worktree-reaper.mjs'));
+}
+
+test('41 · after the hook is installed, a real merge retires the landed worktree by itself', () => {
+  const root = repo();
+  materializeReaper(root);
+  installMergeHook(root);
+  const wt = rscWorktree(root, 'hooked');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A');
+  git(wt.path, 'commit', '-qm', 'feat: hooked');
+
+  // Nobody calls the reaper here. git does.
+  mergeIntoTrunk(root, wt.branch);
+
+  assert.equal(existsSync(wt.path), false, 'the merge itself must have retired it');
+});
+
+test('42 · an existing post-merge hook is preserved and still runs', () => {
+  const root = repo();
+  materializeReaper(root);
+  const hooks = join(root, '.git', 'hooks');
+  mkdirSync(hooks, { recursive: true });
+  writeFileSync(join(hooks, 'post-merge'), `#!/bin/sh\ntouch "${join(root, 'THEIRS-RAN')}"\n`, { mode: 0o755 });
+
+  installMergeHook(root);
+  const wt = rscWorktree(root, 'chained');
+  write(wt.path, 'f.txt', 'x\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: chained');
+  mergeIntoTrunk(root, wt.branch);
+
+  assert.equal(existsSync(join(root, 'THEIRS-RAN')), true, "somebody else's hook must not be swallowed");
+  assert.equal(existsSync(wt.path), false, 'and ours must still have run');
+});
+
+test('43 · a broken cleanup still exits 0 — asked of the hook, not of git', () => {
+  // Written the obvious way first — merge, then assert the merge survived — and a mutant that
+  // removed the `|| true` did not kill it. It could not: git IGNORES post-merge's exit status, so
+  // that version was asserting a guarantee git already makes, and would have passed over any hook
+  // at all. The contract that is actually ours is the script's own exit code, so ask the script.
+  const root = repo();
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  // A reaper that throws on import is the worst case the hook can meet.
+  writeFileSync(join(root, '.rsc', 'worktree-reaper.mjs'), 'throw new Error("boom");\n');
+  installMergeHook(root);
+
+  const r = spawnSync(join(root, '.git', 'hooks', 'post-merge'), [], { cwd: root, encoding: 'utf8' });
+
+  assert.equal(r.status, 0, 'the hook must succeed even when everything it calls is broken');
+  assert.equal(r.stderr, '', 'and it must not spill the failure into the merge output');
+});
+
+test('43b · and the merge itself is of course unaffected', () => {
+  const root = repo();
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  writeFileSync(join(root, '.rsc', 'worktree-reaper.mjs'), 'throw new Error("boom");\n');
+  installMergeHook(root);
+  const wt = rscWorktree(root, 'survivor');
+  write(wt.path, 'f.txt', 'x\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: survivor');
+
+  assert.doesNotThrow(() => mergeIntoTrunk(root, wt.branch));
+  assert.equal(git(root, 'log', '--oneline', '-1').includes('merge'), true, 'and the merge must be real');
+});
+
+test('44 · no reaper materialized at all is a silent no-op, not an error', () => {
+  const root = repo();
+  installMergeHook(root);
+  const wt = rscWorktree(root, 'bare');
+  write(wt.path, 'f.txt', 'x\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: bare');
+
+  assert.doesNotThrow(() => mergeIntoTrunk(root, wt.branch));
+});
+
+test('45 · installing twice does not stack the hook on top of itself', () => {
+  const root = repo();
+  materializeReaper(root);
+  installMergeHook(root);
+  const once = readFileSync(join(root, '.git', 'hooks', 'post-merge'), 'utf8');
+  installMergeHook(root);
+  const twice = readFileSync(join(root, '.git', 'hooks', 'post-merge'), 'utf8');
+
+  assert.equal(twice, once, 'repair and reinstall run this repeatedly; it must converge');
 });
