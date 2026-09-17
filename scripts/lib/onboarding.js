@@ -181,8 +181,24 @@ export function buildOnboardingPlan(record, evidence) {
   if (/database|persistence|persistencia|base de datos/.test(goal)) goalSignals.push('persistence');
   if (/integration|integración|webhook|third-party|tercero/.test(goal)) goalSignals.push('external-integrations');
   const complexitySignals = [...new Set([...(evidence.complexitySignals || []), ...goalSignals])].sort();
-  const needsSdd = isSoftware && (normalized.softwareScope !== 'small' || complexitySignals.length > 0);
-  const profile = needsSdd ? 'core' : 'minimal';
+  // One harness. WHICH SKILLS you get no longer depends on a prediction nobody can make at minute
+  // zero — the kind of project, and how big the work will turn out to be. The old default installed
+  // eight skills and none of the ten phases the always-on layer routes work to, so the first real
+  // request of every new install stopped to install what the harness had just demanded.
+  //
+  // What still depends on this being a code project is the machinery that EXECUTES: subagents, code
+  // hooks and the gitmoji guard. A company-ops workspace has no git to hook and no diff to review,
+  // and writing those anyway is acting outside the plan the user accepted (P4) — the onboarding
+  // route-inventory gate refuses it, which is how this boundary was found rather than guessed.
+  const profile = 'core';
+  const codeProject = isSoftware;
+  const needsSdd = codeProject;
+  // Installed is not the same as practised, and conflating them is how "everyone gets the chain"
+  // turns into "everyone is told they are missing a constitution". The skills ship with every
+  // harness so the chain is always reachable; the FLOOR — the artifacts a project is expected to
+  // actually have — keeps asking the question it always asked: is this code, and is the work big
+  // enough that the chain will really be run here?
+  const practisesSdd = isSoftware && (normalized.softwareScope !== 'small' || complexitySignals.length > 0);
   const catalog = loadManifest();
   const catalogIds = new Set(catalog.skills.map((skill) => skill.id));
   const detectedSkills = (evidence.stacks || []).filter((stack) => catalogIds.has(stack));
@@ -210,11 +226,14 @@ export function buildOnboardingPlan(record, evidence) {
   const declared = (readManifest(evidence.root ?? process.cwd())?.skills ?? [])
     .filter((id) => catalogIds.has(id) && !inAnyProfile.has(id));
   const skills = [...new Set([...skillsForProfile(catalog, profile), ...detectedSkills, ...declared])].sort();
-  const baseAgents = needsSdd;
-  const hooks = needsSdd;
+  const baseAgents = practisesSdd;
+  const hooks = practisesSdd;
   const agents = baseAgents ? resolveAgentNames(skills, []).sort() : [];
   const gitmojiGuard = hooks && normalized.targets.includes('claude');
-  const decisions = skills.map((id) => detectedSkills.includes(id)
+  // `sdd` is installed everywhere now, but its DECISION is about practice, not presence — so where
+  // the chain is not practised the explicit `deferred` entry below must be the only one, or the
+  // generic "installed → selected" mapping would shadow it and `reassess` would see nothing to watch.
+  const decisions = skills.filter((id) => practisesSdd || id !== 'sdd').map((id) => detectedSkills.includes(id)
     ? selected(id, 'skill', `Detected ${id} evidence inside the selected project root.`, 'workspace-evidence')
     : selected(id, 'skill', needsSdd
       ? (id === 'sdd' && complexitySignals.length
@@ -227,7 +246,11 @@ export function buildOnboardingPlan(record, evidence) {
     { type: 'complexity-added', atLeast: 1 },
     { type: 'manifest-with-implementation' },
   ];
-  if (!needsSdd) decisions.push(deferred('sdd', 'workflow', isSoftware
+  // Deferred means "not practised here yet", NOT "not installed". The skills ship with every harness
+  // so the chain is always one request away; this decision is what `reassess` watches, and what the
+  // floor reads. Collapsing the two would have deleted reassess's reason to exist as a side effect
+  // of an installer change, which is not a decision an installer change gets to make.
+  if (!practisesSdd) decisions.push(deferred('sdd', 'workflow', isSoftware
     ? 'The software scope is small, so specification overhead is not justified yet.'
     : 'SDD applies to substantial software work, which is not the declared project purpose.', sddTriggers, softwareTriggers));
   if (baseAgents) {
@@ -251,7 +274,7 @@ export function buildOnboardingPlan(record, evidence) {
     baseAgents,
     agents,
     alwaysOn: true,
-    codeHooks: needsSdd,
+    codeHooks: practisesSdd,
     gitmojiGuard,
     memory: true,
     context7: false,
@@ -274,8 +297,7 @@ export function buildOnboardingPlan(record, evidence) {
   const floorPaths = [
     '01-TOOLS/_TEMPLATE/',
     '02-DOCS/wiki/harness/',
-    ...(decisions.some((decision) => decision.id === 'sdd' && decision.state === 'selected')
-      ? ['02-DOCS/wiki/sdd/constitution.md'] : []),
+    ...(practisesSdd ? ['02-DOCS/wiki/sdd/constitution.md'] : []),
   ].sort();
   return {
     schemaVersion: 1,

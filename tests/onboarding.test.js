@@ -72,7 +72,15 @@ test('small software defers SDD with observable triggers; growing software selec
   assert.ok(growing.decisions.some((d) => d.id === 'context7' && d.state === 'excluded'));
 });
 
-test('operations policy contains no SDD, base agents, code hooks or gitmoji guard', () => {
+test('operations gets the whole harness, and none of the machinery that only makes sense with code', () => {
+  // Was "operations policy contains no SDD, base agents, code hooks or gitmoji guard". The skills
+  // half of that is gone on purpose: choosing between an operations harness and a programming one at
+  // minute zero asked the user to predict which half they would need, and an ops workspace that
+  // later wants a spec had no way to reach one. So the chain SHIPS everywhere.
+  //
+  // What did not change is the machinery that executes. Subagents, code hooks and the gitmoji guard
+  // are useless where there is no diff and no git, and writing them anyway means acting outside the
+  // plan the user accepted (P4) — the onboarding route-inventory gate refuses it.
   const record = normalizeOnboarding(answers({ projectKind: 'operations', softwareScope: undefined }));
   const plan = buildOnboardingPlan(record, scanProject(root()));
   assert.equal(plan.policy.baseAgents, false);
@@ -80,8 +88,10 @@ test('operations policy contains no SDD, base agents, code hooks or gitmoji guar
   assert.equal(plan.policy.codeHooks, false);
   assert.equal(plan.policy.gitmojiGuard, false);
   assert.deepEqual(plan.policy.agents, []);
-  assert.ok(!plan.policy.skills.includes('sdd'));
-  assert.equal(plan.decisions.find((d) => d.id === 'sdd').state, 'deferred');
+  assert.ok(plan.policy.skills.includes('sdd'), 'the chain is reachable from every harness');
+  assert.ok(plan.policy.skills.includes('ftd'), 'and so is the lane ordinary work takes');
+  assert.equal(plan.decisions.find((d) => d.id === 'sdd').state, 'deferred',
+    'installed, but not practised here — which is what `reassess` watches');
 });
 
 test('the plan does not claim a Claude-only gitmoji guard for Codex', () => {

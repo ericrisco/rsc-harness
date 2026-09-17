@@ -42,11 +42,13 @@ test('the wizard label is read from the profile, not enumerated by hand', () => 
   }
 });
 
-test('the README names every base skill on its minimal-profile line', () => {
-  const line = readme.split('\n').find((l) => l.includes('--profile minimal'));
-  assert.ok(line, 'the README still documents the minimal profile');
-  const missing = BASE.filter((id) => !line.includes(id));
-  assert.deepEqual(missing, [], `README minimal line is missing: ${missing.join(', ')}`);
+test('the README no longer documents a profile the installer will refuse', () => {
+  // Was "the README names every base skill on its minimal-profile line", and it was right to check:
+  // a hand-kept enumeration in prose is parallel accounting and it lies quietly (P3). What changed
+  // is that there is no profile to enumerate. One harness installs; everything else arrives on
+  // demand. A documented flag the CLI now refuses would be a promise the code breaks.
+  assert.doesNotMatch(readme, /--profile\s+(minimal|core|full)/,
+    'the README must not sell a flag that no longer exists');
 });
 
 test('no two base skills compete for the same request', () => {

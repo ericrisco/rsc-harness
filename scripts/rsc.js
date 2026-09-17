@@ -565,9 +565,16 @@ async function guardCollisions(targets, ids) {
 // So the two travel together, always. Any command that changes what is installed carries both, and
 // `applyInstall` persists the receipt rather than conserving the stale one.
 function governedBy(receipt, skills) {
+  // The receipt is hash-checked against the plan the user accepted, so its policy is NOT a place to
+  // record what happened afterwards: rewriting `plan.policy.skills` made every install report "the
+  // receipt does not match its accepted plan id", which is the integrity check doing its job.
+  //
+  // An earlier fix for the reported data loss did exactly that, and it was wrong — the right place
+  // was never `add`, it was `sync`, which treated the accepted plan as the only declaration and
+  // pruned everything absent from it. The policy still travels for hooks and agents; what must not
+  // travel is a rewritten receipt.
   if (!receipt) return { policy: undefined, onboarding: undefined };
-  const policy = { ...receipt.plan.policy, skills };
-  return { policy, onboarding: { ...receipt, plan: { ...receipt.plan, policy } } };
+  return { policy: { ...receipt.plan.policy, skills }, onboarding: undefined };
 }
 
 async function main() {
@@ -621,10 +628,20 @@ async function main() {
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
     }
     case 'install': {
+      // Before the harness check on purpose: an obsolete flag is an argument error, and telling
+      // someone to run onboarding first when what they actually typed no longer exists sends them
+      // down the wrong path. There is one harness now, so there is nothing to choose. A flag that
+      // silently stops meaning what it used to is worse than one that is gone — a script would keep
+      // passing `--profile minimal` and keep believing it installed eight skills. Refused, with what
+      // replaced it (P6).
+      if (flag('profile')) {
+        say('⚠️  `--profile` no longer exists: rsc installs one harness — the always-on layer, the FTD lane and the SDD chain.');
+        say('    Everything else still arrives on demand: `npx @ericrisco/rsc add <id>`.');
+        return;
+      }
       if (!hasDeclaredHarness()) return onboardingRequired(onboardingInput(targets));
-      const profile = flag('profile') || 'minimal';
       const without = argv.filter((a, i) => argv[i - 1] === '--without');
-      let ids = skillsForProfile(loadManifest(), profile);
+      let ids = skillsForProfile(loadManifest(), 'core');
       ids = withDefaultSkillFloor(ids).filter((id) => !without.includes(id));
       if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
       const receipt = readManifest()?.onboarding;
@@ -634,13 +651,13 @@ async function main() {
       // SDD onboarding erased the SDD chain from the governed list, and the floor check then reported
       // nothing pending. Unioning instead would leave `install` pruning to the profile while the
       // governed list asked for more, and `sync` putting them back: churn.
-      // The real fix is that profiles stop existing, which is `install-single-harness`. Until then
-      // this path keeps its old behaviour, desync included, and the bug it causes is the one `add`
-      // no longer causes.
-      const policy = receipt ? { ...receipt.plan.policy, skills: ids } : undefined;
-      for (const t of targets) await applyInstall({ skillIds: ids, target: t, policy });
-      markMaintenanceDrift(`install ${profile}`);
-      say(`✅ Profile '${profile}' installed for ${targets.join(', ')} (${ids.length} skills)`);
+      // Now that profiles are gone this set IS the harness, so persisting it no longer overwrites a
+      // narrower accepted plan with a wider guess: they are the same set. The desync `add` had is
+      // therefore closed here too.
+      const { policy, onboarding } = governedBy(receipt, ids);
+      for (const t of targets) await applyInstall({ skillIds: ids, target: t, policy, onboarding });
+      markMaintenanceDrift('install harness');
+      say(`✅ Harness installed for ${targets.join(', ')} (${ids.length} skills)`);
       printAgentHandoff();
       return;
     }

@@ -145,7 +145,7 @@ test('rsc sync --dry-run reports installed skills', () => {
 test('rsc install prints the agent handoff (reload → equipped → ready, no auto-task)', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cli-handoff-'));
   adoptExistingHarness(cwd);
-  const result = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'install', '--profile', 'minimal', '--target', 'claude'], {
+  const result = spawnSync(process.execPath, [join(ROOT, 'scripts/rsc.js'), 'install', '--target', 'claude'], {
     cwd,
     encoding: 'utf8',
   });
