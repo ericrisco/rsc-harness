@@ -446,6 +446,12 @@ The front door and the workspace brain.
 > **bro** is installed with every profile and rewrites any answer in plain, natural
 > language when the user asks — without making its full body always-on.
 
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/company-brain.svg" alt="The rsc company brain as a 3D knowledge graph: loose material drifts in from the inbox on the left and is absorbed into the bright green wiki cluster, whose brightest hubs are its .base views; dim clusters behind are raw sources and the agent's own captured worklog; an amber cluster is gaps.md, what the wiki knows it is missing." width="960">
+
+Anything you drop in goes to `inbox/` and is ingested; the wiki consolidates it as plain markdown you can open as an
+Obsidian vault; and every skill reads it before acting, so the next session starts where the last one stopped. Raw
+sources and the agent's own worklog stay underneath — present, never deleted, out of the way.
+
 > #### 📦 The `02-DOCS/` brain is now 100% Open Knowledge Format (OKF v0.1) conformant
 >
 > Google Cloud published the [**Open Knowledge Format**](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)
