@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" role="img" aria-label="The rsc lane decisor: every request is classified into answer, FTD or SDD, and only the user selects the chain">
+  <title>rsc — the lane decisor</title>
+  <desc>A request meets a decision. Answer writes nothing. FTD is the default lane for ordinary authorised change. SDD, the ten-phase chain, is entered only by explicit request or an accepted proposal.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12161c"/><stop offset="1" stop-color="#0b0e12"/>
+    </linearGradient>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#63d68a"/>
+    </marker>
+    <style>
+      .s { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      .t { font-size: 34px; font-weight: 700; fill: #63d68a; letter-spacing: .5px; }
+      .d { font-size: 21px; fill: #c7d2dd; }
+      .k { font-size: 19px; fill: #8a97a6; }
+      .in { font-size: 25px; font-weight: 700; fill: #eaf2f8; letter-spacing: 1px; }
+      .card { fill: none; stroke: #63d68a; stroke-width: 2; }
+      .line { stroke: #63d68a; stroke-width: 2; fill: none; }
+    </style>
+  </defs>
+  <rect width="1600" height="620" fill="url(#bg)"/>
+
+  <text x="60" y="318" class="s in">REQUEST</text>
+  <path d="M215 310 H330" class="line" marker-end="url(#a)"/>
+  <path d="M400 310 m-52,0 l52,-52 l52,52 l-52,52 z" class="line"/>
+  <text x="400" y="400" class="s k" text-anchor="middle">classify first</text>
+  <path d="M452 310 H520" class="line"/>
+  <path d="M520 310 V110 H600" class="line" marker-end="url(#a)"/>
+  <path d="M520 310 H600" class="line" marker-end="url(#a)"/>
+  <path d="M520 310 V510 H600" class="line" marker-end="url(#a)"/>
+
+  <rect x="610" y="46" width="930" height="128" rx="14" class="card"/>
+  <text x="646" y="98" class="s t">ANSWER</text>
+  <text x="646" y="136" class="s d">Information only — read-only. Nothing is written, no artifact created.</text>
+
+  <rect x="610" y="246" width="930" height="128" rx="14" class="card"/>
+  <text x="646" y="298" class="s t">FTD · Fast-Track Development</text>
+  <text x="646" y="336" class="s d">The default. One feature document; tasks checked off against observed proof.</text>
+
+  <rect x="610" y="446" width="930" height="128" rx="14" class="card"/>
+  <text x="646" y="498" class="s t">SDD · the ten-phase chain</text>
+  <text x="646" y="536" class="s d">Proposed only when artifacts would settle a real ambiguity. You select it.</text>
+
+  <text x="1540" y="604" class="s k" text-anchor="end">Size, file count and risk never select the chain.</text>
+</svg>
