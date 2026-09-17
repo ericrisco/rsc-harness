@@ -1,45 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" role="img" aria-label="The rsc lane decisor: every request is classified into answer, FTD or SDD, and only the user selects the chain">
-  <title>rsc — the lane decisor</title>
-  <desc>A request meets a decision. Answer writes nothing. FTD is the default lane for ordinary authorised change. SDD, the ten-phase chain, is entered only by explicit request or an accepted proposal.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-label="The rsc lane decisor: every request is classified into answer, FTD or SDD, and the harness never enters the ten-phase chain on its own">
+  <title>rsc-harness — the lane decisor</title>
+  <desc>Every request takes exactly one lane. Answer is read-only and writes nothing. FTD, Fast-Track Development, is the default for ordinary authorised change and keeps one feature document. SDD, the ten-phase chain, is proposed but never selected by the harness alone. Size, file count and risk never select the chain.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#12161c"/><stop offset="1" stop-color="#0b0e12"/>
+      <stop offset="0" stop-color="#161c23"/><stop offset="1" stop-color="#101419"/>
     </linearGradient>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#63d68a"/>
-    </marker>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#173527" stop-opacity=".9"/>
+      <stop offset="60%" stop-color="#173527" stop-opacity=".40"/>
+      <stop offset="100%" stop-color="#173527" stop-opacity="0"/>
+    </radialGradient>
     <style>
-      .s { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-      .t { font-size: 34px; font-weight: 700; fill: #63d68a; letter-spacing: .5px; }
-      .d { font-size: 21px; fill: #c7d2dd; }
-      .k { font-size: 19px; fill: #8a97a6; }
-      .in { font-size: 25px; font-weight: 700; fill: #eaf2f8; letter-spacing: 1px; }
-      .card { fill: none; stroke: #63d68a; stroke-width: 2; }
-      .line { stroke: #63d68a; stroke-width: 2; fill: none; }
+      .sans{font-family:ui-sans-serif,system-ui,sans-serif}
+      .mono{font-family:ui-monospace,Menlo,monospace}
+      .ink{fill:#f4f5f2}.muted{fill:#9ca7b3}.green{fill:#63d68a}.amber{fill:#d8b76a}.dim{fill:#71808f}
     </style>
   </defs>
-  <rect width="1600" height="620" fill="url(#bg)"/>
 
-  <text x="60" y="318" class="s in">REQUEST</text>
-  <path d="M215 310 H330" class="line" marker-end="url(#a)"/>
-  <path d="M400 310 m-52,0 l52,-52 l52,52 l-52,52 z" class="line"/>
-  <text x="400" y="400" class="s k" text-anchor="middle">classify first</text>
-  <path d="M452 310 H520" class="line"/>
-  <path d="M520 310 V110 H600" class="line" marker-end="url(#a)"/>
-  <path d="M520 310 H600" class="line" marker-end="url(#a)"/>
-  <path d="M520 310 V510 H600" class="line" marker-end="url(#a)"/>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <circle cx="1010" cy="70" r="420" fill="url(#glow)"/>
 
-  <rect x="610" y="46" width="930" height="128" rx="14" class="card"/>
-  <text x="646" y="98" class="s t">ANSWER</text>
-  <text x="646" y="136" class="s d">Information only — read-only. Nothing is written, no artifact created.</text>
+  <rect x="62" y="55" width="40" height="40" rx="11" fill="#f4f5f2"/>
+  <text x="82" y="81" text-anchor="middle" class="mono" font-size="14" font-weight="700" fill="#101419">rsc</text>
+  <text x="116" y="82" class="mono ink" font-size="20" font-weight="700">rsc-harness</text>
 
-  <rect x="610" y="246" width="930" height="128" rx="14" class="card"/>
-  <text x="646" y="298" class="s t">FTD · Fast-Track Development</text>
-  <text x="646" y="336" class="s d">The default. One feature document; tasks checked off against observed proof.</text>
+  <text x="62" y="205" class="sans ink" font-size="48" font-weight="750" letter-spacing="-1.8">Every request takes one lane.</text>
+  <text x="62" y="263" class="sans green" font-size="48" font-weight="750" letter-spacing="-1.8">You decide when it gets expensive.</text>
+  <text x="62" y="309" class="sans muted" font-size="19">The harness classifies first and says which lane. It never enters the chain on its own.</text>
 
-  <rect x="610" y="446" width="930" height="128" rx="14" class="card"/>
-  <text x="646" y="498" class="s t">SDD · the ten-phase chain</text>
-  <text x="646" y="536" class="s d">Proposed only when artifacts would settle a real ambiguity. You select it.</text>
+  <rect x="62" y="348" width="1076" height="305" rx="20" fill="#171d24" stroke="#2d3742"/>
+  <text x="88" y="386" class="mono muted" font-size="14">RSC_LANE_DECISOR</text>
 
-  <text x="1540" y="604" class="s k" text-anchor="end">Size, file count and risk never select the chain.</text>
+  <text x="88" y="437" class="mono dim" font-size="17">○ ANSWER</text>
+  <text x="250" y="437" class="sans ink" font-size="18">Information only — explain, compare, audit, review, propose.</text>
+  <text x="250" y="461" class="mono dim" font-size="13">read-only · nothing is written · no artifact created</text>
+
+  <text x="88" y="514" class="mono green" font-size="17">✓ FTD</text>
+  <text x="250" y="514" class="sans ink" font-size="18">Fast-Track Development — the default for ordinary change.</text>
+  <text x="250" y="538" class="mono green" font-size="13" opacity=".85">one feature document · tasks checked off against observed proof</text>
+
+  <text x="88" y="591" class="mono amber" font-size="17">○ SDD</text>
+  <text x="250" y="591" class="sans ink" font-size="18">The ten-phase chain — proposed, never auto-selected.</text>
+  <text x="250" y="615" class="mono amber" font-size="13" opacity=".85">entered only on your explicit request, or a proposal you accept</text>
+
+  <text x="62" y="676" class="mono dim" font-size="13">Size, file count and perceived risk never select the chain.</text>
+  <text x="1138" y="676" class="mono dim" font-size="13" text-anchor="end">friction proportional to risk · constitution §7</text>
 </svg>
