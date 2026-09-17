@@ -116,16 +116,18 @@ Stacked PR / feature-track support still fits inside the three landing options: 
 git switch main && git pull --ff-only
 git merge --no-ff feature/<slug> -m "feat: <what shipped> (<spec-slug>)"   # no AI trailer
 git push origin main
-npx @ericrisco/rsc worktrees reap <path-of-this-feature-worktree>   # by name: this one, not all of them
+# the merge above already retired the worktree and its branch: post-merge does it
 git branch -d feature/<slug> 2>/dev/null || true   # no worktree involved? then the branch alone
 git push origin --delete feature/<slug> 2>/dev/null || true
 ```
 
 Use `--no-ff` so the feature is one legible merge commit tied to the spec. Confirm the trunk still builds after the merge if the repo has a local gate (defer the actual run to `verify`).
 
-**Name the path.** Bare `worktrees reap` retires *every* worktree that currently qualifies, which is not what landing one branch means — with `parallel` running two streams, it is how shipping A deletes B. Pass the path of the worktree this branch lived in; capture it before you switch, since you are usually standing in it (`WT=$(pwd)`).
+**You no longer run the cleanup; you check that it ran.** A `post-merge` hook retires the worktree and its branch the moment the work lands, on both landing paths — the local merge above and the `pull --ff-only` after a forge merge. It removes only what the reaper already classifies as safe, so anything holding unsaved work survives with its reason, exactly as before.
 
-Naming a path selects it, it does not accept the risk of removing it: a worktree holding anything unsaved is still refused, with the reason. Add `--confirm` only after the user has seen that reason and said yes. Run it from anywhere — it finds the main checkout itself.
+This used to be an instruction in this paragraph, and it was skipped on both features that reached it. That is why it is a hook now: an instruction at the end of a long phase is the least reliable place to put a step that matters (P1).
+
+If something did survive, it survived *for a reason* — read it rather than forcing it: `npx @ericrisco/rsc worktrees` lists what is left and why. `worktrees reap <path>` still exists for the backlog and for anything the hook deliberately refused; name the path, because bare `reap` retires every worktree that qualifies and with `parallel` running two streams that is how shipping A deletes B. Naming a path selects it, it does not accept the risk: add `--confirm` only after the user has seen the reason and said yes.
 
 ### Option 2 — pull request
 
@@ -163,7 +165,7 @@ Implements `02-DOCS/wiki/sdd/specs/<slug>.md`. <the user-facing reason>
 
 Then either let the gate run (team/CI) or self-merge once green: `gh pr merge --squash --delete-branch` (or `--merge` to preserve the history). Squash when the branch history is noisy; preserve when each commit is meaningful.
 
-Once it is merged, pull the trunk and reap the one you landed — `git switch main && git pull --ff-only && npx @ericrisco/rsc worktrees reap "$WT"`. A squashed pull request is exactly the case the reaper judges by content rather than by commit identity, so it is recognised as landed; the local branch is kept, because git will not delete a squashed branch safely and while it exists the work is recoverable.
+Once it is merged, pull the trunk — `git switch main && git pull --ff-only` — and the cleanup rides along with that pull: `post-merge` fires on a fast-forward too, verified. A squashed pull request is exactly the case the reaper judges by content rather than by commit identity, so it is recognised as landed; the local branch is kept, because git will not delete a squashed branch safely and while it exists the work is recoverable.
 
 For stacked PRs, create each PR against the previous branch or against a feature-track branch, with bodies that name their dependency:
 

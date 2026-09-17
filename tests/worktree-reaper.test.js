@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, realpathSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, realpathSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,7 +18,7 @@ const MOD = join(HERE, '..', 'targets', 'worktree-reaper.mjs');
 const CLI = join(HERE, '..', 'scripts', 'rsc.js');
 
 const {
-  classifyWorktrees, reapWorktree, isCleanupEnabled, resolveTrunk, listWorktrees, REGENERABLE,
+  classifyWorktrees, reapWorktree, isCleanupEnabled, resolveTrunk, listWorktrees, REGENERABLE, autoReap, installMergeHook,
 } = await import(MOD);
 
 const TMP = [];
@@ -319,16 +319,24 @@ test('15 · the regenerable table is data the test can read, not conditionals it
   }
 });
 
-test('15b · ship option 1 executes the cleanup instead of describing it afterwards', async () => {
+test('15b · ship option 1 gets the cleanup executed, and no longer asks anyone to run it', async () => {
+  // The original criterion was that option 1 RAN the reap rather than describing it, because a
+  // described cleanup is not a cleanup. That criterion was right and the section satisfied it — and
+  // the step was still skipped on both features that reached it, because a runnable line in a
+  // document only runs if somebody runs it. The cleanup now rides on the merge itself, so what this
+  // asserts is the same intent one level down: option 1 must not hand the step back to a human.
   const { readFileSync } = await import('node:fs');
   const ship = readFileSync(join(HERE, '..', 'skills', 'ship', 'SKILL.md'), 'utf8');
   const start = ship.indexOf('### Option 1');
   const end = ship.indexOf('### Option 2');
   assert.ok(start > 0 && end > start, 'the option-1 section must exist');
-  const runnable = ship.slice(start, end).split('\n')
-    .filter((l) => !l.trimStart().startsWith('#')).join('\n');
-  assert.match(runnable, /^npx @ericrisco\/rsc worktrees reap /m,
-    'a commented-out command satisfies /rsc worktrees/ too; the criterion is that option 1 RUNS it');
+  const section = ship.slice(start, end);
+  const runnable = section.split('\n').filter((l) => !l.trimStart().startsWith('#')).join('\n');
+
+  assert.doesNotMatch(runnable, /^npx @ericrisco\/rsc worktrees reap /m,
+    'landing a branch must not require anyone to remember a cleanup command');
+  assert.match(section, /post-merge/,
+    'and it must say what does retire it, or the reader is left thinking nothing does');
 });
 
 test('15c · the CLI classifies a real repository', () => {
@@ -764,4 +772,251 @@ test('36 · the sweep respects the opt-out, not only the library does', () => {
   mkdirSync(join(root, '.rsc'), { recursive: true });
   writeFileSync(join(root, '.rsc', '.no-worktree-cleanup'), '');
   assert.doesNotMatch(sweep(root), /worktree cleanup/, 'off means off at both entry points');
+});
+
+// ── 37-40. autoReap: the same judgement, exercised without a human in the loop ───────────────
+//
+// `sweep` above offers and never acts, and test 16 pins that on purpose. This is the other half:
+// the path that runs from a git hook after work lands, where there is nobody to ask. It is allowed
+// to remove ONLY what classification already calls `safe` — it introduces no new judgement of its
+// own, because the judgement is the dangerous part and it has already been written and tested.
+// Measured 2026-09-17: the prose instruction that used to cover this moment was skipped 2 times
+// out of 2 on real features, which is what moved it from an instruction to a mechanism (P1).
+
+test('37 · autoReap removes what classification already calls safe, and reports it', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'auto-alpha');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A');
+  git(wt.path, 'commit', '-qm', 'feat: auto-alpha');
+  mergeIntoTrunk(root, wt.branch);
+
+  const out = autoReap(root);
+
+  assert.equal(existsSync(wt.path), false, 'the landed worktree must be gone without anyone asking');
+  assert.deepEqual(out.reaped, [wt.path], 'and it must say what it removed');
+  assert.equal(out.disabled, false);
+});
+
+test('38 · autoReap never touches one that would have been ASKED about', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'auto-beta');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A');
+  git(wt.path, 'commit', '-qm', 'feat: auto-beta');
+  mergeIntoTrunk(root, wt.branch);
+  // Landed, but something inside was never committed. Interactively this is an `ask`; unattended it
+  // is a refusal, because there is no one present to accept the loss.
+  write(wt.path, 'notes.txt', 'unsaved thinking\n');
+
+  const out = autoReap(root);
+
+  assert.equal(existsSync(wt.path), true, 'unattended removal must never eat uncommitted work');
+  assert.deepEqual(out.reaped, []);
+  assert.ok(out.skipped.some((s) => s.path === wt.path), 'and it must account for what it left');
+});
+
+test('39 · the opt-out silences autoReap exactly like everything else', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'auto-gamma');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A');
+  git(wt.path, 'commit', '-qm', 'feat: auto-gamma');
+  mergeIntoTrunk(root, wt.branch);
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  writeFileSync(join(root, '.rsc', '.no-worktree-cleanup'), '');
+
+  const out = autoReap(root);
+
+  assert.equal(out.disabled, true);
+  assert.deepEqual(out.reaped, []);
+  assert.equal(existsSync(wt.path), true);
+});
+
+test('40 · autoReap never throws — it runs from a git hook, where throwing breaks a merge', () => {
+  // No trunk to compare against, so every internal question is unanswerable. The interactive path
+  // is allowed to return nothing; this one must ALSO not blow up, because its caller is git.
+  const root = mkdtempSync(join(tmpdir(), 'rsc-wt-bare-'));
+  TMP.push(root);
+  git(root, 'init', '-b', 'main', '-q');
+
+  let out;
+  assert.doesNotThrow(() => { out = autoReap(root); });
+  assert.deepEqual(out.reaped, []);
+});
+
+// ── 41-45. the trigger: git runs the cleanup, so no agent has to remember to ──────────────────
+//
+// The module header names the gap it was born with: "nothing at all fired when the merge happened
+// in the forge". The judgement got built and the trigger stayed prose. `post-merge` is the trigger,
+// and it was chosen because it fires on BOTH of ship's landing paths — verified empirically on
+// 2026-09-17: `git pull --ff-only` (the PR path) and `git merge --no-ff` (the local one).
+//
+// The hook must never fail. git happens to ignore post-merge's exit status, so a merge is safe from
+// it either way — but the script is also wired into repair and re-run on machines nobody watches, so
+// its own exit code is a contract worth holding. 43 asks the script directly, for that reason.
+
+// Give a repo what an installed project has: the reaper materialized under .rsc/.
+function materializeReaper(root) {
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  copyFileSync(MOD, join(root, '.rsc', 'worktree-reaper.mjs'));
+}
+
+test('41 · after the hook is installed, a real merge retires the landed worktree by itself', () => {
+  const root = repo();
+  materializeReaper(root);
+  installMergeHook(root);
+  const wt = rscWorktree(root, 'hooked');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A');
+  git(wt.path, 'commit', '-qm', 'feat: hooked');
+
+  // Nobody calls the reaper here. git does.
+  mergeIntoTrunk(root, wt.branch);
+
+  assert.equal(existsSync(wt.path), false, 'the merge itself must have retired it');
+});
+
+test('42 · an existing post-merge hook is preserved and still runs', () => {
+  const root = repo();
+  materializeReaper(root);
+  const hooks = join(root, '.git', 'hooks');
+  mkdirSync(hooks, { recursive: true });
+  writeFileSync(join(hooks, 'post-merge'), `#!/bin/sh\ntouch "${join(root, 'THEIRS-RAN')}"\n`, { mode: 0o755 });
+
+  installMergeHook(root);
+  const wt = rscWorktree(root, 'chained');
+  write(wt.path, 'f.txt', 'x\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: chained');
+  mergeIntoTrunk(root, wt.branch);
+
+  assert.equal(existsSync(join(root, 'THEIRS-RAN')), true, "somebody else's hook must not be swallowed");
+  assert.equal(existsSync(wt.path), false, 'and ours must still have run');
+});
+
+test('43 · a broken cleanup still exits 0 — asked of the hook, not of git', () => {
+  // Written the obvious way first — merge, then assert the merge survived — and a mutant that
+  // removed the `|| true` did not kill it. It could not: git IGNORES post-merge's exit status, so
+  // that version was asserting a guarantee git already makes, and would have passed over any hook
+  // at all. The contract that is actually ours is the script's own exit code, so ask the script.
+  const root = repo();
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  // A reaper that throws on import is the worst case the hook can meet.
+  writeFileSync(join(root, '.rsc', 'worktree-reaper.mjs'), 'throw new Error("boom");\n');
+  installMergeHook(root);
+
+  const r = spawnSync(join(root, '.git', 'hooks', 'post-merge'), [], { cwd: root, encoding: 'utf8' });
+
+  assert.equal(r.status, 0, 'the hook must succeed even when everything it calls is broken');
+  assert.equal(r.stderr, '', 'and it must not spill the failure into the merge output');
+});
+
+test('43b · and the merge itself is of course unaffected', () => {
+  const root = repo();
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  writeFileSync(join(root, '.rsc', 'worktree-reaper.mjs'), 'throw new Error("boom");\n');
+  installMergeHook(root);
+  const wt = rscWorktree(root, 'survivor');
+  write(wt.path, 'f.txt', 'x\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: survivor');
+
+  assert.doesNotThrow(() => mergeIntoTrunk(root, wt.branch));
+  assert.equal(git(root, 'log', '--oneline', '-1').includes('merge'), true, 'and the merge must be real');
+});
+
+test('44 · no reaper materialized at all is a silent no-op, not an error', () => {
+  const root = repo();
+  installMergeHook(root);
+  const wt = rscWorktree(root, 'bare');
+  write(wt.path, 'f.txt', 'x\n');
+  git(wt.path, 'add', '-A'); git(wt.path, 'commit', '-qm', 'feat: bare');
+
+  assert.doesNotThrow(() => mergeIntoTrunk(root, wt.branch));
+});
+
+test('45 · installing twice does not stack the hook on top of itself', () => {
+  const root = repo();
+  materializeReaper(root);
+  installMergeHook(root);
+  const once = readFileSync(join(root, '.git', 'hooks', 'post-merge'), 'utf8');
+  installMergeHook(root);
+  const twice = readFileSync(join(root, '.git', 'hooks', 'post-merge'), 'utf8');
+
+  assert.equal(twice, once, 'repair and reinstall run this repeatedly; it must converge');
+});
+
+// ── 46-47. R1: a hook lives in .git/hooks, which is not cloned ────────────────────────────────
+//
+// This is the risk the plan ranked first. The judgement and the trigger can both be perfect and the
+// feature still not exist on anybody's machine, because nothing re-installs it. So the wiring is
+// asserted from the operations that actually run on a user's repo, not from the function in
+// isolation — and it is asserted for a target that is not Claude, because the reaper's
+// materialization lives in the Claude adapter and the merge hook must not inherit that limit.
+
+test('46 · installing the harness wires the merge hook, on any target', async () => {
+  const root = repo();
+  const { applyInstall } = await import(join(HERE, '..', 'scripts', 'install-apply.js'));
+  await applyInstall({ skillIds: ['orient'], target: 'codex', cwd: root, home: join(root, '.home') });
+
+  const hook = join(root, '.git', 'hooks', 'post-merge');
+  assert.equal(existsSync(hook), true, 'a feature nothing installs is a feature nobody has');
+  assert.match(readFileSync(hook, 'utf8'), /rsc-managed worktree cleanup/);
+});
+
+test('47 · a project that is not a git repository installs fine and grows no hook', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'rsc-nogit-'));
+  TMP.push(root);
+  const { applyInstall } = await import(join(HERE, '..', 'scripts', 'install-apply.js'));
+
+  await assert.doesNotReject(() => applyInstall({ skillIds: ['orient'], target: 'codex', cwd: root, home: join(root, '.home') }));
+  assert.equal(existsSync(join(root, '.git', 'hooks', 'post-merge')), false);
+});
+
+// ── 48. doctor: the trigger can be missing while everything else looks healthy ────────────────
+
+test('48 · doctor reports whether the cleanup is actually armed in THIS clone', async () => {
+  const { doctor } = await import(join(HERE, '..', 'scripts', 'doctor.js'));
+  const root = repo();
+
+  const before = doctor({ target: 'codex', cwd: root, home: join(root, '.home') });
+  assert.equal(before.worktreeCleanup.state, 'absent', 'a clone without the hook must not look healthy');
+  assert.match(before.worktreeCleanup.action, /repair/, 'and a finding with no way out is a dead end (P6)');
+
+  installMergeHook(root);
+  const after = doctor({ target: 'codex', cwd: root, home: join(root, '.home') });
+  assert.equal(after.worktreeCleanup.state, 'armed');
+});
+
+test('48b · and it does not claim a foreign hook as its own', async () => {
+  const { doctor: DOCTOR } = await import(join(HERE, '..', 'scripts', 'doctor.js'));
+  const root = repo();
+  mkdirSync(join(root, '.git', 'hooks'), { recursive: true });
+  writeFileSync(join(root, '.git', 'hooks', 'post-merge'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  // Deliberately NOT installing ours: this is the state a husky user is in before rsc ever ran.
+  const report = DOCTOR({ target: 'codex', cwd: root, home: join(root, '.home') });
+  assert.equal(report.worktreeCleanup.state, 'foreign');
+});
+
+// ── 49. the hazard ship names by name: two streams, and landing one eats the other ────────────
+
+test('49 · with two worktrees open, landing one leaves the other alone', () => {
+  const root = repo();
+  materializeReaper(root);
+  installMergeHook(root);
+
+  const a = rscWorktree(root, 'stream-a');
+  write(a.path, 'a.txt', 'a\n');
+  git(a.path, 'add', '-A'); git(a.path, 'commit', '-qm', 'feat: a');
+
+  const b = rscWorktree(root, 'stream-b');
+  write(b.path, 'b.txt', 'b\n');
+  git(b.path, 'add', '-A'); git(b.path, 'commit', '-qm', 'feat: b');
+
+  // Only A lands. B is still live work — the exact case `ship` warns about when it says a bare reap
+  // is "how shipping A deletes B". The unattended path must not reintroduce that.
+  mergeIntoTrunk(root, a.branch);
+
+  assert.equal(existsSync(a.path), false, 'the one that landed goes');
+  assert.equal(existsSync(b.path), true, 'the one still carrying work stays');
+  assert.ok(git(root, 'branch', '--list', b.branch), 'and so does its branch');
 });

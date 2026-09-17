@@ -16,7 +16,7 @@
 //
 // Imported by `.rsc/session-start.mjs` (the sweep) and by `scripts/rsc.js` (`rsc worktrees`), so the
 // rule exists once and both entry points cannot drift apart. Same shape as `sello.mjs`.
-import { existsSync, realpathSync } from 'node:fs';
+import { existsSync, realpathSync, mkdirSync, readFileSync, writeFileSync, renameSync, chmodSync } from 'node:fs';
 import { join, resolve, dirname, basename, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
@@ -365,6 +365,106 @@ export function reapWorktree(root, targetPath, { confirmed = false } = {}) {
  * README.md", judged that a nuisance, confirmed, and the confirmation landed on a `production.env`
  * the message never mentioned. The module knew. It just did not say.
  */
+/**
+ * The unattended half: remove what classification already called `safe`, and nothing else.
+ *
+ * `sweep` offers and never acts, on purpose — there is a human reading it. This runs from a git hook
+ * the moment work lands, where there is nobody to ask, so the two verdicts that would have become a
+ * question become a refusal instead. It adds NO judgement of its own: the judgement is the dangerous
+ * part, it is written above, and it is already tested in both directions.
+ *
+ * Two properties its caller depends on, both load-bearing:
+ *  - it never throws. The caller is git, mid-merge. A throw here would turn a cleanup into a failed
+ *    merge, which is a far worse bug than the one this fixes.
+ *  - it is silent when there is nothing to do, so the common merge prints nothing.
+ */
+export function autoReap(root) {
+  const result = { reaped: [], skipped: [], disabled: false };
+  try {
+    if (!isCleanupEnabled(root)) {
+      result.disabled = true;
+      return result;
+    }
+    for (const candidate of classifyWorktrees(root)) {
+      // Not the protection, and it must not be mistaken for one: `reapWorktree` refuses an `ask`
+      // on its own, and that refusal is the gate — mutation-tested by 18b and 23. Verified here on
+      // 2026-09-17 by removing this line: every test still passed. It stays because skipping early
+      // avoids re-classifying the whole repository once per candidate, and because the recorded
+      // reason is then the verdict itself rather than a message written for a human to read.
+      if (candidate.verdict !== 'safe') {
+        result.skipped.push({ path: candidate.path, reason: candidate.reasons.join(', ') || candidate.verdict });
+        continue;
+      }
+      const out = reapWorktree(root, candidate.path);
+      if (out.removed) result.reaped.push(candidate.path);
+      else result.skipped.push({ path: candidate.path, reason: out.reason });
+    }
+  } catch (err) {
+    // Swallowed deliberately, and recorded rather than discarded: the merge must survive whatever
+    // went wrong in here, but a silent failure that leaves no trace is how this rots unnoticed.
+    result.skipped.push({ path: root, reason: `cleanup could not run: ${err.message}` });
+  }
+  return result;
+}
+
+export const HOOK_MARKER = '# rsc-managed worktree cleanup (post-merge) v1';
+
+// Every branch exits 0. That is the whole contract with git: this hook runs in the middle of
+// somebody's merge, and a cleanup that can turn a good merge into a failed one is a worse bug than
+// the accumulation it exists to fix. Missing node, missing reaper, broken reaper, unreadable repo —
+// all of them are "do nothing", never "fail".
+const HOOK_BODY = `#!/bin/sh
+${'# rsc-managed worktree cleanup (post-merge) v1'}
+# Retires worktrees whose work has just landed. Installed by rsc; safe to delete.
+# Turn it off for this project with: .rsc/.no-worktree-cleanup
+hook_dir=$(dirname "$0")
+if [ -x "$hook_dir/post-merge.rsc-local" ]; then
+  "$hook_dir/post-merge.rsc-local" "$@" || true
+fi
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$root/.rsc/worktree-reaper.mjs" ] || exit 0
+command -v node >/dev/null 2>&1 || exit 0
+node "$root/.rsc/worktree-reaper.mjs" "$root" auto 2>/dev/null || true
+exit 0
+`;
+
+/**
+ * Install the trigger. The judgement has existed and been tested for a while; what never existed was
+ * something that runs it at the moment work lands. `post-merge` is that moment, and it covers both
+ * of ship's landing paths — a local `merge --no-ff` and the `pull --ff-only` after a forge merge.
+ *
+ * A hook lives in `.git/hooks/`, which is not cloned. So this is called on install AND on repair,
+ * and `doctor` reports its absence: a trigger nobody re-installs is a trigger that quietly stops
+ * existing on every machine but the one that ran the installer.
+ *
+ * Somebody else's post-merge is moved aside and chained, never overwritten. Husky and lefthook put
+ * real work in there, and eating it to install a convenience would be indefensible.
+ */
+export function installMergeHook(root) {
+  try {
+    const dir = join(real(root), '.git', 'hooks');
+    const hook = join(dir, 'post-merge');
+    mkdirSync(dir, { recursive: true });
+    if (existsSync(hook)) {
+      const current = readFileSync(hook, 'utf8');
+      if (current.includes(HOOK_MARKER)) {
+        // Already ours. Rewrite so an older body converges, but never chain ourselves behind
+        // ourselves — repair runs this repeatedly and stacking would run the cleanup N times.
+        writeFileSync(hook, HOOK_BODY);
+        chmodSync(hook, 0o755);
+        return { installed: true, chained: existsSync(join(dir, 'post-merge.rsc-local')) };
+      }
+      renameSync(hook, join(dir, 'post-merge.rsc-local'));
+      chmodSync(join(dir, 'post-merge.rsc-local'), 0o755);
+    }
+    writeFileSync(hook, HOOK_BODY);
+    chmodSync(hook, 0o755);
+    return { installed: true, chained: existsSync(join(dir, 'post-merge.rsc-local')) };
+  } catch (err) {
+    return { installed: false, reason: err.message };
+  }
+}
+
 export function refusal(candidate) {
   const d = candidate.details || {};
   const parts = (candidate.reasons || []).map((reason) => {
@@ -441,7 +541,11 @@ export function summarize(candidate, root) {
 if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
   const root = resolve(process.argv[2] || process.cwd());
   const candidates = classifyWorktrees(root).filter((c) => c.verdict !== 'skip');
-  if (process.argv[3] === 'reap') {
+  if (process.argv[3] === 'auto') {
+    // The unattended entry point, called by the post-merge hook. Prints only what it actually did.
+    const out = autoReap(root);
+    for (const p of out.reaped) process.stdout.write(`rsc: retired worktree ${p}\n`);
+  } else if (process.argv[3] === 'reap') {
     const one = process.argv[4];
     const targets = one ? [resolve(one)] : candidates.filter((c) => c.verdict === 'safe').map((c) => c.path);
     for (const t of targets) {

@@ -79,6 +79,24 @@ export function missingHookScripts({ target, home = homedir(), cwd = process.cwd
   return [...seen];
 }
 
+// Is the post-merge trigger actually armed in this clone? Three states, because they need three
+// different answers: armed, absent (repair it), or someone else's (leave it — chaining is our job
+// at install time, and overwriting a husky hook to fix a convenience would be indefensible).
+function worktreeCleanupStatus(root) {
+  const hook = join(root, '.git', 'hooks', 'post-merge');
+  if (!existsSync(join(root, '.git'))) return { state: 'not-a-repo' };
+  if (existsSync(join(root, '.rsc', '.no-worktree-cleanup'))) return { state: 'off-by-choice' };
+  if (!existsSync(hook)) {
+    return { state: 'absent', action: 'Run `npx @ericrisco/rsc repair` to arm the post-merge cleanup in this clone.' };
+  }
+  try {
+    const armed = readFileSync(hook, 'utf8').includes('rsc-managed worktree cleanup');
+    return armed
+      ? { state: 'armed' }
+      : { state: 'foreign', action: 'A post-merge hook from another tool is in place; `npx @ericrisco/rsc repair` chains ours behind it.' };
+  } catch { return { state: 'unreadable' }; }
+}
+
 export function doctor({ target, home, cwd }) {
   const root = cwd || process.cwd();
   const paths = targetPaths(target, home, cwd);
@@ -134,6 +152,10 @@ export function doctor({ target, home, cwd }) {
       latest: backups[0]?.id || null,
     },
     contextBudget: contextBudget({ target, home, cwd }),
+    // The worktree cleanup's trigger is a git hook, and `.git/hooks/` is not cloned. So a repo can
+    // carry a perfectly healthy harness and still never clean up, on every machine but the one that
+    // ran the installer. Reported, never nagged about: `repair` is what puts it back (P6).
+    worktreeCleanup: worktreeCleanupStatus(root),
     sello: selloStatus(root),
     // Whether this harness has a design identity at all. `design` has always DECLARED that it
     // stops without one; until lib/design-identity.js nothing checked it (P2). Reported here,
