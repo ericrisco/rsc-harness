@@ -996,3 +996,27 @@ test('48b · and it does not claim a foreign hook as its own', async () => {
   const report = DOCTOR({ target: 'codex', cwd: root, home: join(root, '.home') });
   assert.equal(report.worktreeCleanup.state, 'foreign');
 });
+
+// ── 49. the hazard ship names by name: two streams, and landing one eats the other ────────────
+
+test('49 · with two worktrees open, landing one leaves the other alone', () => {
+  const root = repo();
+  materializeReaper(root);
+  installMergeHook(root);
+
+  const a = rscWorktree(root, 'stream-a');
+  write(a.path, 'a.txt', 'a\n');
+  git(a.path, 'add', '-A'); git(a.path, 'commit', '-qm', 'feat: a');
+
+  const b = rscWorktree(root, 'stream-b');
+  write(b.path, 'b.txt', 'b\n');
+  git(b.path, 'add', '-A'); git(b.path, 'commit', '-qm', 'feat: b');
+
+  // Only A lands. B is still live work — the exact case `ship` warns about when it says a bare reap
+  // is "how shipping A deletes B". The unattended path must not reintroduce that.
+  mergeIntoTrunk(root, a.branch);
+
+  assert.equal(existsSync(a.path), false, 'the one that landed goes');
+  assert.equal(existsSync(b.path), true, 'the one still carrying work stays');
+  assert.ok(git(root, 'branch', '--list', b.branch), 'and so does its branch');
+});
