@@ -472,7 +472,9 @@ test('syncInstalled refreshes installed skills and creates a sync backup', async
 
   const result = await syncInstalled({ target: 'claude', cwd });
 
-  assert.deepEqual(result.synced, ['fastapi']);
+  // `includes`, not `deepEqual`: since 2.0.1 sync also carries the default skill floor.
+  // What this test pins is the refresh and the backup, not the size of the list.
+  assert.ok(result.synced.includes('fastapi'));
   assert.ok(!existsSync(join(cwd, '.rsc/skills/fastapi/STALE.txt')));
   assert.equal(listBackups({ cwd })[0].operation, 'sync');
 });

@@ -10,6 +10,7 @@ import {
   resolveAgentNames, agentByName, allAgentNames, readDeveloperTier,
 } from '../targets/agents.js';
 import { readState, writeState } from './lib/state.js';
+import { withDefaultSkillFloor } from './lib/default-skill-floor.js';
 import { readManifest, writeManifest } from './lib/manifest-file.js';
 import { createBackup } from './lib/backups.js';
 import {
@@ -534,9 +535,16 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
   // then rebuilt from a governed list that predated it and pruned the difference, recursively.
   // Reported by a user and reproduced 2026-09-17. The receipt stays untouched, because it is
   // hash-checked against what the user accepted and is not a log of what happened since.
-  const declared = governedSkills
+  const declaredRaw = governedSkills
     ? [...new Set([...governedSkills, ...(manifest?.skills || [])])].sort()
     : (ids.length ? ids : (manifest?.skills || []));
+  // A declaration is frozen at the moment it was written, so a skill the catalog later makes
+  // mandatory never reaches an existing harness: `add` and `install` apply the floor, sync did
+  // not, and sync is the only one an upgrade runs. 2.0.0 shipped the three-lane decisor inside
+  // `suggest` — already declared, so already upgraded — routing ordinary work to an `ftd` that
+  // sync had no reason to fetch. Applied only to a harness that already declares something: a
+  // directory declaring nothing is not a harness missing its floor.
+  const declared = declaredRaw.length ? withDefaultSkillFloor(declaredRaw) : declaredRaw;
   const declaredAgents = state.explicitAgents?.length ? state.explicitAgents : (manifest?.agents || []);
   if (!declared.length && !declaredAgents.length) return dryRun ? { dryRun: true, synced: [], syncedAgents: [], paths: [] } : { synced: [], syncedAgents: [], backup: null };
   if (dryRun) {

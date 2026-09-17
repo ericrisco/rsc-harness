@@ -2,6 +2,7 @@ import { readManifest } from './manifest-file.js';
 import { readState } from './state.js';
 import { targetPaths } from '../../targets/index.js';
 import { existsSync } from 'node:fs';
+import { DEFAULT_SKILL_FLOOR } from './default-skill-floor.js';
 
 // What the team declared versus what is on this machine.
 //
@@ -15,10 +16,13 @@ import { existsSync } from 'node:fs';
 //   ownMissing — declared team skill, absent from the repo. Aligning says so and writes
 //                nothing: it comes from the repo, not from us.
 //   extra      — installed BY RSC, no longer declared.
+//   floorMissing — a skill the catalog makes mandatory that this declaration predates.
+//                Not drift between teammates: drift between the harness and the catalog,
+//                and the only bucket that survives everyone running the same `git pull`.
 // A hand-written skill that nobody declared is in none of them. Not declaring is a valid
 // way to keep things of your own, not an oversight to correct.
 export function divergence({ cwd = process.cwd(), target, home } = {}) {
-  const empty = { missing: [], extra: [], ownMissing: [] };
+  const empty = { missing: [], extra: [], ownMissing: [], floorMissing: [] };
   const manifest = readManifest(cwd);
   if (!manifest) return empty;
 
@@ -29,5 +33,8 @@ export function divergence({ cwd = process.cwd(), target, home } = {}) {
     missing: (manifest.skills || []).filter((id) => !installed.has(id)),
     extra: [...installed].filter((id) => !(manifest.skills || []).includes(id)),
     ownMissing: (manifest.ownSkills || []).filter((name) => !existsSync(paths.skillDir(name))),
+    // Read off the declaration, not off the disk: a skill installed by hand into a harness
+    // that still does not declare it is one sync away from being pruned again.
+    floorMissing: DEFAULT_SKILL_FLOOR.filter((id) => !(manifest.skills || []).includes(id)),
   };
 }

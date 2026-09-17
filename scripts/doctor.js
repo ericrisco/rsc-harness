@@ -445,6 +445,18 @@ export function contextBudget({ target, home = homedir(), cwd = process.cwd() } 
     });
   }
   const drift = divergence({ cwd, target, home });
+  // A separate finding, not a fourth clause of the one below: that one says this checkout
+  // is behind its own team, and the fix is to align with the declaration. This one says the
+  // declaration itself is behind the catalog, so aligning with it changes nothing. Folded
+  // together, the report would name the right skill and the wrong reason.
+  if (drift.floorMissing?.length) {
+    findings.push({
+      id: 'floor-missing',
+      severity: 'high',
+      summary: `.rsc.json predates a skill the catalog now requires: ${drift.floorMissing.join(', ')}. The always-on body routes work to it, so that route currently answers nowhere.`,
+      action: 'Run `npx @ericrisco/rsc sync` — it adds what the catalog requires and touches nothing else.',
+    });
+  }
   if (drift.missing.length || drift.extra.length || drift.ownMissing.length) {
     // The day-two case: a teammate changed the harness and this checkout has not caught
     // up. Reported always, even after someone declines to align — the divergence does not
