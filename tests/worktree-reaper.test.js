@@ -319,16 +319,24 @@ test('15 · the regenerable table is data the test can read, not conditionals it
   }
 });
 
-test('15b · ship option 1 executes the cleanup instead of describing it afterwards', async () => {
+test('15b · ship option 1 gets the cleanup executed, and no longer asks anyone to run it', async () => {
+  // The original criterion was that option 1 RAN the reap rather than describing it, because a
+  // described cleanup is not a cleanup. That criterion was right and the section satisfied it — and
+  // the step was still skipped on both features that reached it, because a runnable line in a
+  // document only runs if somebody runs it. The cleanup now rides on the merge itself, so what this
+  // asserts is the same intent one level down: option 1 must not hand the step back to a human.
   const { readFileSync } = await import('node:fs');
   const ship = readFileSync(join(HERE, '..', 'skills', 'ship', 'SKILL.md'), 'utf8');
   const start = ship.indexOf('### Option 1');
   const end = ship.indexOf('### Option 2');
   assert.ok(start > 0 && end > start, 'the option-1 section must exist');
-  const runnable = ship.slice(start, end).split('\n')
-    .filter((l) => !l.trimStart().startsWith('#')).join('\n');
-  assert.match(runnable, /^npx @ericrisco\/rsc worktrees reap /m,
-    'a commented-out command satisfies /rsc worktrees/ too; the criterion is that option 1 RUNS it');
+  const section = ship.slice(start, end);
+  const runnable = section.split('\n').filter((l) => !l.trimStart().startsWith('#')).join('\n');
+
+  assert.doesNotMatch(runnable, /^npx @ericrisco\/rsc worktrees reap /m,
+    'landing a branch must not require anyone to remember a cleanup command');
+  assert.match(section, /post-merge/,
+    'and it must say what does retire it, or the reader is left thinking nothing does');
 });
 
 test('15c · the CLI classifies a real repository', () => {
@@ -935,4 +943,56 @@ test('45 · installing twice does not stack the hook on top of itself', () => {
   const twice = readFileSync(join(root, '.git', 'hooks', 'post-merge'), 'utf8');
 
   assert.equal(twice, once, 'repair and reinstall run this repeatedly; it must converge');
+});
+
+// ── 46-47. R1: a hook lives in .git/hooks, which is not cloned ────────────────────────────────
+//
+// This is the risk the plan ranked first. The judgement and the trigger can both be perfect and the
+// feature still not exist on anybody's machine, because nothing re-installs it. So the wiring is
+// asserted from the operations that actually run on a user's repo, not from the function in
+// isolation — and it is asserted for a target that is not Claude, because the reaper's
+// materialization lives in the Claude adapter and the merge hook must not inherit that limit.
+
+test('46 · installing the harness wires the merge hook, on any target', async () => {
+  const root = repo();
+  const { applyInstall } = await import(join(HERE, '..', 'scripts', 'install-apply.js'));
+  await applyInstall({ skillIds: ['orient'], target: 'codex', cwd: root, home: join(root, '.home') });
+
+  const hook = join(root, '.git', 'hooks', 'post-merge');
+  assert.equal(existsSync(hook), true, 'a feature nothing installs is a feature nobody has');
+  assert.match(readFileSync(hook, 'utf8'), /rsc-managed worktree cleanup/);
+});
+
+test('47 · a project that is not a git repository installs fine and grows no hook', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'rsc-nogit-'));
+  TMP.push(root);
+  const { applyInstall } = await import(join(HERE, '..', 'scripts', 'install-apply.js'));
+
+  await assert.doesNotReject(() => applyInstall({ skillIds: ['orient'], target: 'codex', cwd: root, home: join(root, '.home') }));
+  assert.equal(existsSync(join(root, '.git', 'hooks', 'post-merge')), false);
+});
+
+// ── 48. doctor: the trigger can be missing while everything else looks healthy ────────────────
+
+test('48 · doctor reports whether the cleanup is actually armed in THIS clone', async () => {
+  const { doctor } = await import(join(HERE, '..', 'scripts', 'doctor.js'));
+  const root = repo();
+
+  const before = doctor({ target: 'codex', cwd: root, home: join(root, '.home') });
+  assert.equal(before.worktreeCleanup.state, 'absent', 'a clone without the hook must not look healthy');
+  assert.match(before.worktreeCleanup.action, /repair/, 'and a finding with no way out is a dead end (P6)');
+
+  installMergeHook(root);
+  const after = doctor({ target: 'codex', cwd: root, home: join(root, '.home') });
+  assert.equal(after.worktreeCleanup.state, 'armed');
+});
+
+test('48b · and it does not claim a foreign hook as its own', async () => {
+  const { doctor: DOCTOR } = await import(join(HERE, '..', 'scripts', 'doctor.js'));
+  const root = repo();
+  mkdirSync(join(root, '.git', 'hooks'), { recursive: true });
+  writeFileSync(join(root, '.git', 'hooks', 'post-merge'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  // Deliberately NOT installing ours: this is the state a husky user is in before rsc ever ran.
+  const report = DOCTOR({ target: 'codex', cwd: root, home: join(root, '.home') });
+  assert.equal(report.worktreeCleanup.state, 'foreign');
 });

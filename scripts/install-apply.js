@@ -241,6 +241,23 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
   writeFileSync(versionFile(cwd), CLI_VERSION + '\n');
   recordInManifest({ cwd, target, skillIds, agentIds, onboarding });
+  // The worktree cleanup's trigger. It lives in `.git/hooks/`, which is NOT cloned, so it has to be
+  // (re)written by every operation that touches a user's repo — install, sync and repair all land
+  // here. Target-agnostic on purpose: it is a git hook, not an assistant hook, and a cleanup that
+  // only worked for one of the sixteen assistants would be a cleanup nobody could rely on. The
+  // reaper travels with it for the same reason; until now only the Claude adapter materialized it,
+  // although `managedPathsForInstall` has always declared it for every target.
+  // Only where the accepted plan governs code hooks. An operations harness — company, research,
+  // content — declares a narrower set of paths, and writing a git hook it never agreed to would be
+  // acting outside the plan the user accepted (P4). Caught by the onboarding route-inventory gate,
+  // which is exactly the kind of catch that justifies its existence.
+  try {
+    if (policy?.codeHooks === false) throw new Error('code hooks not governed by the accepted plan');
+    mkdirSync(join(cwd, '.rsc'), { recursive: true });
+    cpSync(join(ROOT, 'targets', 'worktree-reaper.mjs'), join(cwd, '.rsc', 'worktree-reaper.mjs'));
+    const { installMergeHook } = await import('../targets/worktree-reaper.mjs');
+    if (existsSync(join(cwd, '.git'))) installMergeHook(cwd);
+  } catch { /* a project without git, or a read-only .git: the cleanup simply does not arm here */ }
   ignoreLocalState(cwd, target);
   return { ...state, backup };
 }
