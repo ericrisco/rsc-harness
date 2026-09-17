@@ -556,6 +556,20 @@ async function guardCollisions(targets, ids) {
   return confirm('Replace them anyway?');
 }
 
+// The governed list that `sync` reads lives INSIDE the onboarding receipt, not in `manifest.skills`.
+// Updating one without the other is what deleted users' skills: `add` installed a skill and recorded
+// it in `manifest.skills`, `sync` then read a governed list that predated the install, and pruned
+// everything absent from it — recursively. Reported by a user, reproduced 2026-09-17: nine declared
+// skills against eight governed, visible in the manifest before sync was even run.
+//
+// So the two travel together, always. Any command that changes what is installed carries both, and
+// `applyInstall` persists the receipt rather than conserving the stale one.
+function governedBy(receipt, skills) {
+  if (!receipt) return { policy: undefined, onboarding: undefined };
+  const policy = { ...receipt.plan.policy, skills };
+  return { policy, onboarding: { ...receipt, plan: { ...receipt.plan, policy } } };
+}
+
 async function main() {
   // One resolution for every command, doctor included: `doctor` used to resolve on its
   // own and could report a different assistant than the one just installed into.
@@ -600,8 +614,8 @@ async function main() {
       const currentManifest = readManifest();
       const receipt = currentManifest?.onboarding;
       const maintainedIds = receipt ? [...new Set([...(currentManifest.skills || []), ...(receipt.plan.policy.skills || []), ...ids])].sort() : ids;
-      const policy = receipt ? { ...receipt.plan.policy, skills: maintainedIds } : undefined;
-      for (const t of targets) await applyInstall({ skillIds: maintainedIds, agentIds: selected.agents, target: t, policy });
+      const { policy, onboarding } = governedBy(receipt, maintainedIds);
+      for (const t of targets) await applyInstall({ skillIds: maintainedIds, agentIds: selected.agents, target: t, policy, onboarding });
       markMaintenanceDrift(`add ${requested.join(',')}`);
       say(`✅ Installed for ${targets.join(', ')}: ${requested.join(', ')}`);
       return void say('   ↻ Reload/restart your assistant so the new skill activates.');
@@ -614,6 +628,15 @@ async function main() {
       ids = withDefaultSkillFloor(ids).filter((id) => !without.includes(id));
       if (!argv.includes('--force') && !(await guardCollisions(targets, ids))) return;
       const receipt = readManifest()?.onboarding;
+      // Deliberately NOT persisting the receipt here, unlike `add` above. `install --profile` REPLACES
+      // the set rather than adding to it, so writing it back would overwrite what the accepted plan
+      // declared with whatever profile was just named — measured: `install --profile minimal` after an
+      // SDD onboarding erased the SDD chain from the governed list, and the floor check then reported
+      // nothing pending. Unioning instead would leave `install` pruning to the profile while the
+      // governed list asked for more, and `sync` putting them back: churn.
+      // The real fix is that profiles stop existing, which is `install-single-harness`. Until then
+      // this path keeps its old behaviour, desync included, and the bug it causes is the one `add`
+      // no longer causes.
       const policy = receipt ? { ...receipt.plan.policy, skills: ids } : undefined;
       for (const t of targets) await applyInstall({ skillIds: ids, target: t, policy });
       markMaintenanceDrift(`install ${profile}`);
