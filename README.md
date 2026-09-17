@@ -97,6 +97,8 @@ before anything is written.
 
 ## 🛣️ Three lanes, and the harness never picks the expensive one for you
 
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/lanes.svg" alt="The rsc lane decisor: a request is classified into answer (read-only), FTD (the default lane, one feature document) or SDD (the ten-phase chain, which only the user selects)." width="960">
+
 Every turn takes exactly one lane, and your agent names the one it took in a line.
 
 1. **Answer.** The request asks for information — explain, compare, investigate, audit, review,
