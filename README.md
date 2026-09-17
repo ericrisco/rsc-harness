@@ -90,8 +90,39 @@ npx @ericrisco/rsc@latest onboard --technical-level mixed --accompaniment L1 \
 - **Add one skill by id:** `rsc add <id>` · **browse the catalog:** `rsc consult "<what you want>"` or `rsc list`.
 
 From then on it's self-driving: `rsc-suggest` proposes the next skill as tasks appear, and in
-Claude Code a hook re-asserts the spec-first **new-feature gate** on every turn — so a feature
-request routes through `specify` before any skill writes code.
+Claude Code a hook re-asserts the **lane decisor** on every turn — so every request is classified
+before anything is written.
+
+---
+
+## 🛣️ Three lanes, and the harness never picks the expensive one for you
+
+Every turn takes exactly one lane, and your agent names the one it took in a line.
+
+1. **Answer.** The request asks for information — explain, compare, investigate, audit, review,
+   propose. It is **read-only**: nothing is written, no artifact is created, no writer is delegated.
+   Asking your agent to *think about* building something is still this lane. When intent is
+   ambiguous it asks one question and stays here; ambiguity slows the lane down, it never raises it.
+2. **FTD — Fast-Track Development.** The request authorises a change. This is the default for
+   ordinary work and needs no ceremony. One feature document per feature holds intent, scope, a
+   checklist, the evidence and the next step. Tasks are checked off against observed proof, never
+   against intention. A branch if the work writes code; nothing if it only touches docs or config.
+3. **SDD — the ten-phase chain.** Unchanged, and **the harness never enters it alone.** It proposes
+   the chain only when a durable spec, plan and task list would remove a *substantial* ambiguity —
+   a test of usefulness, not of size — and enters it only when you ask for it or accept that
+   proposal. Size, file count and perceived risk never select it on their own.
+
+**Isolation cleans itself up.** When a lane opens a branch or a worktree, you no longer have to
+remember to retire it: a `post-merge` hook does it the moment the work lands on the trunk, on both
+landing paths — a local merge and the pull after a forge merge. It removes only what is provably
+landed and holds nothing unsaved; anything it refuses tells you why. The previous version asked an
+agent to run the cleanup at the end of a long phase, and that step was skipped on both features that
+reached it.
+
+Earlier versions routed everything that sounded like building into the chain. That contradicted the
+project's own first rule — friction is proportional to risk — and a harness that interrupts the 80%
+that is harmless gets switched off, which protects nothing. Both lanes are still here; what changed
+is which one you land in by default, and who decides.
 
 ---
 
@@ -309,9 +340,11 @@ When someone changes the harness and you `git pull`, `rsc doctor` tells you what
 matches. **Nothing is ever written to your machine by a pull** — you are told, and you decide.
 
 **Own skills.** A skill your team wrote lives in the repo and already works for whoever clones,
-with no command at all. Declare it in `.rsc.json` under `ownSkills` and `doctor` will also say
-when someone is missing it — that is all declaring does. rsc never installs, updates or
-overwrites it: its version is the commit.
+with no command at all. rsc never installs, updates or overwrites it: its version is the commit.
+Installing a catalog skill of the same name is refused rather than silently winning, and `doctor`
+lists what is yours by reading the files themselves — no list to keep in `.rsc.json`, because a
+list somebody has to remember to update is a list that goes quietly stale. Declaring a skill under
+`ownSkills` still works and still reports when someone is missing it.
 
 
 ## 🩹 Something's off? One command

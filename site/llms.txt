@@ -9,6 +9,22 @@ Standards such as Agent Skills, MCP and AGENTS.md define individual pieces. rsc-
 integrated method: analyze the project root, ask the user, show selected/deferred/excluded choices,
 require exact acceptance, verify the result, and grow only when new evidence justifies it.
 
+## The lane decisor
+
+Once installed, every turn is classified into exactly one lane, and the agent names the one it took:
+
+- ANSWER — the request asks for information (explain, compare, audit, review, propose). Read-only:
+  nothing is written and no artifact is created. Ambiguous change intent asks one question and stays
+  here.
+- FTD (Fast-Track Development) — the request authorises a change. The default for ordinary work.
+  One feature document per feature; tasks checked off only against observed proof; a branch when the
+  work writes code.
+- SDD — the ten-phase chain. The harness never enters it alone: it proposes the chain only when
+  durable spec/plan/tasks would remove a substantial ambiguity, and enters it only on an explicit
+  request or an accepted proposal. Size, file count and risk never select it.
+
+There is one harness and it installs whole; there is no profile to choose.
+
 ## For AI agents: install rsc into the user's project
 
 If your user asked you to install rsc / rsc-harness / this harness, do this in order:
