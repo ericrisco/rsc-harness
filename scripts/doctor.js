@@ -1,10 +1,11 @@
-import { existsSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { targetPaths, TARGET_IDS } from '../targets/index.js';
 import { readState } from './lib/state.js';
 import { divergence } from './lib/divergence.js';
 import { loadManifest } from './lib/manifest.js';
+import { readManifest as readProjectManifest } from './lib/manifest-file.js';
 import { listBackups } from './lib/backups.js';
 import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
 import { isEnabled, checkSello, readSello, countFindings, readEffectiveConfig, validateRiskConfig } from '../targets/sello.mjs';
@@ -97,6 +98,44 @@ function worktreeCleanupStatus(root) {
   } catch { return { state: 'unreadable' }; }
 }
 
+// Every skill this catalog ships declares `origin: risco` in its own frontmatter — all 272 of them,
+// uniformly. So "is this ours?" is answerable from the file itself, and does not need the list in
+// `.rsc.json` that nobody ever filled: that list is parallel accounting (P3), it has been empty in
+// every project since it was introduced, and `doctor` has been faithfully reporting on the emptiness.
+//
+// Failing towards "the user's" is deliberate. Reading a catalog skill as the user's leaves a file
+// that stops being updated; reading the user's as the catalog's invites something to overwrite it.
+// Only one of those loses work.
+const CATALOG_ORIGIN = 'risco';
+
+function ownSkillsIn(paths, declared = []) {
+  const present = [];
+  let dir;
+  try { dir = dirname(paths.skillDir('_')); } catch { return { present, missing: [], declared }; }
+  let entries = [];
+  try { entries = readdirSync(dir, { withFileTypes: true }); } catch { /* nothing installed here yet */ }
+  for (const entry of entries) {
+    // Symlinks included, deliberately. rsc installs a catalog skill AS a symlink into `.rsc/skills/`
+    // and a hand-written one is a real directory, so the entry type is itself a provenance signal —
+    // and skipping symlinks would have made the frontmatter check below dead code that still looked
+    // like it worked. It did: a mutant that removed the check passed every test until this line was
+    // fixed. Both signals are read now, and the frontmatter is the one that decides.
+    if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
+    const md = join(dir, entry.name, 'SKILL.md');
+    if (!existsSync(md)) continue;
+    let origin = null;
+    try {
+      const head = readFileSync(md, 'utf8').slice(0, 2048);
+      origin = (/^origin:\s*(\S+)\s*$/m.exec(head) || [])[1] || null;
+    } catch { continue; }
+    if (origin !== CATALOG_ORIGIN) present.push(entry.name);
+  }
+  // Declared-but-absent stays meaningful for anyone who did fill the list by hand, and it is the
+  // only half a derivation cannot cover: a file that is gone cannot describe itself.
+  const missing = declared.filter((name) => !existsSync(paths.skillDir(name)));
+  return { present: present.sort(), missing, declared };
+}
+
 export function doctor({ target, home, cwd }) {
   const root = cwd || process.cwd();
   const paths = targetPaths(target, home, cwd);
@@ -156,6 +195,7 @@ export function doctor({ target, home, cwd }) {
     // carry a perfectly healthy harness and still never clean up, on every machine but the one that
     // ran the installer. Reported, never nagged about: `repair` is what puts it back (P6).
     worktreeCleanup: worktreeCleanupStatus(root),
+    ownSkills: ownSkillsIn(paths, readProjectManifest(root)?.ownSkills || []),
     sello: selloStatus(root),
     // Whether this harness has a design identity at all. `design` has always DECLARED that it
     // stops without one; until lib/design-identity.js nothing checked it (P2). Reported here,
