@@ -20,13 +20,20 @@ test('always-on body: stays under its context ceiling', () => {
   assert.ok(bytes < BODY_CEILING_BYTES, `always-on body is ${bytes} B, ceiling ${BODY_CEILING_BYTES} B`);
 });
 
-test('always-on body: still states the SDD routing rule and its exceptions', () => {
-  assert.match(body, /`specify`/, 'names the destination');
-  assert.match(body, /one-line, low-risk change/i, 'names the trivial-change exception');
+test('always-on body: states the three-lane decisor, not just a pointer to it', () => {
+  // Was "still states the SDD routing rule and its exceptions" and asserted `specify` plus a
+  // one-line-change carve-out. That rule is gone: every turn that sounded like building went to the
+  // chain, which is what constitution P7 has contradicted since it was written. The intent of this
+  // test is unchanged and still load-bearing — hookless assistants (AGENTS.md family, Cursor) have
+  // no per-turn gate, so this body is the ONLY place the rule exists for them. Shortening is fine;
+  // removing is a silent regression. What it asserts is the rule that replaced it.
+  assert.match(body, /\bFTD\b/, 'names the default lane');
+  assert.match(body, /\bSDD\b/, 'names the chain');
+  assert.match(body, /read-only/i, 'names the lane that writes nothing — the one the old rule lacked');
   assert.match(body, /`debug`/, 'names the bug-fix route');
-  // Hookless assistants (AGENTS.md family, Cursor) have no per-turn gate: this body is the ONLY
-  // place the rule exists for them. Shortening it is fine; removing it is a silent regression.
-  assert.match(body, /before any\s+code is written/i, 'the rule itself, not just a pointer');
+  assert.match(body, /never entered by the harness alone|explicit request or an accepted proposal/i,
+    'and states WHO selects the chain, which is the whole change');
+  assert.match(body, /before anything is written/i, 'the rule itself, not just a pointer');
 });
 
 test('always-on body: no longer over-constrains, per our own skill-rubric', () => {

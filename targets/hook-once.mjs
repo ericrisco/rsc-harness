@@ -89,18 +89,19 @@ export function claimOnce(key, { dir = markerDir(), windowMs = 30_000, now = Dat
 // The SDD gate text lives here, not inline in userprompt-gate.mjs, so it has exactly one
 // definition: the hook emits it and `rsc doctor` measures it from the same constant. Anything
 // that reports a byte count for text it does not own drifts the moment the text changes.
-export const SDD_GATE_TEXT = `===== rsc SDD new-feature gate (highest precedence) =====
-Before acting on this turn: if the user wants to BUILD, ADD, or CHANGE a feature — in
-ANY language, judged by intent, not by keywords — you MUST route it through SDD via
-\`specify\` FIRST. No feature code is written by ANY skill (stack skills included —
-nextjs/react/fastapi/flutter/go/postgresdb/building-agents/design — and any builder skill
-such as chatbot/course-builder/marketing) until a spec AND a plan exist and the user has
-approved them. No skill outranks this gate.
-- Unclear / in-between? -> \`specify\` (the safe default; a skipped spec is where drift hides).
-- One-line / low-risk change, or a bug fix restoring intended behaviour? -> skip the chain,
-  do it, and say so out loud.
-Full gate + decision table live in the always-on \`suggest\` body; method in \`sdd\`.
-=========================================================
+export const SDD_GATE_TEXT = `===== rsc lane decisor (highest precedence) =====
+Classify this turn before acting, and name the lane in one line.
+- Asks for information — explain, compare, audit, review, propose? -> Answer.
+  Write nothing and create no artifact. Change intent unclear -> ask one
+  question and stay read-only; ambiguity slows the lane, it never raises it.
+- Authorises a change? -> FTD (Fast-Track Development). One feature document,
+  tasks checked off only against observed proof, a branch if it writes code.
+- SDD, the ten-phase chain, is never entered by the harness alone. Propose it
+  only when durable spec/plan/tasks would remove a substantial ambiguity, and
+  enter it only on an explicit request or an accepted proposal. Size, file
+  count and risk never select it.
+Method: \`ftd\` · chain: \`sdd\` · full decisor in the always-on \`suggest\` body.
+=================================================
 `;
 
 /**

@@ -12,7 +12,7 @@ origin: risco
 Your body is injected at the start of **every** session and again after every compaction, so you
 are the one piece guaranteed to be present before any other skill is matched. Two jobs, in order:
 
-1. **Route feature intent into SDD** before any code is written.
+1. **Classify every turn into one of three lanes** before anything is written.
 2. **Keep the session equipped** — spot the skill the task needs but the user does not have.
 
 Everything below is what only this layer can do. The method behind each rule lives in the skill that
@@ -20,34 +20,31 @@ owns it; this is the pointer, not the manual.
 
 ---
 
-## 1. Routing: feature intent goes through SDD first
+## 1. The decisor: classify the turn before acting
 
-The moment someone wants something to **exist or behave differently** — build, add, change,
-integrate, "it should also…", "¿y si…?", in any language — route the turn to `specify` before any
-code is written. No skill outranks this. The stack and builder skills that match the same request
-(`nextjs`, `react`, `fastapi`, `flutter`, `go`, `postgresdb`, `building-agents`, `design`,
-`chatbot`, `course-builder`, `marketing`…) run **inside** the chain, after the plan is approved —
-matching strongly is not a reason to skip ahead.
+Every turn takes one of three lanes, and you name the one you took in a line.
 
-Two exceptions, and say out loud when you take one:
+**Answer** — the request asks for information: explain, compare, investigate, audit, review,
+recommend. Read-only: write nothing, create no artifact, delegate no writer. Asking you to *think
+about* building something is still this lane; only asking to build authorises it. When change
+intent is ambiguous, ask one question and stay here — ambiguity slows the lane, never raises it.
 
-- a genuinely one-line, low-risk change (typo, copy tweak, config bump, non-breaking bump) — just do it;
-- a bug fix restoring intended behaviour — that is `debug`, then resume.
+**FTD — Fast-Track Development** — the request authorises a change. The default for ordinary work,
+entered without ceremony. One feature document per feature in `02-DOCS`: intent, scope, checklist,
+evidence, next step. Tasks are checked off against observed proof, never intention. A branch if it
+writes code, none if it only touches docs, wiki or config; never a worktree. → `../ftd/SKILL.md`.
 
-When you cannot tell, choose `specify`. A skipped spec is where drift hides.
+**SDD** — the ten-phase chain, unchanged, and **never entered by the harness alone**. Propose it only
+when durable spec/plan/tasks would remove a *substantial* ambiguity — a test of usefulness, not of
+size — and enter it only on explicit request or an accepted proposal. Size, file count and perceived
+risk never select it. → `../sdd/SKILL.md`.
 
-Judge the **meaning**, not the wording: the trigger is semantic, so it holds in any language,
-including ones with no example here. A URL plus a description of desired behaviour is a feature
-request. If the user engaged **SDD autopilot**, that one consent covers the whole run — advance
-through the phases without re-asking.
+Judge the **meaning**, not the wording: the trigger is semantic in any language. A bug fix restoring
+intended behaviour is `debug`. Autopilot consent covers a whole run — advance without re-asking.
 
-If `specify` / `sdd` are not installed, offer to add them (§2) before routing.
-When `.rsc.json` records SDD as deferred, first run `npx @ericrisco/rsc@latest reassess`.
-Stay silent on `RSC_REASSESSMENT_NO_CHANGE`. If it reports new evidence, explain what changed and
-show the new plan command; SDD still needs a newly accepted plan id and is never added silently.
-
-Method, phase map and full decision table: `../sdd/SKILL.md`. On Claude Code this rule also arrives
-as a per-turn hook; the brevity here is deduplication, not relaxation.
+Lane's skill missing? Offer it (§2) first. SDD recorded as deferred in `.rsc.json`? Run
+`npx @ericrisco/rsc@latest reassess`; silent on `RSC_REASSESSMENT_NO_CHANGE`, and on new evidence
+show the plan command — SDD still needs a newly accepted plan id, never added silently.
 
 ---
 
