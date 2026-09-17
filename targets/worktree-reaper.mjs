@@ -365,6 +365,48 @@ export function reapWorktree(root, targetPath, { confirmed = false } = {}) {
  * README.md", judged that a nuisance, confirmed, and the confirmation landed on a `production.env`
  * the message never mentioned. The module knew. It just did not say.
  */
+/**
+ * The unattended half: remove what classification already called `safe`, and nothing else.
+ *
+ * `sweep` offers and never acts, on purpose — there is a human reading it. This runs from a git hook
+ * the moment work lands, where there is nobody to ask, so the two verdicts that would have become a
+ * question become a refusal instead. It adds NO judgement of its own: the judgement is the dangerous
+ * part, it is written above, and it is already tested in both directions.
+ *
+ * Two properties its caller depends on, both load-bearing:
+ *  - it never throws. The caller is git, mid-merge. A throw here would turn a cleanup into a failed
+ *    merge, which is a far worse bug than the one this fixes.
+ *  - it is silent when there is nothing to do, so the common merge prints nothing.
+ */
+export function autoReap(root) {
+  const result = { reaped: [], skipped: [], disabled: false };
+  try {
+    if (!isCleanupEnabled(root)) {
+      result.disabled = true;
+      return result;
+    }
+    for (const candidate of classifyWorktrees(root)) {
+      // Not the protection, and it must not be mistaken for one: `reapWorktree` refuses an `ask`
+      // on its own, and that refusal is the gate — mutation-tested by 18b and 23. Verified here on
+      // 2026-09-17 by removing this line: every test still passed. It stays because skipping early
+      // avoids re-classifying the whole repository once per candidate, and because the recorded
+      // reason is then the verdict itself rather than a message written for a human to read.
+      if (candidate.verdict !== 'safe') {
+        result.skipped.push({ path: candidate.path, reason: candidate.reasons.join(', ') || candidate.verdict });
+        continue;
+      }
+      const out = reapWorktree(root, candidate.path);
+      if (out.removed) result.reaped.push(candidate.path);
+      else result.skipped.push({ path: candidate.path, reason: out.reason });
+    }
+  } catch (err) {
+    // Swallowed deliberately, and recorded rather than discarded: the merge must survive whatever
+    // went wrong in here, but a silent failure that leaves no trace is how this rots unnoticed.
+    result.skipped.push({ path: root, reason: `cleanup could not run: ${err.message}` });
+  }
+  return result;
+}
+
 export function refusal(candidate) {
   const d = candidate.details || {};
   const parts = (candidate.reasons || []).map((reason) => {

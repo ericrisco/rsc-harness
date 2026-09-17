@@ -18,7 +18,7 @@ const MOD = join(HERE, '..', 'targets', 'worktree-reaper.mjs');
 const CLI = join(HERE, '..', 'scripts', 'rsc.js');
 
 const {
-  classifyWorktrees, reapWorktree, isCleanupEnabled, resolveTrunk, listWorktrees, REGENERABLE,
+  classifyWorktrees, reapWorktree, isCleanupEnabled, resolveTrunk, listWorktrees, REGENERABLE, autoReap,
 } = await import(MOD);
 
 const TMP = [];
@@ -764,4 +764,75 @@ test('36 · the sweep respects the opt-out, not only the library does', () => {
   mkdirSync(join(root, '.rsc'), { recursive: true });
   writeFileSync(join(root, '.rsc', '.no-worktree-cleanup'), '');
   assert.doesNotMatch(sweep(root), /worktree cleanup/, 'off means off at both entry points');
+});
+
+// ── 37-40. autoReap: the same judgement, exercised without a human in the loop ───────────────
+//
+// `sweep` above offers and never acts, and test 16 pins that on purpose. This is the other half:
+// the path that runs from a git hook after work lands, where there is nobody to ask. It is allowed
+// to remove ONLY what classification already calls `safe` — it introduces no new judgement of its
+// own, because the judgement is the dangerous part and it has already been written and tested.
+// Measured 2026-09-17: the prose instruction that used to cover this moment was skipped 2 times
+// out of 2 on real features, which is what moved it from an instruction to a mechanism (P1).
+
+test('37 · autoReap removes what classification already calls safe, and reports it', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'auto-alpha');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A');
+  git(wt.path, 'commit', '-qm', 'feat: auto-alpha');
+  mergeIntoTrunk(root, wt.branch);
+
+  const out = autoReap(root);
+
+  assert.equal(existsSync(wt.path), false, 'the landed worktree must be gone without anyone asking');
+  assert.deepEqual(out.reaped, [wt.path], 'and it must say what it removed');
+  assert.equal(out.disabled, false);
+});
+
+test('38 · autoReap never touches one that would have been ASKED about', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'auto-beta');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A');
+  git(wt.path, 'commit', '-qm', 'feat: auto-beta');
+  mergeIntoTrunk(root, wt.branch);
+  // Landed, but something inside was never committed. Interactively this is an `ask`; unattended it
+  // is a refusal, because there is no one present to accept the loss.
+  write(wt.path, 'notes.txt', 'unsaved thinking\n');
+
+  const out = autoReap(root);
+
+  assert.equal(existsSync(wt.path), true, 'unattended removal must never eat uncommitted work');
+  assert.deepEqual(out.reaped, []);
+  assert.ok(out.skipped.some((s) => s.path === wt.path), 'and it must account for what it left');
+});
+
+test('39 · the opt-out silences autoReap exactly like everything else', () => {
+  const root = repo();
+  const wt = rscWorktree(root, 'auto-gamma');
+  write(wt.path, 'feature.txt', 'work\n');
+  git(wt.path, 'add', '-A');
+  git(wt.path, 'commit', '-qm', 'feat: auto-gamma');
+  mergeIntoTrunk(root, wt.branch);
+  mkdirSync(join(root, '.rsc'), { recursive: true });
+  writeFileSync(join(root, '.rsc', '.no-worktree-cleanup'), '');
+
+  const out = autoReap(root);
+
+  assert.equal(out.disabled, true);
+  assert.deepEqual(out.reaped, []);
+  assert.equal(existsSync(wt.path), true);
+});
+
+test('40 · autoReap never throws — it runs from a git hook, where throwing breaks a merge', () => {
+  // No trunk to compare against, so every internal question is unanswerable. The interactive path
+  // is allowed to return nothing; this one must ALSO not blow up, because its caller is git.
+  const root = mkdtempSync(join(tmpdir(), 'rsc-wt-bare-'));
+  TMP.push(root);
+  git(root, 'init', '-b', 'main', '-q');
+
+  let out;
+  assert.doesNotThrow(() => { out = autoReap(root); });
+  assert.deepEqual(out.reaped, []);
 });
