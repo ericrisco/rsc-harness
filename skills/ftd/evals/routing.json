@@ -1,0 +1,24 @@
+{
+  "about": "Fixture corpus for the three-lane decisor. The decisor is prose and judgement — chosen deliberately over deterministic signals — so this corpus is the mechanism that makes it checkable (P2). Scored by the behaviour eval, not by npm test; what npm test checks is that the corpus stays honest: every lane represented, every case reasoned, and the cases this lane exists because of still present.",
+  "lanes": {
+    "answer": "information only; writes nothing, creates no artifact",
+    "ftd": "authorised change, ordinary; one feature document",
+    "sdd": "the ten-phase chain, by explicit request or accepted proposal only"
+  },
+  "cases": [
+    { "request": "¿Por qué el login tarda tanto en producción?", "expect": "answer", "why": "investigation; nothing authorises a change" },
+    { "request": "Compare Postgres and SQLite for this workload and recommend one", "expect": "answer", "why": "comparison and a recommendation are information, not a mandate" },
+    { "request": "Revisa este diff y dime si tiene bugs", "expect": "answer", "why": "review is read-only even though it is about code that changes" },
+    { "request": "Audita la seguridad de la capa de autenticación", "expect": "answer", "why": "audit; a finding is not permission to fix it" },
+    { "request": "¿Y si añadiéramos exportación a CSV?", "expect": "answer", "why": "thinking aloud about a feature is not a request to build it; ask before building" },
+    { "request": "Propón cómo estructurarías el módulo de pagos", "expect": "answer", "why": "proposal-only; the old gate would have started the chain here" },
+    { "request": "Añade exportación a CSV usando los filtros del informe que ya existen", "expect": "ftd", "why": "an outcome asked for plainly: authorised, understood, no ambiguity artifacts would settle" },
+    { "request": "Arregla el typo del botón de guardar", "expect": "ftd", "why": "trivial and authorised; one document, no ceremony" },
+    { "request": "Renombra la tabla de usuarios en las 40 llamadas que la usan", "expect": "ftd", "why": "large and mechanical: size alone must never select the chain" },
+    { "request": "Sube la versión de la dependencia y arregla lo que rompa", "expect": "ftd", "why": "authorised change with no unresolved design question" },
+    { "request": "Migra los tres endpoints al nuevo formato de respuesta", "expect": "ftd", "why": "many files, but nothing a spec would settle that the code does not" },
+    { "request": "Quiero especificar bien el sistema de permisos antes de tocar nada", "expect": "sdd", "why": "explicit request for the chain" },
+    { "request": "Vamos a hacer una spec de esto", "expect": "sdd", "why": "explicit request, stated in the user's own words" },
+    { "request": "No tengo claro si los permisos van por rol o por recurso, y afecta al esquema, a la API y a la UI", "expect": "sdd", "why": "propose the chain: durable artifacts would settle a substantial ambiguity, and only an accepted proposal enters it" }
+  ]
+}

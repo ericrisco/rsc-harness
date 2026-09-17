@@ -16,7 +16,10 @@ const rscCli = readFileSync(join(ROOT, 'scripts/rsc.js'), 'utf8');
 const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
 
 // The set, spelled out once. Changing the base install means changing this line ON PURPOSE.
-const BASE = ['bro', 'eli5', 'harness', 'init', 'orient', 'show-me', 'suggest', 'unslop'];
+// 9 desde 2026-09-17: `ftd` es el carril por defecto del decisor. Un carril al que la capa always-on
+// enruta y que no está instalado convierte la primera petición de trabajo real en una interrupción
+// para instalarlo — el mismo defecto que `install-single-harness` documenta en el perfil mínimo.
+const BASE = ['bro', 'eli5', 'ftd', 'harness', 'init', 'orient', 'show-me', 'suggest', 'unslop'];
 
 test('the base install is exactly the declared set', () => {
   assert.deepEqual(skillsForProfile(manifest, 'minimal').sort(), [...BASE].sort());

@@ -5,7 +5,7 @@
 
 export const DOMAINS = [
   { title: 'Core & control plane', ids: ['init', 'harness', 'orient', 'suggest', 'bro', 'unslop', 'author-skill', 'sdd-init'] },
-  { title: 'Spec-Driven Development', ids: ['sdd', 'constitution', 'idea-refinement', 'specify', 'clarify', 'plan', 'tasks', 'analyze', 'decision-challenge', 'implement', 'source-grounded-development', 'verify', 'review', 'simplify-code', 'ship', 'debug', 'worktrees', 'parallel'] },
+  { title: 'Spec-Driven Development', ids: ['ftd', 'sdd', 'constitution', 'idea-refinement', 'specify', 'clarify', 'plan', 'tasks', 'analyze', 'decision-challenge', 'implement', 'source-grounded-development', 'verify', 'review', 'simplify-code', 'ship', 'debug', 'worktrees', 'parallel'] },
   { title: 'Run a business', ids: ['finance-ops', 'invoicing', 'bookkeeping', 'pricing', 'sales-pipeline', 'lead-gen', 'cold-outreach', 'proposals', 'contracts', 'customer-support', 'client-onboarding', 'retention', 'hiring', 'people-ops', 'inventory', 'logistics-ops', 'procurement', 'meeting-notes', 'sop-builder', 'project-ops'] },
   { title: 'Raise & model money', ids: ['pitch-deck', 'investor-materials', 'financial-model', 'fundraising', 'unit-economics', 'grants'] },
   { title: 'Legal, privacy & compliance', ids: ['gdpr-privacy', 'terms-conditions', 'compliance', 'data-policy', 'ip-trademark'] },

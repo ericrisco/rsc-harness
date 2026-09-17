@@ -1,0 +1,66 @@
+skill: ftd
+
+# Cases for FTD — Fast-Track Development, the lane ordinary authorised change takes.
+# FTD keeps ONE feature document per feature in 02-DOCS (intent, scope, checklist,
+# evidence, next step), checks tasks off only against observed proof, and branches when
+# the work writes code. It is NOT the ten-phase chain (sdd), NOT the classification
+# itself (the decisor lives in the always-on suggest body), and NOT a request for
+# information — those write nothing at all.
+
+should_trigger:
+  - prompt: "Añade exportación a CSV usando los filtros del informe que ya existen."
+    why: "An outcome asked for plainly: the change is authorised, understood, and no durable spec would settle anything the code does not. This is the default lane, entered without ceremony."
+
+  - prompt: "Rename the users table across every call site that touches it — there are about forty."
+    why: "Large and mechanical. Size is exactly what must NOT escalate to the chain; forty call sites carry no unresolved design question, so it stays here with one feature document."
+
+  - prompt: "Bump the dependency and fix whatever breaks."
+    why: "Authorised, open-ended in effort but not in intent. The feature document exists so an interruption mid-way costs nothing, which is the whole reason this lane writes one."
+
+  - prompt: "Migra los tres endpoints al nuevo formato de respuesta y deja constancia de lo que has comprobado."
+    why: "Multiple coordinated steps plus an explicit ask for evidence — the checklist-with-observed-proof shape this skill owns, without any phase handoffs."
+
+  - prompt: "Arregla el typo del botón de guardar."
+    why: "Trivial and authorised. Still this lane: the document is short, but the lane is the same, and the boundary is authorisation rather than size."
+
+should_not_trigger:
+  - prompt: "¿Por qué el login tarda tanto en producción?"
+    route_to: "debug"
+    why: "A question about a failure, with nothing authorising a change. Investigation writes nothing; if it becomes a fix, debug reproduces the cause first."
+
+  - prompt: "Compare Postgres and SQLite for this workload and recommend one."
+    route_to: "suggest"
+    why: "Information only. The decisor's read-only lane answers and creates no artifact — a recommendation is not permission to implement it."
+
+  - prompt: "No tengo claro si los permisos van por rol o por recurso, y afecta al esquema, a la API y a la UI."
+    route_to: "specify"
+    why: "A substantial unresolved ambiguity that durable spec/plan/tasks would settle. The harness proposes the chain here; only an explicit request or an accepted proposal enters it."
+
+  - prompt: "Quiero especificar bien el sistema de permisos antes de tocar nada."
+    route_to: "specify"
+    why: "The chain requested by name. Explicit selection always wins over the decisor's default."
+
+  - prompt: "Revisa este diff y dime si tiene bugs."
+    route_to: "code-review"
+    why: "Reading a finished diff for defects is a review, not a change. Nothing here authorises writing, so no feature document is created."
+
+capability:
+  - scenario: "A developer at accompaniment level L2 says: 'Añade exportación a CSV usando los filtros del informe que ya existen.' Show how the lane runs from the first word to delivery."
+    must_include:
+      - "Names the lane out loud in one line before acting, as the decisor requires — this is FTD, not a question and not the chain"
+      - "Creates one feature document at 02-DOCS/wiki/ftd/<slug>.md BEFORE the first change, and says which document it created and how many tasks it holds"
+      - "Writes the document into the workspace wiki, never into the code repository, so whoever clones the repo gets code and not somebody's notes in progress"
+      - "Keeps the document to intent, scope, checklist, evidence and next step — no spec, no plan, no tasks artifact, no decision journal"
+      - "States for each checklist item what would prove it done, before doing it"
+      - "Opens a branch because the work writes code, and explicitly does NOT open a worktree"
+      - "Checks a task off only after observing its stated check, and records a check that failed, was skipped or could not run rather than omitting it (P10)"
+      - "Does not escalate to the ten-phase chain on the basis of size, file count or perceived risk"
+      - "Closes by reporting the verified outcome, every failed or pending check, and the single next step"
+
+  - scenario: "Mid-way through the same work, the developer says the requirement has changed: the export must also respect a date range that does not exist in the current filters. Show how the lane absorbs it."
+    must_include:
+      - "Revises the existing feature document rather than starting a second one, preserving completed work that is still valid"
+      - "Adds the genuinely new tasks, and reopens any invalidated task with the reason written next to it"
+      - "Distinguishes a change the user authorised from a finding the agent made — a finding alone never expands scope"
+      - "Considers promotion to the chain only if durable artifacts would settle a substantial ambiguity, and says so rather than escalating because the work grew"
+      - "If promoted, carries the feature document into specify as input instead of discarding the work already done"

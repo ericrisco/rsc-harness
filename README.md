@@ -6,7 +6,7 @@
 
 [![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
 [![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
-[![skills](https://img.shields.io/badge/skills-272-63d68a?labelColor=12161c)](#the-catalog)
+[![skills](https://img.shields.io/badge/skills-273-63d68a?labelColor=12161c)](#the-catalog)
 [![license](https://img.shields.io/badge/license-MIT-63d68a?labelColor=12161c)](LICENSE)
 [![stars](https://img.shields.io/github/stars/ericrisco/rsc-harness?color=63d68a&labelColor=12161c)](https://github.com/ericrisco/rsc-harness/stargazers)
 
@@ -199,7 +199,7 @@ $ rsc onboard
  ██████╗ ███████╗ ██████╗     ← animated gradient wordmark
  ██╔══██╗██╔════╝██╔════╝
  ██████╔╝███████╗██║
-  272 skills · one CLI · zero bloat
+  273 skills · one CLI · zero bloat
 
 How technical should the conversation be?
 How much accompaniment do you want?
@@ -236,9 +236,9 @@ rsc reassess                        # check persisted deferral triggers; never i
 rsc add fastapi postgresdb           # install specific skills, by name
 rsc add youtube-api remotion-video   # …grow a channel, edit with Remotion
 rsc add fastapi --target claude,codex   # install into several assistants at once
-rsc install --profile minimal        # the base: orient + suggest + bro + unslop + show-me + eli5 + harness + init
+rsc install --profile minimal        # the base: orient + suggest + ftd + bro + unslop + show-me + eli5 + harness + init
 rsc install --profile core           # floor + the full SDD workflow
-rsc install --profile full           # everything (all 272 skills)
+rsc install --profile full           # everything (all 273 skills)
 rsc install --profile full --without go
 rsc consult "I want to launch a SaaS"  # recommend only, no install
 rsc registry refresh                 # write .rsc/skill-registry.{json,md}
@@ -400,7 +400,7 @@ just asks in plain language.
 
 ## The catalog
 
-272 skills, grouped by what you're trying to do. Click any skill to read its
+273 skills, grouped by what you're trying to do. Click any skill to read its
 `SKILL.md`. It fires on its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -436,9 +436,9 @@ The front door and the workspace brain.
 > root, anything in `inbox/`) is *moved* into `raw/`, never left as clutter.
 
 ### 📐 Spec-Driven Development
-Take a fuzzy intent to a shipped, verified change — phase by phase. `npx @ericrisco/rsc install --profile core`.
+Two lanes for change: `ftd` for ordinary work — one feature document, evidence, done — and the ten-phase chain when durable artifacts would settle a real ambiguity. `npx @ericrisco/rsc install --profile core`.
 
-[sdd](skills/sdd/) · [constitution](skills/constitution/) · [idea-refinement](skills/idea-refinement/) · [specify](skills/specify/) · [clarify](skills/clarify/) · [plan](skills/plan/) · [tasks](skills/tasks/) · [analyze](skills/analyze/) · [decision-challenge](skills/decision-challenge/) · [implement](skills/implement/) · [source-grounded-development](skills/source-grounded-development/) · [verify](skills/verify/) · [review](skills/review/) · [simplify-code](skills/simplify-code/) · [ship](skills/ship/) · [debug](skills/debug/) · [worktrees](skills/worktrees/) · [parallel](skills/parallel/)
+[ftd](skills/ftd/) · [sdd](skills/sdd/) · [constitution](skills/constitution/) · [idea-refinement](skills/idea-refinement/) · [specify](skills/specify/) · [clarify](skills/clarify/) · [plan](skills/plan/) · [tasks](skills/tasks/) · [analyze](skills/analyze/) · [decision-challenge](skills/decision-challenge/) · [implement](skills/implement/) · [source-grounded-development](skills/source-grounded-development/) · [verify](skills/verify/) · [review](skills/review/) · [simplify-code](skills/simplify-code/) · [ship](skills/ship/) · [debug](skills/debug/) · [worktrees](skills/worktrees/) · [parallel](skills/parallel/)
 
 > Two of those are not phases the chain walks on its own. `idea-refinement` **is** invoked — `specify` runs its FRAME block before the first question round. `decision-challenge` is **on-demand**: it exists, it is good, and no phase calls it yet. Listed so you can reach for it, not because the chain will. And the limit of what FRAME buys you, stated rather than implied: a second reading by the same model breaks correlation of **framing**, not of model — it shares the priors it is checking.
 

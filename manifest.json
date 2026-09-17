@@ -1,7 +1,7 @@
 {
   "version": "1.4.1",
   "counts": {
-    "skills": 272,
+    "skills": 273,
     "agents": 33,
     "commands": 53,
     "fixedCommands": 20
@@ -1955,6 +1955,27 @@
         "duckdb"
       ],
       "profiles": []
+    },
+    {
+      "id": "ftd",
+      "description": "Use for ordinary authorised change — the default lane once the decisor has ruled out a question and not selected the chain. Keeps one feature document per feature in 02-DOCS holding intent, scope, checklist, evidence and next step, checks tasks off only against observed proof, and branches when the work writes code. NOT the ten-phase chain (that is `sdd`), NOT the classification itself (that is the decisor in `suggest`), NOT a request for information, which writes nothing.",
+      "tags": [
+        "ftd",
+        "lane",
+        "default",
+        "feature-document",
+        "evidence"
+      ],
+      "recommends": [
+        "worktrees",
+        "debug",
+        "verify"
+      ],
+      "profiles": [
+        "minimal",
+        "core",
+        "full"
+      ]
     },
     {
       "id": "fundraising",

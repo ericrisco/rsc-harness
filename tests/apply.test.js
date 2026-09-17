@@ -237,7 +237,7 @@ test('claude: project-local install links to .rsc base, wires hook, list/uninsta
   assert.ok(!listInstalled({ target: 'claude', cwd }).includes('fastapi'));
 });
 
-test('claude: install wires the UserPromptSubmit new-feature gate (idempotent, opt-out honored)', async () => {
+test('claude: install wires the UserPromptSubmit lane decisor (idempotent, opt-out honored)', async () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-fg-'));
   await applyInstall({ skillIds: ['suggest'], target: 'claude', cwd });
 
@@ -255,7 +255,7 @@ test('claude: install wires the UserPromptSubmit new-feature gate (idempotent, o
 
   // The materialized script emits the gate; the opt-out marker silences it.
   const emit = spawnSync('node', [join(cwd, '.rsc/userprompt-gate.mjs'), cwd], { encoding: 'utf8' });
-  assert.ok(emit.stdout.includes('new-feature gate'), 'script emits the gate reminder');
+  assert.ok(emit.stdout.includes('lane decisor'), 'script emits the gate reminder');
   writeFileSync(join(cwd, '.rsc/.no-feature-gate'), '');
   const silenced = spawnSync('node', [join(cwd, '.rsc/userprompt-gate.mjs'), cwd], { encoding: 'utf8' });
   assert.equal(silenced.stdout.trim(), '', 'opt-out marker silences the gate');
@@ -312,8 +312,8 @@ test('userprompt-gate: two scopes in one turn emit the gate exactly once', async
   const first = spawnSync('node', [gate, cwd], { encoding: 'utf8', env, input: turn });
   const second = spawnSync('node', [gate, cwd], { encoding: 'utf8', env, input: turn });
 
-  assert.equal(countOf(first.stdout, 'new-feature gate'), 1, 'first scope emits the gate');
-  assert.equal(countOf(second.stdout, 'new-feature gate'), 0, 'second scope stays silent');
+  assert.equal(countOf(first.stdout, 'lane decisor'), 1, 'first scope emits the gate');
+  assert.equal(countOf(second.stdout, 'lane decisor'), 0, 'second scope stays silent');
 });
 
 test('userprompt-gate: the next turn emits the gate again', async () => {
@@ -330,8 +330,8 @@ test('userprompt-gate: the next turn emits the gate again', async () => {
     encoding: 'utf8', env, input: JSON.stringify({ session_id: 'sess-4', prompt_id: 'turn-2' }),
   });
 
-  assert.equal(countOf(t1.stdout, 'new-feature gate'), 1);
-  assert.equal(countOf(t2.stdout, 'new-feature gate'), 1, 'a new prompt_id is a new turn');
+  assert.equal(countOf(t1.stdout, 'lane decisor'), 1);
+  assert.equal(countOf(t2.stdout, 'lane decisor'), 1, 'a new prompt_id is a new turn');
 });
 
 // De-dup only works when BOTH scopes run an updated hook. A scope left on an older version keeps
@@ -635,7 +635,12 @@ test('cross-target: onboarding gate text rides suggest into a non-claude target'
   assert.ok(agents.includes('catalog --available'), 'capability detector injected cross-target');
   assert.ok(agents.includes('by meaning'), 'detector matches semantically, not by keyword');
   // A hookless target has no per-turn gate, so the routing rule must be IN this block.
-  assert.ok(agents.includes('specify'), 'SDD routing rule survives into a hookless assistant');
+  // A hookless assistant has no per-turn decisor, so the always-on body is the only place the
+  // routing rule reaches it. It used to be asserted by the presence of `specify`, the old single
+  // destination; now there are three lanes and the assertion is that the body still carries the
+  // choice between them, not just a pointer to a skill that would explain it.
+  assert.ok(agents.includes('FTD'), 'the default lane survives into a hookless assistant');
+  assert.ok(agents.includes('SDD'), 'and so does the chain it is chosen against');
 });
 
 test('unknown target throws', async () => {

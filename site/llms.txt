@@ -50,7 +50,7 @@ Canonical non-interactive preview:
 
 ## Facts
 
-- 272 skills; minimal profile 8, core 31, full 272.
+- 273 skills; minimal profile 9, core 32, full 273.
 - 17 supported assistants; 33 agents and 30 command entries in the catalog.
 - Every skill cleared an adversarial behavioral quality gate of at least 8.5/10.
 - Free, MIT, no API key and no global install required.
