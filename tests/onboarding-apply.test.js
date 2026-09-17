@@ -187,8 +187,16 @@ test('accepting fewer targets removes the deselected RSC installation before REA
   await applyAcceptedOnboarding({ cwd, plan: codex, planId: identifyPlan(codex) });
   const manifest = JSON.parse(readFileSync(join(cwd, '.rsc.json'), 'utf8'));
   assert.deepEqual(manifest.targets, ['codex']);
-  assert.equal(existsSync(join(cwd, '.claude', 'skills', 'specify')), false);
-  assert.equal(existsSync(join(cwd, '.rsc', 'skills', 'specify')), false);
+  assert.equal(existsSync(join(cwd, '.claude', 'skills', 'specify')), false,
+    'the deselected target must lose its installation — that is what this test is about');
+  // The second half used to assert the shared store lost `specify` too, because re-onboarding as
+  // SMALL software dropped to a narrower profile. Profiles are gone: every harness carries the chain
+  // now, and narrowing the declared scope no longer narrows what you can reach. What it still
+  // narrows is whether the chain is PRACTISED here, which the sdd decision records.
+  assert.equal(existsSync(join(cwd, '.rsc', 'skills', 'specify')), true,
+    'the chain stays reachable regardless of declared scope');
+  assert.equal(codex.decisions.find((d) => d.id === 'sdd').state, 'deferred',
+    'reachable, but not practised in small software — the distinction the single harness rests on');
   assert.doesNotMatch(readFileSync(join(cwd, '.gitignore'), 'utf8'), /^\.claude\//m);
   assert.deepEqual(verifyOnboarding(cwd, codex, identifyPlan(codex)), []);
 });

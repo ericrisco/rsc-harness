@@ -65,14 +65,40 @@ test('1 · a skill added after onboarding survives the next sync', () => {
     'this is the reported data loss: sync removed what add had just installed');
 });
 
-test('2 · add leaves the two governed lists describing the same set', () => {
+test('2 · add records the skill in the living list and leaves the accepted receipt untouched', () => {
+  // The first version of this test demanded that `add` write the new skill INTO the receipt's
+  // governed list. That fix shipped and was wrong: the receipt is hash-checked against the plan the
+  // user accepted, so editing it made every subsequent install report "the receipt does not match
+  // its accepted plan id". The invariant is the opposite of what was asserted — the receipt is
+  // immutable, the living list moves, and `sync` reads their union.
   const cwd = onboarded();
-  rsc(cwd, 'add', 'sdd', '--target', 'claude');
-  const m = manifest(cwd);
+  const before = manifest(cwd).onboarding;
+  rsc(cwd, 'add', 'fastapi', '--target', 'claude');
+  const after = manifest(cwd);
 
-  assert.ok(m.skills.includes('sdd'), 'the declared skills must include it');
-  assert.ok(m.onboarding.plan.policy.skills.includes('sdd'),
-    'and so must the governed list sync actually reads — the desync IS the bug');
+  assert.ok(after.skills.includes('fastapi'), 'the living declaration must record it');
+  // The PLAN is what the id hashes, so the plan is what must not move. The receipt may still gain
+  // maintenance bookkeeping around it — that is the record of what happened, not a rewrite of what
+  // was agreed, and 2b checks that the distinction actually holds.
+  assert.deepEqual(after.onboarding.plan, before.plan, 'the accepted plan must be untouched');
+});
+
+test('2b · and the harness does not then report itself as tampered', () => {
+  const cwd = onboarded();
+  rsc(cwd, 'add', 'fastapi', '--target', 'claude');
+  const out = rsc(cwd, 'install', '--target', 'claude');
+
+  assert.doesNotMatch(out.stdout + out.stderr, /does not match its accepted plan id/,
+    'adding a skill must not make the harness distrust its own receipt');
+});
+
+test('2c · and a skill added after onboarding survives sync even though the receipt never mentions it', () => {
+  const cwd = onboarded();
+  rsc(cwd, 'add', 'fastapi', '--target', 'claude');
+  rsc(cwd, 'sync');
+
+  assert.equal(existsSync(skillDir(cwd, 'fastapi')), true,
+    'the accepted plan is a floor, not a ceiling');
 });
 
 // ── 3-4. the protection that already exists, now asserted instead of assumed ──────────────────
@@ -90,13 +116,15 @@ test('3 · a hand-written skill survives sync, byte for byte', () => {
 });
 
 test('4 · installing a catalog skill refuses to overwrite a hand-written one of the same name', () => {
+  // `fastapi`, not `debug`: since the harness became one set, the chain ships with every install, so
+  // `debug` is already there as a catalog symlink and writing over it tests nothing about ownership.
   const cwd = onboarded();
-  writeOwnSkill(cwd, 'debug');
-  const before = readFileSync(join(skillDir(cwd, 'debug'), 'SKILL.md'), 'utf8');
+  writeOwnSkill(cwd, 'fastapi');
+  const before = readFileSync(join(skillDir(cwd, 'fastapi'), 'SKILL.md'), 'utf8');
 
-  const out = rsc(cwd, 'add', 'debug', '--target', 'claude');
+  const out = rsc(cwd, 'add', 'fastapi', '--target', 'claude');
 
-  assert.equal(readFileSync(join(skillDir(cwd, 'debug'), 'SKILL.md'), 'utf8'), before,
+  assert.equal(readFileSync(join(skillDir(cwd, 'fastapi'), 'SKILL.md'), 'utf8'), before,
     "the README promises the user's version is the commit; it must not be replaced");
   assert.match(out.stdout + out.stderr, /refusing to overwrite|--force/,
     'and a refusal must name the way out (P6)');

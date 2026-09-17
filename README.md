@@ -226,7 +226,7 @@ report success with three markdown files.
 
 ## The CLI
 
-Fresh projects enter through `rsc onboard`. The direct `add` and `install --profile` forms below
+Fresh projects enter through `rsc onboard`. The direct `add` and `install` forms below
 are maintenance controls for projects that already carry an `.rsc.json` declaration; they cannot
 bypass onboarding in a new folder.
 
@@ -236,10 +236,6 @@ rsc reassess                        # check persisted deferral triggers; never i
 rsc add fastapi postgresdb           # install specific skills, by name
 rsc add youtube-api remotion-video   # …grow a channel, edit with Remotion
 rsc add fastapi --target claude,codex   # install into several assistants at once
-rsc install --profile minimal        # the base: orient + suggest + ftd + bro + unslop + show-me + eli5 + harness + init
-rsc install --profile core           # floor + the full SDD workflow
-rsc install --profile full           # everything (all 273 skills)
-rsc install --profile full --without go
 rsc consult "I want to launch a SaaS"  # recommend only, no install
 rsc registry refresh                 # write .rsc/skill-registry.{json,md}
 rsc list                             # installed skills, agents and commands
@@ -436,7 +432,7 @@ The front door and the workspace brain.
 > root, anything in `inbox/`) is *moved* into `raw/`, never left as clutter.
 
 ### 📐 Spec-Driven Development
-Two lanes for change: `ftd` for ordinary work — one feature document, evidence, done — and the ten-phase chain when durable artifacts would settle a real ambiguity. `npx @ericrisco/rsc install --profile core`.
+Two lanes for change: `ftd` for ordinary work — one feature document, evidence, done — and the ten-phase chain when durable artifacts would settle a real ambiguity. Both ship with the harness.
 
 [ftd](skills/ftd/) · [sdd](skills/sdd/) · [constitution](skills/constitution/) · [idea-refinement](skills/idea-refinement/) · [specify](skills/specify/) · [clarify](skills/clarify/) · [plan](skills/plan/) · [tasks](skills/tasks/) · [analyze](skills/analyze/) · [decision-challenge](skills/decision-challenge/) · [implement](skills/implement/) · [source-grounded-development](skills/source-grounded-development/) · [verify](skills/verify/) · [review](skills/review/) · [simplify-code](skills/simplify-code/) · [ship](skills/ship/) · [debug](skills/debug/) · [worktrees](skills/worktrees/) · [parallel](skills/parallel/)
 

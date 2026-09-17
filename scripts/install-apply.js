@@ -529,7 +529,14 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
   const ids = Object.keys(state.skills || {});
   const manifest = readManifest(cwd);
   const governedSkills = manifest?.onboarding?.plan?.policy?.skills;
-  const declared = governedSkills || (ids.length ? ids : (manifest?.skills || []));
+  // The accepted plan is a FLOOR, not a ceiling. Reading it as the whole declaration is what deleted
+  // users' skills: `add` recorded the new skill in `manifest.skills` — the living list — and sync
+  // then rebuilt from a governed list that predated it and pruned the difference, recursively.
+  // Reported by a user and reproduced 2026-09-17. The receipt stays untouched, because it is
+  // hash-checked against what the user accepted and is not a log of what happened since.
+  const declared = governedSkills
+    ? [...new Set([...governedSkills, ...(manifest?.skills || [])])].sort()
+    : (ids.length ? ids : (manifest?.skills || []));
   const declaredAgents = state.explicitAgents?.length ? state.explicitAgents : (manifest?.agents || []);
   if (!declared.length && !declaredAgents.length) return dryRun ? { dryRun: true, synced: [], syncedAgents: [], paths: [] } : { synced: [], syncedAgents: [], backup: null };
   if (dryRun) {
