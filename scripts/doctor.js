@@ -1,3 +1,4 @@
+import { hooksDir, hooksDirIsOurs } from '../targets/worktree-reaper.mjs';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
@@ -84,9 +85,21 @@ export function missingHookScripts({ target, home = homedir(), cwd = process.cwd
 // different answers: armed, absent (repair it), or someone else's (leave it — chaining is our job
 // at install time, and overwriting a husky hook to fix a convenience would be indefensible).
 function worktreeCleanupStatus(root) {
-  const hook = join(root, '.git', 'hooks', 'post-merge');
   if (!existsSync(join(root, '.git'))) return { state: 'not-a-repo' };
   if (existsSync(join(root, '.rsc', '.no-worktree-cleanup'))) return { state: 'off-by-choice' };
+  // Ask git where hooks live instead of assuming `.git/hooks`. Until 2.0.1 this read the assumed
+  // path, so on a repo with its own `core.hooksPath` it found our inert file there and answered
+  // `armed` about a hook git would never run — the check confirming the exact failure it exists to
+  // catch. `unreachable` is its own state on purpose: `repair` re-runs the same install, so
+  // recommending it here would send the reader round the same loop (P6 wants a way out, not a ring).
+  const dir = hooksDir(root);
+  if (!hooksDirIsOurs(root, dir)) {
+    return {
+      state: 'unreachable',
+      action: `git reads hooks from ${dir}, which belongs to this repo or to another tool (husky, lefthook, a committed dispatcher). rsc will not write there. To arm the cleanup, add \`node "$(git rev-parse --show-toplevel)/.rsc/worktree-reaper.mjs" "$(git rev-parse --show-toplevel)" auto\` to your own post-merge hook.`,
+    };
+  }
+  const hook = join(dir, 'post-merge');
   if (!existsSync(hook)) {
     return { state: 'absent', action: 'Run `npx @ericrisco/rsc repair` to arm the post-merge cleanup in this clone.' };
   }

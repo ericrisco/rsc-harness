@@ -252,15 +252,20 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   // content — declares a narrower set of paths, and writing a git hook it never agreed to would be
   // acting outside the plan the user accepted (P4). Caught by the onboarding route-inventory gate,
   // which is exactly the kind of catch that justifies its existence.
+  // The answer used to be discarded, so a hook that could not arm looked exactly like one that
+  // did — and the only place that could have noticed, `doctor`, was reading the same wrong path.
+  // Reported 2026-09-18. Carried out, never thrown: the harness installing is the point, and the
+  // merge hook is a convenience layered on top of it.
+  let mergeHook = { installed: false, state: 'skipped' };
   try {
     if (policy?.codeHooks === false) throw new Error('code hooks not governed by the accepted plan');
     mkdirSync(join(cwd, '.rsc'), { recursive: true });
     cpSync(join(ROOT, 'targets', 'worktree-reaper.mjs'), join(cwd, '.rsc', 'worktree-reaper.mjs'));
     const { installMergeHook } = await import('../targets/worktree-reaper.mjs');
-    if (existsSync(join(cwd, '.git'))) installMergeHook(cwd);
-  } catch { /* a project without git, or a read-only .git: the cleanup simply does not arm here */ }
+    if (existsSync(join(cwd, '.git'))) mergeHook = installMergeHook(cwd);
+  } catch (err) { mergeHook = { installed: false, state: 'skipped', reason: err.message }; }
   ignoreLocalState(cwd, target);
-  return { ...state, backup };
+  return { ...state, backup, mergeHook };
 }
 
 // `.rsc/` holds local machine state — hook scripts, install markers, the sello's
