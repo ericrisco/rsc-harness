@@ -1084,3 +1084,36 @@ test('50e · a landed fix/ worktree is retired by the sweep, not left for a huma
   assert.equal(out.reaped.length, 1);
   assert.equal(existsSync(dir), false);
 });
+
+// ── 51. landing by fast-forward is still landing ──────────────────────────────────────────────
+//
+// `hasLandedWork` short-circuited on "worktree HEAD equals trunk tip" and called it nothing-landed.
+// That guard is for a worktree freshly created AT the trunk, which has indeed carried nothing. But
+// a branch that lands by fast-forward makes the trunk tip equal to its own head, so the branch that
+// did all the work becomes indistinguishable from the one that never started — and FTD lands by
+// fast-forward as a matter of course. Found on 2026-09-18 by watching this very repo refuse to
+// sweep the worktree of the fix above, for the wrong reason. The reflog already knew the answer;
+// the early return never let it be asked.
+
+test('51 · a branch that landed by fast-forward is not mistaken for one that never started', () => {
+  const root = repo();
+  const dir = join(root, '.worktrees', 'ff');
+  git(root, 'worktree', 'add', '-q', '-b', 'fix/ff', dir);
+  write(dir, 'x.txt', 'work\n');
+  git(dir, 'add', '-A');
+  git(dir, 'commit', '-qm', 'the work');
+  // Fast-forward the trunk onto it: trunk tip and worktree HEAD are now the same commit.
+  git(root, 'merge', '-q', '--ff-only', 'fix/ff');
+  assert.equal(git(root, 'rev-parse', 'main'), git(root, 'rev-parse', 'fix/ff'), 'precondition: the tips match');
+  const c = classifyWorktrees(root).find((x) => realpathSync(x.path) === realpathSync(dir));
+  assert.equal(c.verdict, 'safe', `refused as: ${(c.reasons || []).join(', ')}`);
+});
+
+test('51b · but a worktree created at the trunk and never committed to is still left alone', () => {
+  const root = repo();
+  const dir = join(root, '.worktrees', 'fresh');
+  git(root, 'worktree', 'add', '-q', '-b', 'feat/fresh', dir);
+  const c = classifyWorktrees(root).find((x) => realpathSync(x.path) === realpathSync(dir));
+  assert.equal(c.verdict, 'skip');
+  assert.deepEqual(c.reasons, ['nothing-landed'], 'a live workspace is not leftovers');
+});

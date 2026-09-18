@@ -194,13 +194,23 @@ export function provenanceOf(root, wt) {
  * The reflog is git's own record of the ref moving; when it cannot answer, the answer is no, because
  * accumulating a stale worktree costs a directory and the other mistake costs someone's afternoon.
  */
-export function hasLandedWork(root, wt, trunk) {
-  const tip = git(root, ['rev-parse', `${trunk}^{commit}`]);
-  if (tip.ok && wt.head && tip.out === wt.head) return false;
+export function hasLandedWork(root, wt) {
   if (!wt.branch) return false;
+  // Ask the reflog FIRST. It is the only record that distinguishes the two states that look
+  // identical from the outside: a worktree sitting at the trunk because it was just created there,
+  // and one sitting at the trunk because its work landed by fast-forward and took the trunk with
+  // it. Until 2.0.3 the tip comparison below ran first and answered "nothing landed" for both, so
+  // every branch landed the ordinary FTD way — commit, push, fast-forward — was kept for ever.
+  // Found on 2026-09-18 watching this repo refuse to sweep its own branch for the wrong reason.
   const log = git(root, ['reflog', 'show', '--format=%gs', wt.branch]);
-  if (!log.ok || !log.out) return false;
-  return log.out.split('\n').some((line) => line.startsWith('commit'));
+  if (log.ok && log.out) return log.out.split('\n').some((line) => line.startsWith('commit'));
+  // No reflog to ask — a fresh clone, or a branch whose reflog has expired. There is then no
+  // evidence this branch ever carried anything, and this whole module fails towards keeping the
+  // directory: unproven is not proven. (The tip comparison that used to sit here is deliberately
+  // gone rather than kept as a fallback: both of its outcomes are this same answer, and a line
+  // that cannot change the result while reading like a guard is the kind of decoration that made
+  // the bug above hard to see.)
+  return false;
 }
 
 export function integrationOf(root, wt, trunk) {
@@ -294,7 +304,7 @@ export function classifyWorktrees(root) {
 
       const integration = integrationOf(root, wt, trunk);
       if (integration !== 'integrated') return { ...base, reasons: [integration] };
-      if (!hasLandedWork(root, wt, trunk)) return { ...base, reasons: ['nothing-landed'] };
+      if (!hasLandedWork(root, wt)) return { ...base, reasons: ['nothing-landed'] };
 
       const { dirty, outside, readable } = contentOutsideHistory(wt.path);
       if (!readable) return { ...base, reasons: ['unreadable'] };
