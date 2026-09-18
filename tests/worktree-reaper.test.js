@@ -18,7 +18,7 @@ const MOD = join(HERE, '..', 'targets', 'worktree-reaper.mjs');
 const CLI = join(HERE, '..', 'scripts', 'rsc.js');
 
 const {
-  classifyWorktrees, reapWorktree, isCleanupEnabled, resolveTrunk, listWorktrees, REGENERABLE, autoReap, installMergeHook,
+  classifyWorktrees, reapWorktree, isCleanupEnabled, resolveTrunk, listWorktrees, REGENERABLE, autoReap, installMergeHook, provenanceOf,
 } = await import(MOD);
 
 const TMP = [];
@@ -1019,4 +1019,68 @@ test('49 · with two worktrees open, landing one leaves the other alone', () => 
   assert.equal(existsSync(a.path), false, 'the one that landed goes');
   assert.equal(existsSync(b.path), true, 'the one still carrying work stays');
   assert.ok(git(root, 'branch', '--list', b.branch), 'and so does its branch');
+});
+
+// ── 50. the branch shapes FTD actually produces ───────────────────────────────────────────────
+//
+// `worktrees` documents `feat/<slug>` and the provenance rule only ever matched feat|feature. That
+// was right while SDD was the only lane: every isolated branch was a feature. 2.0.0 made FTD the
+// default, and FTD branches are named for what they are — `fix/`, `docs/`, `chore/`. None of them
+// matched, so each was `ambiguous` and never auto-reaped, while `ftd` promises in writing that
+// "once the branch lands, the cleanup is automatic and you do not run anything". Found by using it:
+// the fix for the sync floor and the fix for the hooks path both had to be swept by hand.
+
+test('50 · a fix/ worktree in rsc own directory is ours, like feat/ always was', () => {
+  const root = repo();
+  for (const branch of ['fix/a', 'docs/b', 'chore/c', 'refactor/d', 'test/e', 'perf/f', 'ci/g', 'build/h', 'style/i']) {
+    const dir = join(root, '.worktrees', branch.replace('/', '-'));
+    git(root, 'worktree', 'add', '-q', '-b', branch, dir);
+    const wt = listWorktrees(root).find((w) => realpathSync(w.path) === realpathSync(dir));
+    assert.equal(provenanceOf(root, wt), 'rsc', `${branch} follows the convention and sits where rsc puts them`);
+  }
+});
+
+test('50b · and feat/ still is, because nothing about SDD changed', () => {
+  const root = repo();
+  const dir = join(root, '.worktrees', 'x');
+  git(root, 'worktree', 'add', '-q', '-b', 'feat/x', dir);
+  const wt = listWorktrees(root).find((w) => realpathSync(w.path) === realpathSync(dir));
+  assert.equal(provenanceOf(root, wt), 'rsc');
+});
+
+// The conjunction is the safety, and widening one signal must not quietly dissolve it. A branch
+// that follows no convention is still only half a signal, wherever it sits.
+test('50c · a branch of their own in that directory is still only half a signal', () => {
+  const root = repo();
+  for (const branch of ['mis-pruebas', 'eric/experimento', 'wip', 'fixup', 'features']) {
+    const dir = join(root, '.worktrees', branch.replace(/\//g, '-'));
+    git(root, 'worktree', 'add', '-q', '-b', branch, dir);
+    const wt = listWorktrees(root).find((w) => realpathSync(w.path) === realpathSync(dir));
+    assert.equal(provenanceOf(root, wt), 'ambiguous', `${branch} is not the convention — it must still be confirmed`);
+  }
+});
+
+test('50d · and a conventional branch somewhere else entirely is still only half a signal', () => {
+  const root = repo();
+  const outside = mkdtempSync(join(tmpdir(), 'rsc-elsewhere-'));
+  TMP.push(outside);
+  const dir = join(outside, 'algo');
+  git(root, 'worktree', 'add', '-q', '-b', 'fix/z', dir);
+  const wt = listWorktrees(root).find((w) => realpathSync(w.path) === realpathSync(dir));
+  assert.equal(provenanceOf(root, wt), 'ambiguous');
+});
+
+// End to end, on the exact shape that had to be swept by hand twice today.
+test('50e · a landed fix/ worktree is retired by the sweep, not left for a human', () => {
+  const root = repo();
+  const dir = join(root, '.worktrees', 'landed');
+  git(root, 'worktree', 'add', '-q', '-b', 'fix/landed', dir);
+  write(dir, 'x.txt', 'hello\n');
+  git(dir, 'add', '-A');
+  git(dir, 'commit', '-qm', 'work');
+  git(root, 'merge', '-q', '--no-ff', 'fix/landed', '-m', 'land');
+  const out = autoReap(root);
+  assert.deepEqual(out.skipped, [], JSON.stringify(out.skipped));
+  assert.equal(out.reaped.length, 1);
+  assert.equal(existsSync(dir), false);
 });

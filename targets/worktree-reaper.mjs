@@ -53,8 +53,20 @@ export const REGENERABLE_FILES = ['.DS_Store', 'Thumbs.db', '.coverage'];
 // Trunk candidates, most authoritative first. The remote tip beats a local branch that may be stale.
 const TRUNKS = ['origin/main', 'main', 'origin/master', 'master'];
 
-// Branch shapes `worktrees` imposes on the isolation it creates.
-const RSC_BRANCH = /^(?:feat|feature)\//;
+// Branch shapes the catalog's isolation produces.
+//
+// `worktrees` documents `feat/<slug>`, and while SDD was the only lane that was the whole set:
+// every isolated branch was a feature. 2.0.0 made FTD the default and FTD names a branch for what
+// it is — a fix is not a feature — so `fix/`, `docs/` and `chore/` fell outside, scored as half a
+// signal, and were never swept, while `ftd` promises in writing that the cleanup is automatic once
+// the branch lands. Found by using it: the two fixes released on 2026-09-18 both had to be removed
+// by hand. These are the Conventional Commits types, which is what the commit guard already
+// enforces on every commit in a project rsc governs — so the branch shape and the commit shape now
+// come from the same vocabulary instead of two that drifted apart.
+//
+// Widening one signal, never the conjunction: a branch outside this vocabulary is still `ambiguous`
+// wherever it sits, and one of these in a directory rsc does not own is still `ambiguous` too.
+const RSC_BRANCH = /^(?:feat|feature|fix|docs|chore|refactor|test|perf|ci|build|style)\//;
 
 function git(cwd, args) {
   // 64 MiB, because node's 1 MiB default kills git mid-write on any worktree with a few thousand

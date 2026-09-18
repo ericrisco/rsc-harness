@@ -75,7 +75,11 @@ Run this in order. Each check prevents a class of "lost work" you can't easily u
    local HEAD. Stale base = predictable merge pain later. Default: fresh from `origin/<default>`.
 6. **Choose a name** tied to the feature slug — the same `<slug>` the spec and plan use
    (`feat/<slug>`), so the branch, the spec at `02-DOCS/wiki/sdd/specs/<slug>.md`, and the plan at
-   `02-DOCS/wiki/sdd/plans/<slug>.md` all line up and are trivially traceable.
+   `02-DOCS/wiki/sdd/plans/<slug>.md` all line up and are trivially traceable. A change that is not
+   a feature takes the type that fits — `fix/<slug>`, `docs/<slug>`, `chore/<slug>` — from the same
+   Conventional Commits vocabulary the commit guard already enforces here. **The prefix is load
+   bearing**: the automatic cleanup uses it, with the location, as the two signals that say a
+   worktree is ours to remove. A name outside that vocabulary is never swept for you.
 
 Only once the tree state is understood and the user's WIP is accounted for do you create anything.
 
@@ -189,7 +193,7 @@ the dial controls verbosity, never whether you check before risking someone's WI
 | "There's uncommitted WIP, I'll stash it and switch" | A worktree avoids the stash entirely and can't drop it. Use a worktree; if you must stash, confirm with the user and name the stash. |
 | "I'll branch off local HEAD, fetching is slow" | Stale base = merge conflicts you pay for later. Branch off an up-to-date `origin/<default>` unless the user wants HEAD. |
 | "The worktree's dirty but I'll `remove --force` to clean up" | Force-removing a dirty/unmerged worktree throws away work irreversibly. Resolve or confirm explicitly first; never silent-force. |
-| "I'll name it `wip` / `temp` / `branch2`" | An untraceable name divorces the branch from its spec/plan. Name it `feat/<slug>` to match the SDD artifacts. |
+| "I'll name it `wip` / `temp` / `branch2`" | An untraceable name divorces the branch from its spec/plan, and the automatic cleanup will not claim it. Use `<type>/<slug>` — `feat/` for a feature, `fix/`, `docs/`, `chore/` for the rest. |
 | "I'll create the worktree AND start writing code right here" | This skill only isolates. Hand a clean isolated workspace to `implement`; don't blur the two steps. |
 | "Already on a feature branch, I'll make a worktree anyway" | Redundant isolation is just clutter. If the current branch is already isolated and clean, say so and proceed. |
 | "I'll record the worktree path into 02-DOCS so it's tracked" | Isolation is plumbing, not knowledge. No artifact; the branch name traces it. Don't pollute the wiki. |
