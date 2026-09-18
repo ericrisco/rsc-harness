@@ -31,6 +31,19 @@ npx @ericrisco/rsc@latest onboard
 
 </div>
 
+
+### Optional shared memory: rsc-brain
+
+For a team, install `@ericrisco/rsc-brain` alongside this CLI and connect a project to
+an owner-managed, self-hosted Brain. `rsc brain` forwards its commands to that installed CLI.
+Brain shares documents and structured project continuity over MCP with Codex and Claude Code;
+the owner approves connections and assigns read/contribute permissions per space.
+
+In Brain mode, `02-DOCS` lives remotely and governed assistant turns and tool calls require
+Brain access. Migration verifies uploaded files before retiring the local folder into an
+external backup. `01-TOOLS` remains local software shared through Git. See the
+[rsc-brain setup and operating limits](https://github.com/ericrisco/rsc-brain#readme).
+
 ## Your agent needs a harness. It should not improvise one.
 
 A model is only the brain. Real work also needs project memory, tools, domain knowledge, rules and

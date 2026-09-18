@@ -76,7 +76,22 @@ function ensureExcluded(cwd, root) {
   return git(cwd, ['check-ignore', '-q', '--no-index', `${rel}/.rsc-probe`]).ok;
 }
 
+export function isBrainProject(cwd = process.cwd()) {
+  let dir = resolve(cwd);
+  for (;;) {
+    const path = join(dir, '.rsc.json');
+    if (existsSync(path)) {
+      try { return JSON.parse(readFileSync(path, 'utf8')).brain?.mode === 'remote'; }
+      catch { return false; }
+    }
+    const parent = dirname(dir);
+    if (parent === dir) return false;
+    dir = parent;
+  }
+}
+
 export function chooseMemoryRoot(cwd = process.cwd()) {
+  if (isBrainProject(cwd)) throw new Error('Brain owns this project memory. Restore access with rsc-brain status and use its MCP tools; local fallback is disabled.');
   const project = resolve(cwd);
   const inGit = git(project, ['rev-parse', '--is-inside-work-tree']).out === 'true';
   if (!inGit) {

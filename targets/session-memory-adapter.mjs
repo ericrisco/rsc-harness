@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
-import { capture, resume } from './session-memory-core.mjs';
+import { capture, resume, isBrainProject } from './session-memory-core.mjs';
 
 const LOCAL_TARGETS = new Set(['claude', 'codex', 'cursor', 'gemini', 'opencode']);
 
@@ -78,6 +78,7 @@ export function handleLifecycle({ target, event, native = {}, cwd, settings } = 
     if (!LOCAL_TARGETS.has(target)) throw new Error(`unsupported memory target: ${target}`);
     if (isRemote(target, native)) return { output: {}, capture: null, remote: true, degraded: false };
     const project = nearestHarness(resolve(cwd || native.cwd || process.env.RSC_PROJECT_CWD || process.cwd()));
+    if (isBrainProject(project)) return {output:{},capture:null,remote:true,brain:true,degraded:false};
     if (!existsSync(project)) throw new Error('project directory unavailable');
     const config = settings || projectSettings(project);
     if (config.enabled === false) return { output: {}, capture: null, remote: false, degraded: false };

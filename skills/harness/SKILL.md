@@ -9,6 +9,19 @@ origin: risco
 
 # Harness — the workspace control plane
 
+If `.rsc.json` has `brain.mode: remote`, first read
+`references/brain-mode.md`. Its storage routing applies to all `02-DOCS/` paths
+below, including profile, knowledge map, inbox and SDD artifacts.
+
+Before creating a requested external tool, inspect local `01-TOOLS/` and its
+`catalog.json`, then search public GitHub candidates using only public technical
+terms. Compare origin, license, maintenance, requirements and configuration;
+record why you reuse, adapt or reject candidates before writing new code. An
+unavailable search means pending verification, not absence of a solution.
+Never execute or install a candidate merely because a search found it. Keep
+catalog entries with purpose, source, version, requirements, environment variable
+names (no values), an example and a connection check alongside tools in Git.
+
 The **harness** is the control plane of a workspace. A workspace need not be code: it can be a company, an ops desk, a legal archive, a personal knowledge vault. Whatever it is, the harness is the durable apparatus that keeps it operable and legible, made of three parts:
 
 - **`01-TOOLS/<PROVIDER>/`** — the operational tooling layer. One folder per external provider, co-locating credentials (`.env`) with the scripts that consume them. Each tool ships a working `test_connection` against the real API.
@@ -298,4 +311,3 @@ This skill is fully self-contained. No external sub-skill required.
 ## Orientación (siempre)
 
 Cierra cada turno con el **bloque-brújula** (📍 dónde estás · ✅ qué hiciste · 🧭 por qué · ➡️ siguiente, terminando en pregunta), calibrado al dial de `02-DOCS/wiki/harness/user-profile.md`. **Nunca termines en seco.** Protocolo completo: skill `orient` → `skills/orient/references/orientation-contract.md`. (Defiere a `suggest` el "¿instalo la skill que falta?".)
-

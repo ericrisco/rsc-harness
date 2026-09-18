@@ -9,6 +9,19 @@ origin: risco
 
 # rsc-suggest — the always-on layer
 
+## Project storage authority
+
+Read `.rsc.json` before applying any filesystem instruction below. When
+`brain.mode` is `remote`, Brain is the authority for every `02-DOCS/` path in every
+skill: use the connected Brain MCP to read `wiki/index.md` and
+`wiki/harness/user-profile.md`, and propose changes at the corresponding relative
+path. Do not recreate `02-DOCS/`, run local wiki writers, or treat its absence as
+first contact. SDD specs, plans, progress and lessons use the same remote authority.
+If access fails, stop the governed workflow and recover with `rsc-brain status`;
+do not switch storage or server. Native Brain hooks enforce access checks; this
+instruction does not replace them. `01-TOOLS/` and source code remain local/Git.
+Read `../harness/references/brain-mode.md` when working in this mode.
+
 Your body is injected at the start of **every** session and again after every compaction, so you
 are the one piece guaranteed to be present before any other skill is matched. Two jobs, in order:
 

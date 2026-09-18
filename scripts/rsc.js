@@ -26,7 +26,7 @@ const rawArgv = process.argv.slice(2);
 const GLOBAL_VALUE_FLAGS = new Set([
   '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--accept-plan',
 ]);
-const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'sello', 'repair', 'uninstall', 'purge']);
+const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'brain', 'memory', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'sello', 'repair', 'uninstall', 'purge']);
 function positionalTokens(input) {
   const out = [];
   for (let i = 0; i < input.length; i++) {
@@ -490,6 +490,18 @@ async function guardCollisions(targets, ids) {
 }
 
 async function main() {
+  if (cmd === 'brain') {
+    const { spawn } = await import('node:child_process');
+    const child = spawn('rsc-brain', rawArgv.slice(rawArgv.indexOf('brain') + 1), {stdio:'inherit',shell:false});
+    await new Promise((resolve) => {
+      child.once('error', () => {
+        console.error('Brain CLI unavailable. Install it with npm install -g @ericrisco/rsc-brain, then retry rsc brain.');
+        process.exitCode=1; resolve();
+      });
+      child.once('exit', code => {process.exitCode=code ?? 1;resolve();});
+    });
+    return;
+  }
   // One resolution for every command, doctor included: `doctor` used to resolve on its
   // own and could report a different assistant than the one just installed into.
   // --target accepts one id or a comma list (e.g. --target claude,codex).
@@ -606,6 +618,8 @@ async function main() {
     case 'memory': {
       const sub = argv[1] || 'status';
       const root = process.cwd();
+      const { isBrainProject } = await import('../targets/session-memory-core.mjs');
+      if (isBrainProject(root)) throw new Error('Brain owns memory for this project. Run rsc-brain status and use Brain MCP continuity tools; local memory changes are disabled.');
       if (sub === 'on' || sub === 'off') {
         const { readManifest, writeManifest } = await import('./lib/manifest-file.js');
         const current = readManifest(root) || { version: 1, targets: targets || [], skills: [], agents: [], ownSkills: [], optOuts: [] };
