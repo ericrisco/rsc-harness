@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, rmSyn
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { linkOrCopy } from './index.js';
+import { ensureShadowClaudeMd, removeShadowClaudeMd } from './agents-md-shadow.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -52,11 +53,16 @@ export function unwireHook(paths) {
     rmSync(join(paths.projectRoot, '.claude', 'rsc-bootstrap.mjs'), { force: true });
   } catch { /* never let cleanup be the thing that fails */ }
 
+  // The shadow CLAUDE.md exists only to keep the hook from being doubled by a natively-read
+  // AGENTS.md. Unwiring the hook removes the reason for it. Only ever takes back an untouched one.
+  const shadow = removeShadowClaudeMd(paths.projectRoot);
+  const removed = shadow ? [shadow] : [];
+
   const file = paths.hookTarget;
-  if (!existsSync(file)) return [];
+  if (!existsSync(file)) return removed;
   let settings;
-  try { settings = JSON.parse(readFileSync(file, 'utf8')); } catch { return []; }
-  if (!settings.hooks) return [];
+  try { settings = JSON.parse(readFileSync(file, 'utf8')); } catch { return removed; }
+  if (!settings.hooks) return removed;
   for (const event of Object.keys(settings.hooks)) {
     settings.hooks[event] = (settings.hooks[event] || []).filter((e) => {
       const s = hookWiringOf(e);
@@ -66,7 +72,7 @@ export function unwireHook(paths) {
   }
   if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
   writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
-  return [file];
+  return [...removed, file];
 }
 
 // SessionStart runs a project-local session-start.mjs via `node`: it prints
@@ -236,5 +242,11 @@ export function wireHook(paths, sourceMd, policy = {}) {
 
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
+
+  // settings.json now names this project as rsc-wired, which is the predicate the shadow reads —
+  // so this call belongs AFTER the write, not before it. No-op unless the root AGENTS.md also
+  // carries the always-on body and no CLAUDE.md exists: see targets/agents-md-shadow.js.
+  const shadow = ensureShadowClaudeMd(paths.projectRoot);
+  if (shadow) written.push(shadow);
   return written;
 }

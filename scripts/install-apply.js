@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
+import { shadowTarget } from '../targets/agents-md-shadow.js';
 import {
   targetHasAgents, reconcileAgents, agentPath, agentNames,
   resolveAgentNames, agentByName, allAgentNames, readDeveloperTier,
@@ -114,6 +115,12 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
       out.push(step.to, ...generatedHookFiles({ target, cwd, policy }));
     }
   }
+  // The shadow CLAUDE.md that keeps a natively-read AGENTS.md from doubling the always-on body.
+  // Written by whichever of the two adapters is wired second, so it is declared for both families,
+  // not just for claude. A claude install must assume its own wiring: settings.json does not name
+  // it yet at plan time.
+  const shadow = shadowTarget(cwd, { assumeClaudeWired: target === 'claude' });
+  if (shadow) out.push(shadow);
   return [...new Set(out)];
 }
 
