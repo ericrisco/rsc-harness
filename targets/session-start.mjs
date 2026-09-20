@@ -194,19 +194,31 @@ ACTION: run \`npx @ericrisco/rsc audit\`. Opt out with .rsc/.no-audit.
 // it's a relocation, not a delete). Opt out with .rsc/.no-claudemd-check.
 const CLAUDEMD_MAX_LINES = 200;
 if (!has('.rsc', '.no-claudemd-check')) {
+  // WHICH file is the project's instructions is no longer a constant. From Claude Code 2.1.277, a
+  // project with no CLAUDE.md is read through its root AGENTS.md instead — same per-turn cost, same
+  // adherence rot when it grows, and until now nothing measured it. Measure the file that is
+  // actually being loaded: CLAUDE.md when there is one, otherwise AGENTS.md.
+  const name = has('CLAUDE.md') ? 'CLAUDE.md' : (has('AGENTS.md') ? 'AGENTS.md' : null);
   try {
-    const lines = readFileSync(join(root, 'CLAUDE.md'), 'utf8').split('\n').length;
+    const lines = readFileSync(join(root, name), 'utf8').split('\n').length;
     if (lines > CLAUDEMD_MAX_LINES) {
+      // Only the CLAUDE.md claim is unconditional. A client older than 2.1.277 does not read
+      // AGENTS.md at all, and this hook cannot tell which it is talking to (the SessionStart
+      // payload carries no version), so the AGENTS.md line says when the cost applies instead of
+      // asserting it — a notice that overstates its case is the kind that gets opted out of.
+      const why = name === 'CLAUDE.md'
+        ? "it's read every turn, so each line costs context"
+        : "Claude Code 2.1.277+ loads it every turn when there is no CLAUDE.md, so each line costs context";
       process.stdout.write(`
-===== rsc CLAUDE.md hygiene =====
-CLAUDE.md is ${lines} lines — over the ~${CLAUDEMD_MAX_LINES}-line budget (it's read every turn, so each line costs context).
+===== rsc ${name} hygiene =====
+${name} is ${lines} lines — over the ~${CLAUDEMD_MAX_LINES}-line budget (${why}).
 ACTION: offload the Knowledge map / overgrown sections into 02-DOCS/wiki/index.md and leave a short
-pointer in CLAUDE.md (no info lost — it's a move). The \`harness\` skill owns the procedure.
+pointer in ${name} (no info lost — it's a move). The \`harness\` skill owns the procedure.
 Opt out with .rsc/.no-claudemd-check.
 =================================
 `);
     }
-  } catch { /* no CLAUDE.md → nothing to check */ }
+  } catch { /* no instructions file (name === null) → nothing to check */ }
 }
 
 // Worktree sweep: a worktree whose work already reached the trunk is landed work wearing the same

@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { linkOrCopy } from './index.js';
+import { ensureShadowClaudeMd } from './agents-md-shadow.js';
 
 // Shared adapter for every assistant whose "always-on" surface is a plain
 // markdown instructions/rules file (AGENTS.md, copilot-instructions.md, a
@@ -33,7 +34,13 @@ export function wireHook(paths, sourceMd, policy = {}) {
   }
   mkdirSync(dirname(paths.hookTarget), { recursive: true });
   writeFileSync(paths.hookTarget, doc);
-  return [paths.hookTarget];
+
+  // This file may BE the root AGENTS.md, which Claude Code 2.1.277+ reads as project instructions
+  // when no CLAUDE.md exists — doubling an always-on body the SessionStart hook already prints.
+  // No-op unless the Claude Code target is also wired here. Called from both adapters so the fix
+  // holds whichever assistant the user installs second. See targets/agents-md-shadow.js.
+  const shadow = ensureShadowClaudeMd(paths.projectRoot);
+  return shadow ? [paths.hookTarget, shadow] : [paths.hookTarget];
 }
 
 // Inverse of wireHook: remove the marked rsc-suggest block from the shared
