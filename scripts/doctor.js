@@ -17,6 +17,16 @@ import { resolveCommands, commandPath, targetHasCommands } from '../targets/comm
 import { inspectMemoryWiring } from '../targets/memory.js';
 import { metricsSummary } from '../targets/session-memory-core.mjs';
 import { agentPath } from '../targets/agents.js';
+import { projectOptOuts } from '../targets/opt-outs.js';
+
+// Gates the committed manifest says the team disarmed, still armed here. Read through the same
+// partition the installer uses, so a machine-only switch somebody's older rsc wrote into the
+// manifest (`harness`, `context7`) is not reported as something to converge on.
+function optOutsNotApplied(root) {
+  let manifest = null;
+  try { manifest = readProjectManifest(root); } catch { return []; }
+  return projectOptOuts(manifest?.optOuts).filter((n) => !existsSync(join(root, '.rsc', `.no-${n}`)));
+}
 
 // The sello's health, surfaced where the user already looks (spec: non-blocking
 // findings live in the project and are SUMMARIZED here, never nagged about).
@@ -223,6 +233,11 @@ export function doctor({ target, home, cwd }) {
     gitmojiGuard: state.policy?.gitmojiGuard === false
       ? 'deferred'
       : existsSync(join(root, '.rsc', '.no-gitmoji')) ? 'opted-out' : 'armed',
+    // The reverse of the same honesty, one level up: a gate the TEAM disarmed in the committed
+    // manifest and that is still armed on this machine. Nothing is applied from here — a pull
+    // never rewrites somebody's machine — so the only thing owed is saying it out loud, and
+    // saying it every run, because a notice offered once per session is a notice missed.
+    optOutsNotApplied: optOutsNotApplied(root),
     // Counted, never interpreted — by spec, the gap log's reader is the user.
     automationGaps: countGaps(root),
     memory,

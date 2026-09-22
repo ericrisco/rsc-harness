@@ -34,6 +34,19 @@ const PACKAGE = '@ericrisco/rsc';
 const SEMVER = /^\d+\.\d+\.\d+(?:-[0-9a-z.-]+)?$/i;
 
 /**
+ * The `.no-*` switches that are the TEAM's decision, and therefore the only ones a manifest may
+ * speak about. Canonical copy: `targets/opt-outs.js`, which carries the reasoning.
+ *
+ * Duplicated on purpose and not by oversight. This file is COMMITTED into user repos and runs with
+ * the package possibly not installed, so it cannot import anything — the same constraint that makes
+ * `sello.mjs` a materialized sibling. A test holds the two copies equal, because duplication that
+ * nothing checks is just drift with a head start.
+ */
+export const PROJECT_OPT_OUTS = [
+  'audit', 'claudemd-check', 'danger-guard', 'feature-gate', 'gitmoji', 'ship-guard', 'worktree-cleanup',
+];
+
+/**
  * Validated at the parse boundary AND again here, on purpose.
  *
  * These functions are exported and they are the ones that build the sentence a person is told to run
@@ -93,6 +106,11 @@ export function readManifest(root) {
     // thing to say, and it is what an unusable value becomes.
     catalogVersion: SEMVER.test(String(parsed.catalogVersion ?? '')) ? parsed.catalogVersion : null,
     targets: Array.isArray(parsed.targets) ? parsed.targets : [],
+    // Same allowlist, same reason, and it bites harder here: these names are pasted into the
+    // notice a model reads. A switch is a plain lowercase name or it is not a switch — and only
+    // the ones the team is allowed to decide for everybody get through at all.
+    optOuts: ids(parsed.optOuts).filter((n) => PROJECT_OPT_OUTS.includes(n)).sort(),
+    tier: ['balanced', 'heavy'].includes(parsed.tier) ? parsed.tier : null,
   };
 }
 
@@ -108,7 +126,9 @@ export function readManifest(root) {
  * assuming otherwise. When it cannot be told apart, it is left alone.
  */
 export function evaluateHarness(root, manifest) {
-  if (manifest.state !== 'declared') return { verdict: 'unknown', missing: [], ownMissing: [] };
+  if (manifest.state !== 'declared') {
+    return { verdict: 'unknown', missing: [], ownMissing: [], optOutsMissing: [], tierDiffers: null };
+  }
   // Catalog skills: `.rsc/skills/<id>` is where their content lands, and it is the same on all
   // seventeen assistants — the per-target directories are links into it.
   const fromCatalog = (id) => existsSync(join(root, '.rsc', 'skills', id));
@@ -126,8 +146,23 @@ export function evaluateHarness(root, manifest) {
   const fromTeam = (name) => OWN_DIRS.some((dir) => existsSync(join(root, ...dir, name)));
   const missing = manifest.skills.filter((id) => !fromCatalog(id));
   const ownMissing = manifest.own.filter((name) => !fromTeam(name));
-  if (!missing.length && !ownMissing.length) return { verdict: 'current', missing: [], ownMissing: [] };
-  return { verdict: 'behind', missing, ownMissing };
+  // A gate the team disarmed that is still armed here. Declared-and-missing only, exactly as for
+  // skills above: a marker this machine has and the manifest does not could be a decision somebody
+  // is still making, and this file does not tell people what to think about their own work.
+  const optOutsMissing = manifest.optOuts.filter((n) => !existsSync(join(root, '.rsc', `.no-${n}`)));
+  const tierDiffers = manifest.tier && manifest.tier !== localTier(root) ? manifest.tier : null;
+  if (!missing.length && !ownMissing.length && !optOutsMissing.length && !tierDiffers) {
+    return { verdict: 'current', missing: [], ownMissing: [], optOutsMissing: [], tierDiffers: null };
+  }
+  return { verdict: 'behind', missing, ownMissing, optOutsMissing, tierDiffers };
+}
+
+/** The tier this machine actually runs at — `balanced` is the documented default, not a guess. */
+function localTier(root) {
+  try {
+    return JSON.parse(readFileSync(join(root, '.rsc', 'developer.json'), 'utf8')).tier === 'heavy'
+      ? 'heavy' : 'balanced';
+  } catch { return 'balanced'; }
 }
 
 /**
@@ -148,6 +183,15 @@ export function composeDivergence(manifest, evaluation) {
     'it and git brought the change; nothing is broken.\n';
   if (evaluation.missing.length) {
     text += `MISSING, declared in .rsc.json: ${evaluation.missing.join(', ')}.\n`;
+  }
+  // Named as the convention they are, never as the file that implements them: "the team disarmed
+  // the commit-message check" is something a person can agree or disagree with; ".no-gitmoji is
+  // absent" is a fact about a directory they have never opened.
+  if (evaluation.optOutsMissing?.length) {
+    text += `DISARMED BY THE TEAM, still armed here: ${evaluation.optOutsMissing.join(', ')}.\n`;
+  }
+  if (evaluation.tierDiffers) {
+    text += `DECLARED developer tier: ${evaluation.tierDiffers} — this machine runs the default.\n`;
   }
   // Before the command, never after: anything sitting under the action reads as part of what the
   // action installs, and these are the one thing rsc will not install. Their version is the commit.

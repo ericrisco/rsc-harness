@@ -8,8 +8,9 @@ import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } fr
 import { shadowTarget } from '../targets/agents-md-shadow.js';
 import {
   targetHasAgents, reconcileAgents, agentPath, agentNames,
-  resolveAgentNames, agentByName, allAgentNames, readDeveloperTier,
+  resolveAgentNames, agentByName, allAgentNames, readDeveloperTier, writeDeveloperTier,
 } from '../targets/agents.js';
+import { projectOptOuts } from '../targets/opt-outs.js';
 import { readState, writeState } from './lib/state.js';
 import { withDefaultSkillFloor } from './lib/default-skill-floor.js';
 import { readManifest, writeManifest } from './lib/manifest-file.js';
@@ -128,15 +129,54 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
 // which is machine-local and therefore lost on every clone: a team that disarmed the
 // gitmoji guard found it armed again on the next checkout, with nobody having decided
 // that. They are decisions, so they belong in the committed declaration.
+//
+// Two distinctions this function exists to keep, both of which used to be collapsed:
+//
+//   ABSENT is not EMPTY. In a clone `.rsc/` does not exist, and reading "no markers here" as
+//   "the team re-armed everything" would have sync quietly delete the decision it came to
+//   rebuild. Unreadable returns null — "I know nothing" — and the caller keeps what was
+//   declared. A readable directory with no markers returns [], which IS a statement: somebody
+//   deleted the last marker, and deleting it is how a gate gets re-armed.
+//
+//   Not every switch is the team's to make. `.no-harness` and friends are decisions of one
+//   machine (see targets/opt-outs.js), and committing them would impose one laptop's answer on
+//   every future clone. They stay local, and never reach the declaration.
 function localDecisions(cwd) {
   const dir = join(cwd, '.rsc');
-  let optOuts = [];
+  let optOuts = null;
   try {
-    optOuts = readdirSync(dir).filter((f) => f.startsWith('.no-')).map((f) => f.slice(4)).sort();
-  } catch { /* no .rsc yet */ }
+    optOuts = projectOptOuts(readdirSync(dir).filter((f) => f.startsWith('.no-')).map((f) => f.slice(4)));
+  } catch { /* no .rsc yet → null, meaning "unknown", never "none" */ }
   let tier = null;
   try { tier = JSON.parse(readFileSync(join(dir, 'developer.json'), 'utf8')).tier ?? null; } catch { /* unset */ }
   return { optOuts, tier };
+}
+
+// The other half of the same promise: what the declaration says is rebuilt as the real local
+// state a hook can see. Hooks are materialized standalone under `.rsc/` and decide with one
+// `existsSync` — they cannot read the manifest, and making them read it would let a `git pull`
+// change how somebody's session behaves in silence, which `project-manifest` ruled out on
+// purpose. So the manifest is applied HERE, inside the install the person chose to run.
+//
+// Only ever on a machine where `.rsc/` did not exist: there, "no marker" carries no information
+// and the declaration is all there is. Where `.rsc/` is already built, the local state is the
+// authority — otherwise the next sync would silently undo a re-arm, and the gate coming back
+// would look like a bug in the guard rather than a decision nobody made.
+export function hydrateLocalDecisions(cwd, manifest) {
+  const applied = { optOuts: [], tier: null };
+  if (!manifest) return applied;
+  const dir = join(cwd, '.rsc');
+  for (const name of projectOptOuts(manifest.optOuts)) {
+    const file = join(dir, `.no-${name}`);
+    if (existsSync(file)) continue;
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(file, `Declared in .rsc.json by this project; rebuilt here by rsc ${CLI_VERSION}.\n`);
+    applied.optOuts.push(name);
+  }
+  if (manifest.tier && !existsSync(join(dir, 'developer.json'))) {
+    applied.tier = writeDeveloperTier(cwd, manifest.tier);
+  }
+  return applied;
 }
 
 // Record the decision, merging so a second assistant never erases the first: installing
@@ -158,17 +198,25 @@ export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalog
     ownSkills: prev.ownSkills || [],
     catalogVersion,
     tier: tier ?? prev.tier ?? null,
-    optOuts: optOuts.length ? optOuts : (prev.optOuts || []),
+    optOuts: optOuts ?? projectOptOuts(prev.optOuts),
     memory: prev.memory,
     onboarding: onboarding ?? prev.onboarding,
   });
 }
 
 export async function applyInstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), operation = 'install', dryRun = false, policy, onboarding }) {
+  // Read BEFORE anything can create it — the backup writes under `.rsc/`, and one line later the
+  // answer would always be "yes, it exists". This single boolean is what separates a clone (the
+  // declaration is the only thing that knows what the team decided) from a built machine (the
+  // local markers are the authority, and a pull must not overwrite them).
+  const fromScratch = !existsSync(join(cwd, '.rsc'));
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.alwaysOn !== false });
   const managedPaths = managedPathsForInstall({ skillIds, agentIds, target, home, cwd, policy });
   if (dryRun) return { dryRun: true, skills: skillIds, agents: agentIds, paths: managedPaths };
+  // Rebuild the declared decisions first, so everything below (the agent tier especially) reads
+  // the state the team declared rather than the default it would otherwise assume.
+  if (fromScratch) hydrateLocalDecisions(cwd, readManifest(cwd));
   const state = readState(paths.stateFile);
   const backup = createBackup({ cwd, operation, target, paths: managedPaths, cliVersion: CLI_VERSION });
   // Decide base refresh per skill (see baseVersionsFile): a base is re-materialized when
