@@ -4,12 +4,29 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyInstall, pruneSharedBases, removeTargetInstall } from '../install-apply.js';
 import { targetPaths } from '../../targets/index.js';
+import { targetHasAgents } from '../../targets/agents.js';
 import { readState } from './state.js';
 import { readManifest, writeManifest } from './manifest-file.js';
 import { encodeGoal, identifyPlan } from './onboarding.js';
 import { createBackup, restoreBackup } from './backups.js';
 
 const sameSet = (a = [], b = []) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+
+/**
+ * What THIS target should be holding, which is not the same question as what the project decided.
+ *
+ * The policy is the PROJECT's: "these are the agents this project wants." Whether an assistant can
+ * hold a subagent at all is the TARGET's business, and nine of the seventeen cannot — amp, jules,
+ * zed, antigravity, windsurf, cline, roo, continue and aider have no such concept. The installer
+ * always knew this and correctly wrote none; the verifier did not, and demanded the project's list
+ * from every target, so onboarding could never complete on any of the nine. Since the failure rolls
+ * back, what the person got was empty directory shells and no harness — with a recovery command
+ * that leads straight back to the same wall.
+ *
+ * Asking amp for a subagent is not a divergence. It is a category error, and this is where the two
+ * categories stop being confused.
+ */
+export const expectedAgentsFor = (target, plan) => (targetHasAgents(target) ? (plan.policy.agents || []) : []);
 
 function inside(root, path) {
   return path === root || path.startsWith(`${root}${sep}`);
@@ -92,7 +109,7 @@ export function verifyOnboarding(cwd, plan, planId) {
   for (const target of plan.policy.targets) {
     const state = readState(targetPaths(target, undefined, cwd).stateFile);
     if (!sameSet(Object.keys(state.skills || {}), plan.policy.skills)) differences.push(`${target}: installed skills differ from accepted policy`);
-    if (!sameSet(state.agents || [], plan.policy.agents || [])) differences.push(`${target}: installed agents differ from accepted policy`);
+    if (!sameSet(state.agents || [], expectedAgentsFor(target, plan))) differences.push(`${target}: installed agents differ from accepted policy`);
     if (state.policy?.alwaysOn !== plan.policy.alwaysOn) differences.push(`${target}: always-on policy differs`);
     if (state.policy?.codeHooks !== plan.policy.codeHooks) differences.push(`${target}: code-hook policy differs`);
     if (state.policy?.memory !== plan.policy.memory) differences.push(`${target}: memory policy differs`);
