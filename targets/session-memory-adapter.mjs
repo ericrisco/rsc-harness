@@ -56,15 +56,35 @@ function hookEventName(target, event, native) {
   return names[event] || event;
 }
 
+const COMPACTION_HINT = 'rsc memory: consider compacting at the next phase boundary; nothing was compacted automatically.';
+
+/**
+ * Two different things used to share one channel, and that is the whole bug.
+ *
+ * The resume CONTEXT is information for the model, and it is only ever produced on `start` —
+ * `SessionStart`, one of the few events whose output may carry `hookSpecificOutput.additionalContext`.
+ * The compaction HINT is a message for the PERSON, and it was going out through the same field on
+ * whatever event happened to be running. On `Stop`, `PreCompact` and `SessionEnd` the client rejects
+ * that outright ("Hook JSON output validation failed — hookSpecificOutput.hookEventName: expected one
+ * of …"), so the hook meant to help ended up printing an error after every turn, and after
+ * `/compact` in particular — which is exactly what the hint had just told the person to run.
+ *
+ * So the hint moves to `systemMessage`, which every event accepts. This needs no table of which
+ * event carries what, and it cannot rot when the client adds an event: anything addressed to the
+ * person travels by the universal channel, and only genuine model context uses the narrow one.
+ */
 function nativeOutput(target, eventName, context = '', notice = null, compactionHint = false) {
-  const hint = compactionHint ? 'rsc memory: consider compacting at the next phase boundary; nothing was compacted automatically.' : '';
-  const extra = [context, hint].filter(Boolean).join('\n');
-  if (!extra && !notice) return {};
-  if (target === 'cursor') return { ...(extra ? { additional_context: extra } : {}), ...(notice ? { user_message: notice } : {}) };
-  if (target === 'opencode') return { context: extra, notice };
+  const hint = compactionHint ? COMPACTION_HINT : '';
+  if (!context && !hint && !notice) return {};
+  if (target === 'cursor') {
+    const message = [notice, hint].filter(Boolean).join('\n');
+    return { ...(context ? { additional_context: context } : {}), ...(message ? { user_message: message } : {}) };
+  }
+  if (target === 'opencode') return { context, notice: [notice, hint].filter(Boolean).join('\n') || null };
+  const message = [notice, hint].filter(Boolean).join('\n');
   return {
-    ...(notice ? { systemMessage: notice } : {}),
-    ...(extra ? { hookSpecificOutput: { hookEventName: eventName, additionalContext: extra } } : {}),
+    ...(message ? { systemMessage: message } : {}),
+    ...(context ? { hookSpecificOutput: { hookEventName: eventName, additionalContext: context } } : {}),
   };
 }
 
@@ -106,8 +126,13 @@ export function handleLifecycle({ target, event, native = {}, cwd, settings } = 
     if (typeof native.cost === 'number') captureInput.cost = native.cost;
     if (Number.isInteger(native.tool_calls)) captureInput.toolCalls = native.tool_calls;
     const captured = capture(captureInput);
+    // `stop_hook_active` is the client saying "this turn is already running BECAUSE a stop hook
+    // asked for it". Speaking again here is how a Stop hook wakes itself: the student's session did
+    // nine rounds of hook → "—" → hook before the client broke the loop. Record the turn, say
+    // nothing.
+    const silenced = event === 'turn' && Boolean(native?.stop_hook_active);
     return {
-      output: nativeOutput(target, eventName, '', captured.notice, captured.compactionHint),
+      output: silenced ? {} : nativeOutput(target, eventName, '', captured.notice, captured.compactionHint),
       capture: captured,
       remote: false,
       degraded: false,
