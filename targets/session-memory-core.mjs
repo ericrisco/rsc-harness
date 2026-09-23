@@ -352,11 +352,22 @@ export function capture(input = {}) {
   if (errors.length) return { record: null, path: null, notice: null, compactionHint: false, errors };
   atomicJson(recordPath, record);
   existing = record;
+  // Once per session, not once per turn. `editCount` only ever grows, so `editCount >= threshold`
+  // was true for every remaining event of a working afternoon — the twentieth edit turned a useful
+  // nudge into a line after every single turn, for good. Worse, compaction does not reset the
+  // count, so following the advice changed nothing and the hint kept coming.
+  //
+  // The flag lives on the ANCHOR and not on the record on purpose: the record's schema is closed
+  // and every field of it is required, so a new field there would fail validation on every record
+  // already written and `readRecords` would quietly drop the project's whole history.
+  let compactionHint = Boolean(config.compactionHint && editCount >= config.editThreshold);
+  if (compactionHint && anchor.compactionHintedAt) compactionHint = false;
+  else if (compactionHint) atomicJson(anchorPath, { ...anchor, compactionHintedAt: now });
   return {
     record,
     path: recordPath,
     notice: consumeNotice(store),
-    compactionHint: Boolean(config.compactionHint && editCount >= config.editThreshold),
+    compactionHint,
   };
 }
 
