@@ -44,6 +44,12 @@ function agentSpecFor(target, root) {
   return { dir: dirname(p), ext };
 }
 
+// A real file, or a link that leads to one. `statSync` follows; a dangling link throws and is
+// therefore not a file, which is the answer we want.
+function isFile(path) {
+  try { return statSync(path).isFile(); } catch { return false; }
+}
+
 // Real files only. Directories (a dir named `foo.md` is not an agent), dangling
 // symlinks and dotfiles are not capabilities.
 function entriesWithExt(dir, ext) {
@@ -96,8 +102,19 @@ export function listSkills({ target, home, cwd = process.cwd() } = {}) {
     try {
       for (const e of readdirSync(paths.dir, { withFileTypes: true })) {
         if (e.name.startsWith('.')) continue;
-        if (ext) { if (e.isFile() && e.name.endsWith(ext)) out.push({ id: e.name.slice(0, -ext.length), scope }); }
-        else if (e.isDirectory() && existsSync(join(paths.dir, e.name, 'SKILL.md'))) out.push({ id: e.name, scope });
+        // Ask what a skill IS, never how it was put on disk. A `Dirent` from `withFileTypes`
+        // describes the LINK and not its target, so `isDirectory()`/`isFile()` are both false for
+        // every skill on macOS and Linux — where a symlink per assistant, pointing at one shared
+        // copy, is the layout the installer deliberately writes. Windows gets real files (relative
+        // dir symlinks need Developer Mode there), which is why this read as correct for so long
+        // and why CI never caught it.
+        //
+        // `existsSync` and `statSync` follow links on their own, so one question answers all three
+        // platforms with no branch: is there a SKILL.md behind this name? Following a link is not
+        // the same as believing anything — a dangling link, a directory with no SKILL.md and a
+        // plain file all still fail it.
+        if (ext) { if (e.name.endsWith(ext) && isFile(join(paths.dir, e.name))) out.push({ id: e.name.slice(0, -ext.length), scope }); }
+        else if (existsSync(join(paths.dir, e.name, 'SKILL.md'))) out.push({ id: e.name, scope });
       }
     } catch { /* unreadable scope → contributes nothing */ }
   }
