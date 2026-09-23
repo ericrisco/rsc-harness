@@ -98,15 +98,18 @@ export function handleLifecycle({ target, event, native = {}, cwd, settings } = 
   try {
     if (!LOCAL_TARGETS.has(target)) throw new Error(`unsupported memory target: ${target}`);
     if (isRemote(target, native)) return { output: {}, capture: null, remote: true, degraded: false };
-    const project = nearestHarness(resolve(cwd || native.cwd || process.env.RSC_PROJECT_CWD || process.cwd()));
+    // Two answers from one path, kept apart on purpose: `project` is where the journal is KEPT (the
+    // nearest harness), `here` is where the agent WORKS and therefore who the session is.
+    const here = resolve(cwd || native.cwd || process.env.RSC_PROJECT_CWD || process.cwd());
+    const project = nearestHarness(here);
     if (!existsSync(project)) throw new Error('project directory unavailable');
     const config = settings || projectSettings(project);
     if (config.enabled === false) return { output: {}, capture: null, remote: false, degraded: false };
     const id = sessionId(native, target);
     const eventName = hookEventName(target, event, native);
     if (event === 'start') {
-      const started = capture({ cwd: project, sessionId: id, target, event: 'start', settings: config });
-      const resumed = resume({ cwd: project, target, settings: config });
+      const started = capture({ cwd: project, worktreeCwd: here, sessionId: id, target, event: 'start', settings: config });
+      const resumed = resume({ cwd: project, worktreeCwd: here, target, settings: config });
       return {
         output: nativeOutput(target, eventName, resumed.context),
         capture: started,
@@ -117,6 +120,7 @@ export function handleLifecycle({ target, event, native = {}, cwd, settings } = 
     }
     const captureInput = {
       cwd: project,
+      worktreeCwd: here,
       sessionId: id,
       target,
       event: event === 'end' ? 'sessionEnd' : event,
