@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { pathToFileURL } from 'node:url';
-import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { capture, resume } from './session-memory-core.mjs';
 
@@ -126,7 +126,34 @@ function stdinJson() {
   }
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+/**
+ * "Was this file run directly?" — the same question `clone-bootstrap.mjs` answers, and the same two
+ * traps, so the same answer. Written out here rather than imported because hooks are materialized
+ * file by file under `.rsc/`: an import would be a second file to copy for six lines.
+ *
+ *   `process.argv[1]` MAY NOT EXIST. Under `node -e`, `--input-type=module` or the REPL there is no
+ *   script path, and `pathToFileURL(undefined)` throws — at module load, so merely IMPORTING this
+ *   file takes the importer down with it. A module that cannot be imported is a module nobody can
+ *   build a tool on top of, and people do exactly that with this package.
+ *
+ *   SYMLINKS MAKE THE TWO SIDES DISAGREE. `import.meta.url` is what the loader resolved (symlinks
+ *   RESOLVED); `process.argv[1]` is the raw string the client passed (symlinks INTACT). One
+ *   symlinked component — `/tmp` and `/var` on macOS, or an ordinary `~/code -> /Volumes/…` — and a
+ *   string compare says "no", the main block never runs, node exits 0 having printed nothing, and
+ *   the hook becomes a silent no-op that `doctor` still reports as wired.
+ */
+function isMainModule(metaUrl) {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  const self = fileURLToPath(metaUrl);
+  try {
+    return realpathSync(self) === realpathSync(invoked);
+  } catch {
+    return self === invoked;
+  }
+}
+
+if (isMainModule(import.meta.url)) {
   const result = handleLifecycle({ target: process.argv[2], event: process.argv[3], native: stdinJson() });
   process.stdout.write(`${JSON.stringify(result.output)}\n`);
 }
