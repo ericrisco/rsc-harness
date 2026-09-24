@@ -85,6 +85,10 @@
     {
       "fixedIn": "2.0.12",
       "symptom": "Security: session continuation context could come from a different git worktree"
+    },
+    {
+      "fixedIn": "2.0.15",
+      "symptom": "The 'consider compacting' notice never appears in sessions that edit files through the terminal instead of the Edit tool"
     }
   ]
 }
