@@ -64,5 +64,27 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "rscFixes": [
+    {
+      "fixedIn": "2.0.6",
+      "symptom": "A guard your team disarmed (.rsc/.no-gitmoji and similar) comes back armed after cloning the repo"
+    },
+    {
+      "fixedIn": "2.0.8",
+      "symptom": "rsc doctor reports commandOrphans for skills that are installed, and rsc capabilities shows no skills (macOS/Linux)"
+    },
+    {
+      "fixedIn": "2.0.10",
+      "symptom": "onboard fails with RSC_ONBOARDING_INCOMPLETE: installed agents differ from accepted policy (antigravity, windsurf, cline, roo, continue, amp, jules, zed, aider)"
+    },
+    {
+      "fixedIn": "2.0.11",
+      "symptom": "Stop or PreCompact hook error: Hook JSON output validation failed, and a 'consider compacting' notice repeating after every turn"
+    },
+    {
+      "fixedIn": "2.0.12",
+      "symptom": "Security: session continuation context could come from a different git worktree"
+    }
+  ]
 }

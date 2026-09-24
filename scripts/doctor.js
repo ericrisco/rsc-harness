@@ -18,6 +18,7 @@ import { inspectMemoryWiring } from '../targets/memory.js';
 import { metricsSummary } from '../targets/session-memory-core.mjs';
 import { agentPath } from '../targets/agents.js';
 import { projectOptOuts } from '../targets/opt-outs.js';
+import { versionReport } from './lib/versions.js';
 
 // Gates the committed manifest says the team disarmed, still armed here. Read through the same
 // partition the installer uses, so a machine-only switch somebody's older rsc wrote into the
@@ -238,6 +239,9 @@ export function doctor({ target, home, cwd }) {
     // never rewrites somebody's machine — so the only thing owed is saying it out loud, and
     // saying it every run, because a notice offered once per session is a notice missed.
     optOutsNotApplied: optOutsNotApplied(root),
+    // First thing to read on any bug report: a project behind its CLI runs old hooks, and "it is
+    // already fixed" only helps once the fix is in `.rsc/`.
+    versions: versionReport(root),
     // Counted, never interpreted — by spec, the gap log's reader is the user.
     automationGaps: countGaps(root),
     memory,

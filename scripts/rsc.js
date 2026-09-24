@@ -16,6 +16,7 @@ import { runUpgrade } from './lib/upgrade.js';
 import { diagnose, repair } from './lib/repair.js';
 import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-floor.js';
 import { readManifest, writeManifest } from './lib/manifest-file.js';
+import { versionReport } from './lib/versions.js';
 import {
   normalizeOnboarding, missingOnboardingFields, scanProject,
   buildOnboardingPlan, decodeGoal, encodeGoal, identifyPlan, recommendDeferredComponents,
@@ -23,6 +24,20 @@ import {
 import { applyAcceptedOnboarding, verifyOnboarding, ensureHarnessSkeleton, harnessReadiness } from './lib/onboarding-apply.js';
 
 const rawArgv = process.argv.slice(2);
+
+// `rsc --version` — answered before anything else runs, offline, and in a shape a bug report can
+// paste. Two numbers because there are two things: the CLI you just ran, and the harness this
+// project was built with. When they differ the project is running old hooks, and a fix that was
+// published may simply not be here yet.
+if (['--version', '-v', 'version'].includes(rawArgv[0])) {
+  const v = versionReport(process.cwd());
+  const lines = [`rsc ${v.cli}`];
+  if (v.installed) lines.push(`installed in this project: ${v.installed}${v.behind ? ' (behind)' : ''}`);
+  else lines.push('installed in this project: none');
+  if (v.behind) lines.push('This project runs older hooks than this CLI. To catch up, run here:', '  npx @ericrisco/rsc@latest');
+  process.stdout.write(`${lines.join('\n')}\n`);
+  process.exit(0);
+}
 const GLOBAL_VALUE_FLAGS = new Set([
   '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--accept-plan',
 ]);
