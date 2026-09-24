@@ -319,7 +319,20 @@ export function capture(input = {}) {
   if (input.event === 'start' && !existing) return { record: null, path: null, notice: null, compactionHint: false };
 
   const repo = snapshot(here, anchor.baselineHead);
-  const editCount = Math.max(0, (existing?.editCount || 0) + (finiteOrNull(input.editDelta, true) || 0));
+  // Count what CHANGED, not which tool changed it. `editDelta` is +1 per Edit/Write tool event, and
+  // on its own it was blind to everything done through the shell — a heredoc, `sed -i`, a script, a
+  // formatter — which is how automated sessions work. The session that found this had touched dozens
+  // of files and its record said editCount=1, so the compaction hint never reached the long sessions
+  // it exists for.
+  //
+  // `snapshot` already fingerprints every modified file on every event. Comparing those fingerprints
+  // with the previous event's counts a change from any source. `max`, not `+`: an Edit that changed a
+  // file shows up in BOTH signals, and must count once.
+  const previousFingerprints = anchor.lastFingerprints || anchor.baselineFingerprints || {};
+  const observed = Object.entries(repo.fingerprints || {})
+    .filter(([path, fingerprint]) => fingerprint && previousFingerprints[path] !== fingerprint).length;
+  const editDelta = Math.max(finiteOrNull(input.editDelta, true) || 0, observed);
+  const editCount = Math.max(0, (existing?.editCount || 0) + editDelta);
   const baselineFiles = new Set(anchor.baselineFiles || []);
   const newDirtyPath = repo.files.some((path) => !baselineFiles.has(path));
   const baselineFingerprints = anchor.baselineFingerprints || {};
@@ -368,7 +381,17 @@ export function capture(input = {}) {
   // already written and `readRecords` would quietly drop the project's whole history.
   let compactionHint = Boolean(config.compactionHint && editCount >= config.editThreshold);
   if (compactionHint && anchor.compactionHintedAt) compactionHint = false;
-  else if (compactionHint) atomicJson(anchorPath, { ...anchor, compactionHintedAt: now });
+  // One anchor write per event at most, carrying both pieces of per-session state: the fingerprints
+  // the next event compares against, and the once-per-session hint mark. Written only when either
+  // actually changed, so a read-only shell command costs no extra disk.
+  const fingerprintsMoved = observed > 0 || !anchor.lastFingerprints;
+  if (compactionHint || fingerprintsMoved) {
+    atomicJson(anchorPath, {
+      ...anchor,
+      lastFingerprints: repo.fingerprints || {},
+      ...(compactionHint ? { compactionHintedAt: now } : {}),
+    });
+  }
   return {
     record,
     path: recordPath,
