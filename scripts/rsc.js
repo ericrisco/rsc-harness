@@ -501,7 +501,18 @@ function printContextBudget(b) {
   say('════════════════════════════════════════════════\n');
 }
 
-async function wizard(flagTargets) {
+async function syncDeclared(targets, dry = false) {
+  for (const t of targets) {
+    const result = await syncInstalled({ target: t, dryRun: dry });
+    const verb = dry ? 'Would sync' : 'Synced';
+    say(`${verb} ${t}: ${result.synced.length ? result.synced.join(', ') : '(nothing to sync)'}`);
+    if (dry && result.paths?.length) {
+      for (const p of result.paths) say(`  ${p}`);
+    }
+  }
+}
+
+async function wizard(flagTargets, declaredTargets = []) {
   const m = loadManifest();
   await banner(m.counts.skills);
   say('  the skill catalog for your assistant (Claude Code · Codex · Cursor · Gemini · Antigravity)\n');
@@ -511,12 +522,16 @@ async function wizard(flagTargets) {
   const baseIds = skillsForProfile(m, 'minimal');
   // Navigable loop: esc / "← Back" / "no" all return here instead of quitting.
   for (;;) {
+    const declared = readManifest();
     const choice = await select('What do you want to do?', [
+      // First, because it is what someone who already has a harness came here for nine times in ten.
+      ...(declared ? [{ key: 'update', label: `Update this project — keeps its ${declared.skills.length} skills, refreshes hooks and content` }] : []),
       { key: 'base', label: `Base install — the essentials (${baseIds.length} skills)` },
       { key: 'sdd', label: 'Base + Spec-Driven Development — the specify → plan → implement → ship flow' },
       { key: 'manual', label: 'Pick skills by hand, by area' },
     ]);
     if (choice === null) { say('\nOK — nothing installed. Anytime: npx @ericrisco/rsc'); return; }
+    if (choice === 'update') return syncDeclared(declaredTargets);
 
     let ids;
     if (choice === 'base') ids = baseIds;
@@ -621,7 +636,14 @@ async function main() {
   const target = targets[0];
   switch (cmd) {
     case undefined:
-      return hasDeclaredHarness() ? wizard(f ? targets : null) : runOnboarding(f ? targets : []);
+      if (!hasDeclaredHarness()) return runOnboarding(f ? targets : []);
+      // A project that already has a harness: the bare command means "bring it up to date". It is
+      // what every update notice, the README and our own replies to users tell people to run, with
+      // the promise "that reinstalls and refreshes". It used to open the install wizard instead, and
+      // with no terminal — which is how an agent runs it when it obeys the notice — it did nothing.
+      // Restoring what the project already declared is not a decision, so there is nothing to ask.
+      if (!isInteractive()) return syncDeclared(targets);
+      return wizard(f ? targets : null, targets);
     case 'onboard':
       return runOnboarding(f ? targets : []);
     case 'reassess':
@@ -773,18 +795,8 @@ async function main() {
       process.exitCode = 1;
       return;
     }
-    case 'sync': {
-      const dry = argv.includes('--dry-run');
-      for (const t of targets) {
-        const result = await syncInstalled({ target: t, dryRun: dry });
-        const verb = dry ? 'Would sync' : 'Synced';
-        say(`${verb} ${t}: ${result.synced.length ? result.synced.join(', ') : '(nothing to sync)'}`);
-        if (dry && result.paths?.length) {
-          for (const p of result.paths) say(`  ${p}`);
-        }
-      }
-      return;
-    }
+    case 'sync':
+      return syncDeclared(targets, argv.includes('--dry-run'));
     case 'backups': {
       const backups = listBackups();
       if (!backups.length) return void say('(no backups)');
