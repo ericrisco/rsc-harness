@@ -266,19 +266,58 @@ function isNewer(a, b) {
   return false;
 }
 
+// "rsc X is out" was being ignored — the maintainer's own workspace sat on 2.0.4 for days with this
+// notice on every session, and two people in two days reported bugs that were already fixed. A
+// version number names nothing anyone recognises. A symptom does: someone who sees a red error after
+// every turn updates the moment they are told that is what the update fixes (`suggest` §3: say what
+// is wrong as a symptom, not as a cause).
+//
+// The symptoms travel for free: the registry's `/latest` document is the published package.json, so
+// its `rscFixes` field — `{ fixedIn, symptom }` — arrives in the response this check already makes.
+// It is text a model will read, so every entry is reduced to one short plain line or dropped.
+const SEMVER_ONLY = /^\d+\.\d+\.\d+$/;
+function fixesSince(list, installed, latest) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const item of list) {
+    if (!item || typeof item !== 'object' || typeof item.symptom !== 'string') continue;
+    if (!SEMVER_ONLY.test(String(item.fixedIn))) continue;
+    if (!isNewer(item.fixedIn, installed) || isNewer(item.fixedIn, latest)) continue;
+    const symptom = item.symptom.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+    if (symptom) out.push({ fixedIn: item.fixedIn, symptom });
+  }
+  return out.slice(0, 8);
+}
+
 if (!process.env.RSC_NO_UPDATE_CHECK) {
   try {
     const installed = readFileSync(join(root, '.rsc', '.version'), 'utf8').trim();
-    let latest = process.env.RSC_LATEST;
-    if (!latest) {
+    let doc = null;
+    if (process.env.RSC_LATEST_JSON) doc = JSON.parse(process.env.RSC_LATEST_JSON);
+    else if (process.env.RSC_LATEST) doc = { version: process.env.RSC_LATEST };
+    else {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 1500);
       const res = await fetch('https://registry.npmjs.org/@ericrisco%2frsc/latest', { signal: ctrl.signal });
       clearTimeout(timer);
-      latest = (await res.json()).version;
+      doc = await res.json();
     }
+    const latest = doc?.version;
     if (installed && latest && isNewer(latest, installed)) {
-      process.stdout.write(`
+      let fixes = [];
+      try { fixes = fixesSince(doc.rscFixes, installed, latest); } catch { fixes = []; }
+      if (fixes.length) {
+        process.stdout.write(`
+===== rsc update available =====
+rsc ${latest} is out — you have ${installed}. It fixes problems this install still has:
+${fixes.map((f) => `  - ${f.symptom} (fixed in ${f.fixedIn})`).join('\n')}
+ACTION: before starting the task, tell the user in one line that the update fixes what they
+may be seeing, and if they say yes, run it in this project:
+  npx @ericrisco/rsc@latest
+================================
+`);
+      } else {
+        process.stdout.write(`
 ===== rsc update available =====
 rsc ${latest} is out — you have ${installed}.
 ACTION: tell the user a new version is available and, if they say yes, run:
@@ -286,6 +325,7 @@ ACTION: tell the user a new version is available and, if they say yes, run:
 (That reinstalls and refreshes the skill content to the latest.)
 ================================
 `);
+      }
     }
   } catch { /* offline / no baseline / parse error → stay silent */ }
 }
