@@ -22,6 +22,7 @@ export const PROJECT_OPT_OUTS = [
   'danger-guard',     // foot-gun denial, keyed to the committed user profile
   'feature-gate',     // per-turn re-injection of the SDD gate
   'gitmoji',          // the commit-message convention
+  'knowledge-sync',   // 01-TOOLS/ + 02-DOCS/ sync: one person off and the team stops seeing their work
   'ship-guard',       // branch/trunk discipline
   'worktree-cleanup', // the reaper's notice (it only ever names, never acts)
 ];

@@ -352,6 +352,39 @@ list somebody has to remember to update is a list that goes quietly stale. Decla
 `ownSkills` still works and still reports when someone is missing it.
 
 
+### Your wiki and tools stay in sync — on by default
+
+`01-TOOLS/` and `02-DOCS/` are the team's knowledge, so rsc keeps them the same on every machine
+without anybody thinking about git:
+
+- **When a turn ends**, your changes there are committed as `📝 docs(auto): … [skip ci]` and pushed
+  to the default branch on `origin` — from whatever branch you are on, without touching your
+  working tree.
+- **Before each message**, what teammates pushed there is applied, and you are told in one line.
+
+What it will not do, by design:
+
+| | |
+| --- | --- |
+| Push your unpushed commits | Only its own commit goes up. Your code waits for you. |
+| Trigger CI or a deploy | Every automatic commit says `[skip ci]`. |
+| Touch anything outside the knowledge folders | Code, config and `.claude/` coming from others are announced, not pulled. |
+| Sync `02-DOCS/wiki/harness/user-profile.md` | Those are one person's dials. |
+| Overwrite a file you are editing | It tells you, and your version stays. |
+| Run where it has no business | No `origin`, no knowledge folders, a rebase in progress, a cloud agent: it stays quiet. |
+
+It rides on the session lifecycle hooks, so it works in every assistant with
+[local session memory](#new-sessions-pick-up-the-latest-local-work), and `rsc memory off` turns it
+off too. The first turn says it is on. To turn it off for the project:
+
+```bash
+rsc knowledge-sync off      # writes .rsc/.no-knowledge-sync and records it in .rsc.json — commit that
+rsc knowledge-sync status   # active or not, and why
+```
+
+It is a **project** switch, not a personal one: if one person stopped pushing, the rest of the team
+would stop seeing their work.
+
 ## 🩹 Something's off? One command
 
 Recognise any of these? They are all the same fix.
