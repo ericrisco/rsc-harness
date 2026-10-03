@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import {
-  KNOWLEDGE, OPT_OUT, SKIP_CI, hook, inactiveReason, knowledgeStatus, onRequest, onTurn, work,
+  KNOWLEDGE, OPT_OUT, SKIP_CI, hook, inactiveReason, knowledgeStatus, onRequest, onTurn, work, workerRuntime,
 } from '../targets/knowledge-sync.mjs';
 
 process.env.RSC_KNOWLEDGE_SYNC_FOREGROUND = '1';
@@ -378,4 +378,11 @@ test('ks42 · every assistant gets it, and the memory stays free of network code
   }
   const source = readFileSync(join(import.meta.dirname, '..', 'targets', 'knowledge-sync.mjs'), 'utf8');
   assert.doesNotMatch(source, /node:(?:http|https|net|tls)|https?:\/\//u, 'it talks to origin through git, and nothing else');
+});
+
+test('ks43 · the background worker runs on node even when the host is not node (OpenCode is Bun)', () => {
+  assert.equal(workerRuntime('/opt/homebrew/lib/node_modules/opencode-ai/bin/opencode.exe', { bun: '1.3.14', node: '24.3.0' }), 'node');
+  assert.equal(workerRuntime('/usr/local/bin/bun', { bun: '1.3.14' }), 'node');
+  assert.equal(workerRuntime('/usr/local/bin/node', { node: '22.0.0' }), '/usr/local/bin/node');
+  assert.equal(workerRuntime('C:\\Program Files\\nodejs\\node.exe', { node: '22.0.0' }), 'C:\\Program Files\\nodejs\\node.exe');
 });

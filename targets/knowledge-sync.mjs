@@ -363,11 +363,21 @@ export function applyIncoming(root, s) {
 
 // `RSC_KNOWLEDGE_SYNC_FOREGROUND=1` runs the network half inline: for tests, which would otherwise race
 // a detached process for the lock, and for anybody debugging what the background did.
+/**
+ * Which program runs the detached worker. Not always `process.execPath`: OpenCode loads plugins in its
+ * own Bun-based binary, so there `execPath` is `opencode` — which does not run scripts — and the push
+ * silently never happened (found end to end, not by the unit tests). Anything that is not Node gets
+ * `node` from the PATH, which every assistant here already needs to run the hooks.
+ */
+export function workerRuntime(execPath = process.execPath, versions = process.versions) {
+  return !versions.bun && /^node(?:\.exe)?$/i.test(execPath.split(/[\\/]/).pop()) ? execPath : 'node';
+}
+
 function background(root, op) {
   if (process.env.RSC_KNOWLEDGE_SYNC_FOREGROUND === '1') return work(root, op);
   try {
     const self = fileURLToPath(import.meta.url);
-    spawn(process.execPath, [self, op, root], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+    spawn(workerRuntime(), [self, op, root], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
   } catch { /* the next turn tries again */ }
 }
 
