@@ -31,6 +31,27 @@ npx @ericrisco/rsc@latest onboard
 
 </div>
 
+## 🐋 New: DeepSeek Harness
+
+[DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/dsh) (`dsh`) is now a supported
+assistant, the 18th. Pick it in the wizard or pass `--target deepseek`:
+
+```bash
+npx @ericrisco/rsc@latest onboard --target deepseek
+```
+
+- **Skills** go to `.dsh/skills/`, where dsh finds them on its own.
+- **Instructions** go in the rsc block of `AGENTS.md`, which dsh already reads.
+- **Session memory, knowledge sync and the update notice** run from dsh's own hooks. dsh has no
+  hooks per project, so rsc adds one marked block to `~/.dsh/cordis.patch.yml` once per machine. That
+  block runs the hooks of whichever project the session is in. It works in `dsh web` with several
+  projects open, and in a project without rsc it does nothing. Restart dsh once after the first
+  install. To turn it off, delete the block.
+
+Details: [targets table](#multi-target).
+
+---
+
 ## Your agent needs a harness. It should not improvise one.
 
 A model is only the brain. Real work also needs project memory, tools, domain knowledge, rules and
@@ -89,6 +110,7 @@ someone runs `rsc git-permissions on`.
 | Gemini | `.gemini/settings.json` → `tools.allowed` |
 | OpenCode | `opencode.json` → `permission.bash` (force-push → `ask`) |
 | Cursor | Not covered: its CLI matches only the first word, so allowing a push would allow every git command. |
+| DeepSeek Harness | Not covered: dsh has no per-command allow list. Its own Permissions selector (`/permission`) sets approval for every command at once. |
 
 ```bash
 rsc git-permissions status   # decided or not, and wired per assistant
@@ -241,8 +263,8 @@ no method deciding whether each piece belongs. rsc-harness keeps that constructi
 - **Specialists follow the stack.** The four base agents stay small; installing a
   supported stack adds only its reviewer and build resolver. `rsc add go`, for
   example, adds the Go pair without pulling reviewers for every other language.
-- **A new local session continues the old one.** Claude Code, Codex, Gemini CLI
-  and OpenCode load a bounded checkpoint for the current branch and worktree at
+- **A new local session continues the old one.** Claude Code, Codex, Gemini CLI,
+  OpenCode and DeepSeek Harness load a bounded checkpoint for the current branch and worktree at
   session start. Cursor desktop uses an assisted read-before-action fallback.
 - **Honestly good.** Every skill was built by a research → spec → implement →
   *adversarial review* pipeline and had to clear an objective rubric
@@ -262,7 +284,8 @@ When a new session opens in the same checkout, that state is injected before the
 first agent action. A completed edit is preserved even if the previous client
 closed before its normal session-end event.
 
-- **Full:** Claude Code, Codex, Gemini CLI and OpenCode. Codex asks you to inspect
+- **Full:** Claude Code, Codex, Gemini CLI, OpenCode and DeepSeek Harness (through rsc's machine
+  bridge, see [targets](#multi-target)). Codex asks you to inspect
   and trust the project hook once with `/hooks`; until then `doctor` reports that
   trust is still required.
 - **Assisted:** Cursor desktop. Its start hook is fire-and-forget, so rsc also
@@ -489,7 +512,7 @@ What it will not do, by design:
 | Run where it has no business | No `origin`, no knowledge folders, a rebase in progress, a cloud agent: it stays quiet. |
 
 It is wired into the assistant's own turn hooks (end of turn, new message) in Claude Code, Codex,
-Gemini, Cursor and OpenCode (tested end to end in Claude Code, Codex and OpenCode). The network part runs in the background, so a turn never waits for
+Gemini, Cursor, OpenCode and DeepSeek Harness (tested end to end in Claude Code, Codex and OpenCode). The network part runs in the background, so a turn never waits for
 it. It is kept apart from the [local session memory](#new-sessions-pick-up-the-latest-local-work),
 which promises never to touch the network. The first turn says it is on. To turn it off for the
 project:
@@ -550,7 +573,7 @@ A new install asks whether you want this (yes by default). To turn it off later,
 `.rsc.json` like the other switches. The update can leave harness files changed in git; rsc never
 commits them for you.
 
-Where it runs on its own: **Claude Code, Codex, Gemini CLI, Cursor and OpenCode**, from a
+Where it runs on its own: **Claude Code, Codex, Gemini CLI, Cursor, OpenCode and DeepSeek Harness**, from a
 session-start hook. Every other assistant has no such hook, so the always-on instructions ask the
 agent to run `node .rsc/auto-update.mjs` on its first turn — same rules, but it depends on the agent
 doing it (and some assistants ask your permission before running a command). Codex asks you to

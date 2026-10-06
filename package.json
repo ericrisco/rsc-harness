@@ -46,6 +46,8 @@
     "claude-code",
     "cursor",
     "codex",
+    "deepseek",
+    "deepseek-harness",
     "gemini",
     "antigravity",
     "cli",
