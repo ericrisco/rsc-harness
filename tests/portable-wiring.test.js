@@ -24,7 +24,7 @@ function repo() {
 
 test('memory support is explicit and Cursor is assisted because start is fire-and-forget', () => {
   assert.deepEqual(adapters.MEMORY_TARGETS, {
-    claude: 'full', codex: 'full', cursor: 'assisted', gemini: 'full', opencode: 'full',
+    claude: 'full', codex: 'full', cursor: 'assisted', deepseek: 'full', gemini: 'full', opencode: 'full',
   });
   assert.equal(adapters.memoryModeFor('windsurf'), 'unsupported');
 });

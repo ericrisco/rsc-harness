@@ -21,8 +21,8 @@ import { AGENT_TARGET_IDS } from '../targets/agents.js';
 const AGENTLESS = TARGET_IDS.filter((t) => !AGENT_TARGET_IDS.includes(t));
 const plan = (agents) => ({ policy: { agents } });
 
-test('the nine agentless targets are expected to hold no agents', () => {
-  assert.deepEqual(AGENTLESS.sort(), ['aider', 'amp', 'antigravity', 'cline', 'continue', 'jules', 'roo', 'windsurf', 'zed']);
+test('the ten agentless targets are expected to hold no agents', () => {
+  assert.deepEqual(AGENTLESS.sort(), ['aider', 'amp', 'antigravity', 'cline', 'continue', 'deepseek', 'jules', 'roo', 'windsurf', 'zed']);
   for (const target of AGENTLESS) {
     assert.deepEqual(expectedAgentsFor(target, plan(['developer', 'refuter-tests'])), [], target);
   }

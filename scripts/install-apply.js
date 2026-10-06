@@ -25,6 +25,7 @@ import {
 import { wireUpdate, unwireUpdate, updateManagedPaths, updateArtifactsPresent } from '../targets/update-wiring.js';
 import { wireKnowledge, unwireKnowledge, knowledgeManagedPaths, knowledgeArtifactsPresent } from '../targets/knowledge-wiring.js';
 import { wireGitPermissions, unwireGitPermissions, gitPermissionsPath } from '../targets/git-permissions.js';
+import { wireDeepseekBridge } from '../targets/deepseek-bridge.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CLI_VERSION = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
@@ -320,6 +321,8 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   // the memory, so the memory's policy does not decide it: wired wherever the assistant can run it.
   const knowledgeResult = wireKnowledge(target, cwd);
   state.knowledge = { mode: knowledgeResult.mode, reason: knowledgeResult.reason || null, paths: knowledgeResult.paths };
+  // DeepSeek Harness only reads hooks through a machine-level bridge (targets/deepseek-bridge.js).
+  if (target === 'deepseek') state.deepseekBridge = wireDeepseekBridge();
   if (gitPermissions === true) state.gitPermissions = wireGitPermissions(target, cwd);
   else if (gitPermissions === false) { unwireGitPermissions(target, cwd); state.gitPermissions = { mode: 'off' }; }
   const context7OptOut = join(cwd, '.rsc', '.no-context7');

@@ -772,13 +772,22 @@ duplicated. The wizard asks which ones; `--target a,b` does it non-interactively
 | `roo` | `.roo/rsc/<id>/` → symlink | rule in `.roo/rules/rsc-suggest.md` |
 | `amp` | `.amp/rsc/<id>/` → symlink | block in `AGENTS.md` |
 | `opencode` | `.opencode/rsc/<id>/` → symlink | block in `AGENTS.md` |
+| `deepseek` | `.dsh/skills/<id>/` → symlink (DeepSeek Harness discovers it natively) | block in `AGENTS.md` |
 | `jules` | `.jules/rsc/<id>/` → symlink | block in `AGENTS.md` |
 | `junie` | `.junie/rsc/<id>/` → symlink | block in `.junie/guidelines.md` |
 | `kiro` | `.kiro/rsc/<id>/` → symlink | doc in `.kiro/steering/rsc-suggest.md` |
 | `aider` | `.aider/rsc/<id>/` → symlink | block in `CONVENTIONS.md` |
 
-> `codex`, `zed`, `amp`, `opencode` and `jules` all share the one root
+> `codex`, `zed`, `amp`, `opencode`, `deepseek` and `jules` all share the one root
 > `AGENTS.md`; the block is idempotent, so picking several writes it once.
+
+> **DeepSeek Harness** (`dsh`) has no project-level hook config: its plugins are per machine. So
+> the `deepseek` target writes the project hooks to `.dsh/hooks.json` (Codex format, untracked) and,
+> once per machine, adds one marked block to `~/.dsh/cordis.patch.yml` (or `$DSH_HOME`) that mounts
+> dsh's Codex-hooks bridge on rsc's dispatcher in `~/.dsh/rsc/`. The dispatcher runs the hooks of
+> whichever project the session is in, so `dsh web` serving several workspaces works too, and a
+> project without rsc runs nothing. Restart dsh once after the first install. Delete the block to
+> turn it off.
 
 The richer surfaces are intentionally narrower than skill support:
 
@@ -788,6 +797,7 @@ The richer surfaces are intentionally narrower than skill support:
 | Codex | yes | no separate project-command surface | full after `/hooks` trust |
 | Cursor desktop | yes | yes | assisted |
 | Gemini CLI, OpenCode | yes | yes | full |
+| DeepSeek Harness | unsupported | unsupported | full (through the machine bridge) |
 | GitHub Copilot | yes | yes | unsupported |
 | Junie, Kiro | yes | unsupported | unsupported |
 | Windsurf, Cline, Roo | unsupported | yes | unsupported |

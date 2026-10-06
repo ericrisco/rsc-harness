@@ -18,6 +18,7 @@ const PLUGIN_MARKER = 'rsc-knowledge:managed';
 const CONFIG = Object.freeze({
   claude: '.claude/settings.local.json',
   codex: '.codex/hooks.json',
+  deepseek: '.dsh/hooks.json',
   cursor: '.cursor/hooks.json',
   gemini: '.gemini/settings.json',
   opencode: '.opencode/plugins/rsc-knowledge.js',
@@ -26,6 +27,7 @@ const CONFIG = Object.freeze({
 const EVENTS = Object.freeze({
   claude: [['UserPromptSubmit', 'request'], ['Stop', 'turn']],
   codex: [['UserPromptSubmit', 'request'], ['Stop', 'turn']],
+  deepseek: [['UserPromptSubmit', 'request'], ['Stop', 'turn']],
   gemini: [['BeforeAgent', 'request'], ['AfterAgent', 'turn']],
   cursor: [['beforeSubmitPrompt', 'request'], ['afterAgentResponse', 'turn']],
 });

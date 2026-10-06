@@ -19,12 +19,13 @@ const PLUGIN_MARKER = 'rsc-update:managed';
 
 const CONFIG = Object.freeze({
   codex: '.codex/hooks.json',
+  deepseek: '.dsh/hooks.json',
   cursor: '.cursor/hooks.json',
   gemini: '.gemini/settings.json',
   opencode: '.opencode/plugins/rsc-update.js',
 });
 
-const EVENT = Object.freeze({ codex: 'SessionStart', gemini: 'SessionStart', cursor: 'sessionStart' });
+const EVENT = Object.freeze({ codex: 'SessionStart', deepseek: 'SessionStart', gemini: 'SessionStart', cursor: 'sessionStart' });
 
 /** Assistants where the update runs on its own. Every other one depends on the agent running it. */
 export const UPDATE_HOOK_TARGETS = Object.freeze(['claude', ...Object.keys(CONFIG)].sort());

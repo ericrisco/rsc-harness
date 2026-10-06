@@ -13,6 +13,7 @@ const PLUGIN_MARKER = 'rsc-memory:managed';
 export const MEMORY_TARGETS = Object.freeze({
   claude: 'full',
   codex: 'full',
+  deepseek: 'full',
   // Cursor documents sessionStart as fire-and-forget. Its best-effort hook is useful,
   // but only the always-on rule can make the read-before-action obligation explicit.
   cursor: 'assisted',
@@ -23,6 +24,7 @@ export const MEMORY_TARGETS = Object.freeze({
 const CONFIG = Object.freeze({
   claude: '.claude/settings.local.json',
   codex: '.codex/hooks.json',
+  deepseek: '.dsh/hooks.json',
   cursor: '.cursor/hooks.json',
   gemini: '.gemini/settings.json',
   opencode: '.opencode/plugins/rsc-memory.js',
@@ -98,6 +100,11 @@ const nestedEvents = {
     ['SessionStart', 'start', 'startup|resume|clear|compact'], ['UserPromptSubmit', 'request'],
     ['PostToolUse', 'edit', 'apply_patch|Edit|Write'], ['PostToolUse', 'boundary', 'Bash'],
     ['Stop', 'turn'], ['PreCompact', 'compact'], ['SessionEnd', 'end'],
+  ],
+  // DeepSeek Harness runs Codex-format hooks through rsc's bridge: only these five points exist there.
+  deepseek: [
+    ['SessionStart', 'start'], ['UserPromptSubmit', 'request'],
+    ['PostToolUse', 'edit', 'edit|write|str_replace_editor'], ['PostToolUse', 'boundary', 'bash'], ['Stop', 'turn'],
   ],
   gemini: [
     ['SessionStart', 'start'], ['BeforeAgent', 'request'], ['AfterTool', 'edit', 'write_file|replace'],

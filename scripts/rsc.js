@@ -450,6 +450,7 @@ function printNextSteps(targets, ids) {
   say('   Browse the catalog / get picks:   npx @ericrisco/rsc consult "whatever you need"');
   say('────────────────────────────────────────────────────────');
   if (targets.includes('codex')) say('   Codex: review and trust the project lifecycle hook once with `/hooks`; until then memory is reported as requiring trust.');
+  if (targets.includes('deepseek')) say('   DeepSeek Harness: hooks run through rsc\'s bridge in ~/.dsh/cordis.patch.yml (one block, every profile); restart dsh once to load it.');
   if (targets.includes('cursor')) say('   Cursor: startup memory is assisted because its sessionStart hook is fire-and-forget; the installed always-on rule performs the read-before-action fallback.');
   printAgentHandoff();
 }

@@ -4,7 +4,7 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { capture, otherActiveSessions, resume } from './session-memory-core.mjs';
 
-const LOCAL_TARGETS = new Set(['claude', 'codex', 'cursor', 'gemini', 'opencode']);
+const LOCAL_TARGETS = new Set(['claude', 'codex', 'cursor', 'deepseek', 'gemini', 'opencode']);
 
 function projectSettings(cwd) {
   try {
