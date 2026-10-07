@@ -50,7 +50,7 @@ test('W4 · a teammate clone inherits it: a worktree there is not offered for co
   git(lead, 'add', '.gitignore');
   git(lead, 'commit', '-qm', 'chore: ignore rsc state');
   const origin = tmp('rsc-hyg-origin-');
-  git(origin, 'init', '-q', '--bare');
+  git(origin, 'init', '-q', '--bare', '-b', 'main'); // CI's git defaults to master: the clone would check out nothing
   git(lead, 'remote', 'add', 'origin', origin);
   git(lead, 'push', '-q', 'origin', 'main');
   const bruno = join(tmp('rsc-hyg-clone-'), 'bruno');
