@@ -8,7 +8,7 @@ import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } fr
 import { shadowTarget } from '../targets/agents-md-shadow.js';
 import {
   targetHasAgents, reconcileAgents, agentPath, agentNames, writeAgentsDetailed,
-  resolveAgentNames, agentByName, allAgentNames, readDeveloperTier, writeDeveloperTier,
+  resolveAgentNames, withAgentCompanions, agentByName, allAgentNames, readDeveloperTier, writeDeveloperTier,
 } from '../targets/agents.js';
 import { projectOptOuts } from '../targets/opt-outs.js';
 import { readState, writeState } from './lib/state.js';
@@ -114,13 +114,13 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
   if (targetHasAgents(target)) {
     const state = readState(paths.stateFile);
     const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
-    const desired = policy?.agents || resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
+    const desired = withAgentCompanions(policy?.agents || resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit));
     out.push(...desired.map((n) => agentPath(target, cwd, n)));
   }
   if (targetHasCommands(target)) {
     const state = readState(paths.stateFile);
     const explicit = [...new Set([...(state.explicitAgents || readManifest(cwd)?.agents || []), ...agentIds])];
-    const desiredAgents = policy?.agents || resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit);
+    const desiredAgents = withAgentCompanions(policy?.agents || resolveAgentNames([...Object.keys(state.skills || {}), ...skillIds], explicit));
     const desiredCommands = resolveCommands({
       target,
       skills: policy ? skillIds : [...new Set([...Object.keys(state.skills || {}), ...skillIds])],
@@ -301,11 +301,11 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   // naming an agent whose file never landed answers "you have it" for something absent.
   const inheritedExplicit = policy ? (state.explicitAgents || []) : (state.explicitAgents || readManifest(cwd)?.agents || []);
   const explicit = [...new Set([...inheritedExplicit, ...agentIds])].sort();
-  const desiredAgents = policy?.agents
+  const desiredAgents = withAgentCompanions(policy?.agents
     ? [...new Set([...policy.agents, ...explicit])].sort()
     : policy?.baseAgents === false
       ? explicit
-      : resolveAgentNames(Object.keys(state.skills || {}), explicit);
+      : resolveAgentNames(Object.keys(state.skills || {}), explicit));
   const previousAgents = state.agents || [];
   let keptAgents = [];
   if (targetHasAgents(target)) {

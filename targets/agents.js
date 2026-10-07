@@ -171,6 +171,16 @@ Also state whether the severity holds. A CONFIRMED finding whose blast radius is
 ];
 
 
+// Agents that only make sense next to others, and so travel with them. A project whose accepted plan
+// lists the refuters explicitly (onboarded before 3.0.11) would otherwise get a `review` skill that
+// dispatches `finding-verifier` into a project that does not have it. Same panel the user accepted,
+// one more member — not a new decision, so it is added on sync rather than asked.
+const COMPANIONS = { 'finding-verifier': (names) => names.some((n) => n.startsWith('refuter-')) };
+export function withAgentCompanions(names = []) {
+  const extra = Object.entries(COMPANIONS).filter(([name, needs]) => !names.includes(name) && needs(names)).map(([name]) => name);
+  return extra.length ? [...names, ...extra] : names;
+}
+
 export const BASE_AGENT_NAMES = Object.freeze(AGENTS.map((agent) => agent.name));
 export { stackAgents, stackAgentNames, validateAgentCatalog };
 export const allAgentNames = () => [...BASE_AGENT_NAMES, ...stackAgentNames()];
