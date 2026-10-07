@@ -102,7 +102,11 @@ test('a requested stack agent renders natively with its declared tools on all 8 
     } else if (path.endsWith('.toml')) {
       assert.match(text, /^tools = \["read", "search"\]$/m);
     } else if (target === 'opencode') {
-      assert.match(text, /^tools:\n {2}read: true\n {2}search: true$/m);
+      // #298: OpenCode used to get `read: true` / `search: true` — grants that loosened a stricter
+      // project policy. It is restrict-only now: a read-only reviewer is denied the edit and shell
+      // tools it never declared, and is granted nothing.
+      assert.match(text, /^tools:\n {2}edit: false\n {2}write: false\n {2}patch: false\n {2}bash: false$/m);
+      assert.doesNotMatch(text, /: true$/m);
     } else {
       assert.match(text, /^tools: \[read, search\]$/m);
     }

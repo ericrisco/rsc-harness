@@ -17,7 +17,7 @@ import { countGaps, listSkills, listAgents } from './lib/capabilities.js';
 import { resolveCommands, commandPath, targetHasCommands } from '../targets/commands.js';
 import { inspectMemoryWiring } from '../targets/memory.js';
 import { metricsSummary } from '../targets/session-memory-core.mjs';
-import { agentPath } from '../targets/agents.js';
+import { agentPath, targetHasAgents, effectiveAgentModel } from '../targets/agents.js';
 import { projectOptOuts } from '../targets/opt-outs.js';
 import { versionReport } from './lib/versions.js';
 import { CONSTITUTION_PATH, constitutionIsDraft } from './lib/constitution-draft.js';
@@ -298,6 +298,11 @@ export function doctor({ target, home, cwd }) {
     memory,
     missingAgents,
     agentCollisions: state.agentCollisions || [],
+    // #298 — generated agents the user edited and sync kept as they are. Not unhealthy: theirs on
+    // purpose. Named with the way back, so a stale edit is one command from rsc's version.
+    agentsEditedByYou: (state.agentsKept || []).map((k) => ({ ...k, action: `\`npx @ericrisco/rsc agents reset ${k.name}\` takes rsc's version (yours is backed up first).` })),
+    // Which model the agents carry: the session's (inherit) or a project pin (`rsc agent-model`).
+    agentModel: targetHasAgents(target) ? (effectiveAgentModel(target, root) || 'inherit') : null,
     missingCommands,
     commandOrphans,
     commandCollisions: state.commandCollisions || [],

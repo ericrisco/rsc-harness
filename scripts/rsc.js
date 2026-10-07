@@ -4,9 +4,12 @@ import { detectTarget, installedTargets, resolveTargets, TARGETS } from '../targ
 import { detectRepo } from './detect-repo.js';
 import { rank } from './consult.js';
 import { expandRecommends, toOutcomes, hasOutcome } from './lib/recommend.js';
-import { applyInstall, listInstalled, listInstalledAgents, listInstalledCommands, uninstall, syncInstalled, purgeReport, collisions, ownSkillPaths } from './install-apply.js';
+import { applyInstall, listInstalled, listInstalledAgents, listInstalledCommands, uninstall, syncInstalled, purgeReport, collisions, ownSkillPaths, resetAgents } from './install-apply.js';
 import { isAbsolute, relative, sep } from 'node:path';
-import { stackAgentNames } from '../targets/agents.js';
+import {
+  stackAgentNames, targetHasAgents, isValidAgentModel, agentModelSetting, targetInheritsByDefault,
+  effectiveAgentModel, writeAgentsDetailed, readDeveloperTier, AGENT_MODEL_INHERIT, AGENT_TARGET_IDS,
+} from '../targets/agents.js';
 import { doctor } from './doctor.js';
 import { ask, say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
 import { refreshRegistry, registryStatus } from './lib/registry.js';
@@ -43,7 +46,7 @@ if (['--version', '-v', 'version'].includes(rawArgv[0])) {
   process.exit(0);
 }
 const GENERAL_HELP = [
-  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
+  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
   'Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)',
   '   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.',
 ].join('\n');
@@ -74,7 +77,7 @@ const PURGE_HELP = [
 const GLOBAL_VALUE_FLAGS = new Set([
   '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--accept-plan',
 ]);
-const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'sello', 'repair', 'uninstall', 'purge']);
+const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'sello', 'repair', 'uninstall', 'purge']);
 function positionalTokens(input) {
   const out = [];
   for (let i = 0; i < input.length; i++) {
@@ -416,7 +419,7 @@ function reportUnknown(ids) {
 // flag says which: `purge` sweeps every target by design, and the catalog/consult
 // side barely touches one, so blocking them would be a regression, not a safeguard.
 const NEEDS_TARGET = new Set([
-  'onboard', 'add', 'install', 'list', 'doctor', 'sync', 'uninstall', 'capabilities', 'catalog', 'registry',
+  'onboard', 'add', 'install', 'list', 'doctor', 'sync', 'uninstall', 'capabilities', 'catalog', 'registry', 'agents',
 ]);
 
 function flag(name) {
@@ -624,6 +627,7 @@ async function syncDeclared(targets, dry = false) {
     const result = await syncInstalled({ target: t, dryRun: dry });
     const verb = dry ? 'Would sync' : 'Synced';
     say(`${verb} ${t}: ${result.synced.length ? result.synced.join(', ') : '(nothing to sync)'}`);
+    for (const k of result.keptAgents || []) say(`  ${k.message}`);
     if (dry && result.paths?.length) {
       for (const p of result.paths) say(`  ${p}`);
     }
@@ -1021,6 +1025,98 @@ async function main() {
       if (sub === 'metrics') return void say(JSON.stringify(M.metricsSummary({ cwd: root }), null, 2));
       say('Use: npx @ericrisco/rsc memory on|off|status|save [--session id]|resume [--json]|learn --text "…" --evidence "…" --scope project|global --confidence 0..1 --approve|metrics');
       process.exitCode = 1;
+      return;
+    }
+    case 'agent-model': {
+      // #298 — which model the generated agents carry: the session's (`inherit`, OpenCode's default)
+      // or one the project pins. A PROJECT decision, saved as `agentModels` in .rsc.json, so a clone
+      // renders the same agents; the files of that target are re-rendered at once.
+      const root = process.cwd();
+      const t = argv[1];
+      const value = argv[2] || 'status';
+      const describe = (id) => {
+        const setting = agentModelSetting(root, id);
+        const effective = effectiveAgentModel(id, root);
+        return {
+          target: id,
+          declared: setting || (targetInheritsByDefault(id) ? 'default (inherit)' : 'default (tier model)'),
+          effective: effective || 'inherit — the agent uses the session model',
+        };
+      };
+      if (!t || t === 'status') {
+        return void say(JSON.stringify(targets.filter(targetHasAgents).map(describe), null, 2));
+      }
+      if (!targetHasAgents(t)) {
+        console.error(`rsc: ${t} has no file-based agents. Targets with agents: ${AGENT_TARGET_IDS.join(', ')}`);
+        process.exitCode = 2;
+        return;
+      }
+      if (value === 'status') return void say(JSON.stringify(describe(t), null, 2));
+      if (!isValidAgentModel(value)) {
+        console.error(`rsc: '${value}' is not a model id (letters, digits and . _ : / @ + - only), nor 'inherit'.\nUse: npx @ericrisco/rsc agent-model <target> <model|inherit|status>`);
+        process.exitCode = 2;
+        return;
+      }
+      const current = readManifest(root);
+      if (!current) { say('No .rsc.json here: install the harness first (`npx @ericrisco/rsc onboard`).'); process.exitCode = 2; return; }
+      const next = { ...(current.agentModels || {}) };
+      // `inherit` on a target whose default is inherit stores nothing: the manifest stays as small as the decision.
+      if (value === AGENT_MODEL_INHERIT && targetInheritsByDefault(t)) delete next[t];
+      else next[t] = value;
+      writeManifest(root, { ...current, agentModels: Object.keys(next).length ? next : undefined });
+      const { targetPaths: pathsOf } = await import('../targets/index.js');
+      const { readState } = await import('./lib/state.js');
+      const installedAgents = readState(pathsOf(t, undefined, root).stateFile).agents || [];
+      const { written, kept } = writeAgentsDetailed(t, root, readDeveloperTier(root), installedAgents);
+      say(value === AGENT_MODEL_INHERIT
+        ? `rsc agent-model ${t} inherit: the agents carry no model and use the session's.`
+        : `rsc agent-model ${t} ${value}: the agents are pinned to ${value}.`);
+      say(`  Re-rendered ${written.length} agent file(s). Commit .rsc.json so the team gets the same decision.`);
+      for (const k of kept) say(`  ${k.message}`);
+      return;
+    }
+    case 'agents': {
+      const sub = argv[1] || 'status';
+      const root = process.cwd();
+      if (sub === 'reset') {
+        const all = argv.includes('--all');
+        const names = requestedIds(2);
+        if (!all && !names.length) {
+          console.error('Use: npx @ericrisco/rsc agents reset <name...|--all> [--target <assistant>]');
+          process.exitCode = 2;
+          return;
+        }
+        const { targetPaths: pathsOf } = await import('../targets/index.js');
+        const { readState } = await import('./lib/state.js');
+        const withAgents = targets.filter(targetHasAgents);
+        let done = 0;
+        for (const t of withAgents) {
+          const installed = readState(pathsOf(t, undefined, root).stateFile).agents || [];
+          const mine = all ? [] : names.filter((n) => installed.includes(n));
+          if (!all && !mine.length) continue;
+          const out = resetAgents({ target: t, cwd: root, names: mine, all });
+          done += out.reset.length;
+          if (out.reset.length) {
+            say(`Reset ${t}: ${out.reset.join(', ')} — rsc's version is back.`);
+            if (out.backup) say(`  Your previous files are kept in ${out.backup}/files/ (\`rsc restore\` lists the snapshot).`);
+          }
+        }
+        if (!all && !done) {
+          console.error(`rsc: ${names.join(', ')}: not an agent rsc installed here (${withAgents.join(', ') || 'no target with agents'}).`);
+          process.exitCode = 1;
+        }
+        return;
+      }
+      if (sub === 'status') {
+        const { targetPaths: pathsOf } = await import('../targets/index.js');
+        const { readState } = await import('./lib/state.js');
+        return void say(JSON.stringify(targets.filter(targetHasAgents).map((t) => {
+          const state = readState(pathsOf(t, undefined, root).stateFile);
+          return { target: t, agents: state.agents || [], editedByYou: (state.agentsKept || []).map((k) => k.name) };
+        }), null, 2));
+      }
+      say('Use: npx @ericrisco/rsc agents status | agents reset <name...|--all>');
+      process.exitCode = 2;
       return;
     }
     case 'sync':

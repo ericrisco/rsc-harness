@@ -17,7 +17,10 @@ test('the 8 agent-capable targets each render a developer agent with a model (va
     const p = developerAgentPath(t, cwd);
     assert.ok(existsSync(p), `${t} agent written`);
     const c = readFileSync(p, 'utf8');
-    assert.ok(/model/.test(c), `${t} carries a model`);
+    // #298: OpenCode agents inherit the session's model by default, so they carry none; every other
+    // target keeps its tier model.
+    if (t === 'opencode') assert.doesNotMatch(c, /^model:/m, 'opencode inherits the session model');
+    else assert.ok(/model/.test(c), `${t} carries a model`);
     if (p.endsWith('.json')) assert.doesNotThrow(() => JSON.parse(c), `${t} json parses`);
   }
 });

@@ -15,7 +15,7 @@ import { join } from 'node:path';
 export const MANIFEST = '.rsc.json';
 export const manifestPath = (cwd = process.cwd()) => join(cwd, MANIFEST);
 
-const KEYS = ['version', 'targets', 'skills', 'agents', 'ownSkills', 'catalogVersion', 'tier', 'optOuts', 'memory', 'gitPermissions', 'onboarding'];
+const KEYS = ['version', 'targets', 'skills', 'agents', 'ownSkills', 'catalogVersion', 'tier', 'optOuts', 'memory', 'gitPermissions', 'agentModels', 'onboarding'];
 
 export function readManifest(cwd = process.cwd()) {
   const file = manifestPath(cwd);
@@ -40,8 +40,17 @@ export function readManifest(cwd = process.cwd()) {
     memory: raw.memory ?? undefined,
     // true on a project installed from scratch since 3.0.3; absent on older ones; false once turned off.
     gitPermissions: typeof raw.gitPermissions === 'boolean' ? raw.gitPermissions : undefined,
+    // #298 — per-target agent model: { opencode: 'openai/gpt-5' | 'inherit' }. Only plain objects of
+    // strings survive the read; what each value may contain is checked where it is rendered.
+    agentModels: agentModelsFrom(raw.agentModels),
     onboarding: raw.onboarding ?? undefined,
   };
+}
+
+function agentModelsFrom(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const entries = Object.entries(value).filter(([, v]) => typeof v === 'string').sort(([a], [b]) => a.localeCompare(b));
+  return entries.length ? Object.fromEntries(entries) : undefined;
 }
 
 // Stable output: fixed key order, arrays one entry per line, order as given. Rewriting an

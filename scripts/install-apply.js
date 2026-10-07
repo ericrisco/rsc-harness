@@ -7,7 +7,7 @@ import { planInstall } from './install-plan.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
 import { shadowTarget } from '../targets/agents-md-shadow.js';
 import {
-  targetHasAgents, reconcileAgents, agentPath, agentNames,
+  targetHasAgents, reconcileAgents, agentPath, agentNames, writeAgentsDetailed,
   resolveAgentNames, agentByName, allAgentNames, readDeveloperTier, writeDeveloperTier,
 } from '../targets/agents.js';
 import { projectOptOuts } from '../targets/opt-outs.js';
@@ -223,6 +223,7 @@ export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalog
     optOuts: optOuts ?? projectOptOuts(prev.optOuts),
     memory: prev.memory,
     gitPermissions: gitPermissions ?? prev.gitPermissions,
+    agentModels: prev.agentModels,
     onboarding: onboarding ?? prev.onboarding,
   });
 }
@@ -306,13 +307,19 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
       ? explicit
       : resolveAgentNames(Object.keys(state.skills || {}), explicit);
   const previousAgents = state.agents || [];
+  let keptAgents = [];
   if (targetHasAgents(target)) {
     const agentResult = reconcileAgents(target, cwd, readDeveloperTier(cwd), previousAgents, desiredAgents);
     state.agents = agentResult.names;
     state.agentCollisions = agentResult.collisions;
+    // #298 — agents the user edited and rsc left alone. Recorded so `doctor` can say it on any run,
+    // and returned so the command that just ran says it now.
+    keptAgents = agentResult.kept;
+    state.agentsKept = keptAgents.map(({ name, path }) => ({ name, path }));
   } else {
     state.agents = [];
     state.agentCollisions = [];
+    state.agentsKept = [];
   }
   state.explicitAgents = explicit;
   const memoryResult = policy?.memory === false
@@ -381,7 +388,7 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
     if (existsSync(join(cwd, '.git'))) mergeHook = installMergeHook(cwd);
   } catch (err) { mergeHook = { installed: false, state: 'skipped', reason: err.message }; }
   ignoreLocalState(cwd, target);
-  return { ...state, backup, mergeHook };
+  return { ...state, backup, mergeHook, keptAgents };
 }
 
 // `.rsc/` holds local machine state — hook scripts, install markers, the sello's
@@ -551,9 +558,16 @@ export async function uninstall({ skillIds = [], agentIds = [], target, home, cw
     delete state.skills[id];
   }
   const agentResult = reconcileAgents(target, cwd, readDeveloperTier(cwd), state.agents || [], desiredAgents);
-  state.agents = agentResult.names;
+  // An edited agent no longer wanted stays on disk (#298) and stays recorded as rsc-managed, so a
+  // later reset or uninstall can still find it.
+  state.agents = [...new Set([...agentResult.names, ...agentResult.kept.map((k) => k.name)])];
   state.agentCollisions = agentResult.collisions;
+  state.agentsKept = agentResult.kept.map(({ name, path }) => ({ name, path }));
   state.explicitAgents = nextExplicit;
+  for (const k of agentResult.kept) {
+    const i = removed.indexOf(k.path);
+    if (i >= 0) removed.splice(i, 1);
+  }
   const desiredCommands = resolveCommands({
     target,
     skills: remainingSkillIds,
@@ -712,7 +726,30 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
   // question sat untracked, one `git add -A` from the team repo (team simulation D13). Sync is what a
   // clone runs, so it writes the same exclude. Lazy import: onboarding-apply imports this module.
   try { (await import('./lib/onboarding-apply.js')).excludePersonalProfile(cwd); } catch { /* not a repo → nothing */ }
-  return { synced: declared, syncedAgents: declaredAgents, backup: nextState.backup };
+  return { synced: declared, syncedAgents: declaredAgents, backup: nextState.backup, keptAgents: nextState.keptAgents || [] };
+}
+
+/**
+ * #298 — `rsc agents reset <name|--all>`: take rsc's version of agents the user edited. The user's
+ * file is snapshotted first (a backup under .rsc/backups/), and the answer says where, so taking rsc's
+ * version is never the loss the protection exists to prevent.
+ */
+export function resetAgents({ target, home, cwd = process.cwd(), names = [], all = false }) {
+  if (!targetHasAgents(target)) return { reset: [], backup: null, kept: [] };
+  const paths = targetPaths(target, home, cwd);
+  const state = readState(paths.stateFile);
+  const installed = state.agents || [];
+  const chosen = all ? installed : names;
+  const unknown = chosen.filter((name) => !installed.includes(name));
+  if (unknown.length) throw new Error(`${unknown.join(', ')}: not an agent rsc installed for ${target} (installed: ${installed.join(', ') || 'none'})`);
+  if (!chosen.length) return { reset: [], backup: null, kept: [] };
+  const files = chosen.map((name) => agentPath(target, cwd, name));
+  const backup = createBackup({ cwd, operation: 'agents-reset', target, paths: files.filter((f) => existsSync(f)), cliVersion: CLI_VERSION });
+  const { written } = writeAgentsDetailed(target, cwd, readDeveloperTier(cwd), chosen, { force: true });
+  state.agentsKept = (state.agentsKept || []).filter((k) => !chosen.includes(k.name));
+  writeState(paths.stateFile, state);
+  const rel = (p) => relative(cwd, p).split(sep).join('/');
+  return { reset: chosen, written, backup: backup ? rel(join(cwd, '.rsc', 'backups', backup.id)) : null };
 }
 
 // Remove EVERYTHING rsc put in this project: installed skills across all targets,

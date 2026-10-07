@@ -9,7 +9,9 @@
 // elsewhere. The chosen tier (balanced default, or heavy) lives in `.rsc/developer.json`,
 // written by `init` at onboarding and read here so re-syncs honor it.
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, relative, sep } from 'node:path';
+import { createHash } from 'node:crypto';
+import { readManifest } from '../scripts/lib/manifest-file.js';
 import {
   stackAgents, stackAgentNames, stackAgentByName,
   resolveStackAgentNames, validateAgentCatalog,
@@ -32,7 +34,12 @@ const AGENT_TARGETS = {
   claude: { dir: '.claude/agents', ext: '.md', format: 'md', model: (t) => (t === 'heavy' ? 'opus' : 'sonnet') },
   junie: { dir: '.junie/agents', ext: '.md', format: 'md', model: (t) => (t === 'heavy' ? 'opus' : 'sonnet') },
   cursor: { dir: '.cursor/agents', ext: '.md', format: 'md', model: (t) => TIER_MODEL.anthropic[t] },
-  opencode: { dir: '.opencode/agents', ext: '.md', format: 'md', mode: 'subagent', toolsFormat: 'map', model: (t) => `anthropic/${TIER_MODEL.anthropic[t]}` },
+  // #298 — OpenCode is the one tool people point at a local model or another provider per session, so
+  // its agents INHERIT the session model by default (`model: null` → no `model:` line) and only carry
+  // one when the project pins it (`agentModels.opencode` in .rsc.json). And its `tools` map is
+  // restrict-only: rsc never grants a tool there, it can only take away what a role never declared,
+  // so a stricter project permission policy is never loosened by an rsc agent.
+  opencode: { dir: '.opencode/agents', ext: '.md', format: 'md', mode: 'subagent', toolsFormat: 'restrict', model: () => null, legacyModel: (t) => `anthropic/${TIER_MODEL.anthropic[t]}` },
   gemini: { dir: '.gemini/agents', ext: '.md', format: 'md', model: (t) => TIER_MODEL.google[t] },
   copilot: { dir: '.github/agents', ext: '.agent.md', format: 'md', model: (t) => TIER_MODEL.anthropic[t] },
   kiro: { dir: '.kiro/agents', ext: '.json', format: 'json', model: (t) => (t === 'heavy' ? 'claude-opus-4' : 'claude-sonnet-4') },
@@ -157,11 +164,26 @@ export function writeDeveloperTier(cwd, tier) {
   return t;
 }
 
-function renderMd(spec, model, agent) {
-  const fm = ['---', `name: ${agent.name}`, `description: "${agent.desc}"`, `model: ${model}`];
+// OpenCode V1 tool names a declared capability maps to. `read`/`search` need nothing: what the agent
+// may read is the project's policy to decide, and saying `read: true` would be a grant.
+const RESTRICT_TOOLS = { edit: ['edit', 'write', 'patch'], shell: ['bash'] };
+function restrictedTools(tools) {
+  if (!tools) return [];
+  return Object.entries(RESTRICT_TOOLS).filter(([cap]) => !tools.includes(cap)).flatMap(([, names]) => names);
+}
+
+function renderMd(spec, model, agent, toolsFormat = spec.toolsFormat) {
+  const fm = ['---', `name: ${agent.name}`, `description: "${agent.desc}"`];
+  if (model) fm.push(`model: ${model}`);
   if (spec.mode) fm.push(`mode: ${spec.mode}`);
   if (agent.tools) {
-    if (spec.toolsFormat === 'map') {
+    if (toolsFormat === 'restrict') {
+      const denied = restrictedTools(agent.tools);
+      if (denied.length) {
+        fm.push('tools:');
+        for (const tool of denied) fm.push(`  ${tool}: false`);
+      }
+    } else if (toolsFormat === 'map') {
       fm.push('tools:');
       for (const tool of agent.tools) fm.push(`  ${tool}: true`);
     } else {
@@ -171,44 +193,146 @@ function renderMd(spec, model, agent) {
   fm.push('---', '');
   return `${fm.join('\n')}${agent.body}\n`;
 }
-const renderJson = (model, agent) => `${JSON.stringify({ name: agent.name, description: agent.desc, model, ...(agent.tools ? { tools: agent.tools } : {}), prompt: agent.body }, null, 2)}\n`;
+const renderJson = (model, agent) => `${JSON.stringify({ name: agent.name, description: agent.desc, ...(model ? { model } : {}), ...(agent.tools ? { tools: agent.tools } : {}), prompt: agent.body }, null, 2)}\n`;
 function renderToml(model, agent) {
   const esc = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   // body as a TOML multiline LITERAL string ('''…''') — no escape processing.
   const tools = agent.tools ? `tools = [${agent.tools.map((tool) => `"${tool}"`).join(', ')}]\n` : '';
-  return `name = "${agent.name}"\ndescription = "${esc(agent.desc)}"\nmodel = "${model}"\n${tools}developer_instructions = '''\n${agent.body}\n'''\n`;
+  return `name = "${agent.name}"\ndescription = "${esc(agent.desc)}"\n${model ? `model = "${model}"\n` : ''}${tools}developer_instructions = '''\n${agent.body}\n'''\n`;
 }
+
+// ── #298: the model, decided by the project. `agentModels` in .rsc.json maps a target to a model id
+// or to `inherit`. Absent → the target's default (inherit on OpenCode, the tier model elsewhere). The
+// value lands verbatim in YAML/TOML/JSON from a COMMITTED file, so anything outside a plain model-id
+// alphabet is ignored rather than written: a pulled .rsc.json must not be able to inject frontmatter.
+export const AGENT_MODEL_INHERIT = 'inherit';
+export const isValidAgentModel = (value) => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,127}$/.test(value);
+export function agentModelSetting(cwd, target) {
+  let value;
+  try { value = readManifest(cwd)?.agentModels?.[target]; } catch { value = undefined; }
+  return isValidAgentModel(value) ? value : null;
+}
+export const targetInheritsByDefault = (target) => AGENT_TARGETS[target]?.model('balanced') === null;
+function resolveModel(target, cwd, tier) {
+  const setting = agentModelSetting(cwd, target);
+  if (setting === AGENT_MODEL_INHERIT) return null;
+  if (setting) return setting;
+  return AGENT_TARGETS[target].model(tier);
+}
+
+export const effectiveAgentModel = (target, cwd, tier = readDeveloperTier(cwd)) => (AGENT_TARGETS[target] ? resolveModel(target, cwd, tier) : null);
+
+function renderAgent(target, spec, model, agent, toolsFormat) {
+  return spec.format === 'json' ? renderJson(model, agent)
+    : spec.format === 'toml' ? renderToml(model, agent)
+      : renderMd(spec, model, agent, toolsFormat);
+}
+
+// ── #298: what rsc wrote, per file, so a user edit is told apart from rsc's own file. Machine-local
+// (.rsc/ is gitignored): a digest says "this machine's rsc wrote these bytes", which is not a team fact.
+const sha = (text) => createHash('sha256').update(text).digest('hex');
+const digestFile = (cwd) => join(cwd, '.rsc', 'agent-digests.json');
+const relKey = (cwd, path) => relative(cwd, path).split(sep).join('/');
+function readDigests(cwd) {
+  try { const d = JSON.parse(readFileSync(digestFile(cwd), 'utf8')); return d && typeof d === 'object' ? d : {}; } catch { return {}; }
+}
+function writeDigests(cwd, digests) {
+  mkdirSync(dirname(digestFile(cwd)), { recursive: true });
+  const ordered = Object.fromEntries(Object.keys(digests).sort().map((k) => [k, digests[k]]));
+  writeFileSync(digestFile(cwd), `${JSON.stringify(ordered, null, 2)}\n`);
+}
+
+// Every rendering rsc could have produced for this agent on this target: either tier, the current
+// model setting, and — for OpenCode — the pre-#298 shape (pinned Anthropic model, `tool: true` map).
+// A file with no digest that matches one of these is rsc's and may be replaced; anything else is the
+// user's. Bodies from older releases are not reconstructed: such a file is kept and reported, the safe
+// direction, and `rsc agents reset` is one command away.
+function knownRenderings(target, cwd, agent) {
+  const spec = AGENT_TARGETS[target];
+  const out = new Set();
+  for (const tier of ['balanced', 'heavy']) {
+    out.add(renderAgent(target, spec, resolveModel(target, cwd, tier), agent));
+    out.add(renderAgent(target, spec, spec.model(tier), agent));
+    if (spec.legacyModel) out.add(renderAgent(target, spec, spec.legacyModel(tier), agent, 'map'));
+  }
+  return out;
+}
+
+// 'rsc' when the file on disk is rsc's to overwrite or remove, 'user' when it carries the user's edit.
+function ownership(target, cwd, agent, path, digests) {
+  if (!existsSync(path)) return 'absent';
+  const current = readFileSync(path, 'utf8');
+  const key = relKey(cwd, path);
+  if (digests[key]) return digests[key] === sha(current) ? 'rsc' : 'user';
+  return knownRenderings(target, cwd, agent).has(current) ? 'rsc' : 'user';
+}
+
+const keptNotice = (name, path, cwd) => ({
+  name,
+  path,
+  message: `kept your edited agent ${name} (${relKey(cwd, path)}; rsc's version differs; \`rsc agents reset ${name}\` to take it)`,
+});
 
 export function agentPath(target, cwd, name = 'developer') {
   const spec = AGENT_TARGETS[target];
   return spec ? join(cwd, ...spec.dir.split('/'), `${name}${spec.ext}`) : null;
 }
 
-export function writeAgents(target, cwd, tier = readDeveloperTier(cwd), names = agentNames()) {
+/**
+ * Write the agents, keeping any the user edited. Returns { written, kept }: `kept` names each agent
+ * left as the user has it, with the message to show. `force` takes rsc's version regardless — only
+ * `rsc agents reset` passes it, after backing the user's file up.
+ */
+export function writeAgentsDetailed(target, cwd, tier = readDeveloperTier(cwd), names = agentNames(), { force = false } = {}) {
   const spec = AGENT_TARGETS[target];
-  if (!spec) return [];
+  if (!spec) return { written: [], kept: [] };
+  const digests = readDigests(cwd);
   const written = [];
+  const kept = [];
   for (const name of names) {
     const agent = byName(name);
     if (!agent) continue;
     const effectiveTier = agent.tier === 'heavy' ? 'heavy' : tier;
-    const model = spec.model(effectiveTier);
-    const content = spec.format === 'json' ? renderJson(model, agent)
-      : spec.format === 'toml' ? renderToml(model, agent)
-        : renderMd(spec, model, agent);
+    const content = renderAgent(target, spec, resolveModel(target, cwd, effectiveTier), agent);
     const path = agentPath(target, cwd, agent.name);
+    if (!force && ownership(target, cwd, agent, path, digests) === 'user') {
+      // Unless it already IS what rsc would write — then there is nothing to protect, only to record.
+      if (readFileSync(path, 'utf8') !== content) { kept.push(keptNotice(agent.name, path, cwd)); continue; }
+    }
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, content);
+    digests[relKey(cwd, path)] = sha(content);
     written.push(path);
   }
-  return written;
+  writeDigests(cwd, digests);
+  return { written, kept };
+}
+
+export function writeAgents(target, cwd, tier = readDeveloperTier(cwd), names = agentNames(), options) {
+  return writeAgentsDetailed(target, cwd, tier, names, options).written;
 }
 
 export function reconcileAgents(target, cwd, tier, previousNames = [], desiredNames = []) {
-  if (!targetHasAgents(target)) return { written: [], removed: [], collisions: [], names: [] };
+  if (!targetHasAgents(target)) return { written: [], removed: [], collisions: [], names: [], kept: [] };
   const previous = new Set(previousNames);
   const desired = new Set(desiredNames);
-  const removed = removeAgents(target, cwd, [...previous].filter((name) => !desired.has(name)));
+  const kept = [];
+  // An agent no longer wanted is removed only while it is still rsc's file. One the user edited is
+  // theirs now: deleting it on an uninstall or a stack change is the same loss sync must not cause.
+  const digests = readDigests(cwd);
+  const stale = [];
+  for (const name of [...previous].filter((n) => !desired.has(n))) {
+    const agent = byName(name);
+    const path = agentPath(target, cwd, name);
+    if (agent && ownership(target, cwd, agent, path, digests) === 'user') {
+      kept.push({ name, path, message: `kept your edited agent ${name} (${relKey(cwd, path)}); rsc no longer installs it, delete it yourself if you do not want it` });
+    } else stale.push(name);
+  }
+  const removed = removeAgents(target, cwd, stale);
+  if (removed.length) {
+    for (const path of removed) delete digests[relKey(cwd, path)];
+    writeDigests(cwd, digests);
+  }
   const written = [];
   const collisions = [];
   const names = [];
@@ -218,10 +342,12 @@ export function reconcileAgents(target, cwd, tier, previousNames = [], desiredNa
       collisions.push(path);
       continue;
     }
-    written.push(...writeAgents(target, cwd, tier, [name]));
+    const result = writeAgentsDetailed(target, cwd, tier, [name]);
+    written.push(...result.written);
+    kept.push(...result.kept);
     if (existsSync(path)) names.push(name);
   }
-  return { written, removed, collisions, names };
+  return { written, removed, collisions, names, kept };
 }
 
 /**

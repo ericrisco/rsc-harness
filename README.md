@@ -403,6 +403,10 @@ rsc memory resume                    # print this branch/worktree continuation
 rsc memory learn --text "…" --evidence "…" --confidence 0.8 --approve
 rsc memory off                       # disable hooks, commands and injection project-wide
 rsc sync --target claude,codex       # refresh managed skills/hooks from the current package version
+rsc agent-model opencode openai/gpt-5   # pin the model the generated agents carry (saved in .rsc.json)
+rsc agent-model opencode inherit     # back to the session's model (OpenCode's default)
+rsc agents status                    # installed agents, and which ones you edited
+rsc agents reset developer           # take rsc's version of an agent you edited (yours is backed up first)
 rsc backups                          # list project-local snapshots
 rsc restore latest --dry-run         # preview restoring the newest snapshot
 rsc restore <snapshot-id>            # restore a project-local snapshot
@@ -845,6 +849,15 @@ The richer surfaces are intentionally narrower than skill support:
 selective specialists) and 53 command entries (20 fixed + 33 stack aliases).
 Unsupported means rsc writes nothing for that surface; it does not emulate a
 provider feature with an unverified file.
+
+**Generated agents follow your project, not rsc's defaults.** OpenCode agents carry no `model:`, so
+they use whatever model the session runs (a local one, OpenAI, Anthropic). To pin one for the whole
+team, run `rsc agent-model opencode <model>`: it is saved as `agentModels` in `.rsc.json` and works
+for any target with agents (`inherit` drops the pin). OpenCode agents never grant a tool either: a
+read-only reviewer only gets `edit`, `write`, `patch` and `bash` set to `false`, and an agent that may
+edit or run commands gets no `tools` block, so your project's permission policy decides. If you edit
+a generated agent, `rsc sync` keeps your file and says so. `rsc agents reset <name>` (or `--all`)
+takes rsc's version back after a backup in `.rsc/backups/`.
 
 ---
 
