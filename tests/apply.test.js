@@ -455,6 +455,7 @@ test('every wired hook script is a managed path, so a backup can restore it', as
     'gitmoji-guard.mjs',
     'userprompt-gate.mjs',
     'hook-once.mjs',
+    'shell-unwrap.mjs',
   ]) {
     assert.ok(existsSync(join(cwd, '.rsc', script)), `${script} is written by wireHook`);
     assert.ok(

@@ -89,6 +89,24 @@ test('tsd16 · a chain is judged the way the shell runs it (review M2/M3)', asyn
   assert.equal(await evaluate({ root: r, command: 'git status && cd .worktrees/z && git commit -m x', cwd: r }), null);
 });
 
+test('tsd16b · a commit wrapped in a shell, eval or env is still a commit on a closed trunk (E2E defect 15)', async () => {
+  const r = repo(); write(r, 'Dockerfile');
+  for (const c of [
+    'bash -c "git commit -m x"', "sh -c 'git commit -m x'", 'zsh -c "git add -A && git commit -m x"',
+    'eval "git commit -m x"', 'env FOO=1 git commit -m x', 'command git commit -m x', 'exec git merge feat/x',
+    'git -C . commit -m x', 'git -c user.name=a commit -m x', `bash -c "sh -c 'git commit -m x'"`,
+  ]) assert.match(await evaluate({ root: r, command: c, cwd: r }) ?? '', /closed for the agent/, c);
+  // Not over-blocked: text that only mentions a commit, and a wrapped commit after a branch switch.
+  for (const c of [
+    `echo "bash -c 'git commit -m x'"`, `bash -c "echo 'git commit'"`, `grep -rn "eval git commit" docs/`,
+  ]) assert.equal(await evaluate({ root: r, command: c, cwd: r }), null, c);
+  assert.equal(await evaluate({ root: r, command: 'bash -c "git switch -c feat/w && git commit -m x"', cwd: r }), null);
+  git(r, 'switch', '-q', '-c', 'feat/m');
+  assert.equal(await evaluate({ root: r, command: `git commit -m "docs: explain why bash -c 'git commit' is guarded"`, cwd: r }), null,
+    'a commit message that contains "git commit" on a branch is just a commit on a branch');
+  assert.match(await evaluate({ root: r, command: 'bash -c "git switch main && git merge feat/m"', cwd: r }) ?? '', /closed for the agent/);
+});
+
 test('tsd17 · heredoc bodies and path checkouts are not what they look like (review L1/L2)', async () => {
   const r = repo(); write(r, 'Dockerfile');
   assert.equal(await evaluate({ root: r, command: 'cat > notes.md <<EOF\nrun git commit later\nEOF', cwd: r }), null);

@@ -62,9 +62,16 @@ try {
 if (existsSync(join(root, '.rsc', '.no-ship-guard'))) allow();
 
 // Does this command try to land on / move to the trunk?
-const TRUNK = /\bgit\s+(?:checkout|switch)\s+(?:-{1,2}\S+\s+)*(?:main|master)\b/;
-const MERGE = /\bgit\s+merge\b/;
-if (!TRUNK.test(command) && !MERGE.test(command)) allow();
+// Global options may sit before the subcommand (`git -C . switch main`, `git -c k=v merge`), and the
+// command may be handed to a shell (`bash -c "git switch main"`): the segments judged are the ones the
+// shell really runs, quoted text blanked (shell-unwrap.mjs, shared with the other guards — E2E defect
+// 15). Without that sibling, the raw command as before.
+const GOPTS = String.raw`(?:(?:-[Cc]\s+\S+|--\S+)\s+)*`;
+const TRUNK = new RegExp(String.raw`\bgit\s+${GOPTS}(?:checkout|switch)\s+(?:-{1,2}\S+\s+)*(?:main|master)\b`);
+const MERGE = new RegExp(String.raw`\bgit\s+${GOPTS}merge\b`);
+const SH = await import(new URL('./shell-unwrap.mjs', import.meta.url)).catch(() => null);
+const judged = SH ? SH.expand(command).map((s) => s.replace(/"(?:[^"\\]|\\.)*"|'[^']*'/g, '""')) : [command];
+if (!judged.some((s) => TRUNK.test(s) || MERGE.test(s))) allow();
 
 const git = (...args) => {
   const r = spawnSync('git', ['-C', root, ...args], { windowsHide: true, encoding: 'utf8' });

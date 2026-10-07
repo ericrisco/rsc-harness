@@ -142,6 +142,22 @@ test('gitmoji: nothing readable → nothing enforced (fail open by design)', () 
   ]) assert.deepEqual(commitMessages(c), [], `unreadable/irrelevant: ${c}`);
 });
 
+test('gitmoji: a commit wrapped in a shell, eval or env is read too (E2E defect 15)', () => {
+  assert.deepEqual(commitMessages('bash -c "git commit -m \'feat: x\'"'), ['feat: x']);
+  assert.deepEqual(commitMessages("sh -c 'git add -A && git commit -m \"fix: y\"'"), ['fix: y']);
+  assert.deepEqual(commitMessages('eval "git commit -m \'feat: z\'"'), ['feat: z']);
+  assert.deepEqual(commitMessages('env FOO=1 git commit -m "feat: e"'), ['feat: e']);
+  assert.deepEqual(commitMessages('command git commit -m "feat: c"'), ['feat: c']);
+  // A mention inside someone else's argument is still not a commit.
+  assert.deepEqual(commitMessages(`echo "bash -c 'git commit -m broken'"`), []);
+});
+
+test('gitmoji-guard: DENIES a wrapped commit with no gitmoji, allows one that has it', () => {
+  const root = freshRoot();
+  assert.ok(runGuard(root, 'bash -c "git commit -m \'feat: x\'"'));
+  assert.equal(runGuard(root, 'bash -c "git commit -m \'✨ feat: x\'"'), null);
+});
+
 // ---- the gate, end to end -------------------------------------------------------
 
 test('gitmoji-guard: DENIES a commit with no gitmoji', () => {

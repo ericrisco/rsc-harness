@@ -100,9 +100,15 @@ function runsRm(segment) {
   return false;
 }
 
+// The shared unwrapper (E2E defect 15) adds the segments the shell really runs — `eval "rm …"`,
+// `exec rm …`, `FOO=1 rm …`, a `cd x && rm …` inside `bash -c` — on top of the plain split, so it
+// can only ever see MORE deletes, never fewer. Sibling import under `.rsc/`; without it, as before.
+const SH = await import(new URL('./shell-unwrap.mjs', import.meta.url)).catch(() => null);
+
 function isRmRecursiveForce() {
   if (!/\brm\b/.test(cmd)) return false;
-  for (const segment of cmd.split(/\|\||&&|[|;&]/)) {
+  const unwrapped = (() => { try { return SH ? SH.expand(cmd) : []; } catch { return []; } })();
+  for (const segment of [...cmd.split(/\|\||&&|[|;&]/), ...unwrapped]) {
     if (!runsRm(segment)) continue;
     const flags = rmFlagsIn(segment);
     const hasR = flags.some((f) => /^--recursive$/i.test(f) || /^-[A-Za-z]*r/i.test(f));
