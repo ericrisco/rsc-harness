@@ -10,6 +10,7 @@ import { readManifest, writeManifest } from './manifest-file.js';
 import { encodeGoal, identifyPlan } from './onboarding.js';
 import { createBackup, restoreBackup } from './backups.js';
 import { RETIRED_SKILLS, replaceRetired } from './retired-skills.js';
+import { CONSTITUTION_PATH } from './constitution-draft.js';
 import { LAYER_IGNORE, TEMPLATE_SOURCE, targetName, templateAssets } from './tools-skeleton.js';
 
 const sameSet = (a = [], b = []) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
@@ -370,7 +371,9 @@ export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planI
 const TEMPLATE_FLOOR = '01-TOOLS/_TEMPLATE/';
 
 export const HARNESS_FLOOR_MINIMUM = [TEMPLATE_FLOOR, '02-DOCS/wiki/harness/'];
-export const HARNESS_FLOOR_CONSTITUTION = '02-DOCS/wiki/sdd/constitution.md';
+// El onboarding escribe ahora un BORRADOR (`constitution-draft.js`) y el suelo lo acepta: sólo
+// mira existencia, y completar el borrador es de la cadena SDD, no del instalador.
+export const HARNESS_FLOOR_CONSTITUTION = CONSTITUTION_PATH;
 
 // La plantilla, sus nombres con punto y el `.gitignore` de la capa viven en `tools-skeleton.js`:
 // lo que se copia aquí es exactamente lo que `purge` puede recuperar, y sólo si sigue intacto.

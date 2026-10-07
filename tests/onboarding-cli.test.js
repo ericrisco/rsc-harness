@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFileSync, existsSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync, existsSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -205,17 +205,40 @@ const onboardWithSdd = (cwd) => {
 // AC7 — no decir «listo», nombrar lo que falta, y ofrecer una acción que pueda CREARLO. El
 // `Recover with:` que existía reejecutaba el onboarding, y el onboarding no monta el esqueleto:
 // una recuperación que no recupera consume el único intento del usuario.
-test('floor: an install whose plan selects SDD is reported incomplete, not ready', () => {
+//
+// Desde que el onboarding escribe la constitución como BORRADOR, una instalación con SDD queda
+// lista; el suelo incompleto se provoca quitando el borrador, que es el caso que sigue existiendo
+// (alguien lo borra, o el directorio no se pudo escribir).
+const withoutDraft = (cwd) => rmSync(join(cwd, '02-DOCS/wiki/sdd/constitution.md'), { force: true });
+test('floor: an install whose plan selects SDD and lacks the constitution is reported incomplete, not ready', () => {
   const cwd = fresh();
-  const { applied } = onboardWithSdd(cwd);
+  const { id } = onboardWithSdd(cwd);
+  withoutDraft(cwd);
+  const applied = run(cwd, ['onboard', ...sddComplete, '--accept-plan', id]);
   assert.equal(applied.status, 0, applied.stderr);
-  assert.doesNotMatch(applied.stdout, /RSC_ONBOARDING_READY/, 'sin constitución no está listo');
-  assert.match(applied.stdout, /RSC_ONBOARDING_INCOMPLETE/);
-  assert.match(applied.stdout, /constitution\.md/);
-  assert.match(applied.stdout, /harness/i, 'la acción tiene que nombrar lo que crea el esqueleto');
+  // Reaceptar vuelve a escribir el borrador: es la recuperación. Para ver el INCOMPLETE hace falta
+  // que el borrador no se pueda escribir — un fichero donde va el directorio.
+  withoutDraft(cwd);
+  rmSync(join(cwd, '02-DOCS/wiki/sdd'), { recursive: true, force: true });
+  writeFileSync(join(cwd, '02-DOCS/wiki/sdd'), 'no soy un directorio\n');
+  const blocked = run(cwd, ['onboard', ...sddComplete, '--accept-plan', id]);
+  assert.equal(blocked.status, 0, blocked.stderr);
+  assert.doesNotMatch(blocked.stdout, /RSC_ONBOARDING_READY/, 'sin constitución no está listo');
+  assert.match(blocked.stdout, /RSC_ONBOARDING_INCOMPLETE/);
+  assert.match(blocked.stdout, /constitution\.md/);
+  assert.match(blocked.stdout, /harness/i, 'la acción tiene que nombrar lo que crea el esqueleto');
   // Y el esqueleto determinista sí lo montó el binario, aunque falte la parte que exige juicio.
   assert.ok(existsSync(join(cwd, '01-TOOLS/_TEMPLATE/.env.example')));
   assert.ok(existsSync(join(cwd, '02-DOCS/wiki/harness')));
+});
+
+test('floor: re-accepting the plan is the recovery — it writes the missing draft again', () => {
+  const cwd = fresh();
+  const { id } = onboardWithSdd(cwd);
+  withoutDraft(cwd);
+  const again = run(cwd, ['onboard', ...sddComplete, '--accept-plan', id]);
+  assert.match(again.stdout, /RSC_ONBOARDING_READY/);
+  assert.ok(existsSync(join(cwd, '02-DOCS/wiki/sdd/constitution.md')));
 });
 
 // AC7b — el suelo NO desactiva el arnés. Colgarlo de `hasDeclaredHarness` habría hecho que `add`
@@ -224,6 +247,7 @@ test('floor: an install whose plan selects SDD is reported incomplete, not ready
 test('floor: an incomplete floor never blocks the maintenance commands', () => {
   const cwd = fresh();
   onboardWithSdd(cwd);
+  withoutDraft(cwd);
   const added = run(cwd, ['add', 'fastapi', '--target', 'codex']);
   assert.doesNotMatch(added.stderr + added.stdout, /RSC_ONBOARDING_REQUIRED/, 'el suelo no bloquea');
   assert.equal(added.status, 0, added.stderr);
@@ -234,6 +258,7 @@ test('floor: an incomplete floor never blocks the maintenance commands', () => {
 test('floor: the agent handoff does not claim ready while the floor is incomplete', () => {
   const cwd = fresh();
   onboardWithSdd(cwd);
+  withoutDraft(cwd);
   const installed = run(cwd, ['install', '--target', 'codex']);
   assert.equal(installed.status, 0, installed.stderr);
   assert.doesNotMatch(installed.stdout, /Tell the user rsc is ready/, 'no puede afirmarlo');
@@ -332,4 +357,124 @@ test('floor: a pre-onboarding harness with no receipt still hears the ready hand
   writeFileSync(manifestPath, JSON.stringify(manifest));
   const installed = run(cwd, ['install', '--target', 'codex']);
   assert.match(installed.stdout, /Tell the user rsc is ready/, 'sin recibo no hay suelo que exigir');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// La constitución como BORRADOR. Una instalación no interactiva de software complejo (terminal,
+// CI, sin agente) terminaba en RSC_ONBOARDING_INCOMPLETE porque el suelo exige la constitución y
+// sólo una fase agéntica la escribía: medio instalado, y en la prueba de campo una sesión entera
+// ($3.59, 67 turnos) sólo para escribirla. Decisión del PO: el onboarding escribe un borrador con
+// lo que sabe, el suelo lo acepta, y la cadena SDD lo completa antes del primer spec.
+
+const CONSTITUTION = '02-DOCS/wiki/sdd/constitution.md';
+const complexClaude = [
+  '--technical-level', 'technical', '--project-kind', 'software', '--goal', 'Ship the billing portal',
+  '--software-scope', 'complex', '--workflow', 'branches', '--target', 'claude',
+];
+const previewId = (cwd, args) => run(cwd, ['onboard', ...args]).stdout.match(/Plan id: ([a-f0-9]{64})/)?.[1];
+
+test('draft: a non-interactive complex install is READY in one accept, with a draft constitution', () => {
+  const cwd = fresh();
+  writeFileSync(join(cwd, 'package.json'), JSON.stringify({ dependencies: { next: '15.0.0' } }));
+  const id = previewId(cwd, complexClaude);
+  const applied = run(cwd, ['onboard', ...complexClaude, '--accept-plan', id]);
+  assert.equal(applied.status, 0, applied.stderr);
+  assert.match(applied.stdout, new RegExp(`RSC_ONBOARDING_READY ${id}`));
+  assert.doesNotMatch(applied.stdout, /RSC_ONBOARDING_INCOMPLETE/);
+  assert.match(applied.stdout, /constitution\.md/, 'READY names the pending draft');
+  assert.match(applied.stdout, /draft/i);
+
+  const draft = readFileSync(join(cwd, CONSTITUTION), 'utf8');
+  assert.match(draft, /^---\n[\s\S]*^status: draft$[\s\S]*?\n---\n/m, 'frontmatter status: draft');
+  assert.match(draft, /^type: constitution$/m);
+  assert.match(draft, /borrador — complétalo con la fase `constitution` antes del primer SDD/);
+  // Sólo hechos que el onboarding conoce.
+  assert.match(draft, /Ship the billing portal/);
+  assert.match(draft, /software/);
+  assert.match(draft, /complex/);
+  assert.match(draft, /branches/i);
+  assert.match(draft, /nextjs/);
+  assert.match(draft, /package\.json/);
+  // Los encabezados reales de la plantilla, sin principios inventados.
+  for (const heading of ['## 1. Stack canon', '## 2. Quality bar', '## 4. Branching & shipping', '## Definition of Done', '## Amendment log']) {
+    assert.ok(draft.includes(heading), `missing heading ${heading}`);
+  }
+  assert.doesNotMatch(draft, /^\d+\. /m, 'a draft carries no numbered principle: nothing was ratified');
+});
+
+test('draft: a project with no stack evidence says so instead of guessing one', () => {
+  const cwd = fresh();
+  const id = previewId(cwd, complexClaude);
+  run(cwd, ['onboard', ...complexClaude, '--accept-plan', id]);
+  const draft = readFileSync(join(cwd, CONSTITUTION), 'utf8');
+  assert.match(draft, /no stack evidence/i);
+});
+
+test('draft: an existing constitution — ratified or draft — is never overwritten', () => {
+  const cwd = fresh();
+  mkdirSync(join(cwd, '02-DOCS/wiki/sdd'), { recursive: true });
+  const mine = '# Mine\n\n1. Ratified by hand.\n';
+  writeFileSync(join(cwd, CONSTITUTION), mine);
+  const id = previewId(cwd, complexClaude);
+  const applied = run(cwd, ['onboard', ...complexClaude, '--accept-plan', id]);
+  assert.match(applied.stdout, /RSC_ONBOARDING_READY/);
+  assert.equal(readFileSync(join(cwd, CONSTITUTION), 'utf8'), mine);
+  assert.doesNotMatch(applied.stdout, /draft/i, 'a ratified constitution is not reported as pending');
+
+  // Un borrador que el usuario ya empezó a completar tampoco se regenera.
+  const other = fresh();
+  const otherId = previewId(other, complexClaude);
+  run(other, ['onboard', ...complexClaude, '--accept-plan', otherId]);
+  const edited = `${readFileSync(join(other, CONSTITUTION), 'utf8')}\nEdited by the user.\n`;
+  writeFileSync(join(other, CONSTITUTION), edited);
+  run(other, ['onboard', ...complexClaude, '--accept-plan', otherId]);
+  assert.equal(readFileSync(join(other, CONSTITUTION), 'utf8'), edited);
+});
+
+test('draft: small software (no SDD floor) gets no constitution draft', () => {
+  const cwd = fresh();
+  // Sin palabras de complejidad en el objetivo: «billing» ya activaría SDD por señal.
+  const small = complexClaude.map((v) => ({ complex: 'small', branches: 'main', 'Ship the billing portal': 'Build one calculator' }[v] ?? v));
+  const id = previewId(cwd, small);
+  const applied = run(cwd, ['onboard', ...small, '--accept-plan', id]);
+  assert.match(applied.stdout, /RSC_ONBOARDING_READY/);
+  assert.ok(!existsSync(join(cwd, CONSTITUTION)));
+});
+
+// RSC_PLAN_CHANGED tras completar el suelo. `scanProject` ya excluía `02-DOCS/wiki/sdd/`, pero la
+// fase `constitution` también añade su fila al Knowledge map del `CLAUDE.md` raíz («create
+// CLAUDE.md if absent»), y ese `.md` contaba como evidencia: la identidad del plan cambiaba sin
+// que nada se hubiera elegido distinto. Medido con el binario 3.0.8.
+test('draft: re-running onboard with the same answers keeps the plan id, also after the constitution phase', () => {
+  const cwd = fresh();
+  const id = previewId(cwd, complexClaude);
+  assert.match(run(cwd, ['onboard', ...complexClaude, '--accept-plan', id]).stdout, /RSC_ONBOARDING_READY/);
+  assert.equal(previewId(cwd, complexClaude), id, 'the install and its draft do not move the id');
+
+  // Lo que escribe la fase `constitution` al completarla.
+  writeFileSync(join(cwd, CONSTITUTION), '---\ntype: constitution\n---\n\n# Ratified\n\n1. A rule.\n');
+  writeFileSync(join(cwd, 'CLAUDE.md'), '# Project\n\n## Knowledge map\n\n| Project constitution (SDD non-negotiables) | `02-DOCS/wiki/sdd/constitution.md` |\n');
+  assert.equal(previewId(cwd, complexClaude), id, 'completing the floor does not move the id');
+  const again = run(cwd, ['onboard', ...complexClaude, '--accept-plan', id]);
+  assert.equal(again.status, 0, again.stderr);
+  assert.match(again.stdout, /RSC_ONBOARDING_READY/);
+});
+
+test('draft: doctor lists the draft constitution as pending, without making the harness unhealthy', () => {
+  const cwd = fresh();
+  const id = previewId(cwd, complexClaude);
+  run(cwd, ['onboard', ...complexClaude, '--accept-plan', id]);
+  const withDraft = run(cwd, ['doctor', '--target', 'claude', '--json']);
+  const report = JSON.parse(withDraft.stdout);
+  const item = (report.pending || []).find((p) => p.id === 'constitution-draft');
+  assert.ok(item, `doctor names the pending draft: ${withDraft.stdout.slice(0, 300)}`);
+  assert.equal(item.path, CONSTITUTION);
+  assert.match(item.action, /constitution/);
+
+  writeFileSync(join(cwd, CONSTITUTION), '---\ntype: constitution\n---\n\n# Ratified\n');
+  const ratified = run(cwd, ['doctor', '--target', 'claude', '--json']);
+  const after = JSON.parse(ratified.stdout);
+  assert.deepEqual(after.pending, [], 'a ratified constitution is not pending');
+  assert.equal(report.healthy, after.healthy, 'the draft never changes the health verdict');
+  assert.equal(withDraft.status, ratified.status, 'nor the exit code');
 });

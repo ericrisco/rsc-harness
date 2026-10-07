@@ -341,7 +341,7 @@ repeated here as prohibitions: naming a behaviour makes it more available, not l
 ## Project grounding (02-DOCS + CLAUDE.md)
 
 - Read `02-DOCS/wiki/sdd/config.yaml` if present. If it is missing and the change is non-trivial, recommend `sdd-init` before proceeding; if the user asks to continue, record the missing config as a risk.
-- Read `02-DOCS/wiki/sdd/constitution.md` first — its principles are inherited constraints, not things to re-decide. If it's missing, note that the project has no constitution yet and suggest the `constitution` phase before continuing (you can still draft a spec, but flag the absence).
+- Read `02-DOCS/wiki/sdd/constitution.md` first — its principles are inherited constraints, not things to re-decide. If it's missing, note that the project has no constitution yet and suggest the `constitution` phase before continuing (you can still draft a spec, but flag the absence). If its frontmatter says `status: draft` (written by `rsc onboard`, unratified), route to `constitution` first and come back: a draft has no principles to inherit.
 - **No constitution yet?** Still write the spec, but inherit nothing — lean harder on the wiki and the user's answers, and record every constraint you would have inherited as a *point to clarify* instead of assuming it.
 - Write the spec to `02-DOCS/wiki/sdd/specs/<slug>.md`. Create the directory if absent.
 - Add a row in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) linking the new spec under the `sdd/specs` topic (additive only — never delete existing rows). Create the index if absent.

@@ -62,10 +62,10 @@ test('a real onboarding including an agentless target completes', { timeout: 300
 
   const accepted = onboard(cwd, ['--goal', GOAL, '--target', 'antigravity,claude', '--accept-plan', planId]);
 
-  // The claim is precise, because the CLI still ends by handing off: it prints
-  // RSC_ONBOARDING_INCOMPLETE for the harness floor (02-DOCS/wiki/sdd/constitution.md), which the
-  // `harness` skill scaffolds and no command does. That is the designed end of a SUCCESSFUL run
-  // and nothing rolls back. What must never appear again is the agent divergence.
+  // The claim is precise, because the CLI still ends by handing off, whether it reports READY or
+  // INCOMPLETE for the harness floor (the constitution is now written as a draft by onboarding).
+  // Either is the designed end of a SUCCESSFUL run and nothing rolls back. What must never appear
+  // again is the agent divergence.
   assert.doesNotMatch(accepted, /installed agents differ from accepted policy/, accepted.slice(-400));
 
   // And "did not fail" is not the claim either — the harness has to be on disk. Before the fix this
