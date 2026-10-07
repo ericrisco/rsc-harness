@@ -261,7 +261,7 @@ A no holds for this session. Permanent off: .rsc/.no-worktree-cleanup
 if (has('.git')) {
   try {
     const T = await import('./team-safe-start.mjs');
-    for (const said of [T.teamSafeAnnouncement(root), await T.rescueTrunkCommits(root), await T.relocateOldWorktrees(root)]) {
+    for (const said of [T.teamSafeAnnouncement(root), await T.rescueTrunkCommits(root), await T.relocateOldWorktrees(root), T.harnessCommitNotice?.(root)]) {
       if (said) process.stdout.write(said.startsWith('\n') ? said : `\n${said}\n`);
     }
   } catch { /* module missing → nothing to do; never worth breaking startup for */ }

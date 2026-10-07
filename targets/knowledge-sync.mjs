@@ -213,6 +213,25 @@ const summary = commitSummary;
  * goes up like any other; the files stay modified until the agent commits on a branch (regla A).
  * Repeating it while they stay modified is a no-op upstream — the content is already there.
  */
+/**
+ * Work of the agent's own still uncommitted outside the knowledge folders. While there is, a docs
+ * commit of ours on the branch would land AHEAD of the code it describes — field test 3.0.8: an FTD
+ * update saying «Fix … probado» committed and pushed while the fix itself was still uncommitted. The
+ * harness's own files (`.claude/`, `.rsc.json`) do not count: they may stay untracked for good.
+ */
+function workPending(root) {
+  const entries = zlist(git(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all']));
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    const path = e.slice(3);
+    if (e[0] === 'R' || e[0] === 'C') i++;
+    if (KNOWLEDGE.some((k) => path.startsWith(k)) || PERSONAL.includes(path)) continue;
+    if (/^(\.claude\/|\.rsc\/|\.rsc\.json$|\.worktrees\/)/.test(path)) continue;
+    return true;
+  }
+  return false;
+}
+
 export function commitLocal(root, s) {
   const branch = line(root, ['rev-parse', '--abbrev-ref', 'HEAD']);
   if (branch === 'HEAD') return null; // detached
@@ -222,7 +241,9 @@ export function commitLocal(root, s) {
   // next ordinary push of that branch would skip CI on main (E2E 2026-10-07). Only the copy on the
   // exchange branch carries it (see `ship`).
   const message = (names) => `📝 docs(auto): ${summary(names)}`;
-  if (branch === defaultBranch(root) && trunkClosed(root)) {
+  // Closed trunk, or code of the agent's still uncommitted: no commit of ours on the branch. The
+  // snapshot goes up the same way and the files stay modified, to be committed WITH that work.
+  if ((branch === defaultBranch(root) && trunkClosed(root)) || workPending(root)) {
     const env = { GIT_INDEX_FILE: join(root, '.rsc', 'knowledge-sync.snap.index') };
     try {
       if (!run(root, ['read-tree', 'HEAD'], { env }).ok) return null;

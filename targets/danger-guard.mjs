@@ -39,8 +39,9 @@ function deny(why) {
       permissionDecision: 'deny',
       permissionDecisionReason:
         `BLOCKED for a non-technical user — this command ${why}. ` +
-        `Do NOT run it: explain the risk in plain language and propose a safer, scoped alternative ` +
-        `(name exact paths, add a WHERE clause, back up first, etc.). ` +
+        `Do NOT run it, and do NOT reach the same result another way (a softer reset plus a delete is the ` +
+        `same loss). Explain the risk in plain language, let the person decide, and propose a safer, scoped ` +
+        `alternative that keeps their work (name exact paths, add a WHERE clause, back up first, etc.). ` +
         `Only if the USER explicitly insists on allowing dangerous commands here, create .rsc/.no-danger-guard to disable this guard.`,
     },
   }));
@@ -50,11 +51,19 @@ function deny(why) {
 if (existsSync(join(root, '.rsc', '.no-danger-guard'))) allow();
 
 // technical_level === 'technical' → not guarded. non-technical / mixed / missing → guarded.
+// The person's own profile first. It is personal and kept out of commits, so a teammate's clone has
+// none — and falling straight to "non-technical" turned every clone into a wall of denials (field
+// test 3.0.8). Next comes the level the harness was installed with, recorded in `.rsc.json`, which
+// the team commits. Only with neither is the safe default applied.
 function technicalLevel() {
   try {
     const txt = readFileSync(join(root, '02-DOCS', 'wiki', 'harness', 'user-profile.md'), 'utf8');
     const m = txt.match(/technical_level:\s*([a-z-]+)/i);
-    return m ? m[1].toLowerCase() : null;
+    if (m) return m[1].toLowerCase();
+  } catch { /* no profile here */ }
+  try {
+    const level = JSON.parse(readFileSync(join(root, '.rsc.json'), 'utf8'))?.onboarding?.plan?.record?.technicalLevel;
+    return typeof level === 'string' ? level.toLowerCase() : null;
   } catch { return null; }
 }
 const technical = technicalLevel() === 'technical';
@@ -152,7 +161,7 @@ const RULES = [
   { id: 'curl-pipe-shell', why: 'pipes a downloaded script straight into a shell (curl|bash) — runs untrusted code', match: () => /\b(curl|wget)\b[^|]*\|\s*(sudo\s+)?(sh|bash|zsh)\b/i.test(cmd) },
 
   { id: 'git-push-force', why: 'force-pushes and can overwrite shared history for everyone (git push --force)', match: () => gitSegment(/\bgit\s+push\b[^|;&]*(--force(?!-with-lease)\b|\s-f\b)/i) },
-  { id: 'git-reset-hard', why: 'throws away all uncommitted work with no undo (git reset --hard)', match: () => gitSegment(/\bgit\s+reset\b[^|;&]*--hard\b/i) },
+  { id: 'git-reset-hard', why: 'throws away uncommitted work, and drops commits when it moves back, with no undo (git reset --hard)', match: () => gitSegment(/\bgit\s+reset\b[^|;&]*--hard\b/i) },
   { id: 'git-clean', why: 'permanently deletes untracked files (git clean -f)', match: () => gitSegment(/\bgit\s+clean\b[^|;&]*-[a-z]*f/i) },
   { id: 'git-discard', why: 'discards every uncommitted change in the tree with no undo (git checkout -- . / git restore .)', match: () => gitSegment(/\bgit\s+(checkout\s+(--\s+)?\.|restore\s+(--(staged|worktree)\s+)*\.)(\s|$|[|;&])/i) },
   { id: 'git-no-verify', why: 'skips the project\'s own git hooks (--no-verify)', match: () => gitSegment(/\bgit\s+(commit|push|merge|rebase|am|cherry-pick)\b.*\s--no-verify\b/i) },

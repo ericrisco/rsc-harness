@@ -117,3 +117,16 @@ test('purge --dry-run reports the same sections and touches nothing', () => {
   assert.equal(readFileSync(join(cwd, '.claude/settings.json'), 'utf8'), before);
   assert.ok(existsSync(join(cwd, '.rsc.json')) && existsSync(join(cwd, '01-TOOLS/_TEMPLATE/README.md')));
 });
+
+// Field test 3.0.8: purge deleted 01-TOOLS/.gitignore although knowledge-sync had already committed it,
+// leaving the tree dirty and the file one push away from vanishing for the whole team.
+test('purge never deletes a scaffold file that is committed, and says why it stays', () => {
+  const cwd = onboardedRepo();
+  git(cwd, ['add', '01-TOOLS/.gitignore']);
+  git(cwd, ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', '📝 docs: tools']);
+  const result = run(cwd, ['purge']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(existsSync(join(cwd, '01-TOOLS', '.gitignore')), 'committed: it stays');
+  assert.equal(git(cwd, ['status', '--porcelain', '--', '01-TOOLS/.gitignore']).stdout.trim(), '', 'and the tree is not left dirty');
+  assert.ok(sections(result.stdout).kept.includes('01-TOOLS/.gitignore'), result.stdout);
+});

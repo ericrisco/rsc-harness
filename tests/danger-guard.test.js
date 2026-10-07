@@ -176,3 +176,19 @@ test('the materialized copy of the guard has not drifted from the source', (t) =
     'run `npx rsc sync` — this workspace is running stale guard code, not the code under test',
   );
 });
+
+// Field test 3.0.8: the profile is personal and excluded from commits, so a teammate's clone has none,
+// and the guard read every clone as a non-technical user — denials where an `ask` was owed.
+test('a clone without the personal profile takes the level the harness was installed with', () => {
+  const root = mkdtempSync(join(tmpdir(), 'rsc-dg-clone-'));
+  writeFileSync(join(root, '.rsc.json'), JSON.stringify({ onboarding: { plan: { record: { technicalLevel: 'technical' } } } }));
+  const decide = (command) => {
+    const out = spawnSync('node', [GUARD, root], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command } }), encoding: 'utf8' }).stdout;
+    return out.trim() ? JSON.parse(out).hookSpecificOutput.permissionDecision : 'allow';
+  };
+  assert.equal(decide('git reset --hard HEAD~1'), 'ask');
+  assert.equal(decide(`rm ${RF} build`), 'allow');
+  mkdirSync(join(root, '02-DOCS', 'wiki', 'harness'), { recursive: true });
+  writeFileSync(join(root, '02-DOCS', 'wiki', 'harness', 'user-profile.md'), 'technical_level: non-technical\n');
+  assert.equal(decide('git reset --hard HEAD~1'), 'deny', 'the person\'s own profile wins');
+});

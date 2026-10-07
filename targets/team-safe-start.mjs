@@ -148,3 +148,35 @@ export function teamSafeAnnouncement(root, env = process.env) {
     return ANNOUNCEMENT[announcementLanguage(root, env)];
   } catch { return ''; }
 }
+
+/**
+ * The harness only reaches a teammate through what is committed: `.rsc.json` (the decision), the
+ * Claude settings that wire the guards and hooks, the bootstrap a clone runs. Field tests 3.0.7 and
+ * 3.0.8: five sessions each, and none of those files was ever committed — «team-safe by default»
+ * that never left the machine. Said at session start while `.rsc.json` is untracked in a repo with a
+ * remote; at most once a week, so it informs without nagging (P7). The agent proposes, never commits
+ * on its own.
+ */
+const HARNESS_FILES = ['.rsc.json', '.claude/settings.json', '.claude/rsc-bootstrap.mjs', '.gitignore'];
+const COMMIT_MARK = '.harness-commit-offered';
+const WEEK_MS = 7 * 24 * 3600 * 1000;
+
+export function harnessCommitNotice(root, now = Date.now()) {
+  try {
+    const run = (args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    if (!existsSync(join(root, '.rsc.json'))) return '';
+    if (!run(['remote'])) return '';
+    if (run(['ls-files', '--', '.rsc.json'])) return '';
+    const mark = join(root, '.rsc', COMMIT_MARK);
+    if (existsSync(mark) && now - Date.parse(readFileSync(mark, 'utf8').trim()) < WEEK_MS) return '';
+    mkdirSync(join(root, '.rsc'), { recursive: true });
+    writeFileSync(mark, `${new Date(now).toISOString()}\n`);
+    const files = HARNESS_FILES.filter((f) => existsSync(join(root, f)));
+    return '===== rsc · harness not committed =====\n' +
+      `The harness files (${files.join(', ')}) are not in git, so teammates and new clones get no guards, ` +
+      'hooks or decisions. ACTION: tell the person in one line, in their language, and offer to commit ' +
+      'them with their next change (on the branch this project uses). Do not commit them on your own.\n' +
+      '=======================================\n';
+  } catch { return ''; }
+}
+

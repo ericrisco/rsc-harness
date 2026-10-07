@@ -675,3 +675,21 @@ test('commitSummary counts files, not basenames, and names each one unambiguousl
   assert.equal(commitSummary(['02-DOCS/wiki/a.md']), '02-DOCS/wiki/a.md');
   assert.equal(commitSummary(['02-DOCS/wiki/a.md', '02-DOCS/wiki/a.md']), '02-DOCS/wiki/a.md', 'duplicates count once');
 });
+
+// Field test 3.0.8: the end of a turn committed an FTD update («Fix … probado») on main while the fix
+// itself was still uncommitted, so the next push published a document describing code not in history.
+test('ks58 · with code still uncommitted, docs go up without a commit of ours on the branch', () => {
+  const { remote, eric } = team({ protectedMain: false });
+  write(eric, '.rsc/.no-trunk-guard', ''); // main explicitly open: two authors would close it as a team
+  const before = git(eric, 'rev-parse', 'HEAD');
+  write(eric, 'src/app.js', 'fixed\n');
+  write(eric, '02-DOCS/wiki/ftd/fix.md', '# fix\n- [x] probado\n');
+  turn(eric);
+  assert.equal(git(eric, 'rev-parse', 'HEAD'), before, 'no docs commit ahead of the code');
+  assert.equal(kShow(remote, '02-DOCS/wiki/ftd/fix.md'), '# fix\n- [x] probado', 'the teammates still get it');
+  assert.match(git(eric, 'status', '--porcelain', '-uall'), /02-DOCS\/wiki\/ftd\/fix\.md/, 'left to be committed with the code');
+  git(eric, 'add', '-A'); git(eric, 'commit', '-q', '-m', 'fix');
+  write(eric, '02-DOCS/wiki/nota.md', 'n\n');
+  turn(eric);
+  assert.match(git(eric, 'log', '-1', '--format=%s'), /^📝 docs\(auto\)/, 'with nothing else pending, the usual commit');
+});

@@ -389,3 +389,22 @@ test('tsd19 · the per-turn rule names the state of THIS project, and the branch
   write(ci, '.rsc/.no-trunk-guard', '');
   assert.match(branchRuleLine(ci), /OPEN/, '«main» chosen at install wins over the signals');
 });
+
+// Field tests 3.0.7 and 3.0.8: nobody ever committed .rsc.json or the Claude settings, so the harness
+// never reached a teammate. Session start says so — weekly at most, and never commits by itself.
+test('tsd40 · an uncommitted harness in a repo with a remote is pointed out, at most once a week', async () => {
+  const { harnessCommitNotice } = await import('../targets/team-safe-start.mjs');
+  const root = mkdtempSync(join(tmpdir(), 'rsc-harness-commit-'));
+  const g = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+  g('init', '-q');
+  writeFileSync(join(root, '.rsc.json'), '{}\n');
+  assert.equal(harnessCommitNotice(root), '', 'no remote: nobody to share with');
+  g('remote', 'add', 'origin', 'https://example.invalid/x.git');
+  const now = Date.parse('2026-10-07T10:00:00Z');
+  assert.match(harnessCommitNotice(root, now), /harness not committed[\s\S]*\.rsc\.json[\s\S]*Do not commit them on your own/);
+  assert.equal(harnessCommitNotice(root, now + 3600e3), '', 'not again the same week');
+  assert.match(harnessCommitNotice(root, now + 8 * 24 * 3600e3), /harness not committed/);
+  g('add', '.rsc.json');
+  g('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', '🔧 harness');
+  assert.equal(harnessCommitNotice(root, now + 30 * 24 * 3600e3), '', 'committed: silent for good');
+});
