@@ -368,7 +368,9 @@ test('ks30 · the hook: a message says it to the person, the end of a turn commi
   const { remote, eric } = team();
   const out = hook('claude', 'request', { session_id: 's1', cwd: eric });
   assert.match(out.systemMessage || '', /rsc knowledge-sync off/, JSON.stringify(out));
-  assert.equal(out.hookSpecificOutput, undefined, 'a notice for the person must not go into the model context');
+  // Since 3.0.8 the model gets the same text (ks57): a notice only the person saw was news the agent
+  // could not explain a turn later.
+  assert.ok(out.hookSpecificOutput.additionalContext.includes(out.systemMessage));
   write(eric, '02-DOCS/wiki/nueva.md', 'hola\n');
   hook('claude', 'turn', { session_id: 's1', cwd: eric });
   assert.match(git(eric, 'log', '-1', '--format=%s'), /^📝 docs\(auto\)/, 'the Stop event did not commit');
@@ -617,4 +619,40 @@ test('ks54 · editing your own uploaded doc again on the same branch is not a cl
   const said = String(message(eric));
   assert.doesNotMatch(said, /también has tocado/);
   assert.equal(read(eric, '02-DOCS/wiki/ftd/a.md'), '# a\n\n- [x] más\n');
+});
+
+// E2E 2026-10-07: the local docs(auto) commit carried [skip ci] onto the working branch, where it is
+// often the newest commit, so the next ordinary push of main would skip CI. And the first turn of a
+// fresh install sent rsc's own 01-TOOLS/_TEMPLATE up as if a teammate had written it.
+test('ks55 · the commit on your branch never carries [skip ci]; the copy on rsc/knowledge does', () => {
+  const { remote, eric } = team({ protectedMain: false });
+  write(eric, '02-DOCS/wiki/nota.md', 'n\n');
+  turn(eric);
+  const local = git(eric, 'log', '-1', '--format=%s');
+  assert.match(local, /^📝 docs\(auto\): nota$/, 'the working branch commit');
+  assert.ok(!local.includes(SKIP_CI));
+  assert.ok(git(remote, 'log', '-1', '--format=%s', K).endsWith(SKIP_CI), 'the exchange copy keeps CI out');
+});
+
+test('ks56 · rsc\'s own template does not travel; a real tool next to it does', () => {
+  const { remote, eric } = team({ protectedMain: false });
+  write(eric, '01-TOOLS/_TEMPLATE/CREDENTIALS.md', '# plantilla\n');
+  write(eric, '01-TOOLS/stripe/README.md', '# stripe\n');
+  turn(eric);
+  const up = kFiles(remote);
+  assert.ok(up.includes('01-TOOLS/stripe/README.md'));
+  assert.ok(!up.some((f) => f.startsWith('01-TOOLS/_TEMPLATE/')), up.join(','));
+  assert.ok(!git(eric, 'show', '--name-only', '--format=', 'HEAD').includes('_TEMPLATE'), 'and it is not committed for you either');
+});
+
+// Field test 3.0.4: «📥 te llegó un cambio» reached the person in one turn, and a turn later the agent
+// could not say what had changed — the notice had never been in its context.
+test('ks57 · what the person is told about knowledge, the model is told too', () => {
+  const { eric } = team({ protectedMain: false });
+  const out = hook('claude', 'request', { cwd: eric });
+  assert.ok(out.systemMessage, 'the first request announces sync');
+  assert.equal(out.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
+  assert.ok(out.hookSpecificOutput.additionalContext.includes(out.systemMessage));
+  const dsh = hook('deepseek', 'request', { cwd: eric });
+  assert.equal(dsh.systemMessage, undefined, 'one copy for DeepSeek Harness');
 });

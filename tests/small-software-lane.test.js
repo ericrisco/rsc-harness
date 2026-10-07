@@ -71,3 +71,10 @@ test('lane04 · what counts as code', () => {
     assert.equal(classify(root, other), 'other', other);
   }
 });
+
+test('profile · the personal profile is excluded in this clone, so it never shows as uncommitted', { timeout: 300000 }, () => {
+  const cwd = onboarded();
+  const status = execFileSync('git', ['status', '--porcelain', '--', '02-DOCS/wiki/harness/user-profile.md'], { cwd, encoding: 'utf8' });
+  assert.equal(status.trim(), '');
+  assert.ok(existsSync(join(cwd, '02-DOCS', 'wiki', 'harness', 'user-profile.md')), 'still there, just not offered for commit');
+});

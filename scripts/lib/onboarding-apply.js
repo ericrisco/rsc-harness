@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import { applyInstall, pruneSharedBases, removeTargetInstall } from '../install-apply.js';
 import { targetPaths } from '../../targets/index.js';
 import { targetHasAgents } from '../../targets/agents.js';
@@ -157,12 +158,35 @@ export function mergeProfile(existing, plan, previousRecord) {
   return `---\n${front.join('\n')}\n---\n${body.startsWith('\n') ? '' : '\n'}${body}`;
 }
 
+/**
+ * The profile is one person's dials (knowledge-sync never sends it), so it never belongs in a commit
+ * either — yet it sat untracked for good, and every session's agent reported it as «cambios sin
+ * commitear» (E2E 2026-10-07). Excluded in THIS clone only (`info/exclude`, not `.gitignore`), and
+ * never when the team already tracks it: that is their decision.
+ */
+export function excludePersonalProfile(cwd) {
+  const git = (args) => { try { return execFileSync('git', args, { cwd, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; } };
+  if (git(['rev-parse', '--is-inside-work-tree']) !== 'true') return false;
+  const rel = '02-DOCS/wiki/harness/user-profile.md';
+  if (git(['ls-files', '--', rel])) return false;
+  const value = git(['rev-parse', '--git-path', 'info/exclude']);
+  if (!value) return false;
+  const file = resolve(cwd, value);
+  const pattern = `/${rel}`;
+  mkdirSync(dirname(file), { recursive: true });
+  const body = existsSync(file) ? readFileSync(file, 'utf8') : '';
+  if (body.split('\n').includes(pattern)) return true;
+  appendFileSync(file, `${body && !body.endsWith('\n') ? '\n' : ''}${pattern}\n`);
+  return true;
+}
+
 export function writeOnboardingDocuments(cwd, plan, planId, previousRecord = null) {
   const dir = join(cwd, '02-DOCS', 'wiki', 'harness');
   mkdirSync(dir, { recursive: true });
   const docs = renderOnboardingDocuments(plan, planId);
   const profilePath = join(dir, 'user-profile.md');
   writeFileSync(profilePath, mergeProfile(existsSync(profilePath) ? readFileSync(profilePath, 'utf8') : '', plan, previousRecord));
+  excludePersonalProfile(cwd);
   writeFileSync(join(dir, 'installation-plan.md'), docs.installation);
   const decisionsPath = join(dir, 'decisions.md');
   if (!existsSync(decisionsPath)) writeFileSync(decisionsPath, docs.decisions);

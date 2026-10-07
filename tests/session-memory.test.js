@@ -188,3 +188,25 @@ test('the local CLI exposes machine-readable status without a network dependency
   assert.equal(status.sessions, 0);
   assert.ok(['wiki-worklog', 'local-state'].includes(status.kind));
 });
+
+// E2E 2026-10-07: the next session learned WHERE the last one stopped (head, files) but not WHAT it
+// did, and the file list included untracked install files the session never opened.
+test('the continuation says what was done and what is next, and lists only what the session touched', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'installed-before.json'), '{}\n'); // untracked before the session
+  const g = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8' });
+  memory.capture({ cwd, sessionId: 's1', target: 'claude', event: 'start', now: '2026-10-07T10:00:00.000Z' });
+  mkdirSync(join(cwd, 'src'), { recursive: true });
+  writeFileSync(join(cwd, 'src', 'filter.js'), 'export const f = 1;\n');
+  g('add', 'src/filter.js');
+  g('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'feat: filtro por estado');
+  mkdirSync(join(cwd, '02-DOCS', 'wiki', 'ftd'), { recursive: true });
+  writeFileSync(join(cwd, '02-DOCS', 'wiki', 'ftd', 'filtro.md'), '# filtro\n\n## Checklist\n- [x] a\n- [ ] persistencia\n\n## Next\n- Añadir persistencia en localStorage\n');
+  memory.capture({ cwd, sessionId: 's1', target: 'claude', event: 'turn', now: '2026-10-07T10:05:00.000Z' });
+  const { context } = memory.resume({ cwd, now: '2026-10-07T11:00:00.000Z' });
+  assert.match(context, /done: [0-9a-f]{7} feat: filtro por estado/);
+  assert.match(context, /next: 02-DOCS\/wiki\/ftd\/filtro\.md: Añadir persistencia en localStorage \(1 open\)/);
+  assert.match(context, /files: .*src\/filter\.js/);
+  assert.doesNotMatch(context, /installed-before\.json/, 'untouched by the session');
+  assert.doesNotMatch(context, /metrics: cost=unknown toolCalls=unknown/);
+});

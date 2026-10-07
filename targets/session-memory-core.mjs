@@ -171,7 +171,7 @@ function fingerprintFiles(worktree, files) {
 
 function snapshot(cwd, baselineHead = null) {
   const top = git(cwd, ['rev-parse', '--show-toplevel']);
-  if (!top.ok) return { git: false, branch: null, worktree: resolve(cwd), head: null, files: [], fingerprints: {}, commits: [] };
+  if (!top.ok) return { git: false, branch: null, worktree: resolve(cwd), head: null, files: [], dirty: [], committed: [], fingerprints: {}, commits: [] };
   const worktree = resolve(top.out);
   const branch = cleanString(git(cwd, ['symbolic-ref', '--quiet', '--short', 'HEAD']).out, 255);
   const head = cleanString(git(cwd, ['rev-parse', '--verify', 'HEAD']).out, 64);
@@ -183,7 +183,7 @@ function snapshot(cwd, baselineHead = null) {
     commits = git(cwd, ['log', '--format=%H', `${baselineHead}..${head}`]).out.split('\n').map((item) => cleanString(item, 64)).filter(Boolean);
   }
   const files = [...new Set([...dirty, ...committed])].sort();
-  return { git: true, branch, worktree, head, files, fingerprints: fingerprintFiles(worktree, dirty), commits };
+  return { git: true, branch, worktree, head, files, dirty, committed, fingerprints: fingerprintFiles(worktree, dirty), commits };
 }
 
 function ledgerSnapshot(cwd) {
@@ -391,7 +391,11 @@ export function capture(input = {}) {
     worktree: cleanString(repo.worktree, 1000),
     baselineHead: cleanString(anchor.baselineHead, 64),
     head: cleanString(repo.head, 64),
-    files: repo.files.filter((item) => !secretShaped(item)),
+    // What THIS session touched: what it committed, plus what is dirty now and was not dirty — or not
+    // this content — when it started. The plain union listed whatever an install had left untracked,
+    // so a session that never opened `.rsc.json` reported it as its work (E2E 2026-10-07).
+    files: [...new Set([...repo.committed, ...repo.dirty.filter((path) => !baselineFiles.has(path)
+      || baselineFingerprints[path] !== repo.fingerprints[path])])].sort().filter((item) => !secretShaped(item)),
     commits: repo.commits.filter((item) => !secretShaped(item)),
     ledger: ledgerSnapshot(cwd),
     timestamps: { startedAt: anchor.startedAt, updatedAt: now, completedAt: completed },
@@ -455,19 +459,46 @@ function truncateUtf8(text, maxBytes) {
   return output;
 }
 
-function renderContext(record, match, lessons, config) {
+// WHAT the last session did, not only where it stopped: the subjects of its commits and the next step
+// its feature document wrote down. Read at resume time from git and the document — never from the
+// prompts, which the record promises not to keep — so the record's closed schema does not change.
+function subjects(cwd, commits) {
+  return commits.slice(0, 8).map((sha) => {
+    const out = git(cwd, ['log', '-1', '--format=%h %s', sha]);
+    return out.ok ? cleanString(out.out, 160) : cleanString(sha.slice(0, 7), 7);
+  }).filter((item) => item && !secretShaped(item));
+}
+
+function nextSteps(cwd, files) {
+  const out = [];
+  for (const rel of files.filter((f) => /^02-DOCS\/wiki\/(ftd|sdd\/(specs|plans|progress))\/[^/]+\.md$/u.test(f)).slice(0, 3)) {
+    let body = '';
+    try { body = readFileSync(join(cwd, rel), 'utf8'); } catch { continue; }
+    const section = body.match(/^##\s*(Next|Siguiente|Próximo)[^\n]*\n+([\s\S]*?)(?=\n##\s|$)/imu)?.[2];
+    const first = section?.split('\n').map((l) => l.replace(/^[-*]\s*/u, '').trim()).find(Boolean);
+    const open = (body.match(/^- \[ \]/gmu) || []).length;
+    if (first || open) out.push(`${rel}: ${first ? cleanString(first, 200) : 'no next step written'}${open ? ` (${open} open)` : ''}`);
+  }
+  return out;
+}
+
+function renderContext(record, match, lessons, config, cwd = process.cwd()) {
   if (!record && !lessons.length) return '';
+  const done = record ? subjects(cwd, record.commits) : [];
+  const next = record ? nextSteps(cwd, record.files) : [];
   const lines = record ? [
     `[rsc local ${match} continuation]`,
-    `source: ${record.target}/${record.sessionId}`,
+    `source: ${record.target}/${record.sessionId} (${record.timestamps.startedAt} → ${record.timestamps.updatedAt})`,
     `branch: ${record.branch || 'unavailable'}`,
     `worktree: ${record.worktree || 'unavailable'}`,
     `head: ${record.head || 'unavailable'}`,
+    `done: ${done.length ? done.join(' | ') : 'no commits'}`,
     `files: ${record.files.join(', ') || 'none'}`,
-    `commits: ${record.commits.join(', ') || 'none'}`,
+    ...(next.length ? [`next: ${next.join(' | ')}`] : []),
   ] : ['[rsc local approved lessons]'];
   if (record?.ledger.length) lines.push(`ledger: ${record.ledger.map((item) => `${item.path}=${item.status}/${item.openItems}`).join(', ')}`);
-  if (record) lines.push(`metrics: cost=${record.cost ?? 'unknown'} toolCalls=${record.toolCalls ?? 'unknown'}`);
+  // Only when something is known: «cost=unknown toolCalls=unknown» on every resume told the model nothing.
+  if (record && (record.cost != null || record.toolCalls != null)) lines.push(`metrics: cost=${record.cost ?? 'unknown'} toolCalls=${record.toolCalls ?? 'unknown'}`);
   if (record?.concurrent) lines.push('parallel sessions detected; this record was not merged with them.');
   for (const lesson of lessons) lines.push(`approved lesson (${lesson.confidence}): ${lesson.text}`);
   return truncateUtf8(`${lines.join('\n')}\n`, config.contextBytes);
@@ -497,7 +528,7 @@ export function resume(input = {}) {
     if (record) match = 'nearby';
   }
   const lessons = selectedLessons(store.root, config);
-  return { match, record, lessons, context: renderContext(record, match, lessons, config) };
+  return { match, record, lessons, context: renderContext(record, match, lessons, config, here) };
 }
 
 export function learn(input = {}) {

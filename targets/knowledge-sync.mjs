@@ -58,7 +58,15 @@ const LOCK_STALE_MS = 120_000;
 const MAX_FILES = 200;
 const KEEP_OURS = 200;
 
-export const isKnowledge = (path) => KNOWLEDGE.some((k) => path.startsWith(k)) && !PERSONAL.includes(path);
+/**
+ * rsc's own scaffolding, identical in every project: it arrives with rsc, not with a teammate. Sent up,
+ * it turned the first turn of a fresh install into a "docs" commit of CREDENTIALS.md and
+ * test_connection.sh on the working branch (E2E 2026-10-07). A team that customises the template
+ * still commits it like any file; it just does not travel on its own.
+ */
+export const SCAFFOLD = Object.freeze(['01-TOOLS/_TEMPLATE/']);
+export const isKnowledge = (path) => KNOWLEDGE.some((k) => path.startsWith(k)) && !PERSONAL.includes(path)
+  && !SCAFFOLD.some((k) => path.startsWith(k));
 
 // ------------------------------------------------------------------ git
 
@@ -203,7 +211,10 @@ export function commitLocal(root, s) {
   if (branch === 'HEAD') return null; // detached
   const files = changedKnowledge(root).slice(0, MAX_FILES);
   if (!files.length) return null;
-  const message = (names) => `📝 docs(auto): ${summary(names)} ${SKIP_CI}`;
+  // No [skip ci] HERE: this commit lands on the working branch, often as its newest commit, and the
+  // next ordinary push of that branch would skip CI on main (E2E 2026-10-07). Only the copy on the
+  // exchange branch carries it (see `ship`).
+  const message = (names) => `📝 docs(auto): ${summary(names)}`;
   if (branch === defaultBranch(root) && trunkClosed(root)) {
     const env = { GIT_INDEX_FILE: join(root, '.rsc', 'knowledge-sync.snap.index') };
     try {
@@ -337,7 +348,9 @@ export function ship(root, s) {
       // A commit of somebody's own (code + docs) goes up as its knowledge part, under a message that
       // says so and carries [skip ci]: its own message would describe code that is not there, and
       // would run CI on the exchange branch.
-      const body = rest.join('\n').includes(SKIP_CI) ? rest : [
+      const ownAuto = /^📝 docs\(auto\):/.test(rest[0] || '');
+      const body = ownAuto ? [`${rest[0].replace(SKIP_CI, '').trim()} ${SKIP_CI}`, ...rest.slice(1)]
+        : rest.join('\n').includes(SKIP_CI) ? rest : [
         `📝 docs(auto): ${summary(zlist(git(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', '-z', sha, '--', ...KNOWLEDGE])).filter(isKnowledge))} ${SKIP_CI}`,
         '', `Desde: ${rest[0] || sha.slice(0, 7)}`];
       base = git(root, ['commit-tree', tree, '-p', base, '-F', '-'], {
@@ -416,7 +429,7 @@ export function applyIncoming(root, s) {
     // and travel into the next branch the agent opens (regla A).
     if (!closed) {
       git(root, ['--literal-pathspecs', 'commit', '--quiet', '--no-verify', '--only',
-        '-m', `📥 docs(auto): sync desde ${KNOWLEDGE_BRANCH} ${SKIP_CI}`, '--', ...take]);
+        '-m', `📥 docs(auto): sync desde ${KNOWLEDGE_BRANCH}`, '--', ...take]);
     } else {
       git(root, ['--literal-pathspecs', 'reset', '--quiet', '--', ...take]); // updated, not staged
     }
@@ -565,7 +578,14 @@ export function hook(target, event, native = {}) {
     if (event === 'request') {
       const said = onRequest(root);
       if (!said) return {};
-      return target === 'cursor' ? { user_message: said } : { systemMessage: said };
+      if (target === 'cursor') return { user_message: said };
+      // The person sees it (`systemMessage`), and now the model knows it too: shown only to the person,
+      // a «📥 llegó un cambio» was news the agent could not explain when asked «¿qué cambió?» a turn
+      // later (field test 3.0.4). Same text, so what they each know is the same thing.
+      const context = { hookEventName: target === 'gemini' ? 'BeforeAgent' : 'UserPromptSubmit', additionalContext: `rsc knowledge-sync (already shown to the person):\n${said}` };
+      // DeepSeek Harness drops systemMessage and rsc's bridge turns it into context: one copy is enough.
+      if (target === 'deepseek') return { hookSpecificOutput: { ...context, additionalContext: `rsc knowledge-sync — tell the person in one line:\n${said}` } };
+      return { systemMessage: said, hookSpecificOutput: context };
     }
     // `stop_hook_active`: this turn exists because a stop hook asked for it. Nothing new to commit.
     if (event === 'turn' && !native?.stop_hook_active) onTurn(root);
