@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, realpathSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { handleLifecycle } from '../targets/session-memory-adapter.mjs';
@@ -150,13 +150,44 @@ test('W6 · after merging the trunk, done/files/next are the session’s own, no
   event(root, 'MINE', 'end');
 
   const record = recordsIn(root).find((r) => r.sessionId === 'MINE');
-  assert.equal(record.commits.length, 1, `only the session's own commit, got ${record.commits.length}`);
+  // Its own commit and the merge it made (since the second team simulation) — never Carla's commit.
+  assert.equal(record.commits.length, 2, `the session's commit and its merge, got ${record.commits.length}`);
   assert.deepEqual(record.files, ['02-DOCS/wiki/ftd/busqueda.md', 'src/search.js']);
 
   const ctx = contextOf(event(root, 'RESUMER', 'start'));
   assert.match(ctx, /BRUNO-SUBJECT/);
   assert.doesNotMatch(ctx, /CARLA-SUBJECT/, 'a teammate’s commit is not this session’s work');
-  assert.doesNotMatch(ctx, /Merge remote-tracking/, 'nor is the merge commit');
+  assert.match(ctx, /Merge remote-tracking/, 'the merge the session made is its work');
   assert.match(ctx, /BRUNO-NEXT/);
   assert.doesNotMatch(ctx, /CARLA-NEXT/, 'nor is the teammate’s next step');
 });
+
+// Second team simulation: a session that merged main and resolved the conflicts was recorded as «no
+// commits, files: none», and the next session told the person nothing had been done.
+test('W6b · a merge with resolved conflicts is the session’s work, and the resolved file is listed', () => {
+  const root = teamProject();
+  write(root, 'src/tasks.js', 'base\n');
+  git(root, 'add', '-A'); git(root, 'commit', '-q', '-m', 'base');
+  git(root, 'checkout', '-q', '-b', 'feat/otra');
+  write(root, 'src/tasks.js', 'theirs\n');
+  write(root, 'src/other.js', 'theirs only\n');
+  git(root, 'add', '-A');
+  git(root, '-c', 'user.email=ana@team.test', '-c', 'user.name=Ana', 'commit', '-q', '-m', 'ANA-SUBJECT');
+  git(root, 'checkout', '-q', 'main');
+  git(root, 'checkout', '-q', '-b', 'feat/mia');
+  write(root, 'src/tasks.js', 'mine\n');
+  git(root, 'add', '-A'); git(root, 'commit', '-q', '-m', 'MINE-BEFORE');
+  event(root, 'RESOLVER', 'start');
+  spawnSync('git', ['merge', '-q', 'feat/otra', '-m', 'MERGE-SUBJECT'], { cwd: root });
+  write(root, 'src/tasks.js', 'resolved\n');
+  event(root, 'RESOLVER', 'edit');
+  git(root, 'add', '-A'); git(root, 'commit', '-q', '--no-edit');
+  event(root, 'RESOLVER', 'turn');
+  const record = recordsIn(root).find((r) => r.sessionId === 'RESOLVER');
+  assert.equal(record.commits.length, 1, 'the merge commit');
+  assert.deepEqual(record.files, ['src/tasks.js'], 'what it resolved — not other.js, which only came in');
+  const ctx = contextOf(event(root, 'NEXT', 'start'));
+  assert.doesNotMatch(ctx, /done: no commits/);
+  assert.doesNotMatch(ctx, /ANA-SUBJECT/);
+});
+

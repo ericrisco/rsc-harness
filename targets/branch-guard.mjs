@@ -37,6 +37,25 @@ export const MOVES_BRANCH = new RegExp(String.raw`\bgit\s+${GIT_OPTS}(?:switch(?
 // (-f/--force, -M, -C). Which ref it moves is read by refMoveTarget().
 export const MOVES_REF = new RegExp(String.raw`\bgit\s+${GIT_OPTS}(?:update-ref(?![\w-])|branch\s+(?:\S+\s+)*?(?:-[A-Za-z]*[fMC][A-Za-z]*|--force)(?=\s|$))`);
 
+// A push whose DESTINATION is named: `git push origin HEAD:main`, `feat/x:refs/heads/main`, `--mirror`.
+export const PUSHES = new RegExp(String.raw`\bgit\s+${GIT_OPTS}push(?![\w-])`);
+
+/** True when this push segment writes to branch `trunk` on the remote by an explicit refspec. */
+export function pushesTo(seg, trunk) {
+  const t = tokens(seg.replace(/^.*?\bgit\s+/, '').replace(/^(?:(?:-C|-c)\s+\S+\s+|--\S+\s+)*/, ''));
+  if (t.shift() !== 'push') return false;
+  const args = [];
+  for (let i = 0; i < t.length; i++) {
+    if (t[i] === '--mirror') return true; // rewrites every ref on the remote, the default branch included
+    if (/^(-o|--push-option|--repo|--receive-pack|--exec)$/.test(t[i])) { i++; continue; }
+    if (!t[i].startsWith('-')) args.push(t[i]);
+  }
+  return args.slice(1).some((spec) => {
+    const dst = spec.replace(/^\+/, '').split(':')[1];
+    return dst !== undefined && dst.replace(/^refs\/heads\//, '') === trunk;
+  });
+}
+
 export const unquoted = (command) => command.replace(/"(?:[^"\\]|\\.)*"|'[^']*'/g, '""');
 
 /** Where the git command actually runs: `git -C <dir>`, or a leading `cd <dir> &&`, else the cwd. */
@@ -114,7 +133,7 @@ export async function evaluate({ root, command, cwd, sessionId }) {
   // the segments judged are the ones the shell would really run (shell-unwrap.mjs).
   const raw = SH.expand(command);
   const segs = raw.map(unquoted);
-  if (!segs.some((s) => COMMITS_HERE.test(s) || MOVES_BRANCH.test(s) || MOVES_REF.test(s))) return null;
+  if (!segs.some((s) => COMMITS_HERE.test(s) || MOVES_BRANCH.test(s) || MOVES_REF.test(s) || PUSHES.test(s))) return null;
   const self = (rel) => new URL(rel, import.meta.url);
   let dir = cwd || root;
   const branchAt = new Map(); // toplevel → branch the chain has moved it to
@@ -126,7 +145,8 @@ export async function evaluate({ root, command, cwd, sessionId }) {
     const commits = COMMITS_HERE.test(seg);
     const moves = MOVES_BRANCH.test(seg);
     const movesRef = MOVES_REF.test(seg);
-    if (!commits && !moves && !movesRef) continue;
+    const pushes = PUSHES.test(seg);
+    if (!commits && !moves && !movesRef && !pushes) continue;
     const at = effectiveDir(raw[i] || seg, dir);
     const git = gitAt(at);
     const top = git('rev-parse', '--show-toplevel');
@@ -152,6 +172,20 @@ export async function evaluate({ root, command, cwd, sessionId }) {
         if (trunk && refMoveTarget(seg) === trunk) {
           const policy = trunkPolicy(here);
           if (policy.closed) return refDenial({ trunk, policy });
+        }
+      } catch { /* policy module missing → nothing to enforce */ }
+    }
+
+    // And by pushing straight into it: `git push origin HEAD:main` from a feature branch. Branch
+    // protection on the server would refuse it, but a repo without one would take it (second team
+    // simulation) — so the closed trunk is enforced here, where the agent runs it.
+    if (pushes && !existsSync(join(root, '.rsc', '.no-trunk-guard'))) {
+      try {
+        const { trunkPolicy, defaultBranchName } = await import(self('./trunk-policy.mjs'));
+        const trunk = defaultBranchName(here);
+        if (trunk && pushesTo(seg, trunk)) {
+          const policy = trunkPolicy(here);
+          if (policy.closed) return refDenial({ trunk, policy, how: '`git push <remote> <branch>:' + trunk + '`' });
         }
       } catch { /* policy module missing → nothing to enforce */ }
     }
@@ -191,9 +225,9 @@ async function trunkDenial({ root, here, sessionId, self, trunk, policy }) {
     'Unlock → only on their explicit answer, `npx @ericrisco/rsc main unlock` (a project decision, saved in .rsc.json), then commit again.';
 }
 
-function refDenial({ trunk, policy }) {
+function refDenial({ trunk, policy, how = '`git update-ref` and a forced `git branch`' }) {
   return `This project keeps its default branch "${trunk}" closed for the agent (it looks complex or in production: ${policy.signals.join(', ')}), so "${trunk}" was not moved — ` +
-    '`git update-ref` and a forced `git branch` land work on it with no commit and no review. ' +
+    `${how} land${how.includes(' and ') ? '' : 's'} work on it with no review. ` +
     `Work reaches "${trunk}" through a pull request: push the branch and open one (the \`ship\` skill). ` +
     `Do not choose for the person: if they want "${trunk}" moved by hand, ask them in one line; only on their explicit answer, \`npx @ericrisco/rsc main unlock\` (a project decision, saved in .rsc.json).`;
 }

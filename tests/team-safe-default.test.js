@@ -429,3 +429,19 @@ test('tsd18 · moving the closed default branch by ref (update-ref, branch -f/-M
   const simple = repo(); git(simple, 'switch', '-q', '-c', 'feat/x');
   assert.equal(await evaluate({ root: simple, command: 'git branch -f main HEAD', cwd: simple }), null, 'an open trunk is the person\'s call');
 });
+
+// Second team simulation: nothing stopped `git push origin HEAD:main` from a feature branch; only the
+// server's branch protection did, and a repo without one would have taken it.
+test('tsd41 · pushing straight into the closed default branch by refspec is denied; ordinary pushes are not', async () => {
+  const r = repo(); write(r, 'Dockerfile');
+  git(r, 'switch', '-q', '-c', 'feat/x');
+  for (const command of ['git push origin HEAD:main', 'git push origin feat/x:main', 'git push origin feat/x:refs/heads/main',
+    'git push origin +HEAD:main', 'git push -o ci.skip origin HEAD:main', 'git push --mirror origin', 'bash -c "git push origin HEAD:main"']) {
+    assert.match((await evaluate({ root: r, command, cwd: r })) ?? '', /closed for the agent/, `not denied: ${command}`);
+  }
+  for (const command of ['git push origin feat/x', 'git push -u origin HEAD', 'git push origin HEAD:feat/x', 'git push origin main:main-backup']) {
+    assert.equal(await evaluate({ root: r, command, cwd: r }), null, `over-blocked: ${command}`);
+  }
+  const open = repo(); git(open, 'switch', '-q', '-c', 'feat/y');
+  assert.equal(await evaluate({ root: open, command: 'git push origin HEAD:main', cwd: open }), null, 'an open trunk is not guarded');
+});

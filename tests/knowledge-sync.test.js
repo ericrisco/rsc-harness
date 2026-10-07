@@ -814,3 +814,18 @@ test('ks63 · D4 · a stale fetch is refreshed in the foreground, so a one-messa
   assert.match(onRequest(eric, { spawnFetch: false }), /fresco\.md/);
   assert.equal(read(eric, '02-DOCS/wiki/fresco.md'), 'f\n');
 });
+
+// Second team simulation: «cambios … de Ana: busqueda.md, estadisticas.md» — busqueda.md was Bruno's own.
+test('ks64 · each incoming file is credited to its own author, and your own come back as yours', () => {
+  const { eric, ana } = team({ protectedMain: false });
+  write(eric, '.rsc/.no-trunk-guard', ''); write(ana, '.rsc/.no-trunk-guard', '');
+  quiet(eric); quiet(ana);
+  write(ana, '02-DOCS/wiki/de-ana.md', 'a\n'); turn(ana);
+  git(eric, 'switch', '-q', '-c', 'feat/otra');
+  write(eric, '02-DOCS/wiki/de-eric.md', 'e\n'); turn(eric);
+  git(eric, 'switch', '-q', 'main');
+  const said = String(message(eric));
+  assert.match(said, /de Ana: 02-DOCS\/wiki\/de-ana\.md/, said);
+  assert.match(said, /de ti, desde otra rama: 02-DOCS\/wiki\/de-eric\.md/, said);
+  assert.doesNotMatch(said, /de Ana: [^;]*de-eric/, said);
+});

@@ -58,7 +58,9 @@ const STATE = 'knowledge-sync.json';
 const LOCK = 'knowledge-sync.lock';
 const FETCH_EVERY_MS = 60_000;
 /** Older than this, the next message fetches in the foreground first (D4, team sim 2026-10-07). */
-const STALE_FETCH_MS = 10 * 60_000;
+// 3 min, not 10: at 10 a teammate's merge three minutes old was missed and a duplicate 📥 commit of a
+// doc main already had went into a feature branch (second team simulation). Offline cost: ≤3 s per 3 min.
+const STALE_FETCH_MS = 3 * 60_000;
 /** …but never waits longer than this for it: fail-open, the background fetch still follows. */
 const FOREGROUND_FETCH_MS = 3_000;
 const NET_TIMEOUT_MS = 30_000;
@@ -162,6 +164,26 @@ const clean = (text, limit = 60) => {
 function listed(paths, max = 5) {
   const shown = paths.slice(0, max).map((p) => clean(p)).join(', ');
   return paths.length > max ? `${shown} y ${paths.length - max} más` : shown;
+}
+
+/**
+ * Who each file is from: the author of the newest commit that changed it, and «ti» when that commit is
+ * one of ours or carries your own git email. One name for the whole list told Bruno his own doc was
+ * Ana's (second team simulation).
+ */
+function byAuthor(root, files, touchedBy, ours) {
+  const me = line(root, ['config', 'user.email']) || '';
+  const groups = new Map();
+  for (const f of files) {
+    const last = touchedBy(f)[0]; // rev-list lists newest first
+    let who = 'ti, desde otra rama';
+    if (last && !ours.includes(last)) {
+      const [name, email] = (line(root, ['log', '-1', '--format=%an%x09%ae', last]) || '').split('\t');
+      if (name && (!me || email !== me)) who = clean(name, 30);
+    }
+    groups.set(who, [...(groups.get(who) || []), f]);
+  }
+  return [...groups].map(([who, list]) => `de ${who}: ${listed(list)}`).join('; ');
 }
 
 const authorsOf = (root, revs) => [...new Set(revs.flatMap((c) => {
@@ -510,9 +532,7 @@ export function applyIncoming(root, s) {
     s.waiting[branch] = tip;
     const pending = know.filter((f) => worktreeBlob(root, f) !== blob(root, tip, f));
     if (!pending.length) return said;
-    const theirs = [...new Set(pending.flatMap(touchedBy))].filter((c) => !s.ours.includes(c));
-    const who = theirs.length ? authorsOf(root, theirs) : 'ti, desde otra rama';
-    said.push(`📥 Hay cambios de conocimiento de ${who} en ${KNOWLEDGE_BRANCH}: ${listed(pending)}. ` +
+    said.push(`📥 Hay cambios de conocimiento en ${KNOWLEDGE_BRANCH} (${byAuthor(root, pending, touchedBy, s.ours)}). ` +
       `En ${branch} (cerrada) no los escribo, porque bloquearían tu próximo git pull: llegan con el pull ` +
       'cuando se fusionen, o a la rama que abras en su primer mensaje. ' +
       `Para leer uno ya: git show origin/${KNOWLEDGE_BRANCH}:<fichero>.`);
@@ -537,10 +557,7 @@ export function applyIncoming(root, s) {
     if (present.length) git(root, ['--literal-pathspecs', 'checkout', tip, '--', ...present]);
     if (gone.length) git(root, ['--literal-pathspecs', 'rm', '--quiet', '--', ...gone]);
     git(root, ['--literal-pathspecs', 'commit', '--quiet', '--no-verify', '--only', '-m', SYNC_SUBJECT, '--', ...take]);
-    const from = [...new Set(take.flatMap(touchedBy))];
-    const theirs = from.filter((c) => !s.ours.includes(c));
-    const who = theirs.length ? authorsOf(root, theirs) : 'ti, desde otra rama';
-    said.push(`📥 Traídos ${from.length} cambio(s) de conocimiento de ${who}: ${listed(take)}.`);
+    said.push(`📥 Traídos ${take.length} fichero(s) de conocimiento (${byAuthor(root, take, touchedBy, s.ours)}).`);
   }
   if (clash.length) {
     const who = authorsOf(root, [...new Set(clash.flatMap(touchedBy))].filter((c) => !s.ours.includes(c)));

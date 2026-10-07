@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -47,6 +47,10 @@ test('the hint never rides on an event that cannot carry additionalContext', () 
 // universal channel — so it is still said, and saying it can no longer fail validation.
 test('the hint still reaches the person, as a system message', () => {
   const cwd = project();
+  // A store choice that IS news (an untracked wiki worklog), so an ordinary notice exists to compare
+  // with; the plain "no wiki worklog" case is silent since 3.0.8.
+  mkdirSync(join(cwd, '02-DOCS', 'raw', 'worklog'), { recursive: true });
+  writeFileSync(join(cwd, '02-DOCS', 'raw', 'worklog', 'notas.md'), 'x\n');
   const native = { session_id: 'S2', cwd };
   const said = [];
   const others = [];

@@ -195,13 +195,22 @@ function snapshot(cwd, baselineHead = null) {
     // simulation, 2026-10-07). The files follow from those commits only — never `diff baseline..head`,
     // which counts everything the merge changed. The knowledge-sync import commit is machine-made and
     // carries other people's feature documents, so it is not the session's work either.
-    const own = git(cwd, ['log', '--first-parent', '--no-merges', '--format=%H%x09%s', `${baselineHead}..${head}`]).out
+    //
+    // A merge the session itself made IS its work, though (second team simulation: a session that
+    // merged main and resolved five conflicts was recorded as «no commits, files: none»). So merges on
+    // the first-parent chain stay, and from a merge only what the session resolved counts — the
+    // combined diff (`--cc`), never everything the merge brought in.
+    const own = git(cwd, ['log', '--first-parent', '--format=%H%x09%P%x09%s', `${baselineHead}..${head}`]).out
       .split('\n').filter(Boolean).map((line) => line.split('\t'))
-      .filter(([, subject = '']) => !KNOWLEDGE_IMPORT.test(subject));
+      .filter(([, , subject = '']) => !KNOWLEDGE_IMPORT.test(subject));
     commits = own.map(([sha]) => cleanString(sha, 64)).filter(Boolean);
+    const merges = new Set(own.filter(([, parents = '']) => parents.trim().split(/\s+/).length > 1).map(([sha]) => sha));
     const touched = new Set();
     for (const sha of commits) {
-      for (const item of git(cwd, ['diff-tree', '--no-commit-id', '--name-only', '-r', '-z', '--root', sha]).out.split('\0')) {
+      const args = merges.has(sha)
+        ? ['diff-tree', '--no-commit-id', '--name-only', '--cc', '-z', sha]
+        : ['diff-tree', '--no-commit-id', '--name-only', '-r', '-z', '--root', sha];
+      for (const item of git(cwd, args).out.split('\0')) {
         const clean = cleanString(item, 1000);
         if (clean) touched.add(clean);
       }
@@ -315,7 +324,9 @@ function noticeText(info) {
   if (info.reason === 'untracked-worklog') return 'rsc memory: using the ignored wiki worklog store.';
   if (info.reason === 'without-git') return 'rsc memory: running without git; branch and commit metadata are unavailable.';
   if (info.reason === 'local-state-tracked') return 'rsc memory: .rsc memory was tracked; using git-private local state.';
-  return 'rsc memory: no wiki worklog found; using ignored local state.';
+  // The ordinary case (no wiki worklog, local state) is not news: said to every new clone it was noise
+  // (second team simulation), like the placeholder case above.
+  return null;
 }
 
 function consumeNotice(info) {
