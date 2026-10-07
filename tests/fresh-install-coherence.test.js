@@ -76,7 +76,12 @@ test('8 · the first session after onboard does not nag for a skill audit', () =
 
 test('7a · "Per session start" matches the always-on body the hook really injects', () => {
   const { text, json } = doctor();
-  const body = statSync(join(cwd, '.rsc/suggest-always-on.md')).size;
+  // Whatever file the SessionStart hook really hands over: since 3.0.8 a small software project gets
+  // the full suggest body (the FTD/SDD lanes), an operations project the short stub.
+  const startCmd = JSON.parse(readFileSync(join(cwd, '.claude', 'settings.json'), 'utf8')).hooks.SessionStart.map((e) => e.hooks[0].command).join(' ');
+  const bodyRel = /\$\{CLAUDE_PROJECT_DIR\}\/([^"]+\.md)/.exec(startCmd)?.[1];
+  assert.ok(bodyRel, startCmd);
+  const body = statSync(join(cwd, bodyRel)).size;
   const shown = /Per session start : ([\d.]+) KB/.exec(text)?.[1];
   assert.equal(shown, (body / 1024).toFixed(1), text);
   const injected = Buffer.byteLength(sessionStart('budget-check'));
