@@ -98,8 +98,8 @@ rsc 3.0 fixes all four, by default, with no new commands to learn:
 
 **Commit, push and pull request without a prompt each time.** A harness installed from scratch lets
 the agent run `git commit`, `git push` and `gh pr create` without asking, because those are the steps
-that close every lane. A force-push still asks. The guards still decide: a commit on a closed `main` is
-refused whatever the permission says. It is a project decision, saved as `gitPermissions` in
+that close every lane. A force-push still asks. In Claude Code, rsc's guards still decide: a commit on a
+closed `main` is refused whatever the permission says. No other assistant runs those guards. It is a project decision, saved as `gitPermissions` in
 `.rsc.json`. A clone gets the same setting. A project adopted before this is left as it was until
 someone runs `rsc git-permissions on`.
 
@@ -108,15 +108,31 @@ someone runs `rsc git-permissions on`.
 | Claude Code | `.claude/settings.json` → `permissions.allow` (force-push under `ask`). Claude Code applies it once the folder is trusted. |
 | Codex | `.codex/rules/rsc-git.rules` (`prefix_rule`; force-push → `prompt`). Loaded when the project is trusted. |
 | Gemini | `.gemini/settings.json` → `tools.allowed` |
-| OpenCode | `opencode.json` → `permission.bash` (force-push → `ask`) |
+| OpenCode | `opencode.json`. With OpenCode 2 installed: the top-level `permissions` list (`shell` rules; force-push → `ask`). rsc's rules go before yours, so any rule of yours that matches later still wins; only a leading `"*"` allow/ask default stays in front. With OpenCode 1.x, or when `opencode --version` cannot be read: `permission.bash`, which both versions read. Moving to 2 moves rsc's entries over. An `opencode.jsonc` is read but never rewritten (its comments would be lost): rsc prints the rules to paste. |
 | Cursor | Not covered: its CLI matches only the first word, so allowing a push would allow every git command. |
 | DeepSeek Harness | Not covered: dsh has no per-command allow list. Its own Permissions selector (`/permission`) sets approval for every command at once. |
 
 ```bash
-rsc git-permissions status   # decided or not, and wired per assistant
-rsc git-permissions off      # ask again for commit, push and PR (saved in .rsc.json)
+rsc git-permissions status   # per assistant: wired or not, and in which format (--json for scripts)
+rsc git-permissions off      # remove rsc's rules (saved in .rsc.json)
 rsc git-permissions on       # turn it on, also for a project adopted before
 ```
+
+**What `off` turns off.** Only rsc's allow rules. Each command says, per assistant, what rsc controls
+there, what stops when it is off, and what is left to the assistant. `off` does not hand rsc's
+protections to the assistant. Claude Code keeps rsc's guards (branch-guard, danger-guard), because
+they do not depend on this switch. OpenCode, Codex and Gemini run no rsc guard. There, your own
+settings decide. With no rule matching, OpenCode 2 asks and OpenCode 1.x runs the command. To refuse a
+force-push in OpenCode 2, add this at the end of `permissions` (use `"ask"` to get a human approval):
+
+```json
+{ "action": "shell", "resource": "git push --force*", "effect": "deny" },
+{ "action": "shell", "resource": "git push -f*", "effect": "deny" },
+{ "action": "shell", "resource": "git push * --force*", "effect": "deny" },
+{ "action": "shell", "resource": "git push * -f*", "effect": "deny" }
+```
+
+In OpenCode 1.x the same patterns go at the end of `permission.bash` (`"git push --force*": "deny"`, …).
 
 **How does it know a project is "complex or in production"?** There are two layers. A hook counts
 what anyone can check: a CI setup, a deployment file (`Dockerfile`, `vercel.json`, `fly.toml`…) or
