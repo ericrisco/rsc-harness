@@ -106,12 +106,13 @@ Offer once per session. Never mention any of it when the harness is healthy.
 
 Before handling the first request of a session, check the workspace:
 
-- No `02-DOCS/wiki/harness/user-profile.md` **and** no `.rsc/.no-harness` → the harness has never
-  been set up here. Invoke `init` first; it opens with one question: technical terms or analogies.
-  Do not start the user's task before first contact is done.
+- No `02-DOCS/wiki/harness/user-profile.md` **and** no `.rsc/.no-harness` → invoke `init` first
+  (one question: technical terms or analogies) before the task.
+- A clone (`.rsc.json` committed) is not first contact: ask that once, in one line, then continue
+  with their task; with `.rsc/.profile-offered`, never again.
 - The user declines a harness here ("sin harness", "solo código") → create an empty
   `.rsc/.no-harness`, confirm in one line, and never auto-start `init` in this repo again.
-- Once the profile exists, this gate is inert. Never re-onboard.
+- With a profile, this gate is inert. Never re-onboard.
 
 ## Explain without assuming
 

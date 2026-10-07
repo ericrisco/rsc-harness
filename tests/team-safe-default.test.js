@@ -408,3 +408,24 @@ test('tsd40 · an uncommitted harness in a repo with a remote is pointed out, at
   g('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', '🔧 harness');
   assert.equal(harnessCommitNotice(root, now + 30 * 24 * 3600e3), '', 'committed: silent for good');
 });
+
+// Team simulation D7 (G1): the default branch can be moved without a commit — `git update-ref` and a
+// forced `git branch` rewrite where it points. On a closed trunk that is the same landing, unreviewed.
+test('tsd18 · moving the closed default branch by ref (update-ref, branch -f/-M/-C) is denied with the way out', async () => {
+  const r = repo(); write(r, 'Dockerfile');
+  git(r, 'switch', '-q', '-c', 'feat/x');
+  for (const command of ['git update-ref refs/heads/main HEAD', 'git update-ref -m "x" refs/heads/main abc123',
+    'git update-ref -d refs/heads/main', 'git branch -f main HEAD', 'git branch --force main', 'git -C . branch -f main feat/x',
+    'git branch -M feat/x main', 'git branch -C main', 'bash -c "git branch -f main"']) {
+    const reason = await evaluate({ root: r, command, cwd: r });
+    assert.match(reason ?? '', /closed for the agent/, `not denied: ${command}`);
+    assert.match(reason, /pull request/, 'P6: the way out is in the message');
+    assert.match(reason, /rsc main unlock/);
+  }
+  for (const command of ['git branch -f feat/y main', 'git update-ref refs/heads/feat/y HEAD', 'git branch feat/z',
+    'git branch -M old feat/new', 'git branch -d feat/x', 'grep "git branch -f main" notes.md']) {
+    assert.equal(await evaluate({ root: r, command, cwd: r }), null, `over-fired: ${command}`);
+  }
+  const simple = repo(); git(simple, 'switch', '-q', '-c', 'feat/x');
+  assert.equal(await evaluate({ root: simple, command: 'git branch -f main HEAD', cwd: simple }), null, 'an open trunk is the person\'s call');
+});

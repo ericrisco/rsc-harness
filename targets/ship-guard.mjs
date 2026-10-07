@@ -5,7 +5,10 @@
 //
 // Enforces the "close the feature before you leave it" rule at the one deterministic
 // moment it matters: when a Bash command tries to switch to the trunk (main/master)
-// or merge into it. If the current feature branch has uncommitted changes or commits
+// or merge into it. A merge run ON the feature branch (`git merge origin/main`) brings
+// the trunk in — it leaves nothing behind, so it is not judged (team simulation D10);
+// a merge counts only where it lands on a trunk checkout (`git -C ../main merge feat`).
+// rsc's own knowledge commits (📥/📝 docs(auto)) are not the person's unpushed work. If the current feature branch has uncommitted changes or commits
 // that were never pushed, the guard DENIES the command and tells the agent to run
 // `ship` (commit → push → PR). Opening the PR itself is `ship`'s job and the skill's
 // hard rule; this hook guarantees you cannot quietly abandon unsaved/unpushed work.
@@ -14,7 +17,7 @@
 // and FAIL-OPEN — any ambiguity (detached HEAD, no repo, git error) allows the command.
 // Opt out per project with .rsc/.no-ship-guard.
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const root = process.argv[2] || process.cwd();
@@ -71,12 +74,33 @@ const TRUNK = new RegExp(String.raw`\bgit\s+${GOPTS}(?:checkout|switch)\s+(?:-{1
 const MERGE = new RegExp(String.raw`\bgit\s+${GOPTS}merge\b`);
 const SH = await import(new URL('./shell-unwrap.mjs', import.meta.url)).catch(() => null);
 const judged = SH ? SH.expand(command).map((s) => s.replace(/"(?:[^"\\]|\\.)*"|'[^']*'/g, '""')) : [command];
-if (!judged.some((s) => TRUNK.test(s) || MERGE.test(s))) allow();
 
-const git = (...args) => {
-  const r = spawnSync('git', ['-C', root, ...args], { windowsHide: true, encoding: 'utf8' });
+const gitIn = (dir, ...args) => {
+  const r = spawnSync('git', ['-C', dir, ...args], { windowsHide: true, encoding: 'utf8' });
   return r.status === 0 ? (r.stdout || '').trim() : null;
 };
+const git = (...args) => gitIn(root, ...args);
+
+// A merge lands on the trunk only where the checkout it runs in IS on the trunk. Here that means a
+// `git -C <dir> merge` aimed at another checkout; a merge in this one runs on the feature branch
+// (checked below), and `git switch main && git merge x` is already caught by its switch.
+function mergesIntoTrunk(segment) {
+  if (!MERGE.test(segment)) return false;
+  const m = segment.match(/\bgit\s+(?:-c\s+\S+\s+)*-C\s+(\S+)/);
+  if (!m) return false;
+  const dir = isAbsolute(m[1]) ? m[1] : resolve(root, m[1]);
+  const b = gitIn(dir, 'rev-parse', '--abbrev-ref', 'HEAD');
+  return b === 'main' || b === 'master';
+}
+if (!judged.some((s) => TRUNK.test(s) || mergesIntoTrunk(s))) allow();
+
+// Commits in a range that are the person's: rsc's own knowledge commits are left out.
+const RSC_OWN = /^(?:📥|📝) docs\(auto\)/u;
+function ownCommits(range) {
+  const log = git('log', '--format=%s', range);
+  if (log === null) return null;
+  return log.split('\n').filter((s) => s && !RSC_OWN.test(s)).length;
+}
 
 const branch = git('rev-parse', '--abbrev-ref', 'HEAD');
 // Not on a feature branch (already trunk, detached, or git failed) → nothing to guard.
@@ -93,13 +117,13 @@ if (dirty && dirty.length > 0) {
 // 2) Commits exist but were never pushed.
 const upstream = git('rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}');
 if (upstream) {
-  const ahead = git('rev-list', '--count', `${upstream}..HEAD`);
+  const ahead = ownCommits(`${upstream}..HEAD`);
   if (ahead && Number(ahead) > 0) {
     deny(`Feature branch "${branch}" has ${ahead} commit(s) not pushed to ${upstream}. Push them and open the PR — run the \`ship\` skill — before switching to the trunk.${tail}`);
   }
 } else {
   // No upstream at all: if the branch carries commits beyond the trunk, it was never pushed.
-  const aheadOfTrunk = git('rev-list', '--count', 'main..HEAD') ?? git('rev-list', '--count', 'master..HEAD');
+  const aheadOfTrunk = ownCommits('main..HEAD') ?? ownCommits('master..HEAD');
   if (aheadOfTrunk && Number(aheadOfTrunk) > 0) {
     deny(`Feature branch "${branch}" was never pushed (no upstream, ${aheadOfTrunk} commit(s) ahead of the trunk). Push it and open a PR — run the \`ship\` skill — before leaving it.${tail}`);
   }

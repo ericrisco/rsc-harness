@@ -239,7 +239,7 @@ test('ship-guard: sello ON + sealed bytes → delivery allowed', () => {
 test('ship-guard: leaving a dirty feature for the trunk is seen through -C/-c and shell wrappers (E2E defect 15)', () => {
   const root = makeRepo();
   writeFileSync(join(root, 'app.js'), 'uncommitted\n');
-  for (const cmd of ['git checkout main', 'git -C . switch main', 'git -c core.x=1 checkout main', 'bash -c "git switch main"', 'eval "git merge feature"']) {
+  for (const cmd of ['git checkout main', 'git -C . switch main', 'git -c core.x=1 checkout main', 'bash -c "git switch main"', 'eval "git checkout main"']) {
     const denial = runGuard(root, cmd);
     assert.ok(denial, `expected a deny for: ${cmd}`);
     assert.match(denial.hookSpecificOutput.permissionDecisionReason, /uncommitted/);
