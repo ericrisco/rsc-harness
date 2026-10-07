@@ -132,7 +132,12 @@ export function wireHook(paths, sourceMd, policy = {}) {
 
   let suggestRel = at(relative(paths.projectRoot, paths.skillDir('suggest')).split(sep).join('/'), 'SKILL.md');
   const operationsSuggest = join(paths.projectRoot, '.rsc', 'suggest-always-on.md');
-  if (policy.codeHooks === false) {
+  // The lane decision (FTD or SDD) belongs to every SOFTWARE project, small ones included. Tying it to
+  // the code gates was the cause behind the E2E of 2026-10-07: a small project got a three-line stub
+  // with no lanes in it, no per-turn gate, and so never wrote a feature document. Plans from before
+  // the field keep their old meaning (`laneGate` follows `codeHooks`) until onboard runs again.
+  const laneGate = policy.laneGate ?? policy.codeHooks !== false;
+  if (policy.codeHooks === false && !laneGate) {
     writeFileSync(operationsSuggest, '# rsc-suggest — always-on operations layer\n\nRead `02-DOCS/wiki/harness/user-profile.md` before acting. Use `orient` to keep the user situated and `suggest` to offer a missing skill only when the current task needs it. Close with the configured orientation block.\n');
     suggestRel = at('.rsc', 'suggest-always-on.md');
   } else if (existsSync(operationsSuggest)) rmSync(operationsSuggest, { force: true });
@@ -237,15 +242,37 @@ export function wireHook(paths, sourceMd, policy = {}) {
       settings.hooks[event] = settings.hooks[event].filter((entry) => {
         const body = hookWiringOf(entry);
         return !body.includes('.rsc/ship-guard.') && !body.includes('.rsc/branch-guard.') &&
-          !body.includes('.rsc/gitmoji-guard.') && !body.includes('.rsc/userprompt-gate.');
+          !body.includes('.rsc/gitmoji-guard.') && (laneGate || !body.includes('.rsc/userprompt-gate.'));
       });
       if (!settings.hooks[event].length) delete settings.hooks[event];
     }
-    for (const name of ['ship-guard.mjs', 'branch-guard.mjs', 'trunk-policy.mjs', 'gitmoji-guard.mjs', 'userprompt-gate.mjs', 'sello.mjs']) {
-      rmSync(join(paths.projectRoot, '.rsc', name), { force: true });
-    }
-    written.push(operationsSuggest);
+    const gone = ['ship-guard.mjs', 'branch-guard.mjs', 'gitmoji-guard.mjs', 'sello.mjs', ...(laneGate ? [] : ['trunk-policy.mjs', 'userprompt-gate.mjs'])];
+    for (const name of gone) rmSync(join(paths.projectRoot, '.rsc', name), { force: true });
+    if (laneGate) {
+      // Same per-turn gate as a governed project: the lane, and where code changes go here.
+      const fgDest = join(paths.projectRoot, '.rsc', 'userprompt-gate.mjs');
+      copyFileSync(join(HERE, 'userprompt-gate.mjs'), fgDest);
+      copyFileSync(join(HERE, 'trunk-policy.mjs'), join(paths.projectRoot, '.rsc', 'trunk-policy.mjs'));
+      const fgCmd = viaBootstrap('quiet', at('.rsc', 'userprompt-gate.mjs'), `"${P}"`);
+      settings.hooks.UserPromptSubmit ||= [];
+      settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit.filter((e) => !hookWiringOf(e).includes('.rsc/userprompt-gate.'));
+      settings.hooks.UserPromptSubmit.push({ hooks: [{ type: 'command', command: fgCmd }] });
+      written.push(fgDest, join(paths.projectRoot, '.rsc', 'trunk-policy.mjs'));
+    } else written.push(operationsSuggest);
   }
+
+  // FTD nudge: once per session, right after the first code edit with no feature document touched.
+  // Wherever the lane decision is installed; context only, never blocks; .rsc/.no-ftd-nudge.
+  settings.hooks.PostToolUse ||= [];
+  settings.hooks.PostToolUse = settings.hooks.PostToolUse.filter((e) => !hookWiringOf(e).includes('.rsc/ftd-nudge.'));
+  if (laneGate) {
+    const fnDest = join(paths.projectRoot, '.rsc', 'ftd-nudge.mjs');
+    copyFileSync(join(HERE, 'ftd-nudge.mjs'), fnDest);
+    const fnCmd = viaBootstrap('quiet', at('.rsc', 'ftd-nudge.mjs'), `"${P}"`);
+    settings.hooks.PostToolUse.push({ matcher: 'Edit|Write|MultiEdit|NotebookEdit', hooks: [{ type: 'command', command: fnCmd }] });
+    written.push(fnDest);
+  } else rmSync(join(paths.projectRoot, '.rsc', 'ftd-nudge.mjs'), { force: true });
+  if (!settings.hooks.PostToolUse.length) delete settings.hooks.PostToolUse;
 
   // Danger guard: its own decision, not part of the code-hook block above (#273). `init` promises it
   // to non-technical and mixed users whatever the project is, and a plan that predates the field is

@@ -248,7 +248,14 @@ export function buildOnboardingPlan(record, evidence) {
   // in an invoicing workspace, and `init` promises it by technical level: non-technical and mixed get
   // it, whatever the project is. The guard also decides at runtime from the profile, so the plan only
   // chooses whether it is present, never whether it bites.
-  const dangerGuard = normalized.technicalLevel !== 'technical';
+  //
+  // And since 3.0.8 it is present for EVERYONE. A technical user used to get nothing, so a small
+  // project with `main` open had no guard at all (E2E 2026-10-07). The runtime still decides the
+  // bite: deny for non-technical, `ask` — only on lost work or rewritten history — for technical.
+  const dangerGuard = true;
+  // The FTD/SDD lane decision belongs to every software project, small ones included: without it
+  // the agent never sees the lanes (E2E 2026-10-07: five sessions, zero feature documents).
+  const laneGate = isSoftware;
   // `sdd` is installed everywhere now, but its DECISION is about practice, not presence — so where
   // the chain is not practised the explicit `deferred` entry below must be the only one, or the
   // generic "installed → selected" mapping would shadow it and `reassess` would see nothing to watch.
@@ -296,6 +303,7 @@ export function buildOnboardingPlan(record, evidence) {
     codeHooks: practisesSdd,
     gitmojiGuard,
     dangerGuard,
+    laneGate,
     memory: true,
     context7: false,
   };

@@ -45,10 +45,20 @@ test('#273 — mixed is guarded too, as init promises', { timeout: 300000 }, () 
   assert.deepEqual(guards(onboarded({ level: 'mixed', kind: 'operations' })), ['danger-guard']);
 });
 
-test('#273 — a technical operations project is not given a guard it would never use', { timeout: 300000 }, () => {
+// Until 3.0.8 a technical user got no guard at all, and the E2E of 2026-10-07 showed the cost: a
+// small project with `main` open had nothing between `git reset --hard` and uncommitted work. The
+// guard is now present for everyone; for a technical user it only ASKS, and only about lost work.
+test('3.0.8 — a technical project gets the danger guard, and it asks instead of denying', { timeout: 300000 }, () => {
   const cwd = onboarded({ level: 'technical', kind: 'operations' });
-  assert.deepEqual(guards(cwd), []);
-  assert.equal(existsSync(join(cwd, '.rsc', 'danger-guard.mjs')), false);
+  assert.deepEqual(guards(cwd), ['danger-guard']);
+  const probe = (command) => {
+    const out = spawnSync('node', [join(cwd, '.rsc', 'danger-guard.mjs'), cwd], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command } }), encoding: 'utf8' }).stdout;
+    return out.trim() ? JSON.parse(out).hookSpecificOutput.permissionDecision : 'allow';
+  };
+  assert.equal(probe('git reset --hard HEAD~1'), 'ask', 'lost work: the person confirms');
+  assert.equal(probe('git restore .'), 'ask');
+  assert.equal(probe('rm -rf build'), 'allow', 'ordinary for a technical person: silent');
+  assert.equal(probe("echo 'git reset --hard'"), 'allow', 'a sentence about a command is not the command');
 });
 
 test('control — a non-technical software project keeps all four guards', { timeout: 300000 }, () => {

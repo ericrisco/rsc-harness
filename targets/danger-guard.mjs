@@ -5,8 +5,14 @@
 //
 // For a NON-TECHNICAL user (per 02-DOCS/wiki/harness/user-profile.md → technical_level),
 // it DENIES irreversible, foot-gun Bash commands and tells the agent to find a safer,
-// scoped alternative. A fully `technical` user is never guarded. Default-safe: if there
-// is no profile yet, the harness convention is "assume non-technical", so the guard is ON.
+// scoped alternative. Default-safe: if there is no profile yet, the harness convention is
+// "assume non-technical", so the guard is ON.
+//
+// A `technical` user used to get nothing at all, and the E2E of 2026-10-07 showed what that means:
+// a small project with `main` open had no guard whatsoever, and `git reset --hard` would have wiped
+// uncommitted work with only the model's judgment in the way. So a technical user now gets the
+// short list of commands that destroy WORK OR SHARED HISTORY with no undo, as an `ask`: Claude Code
+// stops and the person confirms. Never a deny — a technical person who wants it gets it in one click.
 //
 // Disable per project with .rsc/.no-danger-guard — but only when the USER explicitly asks
 // for it (the deny message says so). Fail-open on any internal error (never brick a shell).
@@ -16,6 +22,16 @@ import { join } from 'node:path';
 const root = process.argv[2] || process.cwd();
 
 function allow() { process.exit(0); }
+function ask(why) {
+  process.stdout.write(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: 'ask',
+      permissionDecisionReason: `rsc: this command ${why}. It cannot be undone, so the person confirms it.`,
+    },
+  }));
+  process.exit(0);
+}
 function deny(why) {
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: {
@@ -41,7 +57,7 @@ function technicalLevel() {
     return m ? m[1].toLowerCase() : null;
   } catch { return null; }
 }
-if (technicalLevel() === 'technical') allow();
+const technical = technicalLevel() === 'technical';
 
 // Only Bash commands can be dangerous here.
 let input = {};
@@ -84,7 +100,9 @@ const SHELLS = /^(bash|sh|zsh|dash|ksh)$/i;
 // this, `echo "never run rm -rf /"` was denied — the guard blocking the conversation about a
 // command instead of the command, exactly the defect the gitmoji guard had to fix with its own
 // RUNS_GIT check. A guard that argues with you about a sentence is a guard you turn off.
-function runsRm(segment) {
+function runsRm(segment) { return runs(segment, 'rm'); }
+
+function runs(segment, bin) {
   const tokens = segment.trim().split(/\s+/).filter(Boolean);
   let i = 0;
   while (i < tokens.length) {
@@ -95,9 +113,14 @@ function runsRm(segment) {
       while (i < tokens.length && /^-/.test(tokens[i])) i += 1; // skip -c and friends
       continue;
     }
-    return bare === 'rm' || bare.endsWith('/rm');
+    return bare === bin || bare.endsWith(`/${bin}`);
   }
   return false;
+}
+
+// A git rule judges the segment that RUNS git, so `echo 'git reset --hard'` is a sentence, not a reset.
+function gitSegment(re) {
+  return cmd.split(/\|\||&&|[|;&]/).some((segment) => runs(segment, 'git') && re.test(segment));
 }
 
 function isRmRecursiveForce() {
@@ -119,10 +142,12 @@ const RULES = [
   { id: 'mkfs', why: 'formats a filesystem, erasing everything on it (mkfs)', match: () => /\bmkfs(\.\w+)?\b/i.test(cmd) },
   { id: 'curl-pipe-shell', why: 'pipes a downloaded script straight into a shell (curl|bash) — runs untrusted code', match: () => /\b(curl|wget)\b[^|]*\|\s*(sudo\s+)?(sh|bash|zsh)\b/i.test(cmd) },
 
-  { id: 'git-push-force', why: 'force-pushes and can overwrite shared history for everyone (git push --force)', match: () => /\bgit\s+push\b[^|;&]*(--force(?!-with-lease)\b|\s-f\b)/i.test(cmd) },
-  { id: 'git-reset-hard', why: 'throws away all uncommitted work with no undo (git reset --hard)', match: () => /\bgit\s+reset\b[^|;&]*--hard\b/i.test(cmd) },
-  { id: 'git-clean', why: 'permanently deletes untracked files (git clean -f)', match: () => /\bgit\s+clean\b[^|;&]*-[a-z]*f/i.test(cmd) },
-  { id: 'git-branch-D', why: 'force-deletes a branch even if its work was never merged (git branch -D)', match: () => /\bgit\s+branch\b[^|;&]*\s-D\b/.test(cmd) },
+  { id: 'git-push-force', why: 'force-pushes and can overwrite shared history for everyone (git push --force)', match: () => gitSegment(/\bgit\s+push\b[^|;&]*(--force(?!-with-lease)\b|\s-f\b)/i) },
+  { id: 'git-reset-hard', why: 'throws away all uncommitted work with no undo (git reset --hard)', match: () => gitSegment(/\bgit\s+reset\b[^|;&]*--hard\b/i) },
+  { id: 'git-clean', why: 'permanently deletes untracked files (git clean -f)', match: () => gitSegment(/\bgit\s+clean\b[^|;&]*-[a-z]*f/i) },
+  { id: 'git-discard', why: 'discards every uncommitted change in the tree with no undo (git checkout -- . / git restore .)', match: () => gitSegment(/\bgit\s+(checkout\s+(--\s+)?\.|restore\s+(--(staged|worktree)\s+)*\.)(\s|$|[|;&])/i) },
+  { id: 'git-no-verify', why: 'skips the project\'s own git hooks (--no-verify)', match: () => gitSegment(/\bgit\s+(commit|push|merge|rebase|am)\b[^|;&]*\s(--no-verify\b|-n\b(?=[^|;&]*\bcommit\b)?)/i.test(cmd) && /--no-verify\b/i) },
+  { id: 'git-branch-D', why: 'force-deletes a branch even if its work was never merged (git branch -D)', match: () => gitSegment(/\bgit\s+branch\b[^|;&]*\s-D\b/) },
 
   { id: 'sql-drop', why: 'drops an entire database/schema/table (DROP …)', match: () => /\bdrop\s+(database|schema|table)\b/i.test(cmd) },
   { id: 'sql-truncate', why: 'empties an entire table (TRUNCATE)', match: () => /\btruncate\s+(table\s+)?\S/i.test(cmd) },
@@ -131,8 +156,23 @@ const RULES = [
   { id: 'mongo-wipe', why: 'drops a collection/database or deletes all documents (drop()/dropDatabase/deleteMany({}))', match: () => /\.drop\(\s*\)|dropdatabase\s*\(|deletemany\(\s*\{\s*\}\s*\)|\.remove\(\s*\{\s*\}\s*\)/i.test(cmd) },
 ];
 
+// What a technical person is asked about: work or shared history gone with no undo. Everything else
+// on the list (a scoped rm -rf, SQL, curl|bash) is ordinary for them and stays silent (P7).
+const FOR_EVERYONE = new Set(['git-push-force', 'git-reset-hard', 'git-clean', 'git-discard', 'git-no-verify', 'git-branch-D', 'dd-disk', 'mkfs', 'rm-rf-root']);
+
+// rm -rf aimed at the project itself, the home or the filesystem root is a wipe for anybody.
+function isRmRfRoot() {
+  if (!isRmRecursiveForce()) return false;
+  return /\brm\b[^|;&]*\s(\/|~\/?|\$HOME\/?|\.\/?|\.\.\/?|\*|\.git\/?)(\s|$|[|;&])/.test(cmd);
+}
+RULES.push({ id: 'rm-rf-root', why: 'recursively deletes the project, the home folder or the filesystem root', match: isRmRfRoot });
+
 for (const rule of RULES) {
-  try { if (rule.match()) deny(rule.why); } catch { /* a rule erroring must never block */ }
+  try {
+    if (!rule.match()) continue;
+    if (!technical) deny(rule.why);
+    if (FOR_EVERYONE.has(rule.id)) ask(rule.why);
+  } catch { /* a rule erroring must never block */ }
 }
 
 allow();
