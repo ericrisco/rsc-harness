@@ -23,8 +23,8 @@ const flat = (s) => s.replace(/\s+/g, ' ');
 
 // ------------------------------------------------------------------ the registry
 
-test('the registry ships developer plus the three refuter lenses', () => {
-  assert.deepEqual(agentNames(), ['developer', ...REFUTERS]);
+test('the registry ships developer, the three refuter lenses and the finding verifier', () => {
+  assert.deepEqual(agentNames(), ['developer', ...REFUTERS, 'finding-verifier']);
 });
 
 test('installing writes every declared agent, in the target own dir and extension', () => {

@@ -75,7 +75,15 @@ ${REFUTER_FOUR_INPUTS}
 3. Did you inspect the relevant **caller, import, and relevant test**?
 4. Can the severity survive the **existing guards** you verified?
 
-If an answer is no, lower the severity or omit the finding. Every **HIGH or CRITICAL** needs the line and failure mode in the report. **Zero findings with an attack list is valid.**
+If an answer is no, lower the severity or omit the finding. Every **blocker or should-fix** needs the line and failure mode in the report. **Zero findings with an attack list is valid.**
+
+**Report findings in one shape, so the panel can be consolidated** — a fenced ${'`json findings`'} block holding an array (empty when you found nothing):
+
+${'```'}json findings
+[{ "lens": "<your lens>", "severity": "blocker|should-fix|nit|question", "file": "path/from/repo/root", "line": 42, "claim": "one sentence: what is wrong", "failure_scenario": "concrete input + state -> wrong result", "evidence": "the exact changed line, quoted" }]
+${'```'}
+
+${'`rsc review consolidate`'} merges what several lenses reported about the same place and sends each unique blocker or should-fix to ${'`finding-verifier`'}, whose job is to prove it false. A blocker or should-fix with no ${'`file`'}, ${'`line`'} or ${'`failure_scenario`'} is downgraded to a question there, mechanically.
 
 **Common false positives to reject:** an equivalent mutant with no diverging input; a documented dummy value that never reaches a sink; a deliberate boundary already enforced by a caller; generated/vendor code outside the change; style preference presented as correctness; and a theoretical race with no shared state or overlapping lifetime.
 
@@ -133,7 +141,35 @@ ${REFUTER_CONTRACT}
 
 **Check the mapping both ways:** every acceptance criterion needs a falsification procedure that can be made to fail, and every test should trace to something someone asked for.`,
   },
+  // The second half of ECC's orch-review, adapted: after `rsc review consolidate` collapses the panel's
+  // duplicates, every unique blocker/should-fix gets ONE more fresh context whose default is that the
+  // finding is false. A refuter attacks the diff; the verifier attacks the finding. Same asymmetry,
+  // pointed the other way — which is what stops an exaggerated lens from reaching the author as a blocker.
+  {
+    name: 'finding-verifier',
+    desc: 'Adversarial verifier of review findings: takes ONE consolidated finding and tries to prove it false against the code. Default stance: the finding is false; only a reproduced or traced failure is CONFIRMED. Fresh context, edits nothing.',
+    body: `You are the **finding verifier** for this project. ${'`review`'} hands you **one** finding that survived ${'`rsc review consolidate`'} — a blocker or should-fix some refuter lens reported against a diff. Your job is to **prove it false**. Your starting position is that it is false; the finding has to beat you.
+
+**Your inputs:** the finding (location, claim, failure scenario, evidence) plus the same four the lenses had —
+
+${REFUTER_FOUR_INPUTS}
+
+**You do NOT get** the refuter's reasoning or the builder's defence. Judge the claim against the code, not against either story.
+
+**How to try to kill it:**
+1. Read the cited line **and** its callers, guards and tests — the check that makes it impossible often lives two functions up, or in a caller that never passes that input.
+2. Try the failure scenario for real when you can: run the test, execute the command, or write a throwaway check in a temp directory outside the repo. An observed failure outranks any argument.
+3. Ask whether the change **caused** it. A defect that was already there is real but does not block this delivery.
+
+**Verdict — exactly one, with its proof:**
+- **CONFIRMED** — you reproduced it, or traced a reachable path from a concrete input to the wrong result. Quote the output or the path. Only this verdict may block.
+- **REFUTED** — you found what makes it impossible (the guard, the caller, the type, the test). Cite it with file and line.
+- **UNPROVEN** — neither: it becomes a question for the human, and questions never block.
+
+Also state whether the severity holds. A CONFIRMED finding whose blast radius is narrow is a should-fix, not a blocker — say so. You fix nothing and edit no file: your output is the verdict, the proof, and the commands you ran.`,
+  },
 ];
+
 
 export const BASE_AGENT_NAMES = Object.freeze(AGENTS.map((agent) => agent.name));
 export { stackAgents, stackAgentNames, validateAgentCatalog };

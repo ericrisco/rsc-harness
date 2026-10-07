@@ -46,7 +46,7 @@ if (['--version', '-v', 'version'].includes(rawArgv[0])) {
   process.exit(0);
 }
 const GENERAL_HELP = [
-  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
+  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | review consolidate [reports…] | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
   'Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)',
   '   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.',
 ].join('\n');
@@ -77,7 +77,7 @@ const PURGE_HELP = [
 const GLOBAL_VALUE_FLAGS = new Set([
   '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--accept-plan',
 ]);
-const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'sello', 'repair', 'uninstall', 'purge']);
+const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'sello', 'repair', 'uninstall', 'purge']);
 function positionalTokens(input) {
   const out = [];
   for (let i = 0; i < input.length; i++) {
@@ -1179,6 +1179,37 @@ async function main() {
         return;
       }
       say('Use: npx @ericrisco/rsc registry refresh | registry status');
+      return;
+    }
+    case 'review': {
+      // `review consolidate` — the deterministic half of the refuter panel (P1): the three lenses
+      // often report one defect three ways, so grouping happens here, by location and evidence, and
+      // only the unique serious findings go on to `finding-verifier`, which is judgement.
+      const USE = 'Use: npx @ericrisco/rsc review consolidate [report.md|findings.json ...] [--json] [--window <lines>]\n  Without files it reads stdin. Each lens report carries its findings in ```json findings blocks.';
+      if (argv[1] !== 'consolidate') { say(USE); if (argv[1]) process.exitCode = 1; return; }
+      const { readFileSync } = await import('node:fs');
+      const R = await import('./lib/review-findings.js');
+      const w = flag('window');
+      const window = w === undefined ? R.DEFAULT_WINDOW : Number(w);
+      if (!Number.isInteger(window) || window < 0) { say(`rsc: --window takes a whole number of lines, got '${w}'.\n${USE}`); process.exitCode = 1; return; }
+      const rest = argv.slice(2);
+      const files = rest.filter((a, i) => !a.startsWith('--') && rest[i - 1] !== '--window');
+      const sources = [];
+      try {
+        if (files.length) for (const f of files) sources.push([readFileSync(f, 'utf8'), f]);
+        else if (!process.stdin.isTTY) sources.push([readFileSync(0, 'utf8'), 'stdin']);
+      } catch (e) { say(`rsc: cannot read ${e.path || 'stdin'} (${e.code || e.message}).`); process.exitCode = 1; return; }
+      if (!sources.length) { say(USE); process.exitCode = 1; return; }
+      const all = []; const errors = [];
+      for (const [raw, src] of sources) {
+        const parsed = R.parseFindings(raw, src);
+        all.push(...parsed.findings); errors.push(...parsed.errors);
+      }
+      const result = R.consolidate(all, { window });
+      if (argv.includes('--json')) say(JSON.stringify({ ...result, errors }, null, 2));
+      else say(R.renderConsolidation(result, errors));
+      // An unreadable block is a finding that may have been lost: say it with the exit code too.
+      if (errors.length) process.exitCode = 1;
       return;
     }
     case 'worktrees': {

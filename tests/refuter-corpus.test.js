@@ -28,7 +28,7 @@ test('each lens carries the same byte-identical four-input contract and anti-noi
       'concrete input, state, and wrong result',
       'caller, import, and relevant test',
       'existing guards',
-      'HIGH or CRITICAL',
+      'blocker or should-fix',
       'zero findings',
     ]) assert.match(body, new RegExp(phrase, 'i'), `${entry.agent}: ${phrase}`);
   }

@@ -232,6 +232,14 @@ Every turn takes exactly one lane, and your agent names the one it took in a lin
 
 The agent says which lane it took and why, in one line. Ask for the other one and it switches.
 
+**The review only brings you what is real.** In SDD, `review` sends three adversarial reviewers at
+the diff (correctness, security, tests). They often find the same defect in different words, and a
+reviewer hunting for problems can overstate one. So before anything reaches you,
+`rsc review consolidate` merges the duplicates (same place, or the same quoted line), and every
+serious finding left goes to a fresh `finding-verifier` agent whose starting position is that the
+finding is false. It blocks the merge only if the verifier reproduces it or traces it. You get
+"11 reported → 4 unique → 2 confirmed", and the refuted ones are listed with the reason.
+
 **Isolation cleans itself up.** When a lane opens a branch or a worktree, you no longer have to
 remember to retire it: a `post-merge` hook does it the moment the work lands on the trunk, on both
 landing paths — a local merge and the pull after a forge merge. It removes only what is provably
@@ -423,6 +431,7 @@ rsc agent-model opencode openai/gpt-5   # pin the model the generated agents car
 rsc agent-model opencode inherit     # back to the session's model (OpenCode's default)
 rsc agents status                    # installed agents, and which ones you edited
 rsc agents reset developer           # take rsc's version of an agent you edited (yours is backed up first)
+rsc review consolidate c.md s.md t.md  # merge the review lenses' findings; serious ones go to finding-verifier
 rsc backups                          # list project-local snapshots
 rsc restore latest --dry-run         # preview restoring the newest snapshot
 rsc restore <snapshot-id>            # restore a project-local snapshot
@@ -884,7 +893,7 @@ The richer surfaces are intentionally narrower than skill support:
 | Windsurf, Cline, Roo | unsupported | yes | unsupported |
 | Antigravity, Zed, Continue, Amp, Jules, Aider | unsupported | unsupported | unsupported |
 
-`manifest.json` is the generated public inventory: 33 agents (4 base + 29
+`manifest.json` is the generated public inventory: 34 agents (5 base + 29
 selective specialists) and 53 command entries (20 fixed + 33 stack aliases).
 Unsupported means rsc writes nothing for that surface; it does not emulate a
 provider feature with an unverified file.

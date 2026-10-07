@@ -70,6 +70,6 @@ Canonical non-interactive preview:
 ## Facts
 
 - 270 skills; minimal profile 6, core 29, full 270.
-- 18 supported assistants (newest: DeepSeek Harness, `--target deepseek`); 33 agents and 30 command entries in the catalog.
+- 18 supported assistants (newest: DeepSeek Harness, `--target deepseek`); 34 agents and 30 command entries in the catalog.
 - Every skill cleared an adversarial behavioral quality gate of at least 8.5/10.
 - Free, MIT, no API key and no global install required.

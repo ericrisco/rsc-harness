@@ -13,7 +13,7 @@ test('manifest lists all skills with required fields', () => {
 
 test('manifest publishes the complete agent and command surfaces with source receipts', () => {
   const m = buildManifest();
-  assert.equal(m.counts.agents, 33);
+  assert.equal(m.counts.agents, 34);
   assert.equal(m.counts.commands, 53);
   assert.equal(m.counts.fixedCommands, 20);
   assert.equal(m.agents.length, m.counts.agents);
