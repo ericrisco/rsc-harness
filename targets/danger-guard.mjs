@@ -153,6 +153,9 @@ function isRmRecursiveForce() {
   return false;
 }
 
+// `git push`, with global options allowed before the subcommand (`git -C . push`, `git -c k=v push`).
+const GIT_PUSH = String.raw`\bgit\s+(?:(?:-[Cc]\s+\S+|--\S+)\s+)*push\b`;
+
 const RULES = [
   { id: 'rm-rf', why: 'deletes whole files/folders irreversibly (rm with -r and -f)', match: isRmRecursiveForce },
   { id: 'find-delete', why: 'mass-deletes matched files (find … -delete / -exec rm)', match: () => /\bfind\b[^|;&]*(-delete\b|-exec\s+rm\b)/i.test(cmd) },
@@ -160,7 +163,12 @@ const RULES = [
   { id: 'mkfs', why: 'formats a filesystem, erasing everything on it (mkfs)', match: () => /\bmkfs(\.\w+)?\b/i.test(cmd) },
   { id: 'curl-pipe-shell', why: 'pipes a downloaded script straight into a shell (curl|bash) — runs untrusted code', match: () => /\b(curl|wget)\b[^|]*\|\s*(sudo\s+)?(sh|bash|zsh)\b/i.test(cmd) },
 
-  { id: 'git-push-force', why: 'force-pushes and can overwrite shared history for everyone (git push --force)', match: () => gitSegment(/\bgit\s+push\b[^|;&]*(--force(?!-with-lease)\b|\s-f\b)/i) },
+  // A `+` in front of a refspec forces that ref exactly like the flag (team simulation D7).
+  { id: 'git-push-force', why: 'force-pushes and can overwrite shared history for everyone (git push --force, or a +refspec)', match: () => gitSegment(new RegExp(String.raw`${GIT_PUSH}[^|;&]*(--force(?!-with-lease)\b|\s-f\b|\s\+[^\s+])`, 'i')) },
+  // The "safer" force: it refuses only when the remote moved since the last fetch, and a fetch that
+  // already happened (an IDE, an earlier pull) satisfies it. What it rewrites is still history the
+  // team may have pulled, so it is asked / denied like the plain flag (team simulation D7).
+  { id: 'git-push-lease', why: 'force-pushes with a lease and still rewrites history the team may have pulled (git push --force-with-lease)', match: () => gitSegment(new RegExp(String.raw`${GIT_PUSH}[^|;&]*--force-with-lease\b`, 'i')) },
   { id: 'git-reset-hard', why: 'throws away uncommitted work, and drops commits when it moves back, with no undo (git reset --hard)', match: () => gitSegment(/\bgit\s+reset\b[^|;&]*--hard\b/i) },
   { id: 'git-clean', why: 'permanently deletes untracked files (git clean -f)', match: () => gitSegment(/\bgit\s+clean\b[^|;&]*-[a-z]*f/i) },
   { id: 'git-discard', why: 'discards every uncommitted change in the tree with no undo (git checkout -- . / git restore .)', match: () => gitSegment(/\bgit\s+(checkout\s+(--\s+)?\.|restore\s+(--(staged|worktree)\s+)*\.)(\s|$|[|;&])/i) },
@@ -176,7 +184,7 @@ const RULES = [
 
 // What a technical person is asked about: work or shared history gone with no undo. Everything else
 // on the list (a scoped rm -rf, SQL, curl|bash) is ordinary for them and stays silent (P7).
-const FOR_EVERYONE = new Set(['git-push-force', 'git-reset-hard', 'git-clean', 'git-discard', 'git-no-verify', 'git-branch-D', 'dd-disk', 'mkfs', 'rm-rf-root']);
+const FOR_EVERYONE = new Set(['git-push-force', 'git-push-lease','git-reset-hard', 'git-clean', 'git-discard', 'git-no-verify', 'git-branch-D', 'dd-disk', 'mkfs', 'rm-rf-root']);
 
 // rm -rf aimed at the project itself, the home or the filesystem root is a wipe for anybody.
 function isRmRfRoot() {

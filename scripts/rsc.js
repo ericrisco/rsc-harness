@@ -428,6 +428,17 @@ async function runPurge(dryRun, withDocs) {
     say(`\nKept ${report.kept.length}:`);
     for (const k of report.kept) say(`  - ${k.path} — ${k.reason}`);
   }
+  // On a clone most of what purge deletes is committed. Deleting it here is local; committing the
+  // deletions uninstalls rsc for the whole team (team simulation D15). Said before anyone commits.
+  if (report.tracked?.length) {
+    const quote = (p) => (/^[\w./@+-]+$/.test(p) ? p : `'${p.replace(/'/g, `'\\''`)}'`);
+    say(`\nWARNING: ${report.tracked.length} of these file(s) are committed in git and ${dryRun ? 'would show' : 'now show'} as deleted or changed:`);
+    for (const f of report.tracked.slice(0, 12)) say(`  - ${f}`);
+    if (report.tracked.length > 12) say(`  … and ${report.tracked.length - 12} more`);
+    say('Committing these changes uninstalls rsc for the whole team, on their next pull. To remove rsc only on this machine, do not commit them.');
+    if (!dryRun) say(`To undo locally: git restore -- ${report.tracked.map(quote).join(' ')}`);
+    else say('To undo after a real purge: git restore -- <those files> (purge prints the exact command).');
+  }
 }
 
 async function recommendIds(query, { labeledOnly = false } = {}) {

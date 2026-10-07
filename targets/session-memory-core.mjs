@@ -83,21 +83,27 @@ export function chooseMemoryRoot(cwd = process.cwd()) {
     return { root: join(project, '.rsc', 'memory'), kind: 'local-state', reason: 'without-git', git: false };
   }
 
+  // The harness itself commits `worklog/.gitkeep` so the folder exists in every clone. A placeholder
+  // is not the team committing its worklog, and reading it as one warned every teammate in every clone
+  // about a tracked worklog that was an empty file (team simulation D13).
   const worklog = join(project, '02-DOCS', 'raw', 'worklog');
-  if (existsSync(worklog)) {
-    const tracked = git(project, ['ls-files', '--', '02-DOCS/raw/worklog']).out;
-    if (!tracked) {
-      const candidate = join(worklog, '.rsc-memory');
-      if (ensureExcluded(project, candidate)) {
-        return { root: candidate, kind: 'wiki-worklog', reason: 'untracked-worklog', git: true };
-      }
+  const local = join(project, '.rsc', 'memory');
+  const trackedFiles = existsSync(worklog)
+    ? git(project, ['ls-files', '--', '02-DOCS/raw/worklog']).out.split('\n').filter(Boolean) : [];
+  const trackedNotes = trackedFiles.filter((file) => !/(^|\/)\.(gitkeep|keep)$/u.test(file));
+  // A clone whose journal already lives in .rsc/memory keeps it there: moving would orphan its history.
+  const placeholderOnly = trackedFiles.length > 0 && trackedNotes.length === 0;
+  const settled = placeholderOnly && existsSync(join(local, 'sessions'));
+  if (existsSync(worklog) && !trackedNotes.length && !settled) {
+    const candidate = join(worklog, '.rsc-memory');
+    if (ensureExcluded(project, candidate)) {
+      return { root: candidate, kind: 'wiki-worklog', reason: 'untracked-worklog', git: true };
     }
   }
 
-  const local = join(project, '.rsc', 'memory');
   if (ensureExcluded(project, local)) {
-    const trackedWorklog = existsSync(worklog) && Boolean(git(project, ['ls-files', '--', '02-DOCS/raw/worklog']).out);
-    return { root: local, kind: 'local-state', reason: trackedWorklog ? 'tracked-worklog' : 'no-wiki', git: true };
+    const reason = trackedNotes.length ? 'tracked-worklog' : settled ? 'placeholder-worklog' : 'no-wiki';
+    return { root: local, kind: 'local-state', reason, git: true };
   }
 
   const gitRoot = git(project, ['rev-parse', '--git-path', 'rsc-memory']).out;
@@ -304,6 +310,7 @@ function nestedWorktreeOf(project, path) {
 }
 
 function noticeText(info) {
+  if (info.reason === 'placeholder-worklog') return null; // nothing the person needs to know
   if (info.reason === 'tracked-worklog') return 'rsc memory: tracked worklog detected; using ignored local state instead.';
   if (info.reason === 'untracked-worklog') return 'rsc memory: using the ignored wiki worklog store.';
   if (info.reason === 'without-git') return 'rsc memory: running without git; branch and commit metadata are unavailable.';
@@ -314,6 +321,7 @@ function noticeText(info) {
 function consumeNotice(info) {
   const marker = join(info.root, `.notice-${info.reason}`);
   if (existsSync(marker)) return null;
+  if (!noticeText(info)) return null;
   writeFileSync(marker, `${iso()}\n`, { mode: 0o600 });
   return noticeText(info);
 }

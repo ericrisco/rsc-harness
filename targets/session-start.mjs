@@ -9,6 +9,7 @@ import { readFileSync, existsSync, readdirSync, mkdirSync, writeFileSync } from 
 import { updateNotice } from './auto-update.mjs';
 import { join, resolve } from 'node:path';
 import { homedir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { claimOnce, readHookInput } from './hook-once.mjs';
 
 const STALE_AUDIT_DAYS = 14; // periodic skill-audit cadence (kept in sync with scripts/audit.js)
@@ -120,7 +121,38 @@ Opt out with .rsc/.no-scope-check · this notice repeats at most every ${SCOPE_W
 const profile = join(root, '02-DOCS', 'wiki', 'harness', 'user-profile.md');
 const optout = join(root, '.rsc', '.no-harness');
 const profileExists = existsSync(profile);
-if (!existsSync(profile) && !existsSync(optout)) {
+// A teammate's clone of an onboarded project: `.rsc.json` is COMMITTED and carries the accepted
+// onboarding, while the profile is personal and never committed, so it is missing in every clone by
+// design. Treating that as a fresh setup told the agent, every session, to run first-install
+// onboarding before the person's task (team simulation D6). There it is an offer, made once per clone.
+function teammateClone() {
+  try {
+    const manifest = JSON.parse(readFileSync(join(root, '.rsc.json'), 'utf8'));
+    if (!manifest?.onboarding?.acceptedPlanId) return null;
+    const r = spawnSync('git', ['-C', root, 'ls-files', '--error-unmatch', '--', '.rsc.json'], { windowsHide: true, stdio: 'ignore' });
+    if (r.status !== 0) return null;
+    const level = manifest.onboarding.plan?.record?.technicalLevel;
+    return { level: typeof level === 'string' ? level : null };
+  } catch { return null; }
+}
+const clone = !existsSync(profile) && !existsSync(optout) ? teammateClone() : null;
+const offered = join(root, '.rsc', '.profile-offered');
+if (clone) {
+  if (!existsSync(offered)) {
+    process.stdout.write(`
+===== rsc onboarding =====
+This is a clone of a project already set up with rsc. The personal profile
+(02-DOCS/wiki/harness/user-profile.md) is never committed, so it is not here. Nothing is blocked.
+ACTION: ask the person once, in one line, whether they want technical terms or analogies; then continue with their task.
+Do not run \`init\`. If they answer, write \`technical_level: technical\` or \`technical_level: non-technical\`
+to 02-DOCS/wiki/harness/user-profile.md (personal, excluded from commits). If they decline or skip it,
+use ${clone.level ? `the level the project was installed with (${clone.level})` : 'analogies'} and do not ask again.
+Said once per clone (.rsc/.profile-offered).
+==========================
+`);
+    try { mkdirSync(join(root, '.rsc'), { recursive: true }); writeFileSync(offered, `${new Date().toISOString()}\n`); } catch { /* unwritable → said again next session */ }
+  }
+} else if (!existsSync(profile) && !existsSync(optout)) {
   process.stdout.write(`
 ===== rsc onboarding =====
 Fresh setup: 02-DOCS/wiki/harness/user-profile.md is missing.

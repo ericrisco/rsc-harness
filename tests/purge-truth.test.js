@@ -130,3 +130,59 @@ test('purge never deletes a scaffold file that is committed, and says why it sta
   assert.equal(git(cwd, ['status', '--porcelain', '--', '01-TOOLS/.gitignore']).stdout.trim(), '', 'and the tree is not left dirty');
   assert.ok(sections(result.stdout).kept.includes('01-TOOLS/.gitignore'), result.stdout);
 });
+
+// Team simulation D15 (G5): purge on a teammate's clone. Three things went unsaid: the post-merge hook
+// rsc installed in .git/hooks (left behind, still calling a reaper that no longer exists), the
+// project's CLAUDE.md / AGENTS.md (kept, but not listed — the report claimed to account for
+// everything), and the fact that most of what it deleted is COMMITTED: committing those deletions
+// uninstalls rsc for the whole team.
+test('purge on a clone reports the post-merge hook, the instruction files, and the team-wide effect of committing', () => {
+  const cwd = onboardedRepo();
+  writeFileSync(join(cwd, 'CLAUDE.md'), '# project\n');
+  writeFileSync(join(cwd, 'AGENTS.md'), '# agents\n');
+  git(cwd, ['add', '-A']);
+  git(cwd, ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--no-verify', '-m', '🔧 chore: harness']);
+  const hook = join(cwd, '.git', 'hooks', 'post-merge');
+  writeFileSync(hook, '#!/bin/sh\n# rsc-managed worktree cleanup (post-merge) v1\nexit 0\n');
+
+  const dry = run(cwd, ['purge', '--dry-run']);
+  assert.match(dry.stdout, /\.git\/hooks\/post-merge/, `dry run names the hook:\n${dry.stdout}`);
+  assert.match(dry.stdout, /whole team/, 'and warns before anything is deleted');
+  assert.ok(existsSync(hook), 'a dry run touches nothing');
+
+  const result = run(cwd, ['purge']);
+  assert.equal(result.status, 0, result.stderr);
+  const report = sections(result.stdout);
+  assert.ok(report.removed.includes('.git/hooks/post-merge'), `the rsc hook is reported removed:\n${result.stdout}`);
+  assert.ok(!existsSync(hook), 'and it is gone');
+  for (const f of ['CLAUDE.md', 'AGENTS.md']) {
+    assert.ok(report.kept.includes(f), `${f} listed under Kept:\n${result.stdout}`);
+    assert.ok(existsSync(join(cwd, f)));
+  }
+  assert.match(result.stdout, /committed in git/);
+  assert.match(result.stdout, /\.rsc\.json/);
+  assert.match(result.stdout, /uninstalls rsc for the whole team/);
+  assert.match(result.stdout, /\.claude\/settings\.json/, "a committed config purge only cleaned is part of the warning too");
+  assert.match(result.stdout, /git restore/);
+  // The undo it prints must work.
+  const restore = result.stdout.match(/git restore -- (.+)/)?.[1];
+  assert.ok(restore, result.stdout);
+  assert.equal(spawnSync('sh', ['-c', `git restore -- ${restore}`], { cwd, encoding: 'utf8' }).status, 0);
+  assert.ok(existsSync(join(cwd, '.rsc.json')) && existsSync(join(cwd, '.claude', 'settings.json')));
+});
+
+test('purge leaves a post-merge hook that is not rsc\'s, and restores one rsc had chained', () => {
+  const cwd = onboardedRepo();
+  const dir = join(cwd, '.git', 'hooks');
+  writeFileSync(join(dir, 'post-merge'), '#!/bin/sh\n# rsc-managed worktree cleanup (post-merge) v1\n');
+  writeFileSync(join(dir, 'post-merge.rsc-local'), '#!/bin/sh\necho mine\n');
+  const result = run(cwd, ['purge']);
+  assert.equal(readFileSync(join(dir, 'post-merge'), 'utf8'), '#!/bin/sh\necho mine\n', 'the person\'s own hook is back in place');
+  assert.ok(!existsSync(join(dir, 'post-merge.rsc-local')));
+  assert.match(result.stdout, /post-merge/);
+
+  const other = onboardedRepo();
+  writeFileSync(join(other, '.git', 'hooks', 'post-merge'), '#!/bin/sh\necho husky\n');
+  run(other, ['purge']);
+  assert.equal(readFileSync(join(other, '.git', 'hooks', 'post-merge'), 'utf8'), '#!/bin/sh\necho husky\n', 'never touches a foreign hook');
+});

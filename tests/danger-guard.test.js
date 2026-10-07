@@ -192,3 +192,35 @@ test('a clone without the personal profile takes the level the harness was insta
   writeFileSync(join(root, '02-DOCS', 'wiki', 'harness', 'user-profile.md'), 'technical_level: non-technical\n');
   assert.equal(decide('git reset --hard HEAD~1'), 'deny', 'the person\'s own profile wins');
 });
+
+// Team simulation D7 (G1): a force push does not need the word "force". A `+` in front of the refspec
+// forces that one ref, and `--force-with-lease` / `--force-if-includes` are the safer forces that
+// still rewrite what the team already pulled. All of them are asked for a technical person and denied
+// for a non-technical one, like the plain flag.
+test('a force push spelled with +refspec or a lease is caught, for both levels', () => {
+  const tech = mkdtempSync(join(tmpdir(), 'rsc-dg-push-tech-'));
+  mkdirSync(join(tech, '02-DOCS', 'wiki', 'harness'), { recursive: true });
+  writeFileSync(join(tech, '02-DOCS/wiki/harness/user-profile.md'), 'technical_level: technical\n');
+  const F = `${DASH}${DASH}force`;
+  const forced = [
+    'git push origin +feat/x',
+    'git push origin +HEAD:main',
+    'git push origin feat/y +feat/x',
+    `git push ${F}-with-lease origin feat/x`,
+    `git push ${F}-with-lease=main:abc123 origin main`,
+    `git push ${F}-if-includes ${F}-with-lease origin feat/x`,
+    `git -C . push ${F} origin feat/x`,
+    `bash -c "git push origin +feat/x"`,
+  ];
+  for (const cmd of forced) {
+    const t = decide(cmd, tech);
+    assert.equal(t.decision, 'ask', `technical: not asked for ${cmd}`);
+    assert.match(t.reason, /force-push/);
+    assert.equal(decide(cmd).decision, 'deny', `non-technical: not denied ${cmd}`);
+  }
+  for (const cmd of ['git push origin feat/x', `git push ${DASH}u origin feat/x`, 'git push origin HEAD:refs/heads/a+b',
+    'echo "git push origin +feat/x"', 'git log --format=+%h']) {
+    assert.equal(decide(cmd, tech).decision, 'allow', `over-fired on ${cmd}`);
+    assert.equal(decide(cmd).decision, 'allow', `over-fired (non-technical) on ${cmd}`);
+  }
+});

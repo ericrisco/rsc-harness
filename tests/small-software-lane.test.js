@@ -38,7 +38,10 @@ test('lane01 · a small software project gets the lanes: full suggest body, per-
   assert.deepEqual(wired(cwd, 'UserPromptSubmit').filter((h) => h === 'userprompt-gate'), ['userprompt-gate']);
   assert.ok(wired(cwd, 'PostToolUse').includes('ftd-nudge'));
   assert.ok(wired(cwd, 'PreToolUse').includes('danger-guard'), 'and a guard, technical user or not');
-  const gate = spawnSync('node', [join(cwd, '.rsc', 'userprompt-gate.mjs'), cwd], { input: JSON.stringify({ session_id: 's', prompt: 'x' }), encoding: 'utf8' }).stdout;
+  // Its own marker dir: the gate de-dups per session+prompt in a machine-wide dir for 24 h, so a fixed
+  // `session_id: 's'` was claimed by the previous run and every later run in that window read empty.
+  const env = { ...process.env, RSC_HOOK_MARKER_DIR: mkdtempSync(join(tmpdir(), 'rsc-lane-marks-')) };
+  const gate = spawnSync('node', [join(cwd, '.rsc', 'userprompt-gate.mjs'), cwd], { input: JSON.stringify({ session_id: 's', prompt: 'x' }), encoding: 'utf8', env }).stdout;
   assert.match(gate, /FTD/);
 });
 

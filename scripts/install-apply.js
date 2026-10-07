@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { rmSync, rmdirSync, existsSync, cpSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync, appendFileSync, readdirSync } from 'node:fs';
+import { rmSync, rmdirSync, existsSync, cpSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync, appendFileSync, readdirSync, renameSync } from 'node:fs';
 import { join, dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -707,6 +707,11 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
     policy: manifest?.onboarding?.plan?.policy,
     onboarding: manifest?.onboarding,
   });
+  // A teammate never runs onboarding — the harness arrives in the clone — so the exclude onboarding
+  // writes for the personal profile never reached them, and their first answer to the one onboarding
+  // question sat untracked, one `git add -A` from the team repo (team simulation D13). Sync is what a
+  // clone runs, so it writes the same exclude. Lazy import: onboarding-apply imports this module.
+  try { (await import('./lib/onboarding-apply.js')).excludePersonalProfile(cwd); } catch { /* not a repo → nothing */ }
   return { synced: declared, syncedAgents: declaredAgents, backup: nextState.backup };
 }
 
@@ -891,11 +896,46 @@ export async function purgeReport({ home, cwd = process.cwd(), withDocs = false,
     else kept.push({ path: 'rsc/knowledge', reason: 'local branch. To delete it: git branch -D rsc/knowledge' });
   }
 
+  // The post-merge hook rsc installs (worktree-reaper.mjs). It lives in git's private hooks dir, so it
+  // is per clone, never committed — and left behind it kept calling a reaper that no longer exists.
+  // Only a hook carrying rsc's marker is touched; one rsc had chained aside is put back in place.
+  const [hooks] = gitLines(cwd, ['rev-parse', '--path-format=absolute', '--git-path', 'hooks']);
+  const hook = hooks ? join(hooks, 'post-merge') : null;
+  if (hook && existsSync(hook)) {
+    let body = '';
+    try { body = readFileSync(hook, 'utf8'); } catch { /* unreadable → not provably ours */ }
+    if (body.includes('# rsc-managed worktree cleanup (post-merge)')) {
+      const chained = join(hooks, 'post-merge.rsc-local');
+      if (existsSync(chained)) {
+        cleaned.add(hook);
+        if (!dryRun) { rmSync(hook, { force: true }); renameSync(chained, hook); }
+      } else drop(hook);
+    }
+  }
+
+  // The project's instruction files are never purge's to delete. Say so, so the report accounts for them.
+  for (const name of ['CLAUDE.md', 'AGENTS.md']) {
+    const file = join(cwd, name);
+    if (existsSync(file) && !removed.has(file) && !cleaned.has(file)) {
+      kept.push({ path: name, reason: 'your project instructions; purge never deletes them. If they still mention rsc or 02-DOCS, edit those lines by hand.' });
+    }
+  }
+
   // A path that is both removed and cleaned was cleaned, then emptied, then removed.
   for (const p of removed) cleaned.delete(p);
   // `.rsc/` is rsc's own directory and goes whole: listing its files one by one adds noise, not truth.
   if (removed.has(rscDir)) for (const p of [...removed]) if (p.startsWith(`${rscDir}${sep}`)) removed.delete(p);
-  return { removed: [...removed], cleaned: [...cleaned], kept };
+
+  // What of the removed or cleaned is COMMITTED. On a teammate's clone that is most of it (.rsc.json,
+  // .claude/settings.json, the bootstrap…): changing it here is local, committing the changes
+  // uninstalls rsc for everyone who pulls (team simulation D15). The index still has them after the
+  // delete, so this reads the same in a dry run and a real one.
+  const gone = new Set([...removed, ...cleaned].map((p) => relative(cwd, p).split(sep).join('/')));
+  const under = (file) => { for (let d = file; d && d !== '.'; d = d.includes('/') ? d.slice(0, d.lastIndexOf('/')) : '') if (gone.has(d)) return true; return false; };
+  const listed = spawnSync('git', ['ls-files', '-z'], { cwd, encoding: 'utf8' });
+  const tracked = listed.status === 0
+    ? listed.stdout.split('\0').filter(Boolean).filter(under) : [];
+  return { removed: [...removed], cleaned: [...cleaned], kept, tracked };
 }
 
 function isLink(p) {

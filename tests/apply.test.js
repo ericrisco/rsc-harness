@@ -826,7 +826,9 @@ test('danger-guard: blocks foot-gun commands for a non-technical user', () => {
 test('danger-guard: allows safe / scoped commands for a non-technical user', () => {
   const root = profileDir('non-technical');
   for (const c of [
-    'rm file.txt', 'ls -la', 'git status', 'git push --force-with-lease',
+    // A lease is no longer on this list: it still rewrites history the team pulled (team simulation
+    // D7), so it is denied for a non-technical user and asked for a technical one (danger-guard.test.js).
+    'rm file.txt', 'ls -la', 'git status', 'git push origin feat/x',
     'psql -c "DELETE FROM users WHERE id=1"', 'mysql -e "UPDATE users SET active=0 WHERE id=2"',
   ]) {
     assert.ok(!denied(root, c), `should allow: ${c}`);
