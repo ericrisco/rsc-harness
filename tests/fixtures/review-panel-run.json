@@ -1,0 +1,59 @@
+{
+  "_about": "Six findings from the first real three-lens run (2026-10-08) against a per-item-discount diff with one planted bug: discount applied to the first unit only. Expected: 3 unique — the planted bug, the missing 0..100 check, the qty-1 test.",
+  "findings": [
+    {
+      "lens": "correctness",
+      "severity": "blocker",
+      "file": "src/cart.js",
+      "line": 9,
+      "claim": "Discount is applied only to the first unit of a line; spec requires it on every unit.",
+      "failure_scenario": "lineTotal({price:100, qty:3, discountPct:10}) returns 290; SPEC.md acceptance requires 270. Any line with qty>1 and a discount is overcharged.",
+      "evidence": "return unit + (i.qty - 1) * i.price;"
+    },
+    {
+      "lens": "correctness",
+      "severity": "should-fix",
+      "file": "src/cart.js",
+      "line": 8,
+      "claim": "discountPct is not validated against the spec range 0..100.",
+      "failure_scenario": "{price:100, qty:1, discountPct:150} gives -50; discountPct:-5 gives 105 (a surcharge). Negative totals flow into subtotal.",
+      "evidence": "const unit = i.price - Math.round(i.price * pct / 100);"
+    },
+    {
+      "lens": "security",
+      "severity": "should-fix",
+      "file": "src/cart.js",
+      "line": 9,
+      "claim": "Discount is applied to only one unit of the line, contradicting the spec that it applies to every unit; customers are overcharged.",
+      "failure_scenario": "items=[{price:100,qty:3,discountPct:10}] -> lineTotal returns 290; SPEC acceptance requires 270. Existing test uses qty 1 so it does not catch it.",
+      "evidence": "return unit + (i.qty - 1) * i.price;"
+    },
+    {
+      "lens": "security",
+      "severity": "question",
+      "file": "src/cart.js",
+      "line": 7,
+      "claim": "discountPct is not validated to 0..100 or numeric; a value outside range or non-number yields negative/NaN totals if any writer ever lets a user set it.",
+      "failure_scenario": "cart item {price:100,qty:1,discountPct:150} -> unit=-50, total negative; discountPct:'abc' -> NaN. No write path to db.carts in this repo, so reachability is unproven.",
+      "evidence": "const pct = i.discountPct || 0;"
+    },
+    {
+      "lens": "tests-as-evidence",
+      "severity": "blocker",
+      "file": "src/cart.js",
+      "line": 10,
+      "claim": "Discount is applied only to one unit of the line, not every unit as the spec requires.",
+      "failure_scenario": "lineTotal({price:100, qty:3, discountPct:10}) -> 290 instead of 270 (spec acceptance); discountPct 100 qty 3 -> 200 instead of 0.",
+      "evidence": "return unit + (i.qty - 1) * i.price;"
+    },
+    {
+      "lens": "tests-as-evidence",
+      "severity": "should-fix",
+      "file": "test/cart.test.js",
+      "line": 4,
+      "claim": "The discount test uses qty 1, so it passes with the buggy implementation. The spec's acceptance example (qty 3 -> 270) is not tested.",
+      "failure_scenario": "Any implementation that discounts only one unit passes: npm test is green (2/2) while lineTotal({price:100,qty:3,discountPct:10}) returns 290.",
+      "evidence": "test('discount', () => assert.equal(lineTotal({ price: 100, qty: 1, discountPct: 10 }), 90));"
+    }
+  ]
+}

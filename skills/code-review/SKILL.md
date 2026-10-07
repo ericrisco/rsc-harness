@@ -93,6 +93,8 @@ Read the surrounding code, trace the *value*, confirm the path is reachable.
 
 If you cannot trace it to a concrete value and a reachable sink, you do not yet have a finding.
 
+When several reviewers looked at the same diff, merge before reporting. Have each one end with a ` ```json findings ` block, run `npx @ericrisco/rsc review consolidate <reports…>`, and send each blocker it marks `verify` to the `finding-verifier` agent. That is the `review` skill's step, and it applies here unchanged.
+
 ## The verdict
 
 End every review with exactly one, plainly — no mushy middle:

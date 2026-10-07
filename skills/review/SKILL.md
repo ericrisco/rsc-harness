@@ -128,7 +128,8 @@ gap deliberately with `--accept-partial-lenses` (it is recorded). Every approval
 
 **Lenses by risk tier** — tier 0 never reaches you (the gate passes docs/copy silently);
 tier 1 → run the single most relevant pass from the table above yourself; tier 2 → dispatch
-**three parallel fresh-context subagents** (correctness · security · tests-as-evidence), each told
+**three parallel fresh-context subagents** (`refuter-correctness` · `refuter-security` ·
+`refuter-tests`), each told
 to *refute* readiness, not confirm it. Fresh context is the point: a reviewer who inherits the
 implementer's context inherits its blind spots.
 
@@ -164,6 +165,26 @@ Two extra finding classes the four inputs unlock, neither reachable from a diff:
 - **Mapping, both directions** — an acceptance criterion with no test that can be made to fail, and
   a test pinning behaviour no criterion asked for.
 
+**Consolidate, then verify — before anything reaches the author.** Three lenses on one diff often
+report one defect three ways, and a lens hunting for something can overstate what it found. Two
+steps, in this order:
+
+1. **Group (deterministic).** Each lens ends its report with a ` ```json findings ` block. Save the
+   three reports and run `npx @ericrisco/rsc review consolidate <reports…>`. It merges findings on
+   the same file within 3 lines, or quoting the same evidence; keeps the highest severity and every
+   lens that saw it; and downgrades a blocker or should-fix with no `file:line` or failure scenario to
+   a question. Several lenses on one finding is a reason to look first, never a reason to raise its
+   severity.
+2. **Verify (judgement).** For each finding it marks `verify`, dispatch the **`finding-verifier`**
+   agent with that one finding plus the same four inputs, in parallel. It starts from "this is false"
+   and returns **CONFIRMED** (reproduced or traced, with the proof), **REFUTED** (cites the guard that
+   makes it impossible), or **UNPROVEN** (becomes a question). It never gets the lens's reasoning.
+
+Report the consolidated count honestly ("11 reported → 4 unique → 2 confirmed"), and list what was
+refuted and why: a refuted finding hidden from the author is a review nobody can audit. At tier 1
+(one pass, run by you) there is nothing to group, but a blocker still goes to `finding-verifier`
+before it blocks.
+
 **A finding blocks only if it survives all three filters** — no exceptions, and eagerness to
 find something is not evidence:
 
@@ -171,8 +192,8 @@ find something is not evidence:
    `--note "<finding>"` (they land in `.rsc/sello-findings.md`, surfaced by `doctor`) and
    suggest an issue; they never block this delivery.
 2. **Severity** — only `blocker` blocks. `should-fix`/`nit` → `--note`.
-3. **Evidence** — a `repro` or a concrete failure scenario. A suspicion without one is a
-   `[question]`, and questions don't block.
+3. **Evidence** — `finding-verifier` returned **CONFIRMED** with its proof. REFUTED is dropped (with
+   its reason in the report); UNPROVEN is a `[question]`, and questions don't block.
 
 **Fixing a blocker is budgeted, one attempt.** Before touching anything: estimate the fix and
 declare it — `npx @ericrisco/rsc sello budget --lines <N>`. After the fix:
