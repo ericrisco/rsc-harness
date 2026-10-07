@@ -1,6 +1,7 @@
-import { hooksDir, hooksDirIsOurs } from '../targets/worktree-reaper.mjs';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { hooksDir, hooksDirIsOurs, classifyWorktrees } from '../targets/worktree-reaper.mjs';
+import { existsSync, readFileSync, readdirSync, statSync, realpathSync } from 'node:fs';
+import { join, dirname, relative, sep } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { targetPaths, TARGET_IDS } from '../targets/index.js';
 import { readState } from './lib/state.js';
@@ -146,6 +147,27 @@ function worktreeCleanupStatus(root, policy) {
   } catch { return { state: 'unreadable' }; }
 }
 
+// The two things a team trips over with worktrees (team simulation D9): a `.worktrees/` git does not
+// ignore — one `git add -A` away from committing a whole checkout — and landed worktrees still on
+// disk, which look exactly like live ones. Reported with the way out, never blocking `healthy`: both
+// cost tidiness, not work.
+const realOf = (p) => { try { return realpathSync.native(p); } catch { return p; } };
+function worktreeHygiene(root) {
+  if (!existsSync(join(root, '.git'))) return { state: 'not-a-repo' };
+  const probe = spawnSync('git', ['-C', root, 'check-ignore', '-q', '--no-index', '.worktrees/rsc-probe/file'], { encoding: 'utf8' });
+  const ignored = probe.status === 0;
+  let leftovers = [];
+  try {
+    leftovers = classifyWorktrees(root)
+      .filter((c) => c.verdict === 'safe' || c.verdict === 'ask')
+      .map((c) => ({ path: relative(realOf(root), c.path).split(sep).join('/') || c.path, branch: c.branch, verdict: c.verdict }));
+  } catch { /* unanswerable is not a finding */ }
+  const actions = [];
+  if (!ignored) actions.push('`.worktrees/` is not ignored by git here: run `npx @ericrisco/rsc sync` (it adds it to the rsc block of .gitignore) and commit .gitignore so every clone gets it.');
+  if (leftovers.length) actions.push(`${leftovers.length} landed worktree(s) are still on disk: \`npx @ericrisco/rsc worktrees\` lists them, \`npx @ericrisco/rsc worktrees reap\` removes the safe ones.`);
+  return { ignored, leftovers, ...(actions.length ? { action: actions.join(' ') } : {}) };
+}
+
 // Every skill this catalog ships declares `origin: risco` in its own frontmatter — all 272 of them,
 // uniformly. So "is this ours?" is answerable from the file itself, and does not need the list in
 // `.rsc.json` that nobody ever filled: that list is parallel accounting (P3), it has been empty in
@@ -246,6 +268,7 @@ export function doctor({ target, home, cwd }) {
     // carry a perfectly healthy harness and still never clean up, on every machine but the one that
     // ran the installer. Reported, never nagged about: `repair` is what puts it back (P6).
     worktreeCleanup: worktreeCleanupStatus(root, state.policy),
+    worktreeHygiene: worktreeHygiene(root),
     ownSkills: ownSkillsIn(paths, readProjectManifest(root)?.ownSkills || []),
     sello: selloStatus(root),
     // Whether this harness has a design identity at all. `design` has always DECLARED that it

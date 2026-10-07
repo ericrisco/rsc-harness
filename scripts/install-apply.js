@@ -407,7 +407,12 @@ export function ignoreLocalState(cwd = process.cwd(), target) {
   // whole directory would quietly stop versioning their work, which is the same sin this
   // release exists to fix: treating what is theirs as if it were ours. So shared
   // directories are excluded entry by entry, and only the entries rsc manages.
-  const wanted = ['.rsc/'];
+  // `.worktrees/` is where the isolation rule sends every concurrent session (`git worktree add
+  // .worktrees/<branch>`). Nothing ignored it, so in a teammate's clone it surfaced as `?? .worktrees/`
+  // — one `git add -A` from committing a whole checkout (team simulation D9). It goes in THIS block,
+  // the committed one, so every clone inherits it with its first pull; `.git/info/exclude` would
+  // only ever cover the machine that ran the installer.
+  const wanted = ['.rsc/', '.worktrees/'];
   if (target) {
     const paths = targetPaths(target, undefined, cwd);
     const rel = (abs) => relative(cwd, abs).split(sep).join('/');
