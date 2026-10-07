@@ -20,6 +20,7 @@ import { metricsSummary } from '../targets/session-memory-core.mjs';
 import { agentPath } from '../targets/agents.js';
 import { projectOptOuts } from '../targets/opt-outs.js';
 import { versionReport } from './lib/versions.js';
+import { CONSTITUTION_PATH, constitutionIsDraft } from './lib/constitution-draft.js';
 
 // Gates the committed manifest says the team disarmed, still armed here. Read through the same
 // partition the installer uses, so a machine-only switch somebody's older rsc wrote into the
@@ -310,6 +311,11 @@ export function doctor({ target, home, cwd }) {
   for (const [id, e] of Object.entries(state.skills)) {
     for (const f of e.files) if (!existsSync(f)) report.missing.push({ id, path: f, action: 'Run `npx @ericrisco/rsc sync` to restore this managed skill.' });
   }
+  // Pending is not unhealthy: work the harness expects the user to finish, named with what does it.
+  // The draft constitution `rsc onboard` writes is the first entry; it never touches `healthy`.
+  report.pending = constitutionIsDraft(root)
+    ? [{ id: 'constitution-draft', path: CONSTITUTION_PATH, action: 'Complete it with the `constitution` phase before the first SDD feature; ratifying removes `status: draft`.' }]
+    : [];
   report.healthy = report.hookWired && !report.missing.length && !missingAgents.length && !missingCommands.length
     && !report.opencodePluginsOutdated.length;
   return report;

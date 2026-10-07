@@ -25,6 +25,7 @@ import {
   buildOnboardingPlan, decodeGoal, encodeGoal, identifyPlan, recommendDeferredComponents,
 } from './lib/onboarding.js';
 import { applyAcceptedOnboarding, verifyOnboarding, ensureHarnessSkeleton, harnessReadiness } from './lib/onboarding-apply.js';
+import { CONSTITUTION_PATH, constitutionIsDraft, ensureConstitutionDraft } from './lib/constitution-draft.js';
 
 const rawArgv = process.argv.slice(2);
 
@@ -298,6 +299,14 @@ async function runOnboarding(targets) {
   } catch (error) {
     say(`RSC_SKELETON_FAILED ${error.message}`);
   }
+  // La constitución, como BORRADOR, cuando el plan eligió SDD y no hay ninguna. Sin esto una
+  // instalación no interactiva de software complejo acababa INCOMPLETE: sólo una fase agéntica la
+  // escribía. Mismo sitio y mismo motivo que el esqueleto: fuera de la transacción, sin residuo.
+  try {
+    ensureConstitutionDraft(process.cwd(), plan);
+  } catch (error) {
+    say(`RSC_SKELETON_FAILED ${error.message}`);
+  }
   // The audit cadence starts at install. Without a baseline the very first session after onboarding
   // announced "a skill audit is due" about a set chosen minutes earlier. Never overwrites a real run.
   try { recordAuditBaseline(process.cwd()); } catch { /* a missing baseline only means an early nudge */ }
@@ -313,7 +322,14 @@ async function runOnboarding(targets) {
 // poco se cumplía entero. Spec: 02-DOCS/wiki/sdd/specs/install-completion-floor.md
 function emitHarnessReadiness(plan, planId) {
   const readiness = harnessReadiness(process.cwd(), plan);
-  if (readiness.ready) return void say(`RSC_ONBOARDING_READY ${planId}`);
+  if (readiness.ready) {
+    say(`RSC_ONBOARDING_READY ${planId}`);
+    // Listo no es «nada pendiente»: el borrador se nombra para que la cadena SDD lo complete primero.
+    if ((plan.floorPaths || []).includes(CONSTITUTION_PATH) && constitutionIsDraft(process.cwd())) {
+      say(`  Pending: ${CONSTITUTION_PATH} is a draft — complete it with the \`constitution\` phase before the first SDD feature.`);
+    }
+    return;
+  }
   say(`RSC_ONBOARDING_INCOMPLETE ${planId}`);
   for (const missing of safeLines(readiness.missing)) say(`  ${missing}`);
   say(`  Next: ${readiness.action}`);

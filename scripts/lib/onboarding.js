@@ -117,6 +117,13 @@ export function scanProject(root = process.cwd()) {
       // Codex stores the always-on layer in AGENTS.md. Ignore a file that contains
       // only our managed block, while retaining a user's surrounding instructions
       // as real project evidence across repair/re-onboarding.
+      // El `CLAUDE.md` raíz es el Knowledge map, y lo escriben las propias fases de rsc: la
+      // `constitution` añade su fila «create CLAUDE.md if absent», y el instalador puede dejar ahí
+      // la sombra de AGENTS.md. Contarlo como evidencia movía la identidad del plan justo después de
+      // completar el suelo, y el `--accept-plan` del mismo id moría con RSC_PLAN_CHANGED sin que
+      // nada se hubiera elegido distinto (reproducido con 3.0.8). La cuenta de markdown no decide
+      // nada del plan —sólo su identidad—, así que no se pierde ninguna decisión.
+      if (rel === 'CLAUDE.md') isSignal = false;
       if (entry.name === 'AGENTS.md') {
         const human = readFileSync(path, 'utf8')
           .replace(/\n*<!-- rsc-suggest:start -->[\s\S]*?<!-- rsc-suggest:end -->\n*/g, '')

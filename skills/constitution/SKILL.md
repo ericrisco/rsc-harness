@@ -86,6 +86,8 @@ Write `02-DOCS/wiki/sdd/constitution.md` from the template in `references/consti
 
 Create `02-DOCS/wiki/sdd/` if it does not exist. Do not overwrite an existing constitution — amend it.
 
+**A draft is "complete me", not "amend me".** `rsc onboard` writes a skeleton with `status: draft` in the frontmatter: the template's headings, the facts onboarding knew (goal, kind, scope, workflow, detected stack) and no principle. Keep those facts, run the interview, fill the sections, then on ratification drop `status: draft`, set `version: v1.0.0` and log v1.0.0 in the amendment log.
+
 ## Versioning & amendment protocol
 
 The constitution is versioned so `analyze` and `review` can cite "constitution v1.2.0, principle 4".

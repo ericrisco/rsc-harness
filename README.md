@@ -372,7 +372,11 @@ That verdict is not just about the receipt: it also requires the harness floor t
 `01-TOOLS/_TEMPLATE/`, `02-DOCS/wiki/harness/`, and the constitution when the plan selects SDD.
 If the floor is missing, the install applied but prints `RSC_ONBOARDING_INCOMPLETE` with each
 missing path and the action that creates it, because a plan that promised little used to be able to
-report success with three markdown files.
+report success with three markdown files. When the plan selects SDD, onboarding writes the
+constitution itself as a draft (`status: draft`, only the facts it knows, no principles), so a
+non-interactive install still ends `RSC_ONBOARDING_READY`; the draft is listed as pending — under
+READY and in `rsc doctor` — until the `constitution` phase completes it. An existing constitution is
+never overwritten.
 
 ---
 
