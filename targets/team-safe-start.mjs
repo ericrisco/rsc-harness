@@ -118,8 +118,8 @@ ACTION: díselo a la persona en pocas líneas, una vez, antes de su petición:
    worktree en .worktrees/<rama>/. Para no hacerlo: «no uses worktrees».
 3. El agente elige solo entre FTD (lo sencillo) y SDD (lo grande o complejo) y lo dice; se puede
    pedir el otro.
-4. 01-TOOLS/ y 02-DOCS/ viajan al equipo por la rama rsc/knowledge y llegan a la principal dentro de
-   las PRs. Para apagarlo: rsc knowledge-sync off.
+4. Las herramientas (01-TOOLS/) y la wiki (02-DOCS/wiki/, attachments/) viajan al equipo por la
+   rama rsc/knowledge y llegan a la principal dentro de las PRs. Para apagarlo: rsc knowledge-sync off.
 ==============================================
 `,
   en: `
@@ -133,8 +133,8 @@ ACTION: tell the person in a few lines, once, before their request, in their lan
    .worktrees/<branch>/. To turn that off: "don't use worktrees" (rsc isolation off).
 3. The agent picks between FTD (simple work) and SDD (large or complex work) and says which; you
    can ask for the other.
-4. 01-TOOLS/ and 02-DOCS/ travel to the team on the rsc/knowledge branch and reach the default
-   branch inside pull requests. To turn it off: rsc knowledge-sync off.
+4. Tools (01-TOOLS/) and the wiki (02-DOCS/wiki/, attachments/) travel to the team on the
+   rsc/knowledge branch and reach the default branch inside pull requests. Off: rsc knowledge-sync off.
 ==========================================
 `,
 };
