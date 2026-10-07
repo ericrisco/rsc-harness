@@ -379,6 +379,60 @@ export function reapWorktree(root, targetPath, { confirmed = false } = {}) {
   };
 }
 
+// Branches that are never a cleanup's side effect, whatever their state: the knowledge branch carries
+// 01-TOOLS/ and 02-DOCS/ to the team (knowledge-sync) and is merged into the trunk as a matter of course.
+export const KEEP_BRANCHES = ['rsc/knowledge'];
+
+/**
+ * Plain local branches whose work has landed: the half of "al fusionar se borra solo" that has no
+ * directory. E2E defect 14 (2026-10-07): a branch merged into the default branch — or whose remote
+ * branch the forge deleted after the PR, `[gone]` — stayed in `git branch` for ever, landed work
+ * looking exactly like live work.
+ *
+ * Deleted only when ALL hold, each failing towards keeping the branch:
+ *   - the cleanup is on, and a trunk resolves (the remote tip first, like the worktrees);
+ *   - it is not the default branch, a trunk name, `rsc/knowledge`, the current branch, or checked out
+ *     in ANY worktree (`branch -d` would refuse that last one anyway; we do not even ask);
+ *   - its tip is an ancestor of the trunk — no commit of its own left. Against `origin/<default>`
+ *     when there is one, so a branch merged locally but not yet pushed keeps its unpushed commits
+ *     (being ahead of its own upstream then loses nothing: those commits are on the remote trunk);
+ *   - it really carried work: a commit in its reflog, or an upstream the forge deleted. A branch cut a
+ *     moment ago is an ancestor of everything and has landed nothing (same rule as `hasLandedWork`).
+ * And then git decides: `branch -d`, never -D. A squash-merged branch is `[gone]` but has commits of
+ * its own by identity, so it is not an ancestor and stays — its commits remain recoverable.
+ *
+ * Never throws (it runs from the post-merge hook, like `autoReap`).
+ */
+export function reapMergedBranches(root) {
+  const out = { deleted: [], kept: [] };
+  try {
+    if (!isCleanupEnabled(root)) return out;
+    const trunk = resolveTrunk(root);
+    if (!trunk) return out;
+    const defaultName = trunk.replace(/^origin\//, '');
+    const current = git(root, ['symbolic-ref', '--quiet', '--short', 'HEAD']).out || null;
+    const checkedOut = new Set(listWorktrees(root).map((wt) => wt.branch).filter(Boolean));
+    const refs = git(root, ['for-each-ref', '--format=%(refname:short)%00%(upstream:track)', 'refs/heads']);
+    if (!refs.ok) return out;
+    for (const line of refs.out.split('\n').filter(Boolean)) {
+      const [branch, track = ''] = line.split('\0');
+      const keep = (reason) => out.kept.push({ branch, reason });
+      if (branch === defaultName || isTrunkName(branch) || KEEP_BRANCHES.includes(branch)) continue;
+      if (branch === current) { keep('current branch'); continue; }
+      if (checkedOut.has(branch)) { keep('checked out in a worktree'); continue; }
+      if (!git(root, ['merge-base', '--is-ancestor', `refs/heads/${branch}`, trunk]).ok) continue; // live work
+      const gone = track.includes('gone');
+      if (!gone && !hasLandedWork(root, { branch })) { keep('never carried a commit'); continue; }
+      const del = git(root, ['branch', '-d', branch]);
+      if (del.ok) out.deleted.push(branch);
+      else keep(`git branch -d refused: ${del.err || del.out}`);
+    }
+  } catch (err) {
+    out.kept.push({ branch: null, reason: `branch cleanup could not run: ${err.message}` });
+  }
+  return out;
+}
+
 /**
  * Every refusal carries the way out, because the person receiving it may not be able to deduce one (P6).
  *
@@ -401,7 +455,7 @@ export function reapWorktree(root, targetPath, { confirmed = false } = {}) {
  *  - it is silent when there is nothing to do, so the common merge prints nothing.
  */
 export function autoReap(root) {
-  const result = { reaped: [], skipped: [], disabled: false };
+  const result = { reaped: [], skipped: [], disabled: false, branches: { deleted: [], kept: [] } };
   try {
     if (!isCleanupEnabled(root)) {
       result.disabled = true;
@@ -421,6 +475,8 @@ export function autoReap(root) {
       if (out.removed) result.reaped.push(candidate.path);
       else result.skipped.push({ path: candidate.path, reason: out.reason });
     }
+    // After the worktrees: removing one frees its branch, which may then be a landed plain branch.
+    result.branches = reapMergedBranches(root);
   } catch (err) {
     // Swallowed deliberately, and recorded rather than discarded: the merge must survive whatever
     // went wrong in here, but a silent failure that leaves no trace is how this rots unnoticed.
@@ -605,6 +661,7 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.
     // The unattended entry point, called by the post-merge hook. Prints only what it actually did.
     const out = autoReap(root);
     for (const p of out.reaped) process.stdout.write(`rsc: retired worktree ${p}\n`);
+    for (const b of out.branches.deleted) process.stdout.write(`rsc: deleted merged branch ${b}\n`);
   } else if (process.argv[3] === 'reap') {
     const one = process.argv[4];
     const targets = one ? [resolve(one)] : candidates.filter((c) => c.verdict === 'safe').map((c) => c.path);
