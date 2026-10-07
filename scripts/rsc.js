@@ -4,12 +4,13 @@ import { detectTarget, installedTargets, resolveTargets, TARGETS } from '../targ
 import { detectRepo } from './detect-repo.js';
 import { rank } from './consult.js';
 import { expandRecommends, toOutcomes, hasOutcome } from './lib/recommend.js';
-import { applyInstall, listInstalled, listInstalledAgents, listInstalledCommands, uninstall, syncInstalled, purge, collisions, ownSkillPaths } from './install-apply.js';
+import { applyInstall, listInstalled, listInstalledAgents, listInstalledCommands, uninstall, syncInstalled, purgeReport, collisions, ownSkillPaths } from './install-apply.js';
+import { isAbsolute, relative, sep } from 'node:path';
 import { stackAgentNames } from '../targets/agents.js';
 import { doctor } from './doctor.js';
 import { ask, say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
 import { refreshRegistry, registryStatus } from './lib/registry.js';
-import { audit, writeAuditReport } from './audit.js';
+import { audit, writeAuditReport, recordAuditBaseline } from './audit.js';
 import { DOMAINS } from './lib/domains.js';
 import { listBackups, restoreBackup, whereKept } from './lib/backups.js';
 import { runUpgrade } from './lib/upgrade.js';
@@ -18,6 +19,7 @@ import { DEFAULT_SKILL_FLOOR, withDefaultSkillFloor } from './lib/default-skill-
 import { RETIRED_SKILLS, replaceRetired } from './lib/retired-skills.js';
 import { readManifest, writeManifest } from './lib/manifest-file.js';
 import { versionReport } from './lib/versions.js';
+import { templateAssets, targetName } from './lib/tools-skeleton.js';
 import {
   normalizeOnboarding, missingOnboardingFields, scanProject,
   buildOnboardingPlan, decodeGoal, encodeGoal, identifyPlan, recommendDeferredComponents,
@@ -38,6 +40,33 @@ if (['--version', '-v', 'version'].includes(rawArgv[0])) {
   if (v.behind) lines.push('This project runs older hooks than this CLI. To catch up, run here:', '  npx @ericrisco/rsc@latest');
   process.stdout.write(`${lines.join('\n')}\n`);
   process.exit(0);
+}
+const GENERAL_HELP = [
+  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
+  'Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)',
+  '   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.',
+].join('\n');
+const UNINSTALL_HELP = [
+  'Use: npx @ericrisco/rsc uninstall <id...> [--dry-run] [--target <assistant>]',
+  '  Removes the named skills or agents from this project.',
+  '  To remove everything rsc installed here, run: npx @ericrisco/rsc purge  (keeps 02-DOCS/ unless --with-docs)',
+].join('\n');
+const PURGE_HELP = [
+  'Use: npx @ericrisco/rsc purge [--dry-run] [--with-docs]',
+  '  Removes everything rsc installed in this project and reports what was removed, cleaned and kept.',
+  '  --dry-run shows the report without touching anything. 02-DOCS/ is kept unless --with-docs.',
+].join('\n');
+
+// Asking for help must never RUN the command. `uninstall --help` used to be read as an empty id list
+// and report "Removed: (nothing)"; `purge --help` would have purged. Answered before anything else.
+{
+  const helpAsked = rawArgv.some((a) => a === '--help' || a === '-h');
+  if (rawArgv[0] === 'help' || helpAsked) {
+    const about = rawArgv[0] === 'help' ? rawArgv[1] : rawArgv.find((a) => !a.startsWith('-'));
+    const text = about === 'uninstall' ? UNINSTALL_HELP : about === 'purge' ? PURGE_HELP : GENERAL_HELP;
+    process.stdout.write(`${text}\n`);
+    process.exit(0);
+  }
 }
 // `--accompaniment` stays listed although the dial is retired: old scripts and agents still pass it,
 // and its value must keep being skipped rather than read as a command or a skill id.
@@ -159,6 +188,12 @@ function renderPlan(plan, planId) {
   for (const decision of plan.decisions.filter((d) => d.state === 'excluded')) say(`  × ${decision.kind}/${decision.id} — ${decision.reason}`);
   say('Managed paths:');
   for (const path of plan.governedPaths) say(`  ${path}`);
+  // The scaffolding is written once and then belongs to the person, so it is not a managed (digested)
+  // path — but it IS written by this plan, and a plan that does not show it is not the whole plan.
+  if ((plan.floorPaths || []).includes('01-TOOLS/_TEMPLATE/')) {
+    say('Scaffolded once (yours to edit; never overwritten; purge removes only untouched files):');
+    for (const path of ['01-TOOLS/.gitignore', ...templateAssets().map((a) => `01-TOOLS/_TEMPLATE/${targetName(a)}`)].sort()) say(`  ${path}`);
+  }
   if (plan.replacesUserSkills?.length) {
     say('Your own skills this plan replaces:');
     for (const path of plan.replacesUserSkills) say(`  ! ${path} — already here and not put by rsc; the catalog skill of the same name takes its place, and yours is kept in .rsc/backups/`);
@@ -166,8 +201,11 @@ function renderPlan(plan, planId) {
     say('  AGENT: name each of these to the user before accepting, and ask whether to replace or rename.');
   }
   if (plan.evidence.parentHarness) say(`Parent harness detected at ${plan.evidence.parentHarness}; it is not inherited by this plan.`);
+  // Pinned to the version that computed this plan. The id is a hash of the plan, and the plan
+  // depends on the catalog of the running version: `@latest` would accept it with whatever version
+  // npm resolves next, which answers RSC_PLAN_CHANGED the day a release lands in between.
   const pieces = [
-    'npx @ericrisco/rsc@latest onboard',
+    `npx @ericrisco/rsc@${versionReport(process.cwd()).cli} onboard`,
     `--technical-level ${plan.record.technicalLevel}`,
     `--project-kind ${plan.record.projectKind}`,
     `--goal-base64 ${encodeGoal(plan.record.goal)}`,
@@ -260,6 +298,9 @@ async function runOnboarding(targets) {
   } catch (error) {
     say(`RSC_SKELETON_FAILED ${error.message}`);
   }
+  // The audit cadence starts at install. Without a baseline the very first session after onboarding
+  // announced "a skill audit is due" about a set chosen minutes earlier. Never overwrites a real run.
+  try { recordAuditBaseline(process.cwd()); } catch { /* a missing baseline only means an early nudge */ }
   for (const path of plan.replacesUserSkills || []) {
     const kept = whereKept({ cwd: process.cwd(), relPath: path });
     if (kept) say(`Your previous ${path} is kept in ${kept}`);
@@ -370,10 +411,23 @@ function flag(name) {
 // Remove everything rsc installed in this project (skills, hooks, .rsc/), across
 // every assistant. Keeps 02-DOCS/ unless --with-docs. `purge` / `uninstall --all`.
 async function runPurge(dryRun, withDocs) {
-  const removed = await purge({ cwd: process.cwd(), withDocs, dryRun });
-  say(`${dryRun ? 'Would remove' : 'Removed'} ${removed.length} path(s):`);
-  for (const r of removed) say(`  - ${r}`);
-  if (!withDocs) say('\nKept 02-DOCS/ (your knowledge base). Add --with-docs to remove it too.');
+  const cwd = process.cwd();
+  const report = await purgeReport({ cwd, withDocs, dryRun });
+  // Relative to the project: the report is read by a person, and every path is inside it.
+  const shown = (p) => {
+    const rel = relative(cwd, p);
+    return !rel || rel.startsWith('..') || isAbsolute(rel) ? p : rel.split(sep).join('/');
+  };
+  say(`${dryRun ? 'Would remove' : 'Removed'} ${report.removed.length} path(s):`);
+  for (const r of report.removed.map(shown).sort()) say(`  - ${r}`);
+  if (report.cleaned.length) {
+    say(`\n${dryRun ? 'Would clean' : 'Cleaned'} ${report.cleaned.length} file(s) — rsc's entries ${dryRun ? 'would be' : 'were'} taken out; ${dryRun ? 'each is deleted if nothing of yours remains' : 'the rest of the file is yours and stays'}:`);
+    for (const c of report.cleaned.map(shown).sort()) say(`  - ${c}`);
+  }
+  if (report.kept.length) {
+    say(`\nKept ${report.kept.length}:`);
+    for (const k of report.kept) say(`  - ${k.path} — ${k.reason}`);
+  }
 }
 
 async function recommendIds(query, { labeledOnly = false } = {}) {
@@ -515,7 +569,7 @@ function printContextBudget(b) {
   if (b.notApplicable.length) {
     say(`  ${b.note}`);
   } else {
-    say(`  Per session start : ${kb(b.sessionStartBytes)}   (always-on body, per wired scope)`);
+    say(`  Per session start : ${kb(b.sessionStartBytes)}   (always-on body, per wired scope; one-time and conditional banners not counted)`);
     say(`  Per user turn     : ${kb(b.perTurnBytes)}`);
   }
   say(`  Skill descriptions: ${kb(b.descriptionsBytes)}   (${b.installedSkills} installed, always in context)`);
@@ -1272,7 +1326,14 @@ async function main() {
       const dry = argv.includes('--dry-run');
       // `uninstall --all` is an alias for a full purge.
       if (argv.includes('--all')) return void (await runPurge(dry, argv.includes('--with-docs')));
-      const selected = classifyRequested(requestedIds());
+      const ids = requestedIds();
+      // No id is not "nothing to remove": it is a command that was not given what it needs.
+      if (!ids.length) {
+        console.error(`rsc: uninstall needs at least one skill or agent id.\n${UNINSTALL_HELP}`);
+        process.exitCode = 1;
+        return;
+      }
+      const selected = classifyRequested(ids);
       // A retired skill an old install still holds is not unknown: the state file proves it is ours.
       const held = new Set(listInstalled({ target }));
       selected.skills.push(...selected.unknown.filter((id) => Object.hasOwn(RETIRED_SKILLS, id) && held.has(id)));
@@ -1306,9 +1367,7 @@ async function main() {
       return void (await runPurge(argv.includes('--dry-run'), argv.includes('--with-docs')));
     default:
       say(`rsc: unknown command '${cmd}'.`);
-      say('Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | memory <on|off|status|save|resume|learn|metrics> | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id> | purge');
-      say('Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)');
-      say('   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.');
+      say(GENERAL_HELP);
       process.exitCode = 1;
   }
 }

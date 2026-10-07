@@ -36,11 +36,14 @@ function hasContext7() {
   } catch { return false; }
 }
 
-// Has a skill audit run within the cadence? Missing stamp → never audited → due.
+// Has a skill audit run within the cadence? Missing stamp → never audited → due. Onboarding writes a
+// `baseline` (no audit ran yet), so the first one falls due a full cadence after install.
 function auditDue() {
   try {
-    const { lastRun } = JSON.parse(readFileSync(join(root, '.rsc', 'audit.json'), 'utf8'));
-    return (Date.now() - new Date(lastRun).getTime()) / 86400000 >= STALE_AUDIT_DAYS;
+    const { lastRun, baseline } = JSON.parse(readFileSync(join(root, '.rsc', 'audit.json'), 'utf8'));
+    const since = new Date(lastRun || baseline).getTime();
+    if (Number.isNaN(since)) return true;
+    return (Date.now() - since) / 86400000 >= STALE_AUDIT_DAYS;
   } catch { return true; }
 }
 

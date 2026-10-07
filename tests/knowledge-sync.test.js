@@ -92,7 +92,7 @@ test('ks01 · a knowledge change goes to rsc/knowledge, and the protected main i
   assert.equal(kShow(remote, '02-DOCS/wiki/nueva.md'), 'hola');
   assert.equal(git(remote, 'rev-parse', 'main'), seedTip, 'the default branch moved');
   const msg = git(remote, 'log', '-1', '--format=%s', K);
-  assert.match(msg, /^📝 docs\(auto\): nueva/);
+  assert.match(msg, /^📝 docs\(auto\): 02-DOCS\/wiki\/nueva\.md/);
   assert.ok(msg.endsWith(SKIP_CI), 'every automatic commit must keep CI and deploys out of it');
   assert.equal(git(remote, 'log', '-1', '--format=%an', K), 'Eric', 'the author is the person, not a bot');
   assert.deepEqual(state(eric).notices, [], 'a protected main must not produce a push error');
@@ -549,7 +549,7 @@ test('ks49 · knowledge the agent committed with its code goes up as its knowled
   assert.equal(kShow(remote, '02-DOCS/wiki/ftd/x.md'), '# x');
   assert.equal(kShow(remote, 'src/app.js'), 'code', 'code travelled through rsc/knowledge');
   const msg = git(remote, 'log', '-1', '--format=%B', K);
-  assert.match(msg, /^📝 docs\(auto\): x \[skip ci\]/);
+  assert.match(msg, /^📝 docs\(auto\): 02-DOCS\/wiki\/ftd\/x\.md \[skip ci\]/);
   assert.match(msg, /Desde: ✨ feat: x/);
   assert.equal(git(remote, 'log', '-1', '--format=%an', K), 'Eric');
   assert.equal(git(remote, 'rev-parse', 'refs/heads/main'), git(eric, 'rev-parse', 'origin/main'), 'main untouched');
@@ -617,4 +617,23 @@ test('ks54 · editing your own uploaded doc again on the same branch is not a cl
   const said = String(message(eric));
   assert.doesNotMatch(said, /también has tocado/);
   assert.equal(read(eric, '02-DOCS/wiki/ftd/a.md'), '# a\n\n- [x] más\n');
+});
+
+// E2E defect 11: "📝 docs(auto): .env, .gitignore, CREDENTIALS y 4 más" for EIGHT files — the count
+// was of distinct basenames (two `.gitignore` became one) and the names could not tell
+// `01-TOOLS/.gitignore` from `01-TOOLS/_TEMPLATE/.gitignore`.
+test('commitSummary counts files, not basenames, and names each one unambiguously', async () => {
+  const { commitSummary } = await import('../targets/knowledge-sync.mjs');
+  const files = [
+    '01-TOOLS/.gitignore', '01-TOOLS/_TEMPLATE/.env.example', '01-TOOLS/_TEMPLATE/.gitignore',
+    '01-TOOLS/_TEMPLATE/CREDENTIALS.md', '01-TOOLS/_TEMPLATE/README.md', '01-TOOLS/_TEMPLATE/test_connection.sh',
+    '02-DOCS/wiki/harness/decisions.md', '02-DOCS/wiki/harness/installation-plan.md',
+  ];
+  const s = commitSummary(files);
+  assert.match(s, /^8 ficheros: /, s);
+  const shown = s.replace(/^8 ficheros: /, '').replace(/ y \d+ más$/, '').split(', ');
+  for (const name of shown) assert.ok(files.includes(name), `shown name is a full path: ${name}`);
+  assert.equal(shown.length + Number(/ y (\d+) más$/.exec(s)?.[1] || 0), 8, s);
+  assert.equal(commitSummary(['02-DOCS/wiki/a.md']), '02-DOCS/wiki/a.md');
+  assert.equal(commitSummary(['02-DOCS/wiki/a.md', '02-DOCS/wiki/a.md']), '02-DOCS/wiki/a.md', 'duplicates count once');
 });

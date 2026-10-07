@@ -207,6 +207,17 @@ export function stampAudit(cwd, date = new Date().toISOString()) {
   writeFileSync(join(dir, 'audit.json'), JSON.stringify({ lastRun: date }, null, 2) + '\n');
 }
 
+// The start of the cadence for a harness that has never been audited: written by onboarding so the
+// first audit falls due STALE_DAYS after install, not in the first session. `baseline` and not
+// `lastRun`, because no audit ran — the SessionStart hook reads either. Leaves an existing file alone.
+export function recordAuditBaseline(cwd, date = new Date().toISOString()) {
+  const file = join(cwd, '.rsc', 'audit.json');
+  if (existsSync(file)) return false;
+  mkdirSync(join(cwd, '.rsc'), { recursive: true });
+  writeFileSync(file, JSON.stringify({ baseline: date }, null, 2) + '\n');
+  return true;
+}
+
 // Write the report into the harness wiki when one exists; always stamp .rsc/audit.json.
 export function writeAuditReport(report, cwd = process.cwd()) {
   const written = [];

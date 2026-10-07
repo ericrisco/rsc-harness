@@ -101,7 +101,18 @@ export function missingHookScripts({ target, home = homedir(), cwd = process.cwd
 // Is the post-merge trigger actually armed in this clone? Three states, because they need three
 // different answers: armed, absent (repair it), or someone else's (leave it — chaining is our job
 // at install time, and overwriting a husky hook to fix a convenience would be indefensible).
-function worktreeCleanupStatus(root) {
+// The skills that read or write a design identity (02-DOCS/wiki/brand/) or a starting point. The
+// state is always reported; the FIX — "run design-loop, then design-dna" — is advice, and advice needs
+// evidence. A todo web app with none of these installed was told to run two skills it does not have
+// and never asked for (E2E 2026-10-07).
+const DESIGN_SKILLS = new Set(['design', 'design-loop', 'design-dna', 'brand-voice', 'content-engine', 'marketing', 'presentations', 'make']);
+function withoutUnfoundedFix(summary, inPlay) {
+  if (inPlay || !summary || !summary.fix) return summary;
+  const { fix, ...rest } = summary;
+  return { ...rest, note: 'no design skill is installed here, so nothing is recommended' };
+}
+
+function worktreeCleanupStatus(root, policy) {
   if (!existsSync(join(root, '.git'))) return { state: 'not-a-repo' };
   if (existsSync(join(root, '.rsc', '.no-worktree-cleanup'))) return { state: 'off-by-choice' };
   // Ask git where hooks live instead of assuming `.git/hooks`. Until 2.0.1 this read the assumed
@@ -118,6 +129,13 @@ function worktreeCleanupStatus(root) {
   }
   const hook = join(dir, 'post-merge');
   if (!existsSync(hook)) {
+    // The merge hook is one of the code hooks, and the accepted plan can defer those. Recommending
+    // `repair` then is a loop with no exit — repair re-runs the same install, which honours the same
+    // plan and skips the hook again — and it contradicted `healthy: true` on every fresh small
+    // software install (E2E 2026-10-07). Said as what it is, with nothing to do.
+    if (policy?.codeHooks === false) {
+      return { state: 'not-in-plan', reason: 'the accepted plan defers code hooks, and the post-merge cleanup is one of them; `rsc reassess` revisits that.' };
+    }
     return { state: 'absent', action: 'Run `npx @ericrisco/rsc repair` to arm the post-merge cleanup in this clone.' };
   }
   try {
@@ -184,8 +202,8 @@ export function doctor({ target, home, cwd }) {
     try {
       memory.metrics = hasStore
         ? metricsSummary({ cwd: root })
-        : { sessions: [], total: { cost: null, toolCalls: null }, knownTotal: { cost: 0, toolCalls: 0 }, unknown: { cost: 0, toolCalls: 0 } };
-    } catch { memory.metrics = { sessions: [], total: { cost: null, toolCalls: null }, knownTotal: { cost: 0, toolCalls: 0 }, unknown: { cost: 0, toolCalls: 0 } }; }
+        : { sessions: [], total: { cost: null, toolCalls: null }, knownTotal: { cost: null, toolCalls: null }, unknown: { cost: 0, toolCalls: 0 } };
+    } catch { memory.metrics = { sessions: [], total: { cost: null, toolCalls: null }, knownTotal: { cost: null, toolCalls: null }, unknown: { cost: 0, toolCalls: 0 } }; }
   }
   const actualSkills = listSkills({ target, home, cwd: root }).map((entry) => entry.id);
   const actualAgents = listAgents({ target, home, cwd: root }).agents.map((entry) => entry.id);
@@ -208,6 +226,9 @@ export function doctor({ target, home, cwd }) {
     const path = agentPath(target, root, id);
     return path && !existsSync(path);
   }).map((id) => ({ id, path: agentPath(target, root, id), action: 'Run `npx @ericrisco/rsc sync` to restore this managed agent.' }));
+  // What THIS harness installed, not every skill visible from here: a design skill in the user's
+  // global scope is how a todo app's doctor came to recommend design-dna (E2E 2026-10-07).
+  const designInPlay = Object.keys(state.skills || {}).some((id) => DESIGN_SKILLS.has(id));
   const report = {
     target,
     installed: Object.keys(state.skills),
@@ -224,17 +245,17 @@ export function doctor({ target, home, cwd }) {
     // The worktree cleanup's trigger is a git hook, and `.git/hooks/` is not cloned. So a repo can
     // carry a perfectly healthy harness and still never clean up, on every machine but the one that
     // ran the installer. Reported, never nagged about: `repair` is what puts it back (P6).
-    worktreeCleanup: worktreeCleanupStatus(root),
+    worktreeCleanup: worktreeCleanupStatus(root, state.policy),
     ownSkills: ownSkillsIn(paths, readProjectManifest(root)?.ownSkills || []),
     sello: selloStatus(root),
     // Whether this harness has a design identity at all. `design` has always DECLARED that it
     // stops without one; until lib/design-identity.js nothing checked it (P2). Reported here,
     // never nagged about and never blocking: a missing identity is low risk (P7).
-    designIdentity: designIdentity(root),
+    designIdentity: withoutUnfoundedFix(designIdentity(root), designInPlay),
     // The other half of the same question: an identity is what this project settled on, a starting
     // point is what it has to settle FROM. Three skills promise to propose one and none could look;
     // this is the look. One field, not a section — a report grows for every user who runs it (P5).
-    designStartingPoint: startingPointSummary(root),
+    designStartingPoint: withoutUnfoundedFix(startingPointSummary(root), designInPlay),
     // An inert gate must never read as an armed one (the same rule the sello follows):
     // the gitmoji guard has a per-project kill switch, so say which state it is in.
     gitmojiGuard: state.policy?.gitmojiGuard === false
@@ -306,9 +327,17 @@ const bytesOf = (p) => { try { return statSync(p).size; } catch { return 0; } };
 
 // The always-on body a wired scope injects: the hook command embeds the exact SKILL.md path,
 // so read it from there rather than guessing the layout.
+// The body the SessionStart hook prints is the `.md` file its command names — today the short
+// `.rsc/suggest-always-on.md`, not the whole `suggest` SKILL.md. Reading only `…SKILL.md` out of the
+// command meant the current wiring never matched and the fallback counted the full skill: doctor said
+// 7.1 KB for a hook that injects 0.3 KB of body (E2E 2026-10-07). The command names the project
+// through ${CLAUDE_PROJECT_DIR}, so that is resolved against the scope before measuring.
 function alwaysOnBytesFor(scopeRoot, settingsRaw) {
-  const fromCommand = /"([^"]*suggest[^"]*SKILL\.md)"/.exec(settingsRaw || '');
-  if (fromCommand && bytesOf(fromCommand[1])) return bytesOf(fromCommand[1]);
+  const raw = (settingsRaw || '').replace(/\\\\/g, '/');
+  const candidates = [...raw.matchAll(/\\?"([^"\\]*suggest[^"\\]*\.md)\\?"/g)].map((m) => m[1]
+    .replace(/\$\{CLAUDE_PROJECT_DIR\}|\$CLAUDE_PROJECT_DIR/g, scopeRoot)
+    .replace(/^~(?=\/)/, homedir()));
+  for (const file of candidates) if (bytesOf(file)) return bytesOf(file);
   return bytesOf(join(scopeRoot, '.rsc', 'skills', 'suggest', 'SKILL.md'));
 }
 

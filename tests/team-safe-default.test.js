@@ -297,9 +297,27 @@ test('tsd37 · the rescue runs once: a commit the person makes on main later is 
 test('tsd35 · the 3.0 announcement is said once per project and machine, with every way to turn it off', async () => {
   const { teamSafeAnnouncement } = await import('../targets/team-safe-start.mjs');
   const r = repo();
-  const first = teamSafeAnnouncement(r);
+  write(r, '02-DOCS/wiki/harness/user-profile.md', '---\ntechnical_level: technical\nlanguage: es\n---\n# Perfil\n');
+  const first = teamSafeAnnouncement(r, {});
   for (const off of ['desbloquea main', 'no uses worktrees', 'pedir el otro', 'rsc knowledge-sync off']) assert.match(first, new RegExp(off));
-  assert.equal(teamSafeAnnouncement(r), '');
+  assert.equal(teamSafeAnnouncement(r, {}), '');
+});
+
+// E2E defect 12: the banner was Spanish-only, shown to everyone. The language comes from the
+// profile's `language:` field, then the locale, and is English when neither says.
+test('tsd35b · the 3.0 announcement is English unless the profile or the locale says otherwise', async () => {
+  const { teamSafeAnnouncement } = await import('../targets/team-safe-start.mjs');
+  const english = teamSafeAnnouncement(repo(), {});
+  assert.match(english, /rsc 3\.0 · team-safe by default/);
+  for (const off of ['unlock main', 'rsc isolation off', 'ask for the other', 'rsc knowledge-sync off']) assert.match(english, new RegExp(off));
+  assert.doesNotMatch(english, /díselo|desbloquea/);
+
+  assert.match(teamSafeAnnouncement(repo(), { LANG: 'es_ES.UTF-8' }), /equipo seguro por defecto/, 'Spanish locale');
+  assert.match(teamSafeAnnouncement(repo(), { LANG: 'C.UTF-8' }), /team-safe by default/, 'neutral locale → English');
+
+  const profiled = repo();
+  write(profiled, '02-DOCS/wiki/harness/user-profile.md', '---\nlanguage: English\n---\n');
+  assert.match(teamSafeAnnouncement(profiled, { LANG: 'es_ES.UTF-8' }), /team-safe by default/, 'the profile wins over the locale');
 });
 
 // ------------------------------------------------------------------ the switches a person asks for
