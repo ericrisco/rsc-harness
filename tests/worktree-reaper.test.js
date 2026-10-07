@@ -1236,3 +1236,63 @@ test('52e · `rsc worktrees reap` deletes landed plain branches too, and names t
   assert.match(r.stdout, /deleted merged branch docs\/landed/);
   assert.deepEqual(branches(root).sort(), ['feat/live', 'main']);
 });
+
+// ── 53. rsc's own state is not "unsaved work" (team simulation W3 / D8) ──────────────────────────
+//
+// A worktree a session worked in grows a `.rsc/` of its own — knowledge-sync's marker, the memory
+// journal. The reaper read that as files that "would be lost" and refused to retire a landed
+// worktree, in every worktree, for ever: the cleanup promised by default never ran. `.rsc/` is
+// harness state, so it does not block; but the journal inside it is a session's history, so it is
+// moved to the project's store before the directory goes.
+
+function landedWorktree(root, slug) {
+  const wt = rscWorktree(root, slug);
+  write(wt.path, `${slug}.txt`, 'work\n');
+  git(wt.path, 'add', '-A');
+  git(wt.path, 'commit', '-qm', `feat: ${slug}`);
+  mergeIntoTrunk(root, wt.branch);
+  return wt;
+}
+
+const journal = (updatedAt, marker) => JSON.stringify({ sessionId: marker, timestamps: { updatedAt }, marker });
+
+test('53 · a landed worktree holding only .rsc/ is retired, and its journal moves to the project', () => {
+  const root = repo();
+  const wt = landedWorktree(root, 'busqueda');
+  write(wt.path, '.rsc/knowledge-sync.json', '{}\n');
+  write(wt.path, '.rsc/memory/sessions/claude--S1.json', journal('2026-10-07T08:55:00.000Z', 'S1'));
+  write(wt.path, '.rsc/memory/anchors/claude--S1.json', '{"sessionId":"S1"}\n');
+
+  assert.equal(verdictFor(root, wt.path).verdict, 'safe', JSON.stringify(verdictFor(root, wt.path)));
+  const out = autoReap(root);
+  assert.deepEqual(out.reaped, [wt.path]);
+  assert.equal(existsSync(wt.path), false);
+  assert.match(readFileSync(join(root, '.rsc', 'memory', 'sessions', 'claude--S1.json'), 'utf8'), /"S1"/,
+    'the session journal must survive the worktree');
+  assert.ok(existsSync(join(root, '.rsc', 'memory', 'anchors', 'claude--S1.json')));
+});
+
+test('53b · the move never overwrites a newer record the project already has', () => {
+  const root = repo();
+  const wt = landedWorktree(root, 'borrar');
+  write(wt.path, '.rsc/memory/sessions/claude--S2.json', journal('2026-10-07T08:00:00.000Z', 'OLD'));
+  write(root, '.rsc/memory/sessions/claude--S2.json', journal('2026-10-07T09:00:00.000Z', 'NEW'));
+  write(wt.path, '.rsc/memory/sessions/claude--S3.json', journal('2026-10-07T09:30:00.000Z', 'WT-NEWER'));
+  write(root, '.rsc/memory/sessions/claude--S3.json', journal('2026-10-07T08:30:00.000Z', 'ROOT-OLDER'));
+  autoReap(root);
+  assert.equal(existsSync(wt.path), false);
+  assert.match(readFileSync(join(root, '.rsc', 'memory', 'sessions', 'claude--S2.json'), 'utf8'), /NEW/);
+  assert.match(readFileSync(join(root, '.rsc', 'memory', 'sessions', 'claude--S3.json'), 'utf8'), /WT-NEWER/);
+});
+
+test('53c · control: anything else outside history still blocks, .rsc/ or not', () => {
+  const root = repo();
+  const wt = landedWorktree(root, 'notas');
+  write(wt.path, '.rsc/knowledge-sync.json', '{}\n');
+  write(wt.path, 'notes-for-me.txt', 'only copy\n');
+  const v = verdictFor(root, wt.path);
+  assert.equal(v.verdict, 'ask');
+  assert.deepEqual(v.details.outside, ['notes-for-me.txt'], 'the refusal names the real file, not .rsc/');
+  autoReap(root);
+  assert.equal(existsSync(wt.path), true);
+});

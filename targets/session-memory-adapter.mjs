@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { fileURLToPath } from 'node:url';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
-import { resolve, join, dirname } from 'node:path';
+import { resolve, join, dirname, isAbsolute, sep } from 'node:path';
 import { capture, otherActiveSessions, resume } from './session-memory-core.mjs';
 
 const LOCAL_TARGETS = new Set(['claude', 'codex', 'cursor', 'deepseek', 'gemini', 'opencode']);
@@ -20,14 +20,37 @@ function projectSettings(cwd) {
 // The hook payload's `cwd` is only where the tool call happened to run; inside a container of child
 // repos that is routinely a subdirectory with no harness of its own, and anchoring there scatters
 // one session's journal across children. With no harness anywhere above, the cwd stays the project.
-function nearestHarness(dir) {
+//
+// One exception, and it is the team workflow: a worktree under `<project>/.worktrees/<branch>/`
+// checks out its OWN committed `.rsc.json`, so the walk stopped there and the session's later events
+// went to a second store inside the worktree — while its open record stayed in the project's store
+// and kept telling every later session in the main checkout that someone was working there (team
+// simulation W1). A worktree the project made belongs to the project: its journal lives in the
+// project's store, with the worktree recorded as WHERE the session works.
+export function nearestHarness(dir) {
   let current = dir;
   for (;;) {
-    if (existsSync(join(current, '.rsc.json'))) return current;
+    if (existsSync(join(current, '.rsc.json'))) return parentProjectOf(current) || current;
     const parent = dirname(current);
     if (parent === current) return dir;
     current = parent;
   }
+}
+
+function parentProjectOf(dir) {
+  const parts = resolve(dir).split(sep);
+  for (let index = 1; index < parts.length; index += 1) {
+    if (parts[index] !== '.worktrees') continue;
+    const project = parts.slice(0, index).join(sep) || sep;
+    if (existsSync(join(project, '.rsc.json'))) return project;
+  }
+  return null;
+}
+
+function editedPath(native) {
+  const input = native?.tool_input || native?.toolInput || {};
+  const path = input.file_path || input.notebook_path || input.path || native?.file_path || null;
+  return typeof path === 'string' && isAbsolute(path) ? path : null;
 }
 
 function sessionId(native, target) {
@@ -144,6 +167,7 @@ export function handleLifecycle({ target, event, native = {}, cwd, settings } = 
       editDelta: event === 'edit' ? 1 : 0,
       settings: config,
     };
+    if (event === 'edit' && editedPath(native)) captureInput.filePath = editedPath(native);
     if (typeof native.cost === 'number') captureInput.cost = native.cost;
     if (Number.isInteger(native.tool_calls)) captureInput.toolCalls = native.tool_calls;
     const captured = capture(captureInput);

@@ -16,7 +16,7 @@
 //
 // Imported by `.rsc/session-start.mjs` (the sweep) and by `scripts/rsc.js` (`rsc worktrees`), so the
 // rule exists once and both entry points cannot drift apart. Same shape as `sello.mjs`.
-import { existsSync, realpathSync, mkdirSync, readFileSync, writeFileSync, renameSync, chmodSync } from 'node:fs';
+import { existsSync, realpathSync, mkdirSync, readFileSync, readdirSync, writeFileSync, renameSync, chmodSync, copyFileSync } from 'node:fs';
 import { join, resolve, dirname, basename, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
@@ -49,6 +49,14 @@ export const REGENERABLE = [
 // full of live credentials — read as build output and get deleted with no confirmation at all. A
 // directory name means something only as a directory.
 export const REGENERABLE_FILES = ['.DS_Store', 'Thumbs.db', '.coverage'];
+
+// rsc's OWN state inside a worktree: hook markers, knowledge-sync's index, the memory journal. It is
+// in no commit by design, so the contents check read it as work that "would be lost" and refused
+// every landed worktree a session had ever worked in (team simulation D8) — the default cleanup
+// never ran. It does not block. The one part of it that is history — the session journal — is moved
+// to the project's store before the directory goes (`adoptJournal`), never dropped.
+export const RSC_STATE = ['.rsc/', '02-DOCS/raw/worklog/.rsc-memory/'];
+const isRscState = (path) => RSC_STATE.some((prefix) => path === prefix || path === prefix.slice(0, -1) || path.startsWith(prefix));
 
 // Trunk candidates, most authoritative first. The remote tip beats a local branch that may be stale.
 const TRUNKS = ['origin/main', 'main', 'origin/master', 'master'];
@@ -251,7 +259,7 @@ export function contentOutsideHistory(wtPath) {
     // does not exist — the exact failure the `raw` comment above exists to prevent (P6).
     if (code[0] === 'R' || code[0] === 'C') { i++; dirty.push(path); continue; }
     if (code === '??' || code === '!!') {
-      if (!isRegenerable(path)) outside.push(path);
+      if (!isRegenerable(path) && !isRscState(path)) outside.push(path);
     } else dirty.push(path);
   }
   return { dirty, outside, readable: true };
@@ -355,6 +363,11 @@ export function reapWorktree(root, targetPath, { confirmed = false } = {}) {
     return { removed: false, reason: refusal(candidate) };
   }
 
+  // The journal first: if it cannot be carried home, the directory stays (fail towards keeping).
+  try { adoptJournal(root, target); } catch (err) {
+    return { removed: false, reason: `its session journal could not be moved to the project, so nothing was removed: ${err.message}` };
+  }
+
   const removal = git(root, ['worktree', 'remove', '--force', target]);
   if (!removal.ok) {
     return { removed: false, reason: `git refused to remove it: ${removal.err || removal.out}` };
@@ -377,6 +390,42 @@ export function reapWorktree(root, targetPath, { confirmed = false } = {}) {
     branchDeleted,
     branchKept: Boolean(candidate.branch) && !branchDeleted,
   };
+}
+
+/**
+ * Carry a worktree's memory journal into the project's store before the worktree is removed.
+ *
+ * Since sessions inside `.worktrees/` journal into the project's store directly, this is the net for
+ * what older versions (and any session that ran before that fix) left inside the worktree. Merge by
+ * file name, the newer record wins, nothing in the project is ever overwritten by something older.
+ * The project's store is the same one the memory picks: the ignored wiki worklog when it is in use,
+ * `.rsc/memory` otherwise.
+ */
+export function adoptJournal(root, worktreePath) {
+  const sources = [join(worktreePath, '.rsc', 'memory'), join(worktreePath, '02-DOCS', 'raw', 'worklog', '.rsc-memory')]
+    .filter((dir) => existsSync(dir));
+  if (!sources.length) return { moved: [] };
+  const worklogStore = join(root, '02-DOCS', 'raw', 'worklog', '.rsc-memory');
+  const dest = existsSync(join(worklogStore, 'sessions')) ? worklogStore : join(root, '.rsc', 'memory');
+  const stamp = (value) => new Date(value?.timestamps?.updatedAt || value?.updatedAt || value?.approvedAt || value?.startedAt || 0).getTime() || 0;
+  const read = (path) => { try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; } };
+  const moved = [];
+  for (const source of sources) {
+    for (const kind of ['sessions', 'anchors', 'lessons']) {
+      const dir = join(source, kind);
+      if (!existsSync(dir)) continue;
+      for (const name of readdirSync(dir).filter((n) => n.endsWith('.json'))) {
+        const from = join(dir, name);
+        const to = join(dest, kind, name);
+        if (existsSync(to) && stamp(read(to)) >= stamp(read(from))) continue;
+        mkdirSync(join(dest, kind), { recursive: true });
+        copyFileSync(from, to);
+        chmodSync(to, 0o600);
+        moved.push(`${kind}/${name}`);
+      }
+    }
+  }
+  return { moved };
 }
 
 // Branches that are never a cleanup's side effect, whatever their state: the knowledge branch carries

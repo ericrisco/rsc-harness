@@ -366,7 +366,8 @@ test('install: .rsc/ is gitignored, additively and idempotently', async () => {
   for (const spelling of ['.rsc', '/.rsc', '.rsc/']) {
     const r = tmp('rsc-gi-');
     mkdirSync(join(r, '.git'), { recursive: true });
-    writeFileSync(join(r, '.gitignore'), `${spelling}\n`);
+    // `.worktrees/` is also in the block (team simulation D9); present here so only `.rsc` is in question.
+    writeFileSync(join(r, '.gitignore'), `${spelling}\n.worktrees/\n`);
     assert.equal(ignoreLocalState(r), null, `${spelling} already covers it`);
   }
 
