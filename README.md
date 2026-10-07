@@ -94,7 +94,7 @@ rsc 3.0 fixes all four, by default, with no new commands to learn:
 | **You choose how the project works** | The install asks once: straight on `main`, or branches and pull requests? Branches are recommended only for long-lived, complex code. With `main` the agent works on it and never asks about branches. With branches a commit on `main` is refused, and before each code change the agent asks: this branch, a new one, or unlock `main`? It never opens a branch on its own. | Say **«unlock main»** / **«lock main»**, or `rsc main unlock` / `lock` |
 | **One workspace per agent** | If another assistant session is working in the same folder, new work goes to a worktree under `.worktrees/<branch>/`. It stays inside the project, is never committed, and is removed once that branch is merged. | `rsc isolation off` |
 | **The agent picks the method** | A simple change takes Fast-Track (one document, proof for every task). Something big or complex takes the spec-driven chain. The agent decides and says why. You still approve *what* gets built: the spec and the clarifications, then step by step or autopilot. | Ask for the other lane |
-| **Knowledge reaches everyone** | `01-TOOLS/` and `02-DOCS/` travel through one exchange branch, `rsc/knowledge`. They go up when your turn ends and come down into whatever branch each person is on. They reach `main` inside your normal pull requests. | `rsc knowledge-sync off` |
+| **Knowledge reaches everyone** | `01-TOOLS/`, `02-DOCS/wiki/` and `02-DOCS/attachments/` travel through one exchange branch, `rsc/knowledge`. They go up when your turn ends and come down into whatever branch each person is on. They reach `main` inside your normal pull requests. | `rsc knowledge-sync off` |
 
 **Commit, push and pull request without a prompt each time.** A harness installed from scratch lets
 the agent run `git commit`, `git push` and `gh pr create` without asking, because those are the steps
@@ -471,8 +471,10 @@ list somebody has to remember to update is a list that goes quietly stale. Decla
 
 ### Your wiki and tools stay in sync — on by default
 
-`01-TOOLS/` and `02-DOCS/` are the team's knowledge, so rsc keeps them the same on every machine
-without anybody thinking about git, **and without ever pushing to `main`**. Your `main` is
+`01-TOOLS/`, `02-DOCS/wiki/` and `02-DOCS/attachments/` are the team's knowledge, so rsc keeps them
+the same on every machine without anybody thinking about git, **and without ever pushing to `main`**.
+Exactly those three folders, minus rsc's own `01-TOOLS/_TEMPLATE/` and your personal
+`02-DOCS/wiki/harness/user-profile.md`. Your `main` is
 protected, or should be; rsc assumes it is.
 
 The knowledge travels through one exchange branch, `rsc/knowledge`, that nobody works on by hand:
@@ -484,13 +486,22 @@ main   · protected      untouched — gets it inside the next merged pull reque
 new    · clones main    has it all after the first message
 ```
 
-- **When a turn ends**, your changes in those folders are committed as `📝 docs(auto): … [skip ci]`
-  and sent to `rsc/knowledge` on `origin`, from whatever branch you are on. If you are on a closed
-  `main`, nothing is committed locally: the snapshot is built aside and only goes to `rsc/knowledge`.
-  Knowledge that you or the agent already **committed** on the branch during the turn goes up too —
-  only its `01-TOOLS/` and `02-DOCS/` part, under a `docs(auto) … [skip ci]` message.
-- **Before each message**, what teammates sent is brought into **the branch you are on**, and you are
-  told in one line. Only the knowledge folders are touched.
+- **When a turn ends**, your changes in those folders are committed on your branch as
+  `📝 docs(auto): …` and sent to `rsc/knowledge` on `origin`, from whatever branch you are on. Only
+  the copy on `rsc/knowledge` carries `[skip ci]`; the commit on your branch does not, so your next
+  ordinary push still runs CI. Two cases commit nothing on your branch: a closed `main`, and code of
+  yours still uncommitted (a docs commit would land ahead of the code it describes). Then the snapshot
+  is built aside, only goes to `rsc/knowledge`, and the files stay modified for you to commit with
+  your work. Knowledge that you or the agent already **committed** on the branch goes up too — only
+  its knowledge part, under a `docs(auto) … [skip ci]` message. Commits that came in by merging
+  `main` are your teammates', not yours, and are not sent again.
+- **Before each message**, what teammates sent is brought into **the branch you are on** as a
+  `📥 docs(auto): sync` commit, and you are told in one line. Only the knowledge folders are touched.
+  A doc that `main` on `origin` already has, identical, is left for your ordinary merge of `main`. On
+  a closed `main` nothing is written at all — an uncommitted file there would make your next
+  `git pull` refuse to run — you are told what is waiting, and it arrives with that pull or in the
+  next branch you open. When the last fetch is more than ten minutes old, the message fetches first
+  (three seconds at most), so even a one-message session sees fresh docs.
   A branch you open later catches up on its first message: everything on `rsc/knowledge` since it
   left `main` comes down, including what you wrote yourself on another branch.
 - **It reaches `main` the normal way.** Your feature branch now carries the team's knowledge, so it
@@ -505,7 +516,7 @@ What it will not do, by design:
 | --- | --- |
 | Push to `main` | Never. Only `rsc/knowledge` receives anything. |
 | Push your code or your unpushed commits | Only the knowledge folders go up, even from a commit that also has code. Your code waits for you. |
-| Trigger CI or a deploy | Every automatic commit says `[skip ci]`. |
+| Trigger CI or a deploy | Every commit on `rsc/knowledge` says `[skip ci]`; the one on your branch does not, so it never skips the CI of your own push. |
 | Bring in anybody else's code | Only knowledge paths come down. Code, config and `.claude/` are never pulled. |
 | Sync `02-DOCS/wiki/harness/user-profile.md` | Those are one person's dials. |
 | Overwrite a file you are editing | It tells you, and your version stays. |

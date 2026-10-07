@@ -272,7 +272,7 @@ test('ks15 · your own pushes do not come back as somebody else\'s', () => {
   assert.equal(message(eric), '', 'announced its own push as incoming');
 });
 
-test('ks16 · on a closed default branch, what arrives updates the files and creates no commit', () => {
+test('ks16 · on a closed default branch, what arrives is not written there; the next branch gets it committed', () => {
   const { eric, ana } = team();
   makeComplex(eric);
   git(eric, 'add', '-A'); git(eric, 'commit', '-q', '-m', 'ci');
@@ -280,9 +280,17 @@ test('ks16 · on a closed default branch, what arrives updates the files and cre
   const head = git(eric, 'rev-parse', 'HEAD');
   write(ana, '02-DOCS/wiki/de-ana.md', 'ana\n');
   turn(ana);
+  const said = String(message(eric));
+  // Team sim 2026-10-07 (D1): written uncommitted, it blocked the next `git pull` of main.
+  assert.equal(existsSync(join(eric, '02-DOCS/wiki/de-ana.md')), false, 'written into a closed default branch');
+  assert.equal(git(eric, 'status', '--porcelain', '--', '02-DOCS'), '', 'nothing left uncommitted on main');
+  assert.equal(git(eric, 'rev-parse', 'HEAD'), head, 'a commit landed on the closed default branch');
+  assert.match(said, /Ana.*de-ana\.md/, 'it is still said what is waiting');
+  assert.equal(String(message(eric)), '', 'said once, not every message');
+  git(eric, 'switch', '-q', '-c', 'feat/e');
   message(eric);
   assert.equal(read(eric, '02-DOCS/wiki/de-ana.md'), 'ana\n');
-  assert.equal(git(eric, 'rev-parse', 'HEAD'), head, 'a commit landed on the closed default branch');
+  assert.match(git(eric, 'log', '-1', '--format=%s'), /^📥 docs\(auto\)/);
 });
 
 test('ks17 · a newcomer clones the default branch and has the team\'s knowledge after the first message', () => {
@@ -478,16 +486,18 @@ test('ks44 · closed main: a second edit of the same file, and a new file later,
   assert.equal(git(eric, 'log', '-1', '--format=%s'), 'ci', 'still nothing committed on the closed main');
 });
 
-test('ks45 · closed main: a teammate changing the same file twice arrives twice, no false clash (review H2)', () => {
+test('ks45 · closed main: a teammate changing the same file twice is never a false clash, and reaches the next branch (review H2)', () => {
   const { eric, ana } = team();
   makeComplex(eric); git(eric, 'add', '-A'); git(eric, 'commit', '-q', '-m', 'ci');
   quiet(eric); quiet(ana);
   git(ana, 'switch', '-q', '-c', 'feat/a');
   write(ana, '02-DOCS/wiki/index.md', 'uno\nANA1\ntres\n'); turn(ana);
-  assert.match(String(message(eric)), /📥/);
-  assert.equal(read(eric, '02-DOCS/wiki/index.md'), 'uno\nANA1\ntres\n');
+  assert.match(String(message(eric)), /Ana/);
+  assert.equal(read(eric, '02-DOCS/wiki/index.md'), 'uno\ndos\ntres\n', 'a closed main is left as the remote has it');
   write(ana, '02-DOCS/wiki/index.md', 'uno\nANA2\ntres\n'); turn(ana);
   assert.doesNotMatch(String(message(eric)), /también has tocado/);
+  git(eric, 'switch', '-q', '-c', 'feat/e');
+  message(eric);
   assert.equal(read(eric, '02-DOCS/wiki/index.md'), 'uno\nANA2\ntres\n');
 });
 
@@ -692,4 +702,115 @@ test('ks58 · with code still uncommitted, docs go up without a commit of ours o
   write(eric, '02-DOCS/wiki/nota.md', 'n\n');
   turn(eric);
   assert.match(git(eric, 'log', '-1', '--format=%s'), /^📝 docs\(auto\)/, 'with nothing else pending, the usual commit');
+});
+
+// ------------------------------------------------------------------ team simulation (2026-10-07)
+
+/** A team whose main is closed for everybody (CI pushed to origin), and pushable by hand (the PR merge). */
+function closedTeam() {
+  const t = team({ protectedMain: false });
+  makeComplex(t.eric);
+  git(t.eric, 'add', '-A'); git(t.eric, 'commit', '-q', '-m', 'ci'); git(t.eric, 'push', '-q', 'origin', 'main');
+  git(t.ana, 'pull', '-q', '--ff-only');
+  return t;
+}
+
+/** A pull request merged into main on the remote: what the lead's merge button does. */
+function mergePR(t, branch) {
+  const lead = existsSync(join(t.tmp, 'lead')) ? join(t.tmp, 'lead') : t.clone('lead', 'Lead');
+  git(lead, 'fetch', '-q', 'origin');
+  git(lead, 'switch', '-q', 'main'); git(lead, 'merge', '-q', '--ff-only', 'origin/main');
+  git(lead, 'merge', '-q', '--no-ff', '--no-edit', `origin/${branch}`);
+  git(lead, 'push', '-q', 'origin', 'main');
+}
+
+test('ks59 · D1 · a closed main never blocks `git pull`: the same docs arriving by rsc/knowledge and by a merged PR', () => {
+  const t = closedTeam();
+  const { eric, ana } = t;
+  quiet(eric); quiet(ana);
+  git(ana, 'switch', '-q', '-c', 'feat/a');
+  write(ana, '02-DOCS/wiki/ftd/orden.md', '# orden\n');          // new
+  write(ana, '02-DOCS/wiki/index.md', 'uno\nANA\ntres\n');      // tracked on main
+  turn(ana);
+  message(eric);
+  assert.equal(git(eric, 'status', '--porcelain', '-uall', '--', '02-DOCS'), '', 'the closed main was left dirty');
+  git(ana, 'push', '-q', 'origin', 'feat/a');
+  mergePR(t, 'feat/a');
+  git(eric, 'pull', '-q', '--no-rebase'); // throws: "untracked working tree files would be overwritten by merge"
+  assert.equal(read(eric, '02-DOCS/wiki/ftd/orden.md'), '# orden\n');
+  assert.equal(read(eric, '02-DOCS/wiki/index.md'), 'uno\nANA\ntres\n');
+  assert.equal(String(message(eric)), '', 'after the pull nothing is pending and nothing clashes');
+});
+
+test('ks60 · D3 · teammates\' commits brought in by merging main are not sent as yours, and no false clash', () => {
+  const t = team({ protectedMain: false });
+  const { eric, ana } = t;
+  quiet(eric); quiet(ana);
+  git(eric, 'switch', '-q', '-c', 'feat/x');
+  write(eric, 'src/app.js', 'eric\n'); git(eric, 'commit', '-qam', '✨ feat: x');
+  turn(eric); // records where the branch was
+  git(ana, 'switch', '-q', '-c', 'feat/a');
+  write(ana, '02-DOCS/wiki/plan.md', 'v1\n'); git(ana, 'add', '-A'); git(ana, 'commit', '-qm', '📝 docs: plan');
+  git(ana, 'push', '-q', 'origin', 'feat/a');
+  turn(ana);
+  mergePR(t, 'feat/a');
+  write(ana, '02-DOCS/wiki/plan.md', 'v2\n'); turn(ana); // rsc/knowledge moves on
+  const anas = git(ana, 'log', '--format=%H', '-1', '--', '02-DOCS/wiki/plan.md');
+  git(eric, 'fetch', '-q', 'origin');
+  git(eric, 'merge', '-q', '--no-edit', 'origin/main');
+  const viaMerge = git(eric, 'log', '--format=%H', '--author=Ana', 'HEAD');
+  turn(eric);
+  const s = state(eric);
+  for (const c of viaMerge.split('\n').filter(Boolean)) {
+    assert.ok(!s.queue.includes(c) && !s.ours.includes(c), `Ana's commit ${c.slice(0, 7)} was taken as Eric's`);
+  }
+  assert.ok(anas);
+  assert.deepEqual(s.notices.filter((n) => /choca/.test(n)), [], s.notices.join(' | '));
+});
+
+test('ks61 · D3 · a clash whose two versions have become the same is not delivered; an open one is', () => {
+  const clashing = () => {
+    const { eric, ana } = team();
+    quiet(eric);
+    write(ana, '02-DOCS/wiki/index.md', 'uno\nANA\ntres\n'); write(ana, '02-DOCS/wiki/otro.md', 'ana\n'); turn(ana);
+    write(eric, '02-DOCS/wiki/index.md', 'uno\nERIC\ntres\n'); write(eric, '02-DOCS/wiki/otro.md', 'eric\n');
+    turn(eric);
+    assert.ok(state(eric).notices.some((n) => /choca/.test(n)), 'fixture: a clash was recorded');
+    return eric;
+  };
+  const one = clashing();
+  git(one, 'checkout', 'origin/rsc/knowledge', '--', '02-DOCS/wiki/index.md'); // took Ana's for one of them
+  const said = onRequest(one, { spawnFetch: false });
+  const notice = said.split('\n').find((l) => /choca/.test(l)) || '';
+  assert.match(notice, /otro\.md/, 'the open clash is still said');
+  assert.doesNotMatch(notice, /index\.md/, 'the resolved file is still named as a clash');
+  const both = clashing();
+  git(both, 'checkout', 'origin/rsc/knowledge', '--', '02-DOCS/wiki/index.md', '02-DOCS/wiki/otro.md');
+  assert.doesNotMatch(onRequest(both, { spawnFetch: false }), /choca/, 'a clash that no longer exists was delivered');
+});
+
+test('ks62 · D3b · a doc already on the remote main as it is on rsc/knowledge is not committed into a branch: the merge brings it', () => {
+  const t = team({ protectedMain: false });
+  const { eric, ana } = t;
+  quiet(eric); quiet(ana);
+  git(eric, 'switch', '-q', '-c', 'feat/x');
+  git(ana, 'switch', '-q', '-c', 'feat/a');
+  write(ana, '02-DOCS/wiki/ya.md', 'en main\n'); turn(ana);
+  git(ana, 'push', '-q', 'origin', 'feat/a');
+  mergePR(t, 'feat/a');
+  git(eric, 'fetch', '-q', 'origin');
+  message(eric);
+  assert.equal(git(eric, 'log', '--format=%s', 'main..HEAD'), '', 'a 📥 commit duplicated what main already has');
+  git(eric, 'merge', '-q', '--no-edit', 'origin/main');
+  assert.equal(read(eric, '02-DOCS/wiki/ya.md'), 'en main\n');
+});
+
+test('ks63 · D4 · a stale fetch is refreshed in the foreground, so a one-message session sees fresh docs', () => {
+  const { eric, ana } = team();
+  quiet(eric);
+  write(ana, '02-DOCS/wiki/fresco.md', 'f\n'); turn(ana);
+  assert.equal(onRequest(eric, { spawnFetch: false }), '', 'a recent fetch is trusted: no network on every message');
+  const s = state(eric); s.lastFetch = Date.now() - 11 * 60_000; writeFileSync(join(eric, '.rsc', 'knowledge-sync.json'), JSON.stringify(s));
+  assert.match(onRequest(eric, { spawnFetch: false }), /fresco\.md/);
+  assert.equal(read(eric, '02-DOCS/wiki/fresco.md'), 'f\n');
 });
