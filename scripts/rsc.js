@@ -573,6 +573,11 @@ function printAgentHandoff() {
   }
   if (readiness.ready) {
     say('  3. Tell the user rsc is ready; they can start in their own words.');
+    // #298 — ready is not «nothing pending»: the onboarding draft is named here too, not only in
+    // RSC_ONBOARDING_READY, so an agent arriving through install/sync tells the user before an SDD feature.
+    let draft = false;
+    try { draft = constitutionIsDraft(process.cwd()); } catch { /* unreadable is not a draft */ }
+    if (draft) say(`     Tell them too: ${CONSTITUTION_PATH} is a draft — complete it with the \`constitution\` phase before the first SDD feature.`);
     say('     Do NOT auto-start a task — wait for the user.');
   } else {
     // El otro emisor. Decía «ready» desde el wizard y desde `install` sin mirar el suelo, así que
@@ -583,6 +588,19 @@ function printAgentHandoff() {
     say('     Then tell the user, and do NOT auto-start a task.');
   }
   say('════════════════════════════════════════════════');
+}
+
+// #298 — the two answers a person looks for first, before any figure or JSON: does the installed
+// harness work (`healthy`, the one the exit code follows) and is onboarding finished (the accepted
+// plan's floor plus drafts). Kept apart on purpose — readiness never changes health nor the exit code.
+const READINESS_LABEL = { ready: 'ready', pending: 'pending', incomplete: 'incomplete', 'not-onboarded': 'not onboarded' };
+function printDoctorHeadline(report) {
+  const o = report.onboarding || {};
+  say(`Harness health: ${report.healthy ? 'healthy' : 'unhealthy'}`);
+  say(`Onboarding readiness: ${READINESS_LABEL[o.status] || 'unknown'}`);
+  if (o.missing?.length) say(`Missing: ${safeLines(o.missing).join(', ')}`);
+  if (o.pending?.length) say(`Pending: ${safeLines(o.pending).map((p) => (p === CONSTITUTION_PATH ? `${p} (draft)` : p)).join(', ')}`);
+  if (o.action) say(`Next: ${o.action}`);
 }
 
 // What the harness costs in context before the user types anything. Printed ahead of the raw
@@ -870,6 +888,7 @@ async function main() {
       // #277 — an automation on top of rsc reads the exit code, not the prose.
       if (!report.healthy) process.exitCode = 1;
       if (argv.includes('--json')) return void say(JSON.stringify(report, null, 2));
+      printDoctorHeadline(report);
       printContextBudget(report.contextBudget);
       return void say(JSON.stringify({ ...report, contextBudget: undefined }, null, 2));
     }

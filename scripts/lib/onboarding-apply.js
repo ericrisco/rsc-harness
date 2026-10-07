@@ -10,7 +10,7 @@ import { readManifest, writeManifest } from './manifest-file.js';
 import { encodeGoal, identifyPlan } from './onboarding.js';
 import { createBackup, restoreBackup } from './backups.js';
 import { RETIRED_SKILLS, replaceRetired } from './retired-skills.js';
-import { CONSTITUTION_PATH } from './constitution-draft.js';
+import { CONSTITUTION_PATH, constitutionIsDraft } from './constitution-draft.js';
 import { LAYER_IGNORE, TEMPLATE_SOURCE, targetName, templateAssets } from './tools-skeleton.js';
 
 const sameSet = (a = [], b = []) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
@@ -445,7 +445,10 @@ function floorSatisfied(cwd, path) {
 // conflictos de merge, y que un repo clonado puede traer preparado. Así que se valida la forma antes
 // de mirar el disco: un `..` daba el suelo por satisfecho MIRANDO FUERA de la raíz, y un `null` o una
 // cadena en lugar de un array tumbaban `rsc install` después de haber instalado.
-export function missingHarnessFloor(cwd = process.cwd(), plan = {}) {
+//
+// Devuelve los CAMINOS que faltan (como se muestran). `missingHarnessFloor` los redacta para el
+// instalador y `onboardingReadiness` los entrega tal cual a `doctor`: una comprobación, dos lectores.
+export function harnessFloorGaps(cwd = process.cwd(), plan = {}) {
   const declared = Array.isArray(plan?.floorPaths) ? plan.floorPaths : [];
   const missing = [];
   for (const path of declared) {
@@ -453,13 +456,17 @@ export function missingHarnessFloor(cwd = process.cwd(), plan = {}) {
     const usable = segments.length > 0 && !segments.includes('..') && !String(path).startsWith('/');
     // Un camino que no se puede usar se reporta como NO satisfecho, nunca como satisfecho, y sin
     // repetir su contenido: es dato ajeno y va a un canal que lee un agente.
-    if (!usable) { missing.push('missing harness floor <invalid declaration>'); continue; }
+    if (!usable) { missing.push('<invalid declaration>'); continue; }
     // La barra sólo si el camino declarado la traía: el suelo condicional es un FICHERO, y decir
     // `constitution.md/` invita a buscar un directorio que no existe.
     const shown = String(path).endsWith('/') ? `${floorKey(path)}/` : floorKey(path);
-    if (!floorSatisfied(cwd, path)) missing.push(`missing harness floor ${shown}`);
+    if (!floorSatisfied(cwd, path)) missing.push(shown);
   }
   return missing;
+}
+
+export function missingHarnessFloor(cwd = process.cwd(), plan = {}) {
+  return harnessFloorGaps(cwd, plan).map((shown) => `missing harness floor ${shown}`);
 }
 
 /**
@@ -478,4 +485,51 @@ export function harnessReadiness(cwd = process.cwd(), plan = {}) {
       ? 'invoke the `harness` skill to scaffold 01-TOOLS/ + 02-DOCS/, and the `constitution` phase when SDD is selected'
       : '',
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Preparación del onboarding, como pregunta PROPIA (#298 punto 5).
+//
+// `doctor` respondía sólo «¿el arnés instalado funciona?» (`healthy`, y el exit code con él) y un
+// usuario leía ese `true` como «el onboarding está terminado» con la constitución sin escribir. Son
+// dos preguntas: ésta se calcula con el MISMO suelo que decide RSC_ONBOARDING_READY/INCOMPLETE
+// (`harnessFloorGaps`) más los borradores, y nunca toca `healthy`.
+//
+//   ready          suelo completo, nada en borrador
+//   pending        suelo completo, pero algo es un borrador que el usuario debe completar
+//   incomplete     falta parte del suelo del plan aceptado (o el recibo no cuadra con su id)
+//   not-onboarded  no hay recibo: instalación manual (`rsc add`) o anterior al onboarding
+//
+// Un recibo de una versión que no declaraba suelo queda exento por construcción (P3), igual que en
+// el instalador: aquí no se inventa un suelo que el plan aceptado no traía.
+const ONBOARD_ACTION = 'Run `npx @ericrisco/rsc@latest onboard` to record a plan for this harness (optional: what is installed keeps working).';
+const draftAction = (path) => `Complete ${path} with the \`constitution\` phase (tell your agent "constitution") before the first SDD feature; ratifying removes \`status: draft\`.`;
+
+export function onboardingReadiness(cwd = process.cwd(), manifest = readManifest(cwd)) {
+  const pending = constitutionIsDraft(cwd) ? [CONSTITUTION_PATH] : [];
+  const receipt = manifest?.onboarding;
+  if (!receipt?.plan) {
+    return { status: 'not-onboarded', missing: [], pending, action: ONBOARD_ACTION };
+  }
+  let identical = false;
+  try { identical = identifyPlan(receipt.plan) === receipt.acceptedPlanId; } catch { /* ilegible: no cuadra */ }
+  if (!identical) {
+    return {
+      status: 'incomplete', missing: ['<onboarding receipt does not match its accepted plan id>'], pending,
+      action: 'Do not trust the receipt. Re-run `npx @ericrisco/rsc@latest onboard` and accept a fresh plan.',
+    };
+  }
+  const missing = harnessFloorGaps(cwd, receipt.plan);
+  if (missing.length) {
+    const actions = [];
+    if (missing.includes(CONSTITUTION_PATH)) {
+      actions.push(`Write ${CONSTITUTION_PATH} with the \`constitution\` phase (tell your agent "constitution"); the SDD plan you accepted requires it.`);
+    }
+    if (missing.some((path) => path !== CONSTITUTION_PATH)) {
+      actions.push('Invoke the `harness` skill to scaffold 01-TOOLS/ + 02-DOCS/.');
+    }
+    return { status: 'incomplete', missing, pending, action: actions.join(' ') };
+  }
+  if (pending.length) return { status: 'pending', missing, pending, action: draftAction(CONSTITUTION_PATH) };
+  return { status: 'ready', missing, pending, action: '' };
 }

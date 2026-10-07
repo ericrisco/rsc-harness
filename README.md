@@ -410,6 +410,29 @@ rsc upgrade --dry-run                # show npm upgrade + sync commands
 rsc uninstall postgresdb --dry-run   # preview a removal
 ```
 
+### `rsc doctor`: harness health vs onboarding readiness
+
+`doctor` answers two different questions, and prints both first, on separate lines:
+
+```text
+Harness health: healthy
+Onboarding readiness: pending
+Pending: 02-DOCS/wiki/sdd/constitution.md (draft)
+Next: Complete 02-DOCS/wiki/sdd/constitution.md with the `constitution` phase …
+```
+
+- **Harness health** (`healthy` in `--json`) says whether what is installed works: skills, agents,
+  commands and hook scripts are on disk. It is the only thing the exit code follows (1 when
+  unhealthy), so CI and editor extensions can rely on it.
+- **Onboarding readiness** (`onboarding` in `--json`: `status`, `missing`, `pending`, `action`) says
+  whether onboarding is finished. It checks the accepted plan's floor, the same check that prints
+  `RSC_ONBOARDING_READY`, plus drafts. The status is `ready`; `pending` when a draft such as the
+  onboarding constitution still has to be completed; `incomplete` when part of the floor is missing,
+  for example a deleted constitution in an SDD plan, with the exact phase or command that fixes it;
+  or `not onboarded` when there is no onboarding record, as in a manual `rsc add` install. Readiness
+  never changes `healthy` or the exit code. `Missing:` and `Pending:` appear only when they have
+  entries.
+
 ---
 
 
