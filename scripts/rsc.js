@@ -952,26 +952,28 @@ async function main() {
       const sub = argv[1] || 'status';
       const root = process.cwd();
       const { readManifest, writeManifest } = await import('./lib/manifest-file.js');
-      const { gitPermissionsWired, GIT_PERMISSION_TARGETS } = await import('../targets/git-permissions.js');
+      const { gitPermissionsState, explainGitPermissions, GIT_PERMISSION_TARGETS } = await import('../targets/git-permissions.js');
       if (sub === 'on' || sub === 'off') {
         const current = readManifest(root);
         if (!current) { say('No .rsc.json here: install the harness first (`npx @ericrisco/rsc onboard`).'); process.exitCode = 2; return; }
         writeManifest(root, { ...current, gitPermissions: sub === 'on' });
         for (const t of targets) await syncInstalled({ target: t, cwd: root });
-        say(sub === 'on'
-          ? 'rsc git-permissions on: the agent may git commit, git push and gh pr create without asking (a force-push still asks; Cursor is not covered). Commit .rsc.json so the team gets the same decision.'
-          : 'rsc git-permissions off: commit, push and PR ask again, as the assistant does by default. Commit .rsc.json so the team gets the same decision.');
-        return;
+        // What rsc controls, what stops when off, and what is the assistant's own job (#298).
+        return void say(explainGitPermissions({ targets, cwd: root, mode: sub }));
       }
       if (sub === 'status') {
         const declared = readManifest(root)?.gitPermissions;
+        if (!flag('json')) return void say(explainGitPermissions({ targets, cwd: root, mode: 'status', declared }));
+        const covered = targets.filter((t) => GIT_PERMISSION_TARGETS.includes(t));
+        const states = Object.fromEntries(covered.map((t) => [t, gitPermissionsState(t, root)]));
         return void say(JSON.stringify({
           declared: declared === undefined ? 'undecided' : declared,
-          wired: Object.fromEntries(targets.filter((t) => GIT_PERMISSION_TARGETS.includes(t)).map((t) => [t, gitPermissionsWired(t, root)])),
+          wired: Object.fromEntries(covered.map((t) => [t, states[t].wired])),
+          format: Object.fromEntries(covered.map((t) => [t, states[t].format])),
           notCovered: targets.filter((t) => !GIT_PERMISSION_TARGETS.includes(t)),
         }, null, 2));
       }
-      say('Use: npx @ericrisco/rsc git-permissions on|off|status');
+      say('Use: npx @ericrisco/rsc git-permissions on|off|status [--json]');
       process.exitCode = 2;
       return;
     }
