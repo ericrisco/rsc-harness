@@ -225,3 +225,33 @@ test('metrics: when every session is unknown, knownTotal is null, not 0', () => 
   assert.deepEqual(summary.knownTotal, { cost: null, toolCalls: null });
   assert.deepEqual(memory.metricsSummary({ cwd: repo() }).knownTotal, { cost: null, toolCalls: null }, 'no sessions: nothing known');
 });
+
+// Field test 3.0.8: a merged feature's document still said «pendiente: abrir PR», and the memory kept
+// injecting it as the next step. A document marked done is finished work, not a next step — whether
+// the close is already here or is still on its way on rsc/knowledge (closed default branch).
+test('the continuation skips a feature document marked done, here or already closed on rsc/knowledge', () => {
+  const cwd = repo();
+  const g = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8' });
+  const open = '---\nauthor: Ana\nbranch: feat/a\nstatus: in-progress\n---\n\n# a\n\n## Checklist\n- [ ] x\n\n## Next\n- pendiente: abrir PR\n';
+  const done = open.replace('status: in-progress', 'status: done\nmerged: 2026-10-07').replace('- pendiente: abrir PR', 'Fusionado en main el 2026-10-07 (abc1234).');
+  mkdirSync(join(cwd, '02-DOCS', 'wiki', 'ftd'), { recursive: true });
+  memory.capture({ cwd, sessionId: 's1', target: 'claude', event: 'start', now: '2026-10-07T10:00:00.000Z' });
+  writeFileSync(join(cwd, '02-DOCS', 'wiki', 'ftd', 'hecho.md'), done);
+  writeFileSync(join(cwd, '02-DOCS', 'wiki', 'ftd', 'viaja.md'), open);
+  writeFileSync(join(cwd, '02-DOCS', 'wiki', 'ftd', 'vivo.md'), open.replace('feat/a', 'feat/b'));
+  g('add', '-A'); g('commit', '-qm', 'docs');
+  // The close of viaja.md is on rsc/knowledge, not here yet.
+  const blob = execFileSync('git', ['hash-object', '-w', '--stdin'], { cwd, input: done, encoding: 'utf8' }).trim();
+  const idx = join(cwd, '.git', 'tmp-index');
+  const env = { ...process.env, GIT_INDEX_FILE: idx };
+  execFileSync('git', ['read-tree', 'HEAD'], { cwd, env });
+  execFileSync('git', ['update-index', '--cacheinfo', `100644,${blob},02-DOCS/wiki/ftd/viaja.md`], { cwd, env });
+  const tree = execFileSync('git', ['write-tree'], { cwd, env, encoding: 'utf8' }).trim();
+  const sha = execFileSync('git', ['commit-tree', tree, '-p', 'HEAD', '-m', 'close'], { cwd, encoding: 'utf8' }).trim();
+  g('update-ref', 'refs/remotes/origin/rsc/knowledge', sha);
+  memory.capture({ cwd, sessionId: 's1', target: 'claude', event: 'turn', now: '2026-10-07T10:05:00.000Z' });
+  const { context } = memory.resume({ cwd, now: '2026-10-07T11:00:00.000Z' });
+  assert.doesNotMatch(context, /hecho\.md: /, 'a done document is not a next step');
+  assert.doesNotMatch(context, /viaja\.md: /, 'nor one whose close is already on rsc/knowledge');
+  assert.match(context, /next: .*vivo\.md: pendiente: abrir PR/, 'a live one still is');
+});

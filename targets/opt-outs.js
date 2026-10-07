@@ -22,6 +22,7 @@ export const PROJECT_OPT_OUTS = [
   'claudemd-check',   // the root CLAUDE.md context budget
   'danger-guard',     // foot-gun denial, keyed to the committed user profile
   'feature-gate',     // per-turn re-injection of the SDD gate
+  'ftd-close',        // a landed branch's feature documents marked done by the post-merge hook
   'ftd-nudge',        // once-per-session reminder: code changed and no feature document yet
   'gitmoji',          // the commit-message convention
   'knowledge-sync',   // 01-TOOLS/ + 02-DOCS/ sync: one person off and the team stops seeing their work

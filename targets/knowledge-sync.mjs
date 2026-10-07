@@ -36,7 +36,7 @@
 // but Node. Never throws into a hook; whatever goes wrong is said on the next message.
 import { execFileSync, spawn } from 'node:child_process';
 import {
-  closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, statSync,
+  appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, statSync,
   unlinkSync, writeFileSync,
 } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
@@ -147,10 +147,29 @@ function acquire(root) {
 
 function release(root) { try { unlinkSync(join(root, '.rsc', LOCK)); } catch { /* gone */ } }
 
+/**
+ * Commits handed over without the lock (the post-merge close runs inside somebody's `git pull` and
+ * must not wait for a push in flight): one SHA per line, taken into the queue by the next locked body.
+ * Renamed before it is read, so a line appended meanwhile lands in a new file and is never lost.
+ */
+const PENDING = 'knowledge-sync.pending';
+function absorbPending(root, s) {
+  const path = join(root, '.rsc', PENDING);
+  const taking = `${path}.taking`;
+  try { renameSync(path, taking); } catch { return; }
+  try {
+    for (const sha of readFileSync(taking, 'utf8').split('\n').map((x) => x.trim()).filter(Boolean)) {
+      if (!s.queue.includes(sha)) s.queue.push(sha);
+    }
+  } catch { /* unreadable: nothing to take */ }
+  try { unlinkSync(taking); } catch { /* gone */ }
+}
+
 /** The lock and the state live together: a body that runs without the lock never runs. */
 function locked(root, body) {
   if (!acquire(root)) return null;
   const s = readState(root);
+  absorbPending(root, s);
   try { return body(s); } finally { writeState(root, s); release(root); }
 }
 
@@ -366,7 +385,8 @@ function replay(root, base, sha, ours = []) {
       // to replace whole. (A snapshot from a closed trunk can start from HEAD, behind our own last
       // upload — after an upgrade, or once the chain is lost.)
       const last = line(root, ['log', '-1', '--format=%H', base, '--', f]);
-      if (there === blob(root, `${sha}^`, f) || (last && ours.includes(last))) {
+      const from = blob(root, `${sha}^`, f);
+      if (there === from || (last && ours.includes(last)) || behindDefault(root, base, f, there, from, last)) {
         const entry = next && line(root, ['ls-tree', sha, '--', f]);
         const ok = next
           ? run(root, ['update-index', '--add', '--cacheinfo', `${entry.split(' ')[0]},${next},${f}`], { env }).ok
@@ -381,6 +401,23 @@ function replay(root, base, sha, ours = []) {
   } finally {
     try { unlinkSync(env.GIT_INDEX_FILE); } catch { /* never created */ }
   }
+}
+
+/**
+ * The exchange branch holds this file only in a version the remote default branch has already gone
+ * past — or never held it — and the change starts from the default branch's version: replacing it
+ * whole is a fast-forward of the file, not a clash. rsc/knowledge is born from main and never merges
+ * it back, so a document merged through a pull request it never carried, then closed on merge
+ * (`closeLanded`), met it as a clash. A file the exchange branch once had and then lost is not this
+ * case: somebody deleted it there, and that is not ours to undo.
+ */
+function behindDefault(root, base, f, there, from, last) {
+  const def = defaultBranch(root);
+  const remoteDef = def && line(root, ['rev-parse', '--verify', '--quiet', `refs/remotes/origin/${def}`]);
+  if (!remoteDef || !from || blob(root, remoteDef, f) !== from) return false;
+  if (!there) return !last;
+  const revs = (line(root, ['rev-list', '-n', '50', remoteDef, '--', f]) || '').split('\n').filter(Boolean);
+  return revs.some((c) => blob(root, c, f) === there);
 }
 
 const clashText = (files) => `No he podido subir ${listed(files)}: choca con un cambio que ya está en ${KNOWLEDGE_BRANCH}. ` +
@@ -517,6 +554,8 @@ export function applyIncoming(root, s) {
     .filter(isKnowledge).filter((f) => !onDefault(f, blob(root, tip, f))).slice(0, MAX_FILES);
   const closed = branch === def && trunkClosed(root);
   const touchedBy = (f) => git(root, ['rev-list', `${seen}..${tip}`, '--', f]).split('\n').filter(Boolean);
+  const superseded = (f, mine) => touchedBy(f).some((c) => blob(root, c, f) === mine)
+    || touchedBy(f).some((c) => (line(root, ['log', '-1', '--format=%B', c]) || '').includes(`${CLOSES} ${mine} ${f}`));
 
   // A default branch closed for the agent is left exactly as the remote has it (team sim 2026-10-07,
   // D1). Nothing can be committed there, and anything written uncommitted blocks the person's next
@@ -546,7 +585,12 @@ export function applyIncoming(root, s) {
     const mine = worktreeBlob(root, f);
     if (mine === incoming) continue;
     const base = blob(root, seen, f);
-    if (mine === base && blob(root, 'HEAD', f) === base) take.push(f);
+    const committed = blob(root, 'HEAD', f);
+    if (mine === base && committed === base) take.push(f);
+    // Untouched here, and a version the exchange branch itself went past — it passed through it, or a
+    // close on merge says it replaces it (`CLOSES`). The branch has the merged document as main has it;
+    // the close is its newer version, not somebody else's competing edit (field test 3.0.8).
+    else if (mine && mine === committed && superseded(f, mine)) take.push(f);
     // Touched here and changed only by your own uploads: your newer version, not a clash.
     else if (touchedBy(f).some((c) => !s.ours.includes(c))) clash.push(f);
   }
@@ -565,6 +609,243 @@ export function applyIncoming(root, s) {
   }
   s.seenBy[branch] = tip;
   return said;
+}
+
+// ------------------------------------------------------------------ close on merge (FTD)
+
+// Field test 3.0.8: a feature document written on a feature branch kept saying «pendiente: abrir PR»
+// after its pull request was merged, and carried no author — «¿qué ha hecho cada uno?» got every
+// feature reported as pending and nobody's name, and the session memory kept injecting the stale Next.
+// So the close is not left to the agent remembering: when a branch LANDS on the default branch (the
+// post-merge hook, `worktree-reaper.mjs`), the feature documents that branch wrote are marked done.
+//
+// Where the edit goes is the whole design. Open default branch: a local `📝 docs(auto)` commit, like
+// any other doc commit there. Closed default branch: never on main — neither the agent nor rsc commits
+// there — so it is built on a throwaway index and handed to `ship`, which replays it onto rsc/knowledge
+// like any knowledge change. The team gets it from there, and it reaches main inside the next PR that
+// carries docs. The checkout is not touched, so the closed main stays clean and the next pull works.
+
+export const FTD_CLOSE_OPT_OUT = '.no-ftd-close';
+const CLOSE_SUBJECT = '📝 docs(auto): cierre FTD';
+/** Trailer of a close: `Cierra: <blob it replaces> <path>`, so a teammate's branch takes it (applyIncoming). */
+const CLOSES = 'Cierra:';
+const isFtdDoc = (p) => /^02-DOCS\/wiki\/ftd\/[^/]+\.md$/.test(p);
+const MAX_BRANCHES = 50;
+
+function splitFrontmatter(text) {
+  const t = String(text).replace(/\r\n/g, '\n');
+  const m = t.match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
+  return m ? { lines: m[1].split('\n'), body: t.slice(m[0].length) } : { lines: null, body: t };
+}
+
+function fmValue(lines, key) {
+  for (const l of lines || []) {
+    const m = l.match(/^([A-Za-z_][\w-]*):[ \t]*(.*)$/);
+    if (m && m[1] === key) return m[2].trim();
+  }
+  return null;
+}
+
+/** The frontmatter of a feature document as plain fields (`author`, `branch`, `status`, …). */
+export function frontmatter(text) {
+  const { lines } = splitFrontmatter(text);
+  const out = {};
+  for (const l of lines || []) {
+    const m = l.match(/^([A-Za-z_][\w-]*):[ \t]*(.*)$/);
+    if (m) out[m[1]] = m[2].trim();
+  }
+  return out;
+}
+
+const isDoneText = (text) => /^done$/i.test(frontmatter(text).status || '');
+
+/**
+ * The closed version of a feature document, or null when it is already done (idempotent). Sets
+ * `status: done`, `merged`, and `merged_by`/`pr` when known; fills `author`/`branch` only when missing;
+ * replaces the Next section with one line saying where and when it landed. Nothing else is rewritten:
+ * the evidence is the record.
+ */
+export function closeDoc(text, { trunk, date, sha, author, branch, mergedBy, pr } = {}) {
+  const { lines, body } = splitFrontmatter(text);
+  const fm = lines ? [...lines] : [];
+  if (/^done$/i.test(fmValue(fm, 'status') || '')) return null;
+  const set = (key, value, onlyIfMissing = false) => {
+    if (value == null || value === '') return;
+    const i = fm.findIndex((l) => l.startsWith(`${key}:`));
+    if (i < 0) fm.push(`${key}: ${value}`);
+    else if (!onlyIfMissing || !fmValue([fm[i]], key)) fm[i] = `${key}: ${value}`;
+  };
+  set('author', author, true);
+  set('branch', branch, true);
+  set('status', 'done');
+  set('merged', date);
+  set('merged_by', mergedBy);
+  set('pr', pr ? `#${String(pr).replace(/^#/, '')}` : null);
+  const landed = `Fusionado en ${trunk} el ${date} (${sha}).`;
+  const next = /^(##[ \t]*(?:Next|Siguiente|Próximo)[^\n]*\n)([\s\S]*?)(?=^##\s|(?![\s\S]))/mu;
+  const rest = next.test(body)
+    ? body.replace(next, (_, heading) => `${heading}${landed}\n\n`)
+    : `${body.replace(/\n*$/, '\n')}\n## Next\n${landed}\n`;
+  return `---\n${fm.join('\n')}\n---\n${lines ? '' : '\n'}${rest.replace(/\n+$/, '\n')}`;
+}
+
+const isAncestor = (root, a, b) => run(root, ['merge-base', '--is-ancestor', a, b]).ok;
+
+/** Would merging `tip` into `into` change nothing? (squash/rebase merges rewrite identities.) */
+function contains(root, into, tip) {
+  const merged = run(root, ['merge-tree', '--write-tree', into, tip]);
+  return merged.ok && merged.out.split('\n')[0].trim() === line(root, ['rev-parse', `${into}^{tree}`]);
+}
+
+/**
+ * The branches that landed between `orig` and `head`: in head and not before, by identity (merge,
+ * fast-forward) or by content (squash, rebase). Local branches and the remote-tracking ones, the most
+ * recent first and bounded — this runs inside somebody's `git pull`.
+ */
+function landedBranches(root, orig, head, def) {
+  const refs = (line(root, ['for-each-ref', '--sort=-committerdate', '--format=%(refname)', 'refs/heads', 'refs/remotes/origin']) || '')
+    .split('\n').filter(Boolean).slice(0, MAX_BRANCHES * 2);
+  const out = [];
+  const seen = new Set();
+  for (const ref of refs) {
+    const name = ref.replace(/^refs\/heads\//, '').replace(/^refs\/remotes\/origin\//, '');
+    if (!name || name === 'HEAD' || name === def || name === KNOWLEDGE_BRANCH || seen.has(name)) continue;
+    const tip = line(root, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]);
+    if (!tip || isAncestor(root, tip, orig)) continue; // in before, or nothing of its own
+    if (isAncestor(root, tip, head) || (contains(root, head, tip) && !contains(root, orig, tip))) {
+      seen.add(name);
+      out.push({ name, tip });
+    }
+    if (out.length >= MAX_BRANCHES) break;
+  }
+  return out;
+}
+
+/** Where and how a branch landed: the first commit of the default branch's own line that has it. */
+function landingOf(root, orig, head, tip) {
+  const line1 = (line(root, ['rev-list', '--first-parent', '--reverse', `${orig}..${head}`]) || '').split('\n').filter(Boolean).slice(0, 20);
+  const at = line1.find((c) => isAncestor(root, tip, c)) || line1.find((c) => contains(root, c, tip)) || head;
+  const [parents = '', committer = '', date = '', subject = ''] = (line(root, ['log', '-1', '--format=%P%x00%cn%x00%cs%x00%s', at]) || '').split('\0');
+  const pr = subject.match(/Merge pull request #(\d+)/)?.[1] || subject.match(/\(#(\d+)\)\s*$/)?.[1] || null;
+  let mergedBy = null;
+  if (parents.trim().split(/\s+/).length > 1 || pr) mergedBy = committer && committer !== 'GitHub' ? committer : null;
+  else if (/^merge /.test(line(root, ['reflog', '-1', '--format=%gs', 'HEAD']) || '')) mergedBy = line(root, ['config', 'user.name']);
+  return { sha: line(root, ['rev-parse', '--short', at]) || at.slice(0, 7), date: date || new Date().toISOString().slice(0, 10), mergedBy, pr };
+}
+
+/**
+ * The documents a landed branch wrote, closed. A document says whose it is with `branch:`; one of
+ * another branch — brought along by a 📥 sync — is not this branch's to close. A document with no
+ * frontmatter (written before it existed) counts when a commit of the branch's own, not a sync,
+ * touched it; its author is then the git author of the commit that created it.
+ */
+function closuresFor(root, orig, head, def, read) {
+  const out = new Map();
+  for (const { name, tip } of landedBranches(root, orig, head, def)) {
+    const base = line(root, ['merge-base', orig, tip]);
+    if (!base) continue;
+    const files = zlist(run(root, ['diff', '--name-only', '--no-renames', '-z', base, tip, '--', '02-DOCS/wiki/ftd/']).out)
+      .filter(isFtdDoc).filter((f) => !out.has(f) && blob(root, head, f));
+    if (!files.length) continue;
+    let landing = null;
+    for (const f of files) {
+      const text = read(f);
+      if (text == null || isDoneText(text)) continue;
+      const owner = frontmatter(text).branch;
+      if (owner && owner !== name) continue;
+      if (!owner) {
+        const own = (line(root, ['log', '--no-merges', '--format=%s', `${base}..${tip}`, '--', f]) || '').split('\n').filter(Boolean);
+        if (!own.some((s) => s !== SYNC_SUBJECT)) continue;
+      }
+      landing ||= landingOf(root, orig, head, tip);
+      const created = (line(root, ['log', '--diff-filter=A', '--format=%an', tip, '--', f]) || '').split('\n').filter(Boolean).pop();
+      const closed = closeDoc(text, { trunk: def, ...landing, author: created, branch: name });
+      if (closed) out.set(f, closed);
+    }
+  }
+  return out;
+}
+
+/**
+ * The post-merge entry point: close what just landed. Returns `{ closed, via }` — via `local` (open
+ * default branch, committed here) or `knowledge` (closed default branch, queued for rsc/knowledge).
+ * Never throws: it runs inside git, mid-pull, and a failed close must never become a failed merge.
+ */
+export function closeLanded(root, { spawnShip = true } = {}) {
+  const res = { closed: [], via: null };
+  try {
+    if (existsSync(join(root, '.rsc', FTD_CLOSE_OPT_OUT)) || !existsSync(join(root, '.rsc.json'))) return res;
+    // Not `busy()`: git runs post-merge with MERGE_HEAD still on disk, so that check refused every
+    // landing (found end to end, through the real hook). A rebase or a pick in progress is no landing.
+    for (const p of ['rebase-merge', 'rebase-apply', 'CHERRY_PICK_HEAD', 'REVERT_HEAD']) {
+      const path = line(root, ['rev-parse', '--git-path', p]);
+      if (path && existsSync(isAbsolute(path) ? path : join(root, path))) return res;
+    }
+    const def = defaultBranch(root);
+    const branch = line(root, ['symbolic-ref', '--quiet', '--short', 'HEAD']);
+    if (!def || branch !== def) return res; // a landing is a landing on the default branch
+    const head = line(root, ['rev-parse', '--verify', '--quiet', 'HEAD^{commit}']);
+    const orig = line(root, ['rev-parse', '--verify', '--quiet', 'ORIG_HEAD^{commit}']);
+    if (!head || !orig || orig === head || !isAncestor(root, orig, head)) return res;
+    const open = !trunkClosed(root);
+    if (!open && inactiveReason(root)) return res; // closed and no rsc/knowledge: nowhere to write
+
+    let read;
+    if (open) {
+      // The checkout's own copy, and only when nobody is editing it.
+      read = (f) => (worktreeBlob(root, f) === blob(root, 'HEAD', f) ? readFileSync(join(root, f), 'utf8') : null);
+    } else {
+      // Already closed on rsc/knowledge, or waiting in the queue to go there: not again.
+      const s = readState(root);
+      let pending = [];
+      try { pending = readFileSync(join(root, '.rsc', PENDING), 'utf8').split('\n').filter(Boolean); } catch { /* none */ }
+      const elsewhere = [`refs/remotes/origin/${KNOWLEDGE_BRANCH}`, ...s.queue, ...pending];
+      const closedElsewhere = (f) => elsewhere.some((rev) => {
+        const b = blob(root, rev, f);
+        return b && isDoneText(git(root, ['cat-file', 'blob', b]));
+      });
+      read = (f) => (closedElsewhere(f) ? null : git(root, ['show', `HEAD:${f}`]));
+    }
+    const docs = closuresFor(root, orig, head, def, read);
+    if (!docs.size) return res;
+    const files = [...docs.keys()];
+
+    // One commit on top of HEAD, built on a throwaway index: plumbing, because git runs this hook
+    // with the merge state still present and refuses a porcelain commit then.
+    const env = { GIT_INDEX_FILE: join(root, '.rsc', 'knowledge-sync.close.index') };
+    let sha;
+    try {
+      mkdirSync(join(root, '.rsc'), { recursive: true });
+      git(root, ['read-tree', 'HEAD'], { env });
+      const trailers = [];
+      for (const [f, text] of docs) {
+        const b = git(root, ['hash-object', '-w', '--stdin'], { input: text }).trim();
+        const mode = (line(root, ['ls-tree', 'HEAD', '--', f]) || '100644').split(' ')[0];
+        git(root, ['update-index', '--cacheinfo', `${mode},${b},${f}`], { env });
+        trailers.push(`${CLOSES} ${blob(root, 'HEAD', f)} ${f}`);
+      }
+      const tree = line(root, ['write-tree'], { env });
+      sha = git(root, ['commit-tree', tree, '-p', head, '-F', '-'], { input: `${CLOSE_SUBJECT}: ${summary(files)}\n\n${trailers.join('\n')}\n` }).trim();
+    } finally {
+      try { unlinkSync(env.GIT_INDEX_FILE); } catch { /* never created */ }
+    }
+
+    if (open) {
+      // Open: it lands here like any docs(auto) commit — HEAD moves only if nobody moved it meanwhile,
+      // then the index and the files follow, for these paths only.
+      git(root, ['update-ref', '-m', `rsc: ${CLOSE_SUBJECT}`, 'HEAD', sha, head]);
+      for (const [f, text] of docs) writeFileSync(join(root, f), text);
+      git(root, ['--literal-pathspecs', 'update-index', '--', ...files]);
+      return { closed: files, via: 'local' };
+    }
+    // Closed: nothing here. Handed to `ship` without the lock, so a push in flight never makes the
+    // pull wait (`absorbPending`); it goes up to rsc/knowledge and reaches main in the next PR.
+    appendFileSync(join(root, '.rsc', PENDING), `${sha}\n`);
+    if (spawnShip) background(root, 'ship');
+    return { closed: files, via: 'knowledge' };
+  } catch {
+    return res;
+  }
 }
 
 // ------------------------------------------------------------------ hook entry points
@@ -738,5 +1019,8 @@ function stdinJson() {
 if (isMainModule(import.meta.url)) {
   const [op, a, b] = process.argv.slice(2);
   if (op === 'hook') process.stdout.write(`${JSON.stringify(hook(a, b, stdinJson()))}\n`);
-  else work(a, op); // detached: `ship <root>` or `fetch <root>`
+  else if (op === 'close') { // the post-merge hook: `close <root>`
+    const r = closeLanded(resolve(a || process.cwd()));
+    for (const f of r.closed) process.stdout.write(`rsc: FTD cerrado ${f}${r.via === 'knowledge' ? ` (vía ${KNOWLEDGE_BRANCH})` : ''}\n`);
+  } else work(a, op); // detached: `ship <root>` or `fetch <root>`
 }

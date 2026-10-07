@@ -43,7 +43,7 @@ const SEMVER = /^\d+\.\d+\.\d+(?:-[0-9a-z.-]+)?$/i;
  * nothing checks is just drift with a head start.
  */
 export const PROJECT_OPT_OUTS = [
-  'audit', 'auto-update', 'claudemd-check', 'danger-guard', 'feature-gate', 'ftd-nudge', 'gitmoji', 'knowledge-sync', 'ship-guard', 'trunk-guard', 'trunk-open', 'worktree-cleanup', 'worktree-isolation',
+  'audit', 'auto-update', 'claudemd-check', 'danger-guard', 'feature-gate', 'ftd-close', 'ftd-nudge', 'gitmoji', 'knowledge-sync', 'ship-guard', 'trunk-guard', 'trunk-open', 'worktree-cleanup', 'worktree-isolation',
 ];
 
 /**

@@ -23,7 +23,7 @@ const KEEP = 50;
 
 export const NUDGE = 'rsc · lane: this session is changing code and has no feature document yet. ' +
   'Before going on, decide the lane and say it in one line: simple → write 02-DOCS/wiki/ftd/<slug>.md now ' +
-  '(Intent, Scope, Checklist with how each item is proven, Evidence, Next) — one document per feature, ' +
+  '(frontmatter author/branch/status: in-progress; Intent, Scope, Checklist with how each item is proven, Evidence, Next) — one document per feature, ' +
   'a box ticked only with its observed proof under Evidence, Next kept current; big or ' +
   'interlocking → SDD (spec first). A one-line, zero-risk change needs no document: say so instead.';
 

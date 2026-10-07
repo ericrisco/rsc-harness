@@ -549,8 +549,12 @@ if [ -x "$hook_dir/post-merge.rsc-local" ]; then
   "$hook_dir/post-merge.rsc-local" "$@" || true
 fi
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
-[ -f "$root/.rsc/worktree-reaper.mjs" ] || exit 0
 command -v node >/dev/null 2>&1 || exit 0
+# First, while the landed branch still exists: close its feature documents (off: .rsc/.no-ftd-close).
+if [ -f "$root/.rsc/knowledge-sync.mjs" ]; then
+  node "$root/.rsc/knowledge-sync.mjs" close "$root" 2>/dev/null || true
+fi
+[ -f "$root/.rsc/worktree-reaper.mjs" ] || exit 0
 node "$root/.rsc/worktree-reaper.mjs" "$root" auto 2>/dev/null || true
 exit 0
 `;

@@ -612,11 +612,19 @@ function subjects(cwd, commits) {
   }).filter((item) => item && !secretShaped(item));
 }
 
+// A document whose frontmatter says `status: done` is finished work, not a next step. On a closed
+// default branch the close travels by rsc/knowledge and is not in the checkout yet (knowledge-sync
+// `closeLanded`), so the exchange branch's copy is asked too — a local ref, no network.
+const isDone = (text) => /^status:[ \t]*done[ \t]*$/mu.test(String(text || '').replace(/\r\n/gu, '\n').match(/^---\n([\s\S]*?)\n---(?:\n|$)/u)?.[1] || '');
+
 function nextSteps(cwd, files) {
   const out = [];
   for (const rel of files.filter((f) => /^02-DOCS\/wiki\/(ftd|sdd\/(specs|plans|progress))\/[^/]+\.md$/u.test(f)).slice(0, 3)) {
     let body = '';
     try { body = readFileSync(join(cwd, rel), 'utf8'); } catch { continue; }
+    if (isDone(body)) continue;
+    const exchange = git(cwd, ['show', `refs/remotes/origin/rsc/knowledge:${rel}`]);
+    if (exchange.ok && isDone(exchange.out)) continue;
     const section = body.match(/^##\s*(Next|Siguiente|Próximo)[^\n]*\n+([\s\S]*?)(?=\n##\s|$)/imu)?.[2];
     const first = section?.split('\n').map((l) => l.replace(/^[-*]\s*/u, '').trim()).find(Boolean);
     const open = (body.match(/^- \[ \]/gmu) || []).length;

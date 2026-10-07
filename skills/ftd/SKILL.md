@@ -34,6 +34,11 @@ repository**: whoever clones it should get code, not somebody else's notes in pr
 It is written **before the first change**, not after, and it holds exactly this:
 
 ```markdown
+---
+author: <who asked for it — git user.name>
+branch: <the branch the work runs on>
+status: in-progress
+---
 # <feature>
 
 ## Intent          — what changes, and why it is worth doing
@@ -42,6 +47,10 @@ It is written **before the first change**, not after, and it holds exactly this:
 ## Evidence        — the observed output per completed task
 ## Next            — the single next step, so an interruption costs nothing
 ```
+
+The frontmatter says whose work it is, so «¿qué ha hecho cada uno?» has an answer. You never close
+it by hand: when the branch lands on the default branch, rsc's post-merge hook sets `status: done`
+and replaces Next with where and when it merged (on a closed default branch, via `rsc/knowledge`).
 
 No decision journal, no phase records, no approvals. If a decision was meaningful, one line of
 rationale goes next to the task it belongs to.
