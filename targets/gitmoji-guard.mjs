@@ -143,7 +143,11 @@ const HAS_INLINE_M = /(?:^|\s)(?:-[a-zA-Z]*m|--message)(?:=|\s|$)/;
 // `git` must be the command being RUN, not text inside someone else's argument —
 // otherwise `echo "git commit -m x"` or `grep "git commit -m"` gets denied, and a guard
 // that blocks the discussion of commits is exactly the kind that gets switched off.
-const RUNS_GIT = /^\s*(?:sudo\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*git\b/;
+const RUNS_GIT = /^\s*(?:(?:sudo|env|command|exec|nohup)\s+|[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*git\b/;
+
+// A commit handed to a shell as a string (`bash -c "git commit -m …"`, `eval …`) is read inside
+// that string (E2E defect 15). shell-unwrap.mjs is a sibling under `.rsc/`; without it, as before.
+const SH = await import(new URL('./shell-unwrap.mjs', import.meta.url)).catch(() => null);
 
 const SEPARATORS = /&&|\|\||[;\n]/;
 
@@ -174,6 +178,15 @@ function inlineMessage(segment) {
 export function commitMessages(command) {
   const cmd = String(command ?? '');
   if (!COMMIT.test(cmd)) return [];
+  const inner = SH ? SH.innerScripts(cmd) : [];
+  if (!inner.length) return directMessages(cmd);
+  // The wrapped strings are read on their own; the rest of the chain without them, so a commit is
+  // never read twice (once naively through the quotes, once unwrapped).
+  const rest = SH.segments(SH.withoutHeredocs(cmd)).filter((seg) => SH.unwrap(seg)?.inner === undefined).join('\n');
+  return [...directMessages(rest), ...inner.flatMap(commitMessages)];
+}
+
+function directMessages(cmd) {
 
   // The heredoc form must be handled before any splitting: its body is the message and
   // may legitimately contain && or ;. The command that owns it is whatever runs just

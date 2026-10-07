@@ -118,14 +118,23 @@ function runs(segment, bin) {
   return false;
 }
 
+// The shared unwrapper (E2E defect 15) adds the segments the shell really runs — `eval "rm …"`,
+// `exec rm …`, `FOO=1 rm …`, a `cd x && rm …` inside `bash -c` — on top of the plain split, so it
+// can only ever see MORE, never fewer. Sibling import under `.rsc/`; without it, as before.
+const SH = await import(new URL('./shell-unwrap.mjs', import.meta.url)).catch(() => null);
+const runSegments = () => {
+  const unwrapped = (() => { try { return SH ? SH.expand(cmd) : []; } catch { return []; } })();
+  return [...cmd.split(/\|\||&&|[|;&]/), ...unwrapped];
+};
+
 // A git rule judges the segment that RUNS git, so `echo 'git reset --hard'` is a sentence, not a reset.
 function gitSegment(re) {
-  return cmd.split(/\|\||&&|[|;&]/).some((segment) => runs(segment, 'git') && re.test(segment));
+  return runSegments().some((segment) => runs(segment, 'git') && re.test(segment));
 }
 
 function isRmRecursiveForce() {
   if (!/\brm\b/.test(cmd)) return false;
-  for (const segment of cmd.split(/\|\||&&|[|;&]/)) {
+  for (const segment of runSegments()) {
     if (!runsRm(segment)) continue;
     const flags = rmFlagsIn(segment);
     const hasR = flags.some((f) => /^--recursive$/i.test(f) || /^-[A-Za-z]*r/i.test(f));
@@ -146,7 +155,7 @@ const RULES = [
   { id: 'git-reset-hard', why: 'throws away all uncommitted work with no undo (git reset --hard)', match: () => gitSegment(/\bgit\s+reset\b[^|;&]*--hard\b/i) },
   { id: 'git-clean', why: 'permanently deletes untracked files (git clean -f)', match: () => gitSegment(/\bgit\s+clean\b[^|;&]*-[a-z]*f/i) },
   { id: 'git-discard', why: 'discards every uncommitted change in the tree with no undo (git checkout -- . / git restore .)', match: () => gitSegment(/\bgit\s+(checkout\s+(--\s+)?\.|restore\s+(--(staged|worktree)\s+)*\.)(\s|$|[|;&])/i) },
-  { id: 'git-no-verify', why: 'skips the project\'s own git hooks (--no-verify)', match: () => gitSegment(/\bgit\s+(commit|push|merge|rebase|am)\b[^|;&]*\s(--no-verify\b|-n\b(?=[^|;&]*\bcommit\b)?)/i.test(cmd) && /--no-verify\b/i) },
+  { id: 'git-no-verify', why: 'skips the project\'s own git hooks (--no-verify)', match: () => gitSegment(/\bgit\s+(commit|push|merge|rebase|am|cherry-pick)\b.*\s--no-verify\b/i) },
   { id: 'git-branch-D', why: 'force-deletes a branch even if its work was never merged (git branch -D)', match: () => gitSegment(/\bgit\s+branch\b[^|;&]*\s-D\b/) },
 
   { id: 'sql-drop', why: 'drops an entire database/schema/table (DROP …)', match: () => /\bdrop\s+(database|schema|table)\b/i.test(cmd) },

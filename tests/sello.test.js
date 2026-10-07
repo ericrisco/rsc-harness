@@ -236,6 +236,17 @@ test('ship-guard: sello ON + sealed bytes → delivery allowed', () => {
   assert.equal(runGuard(root, 'git commit -m "x"'), null);
 });
 
+test('ship-guard: leaving a dirty feature for the trunk is seen through -C/-c and shell wrappers (E2E defect 15)', () => {
+  const root = makeRepo();
+  writeFileSync(join(root, 'app.js'), 'uncommitted\n');
+  for (const cmd of ['git checkout main', 'git -C . switch main', 'git -c core.x=1 checkout main', 'bash -c "git switch main"', 'eval "git merge feature"']) {
+    const denial = runGuard(root, cmd);
+    assert.ok(denial, `expected a deny for: ${cmd}`);
+    assert.match(denial.hookSpecificOutput.permissionDecisionReason, /uncommitted/);
+  }
+  assert.equal(runGuard(root, 'echo "git switch main"'), null, 'a mention is not a switch');
+});
+
 test('ship-guard: non-delivery commands never consult the sello', () => {
   const root = makeRepo();
   enable(root);
@@ -324,12 +335,14 @@ test('sello: delivery detection resists both evasion and false positives (B5)', 
     'git commit -m x', 'git -C /some/path commit -m x', 'git -c user.name=x commit -m x',
     'git --no-pager commit', 'git push', 'git -C . push origin feature',
     'gh pr create --title x', 'gh pr merge --squash', 'gh -R o/r pr create',
+    // E2E defect 15: a delivery wrapped in a shell, eval or env is still a delivery.
+    'bash -c "git push"', "sh -c 'git commit -m x'", 'eval "gh pr create"', 'env A=1 git push',
   ]) assert.equal(isDeliveryCommand(c), true, `should be a delivery: ${c}`);
 
   for (const c of [
     'grep -rn "git push" docs/', "grep -rn 'git commit' .", 'echo "remember to git commit later"',
     'git log --grep="git push"', 'git status', 'git commit-tree abc', 'git commit-graph write',
-    'ls -la', 'git merge-base HEAD main',
+    'ls -la', 'git merge-base HEAD main', `echo "bash -c 'git push'"`,
   ]) assert.equal(isDeliveryCommand(c), false, `should NOT be a delivery: ${c}`);
 });
 

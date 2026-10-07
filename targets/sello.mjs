@@ -333,12 +333,19 @@ const GIT_OPTS = '(?:-{1,2}[\\w-]+(?:=\\S+)?\\s+|-[A-Za-z]\\s+\\S+\\s+)*';
 const GIT_DELIVERY = new RegExp(`\\bgit\\s+${GIT_OPTS}(?:commit|push)(?![\\w-])`);
 const GH_DELIVERY = new RegExp(`\\bgh\\s+${GIT_OPTS}pr\\s+${GIT_OPTS}(?:create|merge)(?![\\w-])`);
 
+// A delivery handed to a shell as a string (`bash -c "git push"`, `eval …`) is still a delivery
+// (E2E defect 15): the segments the shell really runs are judged too. Sibling import, fail-soft.
+const SH = await import(new URL('./shell-unwrap.mjs', import.meta.url)).catch(() => null);
+
 export function isDeliveryCommand(command) {
   if (typeof command !== 'string' || !command) return false;
   // Blank out quoted strings so a command that merely MENTIONS the words is not
   // mistaken for one that runs them.
-  const bare = command.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
-  return GIT_DELIVERY.test(bare) || GH_DELIVERY.test(bare);
+  const delivers = (c) => {
+    const bare = c.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
+    return GIT_DELIVERY.test(bare) || GH_DELIVERY.test(bare);
+  };
+  return delivers(command) || (SH ? SH.expand(command).some(delivers) : false);
 }
 
 // ---------------------------------------------------------------- messages (P6)

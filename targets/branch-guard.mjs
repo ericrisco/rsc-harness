@@ -54,27 +54,10 @@ const ago = (iso) => {
   return min <= 1 ? 'just now' : `${min} min ago`;
 };
 
-/** Heredoc bodies are text being written, not commands: `cat > notes.md <<EOF … git commit … EOF`. */
-export const withoutHeredocs = (command) => command.replace(/<<-?\s*(['"]?)([A-Za-z_]\w*)\1[^\n]*\n[\s\S]*?\n\s*\2\s*(?=\n|$)/g, '');
-
-/** The command split where the shell would run one thing after another, never inside quotes. */
-export function segments(command) {
-  const out = [];
-  let cur = '';
-  let q = null;
-  for (let i = 0; i < command.length; i++) {
-    const c = command[i];
-    if (q) { cur += c; if (c === '\\' && q === '"') cur += command[++i] ?? ''; else if (c === q) q = null; continue; }
-    if (c === '"' || c === "'") { q = c; cur += c; continue; }
-    if (c === ';' || c === '\n' || c === '|' || c === '&') {
-      if ((c === '&' || c === '|') && command[i + 1] === c) i++;
-      out.push(cur); cur = ''; continue;
-    }
-    cur += c;
-  }
-  out.push(cur);
-  return out.filter((s) => s.trim());
-}
+// The quote-aware split, the heredoc strip and the shell unwrapping (`bash -c "…"`, `eval`, `env`…)
+// live in shell-unwrap.mjs, shared with the other guards (E2E defect 15). It is a sibling import
+// like trunk-policy.mjs; without it the guard cannot read a command and fails open.
+const SH = await import(new URL('./shell-unwrap.mjs', import.meta.url)).catch(() => null);
 const tokens = (s) => s.trim().split(/\s+/).filter(Boolean);
 
 /** What a branch-moving segment moves to, or null if it is a path checkout after all (`checkout .`). */
@@ -96,12 +79,14 @@ function moveTarget(seg, dir) {
  */
 export async function evaluate({ root, command, cwd, sessionId }) {
   if (typeof command !== 'string' || !command) return null;
+  if (!SH) return null;
   // Words inside quotes or heredocs are text, not commands: `grep -rn "git commit" docs/` is a search.
-  const bare = unquoted(withoutHeredocs(command));
-  if (!COMMITS_HERE.test(bare) && !MOVES_BRANCH.test(bare)) return null;
-  const self = (rel) => new URL(rel, import.meta.url);
-  const raw = segments(withoutHeredocs(command));
+  // Except where a wrapper hands the string to a shell: `bash -c "git commit"` runs the commit, so
+  // the segments judged are the ones the shell would really run (shell-unwrap.mjs).
+  const raw = SH.expand(command);
   const segs = raw.map(unquoted);
+  if (!segs.some((s) => COMMITS_HERE.test(s) || MOVES_BRANCH.test(s))) return null;
+  const self = (rel) => new URL(rel, import.meta.url);
   let dir = cwd || root;
   const branchAt = new Map(); // toplevel → branch the chain has moved it to
 

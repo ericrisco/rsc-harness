@@ -1006,7 +1006,15 @@ async function main() {
         // defeated by an argument the sweep itself told the agent to type.
         const confirmed = argv.includes('--confirm');
         const targets = one ? [one] : candidates.filter((c) => c.verdict === 'safe').map((c) => c.path);
-        if (!targets.length) { say('nothing to clean up.'); return; }
+        // The bulk reap also deletes plain local branches that have landed (`branch -d`, never -D):
+        // the worktree is not the only thing a merge leaves behind (E2E defect 14).
+        const reapBranches = () => {
+          if (one) return 0;
+          const { deleted } = W.reapMergedBranches(root);
+          for (const b of deleted) say(`✅ deleted merged branch ${b}`);
+          return deleted.length;
+        };
+        if (!targets.length) { if (!reapBranches()) say('nothing to clean up.'); return; }
         for (const t of targets) {
           const out = W.reapWorktree(root, t, { confirmed });
           if (out.removed) {
@@ -1018,6 +1026,7 @@ async function main() {
             process.exitCode = 1;
           }
         }
+        reapBranches();
         return;
       }
 

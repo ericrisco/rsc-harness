@@ -82,7 +82,8 @@ test('merely TALKING about a dangerous command is not running one', () => {
 test('a shell wrapper does not smuggle a real delete past the guard', () => {
   // The hole the "rm must be the executed command" rule could have opened: `bash -c "…"` really
   // does run the delete, so the wrapper is walked through rather than skipped over.
-  for (const cmd of [`bash -c "rm ${RF} /"`, `sh -c 'rm ${RF} build'`, `sudo bash -c "rm ${RF} /var"`]) {
+  for (const cmd of [`bash -c "rm ${RF} /"`, `sh -c 'rm ${RF} build'`, `sudo bash -c "rm ${RF} /var"`,
+    `eval "rm ${RF} build"`, `exec rm ${RF} build`, `FOO=1 rm ${RF} build`, `bash -c "cd /tmp && rm ${RF} junk"`]) {
     assert.equal(decide(cmd).decision, 'deny', `smuggled through a wrapper: ${cmd}`);
   }
 });

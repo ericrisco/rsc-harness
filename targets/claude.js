@@ -115,6 +115,9 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // Shared by session-start + userprompt-gate. Hooks are materialized file by file, so a module
   // they import must be copied as their SIBLING — a subdirectory import would break once copied.
   copyFileSync(join(HERE, 'hook-once.mjs'), join(paths.projectRoot, '.rsc', 'hook-once.mjs'));
+  // Shared by every PreToolUse guard (and the sello): what a Bash command really runs, `bash -c` and
+  // `eval` unwrapped. A sibling for the same reason, and here because the danger guard needs it too.
+  copyFileSync(join(HERE, 'shell-unwrap.mjs'), join(paths.projectRoot, '.rsc', 'shell-unwrap.mjs'));
   // Same reason: session-start imports the reaper for the landed-worktree sweep, so it travels as a
   // sibling too. Missing it does not break startup — the sweep is wrapped — it just goes silent.
   copyFileSync(join(HERE, 'worktree-reaper.mjs'), join(paths.projectRoot, '.rsc', 'worktree-reaper.mjs'));

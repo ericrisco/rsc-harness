@@ -81,6 +81,7 @@ export function generatedHookFiles({ target, cwd, policy }) {
     join(cwd, '.rsc', 'session-start.mjs'),
     join(cwd, '.rsc', 'worklog-checkpoint.mjs'),
     join(cwd, '.rsc', 'hook-once.mjs'),
+    join(cwd, '.rsc', 'shell-unwrap.mjs'),
     join(cwd, '.rsc', 'worktree-reaper.mjs'),
     join(cwd, '.rsc', 'auto-update.mjs'),
     // team-safe-default: the 3.0 start-up duties and the trunk policy (also read by branch-guard).
