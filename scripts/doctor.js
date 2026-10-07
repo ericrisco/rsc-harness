@@ -21,6 +21,7 @@ import { agentPath, targetHasAgents, effectiveAgentModel } from '../targets/agen
 import { projectOptOuts } from '../targets/opt-outs.js';
 import { versionReport } from './lib/versions.js';
 import { CONSTITUTION_PATH, constitutionIsDraft } from './lib/constitution-draft.js';
+import { onboardingReadiness } from './lib/onboarding-apply.js';
 
 // Gates the committed manifest says the team disarmed, still armed here. Read through the same
 // partition the installer uses, so a machine-only switch somebody's older rsc wrote into the
@@ -321,6 +322,14 @@ export function doctor({ target, home, cwd }) {
   report.pending = constitutionIsDraft(root)
     ? [{ id: 'constitution-draft', path: CONSTITUTION_PATH, action: 'Complete it with the `constitution` phase before the first SDD feature; ratifying removes `status: draft`.' }]
     : [];
+  // #298 — onboarding readiness is a SEPARATE question from health: is the accepted plan's floor
+  // on disk (the same check that prints RSC_ONBOARDING_READY), and is anything still a draft. It is
+  // reported, never folded into `healthy`: `healthy` and the exit code keep meaning "the installed
+  // harness works", which is what CI and editor extensions built on #277 read. Wrapped because a
+  // report must never fail for asking an extra question.
+  try { report.onboarding = onboardingReadiness(root); } catch (error) {
+    report.onboarding = { status: 'incomplete', missing: ['<onboarding readiness could not be read>'], pending: [], action: String(error?.message || error).slice(0, 200) };
+  }
   report.healthy = report.hookWired && !report.missing.length && !missingAgents.length && !missingCommands.length
     && !report.opencodePluginsOutdated.length;
   return report;
