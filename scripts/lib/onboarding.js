@@ -276,9 +276,16 @@ export function buildOnboardingPlan(record, evidence) {
   // so the chain is always one request away; this decision is what `reassess` watches, and what the
   // floor reads. Collapsing the two would have deleted reassess's reason to exist as a side effect
   // of an installer change, which is not a decision an installer change gets to make.
-  if (!practisesSdd) decisions.push(deferred('sdd', 'workflow', isSoftware
-    ? 'The software scope is small, so specification overhead is not justified yet.'
-    : 'SDD applies to substantial software work, which is not the declared project purpose.', sddTriggers, softwareTriggers));
+  // The reason says both halves, because the plan lists `.claude/skills/sdd` under managed paths
+  // and a bare "deferred" next to it read as a contradiction (E2E 2026-10-07). Only the wording
+  // changes: the decision stays the one deferred `workflow/sdd` entry that reassess watches.
+  const whyDeferred = isSoftware
+    ? 'the software scope is small, so specification overhead is not justified yet.'
+    : 'SDD applies to substantial software work, which is not the declared project purpose.';
+  const sddReason = skills.includes('sdd')
+    ? `The sdd skill is installed, so the chain is one request away; the practice is deferred: ${whyDeferred}`
+    : whyDeferred.charAt(0).toUpperCase() + whyDeferred.slice(1);
+  if (!practisesSdd) decisions.push(deferred('sdd', 'workflow', sddReason, sddTriggers, softwareTriggers));
   if (baseAgents) {
     for (const id of agents) decisions.push(selected(id, 'agent', 'The accepted substantial software workflow requires this implementation or review role.'));
   } else {

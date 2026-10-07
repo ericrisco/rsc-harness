@@ -210,3 +210,18 @@ test('the continuation says what was done and what is next, and lists only what 
   assert.doesNotMatch(context, /installed-before\.json/, 'untouched by the session');
   assert.doesNotMatch(context, /metrics: cost=unknown toolCalls=unknown/);
 });
+
+// E2E defect 7d: doctor showed "knownTotal": { "cost": 0 } for three sessions whose cost was unknown.
+// A sum over nothing known is not zero — it is unknown.
+test('metrics: when every session is unknown, knownTotal is null, not 0', () => {
+  const cwd = repo();
+  for (const [sessionId, minute] of [['x', '01'], ['y', '02']]) {
+    memory.capture({ cwd, sessionId, target: 'claude', event: 'start', now: `2026-09-02T10:${minute}:00.000Z` });
+    writeFileSync(join(cwd, 'README.md'), `${sessionId}\n`);
+    memory.capture({ cwd, sessionId, target: 'claude', event: 'edit', editDelta: 1, cost: null, toolCalls: null, now: `2026-09-02T10:${minute}:30.000Z` });
+  }
+  const summary = memory.metricsSummary({ cwd, now: '2026-09-02T11:00:00.000Z' });
+  assert.deepEqual(summary.unknown, { cost: 2, toolCalls: 2 });
+  assert.deepEqual(summary.knownTotal, { cost: null, toolCalls: null });
+  assert.deepEqual(memory.metricsSummary({ cwd: repo() }).knownTotal, { cost: null, toolCalls: null }, 'no sessions: nothing known');
+});

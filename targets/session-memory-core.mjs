@@ -561,10 +561,11 @@ export function metricsSummary(input = {}) {
     cost: sessions.filter((row) => row.cost === null).length,
     toolCalls: sessions.filter((row) => row.toolCalls === null).length,
   };
-  const knownTotal = {
-    cost: sessions.reduce((sum, row) => sum + (row.cost ?? 0), 0),
-    toolCalls: sessions.reduce((sum, row) => sum + (row.toolCalls ?? 0), 0),
-  };
+  // A sum over nothing known is unknown, not zero: doctor printed `cost: 0` for three sessions whose
+  // cost nobody had measured.
+  const knownSum = (key) => (unknown[key] === sessions.length ? null
+    : sessions.reduce((sum, row) => sum + (row[key] ?? 0), 0));
+  const knownTotal = { cost: knownSum('cost'), toolCalls: knownSum('toolCalls') };
   const total = {
     cost: !sessions.length || unknown.cost ? null : knownTotal.cost,
     toolCalls: !sessions.length || unknown.toolCalls ? null : knownTotal.toolCalls,

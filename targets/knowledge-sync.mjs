@@ -36,7 +36,7 @@ import {
   closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, statSync,
   unlinkSync, writeFileSync,
 } from 'node:fs';
-import { basename, dirname, extname, isAbsolute, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultBranchName, trunkClosed } from './trunk-policy.mjs';
 
@@ -193,10 +193,17 @@ function changedKnowledge(root) {
   return [...new Set(files)].filter(isKnowledge);
 }
 
-function summary(files) {
-  const names = [...new Set(files.map((f) => basename(f, extname(f))))].sort();
-  return listed(names, 3);
+// The subject of an auto-commit. Counted by FILE and named by full path: it used to dedupe by
+// basename-without-extension, so eight files read as "… y 4 más" and `01-TOOLS/.gitignore` was
+// indistinguishable from `01-TOOLS/_TEMPLATE/.gitignore`.
+export function commitSummary(files) {
+  const paths = [...new Set(files)].sort();
+  if (paths.length <= 1) return paths.map((p) => clean(p, 80)).join('');
+  const max = 3;
+  const shown = paths.slice(0, max).map((p) => clean(p, 80)).join(', ');
+  return `${paths.length} ficheros: ${shown}${paths.length > max ? ` y ${paths.length - max} más` : ''}`;
 }
+const summary = commitSummary;
 
 /**
  * Commit your knowledge changes so they can go up. Local and fast; returns the new SHA or null.
