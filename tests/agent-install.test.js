@@ -93,3 +93,18 @@ test('fresh minimal and core profiles materialize only the four base agents', as
     assert.deepEqual(stateAt(cwd).agents.sort(), [...BASE_AGENT_NAMES].sort(), profile);
   }
 });
+
+// 3.0.11 shipped `finding-verifier`, and `review` dispatches it. Projects whose accepted plan lists
+// the refuters by name kept their old list on sync and never got it — found on the first real sync of
+// twelve installs. The verifier travels with the refuters; a plan without them gets nothing new.
+test('a plan that lists the refuters gets the finding-verifier with them; one without them does not', async () => {
+  const withPanel = repo();
+  const panel = ['developer', 'refuter-correctness', 'refuter-security', 'refuter-tests'];
+  await applyInstall({ agentIds: panel, target: 'claude', home: withPanel, cwd: withPanel, policy: { agents: panel } });
+  assert.ok(existsSync(agentPath('claude', withPanel, 'finding-verifier')), 'the panel is incomplete without its verifier');
+  assert.ok(stateAt(withPanel).agents.includes('finding-verifier'));
+
+  const noPanel = repo();
+  await applyInstall({ agentIds: ['developer'], target: 'claude', home: noPanel, cwd: noPanel, policy: { agents: ['developer'] } });
+  assert.ok(!existsSync(agentPath('claude', noPanel, 'finding-verifier')), 'no refuters, no verifier');
+});
