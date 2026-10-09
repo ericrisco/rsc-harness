@@ -2,7 +2,7 @@
 name: harness
 description: "Use when governing a workspace's control plane, code or not — the `01-TOOLS/` tooling layer, the `02-DOCS/` chaos→knowledge wiki, the root Knowledge map. Audits it, migrates legacy `XX-*` folders, scaffolds provider tooling, sweeps the inbox, writes root CLAUDE.md/AGENTS.md. NOT the bootstrap front door (that is `init`, which hands off here)."
 tags: [harness, company, ops, docs, wiki, connect, tools, knowledge]
-recommends: [init]
+recommends: [init, connect-tool]
 profiles: [minimal, core, full]
 origin: risco
 ---
@@ -81,7 +81,7 @@ for harness-level choices, but defer concrete deploy mechanics to `deployment`, 
 
 The skill proposes, the user confirms, the skill executes. Every destructive operation (deleting a legacy folder, merging into an existing `CLAUDE.md`) requires explicit consent quoted back from the user, not inferred.
 
-**Out of scope:** adding a single tool — the user does `cp -r 01-TOOLS/_TEMPLATE 01-TOOLS/<X>` manually, no need for the full protocol; and refactoring runtime code — this skill is operational tooling only, never runtime.
+**Out of scope:** adding a single tool the user names — that is `../connect-tool/SKILL.md`, which researches the tool and builds `01-TOOLS/<X>/` from the template; and refactoring runtime code — this skill is operational tooling only, never runtime.
 
 ## Protocol — five phases
 
@@ -152,7 +152,7 @@ Execute in this exact order. Each step writes to disk; abort and report on first
    - Same logic for `AGENTS.md`, rendered from `references/agents-md-template.md`.
 2. **Create `01-TOOLS/` skeleton.**
    - Create `01-TOOLS/` directory.
-   - Copy `assets/_TEMPLATE/` to `01-TOOLS/_TEMPLATE/`. The asset ships its ignore rules as `gitignore` (no leading dot, because npm never packages a `.gitignore`) and it must land as `.gitignore`; the installer already does this on every apply, so normally you will find the directory built. This template is **generic boilerplate with placeholders (`<NOMBRE_TOOL>`, `<TOOL>_API_KEY`)**. The user copies it manually when adding a tool NOT in the catalog. The skill itself does NOT use `_TEMPLATE/` to generate the detected tools — those come from `providers.yaml`.
+   - Copy `assets/_TEMPLATE/` to `01-TOOLS/_TEMPLATE/`. The asset ships its ignore rules as `gitignore` (no leading dot, because npm never packages a `.gitignore`) and it must land as `.gitignore`; the installer already does this on every apply, so normally you will find the directory built. This template is **generic boilerplate with placeholders (`<NOMBRE_TOOL>`, `<TOOL>_API_KEY`)**. `../connect-tool/SKILL.md` copies it when the user asks for a tool NOT in the catalog. The skill itself does NOT use `_TEMPLATE/` to generate the detected tools — those come from `providers.yaml`.
 3. **Per detected tool** (in catalog order):
    - Create `01-TOOLS/<ID>/`.
    - Write every file from the provider entry's `files:` map verbatim (replacing template variables: `{{TOOL_ID}}`, `{{DASHBOARD_URL}}`, etc.).
@@ -279,7 +279,7 @@ Opt out of the size nudge with `.rsc/.no-claudemd-check`.
 The consent, merge and `.env` rules live with the phases that enforce them above. These four are
 scope rules that no single phase owns, and breaking one destroys something the user cannot get back:
 
-1. **No speculative tools.** A tool is created if and only if the detector found evidence in the user's code. No "we should probably have a Sentry tool too".
+1. **No speculative tools.** A tool is created only when there is evidence: the detector found it in the user's code, or the user asked for it by name (then `../connect-tool/SKILL.md` builds it). No "we should probably have a Sentry tool too".
 2. **Idempotent.** Running the skill twice produces no extra side effects. Re-scanning a project already canonical detects "nothing to do".
 3. **Out-of-scope dirs are invisible.** `node_modules/`, `.venv/`, `.next/`, `__pycache__/`, `.git/`, `dist/`, `build/`, `.dart_tool/` are never read for detection and never touched.
 4. **Subproject internals are out of scope.** `.env.example`, `requirements.txt`, `package.json`, source files inside subprojects are READ for detection only. They are NEVER moved, renamed, modified, or deleted. The skill operates exclusively on workspace-root artifacts (`CLAUDE.md`, `AGENTS.md`, `01-TOOLS/`, `02-DOCS/`, and `XX-*` legacy folders at the root level).

@@ -1,7 +1,7 @@
 {
   "version": "3.0.12",
   "counts": {
-    "skills": 270,
+    "skills": 271,
     "agents": 34,
     "commands": 53,
     "fixedCommands": 20
@@ -809,6 +809,35 @@
         "tauri"
       ],
       "profiles": []
+    },
+    {
+      "id": "connect-tool",
+      "description": "Use when the user names a specific tool to connect to the agent (an ERP, accounting or desktop program, CRM, WhatsApp, a spreadsheet, a database): research its real docs, choose the safest route, build `01-TOOLS/<TOOL>/` with a test that proves it, and guide the user. NOT a full typed API client (that is `api-connector-builder`), NOT a whole-workspace tooling scan (that is `harness`).",
+      "tags": [
+        "connect",
+        "integration",
+        "erp",
+        "legacy",
+        "desktop",
+        "database",
+        "read-only",
+        "mcp",
+        "api",
+        "export",
+        "least-privilege",
+        "onboarding"
+      ],
+      "recommends": [
+        "harness",
+        "api-connector-builder",
+        "automation-strategy",
+        "automation-flows"
+      ],
+      "profiles": [
+        "minimal",
+        "core",
+        "full"
+      ]
     },
     {
       "id": "constitution",
@@ -2293,7 +2322,8 @@
         "knowledge"
       ],
       "recommends": [
-        "init"
+        "init",
+        "connect-tool"
       ],
       "profiles": [
         "minimal",
