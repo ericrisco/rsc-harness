@@ -79,7 +79,7 @@ test('a harness whose declaration predates a mandatory skill is reported, not ca
     catalogVersion: '1.2.2', tier: null, optOuts: [],
   });
   const v = divergence({ cwd: d, target: 'claude' });
-  assert.deepEqual(v.floorMissing, ['ftd']);
+  assert.deepEqual(v.floorMissing, ['ftd', 'connect-tool']);
 });
 
 test('a harness that already declares the whole floor reports nothing', async () => {

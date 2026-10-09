@@ -10,7 +10,11 @@
 // routes ordinary work to `../ftd/SKILL.md`, so a harness without it has a default
 // lane that points at nothing. Membership of every profile was not enough — a
 // declaration written before the skill existed never gains it (see `syncInstalled`).
-export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd']);
+//
+// `connect-tool` joined in 3.0.13 (issue #303): rsc ships no ready-made connections, so "connect my
+// Holded" is answered by a method, not a list, and that method has to be there the first time the
+// user asks, in any kind of project. Like `unslop`, only its description is paid for on other turns.
+export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd', 'connect-tool']);
 
 export function withDefaultSkillFloor(skillIds = []) {
   return [...new Set([...DEFAULT_SKILL_FLOOR, ...skillIds])];

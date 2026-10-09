@@ -20,7 +20,8 @@ const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
 // enruta y que no está instalado convierte la primera petición de trabajo real en una interrupción
 // para instalarlo — el mismo defecto que `install-single-harness` documenta en el perfil mínimo.
 // 6 since eli5 and show-me folded into `orient` and bro into `unslop` (scripts/lib/retired-skills.js).
-const BASE = ['ftd', 'harness', 'init', 'orient', 'suggest', 'unslop'];
+// 7 since 3.0.13: `connect-tool` (#303), the method for connecting any tool the user names.
+const BASE = ['connect-tool', 'ftd', 'harness', 'init', 'orient', 'suggest', 'unslop'];
 
 test('the base install is exactly the declared set', () => {
   assert.deepEqual(skillsForProfile(manifest, 'minimal').sort(), [...BASE].sort());
