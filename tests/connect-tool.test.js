@@ -61,7 +61,7 @@ test('the read-only proof tells a permission error apart from any other failure'
   }
 });
 
-test('the guide for someone else is ready to send, and asks before touching anything', () => {
-  assert.match(skill, /```text\nHi <name>, we want our assistant to READ/);
-  assert.match(skill, /We will not modify anything/);
+test('no ready-to-send message for an IT person or an accounting firm (removed by the owner)', () => {
+  assert.doesNotMatch(skill, /Hi <name>|ready to\s+send|write the message/i);
+  assert.match(skill, /Check the support terms/, 'the vendor-terms caution stays, without the message');
 });

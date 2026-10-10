@@ -17,8 +17,8 @@ should_trigger:
   - prompt: "Hook up our WhatsApp Business number so the agent can see incoming orders."
     why: "A named tool where the route is not obvious (the Business app versus the Cloud API). Research decides, and reading orders is the first, read-only step."
 
-  - prompt: "Mi TPV no tiene API. ¿Qué le pido al informático para que el agente vea las ventas?"
-    why: "Non-obvious trigger: no connection yet, the deliverable is the route choice plus the ready-to-send message for the IT person asking for an export or a read-only user."
+  - prompt: "Mi TPV no tiene API. ¿Cómo hago que el agente vea las ventas?"
+    why: "Non-obvious trigger: no API is not the end. The route comes from the product's export features or a read-only copy of its database, found in the vendor's docs."
 
   - prompt: "Connect the agent to our Access database, the one the old stock program uses."
     why: "A legacy file database. Copy the .mdb/.accdb, read it with mdbtools or convert it, and never write into the program's file."
@@ -55,4 +55,4 @@ capability:
       - "Chooses a read-only route and never proposes writing into the program's database; if writing comes up, it goes through the official import format"
       - "Proposes reading a nightly copy with a SELECT-only user, reached privately, never the live database exposed to the internet"
       - "Builds 01-TOOLS/<TOOL>/ from the template with a test_connection that proves reading works AND that a write is refused, telling a permission error apart from any other failure"
-      - "Writes the ready-to-send message for the accounting firm asking for a read-only user or an export, and records the connection in 02-DOCS"
+      - "Explains the chosen route in plain words and records the connection in 02-DOCS"

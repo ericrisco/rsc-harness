@@ -27,8 +27,6 @@ Ask only what the docs cannot answer, in plain words (`technical_level` in
   server in the office.
 - **Read or write?** Reports and questions need reading. Entering invoices needs writing, and
   writing is a separate, explicit decision (below).
-- **Who administers it?** Themselves, an IT person, an accounting firm, the vendor's distributor.
-  That person often holds the keys, and step 5 writes the message for them.
 
 ## 1. Research: the docs decide, never memory
 
@@ -128,20 +126,12 @@ Most small-business software was never meant to be connected. The safe pattern:
 
 4. **Reach it privately.** Same network, or a private mesh (the `TAILSCALE` tool). Never open the
    database port to the internet.
-5. **Ask first.** Many vendors and distributors restrict direct database access in their support
-   terms. The message in step 5 asks before anyone touches anything.
+5. **Check the support terms.** Many vendors restrict direct database access. If they do, use
+   their export or their API instead.
 
 ## 5. Guide the user, in their words
 
-Say what you found, which route you chose and why, and what happens next, in short sentences. When
-the next step belongs to someone else, write the message for them, ready to send:
-
-```text
-Hi <name>, we want our assistant to READ <data> from <program> for <purpose>.
-Could you create a read-only user (SELECT only, no write permissions) on <database or a copy of
-it>, and tell us the server name and port? We will not modify anything. If your support terms
-prefer another method (an export, an official API), we are happy to use that instead.
-```
+Say what you found, which route you chose and why, and what happens next, in short sentences.
 
 ## 6. Leave it written down
 
