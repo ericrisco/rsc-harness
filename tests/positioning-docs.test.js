@@ -16,7 +16,8 @@ const surfaces = {
 };
 
 test('public surfaces define rsc-harness as the guided harness builder', () => {
-  assert.match(surfaces.readme.slice(0, 2400), /You decide what to build[\s\S]*rsc-harness builds your agent['’]s harness/i);
+  // 2026-10-10, owner's tagline: «tú construyes el producto, el arnés te lo construye rsc».
+  assert.match(surfaces.readme.slice(0, 2400), /You build the product[\s\S]*rsc-harness builds its harness/i);
   assert.match(surfaces.en.slice(0, 9000), /You build the project[\s\S]*rsc-harness builds the harness/i);
   assert.match(surfaces.en.slice(0, 9000), /You decide what to build/i);
   assert.match(surfaces.es.slice(0, 9000), /Tú construyes el proyecto[\s\S]*rsc-harness construye el arnés/i);
