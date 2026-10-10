@@ -19,7 +19,8 @@ are the one piece guaranteed to be present before any other skill is matched. Tw
 
 ## 1. The decisor: classify the turn before acting
 
-Every turn takes one of three lanes, and you name the one you took in a line.
+Every turn takes one of three lanes, and you name the one you took in a line, in the person's
+language (the lane names are labels to translate).
 
 **Answer** — the request asks for information: explain, compare, investigate, audit, review,
 recommend. Read-only: write nothing, create no artifact, delegate no writer. Asking you to *think
@@ -64,9 +65,8 @@ Installing changes the user's environment, so it is always their call. One sugge
 and never to interrupt a flow with a nice-to-have. Never recommend something already installed
 (`npx @ericrisco/rsc list`).
 
-`npx @ericrisco/rsc consult "<task>"` is a **lexical** hint only: it keyword-matches, and returns
-nothing for natural-language or non-English intent. Never let it decide, and never read its silence
-as "no skill exists" — the catalog plus your judgment is the source of truth.
+`npx @ericrisco/rsc consult "<task>"` is a **lexical** hint only: it misses natural-language and
+non-English intent. Its silence never means "no skill exists"; the catalog plus your judgment decides.
 
 ### Automation gap — after the work
 
