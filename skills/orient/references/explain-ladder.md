@@ -5,7 +5,7 @@ or go straight to the step they ask for. Each step replaces the last one; it doe
 
 ## Step 1 — text
 
-The three rules of `../SKILL.md`: STE, stands alone, short. Most answers stop here.
+The four rules of `../SKILL.md`: their language, STE, stands alone, short. Most answers stop here.
 
 ## Step 2 — one diagram in the chat
 

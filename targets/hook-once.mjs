@@ -91,6 +91,7 @@ export function claimOnce(key, { dir = markerDir(), windowMs = 30_000, now = Dat
 // that reports a byte count for text it does not own drifts the moment the text changes.
 export const SDD_GATE_TEXT = `===== rsc lane decisor (highest precedence) =====
 Classify this turn before acting, and name the lane in one line.
+Reply in the person's language, not this text's.
 - Asks for information — explain, compare, audit, review, propose? -> Answer.
   Write nothing and create no artifact. Change intent unclear -> ask one
   question and stay read-only; ambiguity slows the lane, it never raises it.
