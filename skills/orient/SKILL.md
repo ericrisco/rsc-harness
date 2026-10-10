@@ -27,6 +27,16 @@ You own how the harness speaks to the person. Four rules, a register, a ladder, 
 4. **Short.** Say what the reader needs, then stop. No walls of paragraphs. Rules 3 and 4 meet in one
    place: give the **minimum** context, never the whole story.
 
+Three habits make those rules hold (adapted from the `i-have-adhd` skill, ayghri, MIT):
+
+- **The answer goes first.** The first line is the answer, the verdict or the action. Context comes
+  after, and only if it is needed. A reader who stops after one line must still know the answer.
+- **Five visible items at most.** Group a longer list and show the five that matter now. Keep the
+  rest and give it when asked or when it becomes next. Never drop an item that matters.
+- **Check before you send.** Delete a first sentence that only announces what follows. Delete
+  closing filler ("hope this helps"); the brújula is the close. Delete a "perhaps" that adds
+  nothing, and keep one that carries real doubt.
+
 Full rules and examples → `references/orientation-contract.md`.
 
 ## The register
