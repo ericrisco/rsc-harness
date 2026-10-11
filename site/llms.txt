@@ -1,9 +1,12 @@
 # rsc-harness — the guided harness builder for AI agents
 
-> You decide what to build. rsc-harness builds your agent's harness. Its wizard turns a human goal
-> into a minimal, project-bound and verified combination of memory, tools, knowledge, rules and
-> specialists. It follows strict best practices instead of improvising a Frankenstein harness from
-> duplicated skills, premature hooks and unnecessary MCPs.
+> You build the product. rsc-harness builds its harness. One message to the coding agent you
+> already use installs a project memory (02-DOCS/), tested tool connections (01-TOOLS/), a handful
+> of skills chosen for the project and hooks that check work before it is called done. Its wizard
+> follows strict best practices instead of improvising a Frankenstein harness from duplicated
+> skills, premature hooks and unnecessary MCPs.
+
+Machine-readable skill catalog: [catalog.json](https://ericrisco.github.io/rsc-harness/catalog.json)
 
 Standards such as Agent Skills, MCP and AGENTS.md define individual pieces. rsc-harness supplies the
 integrated method: analyze the project root, ask the user, show selected/deferred/excluded choices,
@@ -61,11 +64,13 @@ Canonical non-interactive preview:
 
 ## Key links
 
-- npm: https://www.npmjs.com/package/@ericrisco/rsc
-- README: https://github.com/ericrisco/rsc-harness
-- English: https://ericrisco.github.io/rsc-harness/
-- Español: https://ericrisco.github.io/rsc-harness/es/
-- Agent Skills: https://agentskills.io/specification
+- [npm package](https://www.npmjs.com/package/@ericrisco/rsc): install with npx @ericrisco/rsc@latest onboard
+- [README](https://github.com/ericrisco/rsc-harness): full documentation and reference
+- [Website, English](https://ericrisco.github.io/rsc-harness/): overview, agent instructions and FAQ
+- [Website, Español](https://ericrisco.github.io/rsc-harness/es/): la misma página en español
+- [Skill catalog (JSON)](https://ericrisco.github.io/rsc-harness/catalog.json): every skill id grouped by domain
+- [Releases](https://github.com/ericrisco/rsc-harness/releases): changelog
+- [Agent Skills specification](https://agentskills.io/specification): the open format the skills follow
 
 ## Facts
 

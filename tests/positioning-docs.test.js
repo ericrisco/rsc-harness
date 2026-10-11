@@ -18,10 +18,8 @@ const surfaces = {
 test('public surfaces define rsc-harness as the guided harness builder', () => {
   // 2026-10-10, owner's tagline: «tú construyes el producto, el arnés te lo construye rsc».
   assert.match(surfaces.readme.slice(0, 2400), /You build the product[\s\S]*rsc-harness builds its harness/i);
-  assert.match(surfaces.en.slice(0, 9000), /You build the project[\s\S]*rsc-harness builds the harness/i);
-  assert.match(surfaces.en.slice(0, 9000), /You decide what to build/i);
-  assert.match(surfaces.es.slice(0, 9000), /Tú construyes el proyecto[\s\S]*rsc-harness construye el arnés/i);
-  assert.match(surfaces.es.slice(0, 9000), /Tú decides qué quieres construir/i);
+  assert.match(surfaces.en.slice(0, 9000), /You build the product[\s\S]*rsc-harness builds its harness/i);
+  assert.match(surfaces.es.slice(0, 9000), /Tú construyes el producto[\s\S]*rsc-harness construye su arnés/i);
   assert.match(surfaces.llms.slice(0, 1200), /guided harness builder/i);
   assert.match(JSON.parse(surfaces.package).description, /guided harness builder/i);
 });
@@ -38,8 +36,12 @@ test('the public story names the Frankenstein risk and concrete best practices',
 
 test('the website leads with the agent handoff and demonstrates proportional judgment', () => {
   for (const [name, body] of Object.entries({ en: surfaces.en, es: surfaces.es })) {
-    const hero = body.slice(body.indexOf('<!-- HERO -->'), body.indexOf('<!-- ANSWER-FIRST'));
-    assert.ok(hero.indexOf('agent-prompt') < hero.indexOf('cmd-hero'), `${name} must put the agent prompt before the terminal command`);
+    // The install block: the message to paste comes first, the terminal command is the fallback.
+    const start = body.indexOf('<!-- HERO -->');
+    const hero = body.slice(start, body.indexOf('<!-- ', start + 5));
+    assert.ok(start >= 0 && hero.includes('agent-prompt'), `${name} must have the agent prompt in the install block`);
+    assert.ok(hero.indexOf('agent-prompt') < hero.indexOf('rsc@latest onboard'), `${name} must put the agent prompt before the terminal command`);
+    assert.match(body, /for AI agents reading this page|para agentes que leen esta página/i, `${name} must keep the instructions agents follow`);
     assert.match(body, /selected|seleccionado/i, `${name} must show a selected component`);
     assert.match(body, /deferred|pospuesto/i, `${name} must show a deferred component`);
     assert.match(body, /excluded|excluido/i, `${name} must show an excluded component`);

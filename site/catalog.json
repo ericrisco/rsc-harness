@@ -1,0 +1,388 @@
+[
+ {
+  "t": "Core & control plane",
+  "ids": [
+   "init",
+   "harness",
+   "orient",
+   "suggest",
+   "unslop",
+   "author-skill",
+   "sdd-init"
+  ]
+ },
+ {
+  "t": "Spec-Driven Development",
+  "ids": [
+   "ftd",
+   "sdd",
+   "constitution",
+   "idea-refinement",
+   "specify",
+   "clarify",
+   "plan",
+   "tasks",
+   "analyze",
+   "decision-challenge",
+   "implement",
+   "source-grounded-development",
+   "verify",
+   "review",
+   "simplify-code",
+   "ship",
+   "debug",
+   "worktrees",
+   "parallel"
+  ]
+ },
+ {
+  "t": "Run a business",
+  "ids": [
+   "finance-ops",
+   "invoicing",
+   "bookkeeping",
+   "pricing",
+   "sales-pipeline",
+   "lead-gen",
+   "cold-outreach",
+   "proposals",
+   "contracts",
+   "customer-support",
+   "client-onboarding",
+   "retention",
+   "hiring",
+   "people-ops",
+   "inventory",
+   "logistics-ops",
+   "procurement",
+   "meeting-notes",
+   "sop-builder",
+   "project-ops"
+  ]
+ },
+ {
+  "t": "Raise & model money",
+  "ids": [
+   "pitch-deck",
+   "investor-materials",
+   "financial-model",
+   "fundraising",
+   "unit-economics",
+   "grants"
+  ]
+ },
+ {
+  "t": "Legal, privacy & compliance",
+  "ids": [
+   "gdpr-privacy",
+   "terms-conditions",
+   "compliance",
+   "data-policy",
+   "ip-trademark"
+  ]
+ },
+ {
+  "t": "Market & brand",
+  "ids": [
+   "marketing",
+   "seo-geo",
+   "content-engine",
+   "social-publisher",
+   "brand-voice",
+   "brand-identity",
+   "newsletter",
+   "landing-copy",
+   "ads",
+   "article-writing",
+   "case-studies",
+   "video-shorts",
+   "podcast",
+   "market-research",
+   "competitor-watch",
+   "press-kit",
+   "community",
+   "webinar",
+   "review-management"
+  ]
+ },
+ {
+  "t": "Grow a channel (YouTube / TikTok / Reels / LinkedIn / Medium)",
+  "ids": [
+   "youtube-api",
+   "youtube-strategy",
+   "youtube-ideation",
+   "youtube-thumbnails",
+   "youtube-packaging",
+   "remotion-video",
+   "tiktok-api",
+   "instagram-api",
+   "shortform-strategy",
+   "shortform-ideation",
+   "shortform-packaging",
+   "shortform-editing",
+   "viral-score",
+   "linkedin-api",
+   "linkedin-strategy",
+   "linkedin-content",
+   "linkedin-carousels",
+   "linkedin-outreach",
+   "medium-writing",
+   "medium-publishing",
+   "medium-strategy"
+  ]
+ },
+ {
+  "t": "Connect & automate",
+  "ids": [
+   "connect-tool",
+   "stripe",
+   "email-connector",
+   "google-workspace",
+   "notion-connector",
+   "whatsapp-telegram",
+   "automation-flows",
+   "api-connector-builder",
+   "webhooks",
+   "data-scraper",
+   "spreadsheet-ops",
+   "calendar-scheduling",
+   "document-processing",
+   "e-signature"
+  ]
+ },
+ {
+  "t": "Automation platforms",
+  "ids": [
+   "automation-strategy",
+   "n8n",
+   "make",
+   "zapier",
+   "power-automate"
+  ]
+ },
+ {
+  "t": "Data & analytics",
+  "ids": [
+   "analytics",
+   "dashboard",
+   "kpi-framework",
+   "reporting",
+   "ab-testing",
+   "forecasting",
+   "data-cleaning",
+   "business-intelligence"
+  ]
+ },
+ {
+  "t": "AI · build it in",
+  "ids": [
+   "building-agents",
+   "rag",
+   "embeddings-search",
+   "prompt-engineering",
+   "llm-pipeline",
+   "agent-eval",
+   "chatbot",
+   "ai-media",
+   "replicate-images",
+   "structured-extraction",
+   "agent-safety",
+   "cost-tracking"
+  ]
+ },
+ {
+  "t": "AI · run it on",
+  "ids": [
+   "replicate",
+   "runpod",
+   "modal",
+   "huggingface",
+   "ollama",
+   "together-fireworks",
+   "fal"
+  ]
+ },
+ {
+  "t": "AI · train it",
+  "ids": [
+   "machine-learning",
+   "deep-learning",
+   "nlp",
+   "finetuning",
+   "training-data",
+   "unsloth",
+   "open-weights",
+   "vllm"
+  ]
+ },
+ {
+  "t": "Languages",
+  "ids": [
+   "typescript",
+   "python",
+   "java",
+   "csharp-dotnet",
+   "php",
+   "ruby",
+   "cpp",
+   "elixir",
+   "bash-scripting",
+   "sql",
+   "go"
+  ]
+ },
+ {
+  "t": "Frameworks & app stacks",
+  "ids": [
+   "fastapi",
+   "nextjs",
+   "react",
+   "react-native",
+   "vue-nuxt",
+   "angular",
+   "svelte",
+   "astro",
+   "solid-js",
+   "htmx",
+   "nodejs",
+   "nestjs",
+   "django",
+   "laravel",
+   "rails",
+   "spring-boot",
+   "phoenix",
+   "flutter",
+   "swift-ios",
+   "kotlin-android",
+   "compose-multiplatform",
+   "expo",
+   "tauri",
+   "electron",
+   "rust",
+   "wordpress",
+   "shopify",
+   "no-code-app",
+   "chrome-extension",
+   "api-design"
+  ]
+ },
+ {
+  "t": "Game development",
+  "ids": [
+   "godot",
+   "unity",
+   "unreal",
+   "game-design",
+   "game-storytelling",
+   "level-design",
+   "gamedev-shaders",
+   "gamedev-multiplayer",
+   "gamedev-physics",
+   "gamedev-pathing",
+   "gamedev-shipping"
+  ]
+ },
+ {
+  "t": "Databases & data layer",
+  "ids": [
+   "postgresdb",
+   "mysql",
+   "mongodb",
+   "redis",
+   "supabase",
+   "neon",
+   "planetscale",
+   "sqlite-turso",
+   "prisma-orm",
+   "drizzle-orm",
+   "firebase",
+   "dynamodb",
+   "vector-db",
+   "clickhouse-analytics",
+   "duckdb",
+   "db-migrations",
+   "backups"
+  ]
+ },
+ {
+  "t": "Ship & operate · platforms",
+  "ids": [
+   "vercel",
+   "netlify",
+   "cloudflare",
+   "railway",
+   "render",
+   "fly-io",
+   "coolify",
+   "hetzner",
+   "digitalocean",
+   "aws-essentials",
+   "gcp-essentials"
+  ]
+ },
+ {
+  "t": "Ship & operate · devops",
+  "ids": [
+   "docker",
+   "github-actions",
+   "git-workflow",
+   "domains-dns",
+   "monitoring",
+   "email-deliverability",
+   "scaling",
+   "deployment",
+   "deprecation"
+  ]
+ },
+ {
+  "t": "Ship & operate · quality & security",
+  "ids": [
+   "code-review",
+   "security-scan",
+   "secure-coding",
+   "testing-py",
+   "testing-web",
+   "testing-go",
+   "e2e-testing",
+   "accessibility",
+   "performance",
+   "error-handling",
+   "observability"
+  ]
+ },
+ {
+  "t": "Motion & interface craft",
+  "ids": [
+   "motion-craft",
+   "ui-engineering",
+   "variant-explorer"
+  ]
+ },
+ {
+  "t": "Design & content craft",
+  "ids": [
+   "design-loop",
+   "design",
+   "design-dna",
+   "presentations",
+   "course-storytelling",
+   "course-builder",
+   "technical-writing",
+   "translation-l10n"
+  ]
+ },
+ {
+  "t": "Knowledge & meta",
+  "ids": [
+   "knowledge-ops",
+   "codebase-onboarding",
+   "research-ops",
+   "decision-records",
+   "continuous-learning",
+   "skill-scout",
+   "context-budget",
+   "roast-me",
+   "fable-operator"
+  ]
+ }
+]

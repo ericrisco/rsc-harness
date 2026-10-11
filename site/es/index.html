@@ -3,274 +3,354 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Construye el arnés adecuado para tu agente — rsc-harness</title>
-<meta name="description" content="Tú decides qué quieres construir. rsc-harness crea un arnés mínimo y verificado siguiendo buenas prácticas estrictas — gratis y open source.">
+<title>rsc-harness: memoria y arnés para tu agente de código con IA</title>
+<meta name="description" content="Tú construyes el producto. rsc-harness construye su arnés: memoria, conexiones, skills y comprobaciones para Claude Code, Codex, Cursor y 15 más. Gratis, MIT.">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="Eric Risco">
 <link rel="canonical" href="https://ericrisco.github.io/rsc-harness/es/">
 <link rel="alternate" hreflang="en" href="https://ericrisco.github.io/rsc-harness/">
 <link rel="alternate" hreflang="es" href="https://ericrisco.github.io/rsc-harness/es/">
 <link rel="alternate" hreflang="x-default" href="https://ericrisco.github.io/rsc-harness/">
-<meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#fdfdfb" media="(prefers-color-scheme: light)">
-
+<link rel="alternate" type="text/plain" title="llms.txt" href="https://ericrisco.github.io/rsc-harness/llms.txt">
+<meta name="theme-color" content="#0f1217">
+<meta name="color-scheme" content="dark">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="rsc">
-<meta property="og:title" content="Tú decides qué construir. rsc-harness construye el arnés.">
-<meta property="og:description" content="Evita un arnés Frankenstein. Un wizard aplica buenas prácticas estrictas y muestra el plan exacto antes de instalar.">
+<meta property="og:site_name" content="rsc-harness">
+<meta property="og:title" content="Tú construyes el producto. rsc-harness construye su arnés.">
+<meta property="og:description" content="Un mensaje le da al agente de código que ya usas una memoria, conexiones probadas, las skills justas y comprobaciones que se ejecutan solas.">
 <meta property="og:url" content="https://ericrisco.github.io/rsc-harness/es/">
 <meta property="og:image" content="https://ericrisco.github.io/rsc-harness/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Tú construyes el producto. rsc-harness construye su arnés.">
 <meta property="og:locale" content="es_ES">
 <meta property="og:locale:alternate" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Construye el arnés adecuado para tu agente — rsc-harness">
-<meta name="twitter:description" content="Tú marcas el objetivo. rsc-harness crea un arnés mínimo y verificado en lugar de un Frankenstein improvisado.">
+<meta name="twitter:title" content="Tú construyes el producto. rsc-harness construye su arnés.">
+<meta name="twitter:description" content="Un mensaje le da al agente de código que ya usas una memoria, conexiones probadas, las skills justas y comprobaciones que se ejecutan solas.">
 <meta name="twitter:image" content="https://ericrisco.github.io/rsc-harness/og.png">
-
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23151a21'/%3E%3Ctext x='50' y='68' font-family='monospace' font-size='46' font-weight='700' text-anchor='middle' fill='%23fdfdfb'%3Ersc%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="../styles.css">
-
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "SoftwareApplication",
-      "name": "rsc",
-      "alternateName": "@ericrisco/rsc",
-      "applicationCategory": "DeveloperApplication",
-      "operatingSystem": "macOS, Linux, Windows (Node.js >= 18)",
-      "description": "Constructor guiado de arneses que convierte un objetivo humano en un entorno de agente mínimo, local y verificado mediante buenas prácticas estrictas.",
-      "url": "https://ericrisco.github.io/rsc-harness/es/",
-      "downloadUrl": "https://www.npmjs.com/package/@ericrisco/rsc",
-      "installUrl": "https://www.npmjs.com/package/@ericrisco/rsc",
-      "softwareHelp": "https://github.com/ericrisco/rsc-harness#readme",
-      "license": "https://opensource.org/licenses/MIT",
-      "isAccessibleForFree": true,
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-      "author": { "@type": "Person", "name": "Eric Risco", "url": "https://github.com/ericrisco" }
-    },
-    {
-      "@type": "WebSite",
-      "name": "rsc",
-      "url": "https://ericrisco.github.io/rsc-harness/",
-      "inLanguage": ["en", "es"],
-      "publisher": { "@type": "Person", "name": "Eric Risco" }
-    }
-  ]
-}
-</script>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://api.github.com" crossorigin>
+<link rel="stylesheet" href="../assets/rsc.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","@id":"https://ericrisco.github.io/rsc-harness/#software","name":"rsc-harness","alternateName":["rsc","@ericrisco/rsc"],"applicationCategory":"DeveloperApplication","applicationSubCategory":"AI agent harness","operatingSystem":"macOS, Linux, Windows (Node.js 18+)","description":"Tú construyes el producto. rsc-harness construye su arnés: memoria, conexiones, skills y comprobaciones para Claude Code, Codex, Cursor y 15 más. Gratis, MIT.","url":"https://ericrisco.github.io/rsc-harness/es/","downloadUrl":"https://www.npmjs.com/package/@ericrisco/rsc","installUrl":"https://www.npmjs.com/package/@ericrisco/rsc","softwareHelp":"https://github.com/ericrisco/rsc-harness#readme","license":"https://opensource.org/licenses/MIT","isAccessibleForFree":true,"inLanguage":"es","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Memoria del proyecto en 02-DOCS/ que el agente lee antes de empezar","Conexiones probadas en 01-TOOLS/ (CRM, ERP, APIs)","271 skills, unas pocas instaladas por proyecto","Hooks que exigen prueba antes de dar una tarea por hecha","Tres carriles: responder, FTD y SDD","Sincronización de conocimiento para equipos mediante pull requests","18 asistentes de código con IA compatibles"],"keywords":"arnés de agentes, agente de código con IA, Claude Code, Codex, Cursor, skills de agentes, AGENTS.md, MCP, ingeniería de contexto","image":"https://ericrisco.github.io/rsc-harness/og.png","sameAs":["https://github.com/ericrisco/rsc-harness","https://www.npmjs.com/package/@ericrisco/rsc"],"author":{"@id":"https://ericrisco.github.io/rsc-harness/#author"}},{"@type":"SoftwareSourceCode","name":"rsc-harness","codeRepository":"https://github.com/ericrisco/rsc-harness","programmingLanguage":"JavaScript","runtimePlatform":"Node.js","license":"https://opensource.org/licenses/MIT","author":{"@id":"https://ericrisco.github.io/rsc-harness/#author"}},{"@type":"Person","@id":"https://ericrisco.github.io/rsc-harness/#author","name":"Eric Risco","url":"https://github.com/ericrisco","sameAs":["https://github.com/ericrisco"]},{"@type":"WebSite","@id":"https://ericrisco.github.io/rsc-harness/#website","name":"rsc-harness","url":"https://ericrisco.github.io/rsc-harness/","inLanguage":["en","es"],"publisher":{"@id":"https://ericrisco.github.io/rsc-harness/#author"}},{"@type":"WebPage","name":"rsc-harness: memoria y arnés para tu agente de código con IA","url":"https://ericrisco.github.io/rsc-harness/es/","inLanguage":"es","isPartOf":{"@id":"https://ericrisco.github.io/rsc-harness/#website"},"about":{"@id":"https://ericrisco.github.io/rsc-harness/#software"},"dateModified":"2026-10-11"},{"@type":"HowTo","name":"Instalar rsc-harness","totalTime":"PT5M","tool":[{"@type":"HowToTool","name":"Node.js 18+"},{"@type":"HowToTool","name":"Un asistente de código con IA"}],"step":[{"@type":"HowToStep","position":1,"name":"Pega el mensaje de configuración","text":"Pega el mensaje en tu agente, o ejecuta npx @ericrisco/rsc@latest onboard en la raíz del proyecto."},{"@type":"HowToStep","position":2,"name":"Responde unas pocas preguntas","text":"Di cómo de técnico hablarte y qué estás construyendo. Solo lee la raíz del proyecto."},{"@type":"HowToStep","position":3,"name":"Revisa el plan exacto","text":"Mira qué se selecciona, qué se pospone y qué se excluye, cada cosa con su motivo."},{"@type":"HowToStep","position":4,"name":"Acéptalo","text":"No escribe nada antes de que aceptes ese plan exacto."}]},{"@type":"FAQPage","inLanguage":"es","mainEntity":[{"@type":"Question","name":"¿Qué es rsc-harness?","acceptedAnswer":{"@type":"Answer","text":"rsc-harness es un constructor de arneses para agentes de código con IA, gratuito y open source (MIT). Un mensaje a Claude Code, Codex, Cursor u otro de sus 18 asistentes compatibles instala una memoria del proyecto (02-DOCS/), conexiones probadas con tus herramientas (01-TOOLS/), unas pocas skills elegidas entre 271 y hooks que comprueban el trabajo antes de que el agente diga que ha terminado."}},{"@type":"Question","name":"¿Qué es el arnés de un agente?","acceptedAnswer":{"@type":"Answer","text":"Todo lo que rodea al modelo y lo hace útil en un proyecto real: las instrucciones que lee, la memoria que guarda, las herramientas que puede usar, las skills que carga y las comprobaciones que se ejecutan solas. El modelo es el motor. El arnés es el resto del coche."}},{"@type":"Question","name":"¿Cómo se instala?","acceptedAnswer":{"@type":"Answer","text":"Pega el mensaje de configuración en tu agente, o ejecuta npx @ericrisco/rsc@latest onboard en la raíz del proyecto. Te hace unas pocas preguntas, te enseña el plan exacto (piezas seleccionadas, pospuestas y excluidas, cada una con su motivo) y no escribe nada antes de que lo aceptes. Los agentes pueden ejecutarlo sin preguntas interactivas con --technical-level y, tras tu aceptación, --accept-plan."}},{"@type":"Question","name":"¿Qué asistentes de IA soporta?","acceptedAnswer":{"@type":"Answer","text":"Claude Code, Codex, Cursor, GitHub Copilot, Gemini CLI, OpenCode, DeepSeek Harness, Windsurf, Cline, Roo, Zed, Continue, Amp, Antigravity, Jules, Junie, Kiro y Aider. Puedes elegir varios: las skills se escriben una vez y se comparten."}},{"@type":"Question","name":"¿Por qué no instalar todas las skills?","acceptedAnswer":{"@type":"Answer","text":"Así nace un arnés Frankenstein: skills duplicadas, hooks prematuros y servidores MCP innecesarios que llenan el contexto y se contradicen. rsc instala solo lo que justifican la raíz del proyecto y tus respuestas, carga las skills bajo demanda y añade más solo cuando aparece evidencia nueva."}},{"@type":"Question","name":"¿De verdad la buena documentación reduce el gasto de tokens?","acceptedAnswer":{"@type":"Answer","text":"Sí, como mecanismo. Un agente con un 02-DOCS/ bien estructurado sabe dónde mirar en vez de buscar archivo por archivo: lee menos, reutiliza el código que ya tienes en vez de duplicarlo y adivina menos. Enseñamos el mecanismo, no una cifra de benchmark."}},{"@type":"Question","name":"¿Es gratis? ¿Envía mi código a algún sitio?","acceptedAnswer":{"@type":"Answer","text":"Tiene licencia MIT y no necesita API key ni cuenta. La memoria de sesión es local por diseño y nunca sale a la red. Funciona dentro del asistente que ya usas."}},{"@type":"Question","name":"¿Sirve para equipos?","acceptedAnswer":{"@type":"Answer","text":"Sí. El conocimiento de 01-TOOLS/ y 02-DOCS/ viaja por una rama de intercambio y llega a main dentro de las pull requests normales, un segundo agente en la misma carpeta trabaja en su propio worktree, y al instalar eliges si el trabajo va directo a main o por ramas y pull requests."}}]}]}</script>
 </head>
 <body>
+<canvas id="field" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="cur" id="cur" aria-hidden="true"></div>
+<div class="cur-ring" id="curRing" aria-hidden="true"></div>
 
-<header class="site-header">
+<a class="skip" href="#top">Saltar al contenido</a>
+<header class="bar" id="bar">
   <div class="wrap">
-    <a class="brand" href="../" aria-label="rsc — inicio">
-      <span class="logo" aria-hidden="true">rsc</span>
-    </a>
-    <nav class="nav" aria-label="Principal">
-      <a class="nav-hide" href="#team">Equipos · 3.0</a>
-      <a class="nav-hide" href="#how">Cómo funciona</a>
-      <a class="nav-hide" href="#practice">Buenas prácticas</a>
-      <a class="nav-hide" href="#skills">Catálogo</a>
-      <a href="https://github.com/ericrisco/rsc-harness" rel="noopener">GitHub</a>
-      <span class="lang" role="group" aria-label="Idioma">
-        <a href="../" hreflang="en">EN</a>
-        <a href="./" aria-current="true" hreflang="es">ES</a>
-      </span>
-    </nav>
+    <a class="logo" href="#top"><span class="chip" aria-hidden="true">rsc</span>rsc<span class="sr">-harness</span></a>
+    <nav aria-label="Secciones"><a href="#memory">Memoria</a><a href="#harness">Instalar</a><a href="#connect">Conectar</a><a href="#lanes">Carriles</a><a href="#team">Equipo</a><a href="#catalog">Catálogo</a><a href="#faq">FAQ</a></nav>
+    <div class="right"><a class="lang" href="../" hreflang="en" lang="en">EN</a><a class="btn mag" href="https://github.com/ericrisco/rsc-harness">★ Estrella en GitHub</a></div>
   </div>
 </header>
 
-<main>
+<main id="top">
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="wrap hero-grid">
-      <div>
-        <p class="eyebrow">Constructor guiado · 18 asistentes · <a href="#team">3.0: seguro para equipos</a></p>
-        <h1>Tú construyes el proyecto. <span class="hl">rsc-harness construye el arnés.</span></h1>
-        <p class="lead">Tú decides qué quieres construir —software, operaciones, investigación, contenidos o una mezcla—. El wizard lo convierte en un sistema mínimo y verificado sin improvisar un arnés Frankenstein.</p>
-        <div class="hero-cta">
-          <button class="btn" type="button" data-copy="#agent-prompt" data-done="Mensaje copiado ✓">Copiar mensaje para mi agente</button>
-          <a class="btn btn-ghost" href="#terminal">Usar el terminal</a>
-        </div>
-        <p class="hero-note">Sin saber de arneses. Sin API key. <b>Gratis y open source (MIT).</b></p>
+
+<!-- MEMORY -->
+<section id="memory" class="brainhero" data-shape="0">
+  <div class="wrap">
+    <div class="bh-head">
+      <span class="eyebrow">rsc-harness · memoria para agentes de código</span>
+      <h1 class="bh-title">Habla con tu agente. <span class="accent">Mira cómo recuerda.</span></h1>
+    </div>
+    <div class="bh-grid">
+      <div class="bh-chat glass" aria-label="Conversación de ejemplo con un agente que tiene rsc">
+        <div class="bh-top"><i></i><i></i><i></i><span>claude code · ~/my-app</span><b id="bhSession">sesión 1</b></div>
+        <div class="bh-msgs" id="bhMsgs" aria-live="polite"></div>
+        <div class="bh-input"><span class="t-acc">›</span> <span id="bhTyping"></span><span class="caret"></span></div>
       </div>
-      <div class="hero-stack">
-        <div class="agent-card reveal">
-          <div class="head"><span class="avatar" aria-hidden="true">rsc</span><span class="who">Dáselo a tu agente <span>· él abre el wizard</span></span></div>
-          <div class="agent-prompt">
-            <p>Pégalo en Claude Code, Codex, Cursor, Gemini u otro asistente compatible:</p>
-            <div class="prompt-box" id="agent-prompt" data-copy-text="Lee https://ericrisco.github.io/rsc-harness/es/ y configura rsc-harness para este proyecto. Hazme las preguntas del onboarding, enséñame el plan exacto y espera mi aceptación antes de escribir nada."><span class="u">›</span> Lee <b>esta página</b> y configura rsc-harness para este proyecto. Hazme las preguntas del onboarding, enséñame el plan exacto y espera mi aceptación antes de escribir nada.</div>
-          </div>
-          <div class="agent-actions"><button class="copy-btn" type="button" data-copy="#agent-prompt" data-done="Copiado ✓">Copiar mensaje</button></div>
-        </div>
-        <div class="term compact-term" id="terminal" aria-label="Alternativa desde terminal">
-          <div class="term-body"><div class="copy-row"><span class="cmd" id="cmd-hero"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span><button class="copy-btn" type="button" data-copy="#cmd-hero" data-done="Copiado ✓">Copiar</button></div></div>
-        </div>
+      <div class="brain-wrap" id="brainWrap">
+        <canvas id="brain" aria-label="Grafo 3D de las páginas enlazadas de la wiki del proyecto, que crece con la conversación y la bandeja de entrada"></canvas>
+        <div class="brain-hud"><span>02-DOCS/</span><span><b id="bPages">0</b> páginas</span><span><b id="bLinks">0</b> enlaces</span></div>
+        <div class="brain-drag">arrastra para girar</div>
+        <div class="brain-legend" id="bLegend"></div>
+        <div class="brain-feed" id="bFeed"></div>
+        <div class="brain-tip" id="bTip"></div>
       </div>
     </div>
-  </section>
+  </div>
+  <div class="scroll-hint" aria-hidden="true"><span>baja</span><i></i></div>
+</section>
 
-  <!-- ANSWER-FIRST INTRO -->
-  <section class="section-tint" aria-labelledby="problem-h">
-    <div class="wrap problem-grid">
-      <div class="section-head"><p class="eyebrow">El problema es el arnés, no tu objetivo</p><h2 id="problem-h">Un modelo potente también puede acabar dentro de un Frankenstein.</h2></div>
-      <div class="prose-lg"><p>Un agente necesita más que cerebro: memoria del proyecto, herramientas, conocimiento, reglas y procesos repetibles. Añadirlos sin criterio produce instrucciones duplicadas, skills que no vienen a cuento, hooks prematuros, MCPs innecesarios y ninguna fuente de verdad.</p><p>Los estándares abiertos definen piezas —Agent Skills, MCP y AGENTS.md—, pero no deciden qué arnés completo necesita tu proyecto. rsc-harness aplica por ti ese método que falta.</p></div>
+<!-- STAR -->
+<section class="star-cta" aria-label="Apoya rsc-harness">
+  <div class="wrap">
+    <a class="star-btn mag" href="https://github.com/ericrisco/rsc-harness" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg><span>Ayúdanos con una estrella en GitHub</span><b class="star-n" id="starN" hidden></b></a>
+    <p class="star-sub">Gratis y open source. Una estrella es como lo encuentra el siguiente desarrollador.</p>
+  </div>
+</section>
+
+<!-- HERO -->
+<section class="install pad" id="harness" data-shape="1">
+  <div class="wrap">
+    <div class="in-head">
+      <span class="eyebrow">empieza aquí<span class="idx">02</span></span>
+      <h2 class="mask"><span class="ln"><span>Tú construyes el producto.</span></span><span class="ln"><span class="accent">rsc construye su arnés.</span></span></h2>
+      <p class="lede">Sin archivos de configuración ni guías. Envías un mensaje al agente que ya usas y se configura solo.</p>
     </div>
-  </section>
 
-  <!-- HOW IT WORKS -->
-  <section id="how" class="section-dark" aria-labelledby="how-h">
-    <div class="wrap">
-      <div class="section-head"><p class="eyebrow">Entra un objetivo, sale un arnés coherente</p><h2 id="how-h">El wizard hace visible cada decisión.</h2></div>
-      <div class="steps"><div class="step reveal"><h3>Cuenta el objetivo</h3><p>Di qué quieres construir o gestionar, y si te hablo técnico o con analogías. No necesitas vocabulario de arneses.</p></div><div class="step reveal"><h3>Revisa el plan exacto</h3><p>rsc lee solo la raíz del proyecto y explica cada componente seleccionado, pospuesto y excluido.</p></div><div class="step reveal"><h3>Acepta, verifica y evoluciona</h3><p>No escribe antes de tu aceptación. Verifica el resultado y solo crece después cuando la evidencia lo justifica.</p></div></div>
-      <div class="term plan-term reveal"><div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">RSC_ONBOARDING_PLAN</span></div><div class="term-body"><div class="ok">✓ seleccionado · memoria del proyecto · orient · suggest</div><div class="out">○ pospuesto · práctica SDD · instalada, se propone cuando aparezcan funciones coordinadas</div><div class="out">○ excluido · Context7 · no se detecta necesidad de documentación</div><div class="cmd">Plan id · sha256:… · esperando tu aceptación</div></div></div>
-    </div>
-  </section>
-
-  <!-- EQUIPOS (3.0) -->
-  <section id="team" aria-labelledby="team-h">
-    <div class="wrap">
-      <div class="section-head"><p class="eyebrow">Nuevo en 3.0 · seguro para equipos por defecto</p><h2 id="team-h">El primer día con agentes es fácil. El día noventa, con todo el equipo, es donde los arneses se rompen.</h2><p>Cada máquina se desvía, dos agentes acaban editando la misma carpeta, alguien trabaja directamente en <code>main</code> y lo que aprende una persona nunca llega al resto. rsc 3.0 arregla las cuatro cosas, y nadie tiene que aprender un comando nuevo.</p></div>
-      <div class="bento bento-4">
-        <div class="card reveal"><h3>Tú eliges cómo trabaja el proyecto</h3><p>La instalación pregunta una vez: ¿directo en <code>main</code> o con ramas y pull requests? Los proyectos sencillos trabajan en <code>main</code> sin preguntas de ramas. El código a largo plazo va con ramas: antes de cada cambio el agente pregunta en cuál, y nunca abre una por su cuenta. Se cambia cuando quieras: <b>«desbloquea main»</b> / <b>«bloquea main»</b>.</p></div>
-        <div class="card reveal"><h3>Un espacio por agente</h3><p>Si otra sesión de un asistente está trabajando en la misma carpeta, el trabajo nuevo va a un worktree en <code>.worktrees/&lt;rama&gt;/</code>, dentro del proyecto y sin comitear. Nadie cambia de rama debajo de otro. Al fusionar, se borra.</p></div>
-        <div class="card reveal"><h3>El agente elige el método</h3><p>Cambio sencillo: FTD (un documento, prueba de cada tarea). Grande o con decisiones que se afectan entre sí: la cadena SDD. Dice cuál y por qué. Tú sigues aprobando <i>qué</i> se construye, y eliges paso a paso o autopiloto.</p></div>
-        <div class="card reveal"><h3>El conocimiento llega a todos</h3><p><code>01-TOOLS/</code>, <code>02-DOCS/wiki/</code> y <code>02-DOCS/attachments/</code> viajan por una rama de intercambio, <code>rsc/knowledge</code>: suben al acabar tu turno y bajan a la rama de trabajo de cada persona antes de su siguiente mensaje. Llegan a <code>main</code> dentro de vuestras PRs normales.</p></div>
+    <div class="in-prompt agent-prompt" id="agent-prompt">
+      <div class="in-glow" aria-hidden="true"></div>
+      <div class="in-bar">
+        <span class="in-step">1</span>
+        <span class="in-title">Pega esto en tu agente</span>
+        <span class="in-works">Claude Code · Codex · Cursor · Gemini CLI · y 14 más</span>
       </div>
-      <div class="term reveal team-term" aria-label="Sincronización del conocimiento entre dos personas">
-        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">RSC_KNOWLEDGE_SYNC</span></div>
-        <div class="term-body"><div class="ok">✓ ana · feat/login · edita 02-DOCS/wiki/api.md → rsc/knowledge [skip ci]</div><div class="ok">✓ eric · feat/pagos · 📥 1 cambio de Ana: api.md</div><div class="out">○ main · protegida · intacta — llega dentro de la próxima PR fusionada</div><div class="out">○ persona nueva · clona main · lo tiene todo tras su primer mensaje</div></div>
-      </div>
-      <p class="team-note">Nunca: sube tu código, lanza CI o un despliegue, trae código de otros, sincroniza tus ajustes personales ni pisa un fichero que estás editando. Para apagarlo en un proyecto: <code>rsc knowledge-sync off</code>.</p>
-    </div>
-  </section>
-
-  <!-- BEST PRACTICES -->
-  <section id="practice" aria-labelledby="practice-h">
-    <div class="wrap">
-      <div class="section-head"><p class="eyebrow">Buenas prácticas estrictas</p><h2 id="practice-h">Lo contrario de “instálalo todo y ya veremos”.</h2><p>Cada regla aparece en el plan o la hace cumplir una comprobación determinista.</p></div>
-      <div class="bento"><div class="card"><h3>Lo mínimo primero</h3><p>Solo lo que justifican el objetivo y la evidencia actual. El conocimiento se carga bajo demanda.</p></div><div class="card"><h3>Separado por función</h3><p>Memoria, herramientas, documentación, reglas y especialistas tienen dueño y fuente de verdad.</p></div><div class="card"><h3>Limitado al proyecto</h3><p>El análisis respeta la raíz elegida. El estado local y la memoria privada se quedan en local.</p></div><div class="card"><h3>Consentimiento exacto</h3><p>Ves el plan completo. Si cambia, la aceptación anterior deja de ser válida.</p></div><div class="card"><h3>Verificado, no declarado</h3><p>READY aparece solo cuando las comprobaciones prueban que el arnés coincide con el plan.</p></div><div class="card"><h3>Crece por evidencia</h3><p>Lo pospuesto vuelve solo cuando un cambio observable lo hace útil, y exige otro plan.</p></div></div>
-    </div>
-  </section>
-
-  <!-- FOR AI AGENTS -->
-  <section class="section-tint" aria-labelledby="inst-h">
-    <div class="wrap">
-      <div class="section-head"><p class="eyebrow">Para agentes que leen esta página</p><h2 id="inst-h">Construye el arnés mediante el wizard vinculante</h2><p>No elijas componentes ni respuestas de onboarding por el usuario.</p></div>
-      <div class="term"><div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">instrucciones-para-agentes</span></div><div class="term-body"><div class="out">1. Trabaja en la raíz del proyecto del usuario, nunca en un clon de rsc-harness.</div><div class="out">2. Ejecuta <span class="cmd">npx @ericrisco/rsc@latest onboard</span> y transmite todas las preguntas.</div><div class="out">3. Los campos incluyen <span class="cmd">--technical-level --project-kind --goal --software-scope --target</span>.</div><div class="out">4. Muestra el plan seleccionado, pospuesto y excluido. Nunca inventes respuestas.</div><div class="out">5. Repite con <span class="cmd">--accept-plan &lt;id-mostrado&gt;</span> solo tras la aceptación exacta.</div><div class="ok">6. Solo RSC_ONBOARDING_READY significa que el arnés está completo. Pide recargar la sesión.</div><div class="out">7. RSC_ONBOARDING_INCOMPLETE significa que se aplicó pero falta el suelo del arnés: ejecuta la acción que indica, y no digas que rsc está listo hasta que imprima READY.</div></div></div>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section id="skills" aria-labelledby="feat-h">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">La prueba, no la promesa</p>
-        <h2 id="feat-h" style="font-size:var(--step-3)">Un catálogo grande para poder ser selectivo.</h2>
-        <p>271 skills con control de calidad en 23 dominios dan opciones al wizard. Tú instalas solo lo que el plan justifica.</p>
-      </div>
-      <div class="bento">
-        <div class="card reveal">
-          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h18M3 17h18"/></svg></div>
-          <h3>Granular por defecto</h3>
-          <p>La unidad de instalación es una skill. Instala <code>fastapi</code> sin arrastrar <code>go</code>. Nada que no uses ocupa el contexto del modelo.</p>
-        </div>
-        <div class="card reveal">
-          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg></div>
-          <h3>Se auto-recomienda</h3>
-          <p>Un detector siempre activo observa tu trabajo y nombra la próxima skill en cuanto una tarea la necesita — un "sí" la instala.</p>
-        </div>
-        <div class="card reveal">
-          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></div>
-          <h3>Con control de calidad</h3>
-          <p>Cada skill se investigó contra fuentes vivas de 2025–2026 y tuvo que superar una rúbrica de comportamiento adversarial de <b>≥ 8.5/10</b> antes de publicarse.</p>
-        </div>
-        <div class="card reveal span2">
-          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
-          <h3>No solo código</h3>
-          <p>Más allá de lenguajes y frameworks, rsc puede llevar toda una operación: contabilidad, facturación, RGPD, pitch decks, SEO y presencia en YouTube / TikTok / LinkedIn — cada una conectada a un bucle de conocimiento que aprende de tus propios resultados.</p>
-        </div>
-        <div class="card reveal">
-          <div class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6M12 19h8"/></svg></div>
-          <h3>Una base, cada IDE</h3>
-          <p>Los archivos de skill se escriben una vez en tu proyecto y se enlazan en cada asistente que elijas — sin copias duplicadas entre IDEs.</p>
-        </div>
+      <p class="in-text">Lee https://ericrisco.github.io/rsc-harness/es/ y configura rsc-harness para este proyecto. Hazme las preguntas del onboarding, enséñame el plan exacto y espera mi aceptación antes de escribir nada.</p>
+      <div class="in-foot">
+        <button class="copy primary in-copy" data-copy="Lee https://ericrisco.github.io/rsc-harness/es/ y configura rsc-harness para este proyecto. Hazme las preguntas del onboarding, enséñame el plan exacto y espera mi aceptación antes de escribir nada.">Copiar el mensaje</button>
+        <span class="in-alt cmd-alt">o en un terminal <code>npx @ericrisco/rsc@latest onboard</code><button class="copy" data-copy="npx @ericrisco/rsc@latest onboard">Copiar</button></span>
       </div>
     </div>
-  </section>
 
-  <!-- ASISTENTES -->
-  <section class="section-tint" aria-labelledby="assist-h">
-    <div class="wrap">
-      <div class="section-head" style="max-width:52ch">
-        <p class="eyebrow">Compatible con</p>
-        <h2 id="assist-h" style="font-size:var(--step-2)">18 asistentes, un método de arnés</h2>
-        <p>Usa el asistente que ya tengas. La misma disciplina viaja con el proyecto.</p>
-        <p><b>Nuevo: DeepSeek Harness.</b> Skills en <code>.dsh/skills/</code>, el bloque de rsc en <code>AGENTS.md</code>, y memoria de sesión, sincronización de conocimiento y aviso de versión nueva con los propios hooks de dsh. Se instala con <code>--target deepseek</code>.</p>
+    <div class="in-next">
+      <div class="in-next-l">
+        <span class="in-kicker">después, en tu agente</span>
+        <ol class="in-steps" id="inSteps">
+          <li data-s="0"><b>2</b><div><h3>Te hace unas pocas preguntas claras</h3><p>Cómo de técnico hablarte y qué estás construyendo. Solo lee la raíz del proyecto.</p></div></li>
+          <li data-s="1"><b>3</b><div><h3>Te enseña el plan exacto</h3><p>Qué instala, qué espera a tener evidencia y qué deja fuera. Cada cosa con su motivo.</p></div></li>
+          <li data-s="2"><b>4</b><div><h3>Dices que sí. Entonces escribe.</h3><p>Antes de eso no toca tu proyecto. Unas pocas skills, no las 271.</p></div></li>
+        </ol>
+        <div class="hero-meta"><span><b>18</b> asistentes</span><span><b>271</b> skills, solo unas pocas instaladas</span><span><b>MIT</b>, sin API key</span></div>
       </div>
-      <div class="assist reveal">
-        <div class="a pri"><span class="badge" aria-hidden="true"></span>Claude Code</div>
-        <div class="a pri"><span class="badge" aria-hidden="true"></span>Codex CLI</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Cursor</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>GitHub Copilot</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Gemini CLI</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Windsurf</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Cline</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Antigravity</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Zed</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Continue</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Roo</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Amp</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>opencode</div>
-        <div class="a pri"><span class="badge" aria-hidden="true"></span>DeepSeek Harness</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Jules</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Junie</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Kiro</div>
-        <div class="a"><span class="badge" aria-hidden="true"></span>Aider</div>
+    <div class="term glass in-term" aria-label="Ejemplo interactivo del plan de onboarding">
+      <div class="term-top"><i></i><i></i><i></i><span>~/my-project · rsc onboard</span></div>
+      <div class="kinds" id="kinds" role="group" aria-label="¿Qué estás construyendo?"></div>
+      <div class="term-body" id="term"></div>
+      <div class="term-foot">Planes de ejemplo. Elige un tipo de proyecto y mira cómo cambia el plan.</div>
+    </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- PROBLEM -->
+<section id="problem" class="pad pillars" data-shape="2">
+  <div class="wrap">
+    <div class="pl-head">
+      <span class="eyebrow">qué te llevas<span class="idx">03</span></span>
+      <h2 class="mask"><span class="ln"><span>Un mensaje instala</span></span><span class="ln"><span class="accent">cuatro cosas.</span></span></h2>
+    </div>
+    <div class="pl-grid">
+      <article class="pl glass" data-k="memory">
+        <div class="pl-top"><span class="pl-n">01</span><span class="pl-k">memoria</span><code>02-DOCS/</code></div>
+        <h3>Recuerda tu proyecto.</h3>
+        <p>Una wiki con tus decisiones, tu stack y tu progreso. El agente la lee antes de empezar y la amplía mientras trabaja.</p>
+        <div class="pl-vis mono" id="plMem"></div>
+      </article>
+      <article class="pl glass" data-k="hands">
+        <div class="pl-top"><span class="pl-n">02</span><span class="pl-k">manos</span><code>01-TOOLS/</code></div>
+        <h3>Trabaja con tus herramientas.</h3>
+        <p>Tu CRM, tu ERP, tus APIs. Cada conexión se construye una vez, se prueba y se queda para todas las sesiones siguientes.</p>
+        <div class="pl-vis mono" id="plHands"></div>
+      </article>
+      <article class="pl glass" data-k="trade">
+        <div class="pl-top"><span class="pl-n">03</span><span class="pl-k">oficio</span><code>skills</code></div>
+        <h3>Conoce tu stack.</h3>
+        <p>El saber hacer de lo que construyes, elegido para este proyecto. Unas pocas de 271, así el resto nunca gasta contexto.</p>
+        <div class="pl-vis" id="plTrade"></div>
+      </article>
+      <article class="pl glass" data-k="reflexes">
+        <div class="pl-top"><span class="pl-n">04</span><span class="pl-k">reflejos</span><code>hooks</code></div>
+        <h3>Comprueba antes de decir que ha terminado.</h3>
+        <p>Reglas que se ejecutan solas: una prueba por tarea, el proceso justo y tu idioma en cada respuesta.</p>
+        <div class="pl-vis mono" id="plRef"></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- TOKENS -->
+<section class="pad" id="tokens" data-shape="3">
+  <div class="wrap">
+    <span class="eyebrow">por qué la documentación va primero<span class="idx">04</span></span>
+    <h2 class="mask"><span class="ln"><span>Buscar gasta tokens.</span></span><span class="ln"><span><span class="accent">Encontrar</span>, no.</span></span></h2>
+    <p class="lede">Un agente sin documentación abre archivos, hace grep, lee dos veces el mismo módulo y aun así adivina. Con un <code>02-DOCS/</code> bien estructurado sabe dónde mirar.</p>
+    <div class="versus">
+      <div class="panel glass">
+        <div class="panel-head"><b>Sin docs</b><span class="t-ros">buscando</span></div>
+        <div class="meter"><span id="mA">0</span><small>tokens leídos</small></div>
+        <div class="bar-track"><div class="bar-fill" id="bA" style="background:var(--rose)"></div></div>
+        <div class="files" id="filesA"></div>
+      </div>
+      <div class="panel glass">
+        <div class="panel-head"><b>Con 02-DOCS/</b><span class="t-acc">encontrando</span></div>
+        <div class="meter"><span id="mB">0</span><small>tokens leídos</small></div>
+        <div class="bar-track"><div class="bar-fill" id="bB" style="background:var(--accent)"></div></div>
+        <div class="files" id="filesB"></div>
       </div>
     </div>
-  </section>
+    <p class="note">Ilustración del mecanismo, no un benchmark.</p>
+    <div class="gains">
+      <div class="gain"><b>Sin código duplicado</b>Reutiliza la función que ya tienes en vez de escribir otra.</div>
+      <div class="gain"><b>Una sola estructura</b>Sigue los patrones que tu proyecto ya usa, siempre.</div>
+      <div class="gain"><b>Menos cosas rotas</b>Trabaja con lo que es cierto de tu código, no con una suposición creíble.</div>
+    </div>
+  </div>
+</section>
 
-  <!-- CTA FINAL -->
-  <section class="section-dark cta-final" aria-labelledby="cta-h">
-    <div class="wrap">
-      <p class="eyebrow">Empieza</p>
-      <h2 id="cta-h">Empieza por lo que quieres construir</h2>
-      <p>Pega el mensaje en tu agente o usa el terminal si lo prefieres.</p>
-      <div class="term">
-        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">tu-proyecto — bash</span></div>
-        <div class="term-body">
-          <div class="copy-row">
-            <span class="cmd" id="cmd-final"><span class="prompt">$ </span>npx @ericrisco/rsc@latest onboard</span>
-            <button class="copy-btn" type="button" data-copy="#cmd-final" data-done="Copiado ✓">Copiar</button>
-          </div>
-        </div>
-      </div>
-      <div class="hero-cta" style="justify-content:center; margin-top:1.5rem">
-        <a class="btn btn-accent" href="https://www.npmjs.com/package/@ericrisco/rsc" rel="noopener">Ver en npm</a>
-        <a class="btn btn-ghost" href="https://github.com/ericrisco/rsc-harness" rel="noopener">Estrella en GitHub</a>
+
+<!-- CONNECT -->
+<section id="connect" class="pad" data-shape="3">
+  <div class="wrap">
+    <span class="eyebrow">las manos, de cerca<span class="idx">05</span></span>
+    <h2 class="mask"><span class="ln"><span>Nombra una herramienta.</span></span><span class="ln"><span class="accent">Queda conectada.</span></span></h2>
+    <p class="lede">CRMs, ERPs, el programa del PC de la oficina. <code>connect-tool</code> lee la documentación actual del fabricante, elige la vía más segura, construye <code>01-TOOLS/</code> y demuestra que funciona. Elige una.</p>
+    <div class="cx" id="cx">
+      <svg class="cx-wire" id="cxWire" aria-hidden="true"><defs><linearGradient id="wg" x1="0" x2="1"><stop offset="0" stop-color="oklch(0.82 0.18 156)" stop-opacity="0.15"/><stop offset="1" stop-color="oklch(0.82 0.18 156)"/></linearGradient></defs><path id="cxPath" fill="none" stroke="url(#wg)" stroke-width="2"/><circle id="cxDot" r="4.5" fill="oklch(0.82 0.18 156)" opacity="0"/></svg>
+      <div class="cx-tools" id="cxTools" role="group" aria-label="Elige una herramienta para conectar"></div>
+      <div class="cx-flow" id="cxFlow">
+        <div class="cx-step glass"><span class="num">1</span><div><div class="ttl">leer la documentación</div><div class="val" data-k="docs">Elige una herramienta a la izquierda.</div></div></div>
+        <div class="cx-step glass"><span class="num">2</span><div><div class="ttl">vía más segura</div><div class="val" data-k="route">&nbsp;</div></div></div>
+        <div class="cx-step glass"><span class="num">3</span><div><div class="ttl">construir</div><div class="val" data-k="folder">&nbsp;</div><div class="files-out"><code>.env.example</code><code>CREDENTIALS.md</code><code>README.md</code><code>test_connection.sh</code></div></div></div>
+        <div class="cx-step glass"><span class="num">4</span><div><div class="ttl">demostrarlo</div><div class="val" data-k="proof">&nbsp;</div></div></div>
       </div>
     </div>
-  </section>
+    <p class="cx-note">Ejecución de ejemplo. La skill consulta cada vez la documentación actual del fabricante y lo dice cuando no encuentra nada fiable. Sirve cualquier herramienta, no solo estas.</p>
+  </div>
+</section>
+<!-- DAY -->
+<section class="day pad" id="day" data-shape="3">
+  <div class="wrap day-head">
+    <div><span class="eyebrow">un día con rsc<span class="idx">06</span></span>
+<h2 class="mask"><span class="ln"><span>Mañana,</span></span><span class="ln"><span>ya lo sabe.</span></span></h2></div>
+    <p class="lede" style="margin:0;max-width:36ch">Cinco pasos, de la instalación a la mañana siguiente.</p>
+  </div>
+  <div class="day-track" id="dayTrack">
+    <article class="day-card glass"><span class="big" aria-hidden="true">01</span><span class="step">instalar</span><h3>Unas pocas preguntas claras</h3><p>Cómo de técnico hablarte, para qué es el proyecto, su objetivo y qué asistentes usas. Solo lee la raíz del proyecto.</p><div class="vis t-dim">? ¿Cómo te hablo?<br>› <span class="t-acc">técnico</span></div></article>
+    <article class="day-card glass"><span class="big" aria-hidden="true">02</span><span class="step">el plan</span><h3>No escribe nada hasta que aceptas</h3><p>Cada pieza viene con su motivo. Aceptas ese plan exacto, o no pasa nada.</p><div class="vis"><span class="pill p-sel">seleccionado</span>orient, ftd, connect-tool<br><span class="pill p-def">pospuesto</span>sdd, hasta que haya evidencia<br><span class="pill p-exc">excluido</span>vídeo, pagos</div></article>
+    <article class="day-card glass"><span class="big" aria-hidden="true">03</span><span class="step">trabajar</span><h3>Elige el proceso justo</h3><p>Una respuesta, un cambio rápido o la cadena completa. Dice cuál en una línea, en tu idioma.</p><div class="vis t-dim">carril: <span class="t-acc">FTD</span> · un documento de feature</div></article>
+    <article class="day-card glass"><span class="big" aria-hidden="true">04</span><span class="step">anotar</span><h3>Documenta mientras trabaja</h3><p>Las decisiones, las conexiones y el progreso acaban en 02-DOCS, no en el chat.</p><div class="vis t-dim">02-DOCS/wiki/ftd/csv-export.md <span class="t-acc">+ evidencia</span></div></article>
+    <article class="day-card glass"><span class="big" aria-hidden="true">05</span><span class="step">a la mañana siguiente</span><h3>Sigue donde lo dejó</h3><p>Tú, alguien del equipo en otra máquina u otro asistente abrís el proyecto, y el agente ya lo sabe.</p><div class="vis t-dim">siguiente: verificar la exportación con filtros reales</div></article>
+  </div>
+  <div class="day-rail"><i id="dayRail"></i></div>
+</section>
+
+<!-- LANES -->
+<section id="lanes" class="lanes-stage" data-shape="4">
+  <div class="wrap">
+    <span class="eyebrow">tres carriles<span class="idx">07</span></span>
+    <h2 class="mask"><span class="ln"><span>El proceso justo.</span></span><span class="ln"><span class="dim">Elegido por ti.</span></span></h2>
+    <div class="lanes" id="laneBox">
+      <div class="lane glass answer" data-lane="answer"><div class="lane-top"><span class="tag">solo lectura</span><b>Responder</b><span>Explica, compara, audita. No escribe nada.</span></div></div>
+      <div class="lane glass ftd" data-lane="ftd"><div class="lane-top"><span class="tag">por defecto</span><b>FTD</b><span>Un documento de feature, una prueba por tarea.</span></div></div>
+      <div class="lane glass sdd" data-lane="sdd"><div class="lane-top"><span class="tag">grande o complejo</span><b>SDD</b><span>El agente entra solo. Tú apruebas la spec.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team" class="pad" data-shape="4">
+  <div class="wrap">
+    <span class="eyebrow">seguro para equipos<span class="idx">08</span></span>
+    <h2 class="mask"><span class="ln"><span>Lo que una persona enseña,</span></span><span class="ln"><span>lo sabe el agente de todos.</span></span></h2>
+    <div class="team-grid">
+      <div class="sync glass" role="img" aria-label="Sincronización de conocimiento entre ramas">
+        <svg viewBox="0 0 640 300">
+          <g font-family="ui-monospace, SF Mono, Menlo, monospace" font-size="12">
+            <line x1="40" y1="60" x2="600" y2="60" stroke="oklch(0.34 0.014 260)" stroke-width="2"/>
+            <line x1="40" y1="150" x2="600" y2="150" stroke="oklch(0.82 0.18 156)" stroke-width="2" stroke-dasharray="4 5"/>
+            <line x1="40" y1="240" x2="600" y2="240" stroke="oklch(0.34 0.014 260)" stroke-width="2"/>
+            <text x="40" y="44" fill="oklch(0.965 0.006 260)">ana · feat/login</text>
+            <text x="40" y="134" fill="oklch(0.82 0.18 156)">rsc/knowledge</text>
+            <text x="40" y="224" fill="oklch(0.965 0.006 260)">eric · feat/payments</text>
+            <text x="600" y="44" text-anchor="end" fill="oklch(0.54 0.012 260)">edita 02-DOCS/wiki/api.md</text>
+            <text x="600" y="224" text-anchor="end" fill="oklch(0.54 0.012 260)">📥 1 cambio de Ana</text>
+            <path id="upPath" d="M200 60 C 250 60, 260 150, 320 150" fill="none" stroke="oklch(0.82 0.18 156 / 0.5)" stroke-width="1.5"/>
+            <path id="downPath" d="M380 150 C 440 150, 450 240, 500 240" fill="none" stroke="oklch(0.82 0.18 156 / 0.5)" stroke-width="1.5"/>
+            <circle cx="200" cy="60" r="6" fill="oklch(0.965 0.006 260)"/>
+            <circle cx="500" cy="240" r="6" fill="oklch(0.965 0.006 260)"/>
+            <circle id="pk1" r="5" fill="oklch(0.82 0.18 156)"/>
+            <circle id="pk2" r="5" fill="oklch(0.82 0.18 156)"/>
+            <text x="320" y="288" text-anchor="middle" fill="oklch(0.54 0.012 260)">main no se toca: recibe la documentación dentro de tu próxima pull request</text>
+          </g>
+        </svg>
+      </div>
+      <ul class="defaults">
+        <li><b>El conocimiento llega a todos</b><span>01-TOOLS y 02-DOCS viajan por una rama de intercambio y llegan a main dentro de las pull requests normales.</span></li>
+        <li><b>Un espacio por agente</b><span>Una segunda sesión en la misma carpeta trabaja en su propio worktree, que se borra cuando la rama se fusiona.</span></li>
+        <li><b>Sin commits sorpresa en main</b><span>Lo eliges al instalar: directo a main, o ramas y pull requests.</span></li>
+        <li><b>Cualquier asistente, una instalación</b><span>Elige varios. Las skills se escriben una vez y se comparten.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ASSISTANTS -->
+<section aria-label="Asistentes compatibles" data-shape="4">
+  <div class="marquee"><div class="mq-skew" id="mqSkew"><div class="mq-row" id="mq1"></div><div class="mq-row rev" id="mq2"></div></div></div>
+</section>
+
+<!-- CATALOG -->
+<section id="catalog" class="pad" data-shape="5">
+  <div class="wrap">
+    <div class="wall-head">
+      <div><span class="eyebrow">el catálogo<span class="idx">09</span></span>
+<h2 class="mask"><span class="ln"><span>271 skills.</span></span><span class="ln"><span>Instalas las pocas que encajan.</span></span></h2></div>
+      <div class="wall-count"><span id="wallN">7</span> de 271<small>el resto no ocupa tu contexto</small></div>
+    </div>
+    <div class="wall-tools"><input id="q" type="search" placeholder="busca una skill: stripe, godot, gdpr…" aria-label="Buscar en el catálogo"></div>
+    <div class="domains" id="domains" aria-label="Filtrar por dominio"></div>
+    <div class="wall" id="wall" role="list" aria-label="Las 271 skills"></div>
+    <div class="wall-tip" id="tip">Pasa por un cuadrado para ver la skill. Cada una se activa sola cuando una tarea la necesita.</div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section class="pad" style="padding-top:0" data-shape="5">
+  <div class="wrap">
+    <span class="eyebrow">por qué puedes fiarte<span class="idx">10</span></span>
+    <h2 class="mask"><span class="ln"><span>Evidencia, no promesas.</span></span></h2>
+    <div class="trust">
+      <article class="glass"><span class="n">P10</span><h3 style="margin-top:8px">Hecho significa observado</h3><p>Una tarea se marca cuando se ha visto su prueba: la salida del test, el resultado del comando. Creerlo no cuenta.</p></article>
+      <article class="glass"><span class="n">P2</span><h3 style="margin-top:8px">Controles que pueden fallar</h3><p>Cada regla que rsc declara obligatoria trae la comprobación que la hace cumplir, y un test que ve esa comprobación fallar y pasar.</p></article>
+      <article class="glass"><span class="n">P7</span><h3 style="margin-top:8px">Fricción donde importa</h3><p>Silencio para lo trivial, ceremonia solo donde fallar sale caro. Un arnés que molesta acaba apagado.</p></article>
+    </div>
+    <p class="limits">Límites conocidos, dichos claramente: los controles duros se ejecutan en Claude Code; en otros asistentes las reglas viajan como instrucciones. La memoria de sesión es local por diseño y nunca sale a la red.</p>
+  </div>
+</section>
+
+<!-- AGENTS -->
+<section id="agents" class="pad" data-shape="5" aria-labelledby="agents-h">
+  <div class="wrap ag-grid">
+    <div><span class="eyebrow">para agentes que leen esta página</span><h2 class="mask" id="agents-h"><span class="ln"><span>Construye el arnés del usuario</span></span><span class="ln"><span class="accent">con el wizard vinculante.</span></span></h2><p class="lede">No elijas componentes ni respuestas de onboarding por el usuario.</p></div>
+    <div class="term glass ag-term"><div class="term-top"><i></i><i></i><i></i><span>instrucciones-para-agentes</span></div><ol class="ag-list"><li>Trabaja en la raíz del proyecto del usuario, nunca en un clon de rsc-harness.</li><li>Ejecuta <code>npx @ericrisco/rsc@latest onboard</code> y transmite todas las preguntas.</li><li>Los campos no interactivos incluyen <code>--technical-level --project-kind --goal --software-scope --target</code>.</li><li>Muestra el plan seleccionado, pospuesto y excluido. Nunca inventes respuestas.</li><li>Repite con <code>--accept-plan &lt;id-mostrado&gt;</code> solo tras la aceptación exacta.</li><li><span class="ok">Solo RSC_ONBOARDING_READY significa que el arnés está completo. Pide recargar la sesión.</span></li><li>RSC_ONBOARDING_INCOMPLETE significa que se aplicó pero falta el suelo del arnés: ejecuta la acción que indica, y no digas que rsc está listo hasta que imprima READY.</li></ol></div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="pad" data-shape="5" aria-labelledby="faq-h">
+  <div class="wrap faq-wrap">
+    <div><span class="eyebrow">preguntas</span><h2 class="mask" id="faq-h"><span class="ln"><span>Preguntas, respondidas.</span></span></h2></div>
+    <div class="faq"><details open><summary>¿Qué es rsc-harness?</summary><p>rsc-harness es un constructor de arneses para agentes de código con IA, gratuito y open source (MIT). Un mensaje a Claude Code, Codex, Cursor u otro de sus 18 asistentes compatibles instala una memoria del proyecto (<code>02-DOCS/</code>), conexiones probadas con tus herramientas (<code>01-TOOLS/</code>), unas pocas skills elegidas entre 271 y hooks que comprueban el trabajo antes de que el agente diga que ha terminado.</p></details><details><summary>¿Qué es el arnés de un agente?</summary><p>Todo lo que rodea al modelo y lo hace útil en un proyecto real: las instrucciones que lee, la memoria que guarda, las herramientas que puede usar, las skills que carga y las comprobaciones que se ejecutan solas. El modelo es el motor. El arnés es el resto del coche.</p></details><details><summary>¿Cómo se instala?</summary><p>Pega el mensaje de configuración en tu agente, o ejecuta <code>npx @ericrisco/rsc@latest onboard</code> en la raíz del proyecto. Te hace unas pocas preguntas, te enseña el plan exacto (piezas seleccionadas, pospuestas y excluidas, cada una con su motivo) y no escribe nada antes de que lo aceptes. Los agentes pueden ejecutarlo sin preguntas interactivas con <code>--technical-level</code> y, tras tu aceptación, <code>--accept-plan</code>.</p></details><details><summary>¿Qué asistentes de IA soporta?</summary><p>Claude Code, Codex, Cursor, GitHub Copilot, Gemini CLI, OpenCode, DeepSeek Harness, Windsurf, Cline, Roo, Zed, Continue, Amp, Antigravity, Jules, Junie, Kiro y Aider. Puedes elegir varios: las skills se escriben una vez y se comparten.</p></details><details><summary>¿Por qué no instalar todas las skills?</summary><p>Así nace un arnés Frankenstein: skills duplicadas, hooks prematuros y servidores MCP innecesarios que llenan el contexto y se contradicen. rsc instala solo lo que justifican la raíz del proyecto y tus respuestas, carga las skills bajo demanda y añade más solo cuando aparece evidencia nueva.</p></details><details><summary>¿De verdad la buena documentación reduce el gasto de tokens?</summary><p>Sí, como mecanismo. Un agente con un <code>02-DOCS/</code> bien estructurado sabe dónde mirar en vez de buscar archivo por archivo: lee menos, reutiliza el código que ya tienes en vez de duplicarlo y adivina menos. Enseñamos el mecanismo, no una cifra de benchmark.</p></details><details><summary>¿Es gratis? ¿Envía mi código a algún sitio?</summary><p>Tiene licencia MIT y no necesita API key ni cuenta. La memoria de sesión es local por diseño y nunca sale a la red. Funciona dentro del asistente que ya usas.</p></details><details><summary>¿Sirve para equipos?</summary><p>Sí. El conocimiento de <code>01-TOOLS/</code> y <code>02-DOCS/</code> viaja por una rama de intercambio y llega a main dentro de las pull requests normales, un segundo agente en la misma carpeta trabaja en su propio worktree, y al instalar eliges si el trabajo va directo a main o por ramas y pull requests.</p></details></div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section class="final" data-shape="6">
+  <div class="wrap" style="width:100%">
+    <span class="eyebrow">empieza aquí</span>
+    <h2 class="mask"><span class="ln"><span>Deja de explicar.</span></span><span class="ln"><span class="accent">Empieza a construir.</span></span></h2>
+    <div class="cmd-hero glass mag-soft"><span class="prompt">$</span><code>npx @ericrisco/rsc@latest onboard</code><button class="copy" data-copy="npx @ericrisco/rsc@latest onboard">Copiar</button></div>
+    <div class="links"><a href="https://github.com/ericrisco/rsc-harness">GitHub</a><a href="https://github.com/ericrisco/rsc-harness#readme">README</a><a href="https://www.npmjs.com/package/@ericrisco/rsc">npm</a><a href="https://github.com/ericrisco/rsc-harness/releases">Releases</a></div>
+  </div>
+</section>
 
 </main>
+<footer><div class="wrap"><span>rsc-harness · MIT</span><span>Tú construyes el producto. rsc construye su arnés.</span></div></footer>
 
-<footer class="site-footer">
-  <div class="wrap">
-    <span class="muted">© <span id="yr">2026</span> Eric Risco · rsc · MIT</span>
-    <nav class="links" aria-label="Pie">
-      <a href="https://github.com/ericrisco/rsc-harness" rel="noopener">GitHub</a>
-      <a href="https://www.npmjs.com/package/@ericrisco/rsc" rel="noopener">npm</a>
-      <a href="https://agentskills.io/specification" rel="noopener">Agent Skills spec</a>
-      <a href="../" hreflang="en">English</a>
-      <a href="../llms.txt">llms.txt</a>
-    </nav>
-  </div>
-</footer>
-
-<script src="../app.js" defer></script>
+<script type="application/json" id="rsc-catalog">[{"t":"Core & control plane","ids":["init","harness","orient","suggest","unslop","author-skill","sdd-init"]},{"t":"Spec-Driven Development","ids":["ftd","sdd","constitution","idea-refinement","specify","clarify","plan","tasks","analyze","decision-challenge","implement","source-grounded-development","verify","review","simplify-code","ship","debug","worktrees","parallel"]},{"t":"Run a business","ids":["finance-ops","invoicing","bookkeeping","pricing","sales-pipeline","lead-gen","cold-outreach","proposals","contracts","customer-support","client-onboarding","retention","hiring","people-ops","inventory","logistics-ops","procurement","meeting-notes","sop-builder","project-ops"]},{"t":"Raise & model money","ids":["pitch-deck","investor-materials","financial-model","fundraising","unit-economics","grants"]},{"t":"Legal, privacy & compliance","ids":["gdpr-privacy","terms-conditions","compliance","data-policy","ip-trademark"]},{"t":"Market & brand","ids":["marketing","seo-geo","content-engine","social-publisher","brand-voice","brand-identity","newsletter","landing-copy","ads","article-writing","case-studies","video-shorts","podcast","market-research","competitor-watch","press-kit","community","webinar","review-management"]},{"t":"Grow a channel (YouTube / TikTok / Reels / LinkedIn / Medium)","ids":["youtube-api","youtube-strategy","youtube-ideation","youtube-thumbnails","youtube-packaging","remotion-video","tiktok-api","instagram-api","shortform-strategy","shortform-ideation","shortform-packaging","shortform-editing","viral-score","linkedin-api","linkedin-strategy","linkedin-content","linkedin-carousels","linkedin-outreach","medium-writing","medium-publishing","medium-strategy"]},{"t":"Connect & automate","ids":["connect-tool","stripe","email-connector","google-workspace","notion-connector","whatsapp-telegram","automation-flows","api-connector-builder","webhooks","data-scraper","spreadsheet-ops","calendar-scheduling","document-processing","e-signature"]},{"t":"Automation platforms","ids":["automation-strategy","n8n","make","zapier","power-automate"]},{"t":"Data & analytics","ids":["analytics","dashboard","kpi-framework","reporting","ab-testing","forecasting","data-cleaning","business-intelligence"]},{"t":"AI · build it in","ids":["building-agents","rag","embeddings-search","prompt-engineering","llm-pipeline","agent-eval","chatbot","ai-media","replicate-images","structured-extraction","agent-safety","cost-tracking"]},{"t":"AI · run it on","ids":["replicate","runpod","modal","huggingface","ollama","together-fireworks","fal"]},{"t":"AI · train it","ids":["machine-learning","deep-learning","nlp","finetuning","training-data","unsloth","open-weights","vllm"]},{"t":"Languages","ids":["typescript","python","java","csharp-dotnet","php","ruby","cpp","elixir","bash-scripting","sql","go"]},{"t":"Frameworks & app stacks","ids":["fastapi","nextjs","react","react-native","vue-nuxt","angular","svelte","astro","solid-js","htmx","nodejs","nestjs","django","laravel","rails","spring-boot","phoenix","flutter","swift-ios","kotlin-android","compose-multiplatform","expo","tauri","electron","rust","wordpress","shopify","no-code-app","chrome-extension","api-design"]},{"t":"Game development","ids":["godot","unity","unreal","game-design","game-storytelling","level-design","gamedev-shaders","gamedev-multiplayer","gamedev-physics","gamedev-pathing","gamedev-shipping"]},{"t":"Databases & data layer","ids":["postgresdb","mysql","mongodb","redis","supabase","neon","planetscale","sqlite-turso","prisma-orm","drizzle-orm","firebase","dynamodb","vector-db","clickhouse-analytics","duckdb","db-migrations","backups"]},{"t":"Ship & operate · platforms","ids":["vercel","netlify","cloudflare","railway","render","fly-io","coolify","hetzner","digitalocean","aws-essentials","gcp-essentials"]},{"t":"Ship & operate · devops","ids":["docker","github-actions","git-workflow","domains-dns","monitoring","email-deliverability","scaling","deployment","deprecation"]},{"t":"Ship & operate · quality & security","ids":["code-review","security-scan","secure-coding","testing-py","testing-web","testing-go","e2e-testing","accessibility","performance","error-handling","observability"]},{"t":"Motion & interface craft","ids":["motion-craft","ui-engineering","variant-explorer"]},{"t":"Design & content craft","ids":["design-loop","design","design-dna","presentations","course-storytelling","course-builder","technical-writing","translation-l10n"]},{"t":"Knowledge & meta","ids":["knowledge-ops","codebase-onboarding","research-ops","decision-records","continuous-learning","skill-scout","context-budget","roast-me","fable-operator"]}]</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="../assets/rsc.js" defer></script>
 </body>
 </html>
