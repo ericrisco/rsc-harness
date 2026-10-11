@@ -9,7 +9,9 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-  if (hasGsap) gsap.registerPlugin(ScrollTrigger);
+  if (hasGsap) { gsap.registerPlugin(ScrollTrigger); ScrollTrigger.config({ ignoreMobileResize: true }); }
+  // Mobile browsers fire resize when the address bar shows or hides; only a width change is a real resize.
+  const onWidthResize = (fn) => { let w = innerWidth; addEventListener('resize', () => { if (innerWidth !== w || fine) { w = innerWidth; fn(); } }); };
 
   /* ================= scroll: native, so wheel, trackpad and iframes behave ================= */
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -158,8 +160,8 @@
       gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
       const F = 1 / Math.tan((45 * Math.PI / 180) / 2), CAM = 6.2;
       let W = 0, H = 0, dpr = 1;
-      const resize = () => { dpr = Math.min(1.75, devicePixelRatio || 1); W = innerWidth; H = innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; gl.viewport(0, 0, canvas.width, canvas.height); };
-      resize(); addEventListener('resize', resize);
+      const resize = () => { dpr = Math.min(1.75, devicePixelRatio || 1); W = innerWidth; H = fine ? innerHeight : Math.max(innerHeight, screen.height || 0); canvas.width = W * dpr; canvas.height = H * dpr; gl.viewport(0, 0, canvas.width, canvas.height); };
+      resize(); onWidthResize(resize);
       const sections = $$('[data-shape]');
       function targetMorph() {
         const mid = innerHeight * 0.5;
@@ -359,7 +361,7 @@
     $('#bLegend').innerHTML = CL.map((cl) => `<span><i style="background:${cl.col}"></i>${cl.name}</span>`).join('');
     let W = 0, H = 0, dpr = 1;
     const size = () => { const r = cv.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; c2.setTransform(dpr, 0, 0, dpr, 0, 0); };
-    size(); addEventListener('resize', size);
+    size(); onWidthResize(size);
     let ry = 0.4, rx = -0.25, vry = reduce ? 0 : 0.0022, drag = null, hover = null, mx = -1, my = -1;
     cv.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, ry, rx }; cv.setPointerCapture(e.pointerId); });
     cv.addEventListener('pointermove', (e) => { const r = cv.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; if (drag) { ry = drag.ry + (e.clientX - drag.x) * 0.006; rx = clamp(drag.rx + (e.clientY - drag.y) * 0.004, -1.2, 1.2); } });
@@ -497,7 +499,9 @@
     const bubble = (who, text) => { const b = document.createElement('div'); b.className = 'bm ' + who; b.innerHTML = `<span class="who">${who === 'you' ? tr('you', 'tú') : tr('agent', 'agente')}</span>`; const t = document.createElement('span'); t.textContent = text; b.appendChild(t); box.appendChild(b); while (box.children.length > 7) box.firstChild.remove(); return b; };
     function fly(fromEl, label, cluster) {
       return new Promise((res) => {
-        const brain = window.__brain; if (!brain || reduce) { brain && brain.learn(label, cluster); return res(); }
+        const brain = window.__brain; const wr = $('#brainWrap').getBoundingClientRect();
+        const brainOnScreen = innerWidth > 960 && wr.top < innerHeight && wr.bottom > 0;
+        if (!brain || reduce || !brainOnScreen) { brain && brain.learn(label, cluster); return res(); }
         const fr = fromEl.getBoundingClientRect(); const sx = fr.left + fr.width / 2, sy = fr.top + fr.height / 2;
         const dot = document.createElement('div'); dot.className = 'bh-fly'; document.body.appendChild(dot);
         const t0 = performance.now(), dur = 1100;
@@ -595,7 +599,7 @@
   const mm = gsap.matchMedia();
   // tokens
   ScrollTrigger.create({ trigger: '.versus', start: 'top 78%', end: 'bottom 35%', scrub: true, onUpdate: (s) => setTokens(s.progress) });
-  gsap.from('.gain', { y: 40, opacity: 0.12, stagger: 0.12, scrollTrigger: { trigger: '.gains', start: 'top 88%', end: 'top 58%', scrub: true } });
+  gsap.from('.gain', { y: 30, opacity: 0, stagger: 0.1, duration: 0.8, ease: 'expo.out', scrollTrigger: { trigger: '.gains', start: 'top 88%', toggleActions: 'play none none none' } });
   // day
   mm.add('(min-width: 721px)', () => {
     const track = $('#dayTrack'); const dist = () => Math.max(0, track.scrollWidth - innerWidth + 60);
@@ -607,11 +611,11 @@
     const tl = gsap.timeline({ scrollTrigger: { trigger: '#lanes', start: 'top top', end: '+=140%', pin: true, scrub: 0.6 } });
     reqEls.forEach((el, i) => tl.from(el, { y: -180, opacity: 0, rotate: i % 2 ? 5 : -5, duration: 0.5, ease: 'back.out(1.4)' }, i * 0.26));
   });
-  mm.add('(max-width: 860px)', () => { reqEls.forEach((el) => gsap.from(el, { x: -30, opacity: 0.15, scrollTrigger: { trigger: el, start: 'top 92%', end: 'top 72%', scrub: true } })); });
+  mm.add('(max-width: 860px)', () => { reqEls.forEach((el) => gsap.from(el, { x: -24, opacity: 0, duration: 0.6, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 92%', toggleActions: 'play none none none' } })); });
   // reveals
-  $$('.defaults li, .trust article, .sync').forEach((el) => gsap.from(el, { y: 50, opacity: 0.15, scrollTrigger: { trigger: el, start: 'top 92%', end: 'top 62%', scrub: true } }));
+  $$('.defaults li, .trust article, .sync').forEach((el) => gsap.from(el, { y: 36, opacity: 0, duration: 0.9, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 90%', toggleActions: 'play none none none' } }));
   // marquee skew with scroll velocity
-  ScrollTrigger.create({ trigger: document.body, start: 0, end: 'max', onUpdate: (s) => { const v = clamp(s.getVelocity() / -180, -10, 10); $('#mqSkew').style.setProperty('--skew', v.toFixed(2) + 'deg'); } });
+  if (fine) ScrollTrigger.create({ trigger: document.body, start: 0, end: 'max', onUpdate: (s) => { const v = clamp(s.getVelocity() / -180, -10, 10); $('#mqSkew').style.setProperty('--skew', v.toFixed(2) + 'deg'); } });
   // catalog
   ScrollTrigger.create({ trigger: '#wall', start: 'top 82%', once: true, onEnter: () => {
     const order = cells.map((c, i) => i).sort(() => Math.random() - 0.5);
@@ -620,7 +624,7 @@
     gsap.to(o, { v: 7, duration: 2.4, delay: 0.5, ease: 'power3.inOut', onUpdate() { el.textContent = Math.round(o.v); } });
   } });
   // final
-  gsap.from('.final .cmd-hero, .final .links', { y: 40, opacity: 0.15, stagger: 0.15, scrollTrigger: { trigger: '.final', start: 'top 70%', end: 'top 30%', scrub: true } });
+  gsap.from('.final .cmd-hero, .final .links', { y: 30, opacity: 0, stagger: 0.12, duration: 0.9, ease: 'expo.out', scrollTrigger: { trigger: '.final', start: 'top 75%', toggleActions: 'play none none none' } });
 
   addEventListener('load', () => ScrollTrigger.refresh());
 })();
