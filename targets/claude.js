@@ -277,6 +277,20 @@ export function wireHook(paths, sourceMd, policy = {}) {
   } else rmSync(join(paths.projectRoot, '.rsc', 'ftd-nudge.mjs'), { force: true });
   if (!settings.hooks.PostToolUse.length) delete settings.hooks.PostToolUse;
 
+  // Copy guard: a Stop hook that refuses a final answer carrying a phrase the project forbids in what
+  // it publishes. Every wired project gets it because brand rules are not a software concern; it is
+  // silent and costs one directory read where no rules are declared. Opt-out: .rsc/.no-copy-guard.
+  settings.hooks.Stop ||= [];
+  settings.hooks.Stop = settings.hooks.Stop.filter((e) => !hookWiringOf(e).includes('.rsc/copy-guard.'));
+  {
+    const cgDest = join(paths.projectRoot, '.rsc', 'copy-guard.mjs');
+    copyFileSync(join(HERE, 'copy-rules.mjs'), join(paths.projectRoot, '.rsc', 'copy-rules.mjs'));
+    copyFileSync(join(HERE, 'copy-guard.mjs'), cgDest);
+    const cgCmd = viaBootstrap('quiet', at('.rsc', 'copy-guard.mjs'), `"${P}"`);
+    settings.hooks.Stop.push({ hooks: [{ type: 'command', command: cgCmd, timeout: 10 }] });
+    written.push(cgDest, join(paths.projectRoot, '.rsc', 'copy-rules.mjs'));
+  }
+
   // Danger guard: its own decision, not part of the code-hook block above (#273). `init` promises it
   // to non-technical and mixed users whatever the project is, and a plan that predates the field is
   // read as "yes": a non-technical operations install gets the guard it was missing on its next sync,

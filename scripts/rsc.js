@@ -46,7 +46,7 @@ if (['--version', '-v', 'version'].includes(rawArgv[0])) {
   process.exit(0);
 }
 const GENERAL_HELP = [
-  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | review consolidate [reports…] | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
+  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | review consolidate [reports…] | copy check <file> | copy rules | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
   'Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)',
   '   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.',
 ].join('\n');
@@ -77,7 +77,7 @@ const PURGE_HELP = [
 const GLOBAL_VALUE_FLAGS = new Set([
   '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--accept-plan',
 ]);
-const COMMANDS = new Set(['onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'sello', 'repair', 'uninstall', 'purge']);
+const COMMANDS = new Set(['copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'sello', 'repair', 'uninstall', 'purge']);
 function positionalTokens(input) {
   const out = [];
   for (let i = 0; i < input.length; i++) {
@@ -1179,6 +1179,36 @@ async function main() {
         return;
       }
       say('Use: npx @ericrisco/rsc registry refresh | registry status');
+      return;
+    }
+    case 'copy': {
+      // The phrases this project forbids in what it publishes (targets/copy-rules.mjs). `check` is the
+      // gate the copy skills run before delivering text; the Claude Stop hook runs the same check.
+      const USE = 'Use: npx @ericrisco/rsc copy check <file|-> [--json] | copy rules [--json]\n  Rules come from 02-DOCS/wiki/: a "Never use" / "Frases prohibidas" section, a "Never use: a, b" line, or a sentence that prohibits quoted phrases.';
+      const sub = argv[1];
+      if (sub !== 'check' && sub !== 'rules') { say(USE); if (sub) process.exitCode = 1; return; }
+      const { readFileSync } = await import('node:fs');
+      const C = await import('../targets/copy-rules.mjs');
+      const rules = C.loadRules(process.cwd());
+      if (sub === 'rules') {
+        if (argv.includes('--json')) say(JSON.stringify(rules, null, 2));
+        else say(rules.length ? rules.map((r) => `${r.phrase}  (${r.source}:${r.line})`).join('\n') : 'No banned phrases declared in 02-DOCS/wiki/.');
+        return;
+      }
+      const file = argv.slice(2).find((a) => !a.startsWith('--'));
+      let text = '';
+      try {
+        if (file && file !== '-') text = readFileSync(file, 'utf8');
+        else if (!process.stdin.isTTY) text = readFileSync(0, 'utf8');
+        else { say(USE); process.exitCode = 1; return; }
+      } catch (e) { say(`rsc: cannot read ${file || 'stdin'} (${e.code || e.message}).`); process.exitCode = 1; return; }
+      const hits = C.findViolations(C.proseOnly(text), rules);
+      const where = file && file !== '-' ? file : 'stdin';
+      if (argv.includes('--json')) say(JSON.stringify({ rules: rules.length, hits }, null, 2));
+      else if (!rules.length) say('No banned phrases declared in 02-DOCS/wiki/: nothing to check.');
+      else if (!hits.length) say(`RSC_COPY_CLEAN · ${rules.length} rule(s) checked.`);
+      else say(['RSC_COPY_VIOLATION · rewrite without these (a negation still counts):', ...hits.map((h) => `  ${where}:${h.line}  "${h.phrase}" found as "${h.match}"  (rule in ${h.source})`)].join('\n'));
+      if (hits.length) process.exitCode = 1;
       return;
     }
     case 'review': {

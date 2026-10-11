@@ -139,6 +139,15 @@ To score a sample against the guide, run three passes:
 
 Off-brand reads like everyone else: abstract nouns, hedged claims, AI tells, energy faked with punctuation instead of verbs. The fix is always a rewrite toward a rule, never "make it pop."
 
+## Banned phrases gate (before you deliver)
+
+The project's forbidden phrases are enforced, not suggested. Before handing over copy meant to be
+published, write it to a scratch file and run `npx @ericrisco/rsc copy check <file>`. On
+`RSC_COPY_VIOLATION`, rewrite and check again. A negation still counts ("this is not X" uses X), so
+say what it is instead. When the person states a new ban, record it in
+`02-DOCS/wiki/brand/voice-guide.md` under `## Never use`, one phrase per bullet (`word*` also covers
+its derivatives). In Claude Code a Stop hook runs the same check on your final answer.
+
 ## Anti-patterns
 
 | Anti-pattern | Why it fails | Do this instead |

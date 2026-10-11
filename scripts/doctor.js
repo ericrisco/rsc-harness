@@ -398,6 +398,7 @@ export const RSC_HOOKS = [
   { id: 'ship-guard', label: 'ship-guard', needle: '.rsc/ship-guard.', injects: null },
   { id: 'danger-guard', label: 'danger-guard', needle: '.rsc/danger-guard.', injects: null },
   { id: 'gitmoji-guard', label: 'gitmoji-guard', needle: '.rsc/gitmoji-guard.', injects: null },
+  { id: 'copy-guard', label: 'copy-guard', needle: '.rsc/copy-guard.', injects: null },
   // The bash-era form, still retired by unwireHook. If uninstall knows how to remove it, the report
   // has to know how to count it.
   { id: 'legacy-cat-form', label: 'legacy suggest hook', needle: 'skills/rsc/suggest', injects: 'sessionStart' },

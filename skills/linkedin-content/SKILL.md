@@ -138,6 +138,15 @@ Full templates with char budgets for all three formats live in `references/hooks
 
 If the project has an `02-DOCS/` post log, read it before drafting: pull prior posts and their measured outcomes (impressions, dwell, comments, saves) and bias the new draft toward the hook patterns, formats, and CTA types that actually performed *for this account* — not generic best practice. Then log the new post back with its hook, format, and CTA type so the next draft is sharper. The front-matter schema (date, format, hook, cta_type, impressions, dwell_s, comments, saves) is in `references/hooks-and-formats.md`.
 
+## Banned phrases gate (before you deliver)
+
+The project's forbidden phrases are enforced, not suggested. Before handing over copy meant to be
+published, write it to a scratch file and run `npx @ericrisco/rsc copy check <file>`. On
+`RSC_COPY_VIOLATION`, rewrite and check again. A negation still counts ("this is not X" uses X), so
+say what it is instead. When the person states a new ban, record it in
+`02-DOCS/wiki/brand/voice-guide.md` under `## Never use`, one phrase per bullet (`word*` also covers
+its derivatives). In Claude Code a Stop hook runs the same check on your final answer.
+
 ## Anti-patterns
 
 | Anti-pattern | Why it kills the post | Fix |

@@ -140,6 +140,15 @@ this gate before judging any campaign:
 Hand the reporting/dashboards to the `analytics` / `dashboard` skills — you set up
 the signal; they build the read-out.
 
+## Banned phrases gate (before you deliver)
+
+The project's forbidden phrases are enforced, not suggested. Before handing over copy meant to be
+published, write it to a scratch file and run `npx @ericrisco/rsc copy check <file>`. On
+`RSC_COPY_VIOLATION`, rewrite and check again. A negation still counts ("this is not X" uses X), so
+say what it is instead. When the person states a new ban, record it in
+`02-DOCS/wiki/brand/voice-guide.md` under `## Never use`, one phrase per bullet (`word*` also covers
+its derivatives). In Claude Code a Stop hook runs the same check on your final answer.
+
 ## Anti-patterns
 
 | Anti-pattern | Why it fails | Do instead |

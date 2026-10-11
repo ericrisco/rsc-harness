@@ -88,6 +88,9 @@ export function generatedHookFiles({ target, cwd, policy }) {
     // team-safe-default: the 3.0 start-up duties and the trunk policy (also read by branch-guard).
     join(cwd, '.rsc', 'team-safe-start.mjs'),
     join(cwd, '.rsc', 'trunk-policy.mjs'),
+    // The copy guard and the rules it reads: wired for every Claude project.
+    join(cwd, '.rsc', 'copy-guard.mjs'),
+    join(cwd, '.rsc', 'copy-rules.mjs'),
   ];
   // The danger guard is declared on its own terms (#273): present unless the plan says otherwise,
   // whether or not the code guards are.
