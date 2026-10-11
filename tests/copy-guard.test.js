@@ -168,3 +168,47 @@ test('12 · `rsc copy check` exits 1 with the hit and its rule, 0 on clean text'
     assert.ok(JSON.parse(rules.stdout).some((r) => r.phrase === 'captar'));
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+// ── precision: 3.0.21 turned documentation ABOUT rules into rules ─────────────────────────────
+// Every sample below is real text from a wiki where 3.0.21 extracted 70+ "banned phrases" (file
+// names, table cells, "add", "review", a lone "y") and then blocked ordinary answers.
+
+test('13 · a mention of a ban is not a declaration of one', () => {
+  const samples = [
+    '- [x] Reproducir. Anuncio «deja claro que no es multinivel»: 2/3 entregan vocabulario prohibido negado («red de captación», «lista de contactos»).',
+    '- **3.0.21, copy guard:** las frases prohibidas de un proyecto se hacen cumplir con un Stop hook y `rsc copy check`. Caso de un alumno: el modelo negaba palabras prohibidas («no es una red de captación») creyendo que estaba permitido.',
+    '| P1 | Todo `skill-id` en SKILL.md debe existir; paths absolutos/personales prohibidos (nuestro `.claude/settings.json`). | Hoy `review` anuncia `/code-review` y `rsc-review` que no existen; `detect-repo.js` emite `design-eng`. | S |',
+    'El gate prohíbe tocar `targets/agents.js` sin test, y nunca uses `add` sin `--target`.',
+  ];
+  for (const md of samples) assert.deepEqual(extractRules(md).map((r) => r.phrase), [], md.slice(0, 60));
+});
+
+test('14 · a wrapped "Vetado:" list is read to its end, code-quoted items included', () => {
+  const md = '**Vetado:** `revolutionary`, `game-changer`, `seamless`,\n`supercharge`, "In today\'s landscape".\n\nOtro párrafo con "comillas" normales.\n';
+  assert.deepEqual(extractRules(md).map((r) => r.phrase).sort(), ['game-changer', "In today's landscape", 'revolutionary', 'seamless', 'supercharge'].sort());
+});
+
+test('15 · process records are not policy: ftd/ and sdd/ are skipped', () => {
+  const dir = project({
+    '02-DOCS/wiki/ftd/feature.md': 'Prohibido "captar".\n',
+    '02-DOCS/wiki/sdd/specs/x.md': '## Never use\n\n- leverage\n',
+    '02-DOCS/wiki/brand/voice.md': 'Prohibido "reclutar".\n',
+    '02-DOCS/wiki/_archive/old.md': 'Prohibido "vender".\n',
+  });
+  try { assert.deepEqual(loadRules(dir).map((r) => r.phrase), ['reclutar']); }
+  finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('16 · a lone letter or a stopword is never a rule', () => {
+  assert.deepEqual(extractRules('## Banned\n\n- y\n- the\n- ok go\n').map((r) => r.phrase), ['ok go']);
+  // An unquoted list splits on commas only, so a common word is never cut out of a phrase.
+  assert.deepEqual(extractRules('Vetado: blobs, ilustraciones de cerebros, robots o personas.\n').map((r) => r.phrase), ['blobs', 'ilustraciones de cerebros', 'robots o personas']);
+});
+
+test('17 · visual bans are not copy rules, and a list ends with its sentence', () => {
+  const md = '## Logo y color\n\nVetado: personas, blobs.\n\n## Voz\n\nVetado: game-changer, y **logos de terceros**. Un logo corporativo mal dibujado hunde el asset.\n';
+  assert.deepEqual(extractRules(md).map((r) => r.phrase), ['game-changer', 'logos de terceros']);
+  const dir = project({ '02-DOCS/wiki/brand/visual-identity.md': 'Vetado: personas.\n', '02-DOCS/wiki/brand/voice.md': 'Vetado: leverage.\n' });
+  try { assert.deepEqual(loadRules(dir).map((r) => r.phrase), ['leverage']); }
+  finally { rmSync(dir, { recursive: true, force: true }); }
+});

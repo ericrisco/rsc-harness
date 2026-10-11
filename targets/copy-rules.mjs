@@ -14,27 +14,40 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const BAN = String.raw`(?:prohib\p{L}*|forbid\p{L}*|banned|ban list|never (?:use|say|write)|nunca (?:uses|usar|digas|decir|escribas)|no (?:uses|digas|escribas)|do not (?:use|say|write)|don'?t (?:use|say|write)|vetad\p{L}*|blocklist|denylist)`;
+// A rule is a DECLARATION, not a mention. 3.0.21 read any sentence that contained "prohibido" and any
+// backticked token near it, and on a real wiki that turned file names, table cells and words like
+// "add" or "review" into banned phrases: documentation ABOUT rules became rules. So the keyword has to
+// open the line or sentence, code spans are never phrases in prose, tables are skipped, and process
+// records (ftd/, sdd/) are not policy.
+const BAN = String.raw`(?:prohib\p{L}*|vetad\p{L}*|forbidden|banned|never (?:use|say|write)|nunca (?:uses|usar|digas|decir|escribas)|no (?:uses|digas|escribas)|do not (?:use|say|write)|don'?t (?:use|say|write)|blocklist|denylist)`;
+const LEAD = String.raw`^[\s>*_¡¿("“«-]*(?:(?:queda|quedan|esta|está|estan|están|it is|it's|is|are|strictly|totalmente|terminantemente|absolutamente|words|phrases|terms|palabras|frases|términos|terminos|expresiones)\s+){0,2}`;
+const DECLARES = new RegExp(LEAD + BAN, 'iu');
 const BAN_HEADING = new RegExp(BAN, 'iu');
-const BAN_SENTENCE = new RegExp(BAN, 'iu');
-const BAN_COLON = new RegExp(String.raw`^\s*(?:[-*+]\s+)?\**\s*(?:[\p{L} ]{0,20}\s)?${BAN}[^:]{0,20}:\**\s*(.+)$`, 'iu');
-const QUOTED = /"([^"\n]{1,80})"|“([^”\n]{1,80})”|«([^»\n]{1,80})»|`([^`\n]{1,80})`/gu;
+const BAN_COLON = new RegExp(String.raw`^\s*(?:[-*+]\s+)?\**\s*(?:(?:queda|quedan|esta|está|it is|words|phrases|terms|palabras|frases|términos|terminos|expresiones)\s+){0,2}${BAN}[\p{L} ]{0,25}:\**\s*(.*)$`, 'iu');
+const PROSE_QUOTES = /"([^"\n]{1,80})"|“([^”\n]{1,80})”|«([^»\n]{1,80})»/gu;
+const LIST_QUOTES = /"([^"\n]{1,80})"|“([^”\n]{1,80})”|«([^»\n]{1,80})»|`([^`\n]{1,80})`/gu;
+const STOP = new Set(['y', 'o', 'e', 'u', 'a', 'de', 'la', 'el', 'en', 'and', 'or', 'the', 'of', 'to', 'in']);
+const SKIP_DIRS = new Set(['ftd', 'sdd', 'raw']);
+// The guard checks TEXT. A visual-identity ban ("no illustrations of people") read as copy would forbid
+// the word "people" in every answer, so pages and sections about visuals are not copy policy.
+const VISUAL = /visual|design|dise[nñ]o|colou?r|logo|imagen|image|ilustraci|tipograf|typograph|paleta|palette/iu;
 
 export const normalize = (s) => String(s).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 // A trailing * is the explicit wildcard, so only a markdown bold pair is stripped from the end.
-const clean = (s) => s.replace(/^[\s"“«`'*_]+/u, '').replace(/\*\*$/u, '').replace(/[\s"”»`'_.;:,]+$/u, '').trim();
+const clean = (s) => s.replace(/\*\*/gu, '').replace(/^[\s"“«`'_]+/u, '').replace(/^(?:y|and|o|or)\s+/iu, '').replace(/[\s"”»`'_.;:,]+$/u, '').trim();
 
-function quotedIn(text) {
+function quotedIn(text, re) {
   const out = [];
-  for (const m of text.matchAll(QUOTED)) out.push(m[1] ?? m[2] ?? m[3] ?? m[4]);
+  for (const m of text.matchAll(re)) out.push(m[1] ?? m[2] ?? m[3] ?? m[4]);
   return out;
 }
 
 function listItems(text) {
-  const q = quotedIn(text);
+  const q = quotedIn(text, LIST_QUOTES);
   if (q.length) return q;
-  return text.split(/[,;]|\s+(?:y|and|o|or)\s+/u).map(clean).filter(Boolean);
+  // Commas only: "cerebros, robots o personas" split on "o" would ban the word "personas".
+  return text.split(/[,;]/u).map(clean).filter(Boolean);
 }
 
 /** Banned phrases declared in one markdown document. */
@@ -42,28 +55,34 @@ export function extractRules(markdown, source = '') {
   const found = [];
   const add = (phrase, line) => {
     const p = clean(phrase);
-    // A ban is a word or a short phrase. Anything longer is a sentence that happened to be quoted.
-    if (p && p.split(/\s+/).length <= 6 && /\p{L}/u.test(p)) found.push({ phrase: p, source, line });
+    const letters = normalize(p).replace(/[^\p{L}]/gu, '');
+    // A ban is a word or a short phrase: not a sentence that happened to be quoted, not a stray "y".
+    if (p && p.split(/\s+/).length <= 6 && letters.length >= 2 && !STOP.has(normalize(p))) found.push({ phrase: p, source, line });
   };
   const lines = String(markdown).split('\n');
-  let inFence = false, banSection = false, para = [], paraStart = 0;
+  let inFence = false, banSection = false, visualSection = false, para = [], paraStart = 0, colonList = null;
   const flush = () => {
+    if (colonList) { for (const item of listItems(colonList.text)) add(item, colonList.line); colonList = null; }
     if (!para.length) return;
     const text = para.join(' ');
-    for (const sentence of text.split(/(?<=[.!?])\s+(?=[\p{Lu}¿¡"“«])/u)) {
-      if (BAN_SENTENCE.test(sentence)) for (const q of quotedIn(sentence)) add(q, paraStart + 1);
+    for (const sentence of text.split(/(?<=[.!?])\s+(?=[\p{Lu}¿¡"“«*])/u)) {
+      if (DECLARES.test(sentence)) for (const q of quotedIn(sentence, PROSE_QUOTES)) add(q, paraStart + 1);
     }
     para = [];
   };
   lines.forEach((raw, i) => {
     if (/^\s*```/.test(raw)) { flush(); inFence = !inFence; return; }
     if (inFence) return;
+    if (/^\s*\|/.test(raw)) { flush(); return; }
     const heading = raw.match(/^#{1,6}\s+(.*)$/);
-    if (heading) { flush(); banSection = BAN_HEADING.test(heading[1]); return; }
+    if (heading) { flush(); visualSection = VISUAL.test(heading[1]); banSection = !visualSection && BAN_HEADING.test(heading[1]) && heading[1].split(/\s+/).length <= 6; return; }
+    if (visualSection) return;
     if (!raw.trim()) { flush(); return; }
-    const colon = raw.match(BAN_COLON);
-    if (colon && !quotedIn(raw.slice(0, raw.indexOf(':'))).length) { flush(); for (const item of listItems(colon[1])) add(item, i + 1); return; }
     const bullet = raw.match(/^\s*(?:[-*+]|\d+[.)])\s+(.*)$/);
+    // A "Vetado: a, b," list may wrap onto the next lines; it runs until a blank line or a new item.
+    if (colonList && !bullet) { colonList.text += ' ' + raw.trim(); const end = colonList.text.search(/[.!?](?=\s+\p{Lu}|\s*$)/u); if (end >= 0) { colonList.text = colonList.text.slice(0, end); flush(); } return; }
+    const colon = raw.match(BAN_COLON);
+    if (colon) { flush(); colonList = { text: colon[1], line: i + 1 }; const end = colonList.text.search(/[.!?](?=\s+\p{Lu}|\s*$)/u); if (end >= 0) { colonList.text = colonList.text.slice(0, end); flush(); } return; }
     if (bullet && banSection) { flush(); for (const item of listItems(bullet[1])) add(item, i + 1); return; }
     if (bullet) { flush(); para = [bullet[1]]; paraStart = i; flush(); return; }
     if (!para.length) paraStart = i;
@@ -84,8 +103,9 @@ export function loadRules(root, { maxFiles = 3000 } = {}) {
       if (files.length >= maxFiles || name.startsWith('.')) continue;
       const full = join(dir, name);
       let st; try { st = statSync(full); } catch { continue; }
-      if (st.isDirectory()) walk(full);
-      else if (name.endsWith('.md')) files.push(full);
+      // Archived pages (_archive/, archive/) are history, not the rules in force.
+      if (st.isDirectory()) { if ((dir !== base || !SKIP_DIRS.has(name)) && !name.startsWith('_') && !/^archive/i.test(name)) walk(full); }
+      else if (name.endsWith('.md') && !VISUAL.test(name)) files.push(full);
     }
   };
   walk(base);
