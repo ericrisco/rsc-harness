@@ -458,3 +458,6 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 
 /* mobile calm: a dimmer particle field behind the text */
 @media (max-width: 760px), (pointer: coarse) { #field { opacity: 0.5; } }
+
+/* decorative day numbers live in CSS so they are not read or contrast-checked as text */
+.day-card .big::before { content: attr(data-n); }
