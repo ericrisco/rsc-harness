@@ -1,6 +1,6 @@
 ---
 name: harness
-description: "Use when governing a workspace's control plane, code or not — the `01-TOOLS/` tooling layer, the `02-DOCS/` chaos→knowledge wiki, the root Knowledge map. Audits it, migrates legacy `XX-*` folders, scaffolds provider tooling, sweeps the inbox, writes root CLAUDE.md/AGENTS.md. NOT the bootstrap front door (that is `init`, which hands off here)."
+description: "Use when governing a workspace's control plane, code or not — the `01-TOOLS/` tooling layer, the `02-DOCS/` chaos→knowledge wiki, the root Knowledge map. Audits it, migrates legacy `XX-*` folders, scaffolds provider tooling, sweeps the inbox, eats a file the person hands over (\"cómete este fichero\", \"guárdalo en la documentación\": moved into 02-DOCS/raw/ and documented), writes root CLAUDE.md/AGENTS.md. NOT the bootstrap front door (that is `init`, which hands off here)."
 tags: [harness, company, ops, docs, wiki, connect, tools, knowledge]
 recommends: [init, connect-tool]
 profiles: [minimal, core, full]
@@ -26,6 +26,14 @@ The **harness** is the control plane of a workspace. A workspace need not be cod
 
   Ingest relocates, never deletes: a loose file at the workspace root moves into `raw/`; a file
   inside a folder the user maintains is copied, and consolidating that folder needs explicit consent.
+
+  **When the person hands you a file** ("cómete este fichero", "guárdalo en la documentación",
+  "ingest this"): run `npx @ericrisco/rsc ingest <file> --topic <topic>`. It moves the file into
+  `02-DOCS/raw/<topic>/` only after the copy is verified, and records it in `wiki/.ingested.json`.
+  Never move or rename that raw copy afterwards: the ledger points at it. Then compile from the raw copy
+  into `wiki/` (update before create, cross-links, `index.md`, `log.md`) and say in one line where it
+  lives now. The file must not stay in the root. A refused file (project file, code, secret) stays
+  where it is: say why; `--keep` documents it without moving it.
 
   The `wiki/` is simultaneously an OKF-v0.1 bundle
   ([Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf))

@@ -46,7 +46,7 @@ if (['--version', '-v', 'version'].includes(rawArgv[0])) {
   process.exit(0);
 }
 const GENERAL_HELP = [
-  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | review consolidate [reports…] | copy check <file> | copy rules | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
+  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | review consolidate [reports…] | ingest <file...> | copy check <file> | copy rules | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
   'Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)',
   '   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.',
 ].join('\n');
@@ -75,9 +75,9 @@ const PURGE_HELP = [
 // `--accompaniment` stays listed although the dial is retired: old scripts and agents still pass it,
 // and its value must keep being skipped rather than read as a command or a skill id.
 const GLOBAL_VALUE_FLAGS = new Set([
-  '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--accept-plan',
+  '--topic', '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--accept-plan',
 ]);
-const COMMANDS = new Set(['copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'sello', 'repair', 'uninstall', 'purge']);
+const COMMANDS = new Set(['ingest', 'copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'sello', 'repair', 'uninstall', 'purge']);
 function positionalTokens(input) {
   const out = [];
   for (let i = 0; i < input.length; i++) {
@@ -1179,6 +1179,27 @@ async function main() {
         return;
       }
       say('Use: npx @ericrisco/rsc registry refresh | registry status');
+      return;
+    }
+    case 'ingest': {
+      // "Eat this file": into 02-DOCS/raw/, verified, then gone from where it was dropped (lib/ingest-move.js).
+      const USE = 'Use: npx @ericrisco/rsc ingest <file...> [--topic <topic>] [--keep] [--json]\n  Moves each file into 02-DOCS/raw/ (the copy is verified first, then the original is removed) and records it in 02-DOCS/wiki/.ingested.json.\n  --keep copies without removing. Project files, code and secrets are refused.';
+      const rest = argv.slice(1);
+      const files = rest.filter((a, i) => !a.startsWith('--') && rest[i - 1] !== '--topic');
+      if (!files.length) { say(USE); process.exitCode = 1; return; }
+      const { ingestFile } = await import('./lib/ingest-move.js');
+      const topic = flag('topic') || '';
+      const results = files.map((f) => ingestFile(process.cwd(), f, { keep: argv.includes('--keep'), topic }));
+      if (argv.includes('--json')) say(JSON.stringify(results, null, 2));
+      else {
+        const lines = results.map((r) => r.status === 'moved' ? `RSC_INGEST_MOVED ${r.file} → ${r.raw}`
+          : r.status === 'copied' ? `RSC_INGEST_COPIED ${r.file} → ${r.raw}`
+          : r.status === 'missing' ? `RSC_INGEST_MISSING ${r.file}: ${r.reason}`
+          : `RSC_INGEST_REFUSED ${r.file}: ${r.reason}`);
+        if (results.some((r) => r.raw)) lines.push('Next: read each raw/ copy and compile it into 02-DOCS/wiki/ (update before create, cross-links, wiki/index.md, wiki/log.md), then tell the person where it lives now.');
+        say(lines.join('\n'));
+      }
+      if (results.some((r) => r.status === 'refused' || r.status === 'missing')) process.exitCode = 1;
       return;
     }
     case 'copy': {

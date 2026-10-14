@@ -424,6 +424,10 @@ rsc agent-model opencode inherit     # agents use the session's model
 rsc agents status | reset <name>     # installed agents, and the ones you edited
 rsc review consolidate c.md s.md t.md  # merge reviewer findings; serious ones go to finding-verifier
 
+# Documentation
+rsc ingest notas.md --topic crm      # move a file into 02-DOCS/raw/ (verified copy), then document it
+rsc copy rules | check ad.txt        # the phrases this project forbids, and a check before publishing
+
 # Memory and diagnostics
 rsc memory status | off | resume
 rsc doctor                           # harness health and onboarding readiness

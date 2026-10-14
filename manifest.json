@@ -1,5 +1,5 @@
 {
-  "version": "3.0.22",
+  "version": "3.1.0-0",
   "counts": {
     "skills": 271,
     "agents": 34,
@@ -2310,7 +2310,7 @@
     },
     {
       "id": "harness",
-      "description": "Use when governing a workspace's control plane, code or not — the `01-TOOLS/` tooling layer, the `02-DOCS/` chaos→knowledge wiki, the root Knowledge map. Audits it, migrates legacy `XX-*` folders, scaffolds provider tooling, sweeps the inbox, writes root CLAUDE.md/AGENTS.md. NOT the bootstrap front door (that is `init`, which hands off here).",
+      "description": "Use when governing a workspace's control plane, code or not — the `01-TOOLS/` tooling layer, the `02-DOCS/` chaos→knowledge wiki, the root Knowledge map. Audits it, migrates legacy `XX-*` folders, scaffolds provider tooling, sweeps the inbox, eats a file the person hands over (\\\"cómete este fichero\\\", \\\"guárdalo en la documentación\\\": moved into 02-DOCS/raw/ and documented), writes root CLAUDE.md/AGENTS.md. NOT the bootstrap front door (that is `init`, which hands off here).",
       "tags": [
         "harness",
         "company",

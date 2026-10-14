@@ -179,7 +179,9 @@ if (existsSync(join(root, '02-DOCS', 'wiki')) && existsSync(inbox)) {
 Un-ingested material is waiting in 02-DOCS/inbox/.
 ACTION: run the Auto-Ingest Sweep now — ingest inbox/, then scan the workspace
 (minus .rscignore) for un-ingested documents, recording them in wiki/.ingested.json.
-Originals are copied, never moved; deleting an emptied folder needs explicit consent.
+Loose root files and inbox/ files move into raw/ with \`npx @ericrisco/rsc ingest <file>\`
+(verified copy, then removed); files inside the person's own folders are copied; deleting a
+folder needs explicit consent.
 ===========================
 `);
   }

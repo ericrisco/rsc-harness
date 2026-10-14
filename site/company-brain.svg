@@ -31,7 +31,7 @@
   <circle cx="196" cy="404" r="5" fill="#9ca7b3"/>
   <path d="M196 404 L130 520 L64 520" class="lead"/>
   <text x="64" y="552" class="mono dim" font-size="15">inbox/</text>
-  <text x="64" y="576" class="sans muted" font-size="15">Drop any file, any format. It is copied, never moved away.</text>
+  <text x="64" y="576" class="sans muted" font-size="15">Drop any file, any format. It moves into the docs, verified.</text>
 
   <circle cx="586" cy="456" r="5" fill="#63d68a"/>
   <path d="M586 456 L586 690 L430 690" class="leadg"/>
