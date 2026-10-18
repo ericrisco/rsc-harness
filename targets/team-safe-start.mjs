@@ -12,15 +12,29 @@
 // Each returns the text to say, or ''. None throws: a session start is never worth breaking.
 // Standalone siblings under `.rsc/`: trunk-policy.mjs, worktree-reaper.mjs, session-memory-core.mjs.
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { basename, join, sep } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 
 const git = (root, args) => {
   try { return execFileSync('git', args, { windowsHide: true, cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 8000 }).trim(); }
   catch { return null; }
 };
 const ok = (root, args) => git(root, args) !== null;
-const real = (p) => { try { return realpathSync(p); } catch { return p; } };
+// The native realpath returns the path as the file system stores it. The JS one keeps the case it was
+// given, and Windows hands the same folder over as "c:\…" (VS Code) and "C:/…" (git): #316.
+const real = (p) => { try { return realpathSync.native(p); } catch { try { return realpathSync(p); } catch { return p; } } };
+
+/** Whether `path` is `home` or inside it. Windows paths compare case-insensitively and with either slash. */
+export function isInside(path, home, platform = process.platform) {
+  const win = platform === 'win32';
+  const norm = (p) => { const s = win ? String(p).replace(/\//g, '\\').toLowerCase() : String(p); return s.length > 1 ? s.replace(/[\\/]+$/, '') : s; };
+  const a = norm(path), b = norm(home);
+  return a === b || a.startsWith(b + (win ? '\\' : '/'));
+}
+
+// The last word on "same folder": two names for one directory share device and inode whatever their
+// spelling. Used before reporting a destination as taken, so a spelling difference never reads as a clash.
+const sameDir = (a, b) => { try { const x = statSync(a), y = statSync(b); return x.dev === y.dev && x.ino === y.ino && x.ino !== 0; } catch { return false; } };
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '').replace(/^(\d{8})(\d{4})$/, '$1-$2');
 
 const RESCUE_MARK = '.team-safe-3-rescue';
@@ -71,11 +85,12 @@ export async function relocateOldWorktrees(root) {
     const left = [];
     for (const wt of W.listWorktrees(root)) {
       const path = real(wt.path);
-      if (path === home || path.startsWith(home + sep)) continue; // already inside
+      if (isInside(path, home)) continue; // already inside
       if (W.provenanceOf(root, { ...wt, path }) !== 'rsc') continue;
       if (others(path).length) { left.push(`${path} (una sesión trabaja en él)`); continue; }
       const name = basename(path);
       const dest = join(home, '.worktrees', name.startsWith(`${basename(home)}-`) ? name.slice(basename(home).length + 1) : name);
+      if (sameDir(dest, path)) continue; // it IS the destination: already inside, under another spelling
       if (existsSync(dest)) { left.push(`${path} (ya existe ${dest})`); continue; }
       mkdirSync(join(home, '.worktrees'), { recursive: true });
       if (ok(root, ['worktree', 'move', path, dest])) moved.push(`${path} → .worktrees/${basename(dest)}`);

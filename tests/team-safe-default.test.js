@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { trunkPolicy, trunkSignals, defaultBranchName, UNLOCK } from '../targets/trunk-policy.mjs';
 import { evaluate, effectiveDir, unquoted, COMMITS_HERE, MOVES_BRANCH } from '../targets/branch-guard.mjs';
 import { capture, otherActiveSessions, ACTIVE_WINDOW_MS } from '../targets/session-memory-core.mjs';
@@ -444,4 +444,32 @@ test('tsd41 · pushing straight into the closed default branch by refspec is den
   }
   const open = repo(); git(open, 'switch', '-q', '-c', 'feat/y');
   assert.equal(await evaluate({ root: open, command: 'git push origin HEAD:main', cwd: open }), null, 'an open trunk is not guarded');
+});
+
+// #316: on Windows the session's root arrives as "c:\…" (VS Code) and git lists worktrees as "C:/…".
+// The JS realpath keeps whatever case it was given, so a worktree already inside .worktrees/ looked
+// outside, its computed destination was itself, and every session said "Sin mover … ya existe".
+// macOS has the same case-insensitive disk and the same JS realpath, so the real bug reproduces here.
+test('tsd-316a · a worktree already inside .worktrees/ is left alone when the root arrives in another case (#316)', async (t) => {
+  const { relocateOldWorktrees } = await import('../targets/team-safe-start.mjs');
+  const r = repo();
+  const flipped = join(dirname(r), basename(r).replace(/[a-z]/i, (c) => (c === c.toLowerCase() ? c.toUpperCase() : c.toLowerCase())));
+  if (flipped === r || !existsSync(flipped)) { t.skip('case-sensitive file system: the case variant does not exist'); return; }
+  const inside = join(r, '.worktrees', 'feat-y');
+  git(r, 'worktree', 'add', '-q', inside, '-b', 'feat/y');
+  const said = await relocateOldWorktrees(flipped);
+  assert.equal(said, '', `nothing to say about a worktree already inside, got: ${said}`);
+  assert.ok(existsSync(inside), 'the worktree must stay where it is');
+});
+
+test('tsd-316b · "inside the project" ignores drive-letter case and slash style on Windows (#316)', async () => {
+  const { isInside } = await import('../targets/team-safe-start.mjs');
+  assert.equal(isInside('C:\\Users\\ana\\proj\\.worktrees\\feat', 'c:\\Users\\ana\\proj', 'win32'), true);
+  assert.equal(isInside('C:/Users/ana/proj/.worktrees/feat', 'c:\\Users\\ana\\proj', 'win32'), true);
+  assert.equal(isInside('c:\\Users\\ana\\proj', 'C:\\Users\\ana\\proj\\', 'win32'), true);
+  assert.equal(isInside('C:\\Users\\ana\\proj-feat', 'c:\\Users\\ana\\proj', 'win32'), false, 'a sibling is not inside');
+  // A case-sensitive system keeps distinguishing case, and siblings stay outside everywhere.
+  assert.equal(isInside('/home/ana/Proj/.worktrees/x', '/home/ana/proj', 'linux'), false);
+  assert.equal(isInside('/home/ana/proj/.worktrees/x', '/home/ana/proj', 'linux'), true);
+  assert.equal(isInside('/home/ana/proj-x', '/home/ana/proj', 'linux'), false);
 });
