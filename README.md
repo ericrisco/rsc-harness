@@ -627,6 +627,7 @@ Most of this catalog is written here. These are not, and they keep their author'
 | --- | --- | --- |
 | `design-eng` · `animate` · `animate-expo` · `review-animations` · `improve-animations` · `find-animation-opportunities` · `animation-vocabulary` · `apple-design` · `prototype` · `pick-ui-library` · `write-swift` · `ask-sonner` | [emilkowalski/skills](https://github.com/emilkowalski/skills) by Emil Kowalski, commit `d23d7f8` | MIT |
 | part of the AI-tell corpus in `design` | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | MIT |
+| the extend/polish/distill/audit modes, the visual-target loop and the habit tells in `design` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) by Paul Bakaus, `skill-v4.6.0`, via Uizze's `ui-taste` | Apache-2.0 |
 | the answer-first habits in `orient` | [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) | MIT |
 
 Adapted, not mirrored: each carries rsc frontmatter, routing evals and hand-offs to its siblings. The

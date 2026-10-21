@@ -79,6 +79,45 @@ export default function Page() {
 }
 ```
 
+## LCP-safe hero
+
+The hero as a Server Component: one `<h1>`, value on the button, a 44px target, and the LCP image
+on `next/image` with `priority` and explicit dimensions so nothing shifts.
+
+```tsx
+// app/page.tsx — Server Component, LCP-safe hero (Next.js 15 / React 19)
+import Image from "next/image";
+
+export default function Page() {
+  return (
+    <main>
+      <section className="mx-auto max-w-5xl px-6 pt-24 text-center">
+        <h1 className="text-balance text-5xl font-semibold tracking-tight md:text-6xl">
+          Ship the change in an afternoon, not a sprint
+        </h1>
+        <p className="mx-auto mt-5 max-w-xl text-pretty text-lg text-fg/70">
+          Concrete benefit, who it is for, and why now — no hype.
+        </p>
+        <a
+          href="#start"
+          className="mt-8 inline-flex min-h-11 items-center rounded-card bg-brand-500 px-6 font-medium text-white transition-colors hover:bg-brand-600"
+        >
+          Start free
+        </a>
+        <Image
+          src="/hero.avif"
+          alt="Product dashboard showing a one-click deploy"
+          width={1200}
+          height={720}
+          priority
+          className="mt-16 rounded-card shadow-card"
+        />
+      </section>
+    </main>
+  );
+}
+```
+
 ## CTA strategy
 
 - **One primary action per viewport.** A secondary action (ghost button, text link) may accompany it, but never two equal-weight primaries competing for the click.

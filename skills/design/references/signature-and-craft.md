@@ -37,6 +37,28 @@ Pick the concept from the DIRECTION BRIEF + brand study + research exemplars —
 you cannot say in one sentence what makes this surface different from the median SaaS page, you have not
 chosen a concept yet, and the output will default to generic.
 
+**Name the default and its opposite before you pick.** Write down the page this category always ships,
+then its predictable inverse (the dark neon dev tool → the cream editorial dev tool). Picking the inverse is
+still a rut. Draw candidates from the audience's own world (the publications they read, the places they
+work, the artifacts and graphic traditions of their trade), not from the product name's literal metaphor.
+A working product does not have to look like the tools its users operate.
+
+## Step 1b — When the brief is open, offer directions, not skins
+
+In Create or Replace with no direction settled, turn the strongest material into **two or three complete
+directions**. Each one states: its thesis, its palette and type, the first viewport, the path a visitor
+takes, its signature interaction, how it reaches the other screens, and an honest risk. Compare them on
+audience fit and product clarity, not novelty. A runner-up may tighten the winner's discipline (its grid,
+its density, its palette commitment); it does not donate decorative motifs. One world owns the result.
+
+Get the user's choice before committing a new identity; an explicit "you choose" counts. A familiar,
+category-standard direction is legitimate when chosen: execute it fully instead of smuggling quirks into
+it. After two rejected rounds, stop generating and ask which quality is missing. Showing the options as
+images or live variants is `../../variant-explorer/SKILL.md`'s job; the target that follows is
+`visual-target.md`.
+
+Adapted from [Impeccable](https://github.com/pbakaus/impeccable) by Paul Bakaus (Apache-2.0); wording ours.
+
 ## Step 2 — Manufacture the signature element (the "ONE idea")
 
 Every premium page has one element you would describe first to a friend. The brief asks for it; this is how

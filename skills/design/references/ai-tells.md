@@ -6,8 +6,9 @@ same rule. This file holds only what a `grep` cannot decide: presences you have 
 the page to see.
 
 Part of this corpus is adapted from [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill)
-(MIT), whose lists came out of real production tests. The split into checkable-vs-judged, the
-thresholds, and the wording are ours.
+(MIT), whose lists came out of real production tests, and the habits section from
+[Impeccable](https://github.com/pbakaus/impeccable) by Paul Bakaus (Apache-2.0). The split into
+checkable-vs-judged, the thresholds, and the wording are ours.
 
 Every item below is a **default**, overridable by a brief that explicitly asks for it. What
 makes them tells is that they show up *unasked*, as the model's idea of "looking designed".
@@ -60,6 +61,17 @@ makes them tells is that they show up *unasked*, as the model's idea of "looking
   agency-portfolio clichés unless they organise real content.
 - **A bento with empty cells.** N items means N cells, and at least two cells need real
   visual variation — otherwise it is a white card grid with extra steps.
+
+## Habits that pass for choices
+
+- **A modal the task did not need.** Nothing to interrupt, no focus to protect: it is a panel.
+- **Charts standing in for content.** Sparklines, progress rings and empty charts with no data
+  behind them; likewise the big-number hero used instead of showing the product.
+- **Monospace as costume.** Mono is for code, data and measurement, not for "technical" vibes.
+- **Emoji or mixed Unicode as the icon system.** One maintained set, one stroke weight.
+- **A polygon mask faking an organic edge.** Use a real alpha cutout, or drop the effect.
+- **Light or dark picked by category.** Pick from who uses it, where, and under what light.
+- **The predictable opposite.** Dodging the category default with its exact inverse is a default too.
 
 ## The second default (repetition)
 

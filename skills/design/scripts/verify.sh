@@ -340,6 +340,7 @@ Manual design-review checklist (Lighthouse did not run):
   [ ] Ban-list words absent from copy.
   [ ] Text fits at 360px and desktop without overflow.
   [ ] Empty / loading / hover / error states designed.
+  [ ] Rendered and inspected at 360px, desktop and the target size, or reported as visually unverified.
 EOF
 }
 
