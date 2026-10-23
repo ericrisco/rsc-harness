@@ -50,13 +50,23 @@ Follow [`engine/RUN.md`](engine/RUN.md) step by step. Read it whole before start
 
 1. Brief and inventory (eight to twelve things only this client has).
 2. The argument: one claim per section; no claim, no section.
-3. Deal three directions with `draw.mjs`, choose one against the inventory, write why.
+3. Deal three directions with `draw.mjs`, keep the two that fit the inventory best.
 4. The idea sentence, the competitor test, and one live thing.
 5. The whole copy deck before markup. Never invent proof: customers, quotes, numbers, logos.
-6. Build still: tokens, hero, sections, at least four real pictures (`assets.mjs`), the live thing.
+6. **Two first screens:** build the hero of both directions, inspect both, choose by looking (see
+   [references/judgement.md](references/judgement.md)), write why. Then build the rest of the page
+   still from the winner: tokens, sections, at least four pictures (`assets.mjs`), the live thing.
 7. Gate: `lint.mjs`, then `inspect.mjs` at 1440, 768 and 390. Zero `FAIL`.
-8. Look: open every screenshot, critique with `engine/references/critique.md`. At most three rounds.
+8. Look: open every screenshot, critique with `engine/references/critique.md` **and the checks
+   in [references/judgement.md](references/judgement.md)**. At most three rounds.
 9. Move: the motion layer, then inspect again.
+
+**What the meter cannot see decides the page.** Every page in rsc's blind benchmark passed the
+inspector; the jurors chose on what it does not measure: whether each picture belongs to this client,
+whether the product leads, whether text reads the first time, whether a field of colour carries
+something, whether an app screen is recomposed for the phone, and whether drawn things look
+finished. A software page pictures the object it replaces (the paper ledger, the printed form), never
+the category's buildings.
 
 For a single component or section inside an existing design, skip the draw, inherit the system,
 and still run the gate.
@@ -109,3 +119,4 @@ launch. Do not claim a check you did not run.
 | [references/modes.md](references/modes.md) | The four modes. |
 | [references/finish-review.md](references/finish-review.md) | The fresh reviewer. |
 | [references/design-md.md](references/design-md.md) | The `DESIGN.md` record. |
+| [references/judgement.md](references/judgement.md) | The checks the meter cannot make, and the two first screens. |

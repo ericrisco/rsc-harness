@@ -15,7 +15,8 @@ Hand it only this:
 - the screenshots from `.taste-skill/inspect/` at every width (the reviewer has no browser);
 - the last `inspect.mjs` result;
 - the direction sheet (`draw.mjs --show`), the idea sentence and the live thing;
-- the paths of `../engine/RUN.md` (house rules) and `../engine/references/critique.md`.
+- the paths of `../engine/RUN.md` (house rules), `../engine/references/critique.md` and
+  `judgement.md`.
 
 ## The checks, in order
 
@@ -26,7 +27,12 @@ Hand it only this:
    competitor test (would it work for the nearest competitor)?
 3. **The direction.** Was the dealt direction built, or did the build drift back to the layout the
    model would have made anyway?
-4. **Substance.** Real pictures, full content, no screen that is mostly empty ground.
+4. **Substance and judgement.** Real pictures, full content, no screen that is mostly empty ground.
+   Then every check of `judgement.md`, each answered on the screenshots: every picture belongs to
+   this client (cover the caption: does it show their product, place, material, process or customer,
+   or for software the object it replaces?), the product leads, text reads the first time (nothing
+   over a busy photo, no clipped glyph, no truncated or touching label), no empty field of colour, an
+   app screen recomposed for the phone, drawn things look finished. Any failure is a material fix.
 5. **Truth.** No invented customers, quotes, numbers or logos. Sample content marked.
 6. **Floor.** The house rules in `../engine/RUN.md`, plus what screenshots show and code hides:
    states (hover, focus, loading, empty, error), themed selection and focus rings, text that fits.

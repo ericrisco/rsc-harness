@@ -135,3 +135,17 @@ test('the engine ships unmodified: every script parses and RUN.md is upstream te
   assert.ok(!run.startsWith('---'), 'RUN.md carries no front matter, so it is never discovered as a skill');
   assert.match(run, /## The run/);
 });
+
+test('the judgement the meter cannot make is part of the run and of the fresh review', () => {
+  // Every page in the October 2026 blind benchmark passed the inspector; the losses came from
+  // pictures that only shared a category word, text over busy photos, products not shown and flat
+  // drawings. Those checks are judgement, so they live in prose, but they must stay wired in.
+  const b = body();
+  assert.match(b, /\*\*Two first screens:\*\*/);
+  assert.ok(b.includes('references/judgement.md'));
+  const judgement = readFileSync(join(SKILL, 'references', 'judgement.md'), 'utf8');
+  for (const h of ['## 1. Every picture belongs to this client', '## 2. The product leads', '## 3. Text reads the first time', '## 4. No empty fields', '## 5. App screens are recomposed for the phone', '## 6. Drawn things are finished', '## Two first screens']) assert.ok(judgement.includes(h), h);
+  assert.match(judgement, /data-ui/);
+  const review = readFileSync(join(SKILL, 'references', 'finish-review.md'), 'utf8');
+  assert.match(review, /every check of `judgement\.md`/);
+});
