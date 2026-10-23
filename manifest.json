@@ -1,7 +1,7 @@
 {
-  "version": "3.1.4",
+  "version": "3.3.0",
   "counts": {
-    "skills": 272,
+    "skills": 269,
     "agents": 34,
     "commands": 53,
     "fixedCommands": 20
@@ -1311,61 +1311,28 @@
     },
     {
       "id": "design",
-      "description": "Use when designing, polishing or auditing a web UI or landing page — visual concept, type/color/spacing/motion tokens, composition, rescuing a UI that reads AI-generic, or a graded review. Brand-grounded, research-first; ships Tailwind v4 + Next.js 15 under WCAG 2.2 AA and Core Web Vitals budgets. NOT the words on the page (that is `marketing`), NOT the App Router build (that is `nextjs`).",
+      "description": "Use when designing, redesigning, restyling or reviewing a web page or app screen (landing, product site, portfolio, dashboard, docs) or when a UI looks generic or AI-made. Deals a researched direction, takes the idea from the subject, uses real pictures, proves it in a browser. NOT the words (landing-copy), NOT component state (ui-engineering).",
       "tags": [
         "design",
-        "ux",
         "ui",
+        "ux",
         "landing",
-        "conversion"
+        "dashboard",
+        "frontend",
+        "taste"
       ],
       "recommends": [
-        "design-loop",
-        "design-dna",
-        "nextjs",
-        "marketing"
-      ],
-      "profiles": [
-        "full"
-      ]
-    },
-    {
-      "id": "design-dna",
-      "description": "Use when a design has won and its look must survive: codify it into a permanent style skill with measured ratios, bans and tests that can fail, then build new pieces in that exact look. Fires on 'turn this into a skill', 'keep the same style', 'my output drifted'. NOT finding the winner (that is `design-loop`), NOT the words (that is `marketing`).",
-      "tags": [
-        "design",
-        "style",
-        "dna",
-        "codify",
-        "skill-factory",
-        "consistency"
-      ],
-      "recommends": [
-        "design-loop",
-        "design",
-        "nextjs",
-        "marketing"
-      ],
-      "profiles": []
-    },
-    {
-      "id": "design-loop",
-      "description": "Use when something must be built well and there is a real reference it should beat: turn what makes the reference good into measured mechanisms, then run a builder and three fresh-context critics until all three pass. Fires on 'design loop', 'make it as good as <site>', 'it looks generic'. NOT keeping an already-won look (that is `design-dna`).",
-      "tags": [
-        "design",
-        "critique",
-        "loop",
-        "reference",
-        "quality",
-        "convergence"
-      ],
-      "recommends": [
-        "design",
-        "design-dna",
-        "marketing",
+        "landing-copy",
+        "ui-engineering",
+        "accessibility",
+        "brand-identity",
         "nextjs"
       ],
-      "profiles": []
+      "profiles": [
+        "minimal",
+        "core",
+        "full"
+      ]
     },
     {
       "id": "digitalocean",
@@ -3130,23 +3097,6 @@
         "scaling"
       ],
       "profiles": []
-    },
-    {
-      "id": "motion-craft",
-      "description": "Use when an interface moves and the movement has to feel right — durations and easing, what must never animate, fixing motion that reads sluggish, cheap or janky, and reduced-motion. Web and native. NOT the visual system (that is `design`), NOT the graded critique (that is `design-loop`).",
-      "tags": [
-        "motion",
-        "animation",
-        "interface",
-        "craft",
-        "frontend"
-      ],
-      "recommends": [
-        "design"
-      ],
-      "profiles": [
-        "full"
-      ]
     },
     {
       "id": "mysql",
@@ -5170,8 +5120,7 @@
         "craft"
       ],
       "recommends": [
-        "design",
-        "motion-craft"
+        "design"
       ],
       "profiles": [
         "core",
@@ -5295,7 +5244,7 @@
     },
     {
       "id": "variant-explorer",
-      "description": "Use when someone wants OPTIONS rather than an answer — 'show me a few versions', picking between approaches by seeing them. Genuinely different candidates, cheap to throw away, trade-off named. NOT the critique that judges one (`design-loop`), NOT the spec (`specify`).",
+      "description": "Use when someone wants OPTIONS rather than an answer — 'show me a few versions', picking between approaches by seeing them. Genuinely different candidates, cheap to throw away, trade-off named. NOT the critique that judges one (`design`), NOT the spec (`specify`).",
       "tags": [
         "prototyping",
         "divergence",
@@ -5304,7 +5253,7 @@
         "decision"
       ],
       "recommends": [
-        "design-loop"
+        "design"
       ],
       "profiles": [
         "full"

@@ -1,0 +1,4 @@
+{
+  "taste-skill": { "repo": "Leonxlnx/taste-skill", "path": "skills/taste-skill", "commit": "6010f91a9935f1c167dfc500fb1a475681892e6b", "version": "2.1.4", "license": "MIT" },
+  "impeccable": { "repo": "pbakaus/impeccable", "commit": "8644175285360c166e57b1e35ecadfbc85ff5209", "version": "skill-v4.7.0", "license": "Apache-2.0", "used": "text only (modes, finish review, DESIGN.md format), rewritten; no code" }
+}

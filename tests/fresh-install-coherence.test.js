@@ -97,8 +97,3 @@ test('7b · a healthy fresh install does not recommend `rsc repair` for a hook t
   assert.ok(!/repair/.test(json.worktreeCleanup.action || ''), JSON.stringify(json.worktreeCleanup));
 });
 
-test('7c · no design skill installed → no design-loop / design-dna recommendation', () => {
-  const { json } = doctor();
-  const blob = JSON.stringify([json.designIdentity, json.designStartingPoint]);
-  assert.doesNotMatch(blob, /design-loop|design-dna/, blob);
-});

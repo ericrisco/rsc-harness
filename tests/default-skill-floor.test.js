@@ -7,12 +7,13 @@ test('the default floor equips unslop without making it runtime always-on', () =
   // without it has a default lane pointing at nothing. See tests/sync-skill-floor.test.js.
   // `unslop` took the place of the retired `bro`.
   // `connect-tool` added in 3.0.13 (#303): "connect my Holded" needs the method present the first time.
-  assert.deepEqual(DEFAULT_SKILL_FLOOR, ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool']);
+  // `design` added in 3.3.0: rebuilt from taste-skill and installed everywhere (design-from-scratch).
+  assert.deepEqual(DEFAULT_SKILL_FLOOR, ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design']);
 });
 
 test('the default floor is stable, ordered and deduplicated for every install path', () => {
   assert.deepEqual(
     withDefaultSkillFloor(['unslop', 'fastapi', 'orient', 'postgresdb']),
-    ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'fastapi', 'postgresdb'],
+    ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'fastapi', 'postgresdb'],
   );
 });

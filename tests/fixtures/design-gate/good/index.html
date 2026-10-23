@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forn Vell, bakery</title>
+<style>
+:root{--ground:#e9eef0;--ink:#1a1714;--accent:#9c3d1c;--field:#2f4a3a;--m:clamp(16px,3vw,32px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:Georgia,"Times New Roman",serif;font-size:19px;line-height:1.55}
+img{display:block;width:100%;height:100%;object-fit:cover}
+nav{display:flex;justify-content:space-between;align-items:center;padding:20px var(--m)}
+nav a{color:var(--ink);text-decoration:none;margin-left:24px}
+.wrap{padding:0 var(--m)}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:var(--m);min-height:78vh;align-items:center;padding:0 var(--m)}
+.hero h1{font-size:clamp(44px,7vw,104px);line-height:.95;letter-spacing:-.03em;margin:0}
+.hero p{margin:32px 0;max-width:30ch}
+.hero figure{margin:0;height:70vh}
+.btn{display:inline-block;background:var(--accent);color:#fff;padding:14px 26px;min-height:48px;text-decoration:none;font-size:18px}
+section{padding:160px var(--m) 0}
+section h2{font-size:clamp(36px,5vw,72px);line-height:1;letter-spacing:-.02em;margin:0 0 32px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:var(--m);align-items:stretch}
+.two figure{margin:0;height:520px}
+.field{background:var(--field);color:#fff;padding:120px var(--m);margin-top:160px}
+.field h2{color:#fff}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--m)}
+.row figure{margin:0;height:360px}
+ul.menu{list-style:none;padding:0;margin:0;columns:2;column-gap:var(--m)}
+ul.menu li{break-inside:avoid;padding:10px 0}
+footer{padding:160px var(--m) 48px}
+footer p.name{font-size:clamp(48px,12vw,180px);line-height:.9;margin:0;letter-spacing:-.04em}
+.rise{opacity:0;transform:translateY(24px);transition:opacity .6s ease-out,transform .6s ease-out}
+.rise.in{opacity:1;transform:none}
+.drift{animation:drift 14s ease-in-out infinite alternate}
+@keyframes drift{from{transform:scale(1)}to{transform:scale(1.06)}}
+@media (max-width:760px){.hero,.two,.row{grid-template-columns:1fr}.hero figure{height:46vh}.two figure,.row figure{height:300px}ul.menu{columns:1}section{padding-top:96px}.field{margin-top:96px;padding:80px var(--m)}footer{padding-top:96px}}
+@media (prefers-reduced-motion:reduce){.rise{opacity:1;transform:none;transition:none}.drift{animation:none}}
+</style></head>
+<body>
+<nav><strong>Forn Vell</strong><div><a href="#bread">Bread</a><a href="#hours">Hours</a><a href="#visit">Visit</a></div></nav>
+<header class="hero">
+  <div>
+    <h1 class="rise">Oven lit at five</h1>
+    <p class="rise">A wood-fired bakery on Carrer Major since 1932. Loaves leave the oven at seven and are gone by noon.</p>
+    <a class="btn rise" href="mailto:hola@example.com?subject=Reserve%20a%20loaf">Reserve a loaf</a>
+  </div>
+  <figure class="rise"><img class="drift" src="img/p1.png" alt="The wood oven at dawn"></figure>
+</header>
+<section id="bread" class="two">
+  <figure class="rise"><img src="img/p2.png" alt="Rye loaves cooling on the rack"></figure>
+  <div>
+    <h2 class="rise">Four loaves, every morning</h2>
+    <ul class="menu rise">
+      <li>Country sourdough, 1 kg: 6.50 €</li><li>Rye with caraway, 800 g: 5.80 €</li>
+      <li>Spelt and honey, 700 g: 5.40 €</li><li>Olive and rosemary, 600 g: 4.90 €</li>
+      <li>Coca de recapte, by the slice: 3.20 €</li><li>Ensaïmada, on Sundays: 2.80 €</li>
+    </ul>
+    <p class="rise">Flour from the Molí d'en Pau, ground the week it is baked. Water from the town well, salt from the Delta.</p>
+  </div>
+</section>
+<div class="field" id="hours">
+  <h2 class="rise">Open six mornings a week</h2>
+  <div class="row">
+    <figure class="rise"><img src="img/p3.png" alt="The shop window on Carrer Major"></figure>
+    <figure class="rise"><img src="img/p4.png" alt="Flour sacks from the mill"></figure>
+    <figure class="rise"><img src="img/p5.png" alt="The baker shaping dough"></figure>
+  </div>
+  <p class="rise">Tuesday to Sunday, 7:00 to 13:00. Closed on Mondays and through August, when the oven is relined.</p>
+</div>
+<section id="visit" class="two">
+  <div>
+    <h2 class="rise">Find the green door</h2>
+    <p class="rise">Carrer Major 14, next to the church steps. Ring the bell if the door is shut; someone is always at the oven.</p>
+    <a class="btn rise" href="mailto:hola@example.com?subject=Question">Ask a question</a>
+  </div>
+  <figure class="rise"><img src="img/p6.png" alt="The street outside the bakery"></figure>
+</section>
+<footer><p class="name">Forn Vell</p><p>Carrer Major 14 · Tuesday to Sunday, 7:00–13:00</p></footer>
+<script>
+const io=new IntersectionObserver((es)=>es.forEach((e)=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.1});
+document.querySelectorAll('.rise').forEach((el,i)=>{el.style.transitionDelay=(i%4)*80+'ms';io.observe(el)});
+</script>
+</body></html>

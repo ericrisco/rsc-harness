@@ -1,6 +1,6 @@
 # Landing Copy by Section
 
-The words for every landing section, mapped 1:1 to the `design` skill's section anatomy (`../../design/references/landing-anatomy-and-cro.md`). `design` owns the visual treatment and layout; this file owns the copy that goes inside each section. Each section has **one copy job**; cut any section whose job you can't name. Ground every line in the brand study (`brand-grounding.md`) and run the value prop through the canvas (`copy-frameworks.md`) first.
+The words for every landing section. `../../design/SKILL.md` owns the visual treatment, the layout and which sections exist (its argument step: one claim per section); this file owns the copy that goes inside each section. Each section has **one copy job**; cut any section whose job you can't name. Ground every line in the brand study (`brand-grounding.md`) and run the value prop through the canvas (`copy-frameworks.md`) first.
 
 ## Section map (copy job + framework)
 
@@ -187,5 +187,5 @@ Good — "Stop babysitting staging. Start free — no credit card."
 
 - `copy-frameworks.md` — the frameworks and headline formulas each section uses.
 - `brand-grounding.md` — the value prop, proof, and voice every line is grounded in.
-- `../../design/references/landing-anatomy-and-cro.md` — the visual anatomy these words fill.
+- `../../design/SKILL.md` — the page these words fill; write the copy deck before its markup.
 - `campaigns-and-channels.md` — driving traffic to this page.

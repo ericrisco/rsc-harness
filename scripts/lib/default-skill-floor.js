@@ -14,7 +14,11 @@
 // `connect-tool` joined in 3.0.13 (issue #303): rsc ships no ready-made connections, so "connect my
 // Holded" is answered by a method, not a list, and that method has to be there the first time the
 // user asks, in any kind of project. Like `unslop`, only its description is paid for on other turns.
-export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd', 'connect-tool']);
+//
+// `design` joined in 3.3.0 (spec design-from-scratch): it was `full`-only, so most projects designed
+// with no design skill at all. Only its description is paid for on other turns; the engine it ships
+// (scripts and data) is never loaded into context.
+export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design']);
 
 export function withDefaultSkillFloor(skillIds = []) {
   return [...new Set([...DEFAULT_SKILL_FLOOR, ...skillIds])];

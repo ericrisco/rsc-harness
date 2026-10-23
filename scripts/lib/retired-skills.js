@@ -8,7 +8,13 @@
 //
 // `targets/clone-bootstrap.mjs` is committed into user repos and cannot import this file; it carries
 // an inline copy, and tests/retired-skills.test.js holds the two equal in behaviour.
-export const RETIRED_SKILLS = Object.freeze({ eli5: 'orient', 'show-me': 'orient', bro: 'unslop' });
+//
+// `design-loop`, `design-dna` and `motion-craft` folded into the rebuilt `design` in 3.3.0 (spec
+// design-from-scratch): its engine deals the direction, measures the render and owns the motion layer.
+export const RETIRED_SKILLS = Object.freeze({
+  eli5: 'orient', 'show-me': 'orient', bro: 'unslop',
+  'design-loop': 'design', 'design-dna': 'design', 'motion-craft': 'design',
+});
 
 const retiredTo = (id) => (Object.hasOwn(RETIRED_SKILLS, id) ? RETIRED_SKILLS[id] : id);
 

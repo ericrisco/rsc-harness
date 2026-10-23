@@ -1,7 +1,8 @@
 name: release
 
 # Publishes rsc-universal to npm and forces a new version on every push to main.
-# Manual runs (workflow_dispatch) let you pick patch / minor / major.
+# Manual runs (workflow_dispatch) let you pick patch / minor / major. A PR that sets package.json
+# above the published version has chosen the number itself: that version is published as is.
 #
 # The version-bump commit carries "[skip ci]" so it does NOT re-trigger this
 # workflow (no publish loop).
@@ -41,7 +42,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
       - run: npm ci
@@ -85,11 +86,22 @@ jobs:
       - name: Bump version
         id: bump
         run: |
-          npm version "${{ github.event.inputs.bump || 'patch' }}" --no-git-tag-version
+          BUMP="${{ github.event.inputs.bump || 'patch' }}"
+          PUBLISHED="$(npm view @ericrisco/rsc version 2>/dev/null || echo 0.0.0)"
+          LOCAL="$(node -p "require('./package.json').version")"
+          # A PR that set a version above the registry chose the number (a minor or major release
+          # decided in review); publish it as is. Otherwise bump as always. Every gate above still
+          # ran. The release commit may then be empty, which keeps the invariant below (the tag
+          # points at a commit that landed on main) without a second path.
+          if [ "$LOCAL" != "$PUBLISHED" ] && [ "$(printf '%s\n%s\n' "$PUBLISHED" "$LOCAL" | sort -V | tail -1)" = "$LOCAL" ]; then
+            echo "version $LOCAL was set in the PR (registry has $PUBLISHED); publishing it as is"
+          else
+            npm version "$BUMP" --no-git-tag-version
+          fi
           VERSION="$(node -p "require('./package.json').version")"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           git add package.json package-lock.json manifest.json
-          git commit -m "🔖 chore(release): $VERSION [skip ci]"
+          git commit --allow-empty -m "🔖 chore(release): $VERSION [skip ci]"
 
       # --- publish + push the bump back ----------------------------------------
       - name: Publish to npm

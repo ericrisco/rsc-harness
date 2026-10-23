@@ -23,10 +23,14 @@ import { readManifest as readCloneManifest } from '../targets/clone-bootstrap.mj
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = join(ROOT, 'scripts', 'rsc.js');
 const run = (cwd, args) => spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8', input: '' });
-const RETIRED = ['bro', 'eli5', 'show-me'];
+const RETIRED = ['bro', 'eli5', 'show-me', 'design-loop', 'design-dna', 'motion-craft'];
 
 test('replaceRetired maps each retired id to its successor, dedupes, keeps the rest', () => {
-  assert.deepEqual(RETIRED_SKILLS, { eli5: 'orient', 'show-me': 'orient', bro: 'unslop' });
+  assert.deepEqual(RETIRED_SKILLS, {
+    eli5: 'orient', 'show-me': 'orient', bro: 'unslop',
+    'design-loop': 'design', 'design-dna': 'design', 'motion-craft': 'design',
+  });
+  assert.deepEqual(replaceRetired(['design-loop', 'design', 'motion-craft', 'design-dna']), ['design']);
   assert.ok(Object.isFrozen(RETIRED_SKILLS));
   assert.deepEqual(replaceRetired(['bro', 'fastapi', 'eli5', 'orient', 'show-me', 'unslop']), ['unslop', 'fastapi', 'orient']);
   assert.deepEqual(replaceRetired(['fastapi', 'plan']), ['fastapi', 'plan']);

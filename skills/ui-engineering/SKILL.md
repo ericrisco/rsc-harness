@@ -2,7 +2,7 @@
 name: ui-engineering
 description: "Use when the question is how interface should be BUILT — component boundaries, state that belongs in the URL vs the component, loading/empty/error states, forms, optimistic updates, build vs adopt. NOT the visual system (`design`), NOT framework mechanics (`react`/`nextjs`)."
 tags: [interface, frontend, architecture, components, state, craft]
-recommends: [design, motion-craft]
+recommends: [design]
 profiles: [core, full]
 origin: risco
 ---
@@ -108,7 +108,6 @@ The split is not about difficulty, it is about **who is the authority on the beh
 
 ## See Also
 
-- `../design/SKILL.md` — the visual system these decisions serve.
-- `../motion-craft/SKILL.md` — how the pieces here move once they exist.
-- `../design-loop/SKILL.md` — the graded critique that judges the result.
+- `../design/SKILL.md` — the visual system these decisions serve, its motion layer, and the
+  browser-measured critique that judges the result.
 - `../accessibility/SKILL.md` — the ground under focus, semantics and forms.

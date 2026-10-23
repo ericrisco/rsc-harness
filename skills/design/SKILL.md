@@ -1,396 +1,111 @@
 ---
 name: design
-description: "Use when designing, polishing or auditing a web UI or landing page — visual concept, type/color/spacing/motion tokens, composition, rescuing a UI that reads AI-generic, or a graded review. Brand-grounded, research-first; ships Tailwind v4 + Next.js 15 under WCAG 2.2 AA and Core Web Vitals budgets. NOT the words on the page (that is `marketing`), NOT the App Router build (that is `nextjs`)."
-tags: [design, ux, ui, landing, conversion]
-recommends: [design-loop, design-dna, nextjs, marketing]
-profiles: [full]
+description: "Use when designing, redesigning, restyling or reviewing a web page or app screen (landing, product site, portfolio, dashboard, docs) or when a UI looks generic or AI-made. Deals a researched direction, takes the idea from the subject, uses real pictures, proves it in a browser. NOT the words (landing-copy), NOT component state (ui-engineering)."
+tags: [design, ui, ux, landing, dashboard, frontend, taste]
+recommends: [landing-copy, ui-engineering, accessibility, brand-identity, nextjs]
+profiles: [minimal, core, full]
 origin: risco
 ---
 
-# Design — Product UI, Landing Pages & Conversion Copy
+# design
 
-**Hand-off — the visual system vs the craft of motion.** This skill owns the visual system and page
-composition, and sets motion *intent + budget* only. The **implementation** of an animation is
-`../motion-craft/SKILL.md`'s; how a piece of interface should be BUILT — boundaries, state, the
-loading and empty and error states — is `../ui-engineering/SKILL.md`'s. When a request could belong to
-several of those, start from the one that owns the decision, not the one that owns the file. The motion reference in
-this skill defers its mechanics to them rather than restating them.
+A model left to design picks the average of every page it has seen. This skill takes those
+decisions away from the model and makes it look at what it built.
 
+- **A script deals the direction.** You choose among researched directions; you never invent one.
+- **The idea comes from the subject,** not from the category.
+- **Real pictures and full content,** never empty space dressed as restraint.
+- **A real browser measures the page** at three widths. A `FAIL` means it is not done.
+- **You look at the screenshots,** fix the worst, and look again.
 
-*Research the best current work, then ship a premium, accessible, fast, high-converting interface.*
+The engine is [taste-skill](https://github.com/Leonxlnx/taste-skill) (MIT), shipped unmodified in
+`engine/`. The modes, the fresh review and the design record adapt
+[impeccable](https://github.com/pbakaus/impeccable) by Paul Bakaus (Apache-2.0). Credits and what
+changed: `THIRD_PARTY.md`.
 
-> **SDD gate.** If this fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, hand off to `../specify/SKILL.md` first — it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build straight from here only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
+## 0. Name the surface and its mode
 
-**Hand-offs.** The WORDS are `../marketing/SKILL.md`'s: it co-owns the `02-DOCS/wiki/brand/` study (the words dimensions there, the visual ones here), and deep keyword research, GEO, or a technical SEO audit belongs to it — this skill only enforces SEO-aware *structure* in markup. The BUILD (App Router / React 19) is `../nextjs/SKILL.md`'s. Mirroring the brand tokens into a Flutter app is `../flutter/SKILL.md`'s. Pure backend/data/infra with no UI surface: decline — there is nothing to design. Three references live outside this repo and are named for direction only, not invocable here: *frontend-design-direction* for dense internal tooling used daily (never paint a marketing skin on a tool that needs repeated daily use — fold its judgment in via the DIRECTION BRIEF); *liquid-glass-design* for native iOS 26 SwiftUI Liquid Glass (this skill ships the *web* glass approximation only); *motion-ui* / *motion-foundations* for motion-code mechanics (springs, `AnimatePresence` internals, layout animations — this skill sets motion *intent + budget*).
+Decide before anything else. The mode is chosen from the surface, not from the product.
 
-## Pick the mode first — it decides what may change
-
-Most requests are not a new identity, and treating a polish pass as a redesign is how a working
-surface gets restyled without anyone asking. Name the mode before anything else:
-
-| Mode | Asked as | What may change | Brand gate |
+| Mode | The visitor… | Surfaces | Run |
 | --- | --- | --- | --- |
-| **Create** | a product with no visual identity yet | everything | blocks until complete |
-| **Replace** | an approved redesign | the look; never facts, content or working behaviour | blocks until complete |
-| **Extend** | a new screen or section in an established product | content, hierarchy, states; not identity | reads, never blocks |
-| **Polish** | "looks amateur", "fix the spacing", "make it feel finished" | the requested scope only | reads, never blocks |
-| **Distill** | "too busy", "simplify this screen" | excess only; never capability | reads, never blocks |
-| **Audit** | "audit", "what's wrong with it" | nothing: read-only unless fixes were asked | reads, never blocks |
+| **Persuade** | decides and acts | landing, marketing, product site, pricing, event, local business | `engine/RUN.md`, the page run |
+| **Experience** | is inside the work | portfolio, gallery, showcase | `engine/RUN.md`, the page run |
+| **Operate** | completes a task | dashboard, admin, settings, inbox, editor | `engine/references/app-screens.md` |
+| **Read** | understands something | docs, guide, article, changelog | the page run, under the Read rules |
 
-Create and Replace run this file top to bottom. Extend, Polish, Distill and Audit follow
-`references/refine-and-audit.md` and borrow the system, checks and rubric from here. If a polish
-pass shows the concept itself is wrong, say so and propose a Replace; never deliver one disguised
-as refinement. A precise request is enough to start: a one-line fix is not a discovery workshop.
+What each mode allows and refuses: [references/modes.md](references/modes.md).
 
-## Brand grounding — before you design anything
+## 1. Brand first, when there is one
 
-A design with no brand behind it is a guess, and a guess defaults to your AI-generic prior. That is why this gate is a hard stop rather than a warning: **an incomplete brand study blocks the work** whenever the work decides identity (Create, Replace).
+Look for an existing identity before dealing anything: `02-DOCS/wiki/brand/`, a `DESIGN.md` in the
+repo, or a coherent identity already in the code. If one exists, its colours and faces win: pass
+`--keep palette,type` to the draw and take only the composition. If none exists, do not stop to
+interview the user about brand; the draw is how a starting point is made.
 
-**When the identity already lives in the code** (Extend, Polish, Distill, Audit), the code is the authority: read the brand study if it exists, read the tokens and representative screens either way, and never block on a missing study. Name its absence in the hand-off and point at `../design-dna/SKILL.md` to codify the look that is already there. An incomplete study keeps every asset it has confirmed; the gate asks only for the gaps and never treats a gap as permission to replace the brand.
+## 2. Run the engine
 
-Follow the harness 02-DOCS convention (brand study = wiki articles under `02-DOCS/wiki/brand/`, raw inputs under `02-DOCS/raw/brand/`, linked from root `CLAUDE.md`):
+Follow [`engine/RUN.md`](engine/RUN.md) step by step. Read it whole before starting. In its commands,
+`<skill>` is this skill's `engine/` folder. Nothing in it is optional:
 
-1. **Locate the brand study.** Read the project root `CLAUDE.md` and look for a `## Brand & voice` section pointing into `02-DOCS/wiki/brand/...`. If present, read those articles.
-2. **In Create or Replace, if the link is MISSING, or the brand study is ABSENT or INCOMPLETE** (any checklist dimension empty), STOP. Do not design yet. Ask the user the targeted question script — **ONE focused batch at a time**, not a wall of questions — until every dimension in the completeness checklist is filled (→ `references/brand-grounding.md`). Write/update the brand study into `02-DOCS/wiki/brand/` (and paste any raw inputs the user gives — screenshots, existing palettes, competitor lists — into `02-DOCS/raw/brand/`), following the wiki article format, update `wiki/index.md` + `wiki/log.md`, and add/update a `## Brand & voice` section in the root `CLAUDE.md` linking to it (create `CLAUDE.md` if absent).
-3. **Only once the brand study exists and is sufficient, proceed** — and cite which brand articles drove which decisions in your output (e.g. "palette from `02-DOCS/wiki/brand/visual-identity.md`").
+1. Brief and inventory (eight to twelve things only this client has).
+2. The argument: one claim per section; no claim, no section.
+3. Deal three directions with `draw.mjs`, choose one against the inventory, write why.
+4. The idea sentence, the competitor test, and one live thing.
+5. The whole copy deck before markup. Never invent proof: customers, quotes, numbers, logos.
+6. Build still: tokens, hero, sections, at least four real pictures (`assets.mjs`), the live thing.
+7. Gate: `lint.mjs`, then `inspect.mjs` at 1440, 768 and 390. Zero `FAIL`.
+8. Look: open every screenshot, critique with `engine/references/critique.md`. At most three rounds.
+9. Move: the motion layer, then inspect again.
 
-The completeness checklist spans visual identity (OKLCH color system, type pairing & scale, logo, imagery/illustration mood, density, radius/shadow/motion personality), reference/inspiration sites the user loves, layout preferences, dark-mode stance, accessibility & performance constraints, and brand voice/positioning (so copy and design agree). Full checklist + exact question script → `references/brand-grounding.md`.
+For a single component or section inside an existing design, skip the draw, inherit the system,
+and still run the gate.
 
-**When a dimension has no answer** — the non-technical default, and the reason this gate used to be impassable: do not invent one and do not wave the STOP through. `references/starting-point.md` is how a starting point gets proposed instead: what the project already owns is checked first, the value comes from a reference you opened and measured, and it is written marked `propuesto` — which does **not** count as complete until the user confirms it.
+## 3. Fresh review
 
-The order is: **brand grounding → trend research → build.**
+The builder believes its own page. When the gate passes, hand the screenshots to a reviewer with no
+history of this conversation (a fresh subagent where the harness has one). It returns one of four
+words: `recapture`, `rebuild`, `fix` or `ship`. Act on the word. The packet and the checks:
+[references/finish-review.md](references/finish-review.md).
 
-## Pick a direction first
+## 4. Record the system
 
-Fill the direction brief before you write a single line of markup:
+A new or replaced visual system is written to `DESIGN.md` at the project root, from what was built,
+so later edits keep the look. Format: [references/design-md.md](references/design-md.md). Extending
+an existing surface does not rewrite it.
 
-```text
-DIRECTION BRIEF (fill before coding)
-1. Purpose .......... persuade | operate | read | experience, plus the job in one sentence
-2. Audience ......... who repeats this workflow; what do they scan first; where, under what light?
-3. Tone ............. pick: utilitarian | editorial | playful | industrial | refined | technical | minimal | dense | calm
-4. Memorable detail . the ONE idea that makes it feel intentional (not a gradient)
-5. Constraints ...... framework, a11y, perf budget, existing design system/tokens
-6. Mode + target .... the mode above, and the image or screenshot this is built against
-```
+## When the browser cannot run
 
-**The purpose bounds the expression.** *Persuade*: the real offer, credible proof, and the primary
-action in its usable form (the search box or the booking form itself, not a decorative link to it).
-*Operate*: the shell, navigation, controls and state are recognised before the aesthetic; a borrowed
-world lends type, palette, density and one signature move, never a costume; state, selection and
-data colours do real jobs. *Read*: start from the reader's question; identity lives in the masthead,
-navigation and section openers while the reading column stays calm. *Experience*: the work leads
-the first viewport, and navigation and actions stay recognisable.
+`inspect.mjs` and `scenes.mjs` need Node 22+ and an installed Chrome, Edge or Chromium. Without them:
+run `lint.mjs` (Node 18+), take screenshots with any browser tool you have, critique those, and
+write in the report: **"inspector not run: <reason>"**. Never report a gate as passed that did not
+run. Without network, draw the pictures and say the open collections could not be searched.
 
-Then map the project type to composition, density, and motion budget. Density and composition follow the audience and the job, not a template — a SaaS operations tool should be dense, quiet, and scannable.
+## Report
 
-| Project type | Composition | Density | Motion budget |
-| --- | --- | --- | --- |
-| SaaS marketing | Full landing stack, hero→CTA | Generous | Tasteful reveals, hover affordances |
-| Dev tool | Show the product/CLI first, then proof | Medium | Subtle, fast (≤200ms) |
-| Dashboard / internal tool | Data-first, no hero | Dense, scannable | State-only (loading, success) |
-| Portfolio / editorial | Expressive, asymmetric | Airy | Expressive but reduced-motion-safe |
-| E-commerce | Product grid, fast PDP | Medium | Micro-interactions on add-to-cart |
-| Docs | Sidebar + reading column | Calm, 65ch measure | Near-zero |
+Say briefly: the surface and mode; the direction dealt (name and seed) and any redraw with its
+reason; the idea sentence and the live thing; the inspector result per width, or that it did not
+run; the reviewer's word; every found picture with its credit; sample content to replace before
+launch. Do not claim a check you did not run.
 
-## Research-first protocol
+## Hand-offs
 
-Trends churn quarterly and your built-in aesthetic prior is the median of every AI template ever scraped. Never prescribe from stale memory; counter it with a loop:
+- The words on a conversion page → `../landing-copy/SKILL.md`.
+- Component boundaries, state, loading and error behaviour → `../ui-engineering/SKILL.md`.
+- WCAG conformance work → `../accessibility/SKILL.md`.
+- A full brand system (logo, print colours, usage rules) → `../brand-identity/SKILL.md`.
+- The App Router build → `../nextjs/SKILL.md`.
+- A hero that is a pre-rendered camera flight in video, scrubbed by scroll → `../scroll-film/SKILL.md`.
 
-1. Define 2–3 reference archetypes from the DIRECTION BRIEF (e.g. "Linear-grade dev tool, dark, type-led").
-2. Browse the dated registry in `references/inspiration-sources.md` — whole pages to beat, SaaS and conversion surfaces, real product flows (Mobbin, Page Flows), single patterns, and the design systems that are specification rather than inspiration — plus the tier-1 sites (Linear, Stripe, Vercel, Cursor, Resend). Every entry there carries a verification date; `godly.website` now redirects to `recent.design`, which is exactly why the list is dated and not inline.
-3. WebFetch 3–5 exemplars, prompting each for type, color, layout, motion, and copy voice — concrete details, not adjectives.
-4. Extract a pattern table from what they share and where they differ.
-5. Synthesize a one-paragraph DESIGN DIRECTION with citations (which URL contributed what).
-6. Only THEN build; re-check the result against the references in QA.
+## Files
 
-Re-research per project — trends churn, competitors moved, and the domain dictates the reference set. Whenever the brand study lacks aesthetic direction or the user asks for "modern" / "2026" / "premium", run this loop, fold the findings into the output **with citations + dates**, and refresh `references/trends-2026.md`. Full loop, source map, and synthesis template → `references/research-method.md`. Current snapshot (dated, cited) → `references/trends-2026.md`.
-
-## From competent to premium (the part that earns the score)
-
-Obeying every constraint gets you to *competent* — a page that ships and passes review. It does NOT get you to premium, because every constraint catches an *absence* (no missing `<h1>`, contrast passes), while premium is a *presence*: a point of view. Competent-but-generic is the default failure mode of under-specified design output. Close it with four deliberate moves, in order, before and during the build:
-
-1. **Choose a visual concept.** One sentence the whole page answers to — `[feeling] + [structural metaphor] for [audience doing job]` (e.g. "quiet instrument-panel precision for ops engineers"). Drawn from the brand study + research exemplars, never your prior. If you cannot name what makes this surface different from the median SaaS page, you have no concept yet, and the output will default to generic. Name the category's default page *and its predictable opposite* first: choosing the opposite is still a rut.
-2. **Manufacture the ONE signature element** the brief asks for — the thing you'd describe first to a friend. Pick exactly one from a real vocabulary, biased by domain: a hero that *demonstrates not describes* (live terminal / real chart / actual diff), an owned type moment, a structural signature (asymmetric split, horizontal feature rail, editorial index), a material signature (hairline grid, one grain pass, duotone), a motion signature, or a real-number/proof signature. Never default to "a gradient". It must be true to the product, and cite the research exemplar that inspired it.
-3. **Force scale contrast.** Generic pages are tonally flat — headline, titles, body all within ~1.5×. Make the hero dominant **3–5× the body**, demote eyebrows/labels/metadata smaller and quieter than feels comfortable, and allow **one focal point per viewport**. If a section feels flat, add contrast, not elements.
-4. **Give the page rhythm.** Ten identical `py-24` white card-grid sections read as one stripe. Vary format (full-bleed vs. contained, alternate media sides), background (a dark section between light ones anchors a CTA), density (a breathing statement after a dense grid), and container idiom (not everything is a bordered card). Inter-section gap > intra-section gap, padding stepping on the scale.
-
-Then, **before claiming done, run the senior-designer crit** and make at least one concrete change as a result: What is the one idea here (name it in a sentence)? Would this place on Awwwards/Godly or just pass review? What is the single most generic element right now — and replace it. Where does the eye land first, and is that what should win? If the logo were removed, would anyone know whose product this is? Does every section earn its place, or is one there out of habit (cut it)?
-
-Concept formula, signature vocabulary, scale/rhythm rules, the crit, open-brief directions, and a worked generic→signature dev-tool hero → `references/signature-and-craft.md`.
-
-## Target before code — image first, then build it 1:1
-
-A direction in prose is still a mood, and the builder fills every gap in a mood with its prior.
-Except in audits and one-line fixes, build against **a target you can look at**: a supplied or
-approved image first (open it; never regenerate it). Else, if an image tool is already connected
-and permitted, generate the real screen straight-on at the intended viewport with real copy and
-controls, fix its false or illegible parts, and save it with its **actual** pixel dimensions; never
-set up or pay for a provider just to have one. Polish uses a screenshot of the incumbent plus a
-change list. No tool and no image: say so, and never claim a 1:1 match.
-
-The image is a spatial contract, not an asset: match it with semantic, working UI, never ship it or
-a crop of it. Paths, prompt contents, the compare loop and what a 1:1 claim requires →
-`references/visual-target.md`.
-
-## Visual system in 90 seconds
-
-Copy-pasteable foundation. Tokens once, consume everywhere — design tokens, never magic numbers.
-
-- Tailwind v4 `@theme` block (OKLCH): tokens become CSS vars and utilities automatically — no `tailwind.config.js`.
-- Type scale via `next/font` (one display + one text face) plus a fluid `clamp()` ladder.
-- Spacing, radius, and shadow are tokens too, never inline numbers.
-- The rule: arbitrary hex + random px = Bad; token references = Good.
-
-```css
-/* Good — Tailwind v4 @theme: OKLCH palette, tokens become CSS vars + utilities */
-@import "tailwindcss";
-@theme {
-  --color-bg:        oklch(0.99 0 0);
-  --color-fg:        oklch(0.21 0.01 256);
-  --color-muted:     oklch(0.55 0.01 256);
-  --color-brand-500: oklch(0.62 0.19 256);
-  --color-brand-600: oklch(0.55 0.19 256);
-  --font-display:    "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-text:       "Inter", ui-sans-serif, system-ui, sans-serif;
-  --radius-card:     0.875rem;
-  --shadow-card:     0 1px 2px oklch(0 0 0 / 0.06), 0 8px 24px oklch(0 0 0 / 0.08);
-  --ease-out:        cubic-bezier(0.22, 1, 0.36, 1);
-}
-```
-
-```html
-<!-- Bad — magic hex + arbitrary px, no system -->
-<div style="background:#5b54ff;border-radius:13px;padding:17px">…</div>
-<!-- Good — token-driven utilities -->
-<div class="bg-brand-500 rounded-card p-4">…</div>
-```
-
-Full token system, type scale, OKLCH ramp, bento, glass → `references/visual-system.md`.
-
-## Landing page build recipe ("the brutal landing")
-
-Each section has ONE job. Cut any section that has none.
-
-1. **Hero** — state the value prop; pass the 5s test.
-2. **Social-proof strip** — borrow credibility immediately (logos, a hard metric).
-3. **Problem / agitation** — name the pain in the reader's words.
-4. **Solution** — show the product doing the job.
-5. **Features → benefits (bento)** — translate each capability into an outcome.
-6. **Objection handling** — preempt the top reason they won't buy.
-7. **Pricing** — anchor, highlight one tier, default to annual.
-8. **FAQ** — answer the real blockers, not filler.
-9. **Final CTA** — one clear action, value on the button.
-10. **Footer** — navigation, legal, trust signals.
-
-The hero is a Server Component with its LCP image on `next/image` `priority`. Full section-by-section anatomy, the LCP-safe hero code, CTA cadence, pricing psychology, JSON-LD → `references/landing-anatomy-and-cro.md`.
-
-## Conversion copy in one pass
-
-Copy is benefit-led and specific, or the page has no value prop. One `<h1>` per page; semantic landmarks (`header`/`nav`/`main`/`section`/`footer`).
-
-- The 5s value-prop test: a stranger reads the hero and can say what it is, who it's for, why it's better — legible above the fold in 5 seconds.
-- Headline formula slots: outcome + timeframe; "X without Y"; the job-to-be-done.
-- Framework picker: PAS for pain-aware cold traffic; AIDA for broad / top-of-funnel; FAB/JTBD for feature → benefit translation.
-- CTA: put the value on the button ("Start free", "Get my estimate"), never "Submit".
-
-```text
-Bad  — "Revolutionize your workflow with our seamless platform"
-Good — "Deploy a fix in 4 minutes — no YAML, no on-call page"
-```
-
-Ban: `revolutionary` · `game-changer` · `cutting-edge` · "In today's landscape" · `unlock` · `seamless` · `elevate` · `supercharge` · bait questions · "not X, just Y" · forced lowercase · "Excited to share".
-
-Frameworks, value-prop canvas, Bad→Good rewrites, VOICE block → `references/copywriting-frameworks.md`.
-
-## Motion & interaction budget
-
-- Purposeful-only: motion must guide attention, communicate state, or preserve continuity — else delete it.
-- Timing defaults: enter 200–350ms, exit ~150ms, press `scale(0.97)`.
-- Never `transition: all` — it animates layout props and janks.
-- Compositor-only properties: `transform`, `opacity`, `filter`.
-- `prefers-reduced-motion` is required, not optional.
-- Scroll-driven via native CSS `animation-timeline: view()` FIRST (no JS, no CLS) before any JS library.
-- Exceptional interaction (shared-element transitions, WebGL, scroll storytelling) is **opt-in**: only when asked, only after the direction is chosen, the smallest mechanism that does the job, a working fallback, and no performance claim without a measurement. Mechanics → `../motion-craft/SKILL.md`.
-
-```css
-/* Good — native scroll-driven reveal, zero JS, explicit @supports fallback */
-.reveal { opacity: 1; } /* default visible: no scroll-timeline support => never hidden */
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .reveal {
-      animation: reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 30%;
-    }
-  }
-}
-@keyframes reveal {
-  from { opacity: 0; translate: 0 16px; }
-  to   { opacity: 1; translate: 0 0; }
-}
-```
-
-Timing tokens, micro-interactions, scroll/parallax, when to escalate to motion/react → `references/motion-and-interaction.md`.
-
-## Premium details that compound
-
-Small things, applied consistently, are what reads as "designed".
-
-| Detail | Bad | Good |
-| --- | --- | --- |
-| Nested radius | Same radius parent + child | `outer = inner + padding` (concentric) |
-| Shadows | One hard `0 4px 8px #000` | Layered transparent OKLCH shadows |
-| Separation | Heavy drop shadow everywhere | Hairline 1px border first, shadow only for lift |
-| Headings | Ragged wrap | `text-wrap: balance` |
-| Body / captions | Orphan last word | `text-wrap: pretty` |
-| Numbers/prices | Width jitters | `font-variant-numeric: tabular-nums` |
-| Images | Edge blurs into bg | 1px neutral `outline`, `outline-offset: -1px` |
-| Glass | `backdrop-blur` on everything | Blur + 1px hairline + subtle noise, sparingly |
-
-```css
-html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-img  { outline: 1px solid oklch(0 0 0 / 0.1); outline-offset: -1px; }
-.price { font-variant-numeric: tabular-nums; }
-```
-
-Depth recipes, glass, noise, concentric math → `references/visual-system.md`.
-
-## The three locks, and who checks them
-
-A long page generated in passes drifts against itself. Three things must be **one** thing for
-the whole page, and they are not preferences — a page that breaks one of them is defective:
-
-1. **Theme lock.** One theme for the page (light, dark, or auto). No section flipping to
-   inverted halfway down because it looked good alone.
-2. **Accent lock.** One accent, used identically in every section. **This one is judgement**:
-   deciding which token is the accent needs to read the system's intent, so no script claims
-   to check it — you do, before you claim done.
-3. **Radius lock.** One radius system. Four different `rounded-*` scales in one tree means
-   there is no system, and `scripts/verify.sh` counts them.
-
-## The tells the script owns, and the ones you own
-
-`scripts/verify.sh` carries a **registry of mechanical tells** and reports each with file and
-line: dashes in rendered copy, scroll cues, numbered eyebrows, build stamps on marketing
-pages, unstable viewport heights, middot chains, hype words, plus counted ratios (eyebrows
-against sections, double-bordered rows, radius scales). Run it; do not re-derive that list
-from memory, and do not treat its silence as a design review.
-
-What it cannot see is the other half: fabricated substance (a product UI built from divs,
-invented photo credits, the Jane Doe cast), decoration posing as information, labels that say
-nothing, and composition habits like three identical feature cards. That half is
-`references/ai-tells.md`, and it is read with your eyes on the page.
-
-When the brief corresponds to an official, maintained design system rather than an aesthetic —
-UK or US public sector, Shopify admin, Carbon, Atlassian, Primer, Fluent — install the
-official package instead of approximating it: `references/design-systems.md`.
-
-## Anti-patterns
-
-| Rationalization | Reality / Fix |
+| File | What |
 | --- | --- |
-| "Purple→blue gradient on everything looks modern" | It reads AI-generic. Pick a domain-true palette; gradients are seasoning. |
-| "Centered text over an atmospheric gradient is a hero" | Show the product. Vague hero fails the 5s test. |
-| "Cards inside cards add structure" | They add noise. Flatten; use spacing + one border. |
-| "I know good design, I'll skip research" | Taste ≠ current trend. Re-research every project. |
-| "The image sells it, copy can be vague" | Copy carries the value prop. Pass the 5s test. |
-| "Animate everything on scroll" | CLS + INP cost. Reveal sparingly, transform/opacity only. |
-| "Ship now, check contrast later" | Contrast is a constraint, not polish. 4.5:1 or it ships broken. |
-| "Glass everywhere looks premium" | Glass on everything looks cheap. Reserve for floating surfaces. |
-| "`transition: all` is convenient" | It animates layout props → jank. List exact properties. |
-| "It's only a polish pass, I'll freshen the palette while I'm in there" | That is a redesign nobody approved. Polish keeps the identity; propose a Replace separately. |
-| "The build is green and `verify.sh` is clean, so it looks right" | Code checks are not visual verification. Render and compare, or report it unverified. |
-| "The generated mockup looks great, use it as the hero background" | A target is a spec, not an asset. Build semantic, working UI that matches it. |
-| "The audit found nothing" (the preview never loaded) | Unknown is not clean. Report the coverage and what could not run. |
-
-## Quick reference
-
-Accessibility and Core Web Vitals are **design constraints, not post-launch tuning** — violating one is a defect, not a style choice. **WCAG 2.2 AA:** 4.5:1 text contrast (3:1 large text / UI), visible focus, `prefers-reduced-motion` honored. Target size: 24×24px is the AA floor (SC 2.5.8 Target Size (Minimum)); 44×44px is the recommended quality bar (Apple HIG / pointer comfort) — aim for 44, never ship below 24. **Core Web Vitals:** LCP < 2.5s, INP < 200ms, CLS < 0.1. (INP replaced FID in March 2024 — measure INP.)
-
-| Lever | Default | Token / where |
-| --- | --- | --- |
-| Type scale ratio | 1.25 | modular scale |
-| Body size | 16–18px | `--font-text` |
-| Line-height | 1.5 body / 1.1 display | per element |
-| Spacing base | 4 / 8px | Tailwind spacing |
-| Color allocation | 60-30-10 | bg / fg / brand |
-| Text contrast | ≥ 4.5:1 (3:1 large) | verify with checker |
-| Card radius | 0.875rem | `--radius-card` |
-| Touch target | 44×44px recommended; 24×24px AA floor (SC 2.5.8) | `min-h-11` |
-| Enter / exit motion | 250ms / 150ms | `--ease-out` |
-| LCP | < 2.5s | `next/image priority` |
-| INP | < 200ms | compositor-only motion |
-| CLS | < 0.1 | reserved space, `next/font` |
-| Hero | passes 5s test | value prop above fold |
-
-## Verify on the render, and report only what you saw
-
-A green build, a clean `verify.sh` or a source read says the code is plausible, not that the page
-looks right. Before claiming done:
-
-- **Render and look.** Capture the intended screen and state after fonts, images and entrance motion
-  settle: at the target's size, at 360px, at desktop, and at the size the user said was failing.
-  Exercise the primary interaction and the states the product can actually reach.
-- **Compare against the target**, side by side or overlaid, whole and in detail crops. Fix layout and
-  proportions first, then type, spacing, colour and assets. For Polish, the untouched regions must
-  match the "before" capture.
-- **Bounded passes.** One batch of fixes, one re-inspection, at most one targeted follow-up. A pass
-  that resolves nothing ends the loop: report the gap. A bar to beat with independent judges is
-  `../design-loop/SKILL.md`'s job, not a fourth round here.
-- **Invalid evidence is not a verdict.** A blank, half-loaded or wrong-size capture is re-taken. A
-  preview that could not run leaves the result *unverified*, never passed. The hand-off says what
-  changed, the sizes and states inspected, how they were compared, and what is still off.
-
-## Design-review QA checklist
-
-Run before claiming done. Same checks `scripts/verify.sh` falls back to.
-
-- [ ] Value prop legible in 5 seconds above the fold.
-- [ ] Text contrast ≥ 4.5:1 (3:1 for large text / UI).
-- [ ] Visible focus state on all interactive elements.
-- [ ] Touch targets 44×44px (recommended); never below the 24×24px WCAG 2.2 AA floor (SC 2.5.8).
-- [ ] `prefers-reduced-motion` honored.
-- [ ] Exactly one `<h1>` on the page.
-- [ ] Semantic landmarks present (`header`/`nav`/`main`/`section`/`footer`).
-- [ ] LCP image has `priority`.
-- [ ] Fonts use `next/font` (no CLS / FOUT swap shift).
-- [ ] No `transition: all` / `transition-all`.
-- [ ] Tokens used (no magic hex / px).
-- [ ] Ban-list words absent from copy.
-- [ ] Text fits at 360px and desktop without overflow.
-- [ ] Empty / loading / hover / error states designed.
-- [ ] Rendered and inspected at 360px, desktop and the target size, or reported as visually unverified.
-
-Automate → `scripts/verify.sh` (runs Lighthouse if a dev server is up, else static grep checks + this list).
-
-### Optional: graded visual-audit rubric (0–10)
-
-The checklist above is pass/fail. When the user asks for a *design review*, a *critique*, or a quality grade — or when you want to argue a surface is genuinely premium rather than merely compliant — score these 11 dimensions 0–10 and report the weighted total. Pass/fail tells you it ships; the rubric tells you how good it is.
-
-| # | Dimension | What a 10 looks like | Weight |
-| --- | --- | --- | --- |
-| 1 | First impression & value clarity | Passes the 5s test instantly; product shown, not a gradient | 1.5 |
-| 2 | Concept & signature | A nameable visual concept; one distinctive, domain-true signature element; logo-removed it's still recognizably this product, not a template | 1.5 |
-| 3 | Typographic craft | Modular scale, ≤2 families, balanced headings, 45–75ch measure, tabular numerals; deliberate 3–5× scale contrast | 1.0 |
-| 4 | Color & contrast | Disciplined 60-30-10 OKLCH system, all text ≥ 4.5:1, dark mode via token swap | 1.0 |
-| 5 | Layout, spacing & rhythm | Consistent 4/8px scale, intentional asymmetry/bento, clear focal point; sections vary in format/background/density, not one repeated stripe | 1.0 |
-| 6 | Hierarchy & scannability | Eye lands in the right order; one primary action per viewport | 1.0 |
-| 7 | Depth & detail polish | Concentric radius, layered shadows, hairline borders, restrained glass | 1.0 |
-| 8 | Motion quality | Purposeful only, compositor-only props, reduced-motion + `@supports` guards | 1.0 |
-| 9 | Accessibility | Landmarks, one `<h1>`, visible focus, 24px+ targets (44 ideal), no motion-only meaning | 1.0 |
-| 10 | Performance (CWV) | LCP < 2.5s, INP < 200ms, CLS < 0.1; LCP image `priority`, `next/font` | 1.0 |
-| 11 | Copy & brand fidelity | Benefit-led, specific, ban-list clean, voice matches the `02-DOCS/wiki/brand/` study | 0.5 |
-
-Score = Σ(dimension × weight), max 115 (normalize to /100 by ×100/115 if you want a percentage). **Bands (on the /115 raw total):** < 69 ships generic — redo; 69–91 competent but improvable — name the lowest two and fix; 92–108 premium; 109+ award-tier. (These are the prior 60/80/95-per-100 cutoffs rescaled to 115.) A surface that scores well on every constraint dimension but low on #1–2 is the classic "competent but generic" result — fix concept and signature first, it has the most leverage. For each dimension below 8, give one concrete, actionable fix (not "improve spacing" but "section padding jumps 48→96px with no 64px step — add `py-16` on mobile"). Cite the brand article or trend source that sets the bar where relevant.
-
-A dimension you could not assess (no preview, no profiler) is reported as *not assessed*, never as a number, and a total with a hole in it is not reported. The rubric grades how good a surface is; a read-only **audit** finds defects, with coverage and P0–P3 findings, and follows `references/refine-and-audit.md`. Run both only when both are asked for.
-
-## Recording the decisions (02-DOCS)
-
-Two records, both indexed in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer to it), both read first on every use so outputs stay consistent with them:
-
-- The **brand study** at `02-DOCS/wiki/brand/` — the hard gate above: in Create or Replace, missing or incomplete → ask until complete before designing.
-- The **design-system decisions** at `02-DOCS/wiki/stack/design.md` — the chosen tokens (color/OKLCH, type scale, spacing, radius, shadow, motion), the 2026 direction picked, and the reference sites. Recorded, not gated; create/update it as decisions are made. **Read it before fixing type and palette on a new surface**, and either reuse what is there or state why you are departing — otherwise every surface of the project drifts into a different design. (Across *different* projects this record cannot help: it lives inside each one. Distrusting your own second default is the only guard there — see the repetition note in `references/ai-tells.md`.)
-
-The wiki article protocol both follow is `../harness/SKILL.md`'s.
+| `engine/RUN.md` | The run, the house rules and the laws of the craft. |
+| `engine/references/` | App screens, type, colour, layout, imagery, motion, scenes, copy, critique, tells, research. |
+| `engine/scripts/` | `draw`, `assets`, `lint`, `inspect`, `scenes`. |
+| `engine/library/` | The data the draw reads. Never read it whole; use the script. |
+| `engine/UPSTREAM.json` | Which upstream versions are shipped here. |
+| [references/modes.md](references/modes.md) | The four modes. |
+| [references/finish-review.md](references/finish-review.md) | The fresh reviewer. |
+| [references/design-md.md](references/design-md.md) | The `DESIGN.md` record. |

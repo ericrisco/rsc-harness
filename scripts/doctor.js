@@ -11,8 +11,6 @@ import { readManifest as readProjectManifest } from './lib/manifest-file.js';
 import { listBackups } from './lib/backups.js';
 import { SDD_GATE_TEXT } from '../targets/hook-once.mjs';
 import { isEnabled, checkSello, readSello, countFindings, readEffectiveConfig, validateRiskConfig } from '../targets/sello.mjs';
-import { designIdentity } from './lib/design-identity.js';
-import { startingPointSummary } from './lib/starting-point.js';
 import { countGaps, listSkills, listAgents } from './lib/capabilities.js';
 import { resolveCommands, commandPath, targetHasCommands } from '../targets/commands.js';
 import { inspectMemoryWiring } from '../targets/memory.js';
@@ -104,17 +102,6 @@ export function missingHookScripts({ target, home = homedir(), cwd = process.cwd
 // Is the post-merge trigger actually armed in this clone? Three states, because they need three
 // different answers: armed, absent (repair it), or someone else's (leave it — chaining is our job
 // at install time, and overwriting a husky hook to fix a convenience would be indefensible).
-// The skills that read or write a design identity (02-DOCS/wiki/brand/) or a starting point. The
-// state is always reported; the FIX — "run design-loop, then design-dna" — is advice, and advice needs
-// evidence. A todo web app with none of these installed was told to run two skills it does not have
-// and never asked for (E2E 2026-10-07).
-const DESIGN_SKILLS = new Set(['design', 'design-loop', 'design-dna', 'brand-voice', 'content-engine', 'marketing', 'presentations', 'make']);
-function withoutUnfoundedFix(summary, inPlay) {
-  if (inPlay || !summary || !summary.fix) return summary;
-  const { fix, ...rest } = summary;
-  return { ...rest, note: 'no design skill is installed here, so nothing is recommended' };
-}
-
 function worktreeCleanupStatus(root, policy) {
   if (!existsSync(join(root, '.git'))) return { state: 'not-a-repo' };
   if (existsSync(join(root, '.rsc', '.no-worktree-cleanup'))) return { state: 'off-by-choice' };
@@ -250,9 +237,6 @@ export function doctor({ target, home, cwd }) {
     const path = agentPath(target, root, id);
     return path && !existsSync(path);
   }).map((id) => ({ id, path: agentPath(target, root, id), action: 'Run `npx @ericrisco/rsc sync` to restore this managed agent.' }));
-  // What THIS harness installed, not every skill visible from here: a design skill in the user's
-  // global scope is how a todo app's doctor came to recommend design-dna (E2E 2026-10-07).
-  const designInPlay = Object.keys(state.skills || {}).some((id) => DESIGN_SKILLS.has(id));
   const report = {
     target,
     installed: Object.keys(state.skills),
@@ -273,14 +257,6 @@ export function doctor({ target, home, cwd }) {
     worktreeHygiene: worktreeHygiene(root),
     ownSkills: ownSkillsIn(paths, readProjectManifest(root)?.ownSkills || []),
     sello: selloStatus(root),
-    // Whether this harness has a design identity at all. `design` has always DECLARED that it
-    // stops without one; until lib/design-identity.js nothing checked it (P2). Reported here,
-    // never nagged about and never blocking: a missing identity is low risk (P7).
-    designIdentity: withoutUnfoundedFix(designIdentity(root), designInPlay),
-    // The other half of the same question: an identity is what this project settled on, a starting
-    // point is what it has to settle FROM. Three skills promise to propose one and none could look;
-    // this is the look. One field, not a section — a report grows for every user who runs it (P5).
-    designStartingPoint: withoutUnfoundedFix(startingPointSummary(root), designInPlay),
     // An inert gate must never read as an armed one (the same rule the sello follows):
     // the gitmoji guard has a per-project kill switch, so say which state it is in.
     gitmojiGuard: state.policy?.gitmojiGuard === false

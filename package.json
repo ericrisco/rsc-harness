@@ -1,6 +1,6 @@
 {
   "name": "@ericrisco/rsc",
-  "version": "3.1.4",
+  "version": "3.3.0",
   "description": "A guided harness builder that turns your goal into a minimal, verified AI-agent setup using strict best practices.",
   "type": "module",
   "bin": {
@@ -19,6 +19,7 @@
     "knowledge:doctor": "node scripts/knowledge-doctor.js",
     "spec:gate": "node scripts/spec-gate.js",
     "routing:audit": "node scripts/routing-audit.js",
+    "design:upstream": "node scripts/design-upstream.js",
     "originality:check": "node scripts/originality-check.js",
     "test": "node --test",
     "coverage": "c8 --reporter=text node --test",
@@ -115,6 +116,10 @@
     {
       "fixedIn": "2.1.0",
       "symptom": "Answers were long and leaned on hidden reasoning, and onboarding asked an accompaniment level few could answer; now: short stand-alone sentences, one question"
+    },
+    {
+      "fixedIn": "3.3.0",
+      "symptom": "Pages and screens designed with rsc came out generic and AI-looking, and most projects had no design skill installed at all (found by Carlos del Corral)"
     }
   ]
 }

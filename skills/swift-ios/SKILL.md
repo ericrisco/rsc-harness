@@ -13,7 +13,7 @@ origin: risco
 app lifecycle, Xcode, iOS APIs, App Store shipping. Language-level Swift — Swift 6 data-race safety
 and approachable concurrency, actors and task groups, `some` vs `any`, ARC and performance, Swift
 Testing, macros — is this skill's own ground. A concurrency error, a hang, a data race or a
-retain cycle belongs here. Interface feel, springs and materials: `../motion-craft/SKILL.md`.
+retain cycle belongs here, and so do interface feel, springs and materials on iOS.
 
 
 Native Apple-platform apps: the code is `.swift`, the UI is SwiftUI, and the compiler enforces actor isolation. If the answer is a `@MainActor`, `@Observable`, `async let`, `#expect`, `NavigationStack`, or `@Model`, you are in the right place.

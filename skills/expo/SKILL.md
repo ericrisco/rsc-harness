@@ -8,10 +8,9 @@ origin: risco
 
 # Expo & EAS: shipping React Native
 
-**Hand-off — the app vs its motion.** This skill owns the Expo platform: router, config plugins, EAS,
-native modules, store builds. **Animation and gestures** — Reanimated worklets, the UI runtime,
-sheets, screen transitions, press feedback, haptics, motion that stutters on a real device — are
-`../motion-craft/SKILL.md`'s.
+**Scope.** This skill owns the Expo platform: router, config plugins, EAS, native modules, store
+builds. Animation and gestures (Reanimated worklets, sheets, press feedback, haptics) follow
+`../react-native/SKILL.md`. Visual design of web pages and screens is `../design/SKILL.md`'s.
 
 
 ## What this skill owns

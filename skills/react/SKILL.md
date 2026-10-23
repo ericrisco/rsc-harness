@@ -10,8 +10,8 @@ origin: risco
 
 **Hand-off — picking dependencies.** Which library to reach for (UI primitives, command menus,
 toasts, OTP inputs, charts, virtualization, drag and drop, state, styling, theming) is
-`../ui-engineering/SKILL.md`'s — build vs adopt is decided there, before hand-rolling a component. Animating what you
-install is `../motion-craft/SKILL.md`'s.
+`../ui-engineering/SKILL.md`'s — build vs adopt is decided there, before hand-rolling a component. The look of a page
+or screen, and its motion layer, is `../design/SKILL.md`'s.
 
 
 > Build or review a fast, typed, correctly-architected **client-side** React single-page app bundled by Vite. No server runtime, no RSC tree, no framework router. Server-rendered React (App Router, server actions, SSR/SSG) is not this skill — that is `../nextjs/SKILL.md`.

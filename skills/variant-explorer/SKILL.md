@@ -1,8 +1,8 @@
 ---
 name: variant-explorer
-description: "Use when someone wants OPTIONS rather than an answer — 'show me a few versions', picking between approaches by seeing them. Genuinely different candidates, cheap to throw away, trade-off named. NOT the critique that judges one (`design-loop`), NOT the spec (`specify`)."
+description: "Use when someone wants OPTIONS rather than an answer — 'show me a few versions', picking between approaches by seeing them. Genuinely different candidates, cheap to throw away, trade-off named. NOT the critique that judges one (`design`), NOT the spec (`specify`)."
 tags: [prototyping, divergence, options, exploration, decision]
-recommends: [design-loop]
+recommends: [design]
 profiles: [full]
 origin: risco
 ---
@@ -84,10 +84,10 @@ handing the work back. Say which one you would pick and why, and make it easy to
 | Present five or six to be thorough | Past three, they stop being compared and start being skimmed. |
 | Give options with no recommendation | Standing back is not neutrality; it hands the work back to the person who asked. |
 | Explore a decision that is cheap to reverse | Just ship one. Divergence is for what is expensive to unwind. |
-| Keep iterating on the winner here | Once one is chosen, refining it is `../design-loop/SKILL.md` or the relevant build skill. |
+| Keep iterating on the winner here | Once one is chosen, refining it is `../design/SKILL.md` or the relevant build skill. |
 
 ## See Also
 
-- `../design-loop/SKILL.md` — the graded critique that takes over once a direction is chosen.
+- `../design/SKILL.md` — the graded critique that takes over once a direction is chosen.
 - `../specify/SKILL.md` — when what is missing is an agreed WHAT/WHY, not options.
 - `../design/SKILL.md` — building the chosen direction properly.

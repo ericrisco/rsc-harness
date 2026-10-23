@@ -8,7 +8,7 @@
 
 [![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
 [![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
-[![skills](https://img.shields.io/badge/skills-272-63d68a?labelColor=12161c)](#the-catalog)
+[![skills](https://img.shields.io/badge/skills-269-63d68a?labelColor=12161c)](#the-catalog)
 [![license](https://img.shields.io/badge/license-MIT-63d68a?labelColor=12161c)](LICENSE)
 [![stars](https://img.shields.io/github/stars/ericrisco/rsc-harness?color=63d68a&labelColor=12161c)](https://github.com/ericrisco/rsc-harness/stargazers)
 
@@ -60,7 +60,7 @@ The model is the brain your agent rents, and you already have it. rsc adds the r
 | --- | --- | --- |
 | **Memory** | `02-DOCS/` | A wiki the agent reads before it works and keeps up to date while it works. |
 | **Hands** | `01-TOOLS/` | One folder per tool, with a test that proves the connection works. |
-| **Trade** | skills | Only the skills your project needs: 272 available, a handful installed. |
+| **Trade** | skills | Only the skills your project needs: 269 available, a handful installed. |
 | **Reflexes** | hooks | Rules that hold even when the agent forgets them mid-session. |
 
 ### Why documentation comes first
@@ -468,7 +468,7 @@ snapshots the project first, so `rsc restore latest` undoes a bad update.
 
 ## The catalog
 
-272 skills, grouped by what you are trying to do. Click any skill to read its `SKILL.md`. It fires on
+269 skills, grouped by what you are trying to do. Click any skill to read its `SKILL.md`. It fires on
 its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -561,11 +561,11 @@ whether, what and which platform.
 
 ### 🌀 Motion & interface craft
 
-[motion-craft](skills/motion-craft/) · [ui-engineering](skills/ui-engineering/) · [variant-explorer](skills/variant-explorer/) · [scroll-film](skills/scroll-film/)
+[ui-engineering](skills/ui-engineering/) · [variant-explorer](skills/variant-explorer/) · [scroll-film](skills/scroll-film/)
 
 ### 🎨 Design & content craft
 
-[design-loop](skills/design-loop/) · [design](skills/design/) · [design-dna](skills/design-dna/) · [presentations](skills/presentations/) · [course-storytelling](skills/course-storytelling/) · [course-builder](skills/course-builder/) · [technical-writing](skills/technical-writing/) · [translation-l10n](skills/translation-l10n/)
+[design](skills/design/) · [presentations](skills/presentations/) · [course-storytelling](skills/course-storytelling/) · [course-builder](skills/course-builder/) · [technical-writing](skills/technical-writing/) · [translation-l10n](skills/translation-l10n/)
 
 ### 🧠 Knowledge & meta
 
@@ -626,8 +626,8 @@ Most of this catalog is written here. These are not, and they keep their author'
 | Skills | Source | License |
 | --- | --- | --- |
 | `design-eng` · `animate` · `animate-expo` · `review-animations` · `improve-animations` · `find-animation-opportunities` · `animation-vocabulary` · `apple-design` · `prototype` · `pick-ui-library` · `write-swift` · `ask-sonner` | [emilkowalski/skills](https://github.com/emilkowalski/skills) by Emil Kowalski, commit `d23d7f8` | MIT |
-| part of the AI-tell corpus in `design` | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | MIT |
-| the extend/polish/distill/audit modes, the visual-target loop and the habit tells in `design` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) by Paul Bakaus, `skill-v4.6.0`, via Uizze's `ui-taste` | Apache-2.0 |
+| the engine of `design` (`skills/design/engine/`: direction draw, browser inspector, study library), shipped unmodified | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) v2.1.4 | MIT |
+| the four modes, the fresh review and the `DESIGN.md` record in `design` (text rewritten) | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) by Paul Bakaus, `skill-v4.7.0` | Apache-2.0 |
 | the answer-first habits in `orient` | [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) | MIT |
 | the scroll-scrubbed camera flight, the frame handoff between clips and the phone fixes behind `scroll-film` (prose and engine rewritten) | [oso95/scroll-world](https://github.com/oso95/scroll-world) | MIT |
 

@@ -16,7 +16,7 @@ should_trigger:
 
 should_not_trigger:
   - prompt: "Review this checkout screen and grade it."
-    route_to: "design-loop"
+    route_to: "design"
     why: "Judging one finished thing is critique, the opposite of divergence."
   - prompt: "We need to agree what this feature is for before anyone builds it."
     route_to: "specify"
