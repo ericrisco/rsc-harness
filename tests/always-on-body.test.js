@@ -58,6 +58,16 @@ test('always-on body: keeps the jobs only it can do', () => {
   assert.match(body, /bloque-brújula/, 'the orientation close');
 });
 
+test('always-on body: sends a project fact to the wiki, not to the assistant memory', () => {
+  // A student said «recuerda X» and could not find it: Claude Code wrote it under
+  // ~/.claude/projects/, outside the folder, where no teammate who clones ever sees it.
+  // This body is the only text present on every turn, so the routing lives here.
+  assert.match(body, /«Recuerda esto»/, 'names the request');
+  assert.match(body, /`02-DOCS\/wiki\/`/, 'sends the fact to the wiki');
+  assert.match(body, /say the path/i, 'and tells the person where it went');
+  assert.match(body, /how this person likes you to work/i, 'keeps native memory for preferences only');
+});
+
 test('always-on body: does not re-elaborate what the per-turn gate already emits', () => {
   // The gate text is emitted verbatim every turn on Claude Code. The body may point at the rule;
   // reproducing its wording is the duplication this spec removes.

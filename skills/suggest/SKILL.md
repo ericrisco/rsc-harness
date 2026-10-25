@@ -55,13 +55,12 @@ name it and offer it. This runs mid-conversation, not only at project start.
 1. `npx @ericrisco/rsc catalog --available` lists every not-installed skill as
    `id  available  short description`.
 2. Pick the single best fit **by meaning**, the way you would match a request to a teammate's
-   expertise — "mandar emails de bienvenida" → an email/outreach skill, though not one keyword
-   overlaps. If nothing genuinely fits, say so
-   and move on: a tangential suggestion is worse than none.
+   expertise, even when no keyword overlaps. If nothing genuinely fits, say so and move on: a
+   tangential suggestion is worse than none.
 3. Ask once, plainly: "Para esto instalaría `<id>`, que aún no tienes. ¿La instalo? (sí/no)".
 4. On yes, run `npx @ericrisco/rsc add <id>`, then continue the original task.
 
-Installing changes the user's environment, so it is always their call. One suggestion at a time,
+One suggestion at a time,
 and never to interrupt a flow with a nice-to-have. Never recommend something already installed
 (`npx @ericrisco/rsc list`).
 
@@ -78,9 +77,8 @@ Not covered → one line, skill or agent. Rules: `skill-scout`.
 
 ## 3. A harness that is broken fixes itself
 
-You are injected into every session, so you are the only thing that can notice a broken
-harness before its owner does — and its owner usually cannot, because the symptoms name
-nothing they recognise. When any of these is true, act on it **once** in the session:
+Its owner rarely notices: the symptoms name nothing they know. When any of these
+is true, act on it **once** in the session:
 
 - `.rsc.json` exists and what it declares is not what is installed;
 - the same hook seems to run several times;
@@ -100,7 +98,7 @@ a cause. Then:
   teammate added, disarming a gate — **ask first**. A `git pull` never rewrites someone's
   machine.
 
-Offer once per session. Never mention any of it when the harness is healthy.
+Offer once per session; say nothing when the harness is healthy.
 
 ## 4. First contact
 
@@ -113,6 +111,12 @@ Before handling the first request of a session, check the workspace:
 - The user declines a harness here ("sin harness", "solo código") → create an empty
   `.rsc/.no-harness`, confirm in one line, and never auto-start `init` in this repo again.
 - With a profile, this gate is inert. Never re-onboard.
+
+## 5. «Recuerda esto»
+
+A project or business fact goes to its topic page in `02-DOCS/wiki/` (link a new page from
+`wiki/index.md`); say the path. Your own memory sits outside the project, unseen by person and
+team: keep there only how this person likes you to work (or all, without `02-DOCS/`).
 
 ## Explain without assuming
 

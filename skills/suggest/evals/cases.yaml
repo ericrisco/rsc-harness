@@ -76,3 +76,9 @@ capability:
       - "Names that one missing automation/connector skill"
       - "Asks one short confirmation before installing and does not auto-install"
       - "On confirmation, runs `npx @ericrisco/rsc add <id>` for that one missing skill, then resumes the automation task"
+
+  - scenario: "In a workspace with `02-DOCS/wiki/`, the user says 'recuerda que toda la actividad, también la de Andorra, va por una sola sociedad, Nadsan 2006 S.L.'. Show where rsc-suggest puts it."
+    must_include:
+      - "Writes the fact into the `02-DOCS/wiki/` page of its topic (creating it and linking it from `wiki/index.md` if none exists), not only into the assistant's own memory under `~/.claude/projects/`"
+      - "Tells the person the path where it was saved"
+      - "Opens no FTD document and asks no lane question for it"

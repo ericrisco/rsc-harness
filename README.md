@@ -405,6 +405,9 @@ file, and `rsc agents reset <name>` takes rsc's version back after a backup.
 
 ## CLI
 
+`rsc` below is short for `npx @ericrisco/rsc`. Without a global install (`npm i -g @ericrisco/rsc`),
+the bare `rsc` answers `command not found`: type the `npx` form.
+
 ```bash
 # Setup
 rsc onboard                          # plain-language onboarding; writes nothing until you accept
@@ -429,7 +432,7 @@ rsc ingest notas.md --topic crm      # move a file into 02-DOCS/raw/ (verified c
 rsc copy rules | check ad.txt        # the phrases this project forbids, and a check before publishing
 
 # Memory and diagnostics
-rsc memory status | off | resume
+rsc memory status | off | resume     # session continuity; «recuerda esto» goes to 02-DOCS/wiki/
 rsc doctor                           # harness health and onboarding readiness
 rsc repair                           # put the harness back to what is declared
 rsc backups | restore latest         # project-local snapshots
