@@ -152,7 +152,7 @@ how the look drifts back to generic by the fifth piece.
   this loop invokes; it stays reachable directly when there is no bar to beat and no loop to run.
 - **Codifying the winner into a permanent identity** → `../design-dna/SKILL.md`.
 - **The words** → `../marketing/SKILL.md`. **The build** → `../nextjs/SKILL.md`.
-- **Motion craft** → `../motion-craft/SKILL.md`. **How the interface should be built** → `../ui-engineering/SKILL.md`.
+- **Motion craft** → `../motion-craft/SKILL.md`. **Application flows and usability** → `../ux-saas/SKILL.md`. **How the interface should be built** → `../react/SKILL.md`.
 - **"Show me a few versions and I'll pick"** → `../variant-explorer/SKILL.md`. That is selection among
   variants; this is convergence against a bar.
 - **SDD gate.** This skill runs a method; it does not outrank the chain. If the request is a new

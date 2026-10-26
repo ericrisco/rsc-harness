@@ -1,0 +1,40 @@
+skill: ux-saas
+
+should_trigger:
+  - prompt: "Diseña el flujo completo para que un cliente nuevo cree su primera factura en la app."
+    why: "A whole journey from empty account to the core job, the thing this skill owns first."
+  - prompt: "Our dashboard works, but new users never find the invite button. What should change?"
+    why: "Discoverability of the next action inside an application, not a landing page."
+  - prompt: "The signup form clears everything when the email is already taken. Fix the flow."
+    why: "Error recovery and input preservation in a form, which the skill covers."
+  - prompt: "Revisa la usabilidad de nuestro panel de administración antes de la demo del martes."
+    why: "An application audit by use, reported by severity, in Spanish."
+  - prompt: "What should the list screen show when the account has no projects yet and when a filter returns zero?"
+    why: "Empty states, and the difference between a new account and a filtered-to-nothing view."
+  - prompt: "Users say the settings page is confusing. How should we group it?"
+    why: "Settings structure and grouping by subject in an application."
+  - prompt: "Make this SaaS easy enough that someone with no training can finish the job alone."
+    why: "The usability goal stated directly; the skill's whole purpose."
+
+should_not_trigger:
+  - prompt: "Design the hero section and pricing block of our product's landing page."
+    route_to: "design"
+    why: "A marketing page, not an application flow. The visual landing system is `design`'s."
+  - prompt: "Write the headline and subheading for the homepage."
+    route_to: "landing-copy"
+    why: "The words on a page, not the interface's behaviour."
+  - prompt: "Our React table re-renders on every keystroke. How do I memoize it?"
+    route_to: "react"
+    why: "Framework mechanics and performance code, not the usability of the screen."
+  - prompt: "Define the MRR and churn metrics and the SQL for the revenue dashboard."
+    route_to: "dashboard"
+    why: "The data model and analytics behind a dashboard, not its interaction design."
+  - prompt: "Convert this legal disclaimer PDF into plain text."
+    route_to: "none"
+    why: "Document conversion with no interface or flow involved."
+
+capability:
+  - prompt: "New users sign up, see a blank page and leave. Walk the lifecycle and tell me what each state should show, in order."
+    why: "Forces the lifecycle checklist: empty account, first value, and the state that loses people."
+  - prompt: "Audit this app by using it: a new account creating a client and sending an invoice. Report by severity with fixes."
+    why: "Forces the walkthrough method and the finding format, instead of a code-only review."

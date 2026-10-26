@@ -1317,7 +1317,8 @@
         "design-loop",
         "design-dna",
         "nextjs",
-        "marketing"
+        "marketing",
+        "ux-saas"
       ],
       "profiles": [
         "full"
@@ -5173,26 +5174,6 @@
       "profiles": []
     },
     {
-      "id": "ui-engineering",
-      "description": "Use when the question is how interface should be BUILT — component boundaries, state that belongs in the URL vs the component, loading/empty/error states, forms, optimistic updates, build vs adopt. NOT the visual system (`design`), NOT framework mechanics (`react`/`nextjs`).",
-      "tags": [
-        "interface",
-        "frontend",
-        "architecture",
-        "components",
-        "state",
-        "craft"
-      ],
-      "recommends": [
-        "design",
-        "motion-craft"
-      ],
-      "profiles": [
-        "core",
-        "full"
-      ]
-    },
-    {
       "id": "unit-economics",
       "description": "Use when computing or improving the per-customer economics of a business — CAC, LTV, CAC payback period and contribution margin — judging whether the ratios are healthy against current norms, and naming the one lever that fixes the worst number. Covers a blended CAC that hides a bleeding channel, and a model that shows profit while each customer loses money. NOT the multi-year P&L or scenario projection (that is `financial-model`).",
       "tags": [
@@ -5304,6 +5285,34 @@
         "huggingface"
       ],
       "profiles": []
+    },
+    {
+      "id": "ux-saas",
+      "description": "Use when designing or auditing a whole SaaS app: full user flows from sign-up to the core job, navigation, forms, empty/loading/error states, undo, tables, dashboards and visual hierarchy, so anyone can use it without a manual. NOT landing pages (`design`), page copy (`landing-copy`), component code (`react`), dashboard data (`dashboard`).",
+      "tags": [
+        "ux",
+        "usability",
+        "saas",
+        "product-design",
+        "flows",
+        "onboarding",
+        "navigation",
+        "forms",
+        "empty-states",
+        "dashboard",
+        "app-ui",
+        "accessibility"
+      ],
+      "recommends": [
+        "design",
+        "dashboard",
+        "accessibility",
+        "react"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
     },
     {
       "id": "variant-explorer",

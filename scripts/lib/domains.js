@@ -24,7 +24,7 @@ export const DOMAINS = [
   { title: 'Ship & operate — platforms', ids: ['vercel', 'netlify', 'cloudflare', 'railway', 'render', 'fly-io', 'coolify', 'hetzner', 'digitalocean', 'aws-essentials', 'gcp-essentials'] },
   { title: 'Ship & operate — devops', ids: ['docker', 'github-actions', 'git-workflow', 'domains-dns', 'monitoring', 'email-deliverability', 'scaling', 'deployment', 'deprecation'] },
   { title: 'Ship & operate — quality & security', ids: ['code-review', 'security-scan', 'secure-coding', 'testing-py', 'testing-web', 'testing-go', 'e2e-testing', 'accessibility', 'performance', 'error-handling', 'observability'] },
-  { title: 'Motion & interface craft', ids: ['motion-craft', 'ui-engineering', 'variant-explorer'] },
+  { title: 'Motion & interface craft', ids: ['motion-craft', 'ux-saas', 'variant-explorer'] },
   { title: 'Design & content craft', ids: ['design-loop', 'design', 'design-dna', 'presentations', 'course-storytelling', 'course-builder', 'technical-writing', 'translation-l10n'] },
   { title: 'Knowledge & meta', ids: ['knowledge-ops', 'codebase-onboarding', 'research-ops', 'decision-records', 'continuous-learning', 'skill-scout', 'context-budget', 'roast-me', 'show-me', 'eli5', 'fable-operator'] },
 ];

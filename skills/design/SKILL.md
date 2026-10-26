@@ -2,7 +2,7 @@
 name: design
 description: "Use when designing or refreshing a web UI or landing page — visual concept, type/color/spacing/motion tokens, composition, rescuing a UI that reads AI-generic, or a graded design review. Brand-grounded and research-first; ships Tailwind v4 + Next.js 15 under WCAG 2.2 AA and Core Web Vitals budgets. NOT the words on the page (that is `marketing`), NOT the App Router build (that is `nextjs`)."
 tags: [design, ux, ui, landing, conversion]
-recommends: [design-loop, design-dna, nextjs, marketing]
+recommends: [design-loop, design-dna, nextjs, marketing, ux-saas]
 profiles: [full]
 origin: risco
 ---
@@ -11,10 +11,11 @@ origin: risco
 
 **Hand-off — the visual system vs the craft of motion.** This skill owns the visual system and page
 composition, and sets motion *intent + budget* only. The **implementation** of an animation is
-`../motion-craft/SKILL.md`'s; how a piece of interface should be BUILT — boundaries, state, the
-loading and empty and error states — is `../ui-engineering/SKILL.md`'s. When a request could belong to
-several of those, start from the one that owns the decision, not the one that owns the file. The motion reference in
-this skill defers its mechanics to them rather than restating them.
+`../motion-craft/SKILL.md`'s; how an application's flows, states and usability are designed — loading,
+empty and error states included — is `../ux-saas/SKILL.md`'s, and how the interface is BUILT (boundaries,
+state) is `../react/SKILL.md`'s. When a request could belong to several of those, start from the one that
+owns the decision, not the one that owns the file. The motion reference in this skill defers its mechanics
+to them rather than restating them.
 
 
 *Research the best current work, then ship a premium, accessible, fast, high-converting interface.*

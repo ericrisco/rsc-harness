@@ -10,7 +10,7 @@ origin: risco
 
 **Hand-off — picking dependencies.** Which library to reach for (UI primitives, command menus,
 toasts, OTP inputs, charts, virtualization, drag and drop, state, styling, theming) is
-`../ui-engineering/SKILL.md`'s — build vs adopt is decided there, before hand-rolling a component. Animating what you
+— check what the project already depends on before hand-rolling a component. Animating what you
 install is `../motion-craft/SKILL.md`'s.
 
 

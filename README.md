@@ -563,7 +563,7 @@ Three engines + engine-agnostic disciplines. Every engine skill pins the current
 
 ### 🌀 Motion & interface craft
 
-[motion-craft](skills/motion-craft/) · [ui-engineering](skills/ui-engineering/) · [variant-explorer](skills/variant-explorer/)
+[motion-craft](skills/motion-craft/) · [ux-saas](skills/ux-saas/) · [variant-explorer](skills/variant-explorer/)
 
 ### 🎨 Design & content craft
 
