@@ -213,3 +213,22 @@ test('research, content and mixed intent survive normalization and drive proport
   assert.equal(mixed.policy.codeHooks, true);
   assert.equal(mixed.decisions.find((d) => d.id === 'sdd').state, 'selected');
 });
+
+test('a PHP project is read from composer.json, and vendored dependencies are not project evidence (#325)', () => {
+  // Reported from a Laravel app: a Composer package shipped `docs/requirements.txt` for its Sphinx
+  // docs, the scan walked into `vendor/`, and onboarding installed `python` and `python-reviewer`
+  // in a project with no Python, while PHP itself was never detected.
+  const dir = root();
+  writeFileSync(join(dir, 'composer.json'), '{"require":{"laravel/framework":"^12.0"}}');
+  mkdirSync(join(dir, 'vendor', 'acme', 'paquete', 'docs'), { recursive: true });
+  writeFileSync(join(dir, 'vendor', 'acme', 'paquete', 'docs', 'requirements.txt'), 'sphinx\n');
+  writeFileSync(join(dir, 'vendor', 'acme', 'paquete', 'Paquete.php'), '<?php\n');
+  const evidence = scanProject(dir);
+  assert.deepEqual(evidence.stacks, ['laravel', 'php']);
+  assert.deepEqual(evidence.signals, ['manifest:composer.json']);
+  assert.equal(evidence.sourceFileCount, 0);
+
+  const plain = root();
+  writeFileSync(join(plain, 'composer.json'), '{"require":{"monolog/monolog":"^3.0"}}');
+  assert.deepEqual(scanProject(plain).stacks, ['php']);
+});
