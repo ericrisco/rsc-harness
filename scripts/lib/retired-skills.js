@@ -11,9 +11,13 @@
 //
 // `design-loop`, `design-dna` and `motion-craft` folded into the rebuilt `design` in 3.3.0 (spec
 // design-from-scratch): its engine deals the direction, measures the render and owns the motion layer.
+//
+// `ui-engineering` folded into `ux` in 3.4.0: the screen states and form behaviour it owned are
+// `ux`'s state matrix now, and where component state lives is `react`'s.
 export const RETIRED_SKILLS = Object.freeze({
   eli5: 'orient', 'show-me': 'orient', bro: 'unslop',
   'design-loop': 'design', 'design-dna': 'design', 'motion-craft': 'design',
+  'ui-engineering': 'ux',
 });
 
 const retiredTo = (id) => (Object.hasOwn(RETIRED_SKILLS, id) ? RETIRED_SKILLS[id] : id);

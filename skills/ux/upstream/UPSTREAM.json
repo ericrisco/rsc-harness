@@ -1,0 +1,59 @@
+{
+  "ux-designer": {
+    "repo": "szilu/ux-designer-skill",
+    "path": ".",
+    "commit": "c869d32fd8df7bd7fcd1db68e93bd3e89eed5161",
+    "license": "MIT",
+    "copyright": "Copyright (c) 2026 Szilárd Hajba",
+    "note": "GUIDE.md is the upstream SKILL.md with its YAML front matter removed; every other file is copied unmodified.",
+    "files": {
+      "GUIDE.md": "7c0d77afe18cbe3bc25364fdf11e8752c6b100ca4e159ef9c43884db5f72d7dc",
+      "LICENSE": "311bce427930791e38cee5f4e81b83240e8ae2b57629e5fec57e1283769f0912",
+      "references/01-core-principles.md": "6df0640b7c438d1ffe83fa057d22030d7bc58569d97094871b441ded02cdea76",
+      "references/02-laws-of-ux.md": "95cad93c188503434764ceae97ce2fd31d1fbe7521ffd93107653e381d5c9c07",
+      "references/03-accessibility.md": "ad72653487f7a4bb194b86999ee12013aa47cd090a4380d4bf6eb2aec0584ac2",
+      "references/04-visual-design.md": "567fb260d75c70b2c295dfd36f3ed3115f50a0b098409ef24e98dc9202c6f694",
+      "references/05-information-architecture.md": "c4b552783851595166f6aa99cb3486c1b834303c541a35a5d6a82d4b25727425",
+      "references/06-interaction-design.md": "d113a969a2af0fc70765076591b5e7c75ab38088a54713d5a1b65ca13b31d669",
+      "references/07-forms-and-inputs.md": "1b23668b13c5953c35038ce30ff5e8bcbc06a29f7a559c53b7be9ddbe59c9d5a",
+      "references/08-mobile-ux.md": "b8ad95440a69e48540bf10f03d427942a7b53fdfaec28e89ebb5fe9933445909",
+      "references/09-ux-writing.md": "080d74e76827972459ba359456f291bfa014fcaf9fff0fc0e6c7780446eef575",
+      "references/10-user-research.md": "83c1a817a02aa977659bb3c0526db0747f320c204b3e24e33629939e1760544f",
+      "references/11-design-systems.md": "82c4fc83b6b28003d76ecb1b310eed274c6c34f87653e729f33950021e88b006",
+      "references/12a-presence-awareness.md": "46834ec1c85df71982c339ab57cec807d1f4ff1a30da124c80e0f1f7dc6fb65a",
+      "references/12b-conflict-resolution-sync.md": "341abb08b5edeeabdb46437bf041aac8a38d1d77f96aa71642843558888e74c9",
+      "references/13a-canvas-navigation.md": "33025d1b3b5af85ce96071190d83305b34d28093089104f20b4ddb05c45f892b",
+      "references/13b-canvas-objects-performance.md": "9fe50592d1b5e211f2f7f0a9e7e018032530b58421b914afcc977ffccd08dc45",
+      "references/14-ai-ux-patterns.md": "c229438a2e33be662732200089a2b495811a3c8716b7e1d8daa25a23ca3035ea",
+      "references/15-ethical-design.md": "cd9f45ca9955cd19c14a39cc0143265591daf0749d45f54245d5e5a57622543f",
+      "references/16-onboarding.md": "af766e664963847367140c25de25edd308ae8bea21dfa76b790f4f3ca06a60d8",
+      "references/17-notifications.md": "d1bd3d109d3f8a3d16d77149c12cba3bc7032b417c1eea7f279159a49a332265",
+      "references/18-data-visualization.md": "6b2cfdd8f26b8372e09affd06a1881b4e21c3eb87206a63f053c86a52844195b",
+      "references/19-search-ux.md": "0f54a38b36ff83a14d4d3823c99bb09672fc8cee82f78f4359d22a9594bfb600",
+      "references/20-emotional-design.md": "5e8a1eb86c8362b9647d1a08a6fbb1b6fd5308dd5dad8aa63deb8470cad8fda5",
+      "references/21-data-tables.md": "84613ad183fa8fdb68389e2f0cce9b62296be18683ee82b5c9c23fc1dc111225",
+      "references/22-performance-ux.md": "8f9cfdc92398bb33b00720ab9be6199b1ad542706017bb8bb18f5bd3cf12655c",
+      "references/23-internationalization.md": "cafe080ec744cd6bdf10d808bb8111fd9a3b8586351d0a374e30fff8dcbbf5d7",
+      "references/24-voice-and-multimodal.md": "056367b50b8e8deb8e0599792c576371c79e4a89e63bd0c324a6351336c1a5d5",
+      "references/25a-barcode-camera-scanning.md": "4818b00cefbde5d77c351706ba2303f94b2107a170b55bae173928a89d97b31f",
+      "references/25b-barcode-scanner-workflows.md": "2f5ee30906e4e56ed2af867c12c21586672ad3f95462634847b408b763feadeb",
+      "references/25c-barcode-display.md": "9c9c4d52b9537e44bac7457365f1e45b931f6a72699de39a3c04abfe604fc9f1"
+    }
+  },
+  "ux-usability-foundations": {
+    "repo": "hueyexe/frontend-agent-skills",
+    "path": "ux-usability-foundations",
+    "commit": "2841c079dd8a9c634882227194dc42e25227710d",
+    "license": "MIT",
+    "copyright": "Copyright (c) 2026 hueyexe",
+    "note": "GUIDE.md is the upstream SKILL.md with its YAML front matter removed; every other file is copied unmodified. LICENSE is the repository licence.",
+    "files": {
+      "GUIDE.md": "1eafbca92bcd8a23a4ded6d5eade8f0d6cfd6477831c2fff73c84635c149bcb2",
+      "LICENSE": "5701f83f101aae5c7d89a1d44087663bd13187c043f6f2b4dc9b7a5a883db034",
+      "references/anti-patterns.md": "007e85bee463f247f89e58e2cc8bb11e373399bfd4ba7cfb8005385ae807f1a8",
+      "references/checklists.md": "3eea35605918f471d1019502294e08c0e42f70c81d4a4c9e3849cb80573ff833",
+      "references/decision-prompts.md": "741090dda5b23732853ef6fafb19f3102d1f8bfe7022049c7bd4efefd3581713",
+      "references/principle-cards.md": "301e976e5accef00f999e03a2196031122d57a0346e120982f799be82d4f6994"
+    }
+  }
+}

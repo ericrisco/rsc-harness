@@ -18,7 +18,11 @@
 // `design` joined in 3.3.0 (spec design-from-scratch): it was `full`-only, so most projects designed
 // with no design skill at all. Only its description is paid for on other turns; the engine it ships
 // (scripts and data) is never loaded into context.
-export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design']);
+//
+// `ux` joined in 3.4.0: `design` decides how a screen looks, `ux` decides whether people can use it —
+// the whole flow, every state, the browser walk. It replaced `ui-engineering`, which was core-only.
+// Only its description is paid for on other turns; the upstream references load on demand.
+export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux']);
 
 export function withDefaultSkillFloor(skillIds = []) {
   return [...new Set([...DEFAULT_SKILL_FLOOR, ...skillIds])];

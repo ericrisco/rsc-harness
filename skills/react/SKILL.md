@@ -10,7 +10,8 @@ origin: risco
 
 **Hand-off — picking dependencies.** Which library to reach for (UI primitives, command menus,
 toasts, OTP inputs, charts, virtualization, drag and drop, state, styling, theming) is
-`../ui-engineering/SKILL.md`'s — build vs adopt is decided there, before hand-rolling a component. The look of a page
+this skill's call: reuse what the project already depends on, then prefer a maintained, accessible library
+over hand-rolling a component. How the screen should behave for people is `../ux/SKILL.md`'s. The look of a page
 or screen, and its motion layer, is `../design/SKILL.md`'s.
 
 

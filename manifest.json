@@ -1,5 +1,5 @@
 {
-  "version": "3.3.1",
+  "version": "3.4.0",
   "counts": {
     "skills": 269,
     "agents": 34,
@@ -1311,7 +1311,7 @@
     },
     {
       "id": "design",
-      "description": "Use when designing, redesigning, restyling or reviewing a web page or app screen (landing, product site, portfolio, dashboard, docs) or when a UI looks generic or AI-made. Deals a researched direction, takes the idea from the subject, uses real pictures, proves it in a browser. NOT the words (landing-copy), NOT component state (ui-engineering).",
+      "description": "Use when designing, redesigning, restyling or reviewing a web page or app screen (landing, product site, portfolio, dashboard, docs) or when a UI looks generic or AI-made. Deals a researched direction, takes the idea from the subject, uses real pictures, proves it in a browser. NOT the words (landing-copy), NOT flows or usability (ux).",
       "tags": [
         "design",
         "ui",
@@ -1323,7 +1323,7 @@
       ],
       "recommends": [
         "landing-copy",
-        "ui-engineering",
+        "ux",
         "accessibility",
         "brand-identity",
         "nextjs"
@@ -5109,25 +5109,6 @@
       "profiles": []
     },
     {
-      "id": "ui-engineering",
-      "description": "Use when the question is how interface should be BUILT — component boundaries, state that belongs in the URL vs the component, loading/empty/error states, forms, optimistic updates, build vs adopt. NOT the visual system (`design`), NOT framework mechanics (`react`/`nextjs`).",
-      "tags": [
-        "interface",
-        "frontend",
-        "architecture",
-        "components",
-        "state",
-        "craft"
-      ],
-      "recommends": [
-        "design"
-      ],
-      "profiles": [
-        "core",
-        "full"
-      ]
-    },
-    {
       "id": "unit-economics",
       "description": "Use when computing or improving the per-customer economics of a business — CAC, LTV, CAC payback period and contribution margin — judging whether the ratios are healthy against current norms, and naming the one lever that fixes the worst number. Covers a blended CAC that hides a bleeding channel, and a model that shows profit while each customer loses money. NOT the multi-year P&L or scenario projection (that is `financial-model`).",
       "tags": [
@@ -5241,6 +5222,46 @@
         "huggingface"
       ],
       "profiles": []
+    },
+    {
+      "id": "ux",
+      "description": "Use when an app or SaaS must be easy to use: designing complete user flows, screens and every state, navigation, forms, onboarding, tables, dashboards, search or AI features, or auditing usability and accessibility. Anyone finishes the job without a manual; experts go fast. NOT the visual direction (design), NOT the words (landing-copy).",
+      "tags": [
+        "ux",
+        "usability",
+        "user-flows",
+        "flows",
+        "screens",
+        "states",
+        "empty-state",
+        "signup",
+        "modal",
+        "saas",
+        "app",
+        "product-design",
+        "navigation",
+        "forms",
+        "onboarding",
+        "dashboard",
+        "productivity",
+        "accessibility",
+        "wcag",
+        "interaction-design",
+        "usabilidad",
+        "flujos",
+        "pantallas"
+      ],
+      "recommends": [
+        "design",
+        "accessibility",
+        "landing-copy",
+        "react"
+      ],
+      "profiles": [
+        "minimal",
+        "core",
+        "full"
+      ]
     },
     {
       "id": "variant-explorer",

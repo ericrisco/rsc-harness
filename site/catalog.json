@@ -353,7 +353,6 @@
  {
   "t": "Motion & interface craft",
   "ids": [
-   "ui-engineering",
    "variant-explorer"
   ]
  },
@@ -361,6 +360,7 @@
   "t": "Design & content craft",
   "ids": [
    "design",
+   "ux",
    "presentations",
    "course-storytelling",
    "course-builder",

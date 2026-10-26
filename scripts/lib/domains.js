@@ -24,8 +24,8 @@ export const DOMAINS = [
   { title: 'Ship & operate — platforms', ids: ['vercel', 'netlify', 'cloudflare', 'railway', 'render', 'fly-io', 'coolify', 'hetzner', 'digitalocean', 'aws-essentials', 'gcp-essentials'] },
   { title: 'Ship & operate — devops', ids: ['docker', 'github-actions', 'git-workflow', 'domains-dns', 'monitoring', 'email-deliverability', 'scaling', 'deployment', 'deprecation'] },
   { title: 'Ship & operate — quality & security', ids: ['code-review', 'security-scan', 'secure-coding', 'testing-py', 'testing-web', 'testing-go', 'e2e-testing', 'accessibility', 'performance', 'error-handling', 'observability'] },
-  { title: 'Motion & interface craft', ids: ['ui-engineering', 'variant-explorer', 'scroll-film'] },
-  { title: 'Design & content craft', ids: ['design', 'presentations', 'course-storytelling', 'course-builder', 'technical-writing', 'translation-l10n'] },
+  { title: 'Motion & interface craft', ids: ['variant-explorer', 'scroll-film'] },
+  { title: 'Design & content craft', ids: ['design', 'ux', 'presentations', 'course-storytelling', 'course-builder', 'technical-writing', 'translation-l10n'] },
   { title: 'Knowledge & meta', ids: ['knowledge-ops', 'codebase-onboarding', 'research-ops', 'decision-records', 'continuous-learning', 'skill-scout', 'context-budget', 'roast-me', 'fable-operator'] },
 ];
 

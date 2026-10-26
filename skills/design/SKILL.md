@@ -1,8 +1,8 @@
 ---
 name: design
-description: "Use when designing, redesigning, restyling or reviewing a web page or app screen (landing, product site, portfolio, dashboard, docs) or when a UI looks generic or AI-made. Deals a researched direction, takes the idea from the subject, uses real pictures, proves it in a browser. NOT the words (landing-copy), NOT component state (ui-engineering)."
+description: "Use when designing, redesigning, restyling or reviewing a web page or app screen (landing, product site, portfolio, dashboard, docs) or when a UI looks generic or AI-made. Deals a researched direction, takes the idea from the subject, uses real pictures, proves it in a browser. NOT the words (landing-copy), NOT flows or usability (ux)."
 tags: [design, ui, ux, landing, dashboard, frontend, taste]
-recommends: [landing-copy, ui-engineering, accessibility, brand-identity, nextjs]
+recommends: [landing-copy, ux, accessibility, brand-identity, nextjs]
 profiles: [minimal, core, full]
 origin: risco
 ---
@@ -91,7 +91,8 @@ launch. Do not claim a check you did not run.
 ## Hand-offs
 
 - The words on a conversion page → `../landing-copy/SKILL.md`.
-- Component boundaries, state, loading and error behaviour → `../ui-engineering/SKILL.md`.
+- Flows, screen states, navigation, forms and usability → `../ux/SKILL.md`.
+- Component code and where state lives → `../react/SKILL.md`.
 - WCAG conformance work → `../accessibility/SKILL.md`.
 - A full brand system (logo, print colours, usage rules) → `../brand-identity/SKILL.md`.
 - The App Router build → `../nextjs/SKILL.md`.

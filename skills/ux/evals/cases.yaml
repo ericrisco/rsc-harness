@@ -1,0 +1,40 @@
+skill: ux
+
+should_trigger:
+  - prompt: "Diseña todos los flujos de la app: desde que alguien se registra hasta que envía su primera factura."
+    why: "A whole application journey, the thing this skill maps before any screen."
+  - prompt: "New users sign up, see an empty dashboard and leave. What should they see instead?"
+    why: "The empty account and first value, rows of the lifecycle this skill owns."
+  - prompt: "Revisa la usabilidad de nuestro panel antes de la demo: que cualquiera entienda cómo usarlo."
+    why: "A usability audit by use, reported by severity, in Spanish."
+  - prompt: "Should editing a customer open a modal, a side panel or a full page?"
+    why: "A pattern decision driven by the job, from the decision trees this skill routes to."
+  - prompt: "The signup form wipes everything when the email is already taken. How should it behave?"
+    why: "Error prevention and recovery in a form."
+  - prompt: "Our power users complain the app is slow to work with. How do we make it more productive?"
+    why: "Expert speed: shortcuts, command search, bulk actions, saved views."
+  - prompt: "What states does this list screen need besides the loaded one?"
+    why: "The state matrix, the checklist that replaced ui-engineering's five states."
+
+should_not_trigger:
+  - prompt: "Give our landing page a distinctive look: type, palette, hero picture."
+    route_to: "design"
+    why: "Visual direction for a page; design runs its engine for that."
+  - prompt: "Write the headline and the call to action for the pricing page."
+    route_to: "landing-copy"
+    why: "The words on a conversion page."
+  - prompt: "My useEffect fires twice in development. Why?"
+    route_to: "react"
+    why: "Framework mechanics, not how the interface should behave for people."
+  - prompt: "Prepare our WCAG 2.2 conformance report for the public tender."
+    route_to: "accessibility"
+    why: "A formal conformance programme, not designing a flow."
+  - prompt: "Convert this PDF contract into plain text."
+    route_to: "none"
+    why: "No interface or flow involved."
+
+capability:
+  - prompt: "We are building a SaaS for clinics to book appointments. Map the complete flows for the receptionist and the invited doctor, with the states of each screen."
+    why: "Forces the flow map, the second role and the state matrix, before any visual work."
+  - prompt: "Audit this app by using it: a new account creating a client and sending an invoice. Report by severity with fixes and references."
+    why: "Forces the browser walk and the finding format instead of a code-only review."

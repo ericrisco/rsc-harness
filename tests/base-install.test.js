@@ -22,7 +22,7 @@ const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
 // 6 since eli5 and show-me folded into `orient` and bro into `unslop` (scripts/lib/retired-skills.js).
 // 7 since 3.0.13: `connect-tool` (#303), the method for connecting any tool the user names.
 // 8 since 3.3.0: `design`, rebuilt and always installed (spec design-from-scratch).
-const BASE = ['connect-tool', 'design', 'ftd', 'harness', 'init', 'orient', 'suggest', 'unslop'];
+const BASE = ['connect-tool', 'design', 'ftd', 'harness', 'init', 'orient', 'suggest', 'unslop', 'ux'];
 
 test('the base install is exactly the declared set', () => {
   assert.deepEqual(skillsForProfile(manifest, 'minimal').sort(), [...BASE].sort());

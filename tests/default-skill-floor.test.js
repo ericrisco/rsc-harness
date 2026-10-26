@@ -8,12 +8,13 @@ test('the default floor equips unslop without making it runtime always-on', () =
   // `unslop` took the place of the retired `bro`.
   // `connect-tool` added in 3.0.13 (#303): "connect my Holded" needs the method present the first time.
   // `design` added in 3.3.0: rebuilt from taste-skill and installed everywhere (design-from-scratch).
-  assert.deepEqual(DEFAULT_SKILL_FLOOR, ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design']);
+  // `ux` added in 3.4.0: flows, states and usability, in place of the retired `ui-engineering`.
+  assert.deepEqual(DEFAULT_SKILL_FLOOR, ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux']);
 });
 
 test('the default floor is stable, ordered and deduplicated for every install path', () => {
   assert.deepEqual(
     withDefaultSkillFloor(['unslop', 'fastapi', 'orient', 'postgresdb']),
-    ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'fastapi', 'postgresdb'],
+    ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux', 'fastapi', 'postgresdb'],
   );
 });

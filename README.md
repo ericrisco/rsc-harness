@@ -564,11 +564,11 @@ whether, what and which platform.
 
 ### 🌀 Motion & interface craft
 
-[ui-engineering](skills/ui-engineering/) · [variant-explorer](skills/variant-explorer/) · [scroll-film](skills/scroll-film/)
+[variant-explorer](skills/variant-explorer/) · [scroll-film](skills/scroll-film/)
 
 ### 🎨 Design & content craft
 
-[design](skills/design/) · [presentations](skills/presentations/) · [course-storytelling](skills/course-storytelling/) · [course-builder](skills/course-builder/) · [technical-writing](skills/technical-writing/) · [translation-l10n](skills/translation-l10n/)
+[design](skills/design/) · [ux](skills/ux/) · [presentations](skills/presentations/) · [course-storytelling](skills/course-storytelling/) · [course-builder](skills/course-builder/) · [technical-writing](skills/technical-writing/) · [translation-l10n](skills/translation-l10n/)
 
 ### 🧠 Knowledge & meta
 
