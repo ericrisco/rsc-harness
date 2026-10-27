@@ -73,7 +73,7 @@ says which on every turn) — never a branch opened on your own:
   is no exception: an unrelated change does not go into it without asking. A new branch is named by
   intent and closes with a pull request. Unlocking is `rsc main unlock`; never without that answer.
 - **Docs, wiki or config only** → no question, no branch.
-- **Another session working in this same folder** → a worktree in `.worktrees/<branch>/`, never a
+- **Another session working in this same folder** → a worktree in `.worktrees/<branch>/` at the root you work in (never inside a project folder), never a
   branch switch under the other session. Not a question: rsc tells you when that is the case.
 
 A worktree only when another session is there: alone, setting one up costs more than it protects.

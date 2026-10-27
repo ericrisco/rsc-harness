@@ -473,3 +473,66 @@ test('tsd-316b · "inside the project" ignores drive-letter case and slash style
   assert.equal(isInside('/home/ana/proj/.worktrees/x', '/home/ana/proj', 'linux'), true);
   assert.equal(isInside('/home/ana/proj-x', '/home/ana/proj', 'linux'), false);
 });
+
+// ------------------------------------------------------------------ branch-guard: rule C
+//
+// 2026-10-27, Eric: a worktree goes in `.worktrees/` at the root the session works in, never inside a
+// project folder. In a workspace that holds its projects as folders (`03-PROJECTS/<p>/`), the agent
+// ran `git -C <p> worktree add .worktrees/<b>` and the relative path landed inside the project.
+
+function workspace() {
+  const root = repo();
+  const child = join(root, '03-PROJECTS', 'app');
+  mkdirSync(child, { recursive: true });
+  git(child, 'init', '-q', '-b', 'main');
+  git(child, 'config', 'user.name', 'Eric');
+  git(child, 'config', 'user.email', 'eric@x');
+  write(child, 'a.txt');
+  git(child, 'add', '-A');
+  git(child, 'commit', '-q', '-m', 'c0');
+  return { root, child };
+}
+
+test('tsd50 · a worktree of a project folder is denied inside the project, with the command for the root', async () => {
+  const { root } = workspace();
+  for (const command of [
+    'git -C 03-PROJECTS/app worktree add .worktrees/feat-x -b feat/x',
+    'cd 03-PROJECTS/app && git worktree add .worktrees/feat-x -b feat/x',
+    'git -C 03-PROJECTS/app worktree add -b feat/x .worktrees/feat-x origin/main',
+  ]) {
+    const reason = await evaluate({ root, command, cwd: root });
+    assert.match(reason ?? '', /never inside a project folder/, command);
+    assert.ok(reason.includes(`git -C 03-PROJECTS/app worktree add ${join(root, '.worktrees', 'app-feat-x')} -b feat/x`),
+      `P6: the exact way out is in the message — ${reason}`);
+  }
+});
+
+test('tsd51 · the root .worktrees/ is allowed, for the root repo and for a project folder; a sibling is not', async () => {
+  const { root } = workspace();
+  const ok = [
+    `git -C 03-PROJECTS/app worktree add ${join(root, '.worktrees', 'app-feat-x')} -b feat/x`,
+    'git worktree add .worktrees/feat-x -b feat/x',
+    'git worktree list',
+  ];
+  for (const command of ok) assert.equal(await evaluate({ root, command, cwd: root }), null, command);
+  const sibling = await evaluate({ root, command: 'git worktree add ../elsewhere -b feat/x', cwd: root });
+  assert.match(sibling ?? '', /git worktree add \.worktrees\/feat-x -b feat\/x/);
+});
+
+test('tsd52 · a repo outside the root, words in quotes, and isolation turned off are not judged', async () => {
+  const { root } = workspace();
+  const outside = repo();
+  assert.equal(await evaluate({ root, command: `git -C ${outside} worktree add ${outside}/wt -b feat/x`, cwd: root }), null);
+  assert.equal(await evaluate({ root, command: 'grep -rn "git worktree add" docs/', cwd: root }), null);
+  write(root, '.rsc/.no-worktree-isolation', '');
+  assert.equal(await evaluate({ root, command: 'git -C 03-PROJECTS/app worktree add .worktrees/x -b feat/x', cwd: root }), null);
+});
+
+test('tsd53 · a project worktree at the root is not moved back into the project at session start', async () => {
+  const { relocateOldWorktrees } = await import('../targets/team-safe-start.mjs');
+  const { root, child } = workspace();
+  const dest = join(root, '.worktrees', 'app-feat-x');
+  git(child, 'worktree', 'add', '-q', dest, '-b', 'feat/x');
+  assert.equal(await relocateOldWorktrees(child), '');
+  assert.ok(git(child, 'worktree', 'list').includes(dest), 'it stays at the root');
+});

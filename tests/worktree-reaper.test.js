@@ -1296,3 +1296,26 @@ test('53c · control: anything else outside history still blocks, .rsc/ or not',
   autoReap(root);
   assert.equal(existsSync(wt.path), true);
 });
+
+// 2026-10-27: worktrees of a project folder live at the workspace root, `<root>/.worktrees/<repo>-<b>`.
+// That is where rsc puts them now, so it is rsc's location — named after the repo, in a `.worktrees/`
+// of a folder that contains the repo. Anywhere else under that folder is still only half a signal.
+test('50f · a project worktree at the workspace root, named after the repo, is ours', () => {
+  const ws = realpathSync(mkdtempSync(join(tmpdir(), 'rsc-ws-')));
+  TMP.push(ws);
+  const root = join(ws, '03-PROJECTS', 'app');
+  mkdirSync(root, { recursive: true });
+  git(root, 'init', '-q', '-b', 'main');
+  git(root, 'config', 'user.name', 'Eric');
+  git(root, 'config', 'user.email', 'eric@x');
+  writeFileSync(join(root, 'a.txt'), 'a\n');
+  git(root, 'add', '-A');
+  git(root, 'commit', '-q', '-m', 'c0');
+  const at = (dir, branch) => {
+    git(root, 'worktree', 'add', '-q', '-b', branch, dir);
+    return listWorktrees(root).find((w) => realpathSync(w.path) === realpathSync(dir));
+  };
+  assert.equal(provenanceOf(root, at(join(ws, '.worktrees', 'app-feat-x'), 'feat/x')), 'rsc');
+  assert.equal(provenanceOf(root, at(join(ws, '.worktrees', 'other-feat-y'), 'feat/y')), 'ambiguous', 'not named after this repo');
+  assert.equal(provenanceOf(root, at(join(ws, 'misc', 'app-feat-z'), 'feat/z')), 'ambiguous', 'not in a .worktrees/');
+});

@@ -169,13 +169,26 @@ export function listWorktrees(root) {
  * accumulates, nothing is lost), while one the user made by hand that happens to match the
  * convention would be indistinguishable from ours. So one signal alone is `ambiguous`, not `rsc`.
  */
+/**
+ * Where a project folder's worktree goes since 2026-10-27: `<root>/.worktrees/<repo>-<branch>`, at the
+ * workspace root that contains the repo (branch-guard rule C). Named after the repo, in a
+ * `.worktrees/` of an ancestor of the repo — both, or it is not this convention.
+ */
+export function atWorkspaceRoot(p, home) {
+  const parent = dirname(p);
+  if (basename(parent) !== '.worktrees' || !basename(p).startsWith(`${basename(home)}-`)) return false;
+  const ws = dirname(parent);
+  return home.startsWith(ws + sep) && home !== ws;
+}
+
 export function provenanceOf(root, wt) {
   const p = wt.path;
   const home = real(root);
   const inside = (dir) => p === dir || p.startsWith(dir + sep);
   const location = inside(join(home, '.worktrees'))
     || inside(join(home, 'worktrees'))
-    || (dirname(p) === dirname(home) && basename(p).startsWith(`${basename(home)}-`));
+    || (dirname(p) === dirname(home) && basename(p).startsWith(`${basename(home)}-`))
+    || atWorkspaceRoot(p, home);
   const branch = Boolean(wt.branch && RSC_BRANCH.test(wt.branch));
   if (location && branch) return 'rsc';
   if (location || branch) return 'ambiguous';

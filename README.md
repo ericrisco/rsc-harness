@@ -239,7 +239,7 @@ project. rsc handles four things by default:
 | | What happens | Turn it off |
 | --- | --- | --- |
 | **You choose how the project works** | The install asks once: straight on `main`, or branches and pull requests? With branches, a commit on `main` is refused and the agent asks before each change: this branch, a new one, or unlock `main`? It never opens a branch on its own. | «unlock main», or `rsc main unlock` |
-| **One workspace per agent** | If another session works in the same folder, new work goes to `.worktrees/<branch>/`, inside the project and never committed. A `post-merge` hook retires it once the branch lands. | `rsc isolation off` |
+| **One workspace per agent** | If another session works in the same folder, new work goes to `.worktrees/<branch>/` at the root you work in (never inside a project folder) and is never committed. A `post-merge` hook retires it once the branch lands. | `rsc isolation off` |
 | **The agent picks the method** | FTD for simple changes, SDD for complex ones. The agent decides and says why. | Ask for the other lane |
 | **Knowledge reaches everyone** | `01-TOOLS/`, `02-DOCS/wiki/` and `02-DOCS/attachments/` travel through one exchange branch, `rsc/knowledge`, and reach `main` inside your normal pull requests. | `rsc knowledge-sync off` |
 
