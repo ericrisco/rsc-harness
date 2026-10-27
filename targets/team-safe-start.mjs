@@ -86,6 +86,7 @@ export async function relocateOldWorktrees(root) {
     for (const wt of W.listWorktrees(root)) {
       const path = real(wt.path);
       if (isInside(path, home)) continue; // already inside
+      if (W.atWorkspaceRoot?.(path, home)) continue; // a project folder's worktree, at the workspace root on purpose
       if (W.provenanceOf(root, { ...wt, path }) !== 'rsc') continue;
       if (others(path).length) { left.push(`${path} (una sesión trabaja en él)`); continue; }
       const name = basename(path);

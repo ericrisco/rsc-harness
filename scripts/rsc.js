@@ -927,7 +927,7 @@ async function main() {
             : 'rsc main lock: branches and pull requests for this project — the default branch is closed for the agent, and it asks before each code change where it goes. Commit .rsc.json so the team gets the same decision.')
           : (sub === OFF
             ? 'rsc isolation off: sessions may share this folder without a worktree. Commit .rsc.json so the team gets the same decision.'
-            : 'rsc isolation on: with another session active in this folder, new work goes to .worktrees/<branch>/. Commit .rsc.json so the team gets the same decision.'));
+            : 'rsc isolation on: with another session active in this folder, new work goes to .worktrees/<branch>/ at the root, never inside a project folder. Commit .rsc.json so the team gets the same decision.'));
         return;
       }
       if (sub === 'status') {
