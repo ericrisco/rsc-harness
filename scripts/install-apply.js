@@ -85,6 +85,7 @@ export function generatedHookFiles({ target, cwd, policy }) {
     join(cwd, '.rsc', 'shell-unwrap.mjs'),
     join(cwd, '.rsc', 'worktree-reaper.mjs'),
     join(cwd, '.rsc', 'auto-update.mjs'),
+    join(cwd, '.rsc', 'memslop-offer.mjs'),
     // team-safe-default: the 3.0 start-up duties and the trunk policy (also read by branch-guard).
     join(cwd, '.rsc', 'team-safe-start.mjs'),
     join(cwd, '.rsc', 'trunk-policy.mjs'),

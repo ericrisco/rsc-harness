@@ -212,6 +212,16 @@ then reload the session. If you don't want it here: create .rsc/.no-context7.
 `);
 }
 
+// MemSlop (optional, macOS 14+ only): one offer per machine, a permanent no in ~/.rsc/.no-memslop.
+// Under emitBody so a project wired in both scopes prints it once. The module is a sibling loaded
+// lazily: missing or failing, it stays silent and never takes the other notices down with it.
+if (emitBody && profileExists) {
+  try {
+    const M = await import('./memslop-offer.mjs');
+    process.stdout.write(M.memslopNotice());
+  } catch { /* no notice */ }
+}
+
 // Periodic skill audit: for active rsc projects, nudge to re-audit when the last run
 // is stale (or never ran). Running \`rsc audit\` stamps .rsc/audit.json and silences
 // this for the cadence. Opt out with .rsc/.no-audit.
