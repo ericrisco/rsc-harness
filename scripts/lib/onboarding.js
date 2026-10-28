@@ -18,11 +18,13 @@ export const ONBOARDING_VALUES = Object.freeze({
 });
 
 const ignored = new Set([
-  '.git', '.rsc', 'node_modules', '.venv', '.next', 'dist', 'build', 'coverage', '__pycache__', '.dart_tool',
+  // `vendor` is Composer's (and Go's/Bundler's) `node_modules`: third-party code, not the project. A
+  // Laravel app was read as Python because one vendored package shipped a `docs/requirements.txt` (#325).
+  '.git', '.rsc', 'node_modules', 'vendor', '.venv', '.next', 'dist', 'build', 'coverage', '__pycache__', '.dart_tool',
   '.claude', '.codex', '.cursor', '.opencode', '.amp', '.jules', '.zed', '.gemini', '.antigravity',
   '.windsurf', '.clinerules', '.roo', '.continue', '.junie', '.kiro', '.aider',
 ]);
-const manifests = new Set(['package.json', 'pyproject.toml', 'go.mod', 'Cargo.toml', 'pubspec.yaml', 'requirements.txt']);
+const manifests = new Set(['package.json', 'pyproject.toml', 'go.mod', 'Cargo.toml', 'pubspec.yaml', 'requirements.txt', 'composer.json']);
 const sourceExt = new Set(['.js', '.jsx', '.ts', '.tsx', '.py', '.go', '.rs', '.dart', '.java', '.kt', '.swift', '.php', '.rb']);
 
 const clean = (value) => String(value ?? '').trim();
@@ -152,6 +154,14 @@ export function scanProject(root = process.cwd()) {
         } catch { stacks.add('node'); }
       }
       if (entry.name === 'pyproject.toml' || entry.name === 'requirements.txt') stacks.add('python');
+      if (entry.name === 'composer.json') {
+        stacks.add('php');
+        try {
+          const composer = JSON.parse(readFileSync(path, 'utf8'));
+          const deps = { ...(composer.require || {}), ...(composer['require-dev'] || {}) };
+          if (deps['laravel/framework']) stacks.add('laravel');
+        } catch { /* an unreadable composer.json is still PHP */ }
+      }
       if (entry.name === 'go.mod') stacks.add('go');
       if (entry.name === 'Cargo.toml') stacks.add('rust');
       if (entry.name === 'pubspec.yaml') stacks.add('flutter');
