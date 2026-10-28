@@ -110,8 +110,8 @@ export default {
 `;
 
 export function updateManagedPaths(target, cwd = process.cwd()) {
-  const module = join(cwd, '.rsc', 'auto-update.mjs');
-  return CONFIG[target] ? [module, join(cwd, ...CONFIG[target].split('/'))] : [module];
+  const modules = [join(cwd, '.rsc', 'auto-update.mjs'), join(cwd, '.rsc', 'memslop-offer.mjs')];
+  return CONFIG[target] ? [...modules, join(cwd, ...CONFIG[target].split('/'))] : modules;
 }
 
 /** Wire it. Always: being off is the runtime's `.no-auto-update`, and the check itself stays on. */
@@ -119,8 +119,11 @@ export function wireUpdate(target, cwd = process.cwd()) {
   const module = join(cwd, '.rsc', 'auto-update.mjs');
   mkdirSync(dirname(module), { recursive: true });
   copyFileSync(join(HERE, 'auto-update.mjs'), module);
+  // The Codex hook imports the MemSlop offer lazily, so it travels as a sibling for every target.
+  const offer = join(cwd, '.rsc', 'memslop-offer.mjs');
+  copyFileSync(join(HERE, 'memslop-offer.mjs'), offer);
   if (!CONFIG[target]) {
-    return { mode: target === 'claude' ? 'hook' : 'agent', paths: [module] };
+    return { mode: target === 'claude' ? 'hook' : 'agent', paths: [module, offer] };
   }
   const configPath = join(cwd, ...CONFIG[target].split('/'));
   if (tracked(cwd, configPath)) return { mode: 'agent', reason: 'config-tracked', paths: [module] };

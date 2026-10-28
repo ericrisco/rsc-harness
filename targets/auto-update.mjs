@@ -204,6 +204,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const root = (hook ? process.argv[4] : process.argv[2]) || process.cwd();
   let notice = '';
   try { if (!process.env.RSC_NO_UPDATE_CHECK) notice = (await updateNotice(root)).trim(); } catch { /* fail open */ }
+  // Codex has no session-start.mjs: its one SessionStart hook is this one, so the MemSlop offer rides
+  // here (macOS 14+ only, rsc projects only). A sibling loaded lazily; any failure → no offer.
+  if (target === 'codex' && existsSync(join(root, '02-DOCS', 'wiki', 'harness', 'user-profile.md'))) {
+    try {
+      const said = (await import('./memslop-offer.mjs')).memslopNotice().trim();
+      if (said) notice = notice ? `${notice}\n\n${said}` : said;
+    } catch { /* no offer */ }
+  }
   if (!hook && !notice) notice = 'rsc is up to date.';
   process.stdout.write(`${hookOutput(target, notice)}\n`);
 }
