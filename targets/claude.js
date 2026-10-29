@@ -123,6 +123,8 @@ export function wireHook(paths, sourceMd, policy = {}) {
   copyFileSync(join(HERE, 'worktree-reaper.mjs'), join(paths.projectRoot, '.rsc', 'worktree-reaper.mjs'));
   // session-start imports the shared update check, so it travels as a sibling too.
   copyFileSync(join(HERE, 'auto-update.mjs'), join(paths.projectRoot, '.rsc', 'auto-update.mjs'));
+  // session-start imports the optional MemSlop offer lazily, so it travels as a sibling too.
+  copyFileSync(join(HERE, 'memslop-offer.mjs'), join(paths.projectRoot, '.rsc', 'memslop-offer.mjs'));
   // team-safe-default: the 3.0 start-up duties and the trunk policy they read, as siblings.
   copyFileSync(join(HERE, 'team-safe-start.mjs'), join(paths.projectRoot, '.rsc', 'team-safe-start.mjs'));
   copyFileSync(join(HERE, 'trunk-policy.mjs'), join(paths.projectRoot, '.rsc', 'trunk-policy.mjs'));
