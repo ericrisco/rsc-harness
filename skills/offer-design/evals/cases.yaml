@@ -1,0 +1,42 @@
+skill: offer-design
+
+should_trigger:
+  - prompt: "Turn this service into a clear offer with deliverables, boundaries and credible proof."
+    why: "Defines the commercial promise and fulfillment commitment."
+  - prompt: "People understand the product but can't tell why they should choose our package."
+    why: "Diagnoses offer differentiation before rewriting copy."
+  - prompt: "Quiero que la oferta sea más atractiva sin inventar bonos ni bajar el precio."
+    why: "Spanish request changes actual value and terms, not price optimization."
+  - prompt: "Check whether our guarantee and bonus fit what the team can actually deliver."
+    why: "Connects promise to capacity and conditions."
+  - prompt: "Explain why our method works using these product facts, then choose the strongest offer angle."
+    why: "Mechanism development belongs inside evidence-backed offer design."
+
+should_not_trigger:
+  - prompt: "Set our SaaS seat price and calculate the margin floor."
+    route_to: pricing
+    why: "Pricing owns price levels and economic models."
+  - prompt: "The offer is approved. Write the landing page around it."
+    route_to: landing-copy
+    why: "Expression of settled terms belongs to page copy."
+  - prompt: "Create the Stripe products and checkout session for this price."
+    route_to: stripe
+    why: "Billing implementation does not design the offer."
+  - prompt: "Read these interviews and discover what buyers care about."
+    route_to: customer-research
+    why: "The missing input is buyer evidence, not a commercial package."
+
+capability:
+  - scenario: |
+      Produce an offer brief ready for a landing/VSL team for DataRelay, a migration service. Work only from these facts; do not write the landing or implement checkout. Owner-approved price is EUR 900 including taxes, paid once. The team can spend 24 engineer-hours per week on migrations. Each client requires 8 engineer-hours before any extras. The owner proposes: "Move in 48 hours, zero errors guaranteed; unlimited live help; a EUR 2,000 bonus; only two places left." No bonus has ever been sold, no capacity has been booked this week, and no refund policy has been approved.
+      Product facts: before writing to production, the service produces an exception report and asks the customer's owner to approve the mapping. Import runs only after approval. Mapping review requires the customer's sample export and one named approver. There is no measured delivery-time history. Other providers also offer migration previews, so this is not an exclusive invention.
+      Buyer evidence R-1, research revision 2: small firms fear discovering errors after going live; two interviewees asked to inspect exceptions first. These interviews are private and cannot be quoted publicly. Evidence E-1: the product's documented preview-and-approval behavior can be demonstrated on synthetic data. Evidence E-2: one client said "the preview caught our duplicate accounts"; no quantitative result or publication consent. Draft offer O-1 revision 1 still says EUR 750 and links to the landing and video briefs. Owner asks for a usable offer now and a minimal validation step, not another broad discovery interview.
+    must_include:
+      - "Keeps the approved EUR 900 including taxes, one-time price; explicitly supersedes EUR 750 and identifies landing/video briefs as needing refresh against the new offer revision."
+      - "Derives a maximum of three base migrations per week from 24/8 and states that support, rework or scheduling can reduce that ceiling; does not present two remaining places as a fact."
+      - "Replaces unconditional 48-hour/zero-error outcomes with a deliverable or process commitment, keeping customer inputs, approval dependency and unknown timing visible."
+      - "Explains exception preview and customer approval as a credible reason to choose the service without claiming exclusive invention or proven elimination of errors."
+      - "Specifies included work and a bounded support proposal, marks new support/refund terms for owner approval, and avoids inventing a refund entitlement or publishing unlimited help."
+      - "Uses the synthetic-data demonstration as available product proof while separating private buyer insight and the unapproved client quote from publishable testimonials."
+      - "Removes the unsupported EUR 2,000 bonus valuation, avoids fabricated scarcity, and leaves no unresolved commercial term disguised as approved fact."
+      - "Delivers a concrete revised offer with evidence references and a small validation focused on a remaining decision, rather than stopping with generic questions or promising conversion lift."

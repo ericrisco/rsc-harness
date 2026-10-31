@@ -8,13 +8,14 @@
 
 [![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
 [![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
-[![skills](https://img.shields.io/badge/skills-269-63d68a?labelColor=12161c)](#the-catalog)
+[![skills](https://img.shields.io/badge/skills-273-63d68a?labelColor=12161c)](#the-catalog)
 [![license](https://img.shields.io/badge/license-MIT-63d68a?labelColor=12161c)](LICENSE)
 [![stars](https://img.shields.io/github/stars/ericrisco/rsc-harness?color=63d68a&labelColor=12161c)](https://github.com/ericrisco/rsc-harness/stargazers)
 
-Every time you open a project, your agent starts from zero. rsc is a meta-harness: it gives the
-assistant you already use (Claude Code, Codex, Cursor and 15 more) a memory, hands, a trade and
-reflexes, so it stops starting over.
+Keep your project knowledge, skills and working rules together across the assistants you already use.
+Start with your goal. Review what rsc proposes to install. Accept the plan before it changes your project.
+
+**MIT licensed · project-local setup · 18 assistant targets**
 
 Give this URL to your agent and paste the request in the chat:
 
@@ -33,86 +34,72 @@ npx @ericrisco/rsc@latest onboard
 
 ---
 
-## The problem
+## Your project has a way of working. Give it to your agent.
 
-- **You explain everything again.** Every new session, every new project: the stack, the
-  conventions, what was decided, what must not be touched.
-- **What the agent does not know, it invents.** And the guess looks plausible, which is worse than
-  an obvious error.
-- **Decisions die with the chat.** What you settled yesterday is gone the moment the window closes.
+A new chat should not make you reconstruct the stack, explain yesterday's decision and remember which
+files must stay untouched. Putting every instruction into one giant prompt creates a different problem:
+the important details compete with rules that have nothing to do with today's task.
 
-The most important thing an agent needs is documentation, and nobody keeps it for the agent.
+Hand-built setups can become a **Frankenstein harness**: duplicated instructions, unrelated skills,
+premature hooks and unnecessary MCP connections. Open standards cover individual pieces
+([Agent Skills](https://agentskills.io/specification), [MCP](https://modelcontextprotocol.io/),
+[AGENTS.md](https://agents.md/)). Your project still needs someone to choose and maintain the right pieces.
 
-When people fix this by hand, the result is a **Frankenstein harness**: duplicated instructions,
-unrelated skills, premature hooks, unnecessary MCPs and no clear owner. Open standards cover single
-parts ([Agent Skills](https://agentskills.io/specification), [MCP](https://modelcontextprotocol.io/),
-[AGENTS.md](https://agents.md/)), but none of them decides which complete harness your project needs.
+rsc-harness makes that choice explicit. It reads evidence within your project root, asks about your goal
+and assistants, and prepares a plan you can inspect before applying it.
 
----
+## See the plan before you install
 
-## The idea: documentation is your agent's memory
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="A project goal becomes an installation plan: components selected, deferred or excluded with reasons." width="960">
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/meta-harness.png" alt="rsc-harness turns an outcome into a verified plan: memory, tools, knowledge and rules selected, deferred or excluded according to evidence." width="960">
+Every component has a disposition:
 
-The model is the brain your agent rents, and you already have it. rsc adds the rest, in four pieces:
+| In your plan | What it means |
+| --- | --- |
+| **Selected** | There is a reason to install it for this project now. |
+| **Deferred** | It may become useful; the plan records what evidence would justify adding it. |
+| **Excluded** | It does not belong in the proposed setup. |
 
-| Piece | Where it lives | What it does |
-| --- | --- | --- |
-| **Memory** | `02-DOCS/` | A wiki the agent reads before it works and keeps up to date while it works. |
-| **Hands** | `01-TOOLS/` | One folder per tool, with a test that proves the connection works. |
-| **Trade** | skills | Only the skills your project needs: 269 available, a handful installed. |
-| **Reflexes** | hooks | Rules that hold even when the agent forgets them mid-session. |
+You accept the exact plan. If project evidence changes before acceptance, rsc asks you to review a
+fresh plan. Later, `rsc reassess` reports new needs without silently installing them.
 
 ### Why documentation comes first
 
-An agent without documentation spends most of its effort searching. It opens files, greps, reads the
-same module twice, and still ends up guessing. Every one of those turns costs tokens, and the guess
-costs more later.
+The decisions your agent needs should have a place to live outside the chat.
 
-With a well-structured `02-DOCS/`, the agent knows where to look. It finds what it needs in one read
-instead of ten, so the same task costs fewer tokens.
+| Part of the harness | What you get |
+| --- | --- |
+| **Knowledge** | A local `02-DOCS/` wiki for project context, decisions and evidence. |
+| **Tools** | A `01-TOOLS/` convention for documenting real connections and their checks. |
+| **Skills** | A selection from 273 available skills, loaded progressively when relevant. |
+| **Controls** | Working rules and provider-specific hooks, with explicit support limits. |
 
-And because it finds what already exists, it builds on it:
-
-- It reuses the function you already have instead of writing a second one.
-- It follows the structure your project already uses, every time.
-- It works from what is true about your code, not from a plausible guess, so less of what it writes
-  breaks.
-
-Good documentation is not overhead for your agent. It is what makes it cheaper and better at the
-same time.
-
----
+The mechanism is practical: keep the decision, make it discoverable, and have the next task consult it.
+That gives the agent a maintained source to work from. It does not make an outdated note correct or
+remove the need to check the result.
 
 ## A day with rsc
 
-<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/lanes.svg" alt="The rsc lane decisor: the agent classifies each request into answer (read-only), FTD (simple change, one feature document) or SDD (the ten-phase chain for big or complex work, entered by the agent; you approve the spec)." width="960">
+<img src="https://raw.githubusercontent.com/ericrisco/rsc-harness/main/site/lanes.svg" alt="The agent chooses a read-only answer, a focused change with evidence, or a specification-led workflow for coupled decisions." width="960">
 
-1. **You install it.** It asks a few questions in plain language: how technical to talk, what the
-   project is for, its goal, and which assistants you use. It reads only the project root.
-2. **It shows the plan before it writes anything.** Every piece is selected, deferred or excluded,
-   each with its reason. Nothing is written until you accept that exact plan.
-3. **You ask for things.** The agent decides how much process each request needs, and says so in one
-   line: an answer, a quick change (FTD), or the full chain (SDD).
-4. **It documents as it goes.** Decisions, connections and progress land in `02-DOCS/`, not in the
-   chat.
-5. **Tomorrow, the agent already knows.** You, a teammate on another machine, or another assistant
-   open the project and continue where the last session stopped.
+1. **Describe the project.** Choose the assistants you use and how technical the conversation should be.
+2. **Review the setup.** See each proposed component and its reason, then accept the plan you want applied.
+3. **Ask for the work.** The agent names the appropriate lane: an answer, a focused change (FTD), or the
+   specification-led chain (SDD) for decisions that affect each other.
+4. **Keep the result and its evidence.** Project knowledge goes into `02-DOCS/`; implementation stays in
+   your code. Future sessions can consult both.
 
----
+## Is this for your project?
 
-## What changes for you
+Use rsc when you already work with an assistant and want a coherent project setup you can inspect,
+share and maintain. It can equip software projects and business workflows; the catalog includes both.
 
-- **You never explain your project again.** The knowledge lives in the repo, not in your head.
-- **Fewer tokens, more consistent code.** The agent finds instead of searching (see
-  [why documentation comes first](#why-documentation-comes-first)).
-- **The right amount of process.** A typo gets fixed; a new subsystem gets a spec. The agent picks.
-- **Safe for teams by default.** Shared knowledge, one workspace per agent, and no surprise commits
-  on `main`.
-- **Any assistant, or several at once.** 18 are supported, and they share one installation.
-- **It talks so you understand.** Short sentences, in your language, technical or with analogies.
+You keep your editor, model and existing project. rsc supplies the harness around them. Provider
+features differ: check [supported assistants](#supported-assistants) before relying on a particular
+hook or memory feature. Model and external-service costs remain with their providers.
 
----
+For a one-off question, a maintained project harness may be unnecessary. You can also install an
+individual skill into an existing rsc project rather than adopt a whole workflow.
 
 ## Install in one minute
 
@@ -216,9 +203,11 @@ share one catalog (`manifest.json`):
 - **In the chat**, the always-on `suggest` notices when a task needs a skill you do not have, names
   it, and installs it on a one-word yes.
 
-Every skill passed a research → spec → implement → adversarial review pipeline and an objective
-rubric (`scripts/skill-rubric.md`) written before any skill existed. Skills that scored 8.0 were sent
-back and fixed, not waved through.
+Skill authoring follows a research → spec → implement → review process. The public
+[rubric](scripts/skill-rubric.md) separates document quality from
+[behavioral evaluation](scripts/skill-behavior-rubric.md). Structural checks validate the catalog;
+behavioral comparisons ask whether loading a skill improves the result. Neither establishes a
+guaranteed business outcome.
 
 ### Hooks and guards
 
@@ -469,9 +458,50 @@ snapshots the project first, so `rsc restore latest` undoes a bad update.
 
 ---
 
+## Build a sales page and VSL from the same offer
+
+The **VSL sales pack**, added in 3.7.0, connects buyer evidence to the offer, the buying journey,
+and a video sales letter (VSL). It is a curated selection of ordinary rsc skills; each remains usable alone.
+
+| Step | Skill | Deliverable |
+| --- | --- | --- |
+| Understand the buyer | [customer-research](skills/customer-research/) | Sourced needs, objections and buyer language, with gaps and publication permissions. |
+| Define the exchange | [offer-design](skills/offer-design/) | What the buyer gets, why it helps, delivery limits and supported terms. |
+| Plan the route | [sales-funnel](skills/sales-funnel/) | Pages, decisions, exits, recovery paths and measurement handoffs. |
+| Write the video | [vsl-script](skills/vsl-script/) | Spoken script, feasible timing, scene cues and evidence for each claim. |
+| Write the page | [landing-copy](skills/landing-copy/) | Page text aligned with the same offer revision and video. |
+
+In an existing rsc project, this command adds the core selection:
+
+```bash
+npx @ericrisco/rsc add customer-research offer-design sales-funnel vsl-script landing-copy
+```
+
+Use `design` and your web-stack skill to build the page; use `remotion-video` or your editor to produce
+the video. Add `analytics` and `ab-testing` when you are ready to measure the result. These are separate
+capabilities, not an automatic payment integration or a promise that the page will convert.
+
+Try this request after installing the selection:
+
+```text
+Use the research and product facts we already have to define one offer.
+Plan the shortest buying journey, write its VSL, and prepare the landing copy.
+Keep the price, scope, evidence and next action consistent across all three.
+Separate missing proof from publishable claims. Show what still needs production or implementation.
+```
+
+**Evaluation status:** initial blind comparisons met the quality threshold for all four new skills;
+only `offer-design` met the required improvement over the no-skill baseline. The others ship with
+that limitation recorded in their `evals/README.md`. Repeated-trial validation remains open.
+
+The same workflow works for a free tool: the next action can be trying or installing it. No invented
+price, customer testimonial, deadline or guarantee is needed to explain a useful product.
+
+---
+
 ## The catalog
 
-269 skills, grouped by what you are trying to do. Click any skill to read its `SKILL.md`. It fires on
+273 skills, grouped by what you are trying to do. Click any skill to read its `SKILL.md`. It fires on
 its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -499,7 +529,7 @@ settle a real ambiguity. `idea-refinement` runs inside `specify`; `decision-chal
 
 ### 📣 Market & brand
 
-[marketing](skills/marketing/) · [seo-geo](skills/seo-geo/) · [content-engine](skills/content-engine/) · [social-publisher](skills/social-publisher/) · [brand-voice](skills/brand-voice/) · [brand-identity](skills/brand-identity/) · [newsletter](skills/newsletter/) · [landing-copy](skills/landing-copy/) · [ads](skills/ads/) · [article-writing](skills/article-writing/) · [case-studies](skills/case-studies/) · [video-shorts](skills/video-shorts/) · [podcast](skills/podcast/) · [market-research](skills/market-research/) · [competitor-watch](skills/competitor-watch/) · [press-kit](skills/press-kit/) · [community](skills/community/) · [webinar](skills/webinar/) · [review-management](skills/review-management/)
+[marketing](skills/marketing/) · [customer-research](skills/customer-research/) · [offer-design](skills/offer-design/) · [sales-funnel](skills/sales-funnel/) · [vsl-script](skills/vsl-script/) · [seo-geo](skills/seo-geo/) · [content-engine](skills/content-engine/) · [social-publisher](skills/social-publisher/) · [brand-voice](skills/brand-voice/) · [brand-identity](skills/brand-identity/) · [newsletter](skills/newsletter/) · [landing-copy](skills/landing-copy/) · [ads](skills/ads/) · [article-writing](skills/article-writing/) · [case-studies](skills/case-studies/) · [video-shorts](skills/video-shorts/) · [podcast](skills/podcast/) · [market-research](skills/market-research/) · [competitor-watch](skills/competitor-watch/) · [press-kit](skills/press-kit/) · [community](skills/community/) · [webinar](skills/webinar/) · [review-management](skills/review-management/)
 
 ### 🎬 Grow a channel
 

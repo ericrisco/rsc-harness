@@ -1,0 +1,50 @@
+skill: sales-funnel
+
+should_trigger:
+  - prompt: "Plan the pages between my video ad and delivery of my paid workshop."
+    why: "Owns the multi-step purchase journey and its handoffs."
+  - prompt: "Tenemos una VSL y un checkout, pero no sabemos qué mostrar si falla el pago."
+    why: "An incomplete failure path is a journey-design problem."
+  - prompt: "People watch our pitch, then have nowhere clear to go. Map the next steps."
+    why: "A symptom of disconnected steps, without naming a funnel."
+  - prompt: "Decide whether this offer needs email capture before the sales page."
+    why: "Chooses the minimum useful route based on buyer readiness."
+  - prompt: "Make a build brief connecting our landing, booking form and confirmation."
+    why: "Specifies transitions and responsibilities across pages."
+
+should_not_trigger:
+  - prompt: "Rewrite the headline and FAQ of this single landing page."
+    route_to: landing-copy
+    why: "The route already exists; this is page wording."
+  - prompt: "Configure Stripe webhook signature verification."
+    route_to: stripe
+    why: "Payment integration implementation belongs to the provider skill."
+  - prompt: "Set up purchase events in PostHog."
+    route_to: analytics
+    why: "Instrumentation implementation is not journey planning."
+  - prompt: "Write the three emails after our launch announcement."
+    route_to: marketing
+    why: "Campaign copy is downstream of the route."
+
+capability:
+  - scenario: >-
+      Create a concrete funnel brief, not implementation code, for a live online workshop.
+      Offer W1 revision 4 is authoritative: EUR 180 total, one workshop plus recording,
+      access after confirmed payment, refund requests accepted until 48 hours before the event.
+      The existing landing draft uses revision 3 and says EUR 150 and lifetime coaching.
+      Warm subscribers arrive from our newsletter; the approved VSL already presents W1 revision 4.
+      Evidence E1 is a permitted screenshot of the actual workshop agenda; no outcome testimonials exist.
+      Checkout is hosted, can redirect back before payment is confirmed, and customers can refresh or return later.
+      We have no additional product and want the shortest path, with no new email capture.
+      The developer needs page purposes, transitions including failed or pending payment,
+      delivery handoff, required events and how to measure purchases without counting retries twice.
+      There is no conversion baseline. Draft the brief with explicit unresolved integration questions.
+    must_include:
+      - "Uses W1 revision 4 throughout and explicitly removes the EUR 150/lifetime-coaching claims from the landing handoff."
+      - "Keeps a direct route without new capture or an invented upsell, using existing warm audience context."
+      - "Separates checkout return, payment pending, confirmed payment and failed/cancelled payment; pending return does not unlock workshop access."
+      - "Specifies a safe refresh/return or retry path that preserves order identity and avoids triggering delivery or a new charge solely from a page load."
+      - "Links E1 to an agenda/process claim, does not imply it proves buyer outcomes, and states unavailable outcome proof as a gap."
+      - "Defines completed-purchase measurement using a confirmed order identity and an explicit denominator; retries and page refreshes are not additional purchases."
+      - "Assigns payment/delivery integration and instrumentation questions to implementation handoffs without claiming provider capabilities were verified."
+      - "Labels conversion targets as unmeasured and proposes baseline collection rather than an invented expected conversion rate."
