@@ -1,0 +1,53 @@
+skill: tidy
+
+# `tidy` owns the end-of-day sweep across every repo in the workspace: each on its default
+# branch, pushed, pulled, no landed branch or worktree left. Upgrading rsc itself, opening
+# isolation for new work and landing one branch belong to neighbours.
+should_trigger:
+  - prompt: "Limpia el harness."
+    why: "The owner's own phrase for the whole sweep."
+
+  - prompt: "Actualiza todo a main en estos proyectos, que esté todo subido y sin ramas."
+    why: "Default branch, pushed, no branches: the contract in one sentence."
+
+  - prompt: "Sube y baja todo y quita los worktrees que sobren."
+    why: "Push, pull and retire leftovers across the workspace."
+
+  - prompt: "Tidy up the repos, I have branches and worktrees everywhere."
+    why: "Leftover branches and worktrees across repos, in English."
+
+  - prompt: "Déjalo todo en main y limpio antes de irme."
+    why: "End-of-session state for every repo."
+
+  - prompt: "Sync everything with GitHub and delete the merged branches."
+    why: "Push/pull plus landed-branch cleanup is this skill's whole job."
+
+should_not_trigger:
+  - prompt: "Actualiza rsc a la última versión."
+    route_to: "suggest"
+    why: "Upgrading the harness itself is `rsc upgrade`, not a git sweep."
+
+  - prompt: "Abre un worktree para empezar la feature de pagos."
+    route_to: "worktrees"
+    why: "Opening isolation for new work is the opposite move."
+
+  - prompt: "Esta rama ya pasó review, fusiónala."
+    route_to: "ship"
+    why: "Landing one verified branch is ship."
+
+  - prompt: "Borra los ficheros temporales y el node_modules del proyecto."
+    route_to: "bash-scripting"
+    why: "Disk cleanup inside a project is not branch and remote hygiene."
+
+capability:
+  - scenario: "User says: 'Limpia el harness.' The workspace has a root repo and two child repos. Between them: a branch merged into main, a squash-merged branch whose remote is gone, a branch with one unpushed commit, a worktree whose work landed, a worktree holding an untracked `.env`, and one child checkout left on a clean, pushed feature branch. Another child has an uncommitted edit to README.md."
+    must_include:
+      - "Lists the repos it found (root plus every nested repo) before changing anything, and runs git with `git -C <repo>` instead of changing directory into a child"
+      - "Fetches with prune and reads branches, worktrees, stashes and status for every repo before the first write"
+      - "Deletes the merged branch with `git branch -d`, and the squash-merged one only after the content check (merge-tree tree equals the default's tree), reporting its tip SHA"
+      - "Pushes the branch with the unpushed commit and keeps it, instead of deleting it"
+      - "Retires the landed worktree through `npx @ericrisco/rsc worktrees reap` and keeps the `.env` worktree, reporting the reaper's reason"
+      - "Stops on the uncommitted README.md edit and asks (commit, stash or leave) instead of stashing or discarding it on its own"
+      - "Switches the clean child checkout back to main and pulls with `--ff-only`"
+      - "Asks once, with the full list, before deleting any remote branch"
+      - "Ends with one table per repo plus the kept items and the action that would close each, and never uses reset --hard, push --force, clean -fdx or stash drop"

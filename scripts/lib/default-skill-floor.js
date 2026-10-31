@@ -22,7 +22,11 @@
 // `ux` joined in 3.4.0: `design` decides how a screen looks, `ux` decides whether people can use it —
 // the whole flow, every state, the browser walk. It replaced `ui-engineering`, which was core-only.
 // Only its description is paid for on other turns; the upstream references load on demand.
-export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux']);
+//
+// `tidy` joined in 3.7.0: "limpia el harness" / "actualiza todo" — every repo on its default branch,
+// pushed, pulled, no landed branch or worktree left. Leftovers pile up in every workspace, not only in
+// the ones that picked a profile with git skills, and the person asks for it in their own words.
+export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux', 'tidy']);
 
 export function withDefaultSkillFloor(skillIds = []) {
   return [...new Set([...DEFAULT_SKILL_FLOOR, ...skillIds])];

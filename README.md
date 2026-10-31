@@ -8,7 +8,7 @@
 
 [![npm](https://img.shields.io/npm/v/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=npm)](https://www.npmjs.com/package/@ericrisco/rsc)
 [![downloads](https://img.shields.io/npm/dm/@ericrisco/rsc?color=63d68a&labelColor=12161c&label=downloads)](https://www.npmjs.com/package/@ericrisco/rsc)
-[![skills](https://img.shields.io/badge/skills-269-63d68a?labelColor=12161c)](#the-catalog)
+[![skills](https://img.shields.io/badge/skills-270-63d68a?labelColor=12161c)](#the-catalog)
 [![license](https://img.shields.io/badge/license-MIT-63d68a?labelColor=12161c)](LICENSE)
 [![stars](https://img.shields.io/github/stars/ericrisco/rsc-harness?color=63d68a&labelColor=12161c)](https://github.com/ericrisco/rsc-harness/stargazers)
 
@@ -60,7 +60,7 @@ The model is the brain your agent rents, and you already have it. rsc adds the r
 | --- | --- | --- |
 | **Memory** | `02-DOCS/` | A wiki the agent reads before it works and keeps up to date while it works. |
 | **Hands** | `01-TOOLS/` | One folder per tool, with a test that proves the connection works. |
-| **Trade** | skills | Only the skills your project needs: 269 available, a handful installed. |
+| **Trade** | skills | Only the skills your project needs: 270 available, a handful installed. |
 | **Reflexes** | hooks | Rules that hold even when the agent forgets them mid-session. |
 
 ### Why documentation comes first
@@ -471,7 +471,7 @@ snapshots the project first, so `rsc restore latest` undoes a bad update.
 
 ## The catalog
 
-269 skills, grouped by what you are trying to do. Click any skill to read its `SKILL.md`. It fires on
+270 skills, grouped by what you are trying to do. Click any skill to read its `SKILL.md`. It fires on
 its own when a task matches.
 
 ### 🧭 Core & control plane
@@ -483,7 +483,7 @@ its own when a task matches.
 Two lanes for change: `ftd` for ordinary work, and the ten-phase chain when durable artifacts would
 settle a real ambiguity. `idea-refinement` runs inside `specify`; `decision-challenge` is on demand.
 
-[ftd](skills/ftd/) · [sdd](skills/sdd/) · [constitution](skills/constitution/) · [idea-refinement](skills/idea-refinement/) · [specify](skills/specify/) · [clarify](skills/clarify/) · [plan](skills/plan/) · [tasks](skills/tasks/) · [analyze](skills/analyze/) · [decision-challenge](skills/decision-challenge/) · [implement](skills/implement/) · [source-grounded-development](skills/source-grounded-development/) · [verify](skills/verify/) · [review](skills/review/) · [simplify-code](skills/simplify-code/) · [ship](skills/ship/) · [debug](skills/debug/) · [worktrees](skills/worktrees/) · [parallel](skills/parallel/)
+[ftd](skills/ftd/) · [sdd](skills/sdd/) · [constitution](skills/constitution/) · [idea-refinement](skills/idea-refinement/) · [specify](skills/specify/) · [clarify](skills/clarify/) · [plan](skills/plan/) · [tasks](skills/tasks/) · [analyze](skills/analyze/) · [decision-challenge](skills/decision-challenge/) · [implement](skills/implement/) · [source-grounded-development](skills/source-grounded-development/) · [verify](skills/verify/) · [review](skills/review/) · [simplify-code](skills/simplify-code/) · [ship](skills/ship/) · [debug](skills/debug/) · [worktrees](skills/worktrees/) · [parallel](skills/parallel/) · [tidy](skills/tidy/)
 
 ### 💼 Run a business
 

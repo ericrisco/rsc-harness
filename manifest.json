@@ -1,7 +1,7 @@
 {
   "version": "3.6.0",
   "counts": {
-    "skills": 269,
+    "skills": 270,
     "agents": 34,
     "commands": 53,
     "fixedCommands": 20
@@ -4991,6 +4991,29 @@
         "debug"
       ],
       "profiles": []
+    },
+    {
+      "id": "tidy",
+      "description": "Use when every repository in the workspace must end synced and clean: each one on its default branch, everything pushed, everything pulled, no leftover branches or worktrees. Covers the root repo and every nested repo (child projects). Fires on 'limpia el harness', 'actualiza todo', 'sincroniza todo', 'déjalo todo en main', 'sube y baja todo', 'tidy up the repos', 'sync everything'. NOT upgrading the rsc version (that is `npx @ericrisco/rsc upgrade`), NOT opening isolation for new work (that is `worktrees`), NOT landing one finished branch (that is `ship`).",
+      "tags": [
+        "git",
+        "sync",
+        "cleanup",
+        "branches",
+        "worktrees",
+        "limpieza",
+        "sincronizar",
+        "main"
+      ],
+      "recommends": [
+        "worktrees",
+        "ship"
+      ],
+      "profiles": [
+        "minimal",
+        "core",
+        "full"
+      ]
     },
     {
       "id": "tiktok-api",
