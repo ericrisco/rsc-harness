@@ -2,7 +2,8 @@
 
 Frameworks are skeletons you fill with the **buyer's own words** — never fill-in
 templates you ship as-is. Pick one for the page's spine and one (FAB) for the
-offer block. Each example below is fresh; mine the structure, not the wording.
+offer block. Examples below are fictional illustrations, not evidence or publishable customer claims.
+Use only behavior and outcomes supported by the actual product evidence.
 
 ## PAS — Problem, Agitate, Solution
 
@@ -35,16 +36,16 @@ Strong for **transformation** stories and pages built around a customer journey.
 
 This is the feature→benefit transform. Climb the ladder, then **stop at the benefit** the reader cares about and use the feature/mechanism as the proof underneath.
 
-- **Feature** — what it has: "AES-256 encryption."
-- **Advantage** — what that does: "data is unreadable if intercepted."
-- **Benefit** — what the buyer gets: "your security team signs off in days, not months."
+- **Feature** — what it has: "Import preview."
+- **Advantage** — what that does: "shows records needing review before the import."
+- **Benefit** — what the buyer gets: "inspect exceptions before approving changes to live records" (when the product supports this preview).
 
 Write the benefit as the line; keep the feature as the evidence beneath it.
 
 ```text
 Bad  — "Includes SSO, SCIM provisioning, and audit logs."
-Good — "Onboard a new hire in one click and prove who touched what in an audit —
-         SSO, SCIM, and full audit logs handle the rest."
+Better — "Review recorded access changes in the audit log."
+Use only if that behavior is verified; the feature list alone does not prove it.
 ```
 
 ## Awareness stage changes how much you agitate

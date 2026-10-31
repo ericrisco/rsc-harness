@@ -5,7 +5,7 @@
 # WHAT IT DOES (read-only; never edits a file)
 #   Network-free static checks over a generated landing-copy file (or a tree):
 #     1. HARD  no CTA at all (no button-style line, no movement-verb call to act).
-#     2. HARD  no proof block (no testimonial/quote marker and no metric).
+#     2. HARD  no proof block (no testimonial/quote, metric or demonstration marker).
 #     3. SOFT  H1 over ~8 words or ~60 chars (warn — clarity beats clever).
 #     4. SOFT  competing CTAs — more than one distinct primary action verb used
 #              as a button-style line (decision fatigue).
@@ -29,7 +29,7 @@
 #   1  a hard violation, or --strict with any warning
 #   2  bad usage
 #
-# POSIX sh, no external deps beyond grep/wc. Runs on stock macOS /bin/sh.
+# Bash 3.2+, no external deps beyond grep/wc. Runs on stock macOS /bin/sh.
 
 set -eu
 
@@ -88,7 +88,7 @@ CTA_VERBS='start|get|see|book|claim|try|join|download|create|build|grab|reserve|
 BANLIST='world-class|cutting-edge|revolutioni[sz]e|game-changer|game changer|seamlessly|unlock the power|in today.?s fast-paced world|next-level|best-in-class'
 
 checked=0
-for f in $FILES; do
+while IFS= read -r f; do
   [ -f "$f" ] || continue
   [ -s "$f" ] || continue
   checked=$((checked + 1))
@@ -101,12 +101,12 @@ for f in $FILES; do
     fail "$f: no CTA found (no movement verb, no button) — a page needs one primary action"
   fi
 
-  # 2. HARD: proof present? a quote/testimonial marker OR a number/metric.
-  if grep -Eq '"|“|”|>|—|--|testimonial|trusted by|review' "$f" \
+  # 2. HARD: a proof-shaped block exists. This heuristic does NOT verify truth or permissions.
+  if grep -Eiq 'demonstration|demo:|demostración|demostracion|"|“|”|>|—|--|testimonial|trusted by|review' "$f" \
      || grep -Eq '[0-9]+%|[0-9]+x|\$[0-9]|[0-9][0-9,]+ (customers|teams|users)' "$f"; then
     :
   else
-    fail "$f: no proof block found (no testimonial/quote and no metric) — belief is built next to the ask"
+    fail "$f: no proof block found (add a sourced demonstration, testimonial or metric) — belief is built next to the ask"
   fi
 
   # 3. SOFT: H1 length. First markdown '# ' heading or first non-empty line.
@@ -148,7 +148,7 @@ for f in $FILES; do
   if grep -Eiq '(^|[^a-z])submit([^a-z]|$)' "$f"; then
     warn "$f: 'Submit' as button copy — use a movement verb that states the value (e.g. 'Start my free trial')"
   fi
-done
+done <<< "$FILES"
 
 printf '\n'
 if [ "$fail_count" -gt 0 ]; then

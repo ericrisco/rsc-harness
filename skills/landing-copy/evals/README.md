@@ -16,3 +16,10 @@ rubric-scored generation: run the scenario with and without the skill loaded and
 grade each output against `must_include` (one point per item); the skill passes
 if WITH covers >= 80% and clearly beats WITHOUT. Report raw fractions, not a
 rounded pass, and re-run after any edit to `SKILL.md` or the references.
+
+## VSL integration validation — 2026-10-31
+
+The added offer-revision scenario and source-grounding repairs were statically reviewed.
+The proof-marker regression tests exercise demonstration-only evidence and paths with spaces.
+The revised skill was applied to the product README. These checks are not a fresh A/B measurement
+of landing-copy quality; the capability comparisons described above remain a separate evaluation.

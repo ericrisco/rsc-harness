@@ -2,7 +2,7 @@
 name: landing-copy
 description: "Use when writing the words on a single conversion page — the hero headline and subhead, the offer, the proof and testimonials, and one primary CTA — or diagnosing a page that gets traffic and does not convert, as a copy problem rather than a layout one. NOT the paid ad that drives the click (that is `ads`), NOT the visual layout the words sit in (that is `design`), NOT the experiment that picks the winning variant (that is `ab-testing`)."
 tags: [landing-page, copywriting, conversion, hero-headline, cta, social-proof]
-recommends: [ads, design, brand-voice, ab-testing, case-studies]
+recommends: [ads, design, brand-voice, ab-testing, case-studies, offer-design, sales-funnel, vsl-script]
 origin: risco
 ---
 
@@ -17,8 +17,8 @@ This skill owns **conversion copy for a single page**: a hero headline under ~8 
 - Writing or rewriting a hero: H1 + subhead + button copy.
 - Structuring a full landing/sales page (hook → problem → offer → proof → CTA → objections).
 - Choosing and writing one primary CTA and its repeated instances.
-- Turning features into benefits ("AES-256 encryption" → "your security team signs off in days").
-- Slotting proof — testimonials, metrics, logos, a guarantee — next to the ask.
+- Turning features into benefits ("preview before import" → "inspect exceptions before changing live records").
+- Slotting supported proof — demonstrations, permitted testimonials or contextualized metrics — next to the ask.
 - Making the page headline *match* the ad/email that drove the click (message match).
 - Rescuing a page that gets traffic but does not convert — when the failure is the words.
 
@@ -35,12 +35,20 @@ This skill owns **conversion copy for a single page**: a hero headline under ~8 
 
 Boundary in one line: **you own the words that convert on one page; `ads` owns the click that arrives, `design` owns the layout they sit in, `ab-testing` owns the proof of which words win.**
 
-## The conversion reality (calibrate, never promise)
+## When the page carries a sales video
 
-These numbers set expectations. State them as a band; the moment you promise a flat conversion rate you are lying to the user.
+Use the campaign's approved offer revision, research and funnel brief before drafting. When these exist under `02-DOCS/wiki/marketing/<campaign>/`, reuse them; keep established project paths. Read [the VSL page handoff](references/vsl-page-handoff.md) when a video is the main sales argument or its claims differ from the page.
 
-- **Cross-industry median is ~6.6%; strong pages in any vertical reach 10–15%+.** Per-vertical the spread is wide: Events & Entertainment ~12.3%, Financial Services ~8.4%, SaaS/Tech ~3.8%, Ecommerce ~2.35%, B2B services ~1–3%. *Why:* a SaaS team told "you'll hit 12%" was quoted the events median; quote the band for *their* vertical so the goal is real. (Foundry CRO benchmarks 2026, citing Unbounce's analysis of 464M visits / 41k pages.)
-- **Visitors decide whether to stay in ~5 seconds, and ~80% rarely scroll past the fold.** *Why:* the hero is the single highest-leverage copy on the page — if it does not answer "what is this and why should I care" before a scroll, the rest is unread. (Hero-section research / NN/g attention studies 2026.)
+Treat video and page as two ways to understand the same offer. Preserve the same deliverables, price, conditions, evidence IDs and primary action. A visitor who cannot play the video still needs the essential offer and purchase conditions in text. A short introduction can invite playback; it does not replace the written decision path.
+
+- Offer is undecided → `offer-design` owns that decision, not a more forceful headline.
+- Multiple pages or booking/payment paths → `sales-funnel` owns the route.
+- Spoken narration, pacing and scene cues → `vsl-script` owns the video.
+- Unsupported ad/video claim → flag the mismatch and draft from supported facts; repeating the claim does not validate it.
+
+## Establish a baseline before predicting conversion
+
+Use the account's observed traffic, eligible visitors and completed actions when available. Define the conversion and observation window before comparing rates. If no baseline exists, say so and route measurement to `analytics` and experiment design to `ab-testing`. External benchmarks need dated sources and comparable audiences; they are not promised outcomes.
 
 ## The four blocks — the spine of the page
 
@@ -48,18 +56,18 @@ Every conversion page is these four jobs, top to bottom. Each has a distinct que
 
 | Block | Must answer | Lives where | Failure mode if weak |
 | --- | --- | --- | --- |
-| **Hook** | "What is this and why should I care?" in <5s | Hero, above the fold | Visitor bounces before scrolling; ~80% never see the rest |
+| **Hook** | "What is this and why should I care?" in <5s | Hero, above the fold | Visitor cannot tell whether to continue |
 | **Offer** | "What exactly do I get, and what does it cost me?" | Right after the hook / problem | Feature dump; reader can't tell what they walk away with |
 | **Proof** | "Why should I believe you?" | Adjacent to each CTA | Claims read as marketing; trust never forms |
 | **CTA** | "What is the one thing to do next?" | Hero, repeated down the page | Competing asks → decision fatigue → no click |
 
 ## The hook
 
-The H1 carries the *what*; the subhead carries the *benefit*; both must echo whatever the visitor clicked.
+The H1 carries the *what*; the subhead carries the *benefit*; both must stay consistent with the supported offer behind the visitor's click.
 
 - **H1 under ~8 words / ~44 characters.** The constraint forces clarity, and a clear headline beats a clever one every time. If you can't say it in 8 words you don't understand the offer yet.
 - **Subhead carries the benefit** — who it's for and the outcome they get, in one clause.
-- **Message match:** the headline must echo the promise of the ad/email that drove the click. Aligning a single claim across ad + page has produced a 66% CVR lift in documented cases (and 212% from fixing message match alone). *You match the page to the ad; writing the ad is `ads`.*
+- **Message match:** maintain the supported offer and action from the ad/email. If its promise lacks evidence, flag it and draft from verified facts; consistency does not make an unsupported claim true. `ads` owns correction of the source ad.
 
 ```text
 Bad  — "Reimagine The Future Of Financial Operations"   (clever, 6 words, says nothing)
@@ -74,27 +82,21 @@ Name the thing, the outcome, and the cost in effort or money. Lead with the outc
 The scaffold is **FAB** — Feature → Advantage → Benefit — but you stop at the benefit the reader cares about and back it with the mechanism as proof, not the other way round.
 
 ```text
-Bad  — "Our platform has advanced AES-256 encryption."
-Good — "Protect customer data with AES-256 encryption, so your security team
-         signs off in days, not months."
+Feature — "Import preview."
+Benefit — "Inspect the exceptions before you approve changes to live records."
+Evidence — A verified demonstration of the actual preview and approval flow.
 ```
 
 Rule: every feature line answers "so what?" with an outcome. If it can't, cut it.
 
 ## The proof
 
-Belief is built next to the ask, not in a wall of quotes elsewhere.
+Choose evidence that supports the claim the visitor is deciding on. A product demonstration can establish behavior; a customer result needs its source, context and permission. A guarantee is a commercial condition, not evidence of effectiveness.
 
-- **3–5 specific, named testimonials, each with a concrete result.** "Great product!" persuades no one; "cut our close time from 9 days to 2 — Maria, CFO at Lumen" does. Specific beats superlative.
-- **Place proof adjacent to the primary CTA.** Social proof next to the ask has lifted conversion ~68% in documented cases; reviews/testimonials are decisive for ~93% of buyers and ~88% trust them like a personal recommendation. *Why:* belief and the decision happen in the same moment — put the evidence where the click is.
-- Numbers, recognizable logos, and a risk-reversal (money-back, no card required) are proof too. One hard number outweighs three adjectives.
-- **Never fabricate proof.** If a metric, quote, or logo isn't real, mark `[[NEEDS PROOF]]` and ask the user — do not invent it.
-
-```text
-Bad  — "Loved by teams everywhere. World-class results!"
-Good — "We cut expense-report time 82% in the first month."
-         — Maria Ortiz, CFO, Lumen (47-person finance team)
-```
+- Use permitted, attributable testimonials when available; there is no required quota of names or numerical results.
+- Place relevant proof near the claim or action it supports. Keep its scope clear: one customer result does not establish a typical outcome.
+- Without outcome evidence, show verified product behavior and narrow the promise. Mark unresolved evidence in draft notes, not as public endorsements.
+- Preserve evidence IDs and publication status from the offer brief. A public review is not automatically cleared for promotional reuse.
 
 ## The CTA
 
@@ -102,7 +104,7 @@ One primary action, verb-led, repeated — not varied — down the page.
 
 - **One primary CTA per page.** Competing asks cause decision fatigue and lower conversion. The same action appears in the hero and again at each decision point; secondary links may exist but must not compete visually or verbally with the primary.
 - **Movement verbs, never "Submit".** "Start free trial", "Get my quote", "See plans" — the button states the value, not the form action.
-- **First-person framing often lifts clicks:** "Start my free trial" reads as the visitor's own intent. Pair the button with one line of friction-reducing microcopy ("No credit card required").
+- **First-person framing is one option to test:** "Start my free trial" reads as the visitor's own intent. Pair the button with one line of friction-reducing microcopy ("No credit card required").
 
 ```text
 Bad  buttons — [Submit]            [Learn more]        [Contact sales]
@@ -137,19 +139,19 @@ its derivatives). In Claude Code a Stop hook runs the same check on your final a
 | "A clever headline will stand out" | Clever is unclear. Name the outcome in <8 words; clear beats clever. |
 | "More features = more value shown" | Feature dumps bury the benefit. Lead with the outcome, then the mechanism. |
 | "Give them several CTAs to choose from" | Choice kills conversion. One primary action, repeated, not varied. |
-| "Any testimonials will do" | Generic raves don't persuade. 3–5 named quotes with a hard result, near the CTA. |
+| "Any testimonials will do" | Use relevant, permitted evidence; a verified demonstration may be the best available proof. |
 | "World-class, cutting-edge, game-changing" | Hype words signal AI-template copy. Replace with a number or a named result. |
-| "The page can say its own thing" | If the headline ignores the ad's promise, you lose the message-match lift. Echo the click. |
-| "Promise them a 12% conversion rate" | Never promise a flat number. Quote the band for their vertical. |
+| "The page can say its own thing" | Keep the supported promise consistent; correct unsupported source claims instead of repeating them. |
+| "Promise them a 12% conversion rate" | Use an observed baseline and explicit test; mark performance unmeasured when no data exists. |
 | "I'll invent a plausible metric" | Never. Mark `[[NEEDS PROOF]]` and ask the user. |
 
 ## Page skeleton + worked example
 
-The annotated top-to-bottom skeleton (hook → problem → offer → proof → CTA → objections/FAQ → final CTA), with one fully worked B2B SaaS example and the variable slots marked, lives in `references/page-skeleton.md`. Start there when you write a full page rather than a single block.
+The annotated top-to-bottom skeleton (hook → problem → offer → proof → CTA → objections/FAQ → final CTA), with a worked demonstration-led example and explicit source limits, lives in `references/page-skeleton.md`. Start there when you write a full page rather than a single block.
 
 ## Verify your copy
 
-Run `scripts/verify.sh` over the file you wrote (or your project) before claiming done. It is a read-only, dependency-free static check: H1 length, exactly one primary CTA verb (flags competing asks), presence of a proof block and a benefit subhead, a banlist of hype/AI-tell phrases, and a "Submit" warning. It warns on soft issues and exits non-zero only on hard ones (no CTA, no proof). It is a backstop, not the judgement — the four-block table is.
+Run `scripts/verify.sh` over the file you wrote (or your project) before claiming done. It is a read-only, dependency-free static check: H1 length, exactly one primary CTA verb (flags competing asks), presence of a proof block and a benefit subhead, a banlist of hype/AI-tell phrases, and a "Submit" warning. It warns on soft issues and exits non-zero only on hard ones (no CTA, no proof). It detects proof-shaped text, not factual support or publication permission; those require source review. Demonstrations are valid proof markers when their claims match the behavior shown.
 
 ## See also
 

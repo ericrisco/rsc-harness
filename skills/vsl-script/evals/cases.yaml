@@ -1,0 +1,51 @@
+skill: vsl-script
+
+should_trigger:
+  - prompt: "Write a spoken sales video for the top of my landing page."
+    why: "Creates the narration and visual plan for a VSL."
+  - prompt: "Quiero explicar mi oferta en vídeo y llevar al espectador a reservar una demo."
+    why: "Spanish sales-video request with a single action."
+  - prompt: "Our presenter cannot get through this pitch in the promised two minutes. Fix the script."
+    why: "Timing feasibility is a script problem even without the VSL label."
+  - prompt: "Turn these verified customer objections into a five-minute video sales argument."
+    why: "Uses evidence and objections to shape a spoken buying decision."
+  - prompt: "Prepare narration, on-screen text and demo cues for our sales video."
+    why: "Produces the production handoff rather than rendering footage."
+
+should_not_trigger:
+  - prompt: "Build the actual video in Remotion from this approved script."
+    route_to: remotion-video
+    why: "Rendering and code are downstream production work."
+  - prompt: "Write the sales page headline, price section and FAQ."
+    route_to: landing-copy
+    why: "Owns written web copy, not spoken narration."
+  - prompt: "Plan the registration and reminder sequence for a live webinar."
+    route_to: webinar
+    why: "The live event journey has its own owner."
+  - prompt: "Set bids and audiences for our Meta video campaign."
+    route_to: ads
+    why: "Paid acquisition management is not a VSL deliverable."
+
+capability:
+  - scenario: >-
+      Write a complete 60-second spoken VSL for a landing visited by warm email subscribers,
+      plus on-screen cues and a short production handoff. The only action is opening a free trial.
+      Offer Q2 revision 7: scheduling app, free trial for 14 days, no card needed, then EUR 12/month
+      if the customer chooses to subscribe. An older page draft says EUR 9/month and a 30-day trial.
+      E1 is a verified product demo showing a customer choosing an available slot and receiving a confirmation;
+      it proves those steps work, not time saved. E2 is a private customer interview saying
+      "I stopped chasing appointment confirmations", with no permission to quote it publicly.
+      No measured time-saving study, customer-count proof, deadline or guarantee exists.
+      The founder wants to say "save five hours every week" and to fit a 20-second silent demo inside
+      the same 60 seconds. Use a planning pace of 135 spoken words per minute. Produce a feasible draft
+      now, explain unsupported claim changes separately, preserve the silent demo, and keep price and trial
+      terms aligned with the authoritative offer. Do not write the surrounding landing page.
+    must_include:
+      - "Delivers actual spoken lines, on-screen cues and a single free-trial action rather than only an outline."
+      - "Preserves Q2 revision 7 terms: 14 days, no card, EUR 12/month only on subscription; explicitly flags the old page terms for correction."
+      - "Allocates 20 seconds with no narration to the demo and at most 40 seconds to speech, yielding a maximum 90 spoken words at 135 words/minute."
+      - "Counts the delivered spoken words, excludes on-screen notes from that count, and gives a timing plan that fits the complete 60 seconds."
+      - "Uses E1 only for observable scheduling/confirmation behavior; removes or qualifies the unsupported five-hours claim rather than presenting it as fact."
+      - "Does not publish or attribute E2's private quote without permission; records the permission gap separately from publishable narration."
+      - "Provides concrete demo capture/visual instructions and source references outside the spoken lines, without claiming a video was rendered."
+      - "Uses no invented testimonial, customer count, scarcity deadline or money-back promise."

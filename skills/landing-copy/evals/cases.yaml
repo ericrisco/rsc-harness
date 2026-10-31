@@ -54,10 +54,18 @@ capability:
     must_include:
       - "H1 is under ~8 words / ~44 chars and is clear, not clever (names the outcome)."
       - "Subhead carries the benefit and names who it is for."
-      - "Headline echoes the ad's '80%' promise (message match), not a disconnected claim."
+      - "Identifies the ad's 80% as an unverified claim; requests its source or drafts without repeating it as proven."
       - "Offer lines are feature->benefit (FAB), benefit on top with the mechanism beneath — not a bare feature list."
-      - "3-5 specific, named testimonials each with a concrete numeric result, placed adjacent to the CTA."
+      - "Does not invent named testimonials or numeric customer results; marks missing evidence for collection and uses only supplied facts."
       - "Exactly one primary CTA with a movement verb (e.g. 'Start my free trial'), repeated unchanged — no competing asks, no 'Submit'."
       - "No banned superlatives ('world-class', 'cutting-edge', 'game-changer', 'revolutionize', 'seamlessly')."
-      - "Conversion expectation, if mentioned, is given as a per-vertical band (SaaS ~3.8%), never a flat promised number."
+      - "Treats conversion performance as unmeasured because the scenario provides no baseline; does not invent a benchmark or promise a rate."
       - "Any proof that is not real is marked [[NEEDS PROOF]], not fabricated."
+
+  - scenario: "Write the hero and purchase section around a VSL for a workshop. Approved offer rev2: EUR 180, two live sessions, no individual review, start 12 November, refund until 48 hours before start. Old video rev1 says EUR 120 with personal review. Evidence E1 is a public demo; a testimonial E2 has no publication permission. Audience includes visitors who cannot play video. No measured conversion results. Deliver useful copy and the handoff decision."
+    must_include:
+      - "Uses rev2 price and scope in draft copy and marks rev1 video as needing correction before coordinated publication."
+      - "Provides essential offer and refund conditions in text without requiring playback."
+      - "Uses E1 demonstration and excludes the unapproved E2 testimonial from public copy."
+      - "Keeps one primary action and identifies unresolved destination or booking details without inventing them."
+      - "Does not promise conversion improvement or invent evidence."

@@ -1,7 +1,7 @@
 {
-  "version": "3.6.0",
+  "version": "3.7.0",
   "counts": {
-    "skills": 269,
+    "skills": 273,
     "agents": 34,
     "commands": 53,
     "fixedCommands": 20
@@ -1049,6 +1049,25 @@
         "postgresdb",
         "secure-coding",
         "deployment"
+      ],
+      "profiles": []
+    },
+    {
+      "id": "customer-research",
+      "description": "Use when buyer interviews, reviews or lost deals need to become sourced needs, objections and language for an offer, or when that evidence is missing. Separates segments, repeated sources and inference. NOT market sizing (that is `market-research`) or page copy (that is `landing-copy`).",
+      "tags": [
+        "customer-research",
+        "buyer-language",
+        "interviews",
+        "reviews",
+        "objections",
+        "voice-of-customer"
+      ],
+      "recommends": [
+        "offer-design",
+        "landing-copy",
+        "market-research",
+        "case-studies"
       ],
       "profiles": []
     },
@@ -2652,7 +2671,10 @@
         "design",
         "brand-voice",
         "ab-testing",
-        "case-studies"
+        "case-studies",
+        "offer-design",
+        "sales-funnel",
+        "vsl-script"
       ],
       "profiles": []
     },
@@ -3340,6 +3362,26 @@
         "performance",
         "cost-tracking",
         "docker"
+      ],
+      "profiles": []
+    },
+    {
+      "id": "offer-design",
+      "description": "Use when deciding what a buyer receives, why it solves their problem, and which promises, extras and conditions the seller can support. Produces an evidence-backed offer brief. NOT setting price levels (that is `pricing`) or writing the page (that is `landing-copy`).",
+      "tags": [
+        "offer",
+        "value-proposition",
+        "differentiation",
+        "guarantee",
+        "deliverables",
+        "commercial-terms"
+      ],
+      "recommends": [
+        "customer-research",
+        "pricing",
+        "sales-funnel",
+        "vsl-script",
+        "landing-copy"
       ],
       "profiles": []
     },
@@ -4203,6 +4245,28 @@
         "postgresdb",
         "secure-coding",
         "deployment"
+      ],
+      "profiles": []
+    },
+    {
+      "id": "sales-funnel",
+      "description": "Use when planning the steps from an offer to purchase or booking: pages, transitions, recovery paths and measurement handoffs. NOT writing one page (that is `landing-copy`), running deals (that is `sales-pipeline`) or implementing payment (that is `stripe`).",
+      "tags": [
+        "sales-funnel",
+        "vsl",
+        "buyer-journey",
+        "conversion",
+        "checkout",
+        "campaign"
+      ],
+      "recommends": [
+        "customer-research",
+        "offer-design",
+        "vsl-script",
+        "landing-copy",
+        "marketing",
+        "analytics",
+        "stripe"
       ],
       "profiles": []
     },
@@ -5400,6 +5464,26 @@
         "runpod",
         "modal",
         "ollama"
+      ],
+      "profiles": []
+    },
+    {
+      "id": "vsl-script",
+      "description": "Use when writing or revising a spoken sales video with timed narration, visual cues, supported claims and one next action. NOT writing the surrounding page (that is `landing-copy`) or rendering the video (that is `remotion-video`).",
+      "tags": [
+        "vsl",
+        "sales-video",
+        "script",
+        "storyboard",
+        "narration",
+        "conversion"
+      ],
+      "recommends": [
+        "customer-research",
+        "offer-design",
+        "sales-funnel",
+        "landing-copy",
+        "remotion-video"
       ],
       "profiles": []
     },

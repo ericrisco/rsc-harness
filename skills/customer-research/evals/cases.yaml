@@ -1,0 +1,48 @@
+skill: customer-research
+
+should_trigger:
+  - prompt: "Find the objections we should answer using these customer interviews."
+    why: "Extracts buyer evidence before writing copy."
+  - prompt: "Our landing sounds like us, but nothing like the reviews. What are buyers actually asking for?"
+    why: "A language mismatch calls for sourced customer understanding."
+  - prompt: "Compara las llamadas de quienes compraron y quienes se fueron sin comprar."
+    why: "Spanish symptom asks for segmented decision evidence."
+  - prompt: "Build a quote bank from these support tickets without treating repeat tickets as different customers."
+    why: "Needs provenance and unit-of-analysis discipline."
+  - prompt: "We have no interviews yet. Plan how to learn why people postpone buying this course."
+    why: "Defines a decision-focused research plan when evidence is absent."
+
+should_not_trigger:
+  - prompt: "Estimate the addressable market for bookkeeping software in Spain."
+    route_to: market-research
+    why: "Market size and segmentation are not buyer-language synthesis."
+  - prompt: "Rewrite this landing headline using the approved customer quote bank."
+    route_to: landing-copy
+    why: "Research is already supplied; this asks for page copy."
+  - prompt: "Track the prices of these three competitors every month."
+    route_to: competitor-watch
+    why: "Recurring rival monitoring has its own owner."
+  - prompt: "Find twenty named companies and contacts to sell this service to."
+    route_to: lead-gen
+    why: "Prospecting produces an outreach list rather than research findings."
+
+capability:
+  - scenario: |
+      Produce a buyer-research brief for a new landing for LedgerBridge, a bookkeeping migration service. Work only from the material below; no browsing or outreach. Identify which message to test first, show the evidence behind it, and propose the smallest follow-up that could change your recommendation. This is a draft for the copywriter, not public copy.
+      Sources (all collected in October 2026):
+      A: Interview with an owner at firm O1 (4 staff, bought): "I didn't need more charts. I needed Friday back." They switched after spending their weekend correcting an import. Private interview; publication permission not requested.
+      B: Support ticket from the same owner at O1: "We spent another Saturday fixing mappings." Same migration as A. Internal use only.
+      C: Public review by O1's owner reposting A verbatim on a review site. No permission to use their name or logo in marketing has been obtained.
+      D: Interview with O2 (6 staff, bought): "Show me the exceptions before anything goes live." They chose the service after a preview of records needing review. Private; internal analysis permitted, public quotation not permitted.
+      E: Lost-deal note for O3 (90 staff): buyer said "Our security team needs a self-hosted option." They declined the cloud-only service. Salesperson wrote "too expensive" in the CRM category, but recorded no price objection in the call notes.
+      F: Interview with O4 (120 staff, bought): "The approval trail mattered more than speed." Procurement required an audit trail; the product included one.
+      G: Anonymous forum comment, organization and date unknown: "All migrations destroy your history." No product named.
+      Founder assertion: "Everyone wants the fastest migration; three customers already said so."
+    must_include:
+      - "Counts A/B/C as one organization and one related episode, not three independent customer confirmations; states the four identifiable organizations and unknown G separately."
+      - "Keeps small firms O1/O2 separate from larger O3/O4 and avoids presenting one universal persona or market-wide frequency."
+      - "Treats the O3 price category as an unsupported interpretation conflicting with the recorded self-hosting objection, preserving both provenance and uncertainty."
+      - "Preserves exact buyer wording with source identifiers and distinguishes observed statements from inferred themes; does not turn Friday back into a measured time-saving claim."
+      - "Makes a bounded initial message hypothesis for a named segment and cites both supporting and limiting evidence rather than accepting the founder's speed consensus."
+      - "Keeps private/internal quotations out of publishable proof and marks public review reuse permissions as unconfirmed rather than assuming public visibility grants promotional consent."
+      - "Proposes a small, decision-changing follow-up comparing the competing explanations with relevant buyers, without sending outreach or treating absent evidence as a positive finding."
