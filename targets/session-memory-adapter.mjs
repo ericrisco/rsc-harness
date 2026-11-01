@@ -116,9 +116,9 @@ function nativeOutput(target, eventName, context = '', notice = null, compaction
  * checkout, the model is told — every message, while it lasts — to do new work in a worktree. Local
  * journal only, no network (the memory's promise stands). `.no-worktree-isolation` turns it off.
  */
-export function isolationContext({ project, here, sessionId, target }) {
+export function isolationContext({ project, here, sessionId, target, memoryRoot }) {
   if (existsSync(join(project, '.rsc', '.no-worktree-isolation'))) return '';
-  const others = otherActiveSessions({ cwd: project, worktreeCwd: here, sessionId, target });
+  const others = otherActiveSessions({ cwd: project, worktreeCwd: here, sessionId, target, memoryRoot });
   if (!others.length) return '';
   const who = others.map((o) => `${o.target}${o.branch ? ` en «${o.branch}»` : ''}`).join(', ');
   return `rsc · aislamiento: otra sesión está trabajando en esta misma carpeta (${who}). ` +
@@ -176,7 +176,8 @@ export function handleLifecycle({ target, event, native = {}, cwd, settings } = 
     // nine rounds of hook → "—" → hook before the client broke the loop. Record the turn, say
     // nothing.
     const silenced = event === 'turn' && Boolean(native?.stop_hook_active);
-    const isolation = event === 'request' ? isolationContext({ project, here, sessionId: id, target }) : '';
+    const isolation = event === 'request'
+      ? isolationContext({ project, here, sessionId: id, target, memoryRoot: captured.memoryRoot }) : '';
     return {
       output: silenced ? {} : nativeOutput(target, eventName, isolation, captured.notice, captured.compactionHint),
       capture: captured,

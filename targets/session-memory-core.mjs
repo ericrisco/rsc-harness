@@ -46,9 +46,12 @@ function cleanId(value, prefix = 'session') {
   return `${prefix}-${hash}`;
 }
 
-function git(cwd, args) {
+// `input` feeds stdin, so one process can answer for many files or commits. Every git process costs
+// 50–80 ms on Windows, and one per file and per commit pushed the hooks past Claude Code's 5 s (#332).
+function git(cwd, args, input = null) {
   try {
-    return { ok: true, out: execFileSync('git', args, { windowsHide: true, cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 2 * 1024 * 1024 }).trim() };
+    const stdin = input === null ? { stdio: ['ignore', 'pipe', 'ignore'] } : { input, stdio: ['pipe', 'pipe', 'ignore'] };
+    return { ok: true, out: execFileSync('git', args, { windowsHide: true, cwd, encoding: 'utf8', ...stdin, maxBuffer: 16 * 1024 * 1024 }).trim() };
   } catch {
     return { ok: false, out: '' };
   }
@@ -168,22 +171,43 @@ function parseStatus(output) {
   return files;
 }
 
+function fingerprintOne(worktree, path) {
+  const result = git(worktree, ['hash-object', '--no-filters', '--', path]);
+  return result.ok ? result.out : null;
+}
+
+// Every file in one `git hash-object --stdin-paths`. One path it cannot read fails the whole batch, so
+// only regular files go in (a deleted one has no fingerprint, as before), and a line opening with `"`
+// is read as C-quoted, so such a name is hashed on its own. If the batch still fails — a file removed
+// between the check and the hash — each file is hashed alone, exactly as it always was.
 function fingerprintFiles(worktree, files) {
-  return Object.fromEntries(files.map((path) => {
-    const result = git(worktree, ['hash-object', '--no-filters', '--', path]);
-    return [path, result.ok ? result.out : null];
-  }));
+  const fingerprints = Object.fromEntries(files.map((path) => [path, null]));
+  const readable = files.filter((path) => {
+    try { return statSync(join(worktree, path)).isFile(); } catch { return false; }
+  });
+  const batch = readable.filter((path) => !path.startsWith('"'));
+  const result = batch.length
+    ? git(worktree, ['hash-object', '--no-filters', '--stdin-paths'], `${batch.join('\n')}\n`) : { ok: false, out: '' };
+  const hashes = result.ok ? result.out.split('\n') : [];
+  const batched = hashes.length === batch.length ? new Map(batch.map((path, index) => [path, hashes[index]])) : new Map();
+  for (const path of readable) fingerprints[path] = batched.get(path) ?? fingerprintOne(worktree, path);
+  return fingerprints;
 }
 
 // `📥 docs(auto): sync desde rsc/knowledge` — written by knowledge-sync.mjs when it imports the team's
 // documents. Authored locally, but its content is other people's.
 const KNOWLEDGE_IMPORT = /^\S*\s*docs\(auto\): sync desde /u;
 
-function snapshot(cwd, baselineHead = null) {
+// Where the agent is — branch and worktree — and nothing else: two processes, not a full snapshot.
+function position(cwd) {
   const top = git(cwd, ['rev-parse', '--show-toplevel']);
-  if (!top.ok) return { git: false, branch: null, worktree: resolve(cwd), head: null, files: [], dirty: [], committed: [], fingerprints: {}, commits: [] };
-  const worktree = resolve(top.out);
-  const branch = cleanString(git(cwd, ['symbolic-ref', '--quiet', '--short', 'HEAD']).out, 255);
+  if (!top.ok) return { git: false, branch: null, worktree: resolve(cwd) };
+  return { git: true, branch: cleanString(git(cwd, ['symbolic-ref', '--quiet', '--short', 'HEAD']).out, 255), worktree: resolve(top.out) };
+}
+
+function snapshot(cwd, baselineHead = null) {
+  const { git: inGit, branch, worktree } = position(cwd);
+  if (!inGit) return { git: false, branch, worktree, head: null, files: [], dirty: [], committed: [], fingerprints: {}, commits: [] };
   const head = cleanString(git(cwd, ['rev-parse', '--verify', 'HEAD']).out, 64);
   const dirty = parseStatus(git(cwd, ['status', '--porcelain=v1', '-z', '--untracked-files=all']).out);
   let committed = [];
@@ -200,17 +224,17 @@ function snapshot(cwd, baselineHead = null) {
     // merged main and resolved five conflicts was recorded as «no commits, files: none»). So merges on
     // the first-parent chain stay, and from a merge only what the session resolved counts — the
     // combined diff (`--cc`), never everything the merge brought in.
-    const own = git(cwd, ['log', '--first-parent', '--format=%H%x09%P%x09%s', `${baselineHead}..${head}`]).out
+    //
+    // All the commits go through one `diff-tree --stdin`, not one process each (#332). `--cc` changes
+    // only what a merge reports and `--root` only a root commit, so one set of flags covers them all.
+    const own = git(cwd, ['log', '--first-parent', '--format=%H%x09%s', `${baselineHead}..${head}`]).out
       .split('\n').filter(Boolean).map((line) => line.split('\t'))
-      .filter(([, , subject = '']) => !KNOWLEDGE_IMPORT.test(subject));
+      .filter(([, subject = '']) => !KNOWLEDGE_IMPORT.test(subject));
     commits = own.map(([sha]) => cleanString(sha, 64)).filter(Boolean);
-    const merges = new Set(own.filter(([, parents = '']) => parents.trim().split(/\s+/).length > 1).map(([sha]) => sha));
     const touched = new Set();
-    for (const sha of commits) {
-      const args = merges.has(sha)
-        ? ['diff-tree', '--no-commit-id', '--name-only', '--cc', '-z', sha]
-        : ['diff-tree', '--no-commit-id', '--name-only', '-r', '-z', '--root', sha];
-      for (const item of git(cwd, args).out.split('\0')) {
+    if (commits.length) {
+      const names = git(cwd, ['diff-tree', '--stdin', '--no-commit-id', '--name-only', '-r', '-z', '--root', '--cc'], `${commits.join('\n')}\n`);
+      for (const item of names.out.split('\0')) {
         const clean = cleanString(item, 1000);
         if (clean) touched.add(clean);
       }
@@ -370,7 +394,8 @@ export function otherActiveSessions(input = {}) {
     const top = git(resolve(input.worktreeCwd || cwd), ['rev-parse', '--show-toplevel']);
     if (!top.ok) return [];
     const here = resolve(top.out);
-    const store = chooseMemoryRoot(cwd);
+    // `memoryRoot`: the store this event's capture already chose, so it is not chosen twice.
+    const store = input.memoryRoot ? { root: input.memoryRoot } : chooseMemoryRoot(cwd);
     if (!existsSync(store.root)) return [];
     const now = new Date(input.now || Date.now()).getTime();
     const windowMs = Number.isFinite(input.windowMs) ? input.windowMs : ACTIVE_WINDOW_MS;
@@ -467,7 +492,10 @@ export function capture(input = {}) {
   else if (fileHint && !relativeSlash(project, fileHint).startsWith('..')) movedTo = null; // back in the main checkout
   else if (movedTo && existsSync(movedTo)) here = movedTo;
   else movedTo = null;
-  const firstSnapshot = snapshot(here, null);
+  // One full snapshot per event (#332). With an anchor, presence needs only the branch and the worktree.
+  // Without one, this snapshot founds the anchor and, when the baseline is this very HEAD, is already
+  // everything the second one would find: no session commits yet, the same dirty files.
+  const firstSnapshot = anchor ? position(here) : snapshot(here, null);
   // Presence: on every event, before any early return — the point is to be seen before there is work.
   const ending = ['end', 'sessionEnd', 'stop'].includes(input.event);
   if (ending) rmSync(join(store.root, 'presence', `${storageId}.json`), { force: true });
@@ -477,6 +505,7 @@ export function capture(input = {}) {
       worktree: cleanString(firstSnapshot.worktree, 1000), updatedAt: now,
     });
   }
+  const founded = !anchor;
   if (!anchor) {
     anchor = {
       sessionId,
@@ -492,9 +521,12 @@ export function capture(input = {}) {
     anchor = movedTo ? { ...rest, movedTo } : rest;
     atomicJson(anchorPath, anchor);
   }
-  if (input.event === 'start' && !existing) return { record: null, path: null, notice: null, compactionHint: false };
+  // The store travels back with the answer so the isolation check of the same event does not choose it
+  // again: that is five more git processes per message.
+  const memoryRoot = store.root;
+  if (input.event === 'start' && !existing) return { record: null, path: null, notice: null, compactionHint: false, memoryRoot };
 
-  const repo = snapshot(here, anchor.baselineHead);
+  const repo = founded && anchor.baselineHead === firstSnapshot.head ? firstSnapshot : snapshot(here, anchor.baselineHead);
   // Count what CHANGED, not which tool changed it. `editDelta` is +1 per Edit/Write tool event, and
   // on its own it was blind to everything done through the shell — a heredoc, `sed -i`, a script, a
   // formatter — which is how automated sessions work. The session that found this had touched dozens
@@ -515,7 +547,7 @@ export function capture(input = {}) {
   const dirtyChanged = Object.entries(baselineFingerprints)
     .some(([path, fingerprint]) => repo.fingerprints[path] !== fingerprint);
   const hasWork = Boolean(input.force === true || existing || editCount || newDirtyPath || dirtyChanged || repo.commits.length);
-  if (!hasWork) return { record: null, path: null, notice: null, compactionHint: false };
+  if (!hasWork) return { record: null, path: null, notice: null, compactionHint: false, memoryRoot };
 
   const records = readRecords(store.root);
   const completed = ['end', 'sessionEnd', 'stop'].includes(input.event) ? now : (existing?.timestamps?.completedAt || null);
@@ -548,7 +580,7 @@ export function capture(input = {}) {
     concurrent: activeConcurrent(records, sessionId, target, repo.worktree, now),
   };
   const errors = validateSessionRecord(record);
-  if (errors.length) return { record: null, path: null, notice: null, compactionHint: false, errors };
+  if (errors.length) return { record: null, path: null, notice: null, compactionHint: false, errors, memoryRoot };
   atomicJson(recordPath, record);
   existing = record;
   // Once per session, not once per turn. `editCount` only ever grows, so `editCount >= threshold`
@@ -577,6 +609,7 @@ export function capture(input = {}) {
     path: recordPath,
     notice: consumeNotice(store),
     compactionHint,
+    memoryRoot,
   };
 }
 
@@ -664,7 +697,8 @@ export function resume(input = {}) {
   const now = iso(input.now);
   prune(store.root, now, config);
   const here = resolve(input.worktreeCwd || cwd);
-  const current = snapshot(here, null);
+  // Only the branch and the worktree are compared: no status, no fingerprints (#317, #332).
+  const current = position(here);
   const records = readRecords(store.root).filter((record) => validAnchor(here, record))
     .sort((a, b) => b.timestamps.updatedAt.localeCompare(a.timestamps.updatedAt));
   let record = records.find((candidate) => candidate.branch === current.branch && candidate.worktree === current.worktree) || null;
