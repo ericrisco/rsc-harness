@@ -1,0 +1,22 @@
+// Kit puente · Política de Tailscale (Admin console → Access controls).
+// Cuándo: el agente es Claude Code en el portátil del dueño (los conectores remotos de
+// claude.ai NO llegan a Tailscale: para eso, ver cloudflared-config.yml.ejemplo).
+//
+// 1. En el servidor del ERP: instala Tailscale e inícialo con la etiqueta tag:erp
+//    (tailscale up --advertise-tags=tag:erp).
+// 2. Arranca DBHub con --host <IP de Tailscale del servidor> --port 8080.
+// 3. Firewall de Windows: el 8080 solo desde la interfaz de Tailscale. El 1433 nunca sale del servidor.
+// Plan: Standard (uso comercial). El plan Personal es solo para uso no comercial.
+{
+  "tagOwners": {
+    "tag:erp": ["autogroup:admin"]
+  },
+  "grants": [
+    {
+      // Solo el dueño (o un grupo) llega al servidor del ERP, y solo al puerto del MCP.
+      "src": ["<email-del-dueño@empresa.com>"],
+      "dst": ["tag:erp"],
+      "ip":  ["tcp:8080"]
+    }
+  ]
+}

@@ -1,9 +1,11 @@
 skill: connect-tool
 
 # Cases for connect-tool: the user names ONE tool to connect to the agent. The skill researches the
-# vendor's real docs, picks the least dangerous route (MCP, API, integration, export, read-only copy
-# of the database, RPA last), builds 01-TOOLS/<TOOL>/ with a test that proves it (and proves writes
-# fail when read-only), guides the user and records it in 02-DOCS. It is NOT the typed API client
+# vendor's real docs FIRST, picks the least dangerous route (MCP, API, integration, vendor module,
+# file exchange, read-only copy of the database; never RPA or scraping), builds 01-TOOLS/<TOOL>/ with
+# a test that proves it (and proves writes fail when read-only), guides the user and records it in
+# 02-DOCS. Only when nothing is documented does it take option 2: diagnose the program in
+# conversation, find who holds the key, and keep going. It is NOT the typed API client
 # (api-connector-builder), NOT the whole-workspace scan (harness), NOT whether to automate a process
 # (automation-strategy), NOT chaining services (automation-flows).
 
@@ -24,7 +26,10 @@ should_trigger:
     why: "A legacy file database. Copy the .mdb/.accdb, read it with mdbtools or convert it, and never write into the program's file."
 
   - prompt: "¿Se puede conectar InstalWin? No sé ni por dónde empezar."
-    why: "An obscure vertical program nobody has catalogued: the method (search vendor docs, export features, the database it installs) works for it, and if nothing reliable exists the skill says so."
+    why: "An obscure vertical program nobody has catalogued: the method (search vendor docs, export features, the database it installs) works for it, and if nothing reliable exists the skill says so and goes to option 2."
+
+  - prompt: "Quiero que el agente meta los asientos de las facturas de proveedores en nuestro Sage 50."
+    why: "Writing into an installed accounting program: the route is the official import file the user's program exports as a sample, validated and imported by a person into the test company first, never the database."
 
 should_not_trigger:
   - prompt: "Write a TypeScript client for the Holded API with pagination, retries and token refresh."
@@ -56,3 +61,35 @@ capability:
       - "Proposes reading a nightly copy with a SELECT-only user, reached privately, never the live database exposed to the internet"
       - "Builds 01-TOOLS/<TOOL>/ from the template with a test_connection that proves reading works AND that a write is refused, telling a permission error apart from any other failure"
       - "Explains the chosen route in plain words and records the connection in 02-DOCS"
+
+  - scenario: "A small-business owner says: 'Quiero conectar Geyce, nuestro programa de gestión de hace veinte años. No sé qué tipo de programa es ni a quién preguntar.' Research finds no public API, MCP or technical documentation. Show what the agent does."
+    must_include:
+      - "Researches first (vendor docs, MCP registry, exports and imports in the manual) and cites what it searched and the date, saying plainly that nothing reliable was found"
+      - "Only then takes option 2 and does not stop: asks the plain diagnosis questions (website login, works offline, several PCs share data, remote desktop, data-folder extensions, who they call when it breaks)"
+      - "Says which program type it looks like and how sure it is, what can be tried, and what the user must confirm"
+      - "Finds out who holds the key (distributor, IT person or accounting firm) and lists the closed questions for them: database engine, read-only user on a copy, scheduled export to a folder, whether the contract allows reading the database, cost"
+      - "Leaves the case open in 02-DOCS with what was asked, to whom and when, so another session can pick it up"
+      - "Never proposes screen automation (RPA) or scraping"
+
+  - scenario: "The user answers the diagnosis: 'Entramos al programa por un escritorio remoto que nos da el distribuidor; en la oficina no hay nada instalado.' Show what the agent concludes and proposes."
+    must_include:
+      - "Recognises a program hosted by the distributor: there is no database to copy and no folder the agent can reach"
+      - "States that the only door is the provider and does not try to reach their servers any other way"
+      - "Proposes asking the distributor for a scheduled export to a folder the client can reach, an integration module or API, or a read-only user on their side, with the cost question"
+      - "Offers the message for the distributor from the messages section, read-only and with nothing opened to the internet"
+      - "If the provider offers nothing, says the honest options are to keep asking the vendor or to weigh migrating, not RPA"
+
+  - scenario: "The user says: 'Llevamos la contabilidad en ContaSOL instalado. Quiero que el agente registre los asientos de las facturas de compra que llegan al correo.' Show the route from the first answer to the first import."
+    must_include:
+      - "Chooses file exchange for writing: the agent generates ContaSOL's official import file in 01-TOOLS/<TOOL>/out/ and a person reviews and imports it; never writes into the program's database"
+      - "Asks for a sample file exported from the user's own ContaSOL and copies its structure, instead of a remembered format"
+      - "Describes the format (columns, encoding, separator, decimal mark, dates) in the tool's README"
+      - "Validates before releasing the file: entries balance, accounts exist in the current chart, no duplicates against a batch log"
+      - "Makes the first import into the program's test company, not the real books"
+
+  - scenario: "The user says: 'Mi ERP no tiene API. ¿Podemos poner un robot que haga clic en las pantallas, o que el agente lea la web del programa?'"
+    must_include:
+      - "Declines screen automation (RPA) and scraping: they act with a person's permissions, break on every update and cannot prove they only read"
+      - "Researches the other routes first: vendor or distributor module, cloud edition with an API, scheduled export, official import file, read-only copy of the database"
+      - "If one exists, proposes it; if none exists, says so and offers asking the vendor or weighing migration with the connect-or-migrate signals"
+

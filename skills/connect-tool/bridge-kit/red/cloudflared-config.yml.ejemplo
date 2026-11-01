@@ -1,0 +1,18 @@
+# Kit puente · Cloudflare Tunnel delante de DBHub (C:\ProgramData\cloudflared\config.yml).
+# Cuándo: el agente es un conector remoto de claude.ai o Cowork, o n8n en la nube. Esos
+# conectores salen de la infraestructura del proveedor y NO llegan a una VPN ni a Tailscale.
+#
+# 1. cloudflared tunnel login  →  cloudflared tunnel create kit-puente  (genera el JSON de credenciales)
+# 2. Crea en Cloudflare Zero Trust una aplicación de Access "self-hosted" para el hostname de abajo:
+#    política por email de las personas autorizadas y service token para máquinas (n8n).
+# 3. DBHub escucha SOLO en 127.0.0.1:8080 y con --auth-token (doble barrera: Access + token).
+# 4. cloudflared service install  (queda como servicio de Windows, conexión saliente, sin abrir puertos)
+# Requisito: un dominio gestionado en Cloudflare. Verifica el plan y el soporte de OAuth para
+# MCP en Access antes de conectar claude.ai.
+tunnel: <ID_DEL_TUNEL>
+credentials-file: C:\ProgramData\cloudflared\<ID_DEL_TUNEL>.json
+
+ingress:
+  - hostname: erp-mcp.<tudominio>.com
+    service: http://127.0.0.1:8080
+  - service: http_status:404

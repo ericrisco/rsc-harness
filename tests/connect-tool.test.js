@@ -29,6 +29,10 @@ test('a harness declared before 3.0.13 gains connect-tool on sync, on disk and n
   const r = await syncInstalled({ target: 'claude', home: d, cwd: d });
   assert.ok(r.synced.includes('connect-tool'));
   assert.ok(existsSync(join(d, '.claude', 'skills', 'connect-tool', 'SKILL.md')));
+  // #337: the references and the bridge kit travel with the skill, or its links lead nowhere.
+  for (const p of ['THIRD_PARTY.md', 'references/messages.md', 'references/spain.md', 'bridge-kit/LICENSE', 'bridge-kit/sqlserver/03-prueba-solo-lectura.sql']) {
+    assert.ok(existsSync(join(d, '.claude', 'skills', 'connect-tool', p)), `${p} installed`);
+  }
 });
 
 test('harness now accepts a tool the user names, and hands that job to connect-tool', () => {
@@ -61,7 +65,54 @@ test('the read-only proof tells a permission error apart from any other failure'
   }
 });
 
-test('no ready-to-send message for an IT person or an accounting firm (removed by the owner)', () => {
-  assert.doesNotMatch(skill, /Hi <name>|ready to\s+send|write the message/i);
-  assert.match(skill, /Check the support terms/, 'the vendor-terms caution stays, without the message');
+// Issue #337: with no documentation the skill stopped at "a question for the vendor", and the owner
+// was left not knowing what program they had, who to ask, or what to ask for. Eric's order: the docs
+// first, always; the diagnosis is option 2, only when there is no API, no MCP and no documentation.
+
+test('documentation first; option 2 only when research came back empty, and it keeps going (#337)', () => {
+  const docs = skill.indexOf('## 1. Research');
+  const option2 = skill.indexOf('## 3. Option 2');
+  assert.ok(docs > 0 && option2 > docs, 'research comes before option 2');
+  assert.match(skill, /Only after section 1 came back empty/);
+  assert.doesNotMatch(skill, /stop at a question for the vendor/, 'no documentation is no longer the end');
+  const section = skill.slice(option2, skill.indexOf('## 4.', option2));
+  for (const step of [/Diagnose in conversation/, /who holds the key/i, /hosted by the distributor/i, /Leave the case open/]) {
+    assert.match(section, step);
+  }
+});
+
+test('screen automation and scraping are not routes, only an anti-pattern (#337)', () => {
+  const routes = skill.slice(skill.indexOf('## 2. Choose the route'), skill.indexOf('## 3. Option 2'));
+  assert.doesNotMatch(routes, /^\| Screen automation|^\| .*RPA.*\| Nothing else exists/m);
+  assert.match(routes, /\(RPA\) and scraping are \*\*not routes\*\*/);
+  assert.match(skill, /^\| Automate the screen \(RPA\) or scrape the web app \|/m);
+  assert.match(skill, /^\| File exchange \|/m, 'file exchange is a route of its own');
+});
+
+test('ready-to-send messages live in their own section, reached from option 2 only (#337)', () => {
+  // 3.0.15 took the messages out of the skill; #337 brings them back as a section, not the method.
+  assert.doesNotMatch(skill, /Hi <name>/, 'no message text in SKILL.md itself');
+  assert.match(skill, /\[references\/messages\.md\]\(references\/messages\.md\)/);
+  assert.match(read('skills/connect-tool/references/messages.md'), /read-only[\s\S]*dedicated user[\s\S]*nothing open to the internet[\s\S]*cost question/);
+  assert.match(skill, /Check the support terms/);
+});
+
+test('every reference the skill links to exists, and the bridge kit ships unmodified with its licence (#337)', () => {
+  const dir = 'skills/connect-tool';
+  const links = [...skill.matchAll(/\]\(((?:references|bridge-kit)\/[^)#]+)\)/g)].map((m) => m[1]);
+  for (const file of ['program-types', 'what-to-find-out', 'messages', 'database-bridge', 'file-exchange', 'connect-or-migrate', 'spain']) {
+    assert.ok(links.includes(`references/${file}.md`), `SKILL.md links ${file}.md`);
+  }
+  for (const link of links) assert.ok(existsSync(join(ROOT, dir, link)), `${link} exists`);
+  const upstream = JSON.parse(read(`${dir}/bridge-kit/UPSTREAM.json`));
+  assert.equal(upstream.modified, false);
+  assert.match(upstream.commit, /^[0-9a-f]{40}$/);
+  assert.match(read(`${dir}/bridge-kit/LICENSE`), /^MIT License/);
+  assert.match(read(`${dir}/THIRD_PARTY.md`), /CC BY 4\.0/, 'the adapted guides carry their attribution');
+});
+
+test('the bridge reference warns that the kit acceptance test can pass on a wrong table name (#337)', () => {
+  const bridge = read('skills/connect-tool/references/database-bridge.md');
+  assert.match(bridge, /invalid object name/);
+  assert.match(bridge, /Msg 229/);
 });
