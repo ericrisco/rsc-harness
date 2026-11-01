@@ -1,0 +1,65 @@
+# Kit puente · Configuración de DBHub (https://github.com/bytebase/dbhub, MIT).
+#
+# Este fichero lleva la contraseña de ia_lectura: guárdalo en el SERVIDOR DEL ERP, en una
+# carpeta que solo pueda leer la cuenta que ejecuta DBHub. NUNCA en git ni en el portátil.
+#
+# Arranque (DBHub escucha por defecto en 0.0.0.0: indica SIEMPRE --host):
+#   set DBHUB_AUTH_TOKEN=<token largo y aleatorio>
+#   npx @bytebase/dbhub@<versión fija> --config=C:\KitPuente\dbhub.toml --transport http --host 127.0.0.1 --port 8080
+# Con Tailscale (sin Cloudflare): --host <IP de Tailscale del servidor> y en el firewall de Windows
+# permite el 8080 solo desde la interfaz de Tailscale (ver ../red/).
+#
+# Marcadores de parámetros en SQL Server: @p1, @p2… (en SQLite: ?).
+
+# --- Origen: la COPIA nocturna (ver ../sqlserver/copia-nocturna.ps1) --------------------
+[[sources]]
+id = "erp_ia"
+type = "sqlserver"
+host = "127.0.0.1"
+port = 1433
+database = "ERP_IA"
+user = "ia_lectura"
+password = "<<CONTRASEÑA DE ia_lectura>>"
+
+# Alternativa para Access convertido a SQLite (ver ../access/access_a_sqlite.py):
+# [[sources]]
+# id = "erp_ia"
+# dsn = "sqlite:///C:/KitPuente/empresa.sqlite"
+
+# --- execute_sql: la documentación no explica cómo quitarlo, así que se deja en solo
+# lectura y con tope de filas. La garantía real es el login ia_lectura, que solo puede
+# hacer SELECT sobre el esquema ia (pasa la prueba 03 antes de conectar nada).
+[[tools]]
+name = "execute_sql"
+source = "erp_ia"
+readonly = true
+max_rows = 200
+
+# --- Herramientas de SQL predefinido: una por pregunta de negocio ------------------------
+[[tools]]
+name = "ventas_por_dia"
+description = "Base imponible y número de facturas emitidas por día entre dos fechas (AAAA-MM-DD)"
+source = "erp_ia"
+statement = "SELECT fecha, base_imponible, facturas FROM ia.ventas_por_dia WHERE fecha BETWEEN @p1 AND @p2 ORDER BY fecha"
+
+[[tools.parameters]]
+name = "desde"
+type = "string"
+description = "Fecha inicial, AAAA-MM-DD"
+
+[[tools.parameters]]
+name = "hasta"
+type = "string"
+description = "Fecha final, AAAA-MM-DD"
+
+[[tools]]
+name = "cobros_pendientes"
+description = "Vencimientos de clientes con importe pendiente, del más antiguo al más reciente"
+source = "erp_ia"
+statement = "SELECT TOP (200) cliente, nombre, vencimiento, pendiente FROM ia.cobros_pendientes ORDER BY vencimiento"
+
+[[tools]]
+name = "stock_bajo_minimos"
+description = "Artículos con stock por debajo del mínimo"
+source = "erp_ia"
+statement = "SELECT TOP (200) articulo, descripcion, stock, minimo FROM ia.stock_bajo_minimos ORDER BY stock - minimo"
