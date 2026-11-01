@@ -33,11 +33,40 @@ permissions:
   id-token: write      # npm provenance via OIDC
 
 jobs:
-  release:
+  # A run queued behind another can find the tip already released: two merges seconds apart, and
+  # the first run (which releases the tip) took both. Its tip is then that release's own tagged
+  # version commit, and releasing it again would publish an empty patch. A manual run always goes.
+  news:
     runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.tip.outputs.released }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main
+          fetch-depth: 0
+      - id: tip
+        run: |
+          if [ "${{ github.event_name }}" = push ] && git tag --points-at HEAD | grep -q '^v[0-9]'; then
+            echo "main is already released as $(git tag --points-at HEAD | grep '^v[0-9]' | head -1); nothing to publish"
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    needs: news
+    if: needs.news.outputs.released != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      # The tip of main, not the commit that triggered the run. Runs queue one behind the other
+      # (concurrency above), and the one queued behind a release must start from that release's
+      # version commit. Checked out at its own trigger commit it still read the old version, bumped
+      # to the number just released, and npm refused it with a 409 (#326 and #336 merged a few
+      # seconds apart, 2026-11-01). Releasing the tip also covers everything merged so far.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
@@ -69,9 +98,18 @@ jobs:
       # package.json is left behind and every later run recomputes the SAME version, hits
       # "tag already exists" and dies — wedging releases permanently. Reconciling first makes
       # the pipeline self-healing instead.
+      #
+      # "Released" is the higher of the registry and the newest `v*` tag. The registry can lag: a
+      # version npm has accepted may take minutes to show in `npm view`, and that delay alone made a
+      # run compute a version already taken. A tag is only cut after a successful publish (below).
       - name: Reconcile version with the registry
+        id: released
         run: |
-          PUBLISHED="$(npm view @ericrisco/rsc version 2>/dev/null || echo 0.0.0)"
+          REGISTRY="$(npm view @ericrisco/rsc version 2>/dev/null || echo 0.0.0)"
+          TAGGED="$(git tag -l 'v[0-9]*' | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
+          PUBLISHED="$(printf '%s\n%s\n' "$REGISTRY" "${TAGGED:-0.0.0}" | sort -V | tail -1)"
+          echo "registry=$REGISTRY tagged=${TAGGED:-none} released=$PUBLISHED"
+          echo "version=$PUBLISHED" >> "$GITHUB_OUTPUT"
           LOCAL="$(node -p "require('./package.json').version")"
           HIGHEST="$(printf '%s\n%s\n' "$PUBLISHED" "$LOCAL" | sort -V | tail -1)"
           echo "published=$PUBLISHED local=$LOCAL highest=$HIGHEST"
@@ -87,7 +125,7 @@ jobs:
         id: bump
         run: |
           BUMP="${{ github.event.inputs.bump || 'patch' }}"
-          PUBLISHED="$(npm view @ericrisco/rsc version 2>/dev/null || echo 0.0.0)"
+          PUBLISHED="${{ steps.released.outputs.version }}"
           LOCAL="$(node -p "require('./package.json').version")"
           # A PR that set a version above the registry chose the number (a minor or major release
           # decided in review); publish it as is. Otherwise bump as always. Every gate above still
@@ -105,7 +143,10 @@ jobs:
 
       # --- publish + push the bump back ----------------------------------------
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        id: publish
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       # main can advance while this job runs (a PR merging behind it), which rejects the push as
@@ -129,10 +170,20 @@ jobs:
 
       # The invariant this pipeline lost for four days: a tag never exists without its commit.
       # Tagging only after a successful push is what guarantees it, in both directions.
+      #
+      # The tag also names exactly what was published. When main moved during the run, the rebase
+      # put the version commit on top of code the tarball does not have: v3.7.2 was tagged on the
+      # #332 fix that only 3.7.3 shipped. If the rebased tree differs from the published one, the
+      # tag goes on the published commit (the tag push keeps it), and the next run releases the rest.
       - name: Tag the released commit
         run: |
           V="v${{ steps.bump.outputs.version }}"
-          git tag -a "$V" -m "🔖 chore(release): ${{ steps.bump.outputs.version }}"
+          TARGET=HEAD
+          if ! git diff --quiet "${{ steps.publish.outputs.sha }}" HEAD; then
+            TARGET="${{ steps.publish.outputs.sha }}"
+            echo "::warning::main moved during the release; $V is tagged on the published commit $TARGET"
+          fi
+          git tag -a "$V" -m "🔖 chore(release): ${{ steps.bump.outputs.version }}" "$TARGET"
           git push origin "$V"
 
       # --- cut a GitHub Release for the new tag --------------------------------
