@@ -8,18 +8,21 @@ rsc-harness issue #337. The exact commit is in `bridge-kit/UPSTREAM.json`.
 
 - **Source:** `kit-puente/` of that repository.
 - **Licence:** MIT, Copyright (c) 2026 Executive Lab. Full text: `bridge-kit/LICENSE`.
-- **What is here:** the whole folder, copied **unmodified**: README, SQL Server login, user, views
-  and acceptance test, the nightly copy in PowerShell, Access to SQLite, the DBHub configuration,
-  the Tailscale and Cloudflare Tunnel examples, and the `01-TOOLS` template. Comments and file
-  names are in Spanish, as upstream.
-- **Known gaps, documented in `references/database-bridge.md` instead of patched:**
-  - `sqlserver/03-prueba-solo-lectura.sql` counts any error on a forbidden statement as a pass, so
-    an unreplaced placeholder or a wrong table name reports OK. The reference requires real tables
-    and permission errors (`Msg 229`/`262`).
-  - `01-TOOLS-plantilla/` has no `.env.example`, although the kit's README lists one. The reference
-    gives its two variables.
-- **Updating:** copy a reviewed checkout of `kit-puente/` over `bridge-kit/` and update
-  `UPSTREAM.json`. Never an automatic download.
+- **What is here:** the whole folder: README, SQL Server login, user, views and acceptance test,
+  the nightly copy in PowerShell, Access to SQLite, the DBHub configuration, the Tailscale and
+  Cloudflare Tunnel examples, and the `01-TOOLS` template. Comments and file names are in Spanish,
+  as upstream. Copied unmodified except for the change below.
+- **Changed here (modified):** `sqlserver/03-prueba-solo-lectura.sql` counted any error on a
+  forbidden statement as a pass, never tried an INSERT, and its UPDATE needed SELECT, so a user
+  who could INSERT, or UPDATE without SELECT, got `RESULTADO: OK`. It now checks the names before
+  it starts, tests INSERT, and passes a statement only when `HAS_PERMS_BY_NAME` denies the
+  permission and the attempt fails with `Msg 229`/`262`. Its row in `README.md` now says it tests
+  INSERT too. Both changes are listed in `UPSTREAM.json`.
+- **Known gap, documented in `references/database-bridge.md` instead of patched:**
+  `01-TOOLS-plantilla/` has no `.env.example`, although the kit's README lists one. The reference
+  gives its two variables.
+- **Updating:** upstream is archived, so fixes to the kit are made here and listed under
+  `changes` in `UPSTREAM.json`. Never an automatic download.
 
 ## references/: adapted guides
 

@@ -14,7 +14,7 @@ Para que un agente de IA **lea** los datos de un programa instalado en la oficin
 |---------|----------|
 | `sqlserver/01-login-servidor.sql` | Login `ia_lectura` (una vez, nivel servidor) |
 | `sqlserver/02-usuario-y-vistas.sql` | Usuario, esquema `ia`, permisos de solo lectura y vistas de plantilla (idempotente) |
-| `sqlserver/03-prueba-solo-lectura.sql` | Prueba de aceptación: lee las vistas, **no** lee tablas, **no** borra, **no** modifica, **no** crea |
+| `sqlserver/03-prueba-solo-lectura.sql` | Prueba de aceptación: lee las vistas, **no** lee tablas, **no** inserta, **no** borra, **no** modifica, **no** crea |
 | `sqlserver/copia-nocturna.ps1` | Backup `COPY_ONLY` → restauración en `ERP_IA` → vuelve a crear usuario y vistas → pasa la prueba |
 | `access/access_a_sqlite.py` | Para programas en Access: copia el fichero y lo convierte a SQLite |
 | `dbhub/dbhub.toml.ejemplo` | MCP de solo lectura con herramientas de SQL predefinido |
