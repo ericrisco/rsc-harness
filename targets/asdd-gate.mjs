@@ -53,13 +53,18 @@ export function linkedSpecs(root, branch, specCompleteness) {
   });
 }
 
-// A panel still covers HEAD when its commit is an ancestor of HEAD and nothing above tier 0 changed
-// since (documentation and progress notes may follow a review; code may not).
-function reviewedStill(root, sha, sello, cfg) {
+// A panel still covers HEAD when its commit is an ancestor of HEAD and this branch's own commits since
+// changed no code. Not code, by the same rules the gate applies above: documentation, the harness's
+// own state (.rsc/ journals, nested worktrees) and harness configuration. Commits that came from the
+// trunk (a merge of main into the branch) are not this branch's work and are not counted.
+function reviewedStill(root, sha, trunk, sello, cfg) {
   if (!sha) return false;
   if (spawnSync('git', ['-C', root, 'merge-base', '--is-ancestor', sha, 'HEAD'], { windowsHide: true }).status !== 0) return false;
-  const since = (git(root, 'diff', '--name-only', '--no-renames', '-z', sha, 'HEAD') || '').split('\0').filter(Boolean);
-  return sello.classifyRisk(since, cfg).tier === 0;
+  const since = [...new Set((git(root, 'log', '--no-merges', '--no-renames', '--format=', '--name-only', `${sha}..HEAD`, `^${trunk}`) || '')
+    .split('\n').map((l) => l.trim()).filter(Boolean))]
+    .filter((n) => !sello.SELLO_STATE_PATHS.includes(n) && !sello.NESTED_WORKTREES.test(n));
+  const { classes } = sello.classifyRisk(since, cfg);
+  return Object.values(classes).every((c) => c === 'docs' || c === 'harness');
 }
 
 // Largest panel recorded in the review ledger for a task of any of these specs (`<slug>/<task>`) that
@@ -108,7 +113,7 @@ export function asddGate(root, command, { sello, specCompleteness }) {
     // by default), recorded against one of its linked specs in the review ledger.
     const required = sello.lensesRequired(2, cfg);
     const slugs = passing.map((s) => s.path.split('/').pop().slice(0, -3));
-    const best = panelSize(root, slugs, (sha) => reviewedStill(root, sha, sello, cfg));
+    const best = panelSize(root, slugs, (sha) => reviewedStill(root, sha, trunk, sello, cfg));
     if (best >= required) return null;
     return `Branch "${branch}" is risk tier 2 and its spec passes, but no review panel of ${required} lens(es) is recorded for it` +
       `${best ? ` (largest still valid: ${best})` : ''}. Tier 2 is reviewed by the full panel, not by one reviewer, and a panel covers ` +

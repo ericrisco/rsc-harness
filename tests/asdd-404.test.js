@@ -243,3 +243,42 @@ test('panel: lens names are one per lens whatever the case, and code after the p
   write(r, 'src/app.js', `export const notes = [];\n${LOGIN}// more\nexport const y = 2;\n`); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'code after review');
   assert.match(guard(r, 'git push'), /no review panel of 3/, 'code after the review voids it');
 });
+
+// ── round-2 findings on e052aee ─────────────────────────────────────────────
+
+test('panel: harness state, CLAUDE.md and a merge of main after the review keep it valid', () => {
+  const r = project();
+  write(r, 'src/app.js', `export const notes = [];\n${LOGIN}`);
+  git(r, 'add', '-A'); git(r, 'commit', '-qm', 'login');
+  write(r, '02-DOCS/wiki/sdd/specs/sign-in.md', SPEC);
+  run(r, ['review', 'ledger', 'panel', 'sign-in/closing', '--lenses', 'correctness,security,tests']);
+  // a project that tracks its harness state commits it after the review
+  write(r, '.rsc/sello.json', '{}\n'); git(r, 'add', '-f', '.rsc/sello.json'); git(r, 'commit', '-qm', 'sello state');
+  write(r, 'CLAUDE.md', '# notes\n'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'claude note');
+  // someone else's code lands on main and is merged in
+  git(r, 'switch', '-q', 'main'); write(r, 'src/other.js', 'export const o = 1;\n'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'other');
+  git(r, 'switch', '-q', 'feat/login'); git(r, 'merge', '-q', '--no-edit', 'main');
+  assert.equal(guard(r, 'git push'), null);
+});
+
+test('content: more real login forms are auth', () => {
+  for (const text of [
+    'const hash = await promisify(crypto.scrypt)(pw, salt, 64);',
+    'const { payload } = await jwtVerify(token, key);',
+    'const t = await new SignJWT(claims).sign(key);',
+    'res.cookie(SESSION_COOKIE, id, { httpOnly: true });',
+    'req.session.userId = user.id;',
+    'const session = await lucia.createSession(user.id, {});',
+  ]) assert.equal(classifyChange(['src/x.js'], { 'src/x.js': text }).tier, 2, text);
+  assert.equal(classifyChange(['src/x.js'], { 'src/x.js': 'if (req.session.userId === id) ok();' }).tier, 1, 'reading the session is not issuing one');
+});
+
+test('changeText: a path git quotes (a tab in the name) is still read', () => {
+  const r = project();
+  const name = 'tab\tx.js';
+  write(r, name, 'a\n'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'base');
+  git(r, 'switch', '-q', 'main'); git(r, 'merge', '-q', 'feat/login'); git(r, 'switch', '-qc', 'feat/q');
+  write(r, name, 'a\nawait bcrypt.hash(p, 10);\n'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'edit');
+  const texts = changeText(r, git(r, 'merge-base', 'HEAD', 'main').trim(), [name]);
+  assert.match(texts[name] || '', /bcrypt\.hash/);
+});

@@ -212,7 +212,7 @@ export function classifyRisk(paths, cfg = null) {
 export const CONTENT_RISK = [
   // Operations, not words: hashing or verifying a password, issuing a session or token. A login form's
   // `type="password"` or an i18n string is not auth code (closing review, 4.0.4).
-  { class: 'auth', scope: 'code', pattern: String.raw`\b(?:bcrypt(?:js)?|argon2(?:id|i|d)?)\.(?:hash|compare|verify)(?:Sync)?\s*\(|\b(?:scrypt|scryptSync|pbkdf2|pbkdf2Sync|timingSafeEqual|createHmac)\s*\(|\bjwt\.(?:sign|verify)\s*\(|\b(?:password_hash|password_verify)\s*\(|\bpassport\.(?:use|authenticate)\s*\(|\b(?:getServerSession|verifyIdToken|signInWith[A-Z]\w*)\s*\(|\bres\.cookie\s*\(\s*['"\x60](?:sid|session|token|auth)|set-cookie['"\x60]?\s*[,:]\s*['"\x60]?\s*\x60?(?:sid|session|token|auth)\w*=` },
+  { class: 'auth', scope: 'code', pattern: String.raw`\b(?:bcrypt(?:js)?|argon2(?:id|i|d)?)\.(?:hash|compare|verify)(?:Sync)?\s*\(|\b(?:scrypt|scryptSync|pbkdf2|pbkdf2Sync|timingSafeEqual|createHmac)\s*\(|\bjwt\.(?:sign|verify)\s*\(|\b(?:password_hash|password_verify)\s*\(|\bpassport\.(?:use|authenticate)\s*\(|\b(?:getServerSession|verifyIdToken|signInWith[A-Z]\w*)\s*\(|\bres\.cookie\s*\(\s*(?:['"\x60](?:sid|session|token|auth)|[A-Z_]*(?:SESSION|SID|TOKEN|AUTH))|\bpromisify\s*\(\s*(?:crypto\.)?(?:scrypt|pbkdf2)\b|\b(?:jwtVerify|SignJWT)\b|\breq\.session\.(?:\w+\s*=[^=]|regenerate\s*\()|\bcreateSession\s*\(|set-cookie['"\x60]?\s*[,:]\s*['"\x60]?\s*\x60?(?:sid|session|token|auth)\w*=` },
   { class: 'billing', scope: 'code', pattern: String.raw`\b(?:paymentIntents|charges|refunds|subscriptions|checkout\.sessions|invoices)\.(?:create|update|confirm|capture)\s*\(|\bprocess\.env\.(?:STRIPE|PAYPAL|BRAINTREE|ADYEN)_\w+` },
   { class: 'migrations', scope: 'code', pattern: String.raw`\b(?:ALTER\s+TABLE|DROP\s+(?:TABLE|COLUMN)|CREATE\s+TABLE|ADD\s+COLUMN|RENAME\s+COLUMN)\b` },
   // A secret is a leak wherever it is added — tests, config and docs included.
@@ -246,7 +246,10 @@ export function changeText(rawRoot, base, paths) {
   for (const line of diff.split('\n')) {
     if (line.startsWith('diff --git ')) { header = true; cur = null; continue; }
     if (header) {
-      const m = /^\+\+\+ b\/(.+?)\t?$/.exec(line);
+      // git quotes a path with a tab, newline or quote even under core.quotePath=false: "b/tab\tx.js".
+      const q = /^\+\+\+ "b\/((?:[^"\\]|\\.)*)"$/.exec(line);
+      const m = q ? [null, q[1].replace(/\\([tn"\\])/g, (_, c) => ({ t: '\t', n: '\n', '"': '"', '\\': '\\' })[c])]
+        : /^\+\+\+ b\/(.+?)\t?$/.exec(line);
       if (m && wanted.has(m[1])) { cur = m[1]; out[cur] ||= ''; }
       if (line.startsWith('@@')) header = false;
       continue;
