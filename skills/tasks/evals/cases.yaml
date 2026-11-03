@@ -71,5 +71,5 @@ capability:
       - "Orders by dependency (migration/schema → data → service → API), so no task precedes what it depends on; marks `[P]` only on file/state-disjoint tasks and defaults to sequential when unsure."
       - "Uses TDD-shaped slicing: a failing-test task before its implementation task, whose done-check is 'the test that was red is now green'."
       - "Checks coverage both ways: every task traces to a criterion and every criterion has a task; a task with no criterion is cut/flagged as scope creep (route to clarify/specify), and either gap is a defect analyze will flag."
-      - "Appends the table under a `## Tasks` heading INSIDE 02-DOCS/wiki/sdd/plans/auth.md (not a new file) and confirms the plan is indexed in the root CLAUDE.md Knowledge map under sdd/."
+      - "Appends the table under a `## Tasks` heading INSIDE 02-DOCS/wiki/sdd/plans/auth.md (not a new file) and confirms the plan is indexed in 02-DOCS/wiki/index.md under sdd/ (never the root CLAUDE.md)."
       - "Adds a final closer task gating on all done-checks passing plus `scripts/verify.sh` green, and hands off to `analyze` next (then implement) — not straight to implementation."

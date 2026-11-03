@@ -59,7 +59,7 @@ Every spec answers four questions, and `spec:gate` refuses one dated 2026-11-03 
 
 ### Park, don't block
 
-Tier 2, a contradiction with a recorded decision, a gap clarify could not close, or no convergence in 3 rounds: the task goes to the **decision queue** (`## Decision queue` in `progress/<slug>.md`) with its evidence, and the agent **continues with the independent tasks**. The run never waits at 2 a.m. for an answer.
+Tier 2, a contradiction with a recorded decision, a gap that would make the build unsafe, or no convergence in 3 rounds: the task goes to the **decision queue** (`## Decision queue` in `progress/<slug>.md`) with its evidence, and the agent **continues with the independent tasks**. The run never waits at 2 a.m. for an answer.
 
 Every entry carries a kind, one line each:
 
@@ -150,7 +150,7 @@ Every phase ends with this block so the dispatcher can chain without interpretin
   "status": "complete|blocked|failed",
   "executive_summary": "one short paragraph",
   "artifact": "path/to/artifact-or-none",
-  "next_recommended": "sdd-init|specify|clarify|plan|tasks|analyze|implement|verify|review|ship",
+  "next_recommended": "sdd-init|constitution|specify|clarify|plan|tasks|analyze|implement|verify|review|ship",
   "risk": "low|medium|high",
   "model": { "tier": "heavy|balanced|light", "resolved": "model-id", "routing": "on|off" },
   "skill_resolution": { "used": [], "missing": [], "fallback": [], "compact_rules": [] },

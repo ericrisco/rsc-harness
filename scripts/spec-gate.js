@@ -12,8 +12,14 @@ import { specCompleteness, statusClaims, checkClaims } from './lib/spec-gate.js'
 // The corpus of the project the gate is run FROM — not of the package that ships the script. Run as
 // `npx @ericrisco/rsc spec gate` in a user project, a package-relative default found nothing.
 function projectRoot() {
-  try { return execFileSync('git', ['rev-parse', '--show-toplevel'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || process.cwd(); }
-  catch { return process.cwd(); }
+  try {
+    const top = execFileSync('git', ['rev-parse', '--show-toplevel'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    if (top) return top;
+  } catch { /* not a git project: look upward for 02-DOCS instead */ }
+  for (let dir = process.cwd(); ; dir = dirname(dir)) {
+    if (existsSync(join(dir, '02-DOCS'))) return dir;
+    if (dirname(dir) === dir) return process.cwd();
+  }
 }
 
 function defaultTargets() {

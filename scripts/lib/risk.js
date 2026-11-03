@@ -24,8 +24,11 @@ export function changedPaths(root, base = null) {
   const mb = head ? (git(root, ['merge-base', 'HEAD', ref]) || '').trim() : '';
   if (!mb) return { ok: false, message: `rsc: cannot find a common ancestor with ${ref}. Pass --base <ref> or the paths themselves: npx @ericrisco/rsc risk <path…>` };
   // --no-renames: a rename reports both paths, so moving a file OUT of a tier-2 place still counts.
-  const diff = (from) => new Set([...nul(git(root, ['diff', '--name-only', '--no-renames', '-z', from])), ...nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z']))]
-    .filter((n) => !NESTED_WORKTREES.test(n) && !SELLO_STATE_PATHS.includes(n)));
+  // Nested worktrees are skipped only while UNTRACKED (another checkout sitting in the tree). Once
+  // committed, a path under them is part of the change and keeps its tier.
+  const untracked = () => nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z'])).filter((n) => !NESTED_WORKTREES.test(n));
+  const diff = (from) => new Set([...nul(git(root, ['diff', '--name-only', '--no-renames', '-z', from])), ...untracked()]
+    .filter((n) => !SELLO_STATE_PATHS.includes(n)));
   let names = diff(mb);
   let shown = ref;
   // Working straight on the trunk (FTD on an open main), the merge-base IS HEAD, and a change

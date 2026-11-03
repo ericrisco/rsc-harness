@@ -1239,7 +1239,9 @@ async function main() {
       if (argv[1] !== 'gate') { say(USE); if (argv[1]) process.exitCode = 1; return; }
       const { spawnSync } = await import('node:child_process');
       const { fileURLToPath: toPath } = await import('node:url');
-      const r = spawnSync(process.execPath, [toPath(new URL('./spec-gate.js', import.meta.url)), ...argv.slice(2)], { stdio: 'inherit', windowsHide: true });
+      const rest = argv.slice(2);
+      const specs = rest.filter((a, i) => !a.startsWith('--') && rest[i - 1] !== '--target');
+      const r = spawnSync(process.execPath, [toPath(new URL('./spec-gate.js', import.meta.url)), ...specs], { stdio: 'inherit', windowsHide: true });
       process.exitCode = r.status ?? 1;
       return;
     }

@@ -54,11 +54,15 @@ const WRITES_ROOT_CLAUDE = [
 ];
 
 test('no ASDD phase asks to edit the root CLAUDE.md (it is tier 2; the index is 02-DOCS/wiki/index.md)', () => {
-  for (const id of ['asdd', 'constitution', 'specify', 'clarify', 'plan', 'tasks', 'analyze', 'implement', 'verify', 'review', 'ship']) {
-    for (const re of WRITES_ROOT_CLAUDE) assert.doesNotMatch(skill(id), re, `${id} still writes the root CLAUDE.md`);
+  // Instructions wrap across lines; read each file as one line so a wrapped one is still seen.
+  const flat = (t) => t.replace(/\s*\n\s*/g, ' ');
+  const files = ['asdd', 'constitution', 'specify', 'clarify', 'plan', 'tasks', 'analyze', 'implement', 'verify', 'review', 'ship', 'debug']
+    .flatMap((id) => [[`${id}`, skill(id)], [`${id}/evals`, existsSync(join(ROOT, 'skills', id, 'evals', 'cases.yaml')) ? readFileSync(join(ROOT, 'skills', id, 'evals', 'cases.yaml'), 'utf8') : '']]);
+  files.push(['plan-template', readFileSync(join(ROOT, 'skills', 'plan', 'references', 'plan-template.md'), 'utf8')]);
+  for (const [name, text] of files) {
+    for (const re of WRITES_ROOT_CLAUDE) assert.doesNotMatch(flat(text), re, `${name} still writes the root CLAUDE.md`);
+    assert.doesNotMatch(flat(text), /index(ed|es)? (it )?in the root CLAUDE\.md/i, `${name} still expects the root CLAUDE.md index`);
   }
-  const template = readFileSync(join(ROOT, 'skills', 'plan', 'references', 'plan-template.md'), 'utf8');
-  for (const re of WRITES_ROOT_CLAUDE) assert.doesNotMatch(template, re, 'plan-template still writes the root CLAUDE.md');
 });
 
 test('no skill sends the user to an npm script that only exists inside the rsc package', () => {

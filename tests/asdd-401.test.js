@@ -198,3 +198,58 @@ test('ledger: parked is accepted and counted, apart from open', () => {
   assert.equal(s.outcomes.parked, 1);
   assert.equal(s.outcomes.open, 0);
 });
+
+// ── closing-review findings on 4a02266 ──────────────────────────────────────
+
+test('risk + sello: a COMMITTED path under a nested-worktree folder keeps its tier', () => {
+  const cwd = repo();
+  git(cwd, 'checkout', '-qb', 'feat');
+  mkdirSync(join(cwd, '.claude', 'worktrees'), { recursive: true });
+  writeFileSync(join(cwd, '.claude', 'worktrees', 'settings.json'), '{}\n');
+  git(cwd, 'add', '.'); git(cwd, 'commit', '-qm', 'sneak');
+  assert.equal(JSON.parse(run(cwd, ['risk', '--base', 'main', '--json']).stdout).tier, 2);
+  assert.ok(Object.keys(computeCandidate(cwd).files).includes('.claude/worktrees/settings.json'));
+});
+
+test('ledger: parked is not counted as decided in the false rate', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'f.json'), JSON.stringify([
+    { severity: 'nit', file: 'a.js', line: 1, claim: 'naming of the totals helper' },
+    { severity: 'nit', file: 'b.js', line: 1, claim: 'billing rounding loses a cent' },
+  ]));
+  run(cwd, ['review', 'ledger', 'record', 'f.json']);
+  run(cwd, ['review', 'ledger', 'outcome', 'L1', 'false']);
+  run(cwd, ['review', 'ledger', 'outcome', 'L2', 'parked']);
+  assert.equal(JSON.parse(run(cwd, ['review', 'ledger', 'stats', '--json']).stdout).falseRate, 1);
+});
+
+test('spec gate: the global --target value is not read as a spec path', () => {
+  const cwd = repo();
+  const dir = join(cwd, '02-DOCS', 'wiki', 'sdd', 'specs');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'ok.md'), SPEC(true));
+  const r = run(cwd, ['spec', 'gate', '--target', 'claude']);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /PASS\s+ok\.md/);
+});
+
+test('spec gate: outside git, a subfolder still finds the project\'s 02-DOCS', () => {
+  const cwd = realpathSync(mkdtempSync(join(tmpdir(), 'rsc-401-nogit-')));
+  const dir = join(cwd, '02-DOCS', 'wiki', 'sdd', 'specs');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'bad.md'), SPEC(false));
+  mkdirSync(join(cwd, 'sub'));
+  const r = spawnSync(process.execPath, [CLI, 'spec', 'gate'], { cwd: join(cwd, 'sub'), encoding: 'utf8', input: '' });
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.match(r.stdout, /FAIL\s+bad\.md/);
+});
+
+test('task-brief: a row inside its own heading block is printed once', () => {
+  const d = mkdtempSync(join(tmpdir(), 'rsc-401-dup-'));
+  writeFileSync(join(d, 'p.md'), '### T1 — first\n\n| ID | Task |\n|---|---|\n| T1 | dup |\n\nafter\n');
+  const r = spawnSync('sh', [BRIEF, join(d, 'p.md'), '1'], { encoding: 'utf8', env: { ...process.env, TMPDIR: d } });
+  const text = readFileSync(r.stdout.trim(), 'utf8');
+  assert.equal(text.split('| T1 | dup |').length - 1, 1, text);
+  assert.equal(text.split('| ID | Task |').length - 1, 1, text);
+  assert.match(text, /after/);
+});

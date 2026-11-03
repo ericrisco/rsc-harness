@@ -246,9 +246,9 @@ export function computeCandidate(rawRoot, cfg = null) {
 
   const names = new Set();
   for (const n of nulList(git(root, 'diff', '--name-only', '-z', base))) names.add(n);
-  for (const n of nulList(git(root, 'ls-files', '--others', '--exclude-standard', '-z'))) names.add(n);
+  // Untracked nested worktrees are other checkouts; committed paths under them are part of the change.
+  for (const n of nulList(git(root, 'ls-files', '--others', '--exclude-standard', '-z'))) if (!NESTED_WORKTREES.test(n)) names.add(n);
   for (const p of SELLO_STATE_PATHS) names.delete(p);
-  for (const n of [...names]) if (NESTED_WORKTREES.test(n)) names.delete(n);
 
   const files = {};
   const numstat = {};

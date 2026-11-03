@@ -47,7 +47,7 @@ CONTENT="$(awk -v n="$N" '
   /^\|/ {
     split($0, cell, "|"); id = cell[2]; gsub(/[[:space:]]/, "", id)
     if (id ~ /^[Tt][0-9]+$/) {
-      if (idnum(id) == n) { if (head != "") print head; if (sep != "") print sep; print; found = 1 }
+      if (idnum(id) == n) { if (!printing) { if (head != "") print head; if (sep != "") print sep }; print; found = 1; next }
     } else if ($0 ~ /^\|[-:| ]+\|[[:space:]]*$/) { sep = $0 }
     else { head = $0; sep = "" }
     if (!printing) next

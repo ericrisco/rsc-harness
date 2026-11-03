@@ -130,7 +130,8 @@ export function stats(root) {
   for (const e of ledger) if (e.type === 'outcome') last.set(e.id, e.outcome);
   const outcomes = Object.fromEntries([...OUTCOMES, 'open'].map((k) => [k, 0]));
   for (const f of originals) outcomes[last.get(f.id) || 'open'] += 1;
-  const closed = originals.length - outcomes.open;
+  // Parked is undecided: a human holds it. Counting it as closed would understate the false rate.
+  const closed = originals.length - outcomes.open - outcomes.parked;
   const rounds = new Map();
   for (const e of ledger) if (e.type === 'round') rounds.set(e.task, Math.max(rounds.get(e.task) || 0, e.n));
   const totalRounds = [...rounds.values()].reduce((a, b) => a + b, 0);
