@@ -202,6 +202,97 @@ export function classifyRisk(paths, cfg = null) {
   return { tier, classes, lowered, configError };
 }
 
+// ---------------------------------------------------------------- content signals
+// A path table only sees code that lives where its name says. A real 4.0.3 run put a whole login —
+// password hashing, session cookies — into `src/app.js`: tier 1 by path, so no gate and no panel would
+// have fired had the spec not happened to be called `login.md`. These rows read WHAT the change adds:
+// code that hashes passwords, sets session cookies, moves money, alters a schema or carries a secret
+// is high risk wherever it lives. Still deterministic (P1): fixed patterns over the added lines, never
+// a judgement. Documentation is not scanned — a spec that talks about passwords is not auth code.
+export const CONTENT_RISK = [
+  // Operations, not words: hashing or verifying a password, issuing a session or token. A login form's
+  // `type="password"` or an i18n string is not auth code (closing review, 4.0.4).
+  { class: 'auth', scope: 'code', pattern: String.raw`\b(?:bcrypt(?:js)?|argon2(?:id|i|d)?)\.(?:hash|compare|verify)(?:Sync)?\s*\(|\b(?:scrypt|scryptSync|pbkdf2|pbkdf2Sync|timingSafeEqual|createHmac)\s*\(|\bjwt\.(?:sign|verify)\s*\(|\b(?:password_hash|password_verify)\s*\(|\bpassport\.(?:use|authenticate)\s*\(|\b(?:getServerSession|verifyIdToken|signInWith[A-Z]\w*)\s*\(|\bres\.cookie\s*\(\s*(?:['"\x60](?:sid|session|token|auth)|[A-Z_]*(?:SESSION|SID|TOKEN|AUTH))|\bpromisify\s*\(\s*(?:crypto\.)?(?:scrypt|pbkdf2)\b|\b(?:jwtVerify|SignJWT)\b|\breq\.session\.(?:\w+\s*=[^=]|regenerate\s*\()|\bcreateSession\s*\(|set-cookie['"\x60]?\s*[,:]\s*['"\x60]?\s*\x60?(?:sid|session|token|auth)\w*=` },
+  { class: 'billing', scope: 'code', pattern: String.raw`\b(?:paymentIntents|charges|refunds|subscriptions|checkout\.sessions|invoices)\.(?:create|update|confirm|capture)\s*\(|\bprocess\.env\.(?:STRIPE|PAYPAL|BRAINTREE|ADYEN)_\w+` },
+  { class: 'migrations', scope: 'code', pattern: String.raw`\b(?:ALTER\s+TABLE|DROP\s+(?:TABLE|COLUMN)|CREATE\s+TABLE|ADD\s+COLUMN|RENAME\s+COLUMN)\b` },
+  // A secret is a leak wherever it is added — tests, config and docs included.
+  { class: 'secrets', scope: 'all', pattern: String.raw`-----BEGIN [A-Z ]*PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\b[sr]k_live_[0-9a-zA-Z]{16,}|\bgh[pousr]_[0-9A-Za-z]{30,}` },
+];
+// What `code` rows never read: tests and fixtures, lockfiles, minified bundles, docs, and comment lines.
+const NOT_CODE = /(?:^|\/)(?:tests?|__tests__|spec|fixtures?|__mocks__)\/|\.(?:test|spec)\.[cm]?[jt]sx?$|(?:^|\/)(?:package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.lock|poetry\.lock|Gemfile\.lock|composer\.lock|go\.sum)$|\.min\.(?:js|css)$/;
+const COMMENT_LINE = /^\s*(?:\/\/|#|\*|\/\*|<!--|--\s)/;
+const CONTENT_MAX_BYTES = 1024 * 1024;
+
+// The text a change ADDS, per path: added lines of the diff against `base` for tracked files, the
+// whole file for untracked ones (or for every path when there is no base — an explicit `rsc risk
+// <paths>`). One whole-tree diff, filtered after: a pathspec per file overflows the argument list on a
+// large change, and a large change must not get LESS scrutiny than a small one. Unreadable or huge
+// files are skipped: the path row still scores them.
+export function changeText(rawRoot, base, paths) {
+  const root = resolveRoot(rawRoot);
+  const out = {};
+  const wanted = new Set(paths);
+  const readWhole = (p) => {
+    try {
+      const st = lstatSync(join(root, p));
+      if (st.isFile() && st.size <= CONTENT_MAX_BYTES) out[p] = readFileSync(join(root, p), 'utf8');
+    } catch { /* gone or unreadable */ }
+  };
+  if (!base) { paths.forEach(readWhole); return out; }
+  const tracked = new Set(nulList(git(root, 'ls-files', '-z')));
+  const diff = git(root, 'diff', '-U0', '--no-renames', '--no-color', base) || '';
+  let cur = null;
+  let header = false;
+  for (const line of diff.split('\n')) {
+    if (line.startsWith('diff --git ')) { header = true; cur = null; continue; }
+    if (header) {
+      // git quotes a path with a tab, newline or quote even under core.quotePath=false: "b/tab\tx.js".
+      const q = /^\+\+\+ "b\/((?:[^"\\]|\\.)*)"$/.exec(line);
+      const m = q ? [null, q[1].replace(/\\([tn"\\])/g, (_, c) => ({ t: '\t', n: '\n', '"': '"', '\\': '\\' })[c])]
+        : /^\+\+\+ b\/(.+?)\t?$/.exec(line);
+      if (m && wanted.has(m[1])) { cur = m[1]; out[cur] ||= ''; }
+      if (line.startsWith('@@')) header = false;
+      continue;
+    }
+    if (line.startsWith('@@')) continue;
+    if (cur && line.startsWith('+')) out[cur] += `${line.slice(1)}\n`;
+  }
+  paths.filter((p) => !tracked.has(p)).forEach(readWhole);
+  return out;
+}
+
+// Path rows and content rows together. A path scores the higher of the two; `content` lists each
+// content hit (path, class, the matched text) so the reader can see why. Lowered classes apply to
+// content rows too; floor classes stay at tier 2.
+export function classifyChange(paths, texts = {}, cfg = null) {
+  const byPath = classifyRisk(paths, cfg);
+  const lowered = byPath.lowered || [];
+  const content = [];
+  let { tier } = byPath;
+  const classes = { ...byPath.classes };
+  const rowTier = (cls) => (lowered.includes(cls) && !FLOOR_CLASSES.includes(cls) ? 1 : 2);
+  const docs = new RegExp(RISK_TABLE.find((r) => r.class === 'docs').pattern);
+  for (const [p, text] of Object.entries(texts)) {
+    if (!text) continue;
+    const codeText = docs.test(p) || NOT_CODE.test(p) ? '' : text.split('\n').filter((l) => !COMMENT_LINE.test(l)).join('\n');
+    for (const row of CONTENT_RISK) {
+      const m = new RegExp(row.pattern, row.scope === 'all' ? '' : 'i').exec(row.scope === 'all' ? text : codeText);
+      if (!m) continue;
+      const t = rowTier(row.class);
+      content.push({ path: p, class: row.class, match: m[0].slice(0, 60) });
+      if (t > classifyRisk([p], cfg).tier) classes[p] = row.class;
+      if (t > tier) tier = t;
+      break;
+    }
+  }
+  return { ...byPath, tier, classes, content };
+}
+
+export function classifyCandidate(rawRoot, candidate, cfg = null) {
+  const paths = Object.keys(candidate.files);
+  return classifyChange(paths, changeText(rawRoot, candidate.base, paths), cfg);
+}
+
 // How many lenses a tier requires (capped by an explicit config knob, floor 1).
 export function lensesRequired(tier, cfg = null) {
   const base = tier === 0 ? 0 : tier === 1 ? 1 : 3;
@@ -418,7 +509,7 @@ export function checkSello(rawRoot) {
   const paths = Object.keys(candidate.files);
   if (paths.length === 0) return { ok: true, code: 'clean' };
 
-  const risk = classifyRisk(paths, cfg);
+  const risk = classifyCandidate(root, candidate, cfg);
   // P7 first, before any sello state is consulted: a docs-only change must never
   // be blocked by a leftover sello from some other change.
   if (risk.tier === 0) return { ok: true, code: 'risk0' };

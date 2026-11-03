@@ -24,6 +24,9 @@ function guard(root, command) {
   return JSON.parse(r.stdout).hookSpecificOutput.permissionDecisionReason;
 }
 
+// 4.0.4: a passing spec is not enough at tier 2 — the panel must be recorded too.
+const panel = (root, task, lenses = 'correctness,security,tests') => spawnSync(process.execPath, [CLI, 'review', 'ledger', 'panel', task, '--lenses', lenses], { cwd: root, encoding: 'utf8', env: ENV });
+
 function project(branch = 'feat/login') {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'rsc-403-')));
   git(root, 'init', '-q', '-b', 'main');
@@ -85,6 +88,7 @@ test('the same branch passes once a spec linked by frontmatter passes the gate',
   const r = project('feat/x1');
   write(r, 'src/auth/session.js'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'auth');
   write(r, '02-DOCS/wiki/sdd/specs/sign-in.md', SPEC('branch: feat/x1\n'));
+  panel(r, 'sign-in/closing');
   assert.equal(guard(r, 'git push -u origin feat/x1'), null);
 });
 
@@ -92,6 +96,7 @@ test('a spec linked by its slug in the branch name counts too', () => {
   const r = project('feat/login');
   write(r, 'src/auth/session.js'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'auth');
   write(r, '02-DOCS/wiki/sdd/specs/login.md', SPEC());
+  panel(r, 'login/closing');
   assert.equal(guard(r, 'git push'), null);
 });
 
@@ -158,6 +163,7 @@ test('a slug links only when it IS the branch\'s last segment — never a substr
   write(r, '02-DOCS/wiki/sdd/specs/a.md', SPEC());
   assert.ok(guard(r, 'git push'), 'api.md, login.md and a.md do not vouch for feat/rapid-login');
   write(r, '02-DOCS/wiki/sdd/specs/rapid_login.md', SPEC());
+  panel(r, 'rapid_login/closing');
   assert.equal(guard(r, 'git push'), null, 'rapid_login.md is feat/rapid-login: _ and - alike');
 });
 
