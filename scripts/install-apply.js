@@ -103,7 +103,8 @@ export function generatedHookFiles({ target, cwd, policy }) {
     join(cwd, '.rsc', 'ship-guard.mjs'),
     join(cwd, '.rsc', 'branch-guard.mjs'),
     join(cwd, '.rsc', 'gitmoji-guard.mjs'), join(cwd, '.rsc', 'userprompt-gate.mjs'),
-    join(cwd, '.rsc', 'sello.mjs'), ...(laneGate ? [join(cwd, '.rsc', 'ftd-nudge.mjs')] : [])];
+    join(cwd, '.rsc', 'sello.mjs'), join(cwd, '.rsc', 'asdd-gate.mjs'), join(cwd, '.rsc', 'spec-completeness.mjs'),
+    ...(laneGate ? [join(cwd, '.rsc', 'ftd-nudge.mjs')] : [])];
 }
 
 export function managedPathsForInstall({ skillIds, agentIds = [], target, home, cwd, policy }) {

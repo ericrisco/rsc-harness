@@ -61,6 +61,17 @@ try {
   }
 } catch { /* sello lib missing/unloadable → nothing to enforce, fail open */ }
 
+// ---- ASDD escalation gate ---------------------------------------------------
+// A tier-2 branch does not leave the machine (push, PR) without a spec linked to it that passes the
+// spec gate. Its own opt-out (.rsc/.no-asdd-gate); fail-open if a sibling is missing.
+try {
+  const sello = await import(new URL('./sello.mjs', import.meta.url));
+  const { specCompleteness } = await import(new URL('./spec-completeness.mjs', import.meta.url));
+  const { asddGate } = await import(new URL('./asdd-gate.mjs', import.meta.url));
+  const verdict = asddGate(root, command, { sello, specCompleteness });
+  if (verdict) deny(verdict);
+} catch { /* sibling missing/unloadable → nothing to enforce, fail open */ }
+
 // Ship-guard's own opt-out (branch hygiene only — the sello above already ran).
 if (existsSync(join(root, '.rsc', '.no-ship-guard'))) allow();
 
