@@ -48,6 +48,8 @@ export function assess(paths, cfg = null) {
     classes: [...new Set(Object.values(classes))].sort(),
     reviewers: lensesRequired(tier, cfg),
     humanApproval: tier >= 2,
+    // Tier 2 is ASDD work, whatever lane it started in: the ship guard refuses to push it without a spec.
+    escalate: tier >= 2 ? 'asdd' : null,
     paths: classes,
     ...(configError ? { configError } : {}),
   };
@@ -61,6 +63,7 @@ export function render(r) {
     `reviewers: ${r.reviewers}`,
     `human approval: ${r.humanApproval ? 'required' : 'not required'}`,
     ...(r.base ? [`base: ${r.base}`] : []),
+    ...(r.escalate ? ['escalate: asdd — tier 2 needs a spec linked to this branch (`branch: <name>` in its frontmatter) that passes `npx @ericrisco/rsc spec gate`; push and PR are refused until it exists. Write it now, before more code.'] : []),
     ...(r.configError ? [`config ignored: ${r.configError}`] : []),
     ...top.slice(0, 20).map(([p, c]) => `  ${c.padEnd(10)} ${p}`),
     ...(top.length > 20 ? [`  … ${top.length - 20} more`] : []),

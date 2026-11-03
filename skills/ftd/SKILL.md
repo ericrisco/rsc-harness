@@ -74,6 +74,8 @@ The lane inherits ASDD's per-task loop, cut to its floor:
 **Escalate to `asdd`** when `rsc risk` says **tier 2**, or when the change contradicts a decision
 already recorded in `decisions.md`: the feature document becomes its spec input, as below.
 
+**This escalation is enforced, not advised.** A tier-2 branch cannot be pushed or opened as a PR until a spec linked to it (`branch: <name>` in its frontmatter) passes `npx @ericrisco/rsc spec gate`. Time pressure does not change the lane: escalate the moment `rsc risk` says tier 2, before writing more code.
+
 ## Isolation
 
 Where the work runs follows the project's decision (asked at install: «main» or «ramas y PR»; rsc

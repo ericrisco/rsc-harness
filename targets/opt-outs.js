@@ -17,6 +17,7 @@
 
 /** Decisions of the project: they belong in `.rsc.json` and are rebuilt in a clone. */
 export const PROJECT_OPT_OUTS = [
+  'asdd-gate',        // a tier-2 branch cannot be pushed without a spec linked to it (ship guard)
   'audit',            // cadence of this project's skill audit
   'auto-update',      // installing new rsc releases alone: one machine ahead moves the team's catalogVersion
   'claudemd-check',   // the root CLAUDE.md context budget

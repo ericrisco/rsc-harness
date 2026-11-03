@@ -199,6 +199,8 @@ empty sections by name, exits non-zero on any `FAIL`, and prints what it does **
 unmarked assumption is yours to catch, because no parser can. A red gate means the spec is not
 closed: name the section that failed and fix it before step 9.
 
+When the work already lives on a branch, put `branch: <name>` in the spec's frontmatter: for a tier-2 change (`rsc risk`) the ship guard refuses push and PR until a spec linked to the branch passes the gate.
+
 ### Fresh-eyes spec review (step 8, scaled to the stakes)
 
 The author's own context is blind to its own gaps — the same mind that wrote the spec self-reviews it

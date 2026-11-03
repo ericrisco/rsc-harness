@@ -187,6 +187,9 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // sello.mjs is ship-guard's sibling import (hooks are materialized file-by-file,
   // so the deterministic sello core must land next to the guard that loads it).
   copyFileSync(join(HERE, 'sello.mjs'), join(paths.projectRoot, '.rsc', 'sello.mjs'));
+  // The ASDD escalation gate and the spec section check it runs — siblings of the guard, same reason.
+  copyFileSync(join(HERE, 'asdd-gate.mjs'), join(paths.projectRoot, '.rsc', 'asdd-gate.mjs'));
+  copyFileSync(join(HERE, 'spec-completeness.mjs'), join(paths.projectRoot, '.rsc', 'spec-completeness.mjs'));
   const sgCmd = viaBootstrap('guard', at('.rsc', 'ship-guard.mjs'), `"${P}"`);
   settings.hooks.PreToolUse ||= [];
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter(
@@ -240,7 +243,8 @@ export function wireHook(paths, sourceMd, policy = {}) {
     (e) => !hookWiringOf(e).includes('.rsc/userprompt-gate.'),
   );
   settings.hooks.UserPromptSubmit.push({ hooks: [{ type: 'command', command: fgCmd }] });
-  written.push(sgDest, gmDest, fgDest, bgDest, join(paths.projectRoot, '.rsc', 'sello.mjs'), join(paths.projectRoot, '.rsc', 'trunk-policy.mjs'));
+  written.push(sgDest, gmDest, fgDest, bgDest, join(paths.projectRoot, '.rsc', 'sello.mjs'), join(paths.projectRoot, '.rsc', 'trunk-policy.mjs'),
+    join(paths.projectRoot, '.rsc', 'asdd-gate.mjs'), join(paths.projectRoot, '.rsc', 'spec-completeness.mjs'));
   } else {
     for (const event of ['PreToolUse', 'UserPromptSubmit']) {
       if (!settings.hooks[event]) continue;
@@ -251,7 +255,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
       });
       if (!settings.hooks[event].length) delete settings.hooks[event];
     }
-    const gone = ['ship-guard.mjs', 'branch-guard.mjs', 'gitmoji-guard.mjs', 'sello.mjs', ...(laneGate ? [] : ['trunk-policy.mjs', 'userprompt-gate.mjs'])];
+    const gone = ['ship-guard.mjs', 'branch-guard.mjs', 'gitmoji-guard.mjs', 'sello.mjs', 'asdd-gate.mjs', 'spec-completeness.mjs', ...(laneGate ? [] : ['trunk-policy.mjs', 'userprompt-gate.mjs'])];
     for (const name of gone) rmSync(join(paths.projectRoot, '.rsc', name), { force: true });
     if (laneGate) {
       // Same per-turn gate as a governed project: the lane, and where code changes go here.
