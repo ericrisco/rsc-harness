@@ -1241,7 +1241,12 @@ async function main() {
       const base = flag('base');
       if (base === true) { say('Use: npx @ericrisco/rsc risk [--base <ref>] [paths…] [--json]'); process.exitCode = 1; return; }
       const rest = argv.slice(1);
-      const given = rest.filter((a, i) => !a.startsWith('--') && rest[i - 1] !== '--base');
+      // Values of value-taking flags are not paths (`--target` is global). Paths given from a
+      // subdirectory are resolved against the repository root, or the table would never match them.
+      const VALUED = new Set(['--base', '--target']);
+      const { resolve: res, relative: rel } = await import('node:path');
+      const given = rest.filter((a, i) => !a.startsWith('--') && !VALUED.has(rest[i - 1]))
+        .map((p) => rel(root, res(process.cwd(), p)).split('\\').join('/'));
       let paths = given;
       if (!given.length) {
         const c = K.changedPaths(root, base || null);
@@ -1259,7 +1264,7 @@ async function main() {
       const USE = [
         'Use: npx @ericrisco/rsc review consolidate [report.md|findings.json ...] [--json] [--window <lines>]',
         '  Without files it reads stdin. Each lens report carries its findings in ```json findings blocks.',
-        '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant> | round <task> | stats [--json]',
+        '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant> | round <slug>/<task> | stats [--json]',
         '     npx @ericrisco/rsc review escapes [--since <ref>] [--json]',
       ].join('\n');
       if (argv[1] === 'ledger' || argv[1] === 'escapes') {
@@ -1281,12 +1286,14 @@ async function main() {
         if (sub === 'record') {
           const { readFileSync } = await import('node:fs');
           const R = await import('./lib/review-findings.js');
+          const args = argv.slice(3);
+          const file = args.find((x, i) => !x.startsWith('--') && args[i - 1] !== '--task');
           let raw;
-          try { raw = a && !a.startsWith('--') ? readFileSync(a, 'utf8') : readFileSync(0, 'utf8'); }
+          try { raw = file ? readFileSync(file, 'utf8') : readFileSync(0, 'utf8'); }
           catch (e) { return fail(`rsc: cannot read ${e.path || 'stdin'} (${e.code || e.message}).\n${USE}`); }
           let list;
           try { const v = JSON.parse(raw); list = Array.isArray(v) ? v : (Array.isArray(v?.findings) ? v.findings : [v]); }
-          catch { const p = R.parseFindings(raw, a || 'stdin'); if (p.errors.length) return fail(p.errors.join('\n')); list = p.findings; }
+          catch { const p = R.parseFindings(raw, file || 'stdin'); if (p.errors.length) return fail(p.errors.join('\n')); list = p.findings; }
           const out = L.record(root, list, { task: str('task') || '' });
           if (json) say(JSON.stringify(out, null, 2));
           else say(out.map((f) => `${f.id}  ${f.status === 'repeat' ? `repeat of ${f.repeatOf} — do not raise it again` : 'new'}  ${f.file || '(no file)'}  ${f.claim}`).join('\n') || 'nothing to record');

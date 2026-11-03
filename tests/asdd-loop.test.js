@@ -65,6 +65,27 @@ test('risk: with no paths it reads the change against the trunk, untracked files
   assert.deepEqual(j.classes, ['billing']);
 });
 
+test('risk: moving a file out of a tier-2 place still counts as tier 2', () => {
+  const cwd = repo();
+  mkdirSync(join(cwd, '.github', 'workflows'), { recursive: true });
+  writeFileSync(join(cwd, '.github', 'workflows', 'ci.yml'), 'on: push\n');
+  git(cwd, 'add', '.'); git(cwd, 'commit', '-qm', 'ci');
+  git(cwd, 'checkout', '-qb', 'feat');
+  git(cwd, 'mv', '.github/workflows/ci.yml', 'old-ci.yml');
+  git(cwd, 'commit', '-qm', 'move');
+  assert.match(run(cwd, ['risk', '--base', 'main']).stdout, /^tier 2$/m);
+});
+
+test('risk: the global --target value is not a path, and paths from a subfolder resolve to the root', () => {
+  const cwd = repo();
+  git(cwd, 'checkout', '-qb', 'feat');
+  mkdirSync(join(cwd, 'migrations'), { recursive: true });
+  writeFileSync(join(cwd, 'migrations', '001.sql'), 'x\n');
+  assert.match(run(cwd, ['risk', '--target', 'claude', '--base', 'main']).stdout, /^tier 2$/m);
+  const sub = spawnSync(process.execPath, [CLI, 'risk', '001.sql'], { cwd: join(cwd, 'migrations'), encoding: 'utf8', env: { ...process.env, RSC_SELLO_HOME: HOME } });
+  assert.match(sub.stdout, /^tier 2$/m);
+});
+
 test('risk: with nothing to compare against it refuses and says how to go on', () => {
   const cwd = realpathSync(mkdtempSync(join(tmpdir(), 'rsc-asdd-nogit-')));
   const r = run(cwd, ['risk']);
@@ -93,25 +114,63 @@ test('ledger: a different claim in the same file is not a repeat', () => {
   assert.deepEqual(JSON.parse(r.stdout).map((f) => f.status), ['new', 'new']);
 });
 
-test('ledger: the same bug class in the same file is one finding, whatever the wording', () => {
+test('ledger: the same bug class in the same file is one finding when the claims still touch', () => {
   const cwd = repo();
-  writeFileSync(join(cwd, 'f.json'), JSON.stringify([finding('user id read from path', 5, { class: 'IDOR' }), finding('anyone can open any order', 40, { class: 'idor' })]));
+  writeFileSync(join(cwd, 'f.json'), JSON.stringify([finding('order id read from the path, no owner check', 5, { class: 'IDOR' }), finding('owner check missing: user opens any order', 40, { class: 'idor' })]));
   const r = run(cwd, ['review', 'ledger', 'record', 'f.json', '--json']);
   assert.deepEqual(JSON.parse(r.stdout).map((f) => f.status), ['new', 'repeat']);
+});
+
+test('ledger: the same class alone never hides a different defect in the same file', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'f.json'), JSON.stringify([
+    finding('parseUser returns undefined on an empty payload', 5, { class: 'null-check' }),
+    finding('deleteInvoice skips the tenant guard, letting any tenant delete', 80, { class: 'null-check' }),
+  ]));
+  const r = run(cwd, ['review', 'ledger', 'record', 'f.json', '--json']);
+  assert.deepEqual(JSON.parse(r.stdout).map((f) => f.status), ['new', 'new']);
+});
+
+test('ledger: a finding closed as fixed that comes back is a regression, raised anew', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'f.json'), JSON.stringify([finding('discount applied to one unit only, not the whole cart')]));
+  run(cwd, ['review', 'ledger', 'record', 'f.json']);
+  run(cwd, ['review', 'ledger', 'outcome', 'L1', 'fixed']);
+  const again = JSON.parse(run(cwd, ['review', 'ledger', 'record', 'f.json', '--json']).stdout);
+  assert.equal(again[0].status, 'new');
+});
+
+test('ledger: the file is read wherever the --task flag sits, and junk entries do not crash it', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'f.json'), JSON.stringify([finding('race on concurrent checkout'), null, 3]));
+  const r = run(cwd, ['review', 'ledger', 'record', '--task', 'T2', 'f.json', '--json']);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].task, 'T2');
+  writeFileSync(join(cwd, 'n.json'), 'null');
+  assert.equal(run(cwd, ['review', 'ledger', 'record', 'n.json']).status, 0);
 });
 
 test('ledger: rounds 1–3 pass, the 4th is refused with the way out', () => {
   const cwd = repo();
   for (let i = 1; i <= MAX_ROUNDS; i += 1) {
-    const r = run(cwd, ['review', 'ledger', 'round', 'T1']);
+    const r = run(cwd, ['review', 'ledger', 'round', 'cart/T1']);
     assert.equal(r.status, 0, `round ${i}: ${r.stdout}`);
     assert.match(r.stdout, new RegExp(`round ${i} of ${MAX_ROUNDS}`));
   }
-  const fourth = run(cwd, ['review', 'ledger', 'round', 'T1']);
+  const fourth = run(cwd, ['review', 'ledger', 'round', 'cart/T1']);
   assert.notEqual(fourth.status, 0);
   assert.match(fourth.stdout, /rethink the approach/);
   assert.match(fourth.stdout, /decision queue/);
-  assert.equal(run(cwd, ['review', 'ledger', 'round', 'T2']).status, 0, 'rounds are per task');
+  assert.equal(run(cwd, ['review', 'ledger', 'round', 'cart/T2']).status, 0, 'rounds are per task');
+  assert.equal(run(cwd, ['review', 'ledger', 'round', 'invoices/T1']).status, 0, 'and per spec: every plan starts at T1');
+});
+
+test('ledger: a bare task id is refused, with the qualified form in the message', () => {
+  const r = run(repo(), ['review', 'ledger', 'round', 'T001']);
+  assert.notEqual(r.status, 0);
+  assert.match(r.stdout, /<slug>\/T001/);
 });
 
 test('ledger: outcomes are validated and counted; stats report the false rate and open findings', () => {
@@ -122,7 +181,7 @@ test('ledger: outcomes are validated and counted; stats report the false rate an
   assert.notEqual(run(cwd, ['review', 'ledger', 'outcome', 'L9', 'fixed']).status, 0, 'unknown id refused');
   assert.equal(run(cwd, ['review', 'ledger', 'outcome', 'L1', 'fixed']).status, 0);
   assert.equal(run(cwd, ['review', 'ledger', 'outcome', 'L2', 'false']).status, 0);
-  run(cwd, ['review', 'ledger', 'round', 'T1']); run(cwd, ['review', 'ledger', 'round', 'T1']);
+  run(cwd, ['review', 'ledger', 'round', 'x/T1']); run(cwd, ['review', 'ledger', 'round', 'x/T1']);
   const s = JSON.parse(run(cwd, ['review', 'ledger', 'stats', '--json']).stdout);
   assert.equal(s.findings, 3);
   assert.equal(s.outcomes.fixed, 1);
@@ -137,7 +196,7 @@ test('ledger: outcomes are validated and counted; stats report the false rate an
 test('ledger: it lives in .rsc/ and never becomes part of a sealed candidate', () => {
   assert.ok(SELLO_STATE_PATHS.includes(LEDGER_PATH));
   const cwd = repo();
-  run(cwd, ['review', 'ledger', 'round', 'T1']);
+  run(cwd, ['review', 'ledger', 'round', 'x/T1']);
   assert.match(readFileSync(join(cwd, LEDGER_PATH), 'utf8'), /"type":"round"/);
 });
 

@@ -53,7 +53,7 @@ Every spec answers four questions, and `spec:gate` refuses one dated 2026-11-03 
 
 ### The loop converges
 
-`npx @ericrisco/rsc review ledger` holds it to the rules that stopped Anthropic's 50-round reviews: `round <task>` refuses a 4th round (rethink the approach or park the task), `record` marks a finding already raised as a `repeat` that is never raised again, `outcome` closes each finding as `fixed|false|intentional|irrelevant`, `stats` measures the noise. Flag the bug class, not the line; from round 2 re-review only the new diff.
+`npx @ericrisco/rsc review ledger` holds it to the rules that stopped Anthropic's 50-round reviews: `round <slug>/<task>` refuses a 4th round (rethink the approach or park the task), `record` marks a finding already raised as a `repeat` that is never raised again, `outcome` closes each finding as `fixed|false|intentional|irrelevant`, `stats` measures the noise. Flag the bug class, not the line; from round 2 re-review only the new diff.
 
 ### Park, don't block
 

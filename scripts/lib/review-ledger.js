@@ -18,10 +18,13 @@ export const OUTCOMES = ['fixed', 'false', 'intentional', 'irrelevant'];
 export const MAX_ROUNDS = 3;
 export const EVALS_DIR = '02-DOCS/wiki/sdd/review-evals';
 
-// Two findings are the same claim when they sit in the same file and either name the same bug class
-// or share most of their words. The line is left out on purpose: it moves between rounds, and a
-// repeat must survive the fix that moved it.
+// Two findings are the same claim when they sit in the same file and share most of their words, or
+// name the same bug class AND still share some. A class alone is not enough: two different
+// null-check bugs in one file are two findings, and suppressing the second hides a real defect.
+// The line is left out on purpose: it moves between rounds, and a repeat must survive the fix
+// that moved it.
 export const SAME_CLAIM = 0.5;
+export const SAME_CLASS_CLAIM = 0.2;
 const STOP = new Set('the and for with not that this its are was from any only one but has have into than then when which will can'.split(' '));
 const words = (s) => new Set(String(s || '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !STOP.has(w)));
 function overlap(a, b) {
@@ -47,8 +50,9 @@ export function normalize(f) {
 
 export function sameClaim(a, b) {
   if (a.file !== b.file) return false;
-  if (a.class && b.class && a.class.toLowerCase() === b.class.toLowerCase()) return true;
-  return overlap(a.claim, b.claim) >= SAME_CLAIM;
+  const o = overlap(a.claim, b.claim);
+  if (a.class && b.class && a.class.toLowerCase() === b.class.toLowerCase()) return o >= SAME_CLASS_CLAIM;
+  return o >= SAME_CLAIM;
 }
 
 export function readLedger(root) {
@@ -68,10 +72,13 @@ function append(root, entries) {
 // being measured) but points at the original, and the caller must not raise it again.
 export function record(root, rawFindings, { task = '', now = new Date().toISOString() } = {}) {
   const ledger = readLedger(root);
-  const seen = ledger.filter((e) => e.type === 'finding' && !e.repeatOf);
+  // A finding closed as fixed that shows up again is a regression, not noise: it is raised anew.
+  const fixed = new Set(ledger.filter((e) => e.type === 'outcome' && e.outcome === 'fixed').map((e) => e.id));
+  const seen = ledger.filter((e) => e.type === 'finding' && !e.repeatOf && !fixed.has(e.id));
   let n = ledger.filter((e) => e.type === 'finding').length;
   const out = [];
   for (const raw of rawFindings) {
+    if (!raw || typeof raw !== 'object') continue;
     const f = normalize(raw);
     n += 1;
     const original = seen.find((s) => sameClaim(s, f));
@@ -96,7 +103,13 @@ export function outcome(root, id, value, { now = new Date().toISOString() } = {}
 
 // Counts one more review round for a task. The fourth is refused, with the way out in the message
 // (P6): rethink the approach, or park the task in the decision queue and go on with independent work.
+// The task is qualified by its spec (`<slug>/T001`): every plan numbers its tasks from T001, and a
+// bare id would let one feature inherit another's rounds and park work never reviewed.
+export const QUALIFIED_TASK = /^[^/\s]+\/[^/\s]+$/;
 export function round(root, task, { now = new Date().toISOString() } = {}) {
+  if (!QUALIFIED_TASK.test(task)) {
+    return { ok: false, round: 0, message: `rsc: qualify the task with its spec slug, e.g. \`review ledger round <slug>/${task || 'T001'}\` — task ids repeat across plans.` };
+  }
   const n = readLedger(root).filter((e) => e.type === 'round' && e.task === task).length + 1;
   if (n > MAX_ROUNDS) {
     return {

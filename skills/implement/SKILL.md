@@ -140,7 +140,7 @@ A control that did not run is reported as **not run**, never as passed — and t
 
 ### f) Fix loop — at most 3 rounds
 
-Each round opens with `npx @ericrisco/rsc review ledger round <task>`. It exits non-zero on the 4th
+Each round opens with `npx @ericrisco/rsc review ledger round <slug>/<task>`. It exits non-zero on the 4th
 round with the action to take; obey it (step g).
 
 - **From round 2, re-review only the new diff** (BASE = the previous round's head).
@@ -347,7 +347,7 @@ outranks the plan, and the plan outranks your in-the-moment preference.
 - [ ] c) review by tier, fresh context, spec + diff + surrounding code, no pre-judging
 - [ ] d) `review consolidate` + `finding-verifier`; `review ledger record`
 - [ ] e) tests, build, security, traceability — each passed or **not run**
-- [ ] f) `review ledger round <task>` each round; ≤ 3; class fixed, no repeats
+- [ ] f) `review ledger round <slug>/<task>` each round; ≤ 3; class fixed, no repeats
 - [ ] g) fixed + logged in decisions.md, or parked in the decision queue
 - [ ] Progress entry appended; skill resolution recorded; checkpoint shown
 ```

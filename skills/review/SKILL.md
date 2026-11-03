@@ -213,7 +213,7 @@ A review loop that never converges is worse than none: Anthropic saw a single PR
 Four rules, enforced by `npx @ericrisco/rsc review ledger` (`.rsc/review-ledger.jsonl`) rather
 than by memory:
 
-1. **Max 3 rounds per task.** Start each round with `review ledger round <task>`; it exits non-zero
+1. **Max 3 rounds per task.** Start each round with `review ledger round <slug>/<task>`; it exits non-zero
    on the 4th. That is not "try harder": rethink the approach, or park the task in the decision
    queue and continue with independent work.
 2. **From round 2, re-review only the new diff** — what changed since the last round, not the task

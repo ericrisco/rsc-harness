@@ -23,7 +23,8 @@ export function changedPaths(root, base = null) {
   const head = git(root, ['rev-parse', 'HEAD']);
   const mb = head ? (git(root, ['merge-base', 'HEAD', ref]) || '').trim() : '';
   if (!mb) return { ok: false, message: `rsc: cannot find a common ancestor with ${ref}. Pass --base <ref> or the paths themselves: npx @ericrisco/rsc risk <path…>` };
-  const names = new Set([...nul(git(root, ['diff', '--name-only', '-z', mb])), ...nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z']))]);
+  // --no-renames: a rename reports both paths, so moving a file OUT of a tier-2 place still counts.
+  const names = new Set([...nul(git(root, ['diff', '--name-only', '--no-renames', '-z', mb])), ...nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z']))]);
   for (const p of SELLO_STATE_PATHS) names.delete(p);
   return { ok: true, base: ref, paths: [...names].sort() };
 }
