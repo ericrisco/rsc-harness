@@ -133,3 +133,38 @@ test('rsc risk announces the escalation at tier 2, and only there', () => {
   const one = spawnSync(process.execPath, [CLI, 'risk', 'src/app.js', '--json'], { cwd: r, encoding: 'utf8', env: ENV });
   assert.equal(JSON.parse(one.stdout).escalate, null);
 });
+
+// ── closing-review findings on 07c110d ──────────────────────────────────────
+
+test('wrapped and option-heavy forms are pushes too', () => {
+  for (const c of ['bash -c "git push"', "sh -c 'git push origin HEAD'", 'eval "git push"', 'gh -R a/b pr merge 3', 'gh --repo a/b pr create']) {
+    assert.ok(isPushOrPr(c), c);
+  }
+  assert.ok(!isPushOrPr('gh -R a/b pr view 3'));
+});
+
+test('end to end: a tier-2 branch is refused through bash -c and gh --repo', () => {
+  const r = project('feat/rapid-login');
+  write(r, 'src/auth/session.js'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'auth');
+  assert.ok(guard(r, 'bash -c "git push"'));
+  assert.ok(guard(r, 'gh --repo a/b pr create'));
+});
+
+test('a slug links only when it IS the branch\'s last segment — never a substring', () => {
+  const r = project('feat/rapid-login');
+  write(r, 'src/auth/session.js'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'auth');
+  write(r, '02-DOCS/wiki/sdd/specs/api.md', SPEC());
+  write(r, '02-DOCS/wiki/sdd/specs/login.md', SPEC());
+  write(r, '02-DOCS/wiki/sdd/specs/a.md', SPEC());
+  assert.ok(guard(r, 'git push'), 'api.md, login.md and a.md do not vouch for feat/rapid-login');
+  write(r, '02-DOCS/wiki/sdd/specs/rapid_login.md', SPEC());
+  assert.equal(guard(r, 'git push'), null, 'rapid_login.md is feat/rapid-login: _ and - alike');
+});
+
+test('a branch that only touches harness configuration needs no spec', () => {
+  const r = project('chore/rsc-upgrade');
+  write(r, 'CLAUDE.md', '# project\n'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'harness');
+  assert.equal(guard(r, 'git push'), null);
+  write(r, 'src/auth/x.js'); git(r, 'add', '-A'); git(r, 'commit', '-qm', 'auth too');
+  assert.ok(guard(r, 'git push'), 'harness plus auth is feature work again');
+});

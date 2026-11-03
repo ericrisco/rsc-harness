@@ -8,19 +8,28 @@
 // must exist and pass the spec gate.
 //
 // A spec is linked to the branch when its frontmatter says `branch: <branch>`, or when its file name
-// (the slug) appears in the branch name (`feat/login` ↔ `specs/login.md`).
+// (the slug) IS the branch's last segment (`feat/login` ↔ `specs/login.md`; `_` and `-` alike). Exact,
+// never a substring: `api.md` must not vouch for `feat/rapid-login`.
+// A branch whose tier-2 paths are all harness configuration (an rsc install or upgrade, CLAUDE.md) is
+// not feature work and needs no spec — it still needs a human, as every tier 2 does.
 // Fail-open on any environment problem; opt out per project with `.rsc/.no-asdd-gate`.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { expand } from './shell-unwrap.mjs';
 
-const OPTS = String.raw`(?:(?:-[Cc]\s+\S+|--?\S+)\s+)*`;
+// Options that take a value must swallow it, or `gh -R owner/repo pr create` reads `owner/repo` as
+// the subcommand and slips past.
+const OPTS = String.raw`(?:(?:-[CcR]\s+\S+|--(?:repo|git-dir|work-tree)\s+\S+|--?\S+)\s+)*`;
 const PUSH_OR_PR = new RegExp(String.raw`\bgit\s+${OPTS}push(?![\w-])|\bgh\s+${OPTS}pr\s+${OPTS}(?:create|merge)(?![\w-])`);
 export const SPECS_DIR = join('02-DOCS', 'wiki', 'sdd', 'specs');
 
+// Quoted text is blanked so a mention is not a push; and the segments a shell really runs
+// (`bash -c "git push"`, `eval …`) are judged too — the same unwrapping the sello uses.
 export function isPushOrPr(command) {
-  if (typeof command !== 'string') return false;
-  return PUSH_OR_PR.test(command.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""'));
+  if (typeof command !== 'string' || !command) return false;
+  const runs = (c) => PUSH_OR_PR.test(c.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""'));
+  return runs(command) || expand(command).some(runs);
 }
 
 function git(root, ...args) {
@@ -34,11 +43,11 @@ const branchOf = (text) => (/^---\r?\n[\s\S]*?^branch:[ \t]*["']?([^"'\r\n]+?)["
 export function linkedSpecs(root, branch, specCompleteness) {
   let files = [];
   try { files = readdirSync(join(root, SPECS_DIR)).filter((f) => f.endsWith('.md') && !f.endsWith('.plan.md')); } catch { return []; }
-  const lower = branch.toLowerCase();
+  const norm = (x) => x.toLowerCase().replace(/_/g, '-');
+  const last = norm(branch.split('/').pop());
   return files.flatMap((f) => {
     const text = readFileSync(join(root, SPECS_DIR, f), 'utf8');
-    const slug = f.slice(0, -3).toLowerCase();
-    if (branchOf(text) !== branch && !lower.split(/[/_.-]+/).join('-').includes(slug)) return [];
+    if (branchOf(text) !== branch && norm(f.slice(0, -3)) !== last) return [];
     const r = specCompleteness(text);
     return [{ path: join(SPECS_DIR, f).split('\\').join('/'), ok: r.ok, missing: r.missing, empty: r.empty }];
   });
@@ -64,6 +73,8 @@ export function asddGate(root, command, { sello, specCompleteness }) {
   ].filter(Boolean))].filter((n) => !sello.SELLO_STATE_PATHS.includes(n));
   const { tier, classes } = sello.classifyRisk(paths, cfg);
   if (tier < 2) return null;
+  const tierTwo = [...new Set(Object.values(classes))].filter((c) => c !== 'default' && c !== 'docs');
+  if (tierTwo.length && tierTwo.every((c) => c === 'harness')) return null;
   const specs = linkedSpecs(root, branch, specCompleteness);
   if (specs.some((s) => s.ok)) return null;
   const why = [...new Set(Object.values(classes).filter((c) => c !== 'default' && c !== 'docs'))].join(', ');
