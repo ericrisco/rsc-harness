@@ -27,7 +27,7 @@ This skill does **not** do a phase. It names the method, reads the register, pla
                  a build + self-check   b rsc risk        c review by tier
                  d verify findings      e mandatory controls
                  f fix (max 3 rounds)   g fix & record  ─or─  park ─► DECISION QUEUE ◄── HUMAN
- 5. CLOSE ────► closing review (whole branch vs spec) · verify against main · rollback plan · explainer
+ 5. CLOSE ────► verify against main + rollback plan · closing review (whole branch vs spec) · explainer
     SHIP ─────► tier 0-1: self-merge on green CI + empty queue  │  tier 2: ◄── HUMAN APPROVES
     LEARN ────► finding outcomes · reverts → reviewer cases · repeated finding → rule
 ```
@@ -38,7 +38,7 @@ This skill does **not** do a phase. It names the method, reads the register, pla
 | **2 Spec** | `../specify/SKILL.md` → `../clarify/SKILL.md` | `specs/<slug>.md` |
 | **3 Plan** | `../plan/SKILL.md` → `../tasks/SKILL.md` → `../analyze/SKILL.md` | `plans/<slug>.md` |
 | **4 Loop** | `../implement/SKILL.md`, calling `../verify/SKILL.md` and `../review/SKILL.md` per task | `progress/<slug>.md` (with `## Decision queue`), `decisions.md` |
-| **5 Close** | `../review/SKILL.md` (closing review), `../verify/SKILL.md` (closing mode), `../ship/SKILL.md` | `verifications/<slug>-<date>.md`, the PR |
+| **5 Close** | `../verify/SKILL.md` (closing mode), then `../review/SKILL.md` (closing review, on what will ship), `../ship/SKILL.md` | `verifications/<slug>-<date>.md`, the PR |
 | on demand | `../debug/SKILL.md` · `../worktrees/SKILL.md` · `../parallel/SKILL.md` | — |
 
 **Where the human enters — three places only:** approving the spec, answering the decision queue, approving a tier-2 merge. Everything else runs.
@@ -69,7 +69,7 @@ Tier 2, a contradiction with a recorded decision, a gap clarify could not close,
 4. **Fuzzy idea, no spec?** → `specify`. **Spec with gaps?** → `clarify`.
 5. **Approved spec, no plan?** → `plan`, then `tasks`, then `analyze`.
 6. **Green light?** → `implement` (the per-task loop; `parallel` / `worktrees` when useful).
-7. **All tasks done or parked?** → closing: `review` (closing review), `verify` (closing mode), then `ship`.
+7. **All tasks done or parked?** → closing: `verify` (closing mode, main merged in), then `review` (closing review of that exact state), then `ship`.
 8. **Broken mid-flight?** → `debug`, then resume.
 
 Cannot tell the phase? Ask one question: *"Do we have a written spec for this yet?"*

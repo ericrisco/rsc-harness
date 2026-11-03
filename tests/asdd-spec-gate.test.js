@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { specCompleteness, ASDD_FAMILIES_SINCE } from '../scripts/lib/spec-gate.js';
+import { readFileSync } from 'node:fs';
+import { specCompleteness } from '../scripts/lib/spec-gate.js';
+
+// The cut is the spec's literal date (AC8), never read back from the code under test.
+const ASDD_FAMILIES_SINCE = '2026-11-03';
 
 // ASDD (4.0): a spec answers four questions or the gate refuses it — from the cut on, never before.
 // Spec: 02-DOCS/wiki/sdd/specs/asdd-v4.md (criterion 8).
@@ -101,4 +105,18 @@ test('"Fuera de alcance" alone counts as the non-goals section', () => {
 
 test('the gate declares the ASDD exemption instead of hiding it', () => {
   assert.ok(specCompleteness('').unchecked.some((u) => u.includes(ASDD_FAMILIES_SINCE)));
+});
+
+test('the shipped template carries the four headings the gate demands', () => {
+  const template = readFileSync(new URL('../skills/specify/references/spec-template.md', import.meta.url), 'utf8');
+  const four = ['What the user can do', 'What result they get', 'What it must respect', 'How it proves it']
+    .map((h) => `\n## ${h}\nfilled.\n`).join('');
+  for (const h of ['What the user can do', 'What result they get', 'What it must respect', 'How it proves it']) {
+    assert.ok(template.includes(`## ${h}`), `template lost "## ${h}"`);
+  }
+  assert.equal(specCompleteness(at('2026-11-20') + four).ok, true, 'the template headings are the families the gate reads');
+});
+
+test('a spec dated a few days after the cut is held to the four as well', () => {
+  assert.equal(specCompleteness(at('2026-11-20')).ok, false);
 });

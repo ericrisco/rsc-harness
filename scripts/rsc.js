@@ -1248,12 +1248,14 @@ async function main() {
       const given = rest.filter((a, i) => !a.startsWith('--') && !VALUED.has(rest[i - 1]))
         .map((p) => rel(root, res(process.cwd(), p)).split('\\').join('/'));
       let paths = given;
+      let against = null;
       if (!given.length) {
         const c = K.changedPaths(root, base || null);
         if (!c.ok) { say(c.message); process.exitCode = 1; return; }
         paths = c.paths;
+        against = c.base;
       }
-      const r = K.assess(paths, S.readEffectiveConfig(root));
+      const r = { ...K.assess(paths, S.readEffectiveConfig(root)), ...(against ? { base: against } : {}) };
       say(argv.includes('--json') ? JSON.stringify(r, null, 2) : K.render(r));
       return;
     }

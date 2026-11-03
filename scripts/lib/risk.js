@@ -24,9 +24,18 @@ export function changedPaths(root, base = null) {
   const mb = head ? (git(root, ['merge-base', 'HEAD', ref]) || '').trim() : '';
   if (!mb) return { ok: false, message: `rsc: cannot find a common ancestor with ${ref}. Pass --base <ref> or the paths themselves: npx @ericrisco/rsc risk <path…>` };
   // --no-renames: a rename reports both paths, so moving a file OUT of a tier-2 place still counts.
-  const names = new Set([...nul(git(root, ['diff', '--name-only', '--no-renames', '-z', mb])), ...nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z']))]);
+  const diff = (from) => new Set([...nul(git(root, ['diff', '--name-only', '--no-renames', '-z', from])), ...nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z']))]);
+  let names = diff(mb);
+  let shown = ref;
+  // Working straight on the trunk (FTD on an open main), the merge-base IS HEAD, and a change
+  // already committed would read as no change at all: tier 0, no reviewer, no escalation. With
+  // nothing uncommitted, the last commit is the change being asked about.
+  if (!base && mb === head.trim() && !names.size && git(root, ['rev-parse', '--verify', '--quiet', 'HEAD~1']) !== null) {
+    names = diff('HEAD~1');
+    shown = 'HEAD~1 (on the trunk: the last commit)';
+  }
   for (const p of SELLO_STATE_PATHS) names.delete(p);
-  return { ok: true, base: ref, paths: [...names].sort() };
+  return { ok: true, base: shown, paths: [...names].sort() };
 }
 
 export function assess(paths, cfg = null) {
@@ -48,6 +57,7 @@ export function render(r) {
     `classes: ${r.classes.join(', ') || 'none'}`,
     `reviewers: ${r.reviewers}`,
     `human approval: ${r.humanApproval ? 'required' : 'not required'}`,
+    ...(r.base ? [`base: ${r.base}`] : []),
     ...(r.configError ? [`config ignored: ${r.configError}`] : []),
     ...top.slice(0, 20).map(([p, c]) => `  ${c.padEnd(10)} ${p}`),
     ...(top.length > 20 ? [`  … ${top.length - 20} more`] : []),

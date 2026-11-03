@@ -6,7 +6,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { SELLO_STATE_PATHS } from '../targets/sello.mjs';
-import { LEDGER_PATH, MAX_ROUNDS } from '../scripts/lib/review-ledger.js';
+import { LEDGER_PATH } from '../scripts/lib/review-ledger.js';
 
 // ASDD's deterministic half: `rsc risk`, `review ledger`, `review escapes`.
 // Spec: 02-DOCS/wiki/sdd/specs/asdd-v4.md (criteria 3–7). Every gate is shown failing AND passing.
@@ -86,6 +86,16 @@ test('risk: the global --target value is not a path, and paths from a subfolder 
   assert.match(sub.stdout, /^tier 2$/m);
 });
 
+test('risk: working straight on the trunk, a committed change is still the change asked about', () => {
+  const cwd = repo();
+  mkdirSync(join(cwd, '.github', 'workflows'), { recursive: true });
+  writeFileSync(join(cwd, '.github', 'workflows', 'release.yml'), 'on: push\n');
+  git(cwd, 'add', '.'); git(cwd, 'commit', '-qm', 'ci');
+  const r = run(cwd, ['risk']);
+  assert.match(r.stdout, /^tier 2$/m);
+  assert.match(r.stdout, /^base: HEAD~1/m);
+});
+
 test('risk: with nothing to compare against it refuses and says how to go on', () => {
   const cwd = realpathSync(mkdtempSync(join(tmpdir(), 'rsc-asdd-nogit-')));
   const r = run(cwd, ['risk']);
@@ -105,6 +115,25 @@ test('ledger: the same claim twice is recorded once as new and once as a repeat,
   assert.match(a.stdout, /L1\s+new/);
   const b = run(cwd, ['review', 'ledger', 'record', 'f2.json', '--task', 'T1']);
   assert.match(b.stdout, /L2\s+repeat of L1/);
+});
+
+test('ledger: the same claim in another file is a different finding', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'f.json'), JSON.stringify([finding('discount applied to one unit only'), { ...finding('discount applied to one unit only'), file: 'src/b.js' }]));
+  const r = run(cwd, ['review', 'ledger', 'record', 'f.json', '--json']);
+  assert.deepEqual(JSON.parse(r.stdout).map((f) => f.status), ['new', 'new']);
+});
+
+test('ledger: the bug class survives the documented pipeline, consolidate --json into record', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'lens.json'), JSON.stringify([finding('order id read from the path, no owner check', 5, { class: 'IDOR' })]));
+  const c = run(cwd, ['review', 'consolidate', 'lens.json', '--json']);
+  writeFileSync(join(cwd, 'c1.json'), c.stdout);
+  assert.equal(JSON.parse(c.stdout).findings[0].class, 'IDOR');
+  run(cwd, ['review', 'ledger', 'record', 'c1.json']);
+  writeFileSync(join(cwd, 'lens2.json'), JSON.stringify([finding('owner check missing: user opens any order', 40, { class: 'idor' })]));
+  writeFileSync(join(cwd, 'c2.json'), run(cwd, ['review', 'consolidate', 'lens2.json', '--json']).stdout);
+  assert.match(run(cwd, ['review', 'ledger', 'record', 'c2.json']).stdout, /repeat of L1/);
 });
 
 test('ledger: a different claim in the same file is not a repeat', () => {
@@ -154,10 +183,11 @@ test('ledger: the file is read wherever the --task flag sits, and junk entries d
 
 test('ledger: rounds 1–3 pass, the 4th is refused with the way out', () => {
   const cwd = repo();
-  for (let i = 1; i <= MAX_ROUNDS; i += 1) {
+  // The cap is the spec's literal 3 (AC5), never read back from the code under test.
+  for (let i = 1; i <= 3; i += 1) {
     const r = run(cwd, ['review', 'ledger', 'round', 'cart/T1']);
     assert.equal(r.status, 0, `round ${i}: ${r.stdout}`);
-    assert.match(r.stdout, new RegExp(`round ${i} of ${MAX_ROUNDS}`));
+    assert.match(r.stdout, new RegExp(`round ${i} of 3`));
   }
   const fourth = run(cwd, ['review', 'ledger', 'round', 'cart/T1']);
   assert.notEqual(fourth.status, 0);
@@ -190,6 +220,13 @@ test('ledger: outcomes are validated and counted; stats report the false rate an
   assert.equal(s.falseRate, 0.5);
   assert.deepEqual(s.open, ['L3']);
   assert.equal(s.meanRounds, 2);
+  // A repeat is noise caught, never a second open finding.
+  writeFileSync(join(cwd, 'again.json'), JSON.stringify([finding('race on concurrent checkout', 31)]));
+  run(cwd, ['review', 'ledger', 'record', 'again.json']);
+  const t = JSON.parse(run(cwd, ['review', 'ledger', 'stats', '--json']).stdout);
+  assert.equal(t.findings, 3);
+  assert.equal(t.repeats, 1);
+  assert.equal(t.outcomes.open, 1);
   assert.match(run(cwd, ['review', 'ledger', 'stats']).stdout, /false rate: 50%/);
 });
 
@@ -215,6 +252,22 @@ test('escapes: a revert without a case is listed, and covered once its case exis
   writeFileSync(join(cwd, '02-DOCS', 'wiki', 'sdd', 'review-evals', `${sha}.md`), '# case\n');
   const after = JSON.parse(run(cwd, ['review', 'escapes', '--json']).stdout);
   assert.deepEqual(after.reverts.map((c) => c.covered), [true]);
+});
+
+test('escapes: each revert is matched to its own case, `revert:` commits count, and --since bounds the range', () => {
+  const cwd = repo();
+  writeFileSync(join(cwd, 'a.js'), '1\n'); git(cwd, 'add', '.'); git(cwd, 'commit', '-qm', 'feat: a');
+  git(cwd, 'revert', '--no-edit', 'HEAD');
+  const old = git(cwd, 'rev-parse', 'HEAD').trim();
+  writeFileSync(join(cwd, 'b.js'), '1\n'); git(cwd, 'add', '.'); git(cwd, 'commit', '-qm', 'revert: undo the QR');
+  const all = JSON.parse(run(cwd, ['review', 'escapes', '--json']).stdout).reverts;
+  assert.equal(all.length, 2);
+  mkdirSync(join(cwd, '02-DOCS', 'wiki', 'sdd', 'review-evals'), { recursive: true });
+  writeFileSync(join(cwd, '02-DOCS', 'wiki', 'sdd', 'review-evals', `${old.slice(0, 7)}.md`), '# case\n');
+  const after = JSON.parse(run(cwd, ['review', 'escapes', '--json']).stdout).reverts;
+  assert.deepEqual(after.map((c) => [c.subject.startsWith('revert:'), c.covered]), [[true, false], [false, true]]);
+  const since = JSON.parse(run(cwd, ['review', 'escapes', '--since', old, '--json']).stdout).reverts;
+  assert.deepEqual(since.map((c) => c.subject), ['revert: undo the QR']);
 });
 
 test('escapes: a repository with no reverts says so and which shapes it recognises', () => {
