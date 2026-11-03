@@ -29,9 +29,9 @@ intent is ambiguous, ask one question and stay here — ambiguity slows the lane
 
 **You choose the lane; never hand that choice to the person.** Simple → **FTD**: one feature document
 in `02-DOCS` (intent, scope, checklist, evidence, next step), tasks checked off against observed proof.
-Big, or decisions that affect each other → **SDD**: enter the chain; the person approves the spec and
+Big, or decisions that affect each other → **ASDD**: enter the chain; the person approves the spec and
 clarify, then picks manual or autopilot. Say which and why in one line; switch if asked.
-→ `../ftd/SKILL.md` · `../sdd/SKILL.md`.
+→ `../ftd/SKILL.md` · `../asdd/SKILL.md`.
 
 **Where.** Default branch open (chosen at install, or nothing complex) → work on it, no branch
 question. Closed («ramas y PR», CI, team) → before each code change ask: this branch, a new one, or
@@ -40,9 +40,9 @@ question. Closed («ramas y PR», CI, team) → before each code change ask: thi
 Judge the **meaning**, not the wording: the trigger is semantic in any language. A bug fix restoring
 intended behaviour is `debug`. Autopilot consent covers a whole run — advance without re-asking.
 
-Lane's skill missing? Offer it (§2) first. SDD recorded as deferred in `.rsc.json`? Run
+Lane's skill missing? Offer it (§2) first. ASDD recorded as deferred in `.rsc.json`? Run
 `npx @ericrisco/rsc@latest reassess`; silent on `RSC_REASSESSMENT_NO_CHANGE`, and on new evidence
-show the plan command — SDD still needs a newly accepted plan id, never added silently.
+show the plan command — ASDD needs a newly accepted plan id, never added silently.
 
 ---
 

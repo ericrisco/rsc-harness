@@ -11,11 +11,11 @@ origin: risco
 
 You have a **constitution**, a **spec**, a **plan** and a **task list**. Four artifacts written at four different moments, by a mind that drifted a little each time. `analyze` reads all four *against each other* and surfaces where they disagree. It is the cheapest place in the whole chain to catch a problem — a contradiction found here costs a sentence; the same contradiction found mid-implement costs a rewrite.
 
-Sixth phase of the rsc-sdd chain (`constitution → specify → clarify → plan → tasks → analyze → implement`); the method itself lives in `../sdd/SKILL.md`. It is a **gate, not a worker**: it produces a report and stops. The user reads the findings and decides what to fix, and which phase to send each fix back to.
+Sixth phase of the rsc-sdd chain (`constitution → specify → clarify → plan → tasks → analyze → implement`); the method itself lives in `../asdd/SKILL.md`. It is a **gate, not a worker**: it produces a report and stops. The user reads the findings and decides what to fix, and which phase to send each fix back to.
 
 **Report only. Resolve nothing.** Never edit the constitution, spec, plan or tasks; never open a code file to "just fix it"; never silently reconcile a contradiction by picking a side. This one is absolute because a gate that quietly fixes things stops being a gate: the user never learns the spec was wrong, the plan built on the old assumption stays stale, and the "consistency check" has manufactured a new inconsistency. Name the conflict, show both sides with locations, propose where it should be resolved, hand the decision back.
 
-**Model tier: `heavy`** (adversarial cross-reading). Resolve and apply it per `../sdd/references/model-routing.md`; routing is off unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`.
+**Model tier: `heavy`** (adversarial cross-reading). Resolve and apply it per `../asdd/references/model-routing.md`; routing is off unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`.
 
 **Register.** Read `technical_level` in `02-DOCS/wiki/harness/user-profile.md` before reporting; with no profile, use analogies and say the harness has not set the register yet. The register changes how the report reads, never what gets checked; the six analyses always run in full.
 
@@ -99,7 +99,7 @@ Render it in the orient voice, in the user's register. Do not log a decision to 
 ## Result envelope
 
 End with the parseable block every SDD phase shares, so the dispatcher can chain without
-interpreting prose (contract: `../sdd/SKILL.md`):
+interpreting prose (contract: `../asdd/SKILL.md`):
 
 ```json result-envelope
 {

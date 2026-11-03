@@ -93,7 +93,7 @@ this slug already exists, update it in place and note what changed — never for
 Architecture, interfaces, data flow and risk are the heaviest reasoning in the chain, so this
 phase's default tier is **`heavy`**. Routing is off unless `models.enabled: true` in
 `02-DOCS/wiki/sdd/config.yaml`; the resolution order, the announce rule and the model table live in
-`../sdd/references/model-routing.md`. Routing off or no profile → session model, silently.
+`../asdd/references/model-routing.md`. Routing off or no profile → session model, silently.
 
 ## Talking about the plan
 
@@ -140,7 +140,7 @@ regardless. (`implement` re-checks this as a hard gate before its first commit.)
 ## Result envelope
 
 End with the parseable block every SDD phase shares, so the dispatcher can chain without
-interpreting prose (contract: `../sdd/SKILL.md`):
+interpreting prose (contract: `../asdd/SKILL.md`):
 
 ```json result-envelope
 {

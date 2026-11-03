@@ -1,5 +1,5 @@
 {
-  "version": "3.7.5",
+  "version": "4.0.0",
   "counts": {
     "skills": 274,
     "agents": 34,
@@ -259,6 +259,27 @@
         "case-studies"
       ],
       "profiles": []
+    },
+    {
+      "id": "asdd",
+      "description": "Use when a feature or substantial change should go from idea to shipped, verified software and an agent may run it for hours on its own — the ASDD (Agent Spec-Driven Development) dispatcher and front door, in any language. A spec that must prove itself, review inside every task scaled by `rsc risk`, a decision queue for what the agent must not decide alone. Routes constitution -> specify -> clarify -> plan -> tasks -> analyze -> implement (verify + review per task) -> closing -> ship. Successor of `sdd`. NOT a single phase (it dispatches), NOT small authorised changes (that is `ftd`), NOT the workspace harness (that is `harness`).",
+      "tags": [
+        "sdd",
+        "asdd",
+        "spec",
+        "workflow",
+        "plan",
+        "review"
+      ],
+      "recommends": [
+        "sdd-init",
+        "constitution",
+        "specify"
+      ],
+      "profiles": [
+        "core",
+        "full"
+      ]
     },
     {
       "id": "astro",
@@ -589,7 +610,7 @@
     },
     {
       "id": "clarify",
-      "description": "Use when a spec exists and must be de-risked before planning — hunt its ambiguities, unstated assumptions and edge cases, ask the few build-changing questions, bake the answers back into the spec. The rsc SDD gate between `specify` (writes the spec) and `plan` (designs the build). NOT the cross-artifact consistency check (that is `analyze`).",
+      "description": "Use when a spec exists and must be de-risked before planning — run the gap checklist over its four ASDD questions and out-of-scope, ask only what changes what gets built (one question at a time, recommendation first), record every other call as an assumption, bake the answers back into the spec. The second half of ASDD stage 2 (Spec), between `specify` (writes the spec) and `plan` (designs the build). NOT the cross-artifact consistency check (that is `analyze`).",
       "tags": [
         "sdd",
         "clarify",
@@ -844,11 +865,12 @@
     },
     {
       "id": "constitution",
-      "description": "Use when setting or amending a project's non-negotiables — stack canon, quality bars, conventions, security/a11y floors — as numbered, testable rules later phases obey. First rsc-sdd phase; writes 02-DOCS/wiki/sdd/constitution.md. NOT a feature spec (that is `specify`), NOT the technical plan (that is `plan`), NOT the wiki itself (that is `harness`).",
+      "description": "Use when setting or amending a project's non-negotiables — stack canon, quality bars, conventions, security/a11y floors — as numbered, testable rules later phases obey, and drafting the REVIEW.md the reviewer reads. ASDD's base stage; writes 02-DOCS/wiki/sdd/constitution.md and REVIEW.md at the project root. NOT a feature spec (that is `specify`), NOT the technical plan (that is `plan`), NOT the wiki itself (that is `harness`).",
       "tags": [
-        "sdd",
+        "asdd",
         "constitution",
-        "principles"
+        "principles",
+        "review"
       ],
       "recommends": [
         "specify"
@@ -1736,7 +1758,6 @@
         "epistemics"
       ],
       "recommends": [
-        "sdd",
         "verify",
         "debug",
         "review"
@@ -1929,7 +1950,7 @@
     },
     {
       "id": "ftd",
-      "description": "Use for ordinary authorised change — the default lane once the decisor has ruled out a question and not selected the chain. Keeps one feature document per feature in 02-DOCS holding intent, scope, checklist, evidence and next step, checks tasks off only against observed proof, and asks whether to branch before the work writes code. NOT the ten-phase chain (that is `sdd`), NOT the classification itself (that is the decisor in `suggest`), NOT a request for information, which writes nothing.",
+      "description": "Use for ordinary authorised change — the default lane once the decisor has ruled out a question and not selected the chain. Keeps one feature document per feature in 02-DOCS holding intent, scope, checklist, evidence and next step, checks tasks off only against observed proof, asks whether to branch before the work writes code, and runs a minimal risk loop (self-check, `rsc risk`, one reviewer from tier 1). NOT the full method (that is `asdd`), NOT the classification itself (that is the decisor in `suggest`), NOT a request for information, which writes nothing.",
       "tags": [
         "ftd",
         "lane",
@@ -2431,14 +2452,16 @@
     },
     {
       "id": "implement",
-      "description": "Use when an approved plan and task list exist and it is time to turn them into working, tested code — the SDD phase after `analyze` and before `verify`. Enforces TDD: a failing test comes before the code that makes it pass, one task at a time, appended to a progress ledger that survives compaction. Delegates test tooling to the stack skill and fans disjoint tasks out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the final lint/test/audit gate (that is `verify`).",
+      "description": "Use when an approved plan and task list exist and it is time to turn them into working, reviewed code — ASDD stage 4, the per-task loop after `analyze`: TDD build and self-check, `rsc risk` on the diff, review scaled by tier (0/1/3 reviewers), mandatory controls (tests, build, security, traceability), at most 3 fix rounds, then fix-and-record or park in the decision queue. Progress ledger survives compaction; disjoint tasks fan out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the closing whole-branch gate (stage 5: `verify` + `review`).",
       "tags": [
+        "asdd",
         "sdd",
         "implement",
         "code"
       ],
       "recommends": [
-        "verify"
+        "verify",
+        "review"
       ],
       "profiles": [
         "core",
@@ -4134,11 +4157,12 @@
     },
     {
       "id": "review",
-      "description": "Use when a green diff needs adversarial judgment in the rsc SDD chain, between verify and ship — give a review keyed to the spec/plan/constitution in 02-DOCS/wiki/sdd/, or receive one and verify each comment before agreeing. NOT running lint/type/tests (that is `verify`), NOT the spec-less standalone pass (that is `code-review`), NOT merging (that is `ship`).",
+      "description": "Use when a diff needs adversarial judgment in rsc ASDD — per task inside implement's loop (depth set by `rsc risk`: none, one fresh-context reviewer, or the three-refuter panel) or as the closing review of the whole branch against the spec — keyed to the spec/plan/constitution in 02-DOCS/wiki/sdd/ and the project's REVIEW.md; or receive a review and verify each comment before agreeing. Converges via `rsc review ledger` (max 3 rounds, no repeated finding). NOT running lint/type/tests (that is `verify`), NOT the spec-less standalone pass (that is `code-review`), NOT merging (that is `ship`).",
       "tags": [
-        "sdd",
+        "asdd",
         "review",
-        "code-review"
+        "code-review",
+        "risk"
       ],
       "recommends": [
         "ship"
@@ -4342,27 +4366,8 @@
       ]
     },
     {
-      "id": "sdd",
-      "description": "Use when you want a disciplined, spec-driven path from a feature idea to shipped, verified software — the SDD dispatcher and front door, in any language. States the method, reads the user's register from 02-DOCS, and routes to the right phase: constitution -> specify -> clarify -> plan -> tasks -> analyze -> implement -> verify -> review -> ship, with debug / worktrees / parallel on demand. Use it to start a feature, to govern the whole flow, or when unsure which phase you are in. NOT a single phase itself (it dispatches), NOT the workspace harness (that is `harness`), NOT a stack build skill.",
-      "tags": [
-        "sdd",
-        "spec",
-        "workflow",
-        "plan"
-      ],
-      "recommends": [
-        "sdd-init",
-        "constitution",
-        "specify"
-      ],
-      "profiles": [
-        "core",
-        "full"
-      ]
-    },
-    {
       "id": "sdd-init",
-      "description": "Use when calibrating an existing repo for the rsc SDD chain: detect stack, package manager, test runners and apply/verify commands, refresh the skill registry, and write the runtime config at 02-DOCS/wiki/sdd/config.yaml. NOT the dispatcher that routes SDD phases (that is `sdd`), NOT first-contact user/workspace bootstrap (that is `init`).",
+      "description": "Use when calibrating an existing repo for the rsc SDD chain: detect stack, package manager, test runners and apply/verify commands, refresh the skill registry, and write the runtime config at 02-DOCS/wiki/sdd/config.yaml. NOT the dispatcher that routes SDD phases (that is `asdd`), NOT first-contact user/workspace bootstrap (that is `init`).",
       "tags": [
         "sdd",
         "init",
@@ -4371,7 +4376,6 @@
         "registry"
       ],
       "recommends": [
-        "sdd",
         "specify",
         "implement",
         "verify"
@@ -4439,12 +4443,13 @@
     },
     {
       "id": "ship",
-      "description": "Use when a verified, review-approved branch has to land — the close of the rsc SDD chain: safety checks, then three landing options (merge, PR, park/discard), authorship always Eric and never an AI trailer. NOT running the gates (that is `verify`), NOT reading the diff for defects (that is `review`), NOT shipping to a server (that is `deployment`).",
+      "description": "Use when a verified branch that passed its closing review has to land — the close of rsc ASDD: safety checks, an explainer for the human (what changed, what the checks proved and would not catch), then three landing options (merge, PR with Testing/Risk/How to revert, park/discard). Risk tier 0-1 with CI green may self-merge; tier 2 waits for human approval. Authorship always the human, never an AI trailer. NOT running the gates (that is `verify`), NOT reading the diff for defects (that is `review`), NOT shipping to a server (that is `deployment`).",
       "tags": [
-        "sdd",
+        "asdd",
         "ship",
         "release",
-        "pr"
+        "pr",
+        "risk"
       ],
       "recommends": [],
       "profiles": [
@@ -4691,7 +4696,7 @@
     },
     {
       "id": "specify",
-      "description": "Use when a feature, change, or product idea is still fuzzy and must become an approved WHAT/WHY spec before any planning or code — the brainstorming front door of SDD. Turns a one-line intent into problem, goals, users, scope, behaviour and acceptance criteria, via frontier-round dialogue and 2-3 approaches with a recommendation, carrying zero implementation detail. Fires whenever someone jumps to HOW before WHAT is agreed, in any language. NOT the technical plan (that is `plan`), NOT the de-risking ambiguity sweep (that is `clarify`), NOT project-wide principles (that is `constitution`).",
+      "description": "Use when a feature, change, or product idea is still fuzzy and must become an approved WHAT/WHY spec before any planning or code — the brainstorming front door of ASDD stage 2 (Spec). Turns a one-line intent into problem, goals, users, out-of-scope, the four ASDD questions (what the user can do, what result they get, what it must respect, how it proves it) and acceptance criteria, via frontier-round dialogue and 2-3 approaches with a recommendation, carrying zero implementation detail. Fires whenever someone jumps to HOW before WHAT is agreed, in any language. NOT the technical plan (that is `plan`), NOT the de-risking ambiguity sweep (that is `clarify`), NOT project-wide principles (that is `constitution`).",
       "tags": [
         "sdd",
         "spec",
@@ -4913,8 +4918,9 @@
     },
     {
       "id": "tasks",
-      "description": "Use when an approved plan needs slicing into an ordered task list before any code — the SDD `tasks` phase. Each row carries a literal done-check, dependencies, a parallel-safe marker and a spec trace, appended to the plan artifact. NOT writing the plan (that is `plan`), NOT the consistency gate (that is `analyze`), NOT executing the tasks (that is `implement`).",
+      "description": "Use when an approved plan needs slicing into an ordered task list before any code — the `tasks` step of ASDD stage 3 (Plan). Each row carries the spec criterion it covers, a risk forecast (tier 0/1/2), a literal done-check, dependencies and a parallel-safe marker, appended to the plan artifact. NOT writing the plan (that is `plan`), NOT the consistency gate (that is `analyze`), NOT executing the tasks (that is `implement`).",
       "tags": [
+        "asdd",
         "sdd",
         "tasks",
         "breakdown"
@@ -5411,8 +5417,9 @@
     },
     {
       "id": "verify",
-      "description": "Use when implementation is finished and about to be called done or merged — the rsc-sdd evidence gate: runs the stack's scripts/verify.sh (lint, type, test, audit), walks every task done-check and acceptance criterion, records a dated verdict. NOT judging the diff by eye (that is `review`, spec-less `code-review`), NOT diagnosis (that is `debug`).",
+      "description": "Use when work is about to be called done — the ASDD evidence gate, in two modes: per task inside `implement`'s loop (tests, build, security, traceability) and at closing over the whole branch against main (stack scripts/verify.sh, every done-check and acceptance criterion, rollback plan, dated verdict). A check that did not execute is reported not run, never passed. NOT judging the diff by eye (that is `review`, spec-less `code-review`), NOT diagnosis (that is `debug`).",
       "tags": [
+        "asdd",
         "sdd",
         "verify",
         "test"

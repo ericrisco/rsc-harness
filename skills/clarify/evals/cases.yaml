@@ -54,18 +54,17 @@ should_not_trigger:
     why: "Establishing project-wide principles is the constitution phase; clarify reads the constitution but does not author it."
 
 # Capability scenario with a rubric to grade WITH vs WITHOUT the skill loaded.
-# A skill-guided pass walks the taxonomy, resolves what the constitution already
-# fixes, ranks by leverage, asks as decisions, and bakes answers back with a
+# A skill-guided pass walks the gap checklist, resolves what the constitution already
+# fixes, asks only what changes the build, records the rest as assumptions, and bakes answers back with a
 # Clarifications log. An ungrounded pass typically free-associates a few
 # questions and never edits the spec or records the reasoning.
 capability:
   - scenario: "We have a spec at 02-DOCS/wiki/sdd/specs/profile.md whose only line about photos is 'Users can upload a profile photo.' De-risk it before we plan."
     must_include:
       - "Reads the spec, the constitution (02-DOCS/wiki/sdd/constitution.md), and the harness profile first — citing anything the constitution already fixes (e.g. storage) as resolved rather than re-asking it."
-      - "Scans against the ambiguity taxonomy and surfaces concrete gaps: accepted formats, max file size / dimensions, empty/no-photo state, upload-failure recovery, old-file deletion on replace, who-can-edit (actor/permission), and security validation of the file type."
-      - "Ranks the gaps by leverage — asks only the build-changing ones (formats+size, security validation, old-file deletion) and proposes safe defaults for the cosmetic ones instead of burning a question on each."
-      - "Frames questions as decisions with a recommendation (e.g. 'soft vs hard delete — recommend X because…'), one ranked batch, anchored to the spec line, rather than open-ended essay prompts or one-at-a-time drips."
-      - "Asks only the build-changing questions and lists the rest as assumed-defaults (assumed unless you object), with no verbosity level; phrases them in the register from technical_level in user-profile.md."
-      - "Bakes the resolved answers BACK into the spec: tightens the photo section into bounded behavior, adds observable acceptance criteria, and bounds dropped items under '## Out of scope'."
+      - "Walks the gap checklist (what the user can do, what result they get, what it must respect, how it proves it, out of scope) and surfaces concrete gaps: accepted formats, max file size / dimensions, empty/no-photo state, upload-failure recovery, old-file deletion on replace, who-can-edit (actor/permission), security validation of the file type, and anything an agent might add 'just in case'."
+      - "Asks only if the answer changes what gets built (formats+size, security validation, old-file deletion); for the rest it picks the most reasonable option and records it in the spec as a 'suposición tomada' with its basis, so the human sees every assumption in one block at approval."
+      - "Asks one question at a time, as a decision with the recommended answer first so a 'yes' suffices (e.g. 'I'd make deletes soft because… — OK?'), anchored to the spec line, rather than open-ended essay prompts or a batch of questions; phrases them in the register from technical_level in user-profile.md."
+      - "Bakes the resolved answers BACK into the spec: tightens the photo section into bounded behavior, adds observable acceptance criteria, and bounds dropped items under out of scope."
       - "Appends a dated '## Clarifications' log of Q → decision → why so the reasoning survives, and does a final re-read to confirm no new gap was opened."
       - "Stays in its lane: decides WHAT, never proposes the technical HOW (no architecture/library choices) and ends by pointing to plan as the next phase."

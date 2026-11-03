@@ -64,5 +64,5 @@ even if it reads tidy.
 - Re-run after any edit to `SKILL.md` or `references/constitution-template.md` —
   wording changes shift both triggering and rubric coverage.
 - Several `route_to` targets are rsc-sdd phase siblings (`specify`, `plan`,
-  `analyze`, `sdd`) that ship alongside this skill; the near-misses here route
+  `analyze`, `asdd`) that ship alongside this skill; the near-misses here route
   only to skills already present in the repo so the eval is runnable today.

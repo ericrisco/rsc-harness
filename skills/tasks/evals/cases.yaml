@@ -66,10 +66,10 @@ capability:
     must_include:
       - "Confirms the inputs first: plan, spec, AND constitution must exist; if the plan were missing it would STOP and route to `plan` rather than slice from intent."
       - "Reads technical_level from 02-DOCS/wiki/harness/user-profile.md and picks the register; the table is complete either way, and the chat adds only one line of why-this-slicing plus the risky tasks."
-      - "Emits sequential zero-padded stable IDs (T001, T002… — no hyphen, GitHub Spec Kit canon) with the six well-formed fields: ID, a separate [P] marker field after the ID, imperative title, done-check, depends-on, and a trace to a spec section."
+      - "Emits sequential zero-padded stable IDs (T001, T002… — no hyphen, GitHub Spec Kit canon) with the seven well-formed fields: ID, a separate [P] marker field after the ID, imperative title, done-check, depends-on, a trace to the spec acceptance criterion it covers, and a risk forecast (tier 0/1/2 from `npx @ericrisco/rsc risk <expected paths>`, never guessed)."
       - "Every done-check is a LITERAL runnable command or checkable observation (e.g. `pytest tests/auth/test_login.py` green; `alembic upgrade head` applies; bad password → 401) — never 'login works'."
       - "Orders by dependency (migration/schema → data → service → API), so no task precedes what it depends on; marks `[P]` only on file/state-disjoint tasks and defaults to sequential when unsure."
       - "Uses TDD-shaped slicing: a failing-test task before its implementation task, whose done-check is 'the test that was red is now green'."
-      - "Ensures every task traces to a spec line and cuts/flags any task with no trace as scope creep (route to clarify/specify), rather than inventing scope."
+      - "Checks coverage both ways: every task traces to a criterion and every criterion has a task; a task with no criterion is cut/flagged as scope creep (route to clarify/specify), and either gap is a defect analyze will flag."
       - "Appends the table under a `## Tasks` heading INSIDE 02-DOCS/wiki/sdd/plans/auth.md (not a new file) and confirms the plan is indexed in the root CLAUDE.md Knowledge map under sdd/."
       - "Adds a final closer task gating on all done-checks passing plus `scripts/verify.sh` green, and hands off to `analyze` next (then implement) — not straight to implementation."

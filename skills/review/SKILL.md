@@ -1,7 +1,7 @@
 ---
 name: review
-description: "Use when a green diff needs adversarial judgment in the rsc SDD chain, between verify and ship — give a review keyed to the spec/plan/constitution in 02-DOCS/wiki/sdd/, or receive one and verify each comment before agreeing. NOT running lint/type/tests (that is `verify`), NOT the spec-less standalone pass (that is `code-review`), NOT merging (that is `ship`)."
-tags: [sdd, review, code-review]
+description: "Use when a diff needs adversarial judgment in rsc ASDD — per task inside implement's loop (depth set by `rsc risk`: none, one fresh-context reviewer, or the three-refuter panel) or as the closing review of the whole branch against the spec — keyed to the spec/plan/constitution in 02-DOCS/wiki/sdd/ and the project's REVIEW.md; or receive a review and verify each comment before agreeing. Converges via `rsc review ledger` (max 3 rounds, no repeated finding). NOT running lint/type/tests (that is `verify`), NOT the spec-less standalone pass (that is `code-review`), NOT merging (that is `ship`)."
+tags: [asdd, review, code-review, risk]
 recommends: [ship]
 profiles: [core, full]
 origin: risco
@@ -9,7 +9,10 @@ origin: risco
 
 # Review — adversarial code review, both directions
 
-Review is the **penultimate gate** of the rsc SDD chain: `constitution → specify → clarify → plan → tasks → analyze → implement → verify → **review** → ship`. By the time a diff reaches review, the `verify` phase has already proven that lint, types, tests and the stack `verify.sh` are green. Review answers a different question: **is the green diff actually correct, well-scoped, and faithful to the spec — or did it pass for the wrong reasons?**
+Tests prove the code works, not that it does what was asked. Review answers that other question: **is the diff correct, well-scoped and faithful to the spec — or did it pass for the wrong reasons?** In ASDD (`../asdd/SKILL.md`) it runs in two modes:
+
+- **Per task** — called from `implement`'s loop after each task's self-check. Depth comes from `npx @ericrisco/rsc risk [--base <ref>] [paths…]` (same path table as the sello, works with the sello off): **tier 0** → no review; **tier 1** → one fresh-context reviewer (a subagent that never saw the implementation conversation); **tier 2** → the three-refuter panel below, and the branch will wait for human approval at ship.
+- **Closing review** — once, before `ship`: the whole branch against the spec. Forty individually-correct tasks can still fail to be the feature together: a criterion nobody owned, two tasks that each assumed the other handled an edge, scope that crept in a slice at a time. Read the spec's acceptance criteria and "must respect" list against `git diff <base>...HEAD`, not the task reviews.
 
 This skill owns **two roles that share one discipline**:
 
@@ -22,9 +25,10 @@ The discipline is the same in both directions: **every finding and every rebutta
 
 ## Read these first
 
-1. `02-DOCS/wiki/sdd/specs/<slug>.md` and `02-DOCS/wiki/sdd/plans/<slug>.md` — what the diff was *supposed* to do. A review with no spec is a review of vibes.
-2. `02-DOCS/wiki/sdd/constitution.md` — the project's non-negotiables (stack canon, quality bars, conventions). Constitution violations are findings even when the code "works".
-3. `02-DOCS/wiki/harness/user-profile.md` — `technical_level`, the register (see "How a review reads" below).
+1. `REVIEW.md` at the project root, if present (drafted by `constitution`): what failure looks like in this repo, paths to skip, the nit cap, and that the summary starts with a count ("3 findings: 1 blocker, 2 nits"). Where it differs from this skill's defaults, it wins.
+2. `02-DOCS/wiki/sdd/specs/<slug>.md` and `02-DOCS/wiki/sdd/plans/<slug>.md` — what the diff was *supposed* to do. A review with no spec is a review of vibes.
+3. `02-DOCS/wiki/sdd/constitution.md` — the project's non-negotiables (stack canon, quality bars, conventions). Constitution violations are findings even when the code "works".
+4. `02-DOCS/wiki/harness/user-profile.md` — `technical_level`, the register (see "How a review reads" below).
 
 If there is no spec/plan (someone jumped straight to code), say so and review against the constitution + the diff's own stated intent. Don't pretend a spec exists.
 
@@ -126,12 +130,14 @@ Every state transition is deterministic CLI, never tokens:
 gap deliberately with `--accept-partial-lenses` (it is recorded). Every approval also appends to
 `.rsc/sello-log.jsonl`, so what shipped under which verdict survives the next freeze.
 
-**Lenses by risk tier** — tier 0 never reaches you (the gate passes docs/copy silently);
-tier 1 → run the single most relevant pass from the table above yourself; tier 2 → dispatch
-**three parallel fresh-context subagents** (`refuter-correctness` · `refuter-security` ·
-`refuter-tests`), each told
-to *refute* readiness, not confirm it. Fresh context is the point: a reviewer who inherits the
-implementer's context inherits its blind spots.
+### Depth by risk — who reviews
+
+`rsc risk` and `sello freeze` read the same path table, so the tier is the same with the sello on
+or off. Tier 0 never reaches you (docs/copy pass silently); tier 1 → **one fresh-context
+reviewer** running the most relevant pass from the table above; tier 2 → **three parallel
+fresh-context subagents** (`refuter-correctness` · `refuter-security` · `refuter-tests`), each
+told to *refute* readiness, not confirm it. Fresh context is the point: a reviewer who inherits the
+implementer's context inherits its blind spots. The closing review is always at least tier 1.
 
 **Give each refuter exactly four inputs — no more, no less.** The diff alone is not enough, and
 that is not a detail: with only the diff, the one failure class no test suite can structurally
@@ -182,8 +188,8 @@ steps, in this order:
 
 Report the consolidated count honestly ("11 reported → 4 unique → 2 confirmed"), and list what was
 refuted and why: a refuted finding hidden from the author is a review nobody can audit. At tier 1
-(one pass, run by you) there is nothing to group, but a blocker still goes to `finding-verifier`
-before it blocks.
+(one reviewer) there is nothing to group, but a blocker still goes to `finding-verifier` before it
+blocks.
 
 **A finding blocks only if it survives all three filters** — no exceptions, and eagerness to
 find something is not evidence:
@@ -195,11 +201,33 @@ find something is not evidence:
 3. **Evidence** — `finding-verifier` returned **CONFIRMED** with its proof. REFUTED is dropped (with
    its reason in the report); UNPROVEN is a `[question]`, and questions don't block.
 
-**Fixing a blocker is budgeted, one attempt.** Before touching anything: estimate the fix and
-declare it — `npx @ericrisco/rsc sello budget --lines <N>`. After the fix:
-`sello budget-check` (over budget → justify with `--justify "…"` or shrink; an unexplained
-overrun is how over-engineering enters disguised as a fix). Then `sello freeze` + re-review
-**only the divergence**, and approve. Still broken after one attempt → stop, hand it to the human.
+**Fixing a blocker is budgeted.** Before touching anything: estimate the fix and declare it —
+`npx @ericrisco/rsc sello budget --lines <N>`. After the fix: `sello budget-check` (over budget →
+justify with `--justify "…"` or shrink; an unexplained overrun is how over-engineering enters
+disguised as a fix). Then `sello freeze` + re-review **only the divergence**, and approve. Each
+fix-and-re-review is one round of the loop below.
+
+### Convergence — the fix loop ends
+
+A review loop that never converges is worse than none: Anthropic saw a single PR take 50 rounds.
+Four rules, enforced by `npx @ericrisco/rsc review ledger` (`.rsc/review-ledger.jsonl`) rather
+than by memory:
+
+1. **Max 3 rounds per task.** Start each round with `review ledger round <task>`; it exits non-zero
+   on the 4th. That is not "try harder": rethink the approach, or park the task in the decision
+   queue and continue with independent work.
+2. **From round 2, re-review only the new diff** — what changed since the last round, not the task
+   again from scratch.
+3. **Flag the bug class, not the line.** "Every handler in this file trusts `req.params.id`" — so
+   one fix covers every instance and round 3 does not find the sibling.
+4. **Never repeat a finding.** Record each round's findings with `review ledger record
+   <findings.json>` (the consolidate output works). A finding already seen — same file, class and
+   normalized title — comes back marked `repeat`; it is never re-raised as new. A repeat means the
+   last fix missed the class, so say that instead.
+
+**Every finding closes with an outcome**: `review ledger outcome <id> fixed|false|intentional|irrelevant`.
+`review ledger stats` then shows totals per outcome, the false rate and mean rounds per task — the
+only way to tell whether a change to the reviewer made it better or worse.
 
 ---
 
@@ -276,26 +304,25 @@ In the `orient` voice: the verdict first, then the blocker list — e.g. `CHANGE
 
 ## Model tier — `heavy` (opt-in routing)
 
-This phase's default model tier is **`heavy`** — adversarial diff reading is where the strongest model pays off most. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch in one line when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
+This phase's default model tier is **`heavy`** — adversarial diff reading is where the strongest model pays off most. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../asdd/references/model-routing.md` — announce the switch in one line when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
 
-## Where this writes
-
-Review is mostly a conversation, but two artifacts persist into the harness wiki so the knowledge model grows:
+## Where this writes — and how the reviewer learns
 
 - **Accepted/declined findings** of consequence → append to `02-DOCS/wiki/sdd/decisions.md` (e.g. "declined NPE finding on documents.py:42 — guarded by require_auth; added regression test"). This is the same append-only log `implement` writes to.
-- If a finding reveals a **missing constitution rule** (a defect class the project keeps hitting), propose adding it to `02-DOCS/wiki/sdd/constitution.md` so the next review catches it earlier.
+- **Escapes become cases.** `npx @ericrisco/rsc review escapes [--since <ref>]` lists every revert commit and whether it has a case at `02-DOCS/wiki/sdd/review-evals/<shortsha>.md`. Write the missing ones: the diff that shipped, where the bug was, and what the reviewer should have said. Only `Revert "…"` / `revert:` commits are seen; a hand-made revert is invisible.
+- **A finding that keeps repeating becomes a rule** — a lint rule, a constitution principle (`02-DOCS/wiki/sdd/constitution.md`, amended via `constitution`) or a line in `REVIEW.md`. Ask what the model didn't have in front of it: a repeat is almost always missing context, not a careless reviewer.
 
-Index both in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) under the `sdd/` topic — the harness owns that map; this skill just keeps its rows honest.
+Index them in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer) under the `sdd/` topic — the harness owns that map; this skill just keeps its rows honest.
 
 ## Result envelope
 
-End with the parseable block every SDD phase shares, so the dispatcher can chain without
-interpreting prose (contract: `../sdd/SKILL.md`):
+End with the parseable block every phase shares, so the dispatcher can chain without
+interpreting prose (contract: `../asdd/SKILL.md`):
 
 ```json result-envelope
 {
   "status": "complete|blocked|failed",
-  "executive_summary": "Adversarial review against spec/plan/constitution; verdict and blocking findings.",
+  "executive_summary": "Per-task or closing review against spec/plan/constitution/REVIEW.md; tier, round, verdict and blocking findings.",
   "artifact": "02-DOCS/wiki/sdd/reviews/<slug>.md",
   "next_recommended": "ship",
   "risk": "low|medium|high",
@@ -303,12 +330,12 @@ interpreting prose (contract: `../sdd/SKILL.md`):
     "used": ["review"],
     "missing": [],
     "fallback": [],
-    "compact_rules": ["Rank or it is noise: blocker / should-fix / nit.", "A finding without a repro is a question, not a defect."]
+    "compact_rules": ["Rank or it is noise: blocker / should-fix / nit.", "A finding without a repro is a question, not a defect.", "Max 3 rounds; never repeat a finding."]
   },
-  "evidence": ["verdict stated (APPROVE | APPROVE WITH NITS | CHANGES REQUESTED)", "each blocker carries location + repro + fix"]
+  "evidence": ["rsc risk tier", "verdict stated (APPROVE | APPROVE WITH NITS | CHANGES REQUESTED)", "each blocker carries location + repro + fix", "every finding has a ledger outcome"]
 }
 ```
 
 ## Next in the chain
 
-When the diff carries an **APPROVE** / **APPROVE WITH NITS** verdict and every blocker is resolved, hand off to **ship** — close the branch via PR / merge / cleanup, with **git authorship as Eric, never Claude**. If the review came back **CHANGES REQUESTED**, the loop goes back to **implement** (fix), then **verify** (re-prove green), then back here for re-review. Don't ship a diff that hasn't earned its verdict.
+Per task: **APPROVE** returns to `implement`'s loop for the next task; **CHANGES REQUESTED** goes back to the fix step of the same task, as the next round. Closing review: **APPROVE** / **APPROVE WITH NITS** with every blocker resolved hands off to **ship**, with **git authorship as the human, never an AI**; anything else goes back to `implement`. Don't ship a diff that hasn't earned its verdict.

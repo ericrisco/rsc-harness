@@ -41,12 +41,32 @@ version, or doing nothing. Required for specs dated 2026-09-06 or later.>
 
 ## Non-goals / out of scope
 - <What is explicitly NOT done in THIS change — adjacent features, deferred
-  work, things a reader might assume are included. Be explicit, not silent:
-  unsaid scope becomes assumed scope.>
+  work, things a reader might assume are included, and what an agent could be
+  tempted to add "just in case" (a feature nobody asked for). Be explicit, not
+  silent: unsaid scope becomes assumed scope.>
 
 ## Users & context
 <Who acts, the situation they're in, and what they're trying to achieve.
 Real users from the constitution/wiki, not invented personas.>
+
+## What the user can do
+<The action, the starting conditions it needs, and who is (and is not)
+allowed to do it. Required for specs dated 2026-11-03 or later.>
+
+## What result they get
+<The observable result, against a reference the human approved: a screenshot
+or sketch for UI, the expected response for an API. An agent's own judgement
+that two screenshots "look alike" is not a reference. Required from 2026-11-03.>
+
+## What it must respect
+<Constraints and prior behaviour that must keep working. Look them up in the
+project's brain if it has one, otherwise in 02-DOCS/wiki/sdd/decisions.md and
+the existing specs, so this spec never steps on a prior decision. Required from
+2026-11-03.>
+
+## How it proves it
+<How the check runs and what evidence remains afterwards. "Yes, I tested it" is
+not evidence. Required from 2026-11-03.>
 
 ## Behaviour
 - Main path: <what the system does, observably, in the common case>
@@ -81,10 +101,12 @@ costliest of the four.>
 - **Before you call it written**, run `npm run spec:gate <path>`. It checks that
   every section here carries content or an explicit open point, and prints the
   clauses it cannot check (the unmarked assumption is yours).
-- **The two doubt sections are dated, not retroactive.** `Cost of not building
+- **The enforced sections are dated, not retroactive.** `Cost of not building
   it` and `The cheapest alternative` are required only for specs whose
-  frontmatter `timestamp` is `2026-09-06` or later. Specs written before that
-  are exempt — they cannot answer honestly after the fact, and a gate that turns
+  frontmatter `timestamp` is `2026-09-06` or later; the four ASDD questions
+  (`What the user can do`, `What result they get`, `What it must respect`, `How
+  it proves it`, or their Spanish headings) from `2026-11-03`. Specs written
+  before are exempt — they cannot answer honestly after the fact, and a gate that turns
   the whole corpus red is a gate that gets switched off. A spec with no readable
   `timestamp` falls on the exempt side too.
 - **Sharpness, not difficulty**, sorts the last two types from the first: *can

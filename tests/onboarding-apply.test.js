@@ -197,7 +197,7 @@ test('accepting fewer targets removes the deselected RSC installation before REA
   // narrows is whether the chain is PRACTISED here, which the sdd decision records.
   assert.equal(existsSync(join(cwd, '.rsc', 'skills', 'specify')), true,
     'the chain stays reachable regardless of declared scope');
-  assert.equal(codex.decisions.find((d) => d.id === 'sdd').state, 'deferred',
+  assert.equal(codex.decisions.find((d) => d.id === 'asdd').state, 'deferred',
     'reachable, but not practised in small software — the distinction the single harness rests on');
   assert.doesNotMatch(readFileSync(join(cwd, '.gitignore'), 'utf8'), /^\.claude\//m);
   assert.deepEqual(verifyOnboarding(cwd, codex, identifyPlan(codex)), []);
@@ -409,14 +409,14 @@ test('floor: a missing floor path is named, a complete floor is silent', async (
 test('floor: the constitution is required only where the plan selects SDD', async () => {
   const withSdd = freshWorkspace('sdd-yes');
   const planWith = buildOnboardingPlan(softwareRecord('complex'), scanProject(withSdd));
-  assert.ok(planWith.decisions.some((d) => d.id === 'sdd' && d.state === 'selected'), 'fixture inválido');
+  assert.ok(planWith.decisions.some((d) => d.id === 'asdd' && d.state === 'selected'), 'fixture inválido');
   assert.ok(planWith.floorPaths.includes('02-DOCS/wiki/sdd/constitution.md'));
   ensureHarnessSkeleton(withSdd);
   assert.ok(missingHarnessFloor(withSdd, planWith).some((m) => m.includes('constitution.md')));
 
   const noSdd = freshWorkspace('sdd-no');
   const planWithout = buildOnboardingPlan(softwareRecord('small'), scanProject(noSdd));
-  assert.ok(planWithout.decisions.some((d) => d.id === 'sdd' && d.state === 'deferred'), 'fixture inválido');
+  assert.ok(planWithout.decisions.some((d) => d.id === 'asdd' && d.state === 'deferred'), 'fixture inválido');
   assert.ok(!planWithout.floorPaths.includes('02-DOCS/wiki/sdd/constitution.md'));
   ensureHarnessSkeleton(noSdd);
   assert.deepEqual(missingHarnessFloor(noSdd, planWithout), [], 'SDD pospuesto no paga constitución');

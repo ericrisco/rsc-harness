@@ -6,7 +6,7 @@ that lets each phase run on the model its work deserves — cheaper where it's s
 where it matters — without surprising anyone and without faking a switch a tool can't make.*
 
 This file is the **single source of truth** for the behavior. `sdd-init` writes the profile,
-`sdd` summarizes it, and every phase skill points here for the procedure. If the three ever
+`asdd` summarizes it, and every phase skill points here for the procedure. If the three ever
 disagree, this file wins.
 
 ## Why this exists
@@ -64,7 +64,7 @@ session model, never announce a switch, never nag. Everything below applies only
 
 **Two phases are deliberately absent from `phases`:**
 
-- `sdd` (the dispatcher) — routing decisions are cheap; it stays on the session model.
+- `asdd` (the dispatcher) — routing decisions are cheap; it stays on the session model.
 - `parallel` — it has no fixed tier. Each fanned-out subagent inherits the tier of the *kind
   of work* its unit does (an implement-type unit → `balanced`; a scan/research unit → `light`;
   a deep-reasoning unit → `heavy`).

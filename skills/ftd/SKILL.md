@@ -1,6 +1,6 @@
 ---
 name: ftd
-description: "Use for ordinary authorised change — the default lane once the decisor has ruled out a question and not selected the chain. Keeps one feature document per feature in 02-DOCS holding intent, scope, checklist, evidence and next step, checks tasks off only against observed proof, and asks whether to branch before the work writes code. NOT the ten-phase chain (that is `sdd`), NOT the classification itself (that is the decisor in `suggest`), NOT a request for information, which writes nothing."
+description: "Use for ordinary authorised change — the default lane once the decisor has ruled out a question and not selected the chain. Keeps one feature document per feature in 02-DOCS holding intent, scope, checklist, evidence and next step, checks tasks off only against observed proof, asks whether to branch before the work writes code, and runs a minimal risk loop (self-check, `rsc risk`, one reviewer from tier 1). NOT the full method (that is `asdd`), NOT the classification itself (that is the decisor in `suggest`), NOT a request for information, which writes nothing."
 tags: [ftd, lane, default, feature-document, evidence]
 recommends: [worktrees, debug, verify]
 profiles: [minimal, core, full]
@@ -10,11 +10,11 @@ origin: risco
 # FTD — Fast-Track Development
 
 The lane ordinary work takes. Not a lighter methodology: the **same** discipline about evidence with
-none of the coordination the ten-phase chain exists to buy. One document instead of five, written
+none of the coordination `asdd` exists to buy. One document instead of five, written
 because the work might be interrupted, not because somebody has to approve it first.
 
 You are here because the decisor in `../suggest/SKILL.md` ruled that this turn authorises a change
-and did not select `../sdd/SKILL.md`. If it is still a question, you are in the wrong place: go back
+and did not select `../asdd/SKILL.md`. If it is still a question, you are in the wrong place: go back
 and answer it.
 
 ## Why this lane exists
@@ -24,7 +24,7 @@ riesgo. Silencio para lo trivial, ceremonia solo donde el fallo es caro. Un sist
 80% inofensivo acaba apagado, y apagado no protege el 20% que importa.»*
 
 The harness spent a long time contradicting it — every request that sounded like building went
-through ten phases. This lane is that principle finally implemented, not a new idea.
+through the whole chain. This lane is that principle finally implemented, not a new idea.
 
 ## The feature document
 
@@ -60,6 +60,20 @@ the test output, the command's result, the page rendering. A task whose check wa
 could not run is recorded as such, honestly. The tenth principle applies here exactly as it does in
 the chain: a result asserted without evidence is treated as not done.
 
+## The minimal loop — per change that writes code
+
+The lane inherits ASDD's per-task loop, cut to its floor:
+
+1. **Self-check** — run the change's own check and record the output under Evidence.
+2. **`npx @ericrisco/rsc risk`** — the tier of what changed (same path table as the sello; works
+   with it off).
+3. **Tier ≥ 1 → one fresh-context reviewer** (`../review/SKILL.md`, per-task mode). Tier 0 → none.
+4. **Mandatory controls** — tests, build, the security scan the project has. What did not run is
+   written «not executed», never left blank.
+
+**Escalate to `asdd`** when `rsc risk` says **tier 2**, or when the change contradicts a decision
+already recorded in `decisions.md`: the feature document becomes its spec input, as below.
+
 ## Isolation
 
 Where the work runs follows the project's decision (asked at install: «main» or «ramas y PR»; rsc
@@ -83,10 +97,10 @@ cleanup is automatic and you do not run anything.
 
 ## Growing out of the lane
 
-A feature that turns out to need the chain is **promoted, not restarted**: the feature document
-becomes the input to `../specify/SKILL.md`, and no completed work is discarded. Promotion happens for
-the same reason the chain is ever entered — durable artifacts would remove a substantial ambiguity —
-and never because the work turned out to be big.
+A feature that turns out to need `asdd` is **promoted, not restarted**: the feature document
+becomes the input to `../specify/SKILL.md`, and no completed work is discarded. Promotion happens
+when durable artifacts would remove a substantial ambiguity, or by the escalation above (tier 2, a
+contradicted decision) — never because the work turned out to be big.
 
 ## Anti-patterns → STOP
 
@@ -96,13 +110,15 @@ and never because the work turned out to be big.
 | Check a task off because you believe it works | Observed proof or it is not done (P10). Record the check you could not run. |
 | Write the document into the code repository | It belongs in `02-DOCS`. A clone should get code, not notes. |
 | Open a worktree "to be safe" | That is the chain's ceremony arriving through the back door (P7). |
-| Escalate to the chain because the change is large | Size never selects it. Only unresolved ambiguity that artifacts would settle. |
+| Escalate to `asdd` because the change is large | Size never selects it. Only unresolved ambiguity, tier 2, or a contradicted decision. |
+| Skip the reviewer because the change looks safe | `rsc risk` decides, not the feeling. Tier ≥ 1 gets one. |
 | Produce a spec, plan or task artifact here | Those are the chain's. This lane has one document. |
 
 ## See Also
 
 - `../suggest/SKILL.md` — the decisor that routed here, and the other two lanes.
-- `../sdd/SKILL.md` — the ten-phase chain, for when artifacts genuinely earn their cost.
+- `../asdd/SKILL.md` — the full method, for when artifacts genuinely earn their cost.
+- `../review/SKILL.md` — the reviewer the minimal loop calls at tier ≥ 1.
 - `../verify/SKILL.md` — the evidence gate, when this lane's checks need the full battery.
 - `../debug/SKILL.md` — a failure to reproduce before fixing; comes back here afterwards.
 

@@ -17,7 +17,7 @@ or screen, and its motion layer, is `../design/SKILL.md`'s.
 
 > Build or review a fast, typed, correctly-architected **client-side** React single-page app bundled by Vite. No server runtime, no RSC tree, no framework router. Server-rendered React (App Router, server actions, SSR/SSG) is not this skill — that is `../nextjs/SKILL.md`.
 
-**SDD gate — before writing feature code.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, stop and hand off to `../specify/SKILL.md`: it runs brainstorm → spec → plan → tasks, then routes back here once the plan is approved. Build directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
+**SDD gate — before writing feature code.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, stop and hand off to `../specify/SKILL.md`: it runs brainstorm → spec → plan → tasks, then routes back here once the plan is approved. Build directly only for a genuinely one-line / low-risk change. Method: `../asdd/SKILL.md`.
 
 ## First: confirm it's a Vite SPA, not a framework
 

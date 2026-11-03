@@ -1,6 +1,6 @@
 ---
 name: sdd-init
-description: "Use when calibrating an existing repo for the rsc SDD chain: detect stack, package manager, test runners and apply/verify commands, refresh the skill registry, and write the runtime config at 02-DOCS/wiki/sdd/config.yaml. NOT the dispatcher that routes SDD phases (that is `sdd`), NOT first-contact user/workspace bootstrap (that is `init`)."
+description: "Use when calibrating an existing repo for the rsc SDD chain: detect stack, package manager, test runners and apply/verify commands, refresh the skill registry, and write the runtime config at 02-DOCS/wiki/sdd/config.yaml. NOT the dispatcher that routes SDD phases (that is `asdd`), NOT first-contact user/workspace bootstrap (that is `init`)."
 tags: [sdd, init, config, testing, registry]
 recommends: [sdd, specify, implement, verify]
 profiles: [core, full]
@@ -15,7 +15,7 @@ Step zero for technical SDD work: read the repo, detect how it should be built a
 02-DOCS/wiki/sdd/config.yaml
 ```
 
-That config is the runtime contract later phases read before choosing commands, TDD strictness, artifact paths, review budget or skill briefs. `sdd` dispatches the phases that consume it, `init` owns first contact and user profiling, `harness` owns `01-TOOLS/` and `02-DOCS/` scaffolding. This skill only calibrates.
+That config is the runtime contract later phases read before choosing commands, TDD strictness, artifact paths, review budget or skill briefs. `asdd` dispatches the phases that consume it, `init` owns first contact and user profiling, `harness` owns `01-TOOLS/` and `02-DOCS/` scaffolding. This skill only calibrates.
 
 ## Inputs
 
@@ -39,7 +39,7 @@ Ask only when the answer changes behavior; explain each trade-off in one line, i
 | `review_budget.line_budget` | `400` | Lower for solo tight review; higher only with explicit approval. |
 | `delivery_strategy.default` | `ask-on-risk` | `ask-on-risk`, `single-pr`, `autochain`, `exception`. |
 | `models.enabled` | `false` | Per-phase model routing is opt-in; leave off unless the user asks for it. |
-| `models.provider` | `anthropic` | Which provider the tiers resolve to. Set from the detected assistant when obvious, else `anthropic`. See `../sdd/references/model-routing.md` for other providers. |
+| `models.provider` | `anthropic` | Which provider the tiers resolve to. Set from the detected assistant when obvious, else `anthropic`. See `../asdd/references/model-routing.md` for other providers. |
 
 ## Detection
 
@@ -145,7 +145,7 @@ models:
   overrides: {}               # per-phase tier overrides set by the user
 ```
 
-The `models` block is the **per-phase model routing** profile: each phase declares a tier (`heavy`/`balanced`/`light`) and the tiers resolve to concrete models for `provider`. The full protocol — how phases apply it, the per-assistant switch mechanism, the provider→model table — lives in `../sdd/references/model-routing.md`. Keep this block byte-for-byte in sync with that reference.
+The `models` block is the **per-phase model routing** profile: each phase declares a tier (`heavy`/`balanced`/`light`) and the tiers resolve to concrete models for `provider`. The full protocol — how phases apply it, the per-assistant switch mechanism, the provider→model table — lives in `../asdd/references/model-routing.md`. Keep this block byte-for-byte in sync with that reference.
 
 Preserve user edits if the file exists: update detected facts and leave comments/custom policy fields intact when possible. **Never flip `models.enabled` or drop `models.overrides` on re-calibration** — a calibration pass that silently switches the user's models is the one failure they cannot detect from the diff, so preserve both verbatim and only refresh `tiers`/`provider` if the user asks. If preservation is risky, write a proposed replacement next to it as `config.proposed.yaml` and ask.
 
@@ -181,9 +181,9 @@ End with the standard SDD result envelope:
 | "I'll skip config and remember the commands in chat." | Chat is not source of truth. Write `config.yaml`. |
 | "No test command detected, but I'll still say strict TDD is active." | Strict TDD needs a runner. Record the gap. |
 | "Load all skills so the agent has context." | That pollutes context. Use registry -> selected skills -> compact rules. |
-| "This is the same as init." | No. `init` profiles user/workspace, `sdd` dispatches the phases, `sdd-init` calibrates the technical SDD runtime they both rely on. |
+| "This is the same as init." | No. `init` profiles user/workspace, `asdd` dispatches the phases, `sdd-init` calibrates the technical SDD runtime they both rely on. |
 | "Create openspec/ because Gentle does." | RSC uses `02-DOCS/wiki/sdd/` as source of truth. |
 
 ## Next
 
-After `sdd-init`, return to `sdd`. If no spec exists, route to `specify`. If the work is ambiguous or architectural, write a proposal first under `02-DOCS/wiki/sdd/proposals/`.
+After `sdd-init`, return to `asdd`. If no spec exists, route to `specify`. If the work is ambiguous or architectural, write a proposal first under `02-DOCS/wiki/sdd/proposals/`.

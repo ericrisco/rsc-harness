@@ -14,10 +14,14 @@
 //
 // `ui-engineering` folded into `ux` in 3.4.0: the screen states and form behaviour it owned are
 // `ux`'s state matrix now, and where component state lives is `react`'s.
+//
+// `sdd` became `asdd` in 4.0.0 (spec asdd-v4): the same phases, with the review moved inside each
+// task of `implement` and scaled by `rsc risk`. Artifacts stay under 02-DOCS/wiki/sdd/.
 export const RETIRED_SKILLS = Object.freeze({
   eli5: 'orient', 'show-me': 'orient', bro: 'unslop',
   'design-loop': 'design', 'design-dna': 'design', 'motion-craft': 'design',
   'ui-engineering': 'ux',
+  sdd: 'asdd',
 });
 
 const retiredTo = (id) => (Object.hasOwn(RETIRED_SKILLS, id) ? RETIRED_SKILLS[id] : id);

@@ -56,12 +56,12 @@ test.after(() => {
 
 test('1 · a skill added after onboarding survives the next sync', () => {
   const cwd = onboarded();
-  rsc(cwd, 'add', 'sdd', '--target', 'claude');
-  assert.equal(existsSync(skillDir(cwd, 'sdd')), true, 'precondition: add installed it');
+  rsc(cwd, 'add', 'asdd', '--target', 'claude');
+  assert.equal(existsSync(skillDir(cwd, 'asdd')), true, 'precondition: add installed it');
 
   rsc(cwd, 'sync');
 
-  assert.equal(existsSync(skillDir(cwd, 'sdd')), true,
+  assert.equal(existsSync(skillDir(cwd, 'asdd')), true,
     'this is the reported data loss: sync removed what add had just installed');
 });
 

@@ -20,7 +20,7 @@ pytest 8 + pytest-asyncio 1.0+ (`asyncio_mode=auto`), ruff 0.7+, mypy 1.13+ stri
 uv 0.5+, uvicorn 0.32+ / gunicorn 23+ + uvicorn-worker 0.3+, PyJWT 2.10+, argon2-cffi 23+,
 pip-audit 2.7+, PostgreSQL 16. (All lower bounds; install the latest in each line.)
 
-> **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
+> **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../asdd/SKILL.md`.
 
 Out of scope, and where it goes instead: [`django`](../django/SKILL.md) for Django; Flask / sync WSGI,
 notebooks and CLI-only scripts (no skill); language-level Python, typing and packaging →

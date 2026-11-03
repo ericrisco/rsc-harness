@@ -1,7 +1,7 @@
 ---
 name: tasks
-description: "Use when an approved plan needs slicing into an ordered task list before any code — the SDD `tasks` phase. Each row carries a literal done-check, dependencies, a parallel-safe marker and a spec trace, appended to the plan artifact. NOT writing the plan (that is `plan`), NOT the consistency gate (that is `analyze`), NOT executing the tasks (that is `implement`)."
-tags: [sdd, tasks, breakdown]
+description: "Use when an approved plan needs slicing into an ordered task list before any code — the `tasks` step of ASDD stage 3 (Plan). Each row carries the spec criterion it covers, a risk forecast (tier 0/1/2), a literal done-check, dependencies and a parallel-safe marker, appended to the plan artifact. NOT writing the plan (that is `plan`), NOT the consistency gate (that is `analyze`), NOT executing the tasks (that is `implement`)."
+tags: [asdd, sdd, tasks, breakdown]
 recommends: [analyze, implement]
 profiles: [core, full]
 origin: risco
@@ -28,7 +28,7 @@ appended to the plan it was built from.
 This phase's default tier is **`balanced`**: decomposing an approved plan is
 structured work, not architecture. Routing is off unless `models.enabled: true`
 in `02-DOCS/wiki/sdd/config.yaml`; when on, resolve the tier and apply it per
-`../sdd/references/model-routing.md`, which owns the resolution order and the
+`../asdd/references/model-routing.md`, which owns the resolution order and the
 announcement rules. Routing off or no profile → honor the session model silently.
 
 ## Read the harness profile first
@@ -45,8 +45,8 @@ You break down a **plan**, not an intent. Before slicing, confirm all three exis
 
 1. **The plan** — `02-DOCS/wiki/sdd/plans/<slug>.md`, written by the `plan`
    phase. It must contain the architecture, interfaces, and testing strategy.
-2. **The spec** — `02-DOCS/wiki/sdd/specs/<slug>.md`, so every task traces to a
-   requirement. A task with no spec line behind it is scope you are inventing.
+2. **The spec** — `02-DOCS/wiki/sdd/specs/<slug>.md`, so every task traces to an
+   acceptance criterion. A task with no criterion behind it is scope you are inventing.
 3. **The constitution** — `02-DOCS/wiki/sdd/constitution.md`, the non-negotiable
    bars (stack canon, quality gates) every task must respect.
 4. **The SDD config** — `02-DOCS/wiki/sdd/config.yaml`, if present. Use its
@@ -61,7 +61,7 @@ exact thing `analyze` will catch next, and you will have wasted the round trip.
 
 ## What makes a task well-formed
 
-Every task is one row. A row is well-formed only when all six fields hold:
+Every task is one row. A row is well-formed only when all seven fields hold:
 
 | Field | Rule |
 | --- | --- |
@@ -70,7 +70,12 @@ Every task is one row. A row is well-formed only when all six fields hold:
 | **Title** | One imperative verb + object. "Implement", "Add", "Wire", "Migrate" — not "Handle" or "Support". |
 | **Done-check** | The **literal** command or observation that proves done. Runnable, not a feeling. See below. |
 | **Depends-on** | The task IDs that must finish first, or `—` for none. Drives the ordering and the parallel markers. |
-| **Trace** | The spec section / acceptance criterion this task satisfies. Every task traces to one; if it can't, it's out of scope. |
+| **Trace** | The spec acceptance criterion this task covers (`AC3`). Every task traces to one; if it can't, it's out of scope. |
+| **Risk forecast** | Tier `0`/`1`/`2` from the paths the task expects to touch: `npx @ericrisco/rsc risk <expected paths…>`. Never guessed. |
+
+**Coverage runs both ways.** A criterion with no task, or a task with no criterion, is a defect
+`analyze` flags. The forecast budgets review; `implement` recomputes the tier on the task's actual
+diff, and that one wins.
 
 Put `[P]` (parallel-safe) in its own field only when the task shares **no files
 and no state** with another unblocked task. When in doubt, leave it blank — a
@@ -125,12 +130,12 @@ will execute.
    service → API → UI. A task never precedes what it depends on.
 4. MARK [P] only on tasks that share no files/state with another
    unblocked task. Default to sequential.
-5. TRACE each task back to a spec line. No trace → cut it (scope creep)
-   or send the gap to `clarify`/`specify`.
-6. ADD the cross-cutting closers: a final "all done-checks pass" task
-   and a "verify.sh green" task that hands off to `verify`.
-7. ADD a review workload + delivery forecast before implementation.
-8. APPEND the table to the plan artifact (see below). Do not start a
+5. TRACE each task to a spec criterion, and each criterion to ≥1 task.
+   No trace → cut it (scope creep) or send the gap to `clarify`/`specify`.
+6. FORECAST risk per task: `npx @ericrisco/rsc risk <expected paths…>`.
+7. ADD the closer: "all done-checks pass + verify.sh green" (stage 5).
+8. ADD a review workload + delivery forecast before implementation.
+9. APPEND the table to the plan artifact (see below). Do not start a
    new file; the list lives with the plan it came from.
 ```
 
@@ -160,14 +165,14 @@ delete a user's map entry.
 ## Tasks
 <!-- generated by tasks on 2026-06-01; IDs are stable, do not renumber -->
 
-| ID | [P] | Task | Done-check | Depends-on | Trace |
-| --- | --- | --- | --- | --- | --- |
-| T001 |  | Add `users` table migration | `alembic upgrade head` applies clean; `\d users` shows email UNIQUE | — | spec §3 Data |
-| T002 | [P] | Add `sessions` table migration | migration applies; FK to users present | T001 | spec §3 Data |
-| T003 |  | Write failing test for `POST /login` | `pytest tests/auth/test_login.py` fails: no route | T001 | spec §4 Auth |
-| T004 |  | Implement `POST /login` | T003 test green; bad pw → 401 | T003 | spec §4 Auth |
-| ... | ... | ... | ... | ... | ... |
-| T0NN |  | All done-checks pass + `verify.sh` green | every row above checked; `scripts/verify.sh` exits 0 | all | spec §Acceptance |
+| ID | [P] | Task | Done-check | Depends-on | Trace | Risk |
+| --- | --- | --- | --- | --- | --- | --- |
+| T001 |  | Add `users` table migration | `alembic upgrade head` applies clean; `\d users` shows email UNIQUE | — | AC1 | 2 |
+| T002 | [P] | Add `sessions` table migration | migration applies; FK to users present | T001 | AC2 | 2 |
+| T003 |  | Write failing test for `POST /login` | `pytest tests/auth/test_login.py` fails: no route | T001 | AC3 | 1 |
+| T004 |  | Implement `POST /login` | T003 test green; bad pw → 401 | T003 | AC3 | 2 |
+| ... | ... | ... | ... | ... | ... | ... |
+| T0NN |  | All done-checks pass + `verify.sh` green | every row above checked; `scripts/verify.sh` exits 0 | all | all ACs | — |
 ```
 
 ### Per-task Interfaces (for context-isolated implementers)
@@ -205,15 +210,13 @@ before a giant diff exists.
 | --- | --- | --- |
 | Estimated changed lines | <number or range> | based on task count + touched areas |
 | Files / areas | <count and names> | modules, migrations, UI, tests, docs |
-| Review risk | low / medium / high | complexity, cross-stack scope, security/data changes |
+| Risk | max tier; count of tier-2 tasks | tier 2 tasks need three refuters and park in the decision queue for the human |
 | Suggested delivery | single-pr / ask-on-risk / autochain / exception | matched to config.review_budget |
 ```
 
-Pick the delivery strategy from the forecast: tiny change → `single-pr`; estimated
-lines over `config.sdd.review_budget.line_budget` (default 400) → recommend
-splitting or `ask-on-risk`; many areas or cross-stack contracts touched →
-`autochain` or a feature-track branch. A deadline or emergency that justifies a
-large review is marked `exception` and requires explicit user approval later.
+Delivery: tiny → `single-pr`; over `config.sdd.review_budget.line_budget` (default
+400) → split or `ask-on-risk`; many areas or cross-stack contracts → `autochain`;
+`exception` (deadline, emergency) needs explicit user approval.
 
 ## Anti-patterns → STOP
 
@@ -223,9 +226,10 @@ large review is marked `exception` and requires explicit user approval later.
 | "Done-check: 'feature works'" | Not runnable, not evidence. Quote the literal test/command, or it's not a done-check. |
 | "One giant task: 'build the backend'" | Unverifiable, un-handoffable. Split until each slice has its own runnable check. |
 | "Mark everything `[P]` so it goes faster" | Shared files = merge collisions. `[P]` only when scope is truly disjoint. |
-| "This task has no spec line but we obviously need it" | That's scope creep wearing a hat. Trace it or cut it; if it's real, send it to `clarify`. |
+| "This task has no criterion but we obviously need it" | That's scope creep wearing a hat. Trace it or cut it; if it's real, send it to `clarify`. |
 | "The plan is thin here, I'll guess the slice" | `analyze` will reject the guess next phase. Tighten the plan first. |
 | "I'll start coding the easy task while I list the rest" | This phase writes zero runtime code. Implementation is `implement`. |
+| "Risk is obviously low, I'll write 0" | The tier comes from `rsc risk` on the paths, never from the agent's judgement. |
 | "Renumber the IDs so they're contiguous" | Downstream phases cite IDs. They're stable once written. Append, don't renumber. |
 
 ## Result envelope
@@ -243,19 +247,19 @@ End with:
     "used": ["tasks"],
     "missing": [],
     "fallback": [],
-    "compact_rules": ["Every task needs a runnable done-check.", "Forecast review load before implementation."]
+    "compact_rules": ["Every task needs a runnable done-check, a criterion trace and a risk forecast.", "Forecast review load before implementation."]
   },
   "evidence": ["task table appended", "review workload forecast appended"]
 }
 ```
 
-## Next in the SDD chain
+## Next in ASDD
 
 The task list is now the contract for the rest of the build. Hand off to
 **`analyze`** — the consistency gate that cross-checks constitution ↔ spec ↔ plan
-↔ **tasks** and surfaces orphan tasks and untraceable scope — and then to
-**`implement`**, which executes the list TDD-style, using `parallel` for the `[P]`
-tasks and `worktrees` for isolation.
+↔ **tasks** and flags uncovered criteria and untraced tasks — and then to
+**`implement`** (stage 4), which runs each task through its build–review–fix loop,
+using `parallel` for the `[P]` tasks and `worktrees` for isolation.
 
 Do not jump straight to `implement`. The whole point of writing a checkable list
 was to let `analyze` audit it cheaply *before* code exists.

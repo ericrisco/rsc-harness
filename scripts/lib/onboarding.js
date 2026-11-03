@@ -276,10 +276,10 @@ export function buildOnboardingPlan(record, evidence) {
   // `sdd` is installed everywhere now, but its DECISION is about practice, not presence — so where
   // the chain is not practised the explicit `deferred` entry below must be the only one, or the
   // generic "installed → selected" mapping would shadow it and `reassess` would see nothing to watch.
-  const decisions = skills.filter((id) => practisesSdd || id !== 'sdd').map((id) => detectedSkills.includes(id)
+  const decisions = skills.filter((id) => practisesSdd || id !== 'asdd').map((id) => detectedSkills.includes(id)
     ? selected(id, 'skill', `Detected ${id} evidence inside the selected project root.`, 'workspace-evidence')
     : selected(id, 'skill', needsSdd
-      ? (id === 'sdd' && complexitySignals.length
+      ? (id === 'asdd' && complexitySignals.length
         ? `Included because the accepted work has ${complexitySignals.join(', ')} complexity.`
         : `Included in the development workflow for ${normalized.softwareScope} software.`)
       : `Included in the lightweight foundation for this ${normalized.projectKind} project.`));
@@ -293,16 +293,16 @@ export function buildOnboardingPlan(record, evidence) {
   // so the chain is always one request away; this decision is what `reassess` watches, and what the
   // floor reads. Collapsing the two would have deleted reassess's reason to exist as a side effect
   // of an installer change, which is not a decision an installer change gets to make.
-  // The reason says both halves, because the plan lists `.claude/skills/sdd` under managed paths
+  // The reason says both halves, because the plan lists `.claude/skills/asdd` under managed paths
   // and a bare "deferred" next to it read as a contradiction (E2E 2026-10-07). Only the wording
-  // changes: the decision stays the one deferred `workflow/sdd` entry that reassess watches.
+  // changes: the decision stays the one deferred `workflow/asdd` entry that reassess watches.
   const whyDeferred = isSoftware
     ? 'the software scope is small, so specification overhead is not justified yet.'
     : 'SDD applies to substantial software work, which is not the declared project purpose.';
-  const sddReason = skills.includes('sdd')
-    ? `The sdd skill is installed, so the chain is one request away; the practice is deferred: ${whyDeferred}`
+  const sddReason = skills.includes('asdd')
+    ? `The asdd skill is installed, so the chain is one request away; the practice is deferred: ${whyDeferred}`
     : whyDeferred.charAt(0).toUpperCase() + whyDeferred.slice(1);
-  if (!practisesSdd) decisions.push(deferred('sdd', 'workflow', sddReason, sddTriggers, softwareTriggers));
+  if (!practisesSdd) decisions.push(deferred('asdd', 'workflow', sddReason, sddTriggers, softwareTriggers));
   if (baseAgents) {
     for (const id of agents) decisions.push(selected(id, 'agent', 'The accepted substantial software workflow requires this implementation or review role.'));
   } else {

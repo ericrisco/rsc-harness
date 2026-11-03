@@ -28,7 +28,7 @@ test('always-on body: states the three-lane decisor, not just a pointer to it', 
   // no per-turn gate, so this body is the ONLY place the rule exists for them. Shortening is fine;
   // removing is a silent regression. What it asserts is the rule that replaced it.
   assert.match(body, /\bFTD\b/, 'names the default lane');
-  assert.match(body, /\bSDD\b/, 'names the chain');
+  assert.match(body, /\bASDD\b/, 'names the chain');
   assert.match(body, /read-only/i, 'names the lane that writes nothing — the one the old rule lacked');
   assert.match(body, /`debug`/, 'names the bug-fix route');
   // 3.0 (team-safe-default C) reversed it: the agent selects, the person keeps the spec approval.
@@ -46,7 +46,7 @@ test('always-on body: no longer over-constrains, per our own skill-rubric', () =
   // Only prose can shout: strip code spans so filenames (SKILL.md, 02-DOCS/…) are not mistaken
   // for directives.
   const prose = body.replace(/`[^`]*`/g, '');
-  const yelled = (prose.match(/\b[A-Z]{4,}\b/g) || []).filter((w) => w !== 'SDD');
+  const yelled = (prose.match(/\b[A-Z]{4,}\b/g) || []).filter((w) => w !== 'SDD' && w !== 'ASDD');
   assert.equal(yelled.length, 0, `unexpected shouted directives: ${yelled.join(', ')}`);
 });
 

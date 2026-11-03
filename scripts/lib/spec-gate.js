@@ -18,6 +18,10 @@ import { parseFrontmatter } from './frontmatter.js';
 // would be exactly the parallel accounting P3 forbids.
 export const NEW_FAMILIES_SINCE = '2026-09-06';
 
+// ASDD (4.0) makes a spec prove itself: four questions a long autonomous run is checked against.
+// Same date rule as above, for the same reason — the corpus before it cannot answer them honestly.
+export const ASDD_FAMILIES_SINCE = '2026-11-03';
+
 // The four states a point can be in. Order is the table's order in the skill body.
 export const OPEN_POINT_TYPES = [
   'pregunta abierta', // formulable now, unanswered → clarify asks it
@@ -32,7 +36,7 @@ export const OPEN_POINT_TYPES = [
 const FAMILIES = {
   problem: { prefixes: ['problema & por que', 'problema y por que', 'problem & why'] },
   goals: { prefixes: ['objetivos', 'goals'] },
-  nongoals: { prefixes: ['no-objetivos', 'no objetivos', 'non-goals'] },
+  nongoals: { prefixes: ['no-objetivos', 'no objetivos', 'non-goals', 'fuera de alcance', 'out of scope'] },
   users: { prefixes: ['usuarios & contexto', 'usuarios y contexto', 'users & context'] },
   behaviour: { prefixes: ['comportamiento', 'behaviour', 'behavior'] },
   acceptance: { prefixes: ['criterios de aceptacion', 'acceptance criteria'] },
@@ -53,6 +57,10 @@ const FAMILIES = {
     prefixes: ['la alternativa mas barata', 'alternativa mas barata', 'cheapest alternative', 'the cheapest alternative'],
     since: NEW_FAMILIES_SINCE,
   },
+  can: { prefixes: ['que podra hacer el usuario', 'what the user can do'], since: ASDD_FAMILIES_SINCE },
+  result: { prefixes: ['que resultado obtiene', 'what result they get'], since: ASDD_FAMILIES_SINCE },
+  respect: { prefixes: ['que debe respetar', 'what it must respect'], since: ASDD_FAMILIES_SINCE },
+  proof: { prefixes: ['como lo demuestra', 'how it proves it'], since: ASDD_FAMILIES_SINCE },
 };
 
 const UNCHECKED = [
@@ -66,6 +74,7 @@ const UNCHECKED = [
   // Sin esta línea, el verde sería más estrecho que la regla que aparenta imponer — que es la
   // definición de puerta decorativa, sólo que por omisión en vez de por ausencia.
   `las specs anteriores a ${NEW_FAMILIES_SINCE} — quedan exentas de "qué pasa si no lo construimos" y de "la alternativa más barata", que no pueden rellenarse a posteriori`,
+  `las specs anteriores a ${ASDD_FAMILIES_SINCE} — quedan exentas de las cuatro preguntas de ASDD (qué podrá hacer el usuario, qué resultado obtiene, qué debe respetar, cómo lo demuestra)`,
 ];
 
 function fold(s) {

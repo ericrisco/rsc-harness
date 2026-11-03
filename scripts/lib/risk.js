@@ -1,0 +1,54 @@
+// `rsc risk` — how much review and whose approval a change needs, decided by WHAT it touches.
+//
+// ASDD reviews inside every task, so the depth of that review cannot be the agent's own call: the
+// change sets the tier, never the author (Anthropic, "How the Claude Code team does code review").
+// The table is the sello's (targets/sello.mjs), reused as is, and it works with the sello off.
+// Spec: 02-DOCS/wiki/sdd/specs/asdd-v4.md.
+
+import { spawnSync } from 'node:child_process';
+import { SELLO_STATE_PATHS, classifyRisk, lensesRequired, readEffectiveConfig, trunkRef } from '../../targets/sello.mjs';
+
+function git(root, args) {
+  const r = spawnSync('git', ['-C', root, '-c', 'core.quotePath=false', ...args], { encoding: 'utf8', windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
+  return r.status === 0 ? r.stdout : null;
+}
+const nul = (out) => (out || '').split('\0').filter(Boolean);
+
+// Every path that differs from the base (committed, staged, unstaged or untracked). The base is the
+// merge-base with `--base`, or with the trunk when none is given.
+export function changedPaths(root, base = null) {
+  const cfg = readEffectiveConfig(root);
+  const ref = base || trunkRef(root, cfg);
+  if (!ref) return { ok: false, message: 'rsc: no base to compare against. Pass --base <ref> or the paths themselves: npx @ericrisco/rsc risk <path…>' };
+  const head = git(root, ['rev-parse', 'HEAD']);
+  const mb = head ? (git(root, ['merge-base', 'HEAD', ref]) || '').trim() : '';
+  if (!mb) return { ok: false, message: `rsc: cannot find a common ancestor with ${ref}. Pass --base <ref> or the paths themselves: npx @ericrisco/rsc risk <path…>` };
+  const names = new Set([...nul(git(root, ['diff', '--name-only', '-z', mb])), ...nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z']))]);
+  for (const p of SELLO_STATE_PATHS) names.delete(p);
+  return { ok: true, base: ref, paths: [...names].sort() };
+}
+
+export function assess(paths, cfg = null) {
+  const { tier, classes, configError } = classifyRisk(paths, cfg);
+  return {
+    tier,
+    classes: [...new Set(Object.values(classes))].sort(),
+    reviewers: lensesRequired(tier, cfg),
+    humanApproval: tier >= 2,
+    paths: classes,
+    ...(configError ? { configError } : {}),
+  };
+}
+
+export function render(r) {
+  const top = Object.entries(r.paths).filter(([, c]) => r.tier === 0 || c !== 'docs');
+  return [
+    `tier ${r.tier}`,
+    `classes: ${r.classes.join(', ') || 'none'}`,
+    `reviewers: ${r.reviewers}`,
+    `human approval: ${r.humanApproval ? 'required' : 'not required'}`,
+    ...(r.configError ? [`config ignored: ${r.configError}`] : []),
+    ...top.slice(0, 20).map(([p, c]) => `  ${c.padEnd(10)} ${p}`),
+    ...(top.length > 20 ? [`  … ${top.length - 20} more`] : []),
+  ].join('\n');
+}

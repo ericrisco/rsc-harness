@@ -1,8 +1,8 @@
 ---
 name: implement
-description: "Use when an approved plan and task list exist and it is time to turn them into working, tested code — the SDD phase after `analyze` and before `verify`. Enforces TDD: a failing test comes before the code that makes it pass, one task at a time, appended to a progress ledger that survives compaction. Delegates test tooling to the stack skill and fans disjoint tasks out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the final lint/test/audit gate (that is `verify`)."
-tags: [sdd, implement, code]
-recommends: [verify]
+description: "Use when an approved plan and task list exist and it is time to turn them into working, reviewed code — ASDD stage 4, the per-task loop after `analyze`: TDD build and self-check, `rsc risk` on the diff, review scaled by tier (0/1/3 reviewers), mandatory controls (tests, build, security, traceability), at most 3 fix rounds, then fix-and-record or park in the decision queue. Progress ledger survives compaction; disjoint tasks fan out via `parallel`. NOT spec writing (that is `specify`), NOT planning (that is `plan`), NOT the closing whole-branch gate (stage 5: `verify` + `review`)."
+tags: [asdd, sdd, implement, code]
+recommends: [verify, review]
 profiles: [core, full]
 origin: risco
 ---
@@ -10,10 +10,11 @@ origin: risco
 # implement — turn the task list into tested code
 
 You have a spec, a plan, and an ordered task list (from `specify` → `plan` → `tasks`), and the
-`analyze` gate has cleared. This skill does the building: it walks the tasks in order, writes each
-one **test-first**, stops to show its work after every task, and records the decisions it makes
-along the way. It is the *intent → shipped code* engine's hands — `verify` is the gate that comes
-after, not part of this skill.
+`analyze` gate has cleared. This skill is **ASDD stage 4**: it walks the tasks in order and runs each
+one through a build → risk → review → controls → fix → decide loop before the next starts. Review
+lives *inside* the task, not after the branch: tests prove the code works, not that it is what was
+asked, and an unrequested feature caught at one commit is cheap — caught under thousands of green
+tests at the end, it is not.
 
 This is a **process skill**. It owns the discipline (red → green → refactor, checkpoints, decision
 logging, constitution adherence). It does **not** own the test tooling — pytest fixtures, `go test`
@@ -51,9 +52,11 @@ back — you do not write feature code anyway.
 6. **Scan the tasks for independence.** Mark which tasks share files/state and which are disjoint.
    Disjoint clusters are candidates for `parallel`; everything else runs in order.
 
-## The loop — one task at a time
+## The loop — seven steps per task
 
-For **each task** in the list, in order (or dispatched per the parallel rule below):
+For **each task** in the list, in order (or dispatched per the parallel rule below), run a → g.
+
+### a) Build and self-check (TDD)
 
 ```text
 RED      → write the smallest failing test that encodes the task's done-check. Run it. Watch it FAIL
@@ -63,23 +66,14 @@ GREEN    → write the least code that makes that test pass. No extra features, 
 TRIANGULATE → add the smallest edge-case test that proves the behavior is not hard-coded
            (only when config.testing.strict_tdd is true and the task has meaningful edge cases).
 REFACTOR → with the test green, clean up names/duplication/shape. Re-run; still green. Only now.
-CHECK    → re-read the task's done-check. Met? Constitution still honored? Decision worth logging?
-PROGRESS → append task/test/blocker/decision state to 02-DOCS/wiki/sdd/progress/<slug>.md.
 COMMIT   → commit this task as one logical unit (authorship = Eric; see ship for the rule).
-REVIEW   → dispatch a fresh reviewer subagent over THIS task's commits (see "Per-task review gate").
-           Fold its Critical/Important findings back in before you move on; Minor can wait.
-CHECKPOINT → stop and show: what changed, test output, review verdict, the next task. Wait for the user.
 ```
 
 The order is load-bearing. **Red before green** is not a suggestion — a test you write *after* the
 code tells you nothing about whether it can fail. **Refactor only on green** keeps every cleanup
-reversible against a passing bar. **Checkpoint after each task** is what makes this resumable and
-reviewable instead of a 2000-line surprise diff.
+reversible against a passing bar. Self-check means evidence: the test output you saw, not "I tested it".
 
 ### Four things you may never do to reach green
-
-The loop only means anything if green cannot be manufactured. These are absolute, and each one is a
-way people reach green without fixing anything:
 
 1. **Never weaken a test to make it pass.** Not broadening an assertion, not adding a skip, not
    raising a tolerance, not deleting it. A test that looks wrong is a **spec conversation** — surface
@@ -94,12 +88,82 @@ way people reach green without fixing anything:
    added to touch lines, with no meaningful assertion, is gaming — and mutation testing exists
    precisely to catch it (`../testing-py/SKILL.md`, `../testing-web/SKILL.md`, `../testing-go/SKILL.md`).
 
-### The done-check is the contract
+**The done-check is the contract.** The task's done-check **is** your first failing test. Never
+invent a looser one; done means that test is green and the traced acceptance criterion holds.
 
-Each task carries a done-check from the `tasks` phase ("returns 409 on duplicate email", "list
-renders empty state when zero items"). That sentence **is** your first failing test. Do not invent a
-looser check, and do not mark a task done because the code "looks right" — done means the done-check's
-test is green and the relevant acceptance criterion in the spec is satisfied.
+### b) Risk — computed, never chosen
+
+```bash
+npx @ericrisco/rsc risk --base <task base sha> --json
+```
+
+It reads the task's **actual** diff through the sello's path table (sello on or off) and prints the
+tier, the touched classes, `reviewers: 0|1|3` and `human approval: required|not required`. Tier 2 =
+auth, billing, CI workflows, migrations, secrets, harness config. The computed tier wins over the
+task's risk forecast. **The agent never picks or argues down its own tier.**
+
+### c) Review scaled by tier — fresh context
+
+| Tier | Review |
+| --- | --- |
+| 0 | none — the controls (e) still run |
+| 1 | one fresh-context reviewer; frozen brief in `references/per-task-review.md` |
+| 2 | the three refuters (`refuter-correctness` · `refuter-security` · `refuter-tests`) in parallel, as `../review/SKILL.md` runs them |
+
+Every reviewer gets the **spec**, the **diff as a file** (`scripts/review-package <BASE> <HEAD>`, BASE
+= the task's *recorded* base sha, never `HEAD~1`), the **surrounding code** at that sha (not just the
+hunk), the task's done-check, its **Interfaces → Produces** and the plan's **§0 Global Constraints**.
+Never your session reasoning. **Anti-pre-judging (hard rule):** the dispatch never says what not to
+flag, pre-rates a severity, or explains why a choice is fine — a stated rationale never downgrades a
+finding.
+
+### d) Consolidate, verify, record
+
+Exactly as `../review/SKILL.md` → *Consolidate, then verify*: `npx @ericrisco/rsc review consolidate
+<reports…>`, then `finding-verifier` on every finding it marks `verify` (tier 1: on every blocker).
+Then `npx @ericrisco/rsc review ledger record <findings.json>`. A finding the ledger already holds
+comes back `repeat`: **never raise it again**. When a finding closes, record its outcome:
+`review ledger outcome <id> fixed|false|intentional|irrelevant`.
+
+### e) Mandatory controls — every tier
+
+These are `verify`'s per-task mode (`../verify/SKILL.md`):
+
+- **Tests** — the affected suite, not just the new test (`testing.commands.apply`).
+- **Build** — the project compiles and type-checks.
+- **Security** — the stack's audit; `../secure-coding/SKILL.md` when input, authz or secrets are touched.
+- **Traceability** — every new behaviour in the diff traces to a spec acceptance criterion.
+  **Untraced behaviour is a finding.** This is the control that catches the unrequested feature: a
+  QR nobody asked for passes every test.
+
+A control that did not run is reported as **not run**, never as passed — and the task is not done.
+
+### f) Fix loop — at most 3 rounds
+
+Each round opens with `npx @ericrisco/rsc review ledger round <task>`. It exits non-zero on the 4th
+round with the action to take; obey it (step g).
+
+- **From round 2, re-review only the new diff** (BASE = the previous round's head).
+- **Fix the bug class, not the line**: name the class and fix every instance in the task's scope.
+- **Never repeat a finding** — the ledger marks repeats; drop them.
+- Re-run the controls (e) before the next round.
+
+### g) Decide
+
+| Situation | Action |
+| --- | --- |
+| Trivial, or no business weight | Fix it and record it in `decisions.md` with the task id |
+| Tier 2, contradicts a decision in `decisions.md`, or no convergence in 3 rounds | Park the task in the **decision queue** and continue with independent tasks |
+
+The **decision queue** is a `## Decision queue` section in `02-DOCS/wiki/sdd/progress/<slug>.md`, one
+entry per parked task: task id, tier, the question, the options, your recommendation, the evidence
+path. Tasks that depend on a parked task wait; the rest continue. Only a human empties the queue — an
+agent's approval never counts as human.
+
+Then append the progress entry and show the checkpoint (below).
+
+**`verify` and `review` run twice.** Per task, inside this loop (steps c–e); and once more at
+**closing** (stage 5), over the whole branch against main.
 
 ## Delegating the test tooling (do not reinvent it)
 
@@ -118,27 +182,10 @@ stack and pulls that stack's testing reference — you do not mix idioms inside 
 
 ## Skill digestion and resolution
 
-When a task or subagent needs skill context, use the registry path from config:
-
-```text
-.rsc/skill-registry.json
-```
-
-Select the smallest set of skills that match the task. Digest each selected skill into 4-5 compact rules that affect this task. A task brief or checkpoint includes:
-
-```text
-Selected skills: fastapi, postgresdb, implement
-Compact rules:
-- Use the configured apply command from config.yaml.
-- Red test first; verify it fails for the right reason.
-- Keep DB migrations expand-contract when touching production tables.
-Skill resolution:
-- used: [...]
-- missing: [...]
-- fallback: [...]
-```
-
-If a skill is referenced but unavailable, say so and record the fallback. Do not silently pretend it was used.
+Select the smallest set of skills from `.rsc/skill-registry.json` that match the task and digest
+each into 4-5 compact rules. Every task brief or checkpoint carries `Selected skills`, `Compact
+rules` and `Skill resolution` (`used` / `missing` / `fallback`). A referenced skill that is
+unavailable is named with its fallback — never silently pretended.
 
 ## Apply progress
 
@@ -157,8 +204,10 @@ Entry shape:
 - green: same test passed
 - triangulation: blank title returns 422
 - files: app/auth.py, tests/auth/test_login.py
-- decision: none
-- blocker: none
+- risk: tier 2 (auth) — 3 refuters
+- review: 5 reported → 2 unique → 1 confirmed (fixed, round 2)
+- controls: tests ✅ build ✅ security ✅ traceability ✅ (AC3)
+- decision: parked in decision queue (tier 2)
 ```
 
 This file is what makes resumes and archive reliable. Never rewrite old entries; append corrections as new entries.
@@ -194,7 +243,7 @@ discipline inside each branch.
 pinned to the balanced tier (Sonnet by default, chosen at onboarding, never `light`). When you
 delegate a task or fan out via `parallel`, dispatch it to that agent (e.g. Claude Code
 `subagent_type: developer`) so the bulk of TDD execution runs on the cheaper-but-capable model
-while you stay on the session model to orchestrate. Full rationale: `../sdd/references/model-routing.md`.
+while you stay on the session model to orchestrate. Full rationale: `../asdd/references/model-routing.md`.
 
 ### The dispatch contract (carriers, statuses, escalation)
 
@@ -220,51 +269,19 @@ each dispatch self-sufficient and make its return machine-checkable:
   escalate the tier (balanced → heavy) for a genuinely hard sub-problem. Re-running an identical
   prompt on an identical model is how a loop burns budget without progress.
 
-## Per-task review gate
-
-After a task is committed and before its checkpoint, run a **small, fresh-eyes review of that task
-alone** — catching over-/under-building while it is one commit cheap to fix, instead of waiting for
-the whole-branch review when it is buried in a large diff. It is a mid-build gate, not the finish
-line (see the boundary below).
-
-How to run it:
-
-1. **Package the diff as a file, not a paste.** `scripts/review-package <BASE> <HEAD>` where `BASE`
-   is the task's *recorded* base sha (never `HEAD~1` — that drops every commit but the last of a
-   multi-commit task). It writes the commit list + `--stat` + full diff to one file.
-2. **Dispatch a fresh reviewer subagent** (context-isolated — it must NOT inherit your session
-   reasoning). Hand it: the review-package *path*, the task's **done-check**, the task's
-   **Interfaces → Produces** contract, and the plan's **§0 Global Constraints**. With routing on,
-   balanced is the floor; escalate to heavy for a risky/security-touching task. The frozen brief
-   lives in `references/per-task-review.md`.
-3. **It returns two verdicts in one pass:** *spec compliance* (missing / extra / misunderstood vs the
-   done-check + Produces) and *code quality* — every finding tagged severity
-   (`Critical`/`Important`/`Minor`) with `file:line` evidence.
-4. **Fold `Critical`/`Important` back in now**; `Minor` may wait for the end-of-branch review.
-
-**Anti-pre-judging (hard rule).** The dispatch must never tell the reviewer what *not* to flag,
-pre-rate a finding's severity, or explain why a choice is fine ("the plan chose X, treat as Minor").
-A stated rationale never downgrades a finding — that is laundering your own bias through the reviewer.
-Hand it the evidence and the contract; let it judge.
-
-**Boundary — this does not replace the end gates.** `verify` still runs the *whole* suite and the
-acceptance criteria once at the end, and `review` still reads the *whole* diff adversarially once
-before `ship`. The per-task gate is the cheap early pass; the broad reviews remain. Skip the per-task
-gate on a genuinely trivial task (a one-line change), like the rest of the chain.
-
 ## Model tier — `balanced` (opt-in routing)
 
-This phase's default model tier is **`balanced`** — it is the bulk of TDD execution: cost-sensitive, with quality balanced handles well. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch in one line when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model (this is where routing pays off most — fan-out runs on `balanced` while a hard sub-problem can be escalated to `heavy`). Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
+Default tier **`balanced`** — the bulk of TDD execution. Routing is **off** unless `models.enabled:
+true` in `02-DOCS/wiki/sdd/config.yaml`; when on, resolve and apply it per
+`../asdd/references/model-routing.md` (fan-out on `balanced`, a hard sub-problem escalated to
+`heavy`). Routing off → honor the session model silently.
 
 ## Checkpoints — what to say
 
-Speak in the `orient` voice, in the register `technical_level` sets. At each checkpoint show: the
-task, tests green or red, the one *why* behind any non-obvious choice, and the next task. Ask only
-where the plan genuinely forked, and confirm before deviating from the plan or doing anything
-irreversible.
-
-How short you are **never** changes the engineering. TDD, the done-checks, the constitution and
-decision logging hold for every reader.
+In the `orient` voice and the `technical_level` register, show: the task, tier, review verdict
+(reported → unique → confirmed), controls (passed / **not run**), rounds, the *why* of any
+non-obvious choice, and the next task. Ask only where the plan forked; confirm before deviating or
+anything irreversible. In autopilot, log it and continue. Brevity never changes the engineering.
 
 ## Logging decisions (the 02-DOCS trail)
 
@@ -299,13 +316,14 @@ outranks the plan, and the plan outranks your in-the-moment preference.
 | "I'll write the tests after, once the code settles" | Then the test only confirms what you built, not what was asked. Red first, always. |
 | "This task is trivial, skip the failing test" | Trivial code breaks too, and the next task may lean on it. Smallest red test still goes first. |
 | "I'm here anyway, I'll also fix that other thing" | Scope creep buries the diff and breaks the done-check contract. One task, one commit. |
-| "The test passed first try without ever being red" | It tests nothing. Make it fail on purpose, then make it pass. |
 | "I'll batch ten tasks into one big commit to save time" | You just made the work unreviewable and un-resumable. One logical unit per task. |
 | "The constitution's rule doesn't fit here, I'll bend it" | The constitution outranks you. Surface the conflict; don't bend it silently. |
 | "These two tasks touch the same file but I'll parallelize anyway" | Shared file = shared state = merge pain and lost work. Serialize them. |
-| "Refactor now, the test is still red" | Never refactor on red — you can't tell a cleanup from a regression. Get green first. |
 | "I'll mark it done, the code looks correct" | Done = the done-check's test is green and the acceptance criterion holds. Looks ≠ green. |
 | "I'll just write the .env so the integration test runs" | Never. Secrets are the user's; mock/stub the boundary or use a test fixture. |
+| "This diff is obviously low-risk, skip the review" | The tier is `rsc risk`'s, not yours. Run it and obey it. |
+| "The security scan didn't run, but nothing changed there" | Report it **not run**. The task is not done. |
+| "Round 4 will crack it" | The ledger stops at 3. Park the task; continue with independent ones. |
 
 ## Red flags — stop and re-route
 
@@ -324,16 +342,14 @@ outranks the plan, and the plan outranks your in-the-moment preference.
 ## Checklist (copy per task)
 
 ```text
-- [ ] Read the task's done-check; it is my first test's assertion
-- [ ] RED: smallest test written, run, fails for the RIGHT reason
-- [ ] GREEN: least code to pass; test now green
-- [ ] REFACTOR: cleaned up on green; still green
-- [ ] Constitution honored; no banned pattern introduced
-- [ ] Non-obvious decision (if any) logged to 02-DOCS/wiki/sdd/decisions.md
-- [ ] Apply progress appended to 02-DOCS/wiki/sdd/progress/<slug>.md
-- [ ] Skill resolution recorded (used/missing/fallback/compact rules)
-- [ ] Committed as one logical unit (authorship = Eric)
-- [ ] Checkpoint shown in the orient voice; next task named
+- [ ] a) RED for the right reason → GREEN → REFACTOR; committed as one unit (authorship = Eric)
+- [ ] b) `rsc risk` on the task diff; tier recorded
+- [ ] c) review by tier, fresh context, spec + diff + surrounding code, no pre-judging
+- [ ] d) `review consolidate` + `finding-verifier`; `review ledger record`
+- [ ] e) tests, build, security, traceability — each passed or **not run**
+- [ ] f) `review ledger round <task>` each round; ≤ 3; class fixed, no repeats
+- [ ] g) fixed + logged in decisions.md, or parked in the decision queue
+- [ ] Progress entry appended; skill resolution recorded; checkpoint shown
 ```
 
 ## Result envelope
@@ -343,7 +359,7 @@ End every implementation checkpoint or completed batch with:
 ```json result-envelope
 {
   "status": "complete",
-  "executive_summary": "Implemented task(s) with red/green/triangulate/refactor evidence.",
+  "executive_summary": "Implemented task(s): red/green evidence, tier, review, controls, decision-queue state.",
   "artifact": "02-DOCS/wiki/sdd/progress/<slug>.md",
   "next_recommended": "implement|verify",
   "risk": "low|medium|high",
@@ -351,31 +367,28 @@ End every implementation checkpoint or completed batch with:
     "used": ["implement"],
     "missing": [],
     "fallback": [],
-    "compact_rules": ["Use config testing commands.", "Append progress after every task."]
+    "compact_rules": ["Tier comes from rsc risk, never the agent.", "Max 3 fix rounds; park, don't loop."]
   },
-  "evidence": ["red test output", "green test output", "progress entry path"]
+  "evidence": ["red/green output", "rsc risk output", "ledger record", "controls", "progress entry path"]
 }
 ```
 
 ## What this skill is NOT
 
-- **Not the lint/type/audit gate.** Per-task tests prove the task; the *whole-suite* run plus
-  lint/type/security audit and acceptance-criteria sign-off is `verify`'s job. Don't claim the
-  feature is done here — that claim belongs to `verify`, on evidence.
+- **Not the closing gate.** The per-task controls prove each task; the whole branch against main,
+  the rollback plan and the human explanation are stage 5 (`verify` closing mode, `review`, `ship`).
 - **Not spec or plan writing.** If you find the plan is wrong mid-build, stop and amend it via
   `plan`; don't silently re-architect inside a commit.
 - **Not the deep-debug protocol.** When a test fails for a reason you don't understand, switch to
   `debug` (reproduce → isolate → hypothesize → fix → verify) instead of guessing.
 
-## Where you are in the chain
+## Where you are in ASDD
 
-`constitution` → `specify` → `clarify` → `plan` → `tasks` → `analyze` → **implement** → `verify` →
-`review` → `ship`. On-demand from here: `debug` (a test fails mysteriously), `worktrees` (need
-isolation), `parallel` (independent tasks to fan out).
+Base → Spec → Plan (`plan` · `tasks` · `analyze`) → **Build loop (this skill)** → Close (`verify` ·
+`review` · `ship`) → Learn. On demand: `debug`, `worktrees`, `parallel`. Front door: `../asdd/SKILL.md`.
 
-**Next:** when every task's done-check is green and committed, go to `verify` — run the stack skill's
-`scripts/verify.sh`, confirm the spec's acceptance criteria, and let evidence (not assertion) declare
-the feature done.
+**Next:** when every task is done or parked, go to stage 5 — `verify` in closing mode over the whole
+branch. Parked tasks travel in the decision queue for the human.
 
 ## Orientación (siempre)
 

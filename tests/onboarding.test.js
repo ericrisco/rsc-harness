@@ -60,13 +60,13 @@ test('canonical identity is stable and any governed change invalidates it', () =
 test('small software defers SDD with observable triggers; growing software selects it', () => {
   const evidence = scanProject(root());
   const small = buildOnboardingPlan(normalizeOnboarding(answers()), evidence);
-  const sdd = small.decisions.find((d) => d.id === 'sdd');
+  const sdd = small.decisions.find((d) => d.id === 'asdd');
   assert.equal(sdd.state, 'deferred');
   assert.ok(sdd.reason);
   assert.ok(sdd.reevaluateWhen.length);
 
   const growing = buildOnboardingPlan(normalizeOnboarding(answers({ softwareScope: 'growing' })), evidence);
-  assert.equal(growing.decisions.find((d) => d.id === 'sdd').state, 'selected');
+  assert.equal(growing.decisions.find((d) => d.id === 'asdd').state, 'selected');
   assert.ok(growing.policy.skills.includes('specify'));
   assert.deepEqual(growing.policy.agents.slice(0, 5).sort(), ['developer', 'finding-verifier', 'refuter-correctness', 'refuter-security', 'refuter-tests'].sort());
   assert.ok(growing.decisions.some((d) => d.id === 'developer' && d.state === 'selected'));
@@ -90,9 +90,9 @@ test('operations gets the whole harness, and none of the machinery that only mak
   assert.equal(plan.policy.codeHooks, false);
   assert.equal(plan.policy.gitmojiGuard, false);
   assert.deepEqual(plan.policy.agents, []);
-  assert.ok(plan.policy.skills.includes('sdd'), 'the chain is reachable from every harness');
+  assert.ok(plan.policy.skills.includes('asdd'), 'the chain is reachable from every harness');
   assert.ok(plan.policy.skills.includes('ftd'), 'and so is the lane ordinary work takes');
-  assert.equal(plan.decisions.find((d) => d.id === 'sdd').state, 'deferred',
+  assert.equal(plan.decisions.find((d) => d.id === 'asdd').state, 'deferred',
     'installed, but not practised here — which is what `reassess` watches');
 });
 
@@ -152,7 +152,7 @@ test('deferred components stay quiet until evidence crosses a recorded trigger',
   assert.deepEqual(recommendDeferredComponents(plan, scanProject(dir)), []);
   for (let i = 0; i < 8; i++) writeFileSync(join(dir, `feature-${i}.js`), 'export {};');
   const recommendations = recommendDeferredComponents(plan, scanProject(dir));
-  const sdd = recommendations.find((item) => item.id === 'sdd');
+  const sdd = recommendations.find((item) => item.id === 'asdd');
   assert.ok(sdd);
   assert.match(sdd.explanation, /source files|grew/i);
   assert.equal(sdd.requiresNewPlan, true);
@@ -173,8 +173,8 @@ test('declared auth, persistence, payments or integrations select SDD for small 
   const dir = root();
   writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { stripe: '1', passport: '1', prisma: '1' } }));
   const plan = buildOnboardingPlan(normalizeOnboarding(answers({ goal: 'Add login, payments and a database' })), scanProject(dir));
-  assert.equal(plan.decisions.find((d) => d.id === 'sdd').state, 'selected');
-  assert.match(plan.decisions.find((d) => d.id === 'sdd').reason, /auth|payment|persistence|integration/i);
+  assert.equal(plan.decisions.find((d) => d.id === 'asdd').state, 'selected');
+  assert.match(plan.decisions.find((d) => d.id === 'asdd').reason, /auth|payment|persistence|integration/i);
 });
 
 test('non-software growth recommends changing to a mixed plan that can actually select SDD', () => {
@@ -183,7 +183,7 @@ test('non-software growth recommends changing to a mixed plan that can actually 
   const accepted = buildOnboardingPlan(operations, scanProject(dir));
   for (let i = 0; i < 6; i++) writeFileSync(join(dir, `automation-${i}.js`), 'export {};');
   const recommendations = recommendDeferredComponents(accepted, scanProject(dir));
-  assert.ok(recommendations.some((item) => item.id === 'sdd'));
+  assert.ok(recommendations.some((item) => item.id === 'asdd'));
   assert.equal(recommendations[0].suggestedRecord.projectKind, 'mixed');
   assert.equal(recommendations[0].suggestedRecord.softwareScope, 'growing');
 });
@@ -194,7 +194,7 @@ test('persisted trigger rules govern reassessment and a bare manifest is insuffi
   writeFileSync(join(dir, 'package.json'), '{}');
   assert.deepEqual(recommendDeferredComponents(accepted, scanProject(dir)), []);
   for (let i = 0; i < 6; i++) writeFileSync(join(dir, `work-${i}.js`), 'export {};');
-  assert.ok(recommendDeferredComponents(accepted, scanProject(dir)).some((item) => item.id === 'sdd'));
+  assert.ok(recommendDeferredComponents(accepted, scanProject(dir)).some((item) => item.id === 'asdd'));
   const disabled = structuredClone(accepted);
   for (const decision of disabled.decisions) decision.triggerRules = [{ type: 'unknown' }];
   assert.deepEqual(recommendDeferredComponents(disabled, scanProject(dir)), []);
@@ -206,12 +206,12 @@ test('research, content and mixed intent survive normalization and drive proport
     const plan = buildOnboardingPlan(normalizeOnboarding(answers({ projectKind, softwareScope: undefined })), evidence);
     assert.equal(plan.record.projectKind, projectKind);
     assert.equal(plan.policy.codeHooks, false);
-    assert.equal(plan.decisions.find((d) => d.id === 'sdd').state, 'deferred');
+    assert.equal(plan.decisions.find((d) => d.id === 'asdd').state, 'deferred');
   }
   const mixed = buildOnboardingPlan(normalizeOnboarding(answers({ projectKind: 'mixed', softwareScope: 'growing' })), evidence);
   assert.equal(mixed.record.projectKind, 'mixed');
   assert.equal(mixed.policy.codeHooks, true);
-  assert.equal(mixed.decisions.find((d) => d.id === 'sdd').state, 'selected');
+  assert.equal(mixed.decisions.find((d) => d.id === 'asdd').state, 'selected');
 });
 
 test('a PHP project is read from composer.json, and vendored dependencies are not project evidence (#325)', () => {

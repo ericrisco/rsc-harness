@@ -20,7 +20,7 @@ human spot-check.
 Goal: the skill fires when it should and never on a near-miss.
 
 1. Configure an agent with the **full catalog of skill descriptions** available
-   for routing — the other rsc-sdd phases (`sdd`, `constitution`, `specify`,
+   for routing — the other rsc-sdd phases (`asdd`, `constitution`, `specify`,
    `clarify`, `plan`, `analyze`, `implement`, `verify`, `review`, `ship`,
    `debug`, `worktrees`, `parallel`) plus the stack/process skills (`fastapi`,
    `nextjs`, `go`, `postgresdb`, `flutter`, `harness`, …) — so routing competes

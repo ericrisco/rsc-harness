@@ -18,7 +18,7 @@ this skill targets: **Flutter 3.44 / Dart 3.12**, **Riverpod 3.0**, **go_router 
 
 ## Boundaries
 
-> **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../sdd/SKILL.md`.
+> **⚠️ SDD new-feature gate — read this first.** If this skill fired on a **new, non-trivial feature or behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP — do **not** write feature code yet. Hand off to `../specify/SKILL.md` first: it runs brainstorm → spec → plan → tasks before any code, then routes back here once the plan is approved. Build here directly only for a genuinely one-line / low-risk change. Method: `../asdd/SKILL.md`.
 
 This skill owns the `pubspec.yaml` subproject and nothing else in the repo. Hand off when the UI is
 Compose Multiplatform (`compose-multiplatform`), SwiftUI/native iOS (`swift-ios`) or React Native
