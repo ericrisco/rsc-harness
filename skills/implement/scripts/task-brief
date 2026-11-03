@@ -5,7 +5,8 @@
 #
 # Two task shapes are read, because `tasks` prescribes a table and older plans used headings:
 #   - a table row `| T002 | ... |` → the table's header, its separator and that row;
-#   - a heading `### T2 …` / `## T002 …` → the block up to the next ## / ### heading.
+#   - a heading `### T2 …` / `## T002 …` → the block up to the next ## / ### heading;
+#   - a bold block `**T002 — Interfaces**` → that line and what follows up to a blank line.
 # Both are printed when both exist (the row is the contract, the heading its detail).
 # If task N is not found, exits nonzero with a clear message.
 
@@ -42,7 +43,7 @@ esac
 
 CONTENT="$(awk -v n="$N" '
   function idnum(s) { sub(/^[Tt]/, "", s); return s + 0 }
-  BEGIN { n = n + 0; printing = 0; found = 0; head = ""; sep = "" }
+  BEGIN { n = n + 0; printing = 0; bold = 0; found = 0; head = ""; sep = "" }
   # Table rows: remember the latest header + separator, print the matching row.
   /^\|/ {
     split($0, cell, "|"); id = cell[2]; gsub(/[[:space:]]/, "", id)
@@ -51,6 +52,14 @@ CONTENT="$(awk -v n="$N" '
     } else if ($0 ~ /^\|[-:| ]+\|[[:space:]]*$/) { sep = $0 }
     else { head = $0; sep = "" }
     if (!printing) next
+  }
+  # A bold block `**T004 — Interfaces**` (what `tasks` writes under the table): the line and every
+  # line after it up to the first blank one. It is the task-local contract an isolated worker needs.
+  bold && /^[[:space:]]*$/ { bold = 0 }
+  bold { print; next }
+  /^\*\*[Tt][0-9]+/ {
+    t = $0; sub(/^\*\*/, "", t); sub(/[^Tt0-9].*$/, "", t)
+    if (idnum(t) == n) { bold = 1; found = 1; print ""; print; next }
   }
   /^#{2,3}[[:space:]]/ {
     if (printing) { printing = 0 }

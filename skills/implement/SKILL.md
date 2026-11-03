@@ -258,8 +258,8 @@ each dispatch self-sufficient and make its return machine-checkable:
 - **Carry the task, not your context.** Hand the worker its task brief, its **Interfaces** block
   (`Consumes`/`Produces`, exact signatures — from `tasks`), and the plan's **§0 Global Constraints**.
   Anything not in those three is invisible to it. Prefer **file paths over pasted text** —
-  `scripts/task-brief <plan> <N>` (N as `1`, `001` or `T001`; reads the `tasks` table row plus any
-  `### T1` detail block) and `scripts/review-package` — pasted briefs and diffs stay resident in
+  `scripts/task-brief <plan> <N>` (N as `1`, `001` or `T001`; reads the `tasks` table row, its `**T001 — Interfaces**` block and
+  any `### T1` detail block) and `scripts/review-package` — pasted briefs and diffs stay resident in
   your context and get re-read every turn.
 - **Native isolation leaves worktrees behind.** A subagent dispatched with worktree isolation
   works in `.claude/worktrees/`. `rsc risk` ignores that folder, but after you cherry-pick the
