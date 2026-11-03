@@ -53,8 +53,18 @@ export function linkedSpecs(root, branch, specCompleteness) {
   });
 }
 
-// Largest panel recorded in the review ledger for a task of any of these specs (`<slug>/<task>`).
-function panelSize(root, slugs) {
+// A panel still covers HEAD when its commit is an ancestor of HEAD and nothing above tier 0 changed
+// since (documentation and progress notes may follow a review; code may not).
+function reviewedStill(root, sha, sello, cfg) {
+  if (!sha) return false;
+  if (spawnSync('git', ['-C', root, 'merge-base', '--is-ancestor', sha, 'HEAD'], { windowsHide: true }).status !== 0) return false;
+  const since = (git(root, 'diff', '--name-only', '--no-renames', '-z', sha, 'HEAD') || '').split('\0').filter(Boolean);
+  return sello.classifyRisk(since, cfg).tier === 0;
+}
+
+// Largest panel recorded in the review ledger for a task of any of these specs (`<slug>/<task>`) that
+// still covers HEAD.
+function panelSize(root, slugs, stillValid = () => true) {
   let text = '';
   try { text = readFileSync(join(root, '.rsc', 'review-ledger.jsonl'), 'utf8'); } catch { return 0; }
   let best = 0;
@@ -63,7 +73,8 @@ function panelSize(root, slugs) {
     try { e = JSON.parse(line); } catch { continue; }
     if (e?.type !== 'panel' || typeof e.task !== 'string' || !Array.isArray(e.lenses)) continue;
     if (!slugs.some((s) => e.task.toLowerCase().replace(/_/g, '-').startsWith(`${s.toLowerCase().replace(/_/g, '-')}/`))) continue;
-    best = Math.max(best, new Set(e.lenses).size);
+    if (!stillValid(e.sha)) continue;
+    best = Math.max(best, new Set(e.lenses.map((l) => String(l).toLowerCase())).size);
   }
   return best;
 }
@@ -97,10 +108,11 @@ export function asddGate(root, command, { sello, specCompleteness }) {
     // by default), recorded against one of its linked specs in the review ledger.
     const required = sello.lensesRequired(2, cfg);
     const slugs = passing.map((s) => s.path.split('/').pop().slice(0, -3));
-    const best = panelSize(root, slugs);
+    const best = panelSize(root, slugs, (sha) => reviewedStill(root, sha, sello, cfg));
     if (best >= required) return null;
     return `Branch "${branch}" is risk tier 2 and its spec passes, but no review panel of ${required} lens(es) is recorded for it` +
-      `${best ? ` (largest recorded: ${best})` : ''}. Tier 2 is reviewed by the full panel, not by one reviewer. ` +
+      `${best ? ` (largest still valid: ${best})` : ''}. Tier 2 is reviewed by the full panel, not by one reviewer, and a panel covers ` +
+      'the commit it was recorded on: code committed after it needs the panel again (the record is self-attested, like the sello). ' +
       `Recover: run the ${required} fresh-context refuters (correctness, security, tests) on the branch, then record it — ` +
       `\`npx @ericrisco/rsc review ledger panel ${slugs[0]}/closing --lenses correctness,security,tests\` — and push again. ` +
       'To turn this gate off for the project: create `.rsc/.no-asdd-gate`.';

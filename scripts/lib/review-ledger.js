@@ -129,10 +129,13 @@ export function panel(root, task, lenses, { now = new Date().toISOString() } = {
   if (!QUALIFIED_TASK.test(task)) {
     return { ok: false, message: `rsc: qualify the task with its spec slug, e.g. \`review ledger panel <slug>/closing --lenses correctness,security,tests\`.` };
   }
-  const list = [...new Set(String(lenses || '').split(',').map((l) => l.trim()).filter(Boolean))];
+  const list = [...new Set(String(lenses || '').split(',').map((l) => l.trim().toLowerCase()).filter(Boolean))];
   if (!list.length) return { ok: false, message: 'rsc: name the lenses that ran: --lenses correctness,security,tests' };
-  append(root, [{ type: 'panel', task, lenses: list, at: now }]);
-  return { ok: true, message: `task "${task}": panel of ${list.length} recorded (${list.join(', ')})` };
+  // Bound to the commit reviewed: code committed after it is code no panel has seen.
+  const r = spawnSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true });
+  const sha = r.status === 0 ? r.stdout.trim() : null;
+  append(root, [{ type: 'panel', task, lenses: list, sha, at: now }]);
+  return { ok: true, message: `task "${task}": panel of ${list.length} recorded (${list.join(', ')})${sha ? ` on ${sha.slice(0, 7)}` : ''}` };
 }
 
 export function stats(root) {
