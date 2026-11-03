@@ -14,7 +14,8 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 export const LEDGER_PATH = '.rsc/review-ledger.jsonl';
-export const OUTCOMES = ['fixed', 'false', 'intentional', 'irrelevant'];
+// `parked`: the finding's task went to the decision queue; neither fixed nor dismissed, a human decides.
+export const OUTCOMES = ['fixed', 'false', 'intentional', 'irrelevant', 'parked'];
 export const MAX_ROUNDS = 3;
 export const EVALS_DIR = '02-DOCS/wiki/sdd/review-evals';
 
@@ -129,7 +130,8 @@ export function stats(root) {
   for (const e of ledger) if (e.type === 'outcome') last.set(e.id, e.outcome);
   const outcomes = Object.fromEntries([...OUTCOMES, 'open'].map((k) => [k, 0]));
   for (const f of originals) outcomes[last.get(f.id) || 'open'] += 1;
-  const closed = originals.length - outcomes.open;
+  // Parked is undecided: a human holds it. Counting it as closed would understate the false rate.
+  const closed = originals.length - outcomes.open - outcomes.parked;
   const rounds = new Map();
   for (const e of ledger) if (e.type === 'round') rounds.set(e.task, Math.max(rounds.get(e.task) || 0, e.n));
   const totalRounds = [...rounds.values()].reduce((a, b) => a + b, 0);

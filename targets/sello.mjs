@@ -45,6 +45,11 @@ export const SELLO_STATE_PATHS = [
   '.rsc/automation-gaps.md', '.rsc/review-ledger.jsonl',
 ];
 
+// Worktrees nested inside the project (the assistant's native `.claude/worktrees/`, rsc's own
+// `.worktrees/`) are other checkouts, not part of this change. Untracked, they showed up as one
+// `.claude/…` path, scored as harness — tier 2 for every task of a run that used isolation.
+export const NESTED_WORKTREES = /^(?:\.claude\/worktrees|\.worktrees)(?:\/|$)/;
+
 export function selloPaths(root) {
   return {
     config: join(root, '.rsc', 'sello-config.json'),
@@ -241,7 +246,8 @@ export function computeCandidate(rawRoot, cfg = null) {
 
   const names = new Set();
   for (const n of nulList(git(root, 'diff', '--name-only', '-z', base))) names.add(n);
-  for (const n of nulList(git(root, 'ls-files', '--others', '--exclude-standard', '-z'))) names.add(n);
+  // Untracked nested worktrees are other checkouts; committed paths under them are part of the change.
+  for (const n of nulList(git(root, 'ls-files', '--others', '--exclude-standard', '-z'))) if (!NESTED_WORKTREES.test(n)) names.add(n);
   for (const p of SELLO_STATE_PATHS) names.delete(p);
 
   const files = {};
@@ -266,7 +272,7 @@ export function computeCandidate(rawRoot, cfg = null) {
   // Untracked files never appear in numstat, so a fix hidden in a new file would
   // cost zero budget. Count their lines.
   for (const n of nulList(git(root, 'ls-files', '--others', '--exclude-standard', '-z'))) {
-    if (SELLO_STATE_PATHS.includes(n) || numstat[n] !== undefined) continue;
+    if (SELLO_STATE_PATHS.includes(n) || NESTED_WORKTREES.test(n) || numstat[n] !== undefined) continue;
     try {
       const st = lstatSync(join(root, n));
       if (st.isFile()) numstat[n] = readFileSync(join(root, n), 'utf8').split('\n').length;

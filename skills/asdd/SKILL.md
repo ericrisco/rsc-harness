@@ -28,7 +28,7 @@ This skill does **not** do a phase. It names the method, reads the register, pla
                  d verify findings      e mandatory controls
                  f fix (max 3 rounds)   g fix & record  ─or─  park ─► DECISION QUEUE ◄── HUMAN
  5. CLOSE ────► verify against main + rollback plan · closing review (whole branch vs spec) · explainer
-    SHIP ─────► tier 0-1: self-merge on green CI + empty queue  │  tier 2: ◄── HUMAN APPROVES
+    SHIP ─────► remote: PR (self-merge only tier 0-1 + green CI + no blocking entry)  │  no remote: park  ◄── HUMAN
     LEARN ────► finding outcomes · reverts → reviewer cases · repeated finding → rule
 ```
 
@@ -36,12 +36,14 @@ This skill does **not** do a phase. It names the method, reads the register, pla
 | --- | --- | --- |
 | **1 Base** | `../constitution/SKILL.md` (also drafts `REVIEW.md`), `../sdd-init/SKILL.md` | `constitution.md`, `REVIEW.md`, `config.yaml` |
 | **2 Spec** | `../specify/SKILL.md` → `../clarify/SKILL.md` | `specs/<slug>.md` |
-| **3 Plan** | `../plan/SKILL.md` → `../tasks/SKILL.md` → `../analyze/SKILL.md` | `plans/<slug>.md` |
+| **3 Plan** | `../plan/SKILL.md` → `../tasks/SKILL.md` → `../analyze/SKILL.md` | `plans/<slug>.md`, `analysis/<slug>.md` |
 | **4 Loop** | `../implement/SKILL.md`, calling `../verify/SKILL.md` and `../review/SKILL.md` per task | `progress/<slug>.md` (with `## Decision queue`), `decisions.md` |
-| **5 Close** | `../verify/SKILL.md` (closing mode), then `../review/SKILL.md` (closing review, on what will ship), `../ship/SKILL.md` | `verifications/<slug>-<date>.md`, the PR |
+| **5 Close** | `../verify/SKILL.md` (closing mode), then `../review/SKILL.md` (closing review, on what will ship), `../ship/SKILL.md` | `verifications/<slug>-<date>.md`, `reviews/<slug>.md`, the PR or parked branch |
 | on demand | `../debug/SKILL.md` · `../worktrees/SKILL.md` · `../parallel/SKILL.md` | — |
 
 **Where the human enters — three places only:** approving the spec, answering the decision queue, approving a tier-2 merge. Everything else runs.
+
+No ASDD phase edits the root `CLAUDE.md`: every artifact is indexed in `02-DOCS/wiki/index.md` (the Knowledge map). The root `CLAUDE.md` is owned by `harness` and is tier 2 in `rsc risk`.
 
 ### The spec proves itself
 
@@ -57,14 +59,24 @@ Every spec answers four questions, and `spec:gate` refuses one dated 2026-11-03 
 
 ### Park, don't block
 
-Tier 2, a contradiction with a recorded decision, a gap clarify could not close, or no convergence in 3 rounds: the task goes to the **decision queue** (`## Decision queue` in `progress/<slug>.md`) with its evidence, and the agent **continues with the independent tasks**. The run never waits at 2 a.m. for an answer.
+Tier 2, a contradiction with a recorded decision, a gap that would make the build unsafe, or no convergence in 3 rounds: the task goes to the **decision queue** (`## Decision queue` in `progress/<slug>.md`) with its evidence, and the agent **continues with the independent tasks**. The run never waits at 2 a.m. for an answer.
+
+Every entry carries a kind, one line each:
+
+```markdown
+- [blocking] Q3 — <what must be decided>, <evidence>, <task>
+- [review-after] Q4 — <assumption taken>, <where it is recorded>, <task>
+```
+
+- **`blocking`** — tier 2, a contradiction with a recorded decision, no convergence in 3 rounds, a hard failure. It stops a self-merge.
+- **`review-after`** — clarify's recorded assumptions, a spec reference the agent had to write itself, a provisional constitution ratification. It never stops a merge; it is listed in the PR body (or the parked summary) for the human.
 
 ## The invoke rule — route to the phase that fits
 
 > **The new-feature gate (hard).** The moment the user is thinking about a new feature or change — "add…", "build…", "it should also…", "quiero añadir…" — and the decisor chose this lane, it goes to `specify` first, *even if a stack skill also fired*. **No feature code is written — by any skill — until a spec AND a plan exist and are approved.** Small authorised changes go to `../ftd/SKILL.md`, which escalates here when `rsc risk` says tier 2 or the change contradicts a recorded decision.
 
-1. **No `02-DOCS/wiki/sdd/config.yaml` and this is non-trivial?** → `sdd-init`.
-2. **No constitution, or `status: draft`?** → `constitution` once (it also drafts `REVIEW.md`).
+1. **Empty repo (nothing to detect)?** → `constitution` first (it decides the stack), then `sdd-init`.
+2. **No `02-DOCS/wiki/sdd/config.yaml` and this is non-trivial?** → `sdd-init`. **No constitution, or `status: draft`?** → `constitution` once (it also drafts `REVIEW.md`).
 3. **Ambiguous / architectural / risky before a spec?** → optional proposal via `specify`.
 4. **Fuzzy idea, no spec?** → `specify`. **Spec with gaps?** → `clarify`.
 5. **Approved spec, no plan?** → `plan`, then `tasks`, then `analyze`.
@@ -78,9 +90,19 @@ Skip honestly: `constitution` runs once per project; `clarify` and `analyze` are
 
 ## Autopilot — one up-front yes
 
-The user says "take it all the way" once (or `sdd.autopilot: true` in `config.yaml`) and the chain runs end to end **without asking to continue between phases**, still writing every artifact. The up-front yes satisfies the new-feature gate.
+The user says "take it all the way" once (or `execution_mode: automatic` under `sdd:` in `config.yaml`, set by `sdd-init`) and the chain runs end to end **without asking to continue between phases**, still writing every artifact. The up-front yes satisfies the new-feature gate.
 
-Autopilot does not stop the run for questions — it **parks**: real ambiguity, tier 2, a contradiction with a recorded decision or a non-converging task go to the decision queue while independent work continues. It **stops** only for a hard failure nothing else can proceed past, and for destructive or irreversible actions. Landing follows the risk: tier 0-1 with green CI and an empty queue may self-merge; tier 2 waits for the human.
+Autopilot does not stop the run for questions — it **parks**: real ambiguity, tier 2, a contradiction with a recorded decision or a non-converging task go to the decision queue while independent work continues. It **stops** only for a hard failure nothing else can proceed past, and for destructive or irreversible actions.
+
+**In autopilot, per phase:**
+
+- `constitution` ratifies provisionally → `review-after` entry.
+- `specify` uses a checkable reference it wrote itself (expected output, sample response) → `review-after` entry.
+- `clarify` records its assumptions (`suposición tomada`) → `review-after` entries.
+- `implement` parks `blocking` items and continues with the independent tasks.
+- `ship` lands by the rule below.
+
+**Landing — there is always a legal path.** A remote exists → open a PR; self-merge only when `rsc risk` says tier 0-1, CI is green and no `blocking` entry is open; `review-after` entries go into the PR body. No remote → **park**: leave the branch committed, write the explainer, the open entries and the exact merge command for the human into `progress/<slug>.md`, and stop. Never merge locally around the branch guard: when `rsc main status` says `closed: true`, the guard denies it.
 
 Narrate in the `orient` voice: name each stage as it passes and show its artifact, one line each.
 
@@ -101,8 +123,10 @@ Each phase declares a tier — `heavy` (constitution, plan, analyze, review, deb
 ├── proposals/<slug>.md      ← optional pre-execution briefing
 ├── specs/<slug>.md          ← one spec per feature (four questions + out of scope)
 ├── plans/<slug>.md          ← plan + tasks
+├── analysis/<slug>.md       ← analyze's cross-artifact report
 ├── progress/<slug>.md       ← append-only loop ledger + ## Decision queue
 ├── verifications/<slug>-YYYY-MM-DD.md
+├── reviews/<slug>.md        ← closing review record
 ├── review-evals/<sha>.md    ← one case per revert that escaped review (`rsc review escapes`)
 ├── archive/<slug>/
 ├── sessions/<date>-<slug>.md
@@ -111,7 +135,7 @@ REVIEW.md                    ← project root: how this repo is judged
 .rsc/review-ledger.jsonl     ← findings, outcomes, rounds (tool-written)
 ```
 
-The directory keeps its `sdd/` name: existing projects keep working. Index it in `02-DOCS/wiki/index.md` under the `sdd/` topic; the harness keeps it honest.
+The directory keeps its `sdd/` name: existing projects keep working. Index it in `02-DOCS/wiki/index.md` under the `sdd/` topic — never in the root `CLAUDE.md`; the harness keeps it honest.
 
 ## Stack handoff and skill registry
 
@@ -126,7 +150,7 @@ Every phase ends with this block so the dispatcher can chain without interpretin
   "status": "complete|blocked|failed",
   "executive_summary": "one short paragraph",
   "artifact": "path/to/artifact-or-none",
-  "next_recommended": "sdd-init|specify|clarify|plan|tasks|analyze|implement|verify|review|ship",
+  "next_recommended": "sdd-init|constitution|specify|clarify|plan|tasks|analyze|implement|verify|review|ship",
   "risk": "low|medium|high",
   "model": { "tier": "heavy|balanced|light", "resolved": "model-id", "routing": "on|off" },
   "skill_resolution": { "used": [], "missing": [], "fallback": [], "compact_rules": [] },
@@ -152,7 +176,7 @@ A run stopped mid-flight writes `02-DOCS/wiki/sdd/sessions/<date>-<slug>.md` ins
 
 ## Start here
 
-- **New project** → `sdd-init`, `constitution`, then `specify`.
+- **New project** → `sdd-init`, `constitution`, then `specify`. **Empty repo** → `constitution` first (it decides the stack), then `sdd-init`.
 - **Existing project, new feature** → `specify` (proposal first if risky or architectural).
 - **Small authorised change** → `../ftd/SKILL.md`.
 

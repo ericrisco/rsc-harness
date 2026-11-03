@@ -68,5 +68,5 @@ capability:
       - "Every principle is numbered, imperative, and testable (a number, command, or named artifact), not an aspiration like 'write clean code'."
       - "Includes the two fixed principles: git authorship is the human's (no Co-Authored-By AI / generated-with footer, enforced at ship) and significant decisions are logged."
       - "Produces a Definition of Done checklist (the merge bar verify runs against) covering format/lint, types, tests/coverage, conventions, branch+PR+authorship, security, and decisions logged."
-      - "Writes 02-DOCS/wiki/sdd/constitution.md with a version (v1.0.0), ratified date, and an append-only amendment log; adds the Knowledge-map row to root CLAUDE.md additively (never deleting sections)."
+      - "Writes 02-DOCS/wiki/sdd/constitution.md with a version (v1.0.0), ratified date, and an append-only amendment log; indexes it in 02-DOCS/wiki/index.md and never edits the root CLAUDE.md."
       - "Shows the draft and gets explicit ratification from the user before it takes effect, and ends by pointing to the specify phase as next in the chain."

@@ -85,7 +85,7 @@ Three of them carry the weight and fail quietly:
 
 Write `02-DOCS/wiki/sdd/plans/<slug>.md`, `<slug>` matching the spec's slug exactly — one plan per
 spec, same name, because that is how `tasks`, `analyze` and `implement` find it. Then index it in
-`02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a pointer). If a plan for
+`02-DOCS/wiki/index.md` (the Knowledge map) — never the root `CLAUDE.md`. If a plan for
 this slug already exists, update it in place and note what changed — never fork a `-v2`.
 
 ## Model tier — `heavy` (opt-in routing)

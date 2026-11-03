@@ -125,7 +125,7 @@ Then they see an empty-cart message and the "pay" button is disabled
 
 A criterion that needs a human to "decide if it's good enough" is not done yet — sharpen it or move the soft part to *Points to clarify*.
 
-**Six of those sections are enforced, not suggested, each from its own date.** For a spec dated 2026-09-06 or later, `spec:gate` refuses the file if *Cost of not building it* or *The cheapest alternative* is missing or still holding the template's guidance; from 2026-11-03 it also refuses one missing any of the four ASDD questions — *What the user can do*, *What result they get*, *What it must respect*, *How it proves it* (Spanish headings accepted: *Qué podrá hacer el usuario*, *Qué resultado obtiene*, *Qué debe respetar*, *Cómo lo demuestra*). Specs written before each date are exempt — they cannot answer honestly after the fact. The first two ask whether the thing should exist at all, because every other gate compares artifacts to each other and a wrong-but-coherent spec passes all of them. The four make the spec something a long autonomous run can be checked against: tests prove the code works, not that it does what was asked.
+**Six of those sections are enforced, not suggested, each from its own date.** For a spec dated 2026-09-06 or later, `rsc spec gate` refuses the file if *Cost of not building it* or *The cheapest alternative* is missing or still holding the template's guidance; from 2026-11-03 it also refuses one missing any of the four ASDD questions — *What the user can do*, *What result they get*, *What it must respect*, *How it proves it* (Spanish headings accepted: *Qué podrá hacer el usuario*, *Qué resultado obtiene*, *Qué debe respetar*, *Cómo lo demuestra*). Specs written before each date are exempt — they cannot answer honestly after the fact. The first two ask whether the thing should exist at all, because every other gate compares artifacts to each other and a wrong-but-coherent spec passes all of them. The four make the spec something a long autonomous run can be checked against: tests prove the code works, not that it does what was asked.
 
 ### Points to clarify carry a type
 
@@ -193,13 +193,11 @@ property of the **file**, not of your confidence:
 > Every template section carries content or an explicit typed open point, and no section holds an
 > unmarked assumption.
 
-Run `npm run spec:gate <path>` on the spec you just wrote (no path: the whole corpus). It reports the
-missing and the empty sections by name, and it prints what it does **not** check — the unmarked
-assumption is yours to catch, because no parser can. A red gate means the spec is not closed: name
-the section that failed and fix it before step 9.
-
-A gate that has never been seen fail is not known to work, so this one ships with the test that
-watches it fail and pass (`tests/spec-gate.test.js`).
+Run `npx @ericrisco/rsc spec gate <path>` on the spec you just wrote (no path: every spec in the
+project's `02-DOCS/wiki/sdd/specs/`). It prints `PASS`/`FAIL` per file, reports the missing and the
+empty sections by name, exits non-zero on any `FAIL`, and prints what it does **not** check — the
+unmarked assumption is yours to catch, because no parser can. A red gate means the spec is not
+closed: name the section that failed and fix it before step 9.
 
 ### Fresh-eyes spec review (step 8, scaled to the stakes)
 
@@ -244,7 +242,11 @@ ask → user answers → fold it in → say what changed → show the revised sp
   **approved in autopilot, not item by item**, in the spec's `status:`. The spec then becomes the
   artifact the user reviews *after the fact*, and the work claims correspondingly less certainty
   about having captured their intent. Writing "aprobada" flat, when what happened was a blanket
-  go-ahead, is the record telling a small lie about the strongest gate in the chain.
+  go-ahead, is the record telling a small lie about the strongest gate in the chain. The same goes
+  for *What result they get*: with no human to approve a reference, write one that can be checked
+  mechanically (the expected transcript, response or output), and record it as a `review-after`
+  entry in the decision queue (`## Decision queue`, `02-DOCS/wiki/sdd/progress/<slug>.md`) — the
+  run continues, the human confirms the reference afterwards.
 - **Rejection is information — keep it.** If the user turns the spec down, revise it in place and
   append the reason to `## Revisions`. Never delete and start clean: what they rejected, and why,
   is the most useful thing in the file.

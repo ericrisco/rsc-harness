@@ -1,5 +1,5 @@
 {
-  "version": "4.0.0",
+  "version": "4.0.1",
   "counts": {
     "skills": 274,
     "agents": 34,
@@ -4376,8 +4376,9 @@
         "registry"
       ],
       "recommends": [
+        "asdd",
+        "constitution",
         "specify",
-        "implement",
         "verify"
       ],
       "profiles": [

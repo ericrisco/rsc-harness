@@ -41,7 +41,8 @@ omitted. A task with a control **not run** is not done; a closing record with on
 
 ```text
 LOCATE  → find the spec, the task done-checks, and which stack(s) changed
-RUN     → execute the relevant stack scripts/verify.sh (lint, type, test+coverage, audit)
+RUN     → execute the relevant stack scripts/verify.sh (lint, type, test+coverage, audit),
+          or the generic gate from config.yaml when no stack ships one
 WALK    → check every task done-check and every spec acceptance criterion against real output
 ROLLBACK→ write how to undo the change (revert sha, migration down, flag off) into the record
 RECORD  → write the verification record under 02-DOCS/wiki/sdd/, index it
@@ -91,7 +92,7 @@ Rules for RUN:
 - A `GAP` is the third thing, and it is the one that looks most like a pass: **the layer ran and had nothing to fail with.** The fastapi gate reports it when coverage runs with no `--cov-fail-under` configured; the Go gate reports it always, because `go test -cover` takes no threshold. The script deliberately does not fail on a GAP — that judgement is yours. **Treat a GAP as an unverified criterion, which fails the verdict**, and record it (see the mapping below). A gate that reports and a gate that checks are indistinguishable on screen, and only the broken one is guaranteed to stay green.
 - A non-zero exit from a tool that actually ran is a hard FAIL. Record the failing tool and its output.
 - Run from the directory the stack skill documents (Go runs from the module root; others from the subproject root). Don't guess paths.
-- If no `scripts/verify.sh` exists for a touched stack, that's a gap — say the gate is incomplete and recommend the user add the stack skill, rather than hand-rolling a one-off check that drifts from the real gate.
+- **No stack skill ships a `scripts/verify.sh` for this stack?** Run the **generic gate**: the test, lint, type, build and audit commands `sdd-init` recorded in `02-DOCS/wiki/sdd/config.yaml`, each recorded as pass, fail or **not run**. It is a full gate, not a lesser one. Procedure: `references/generic-gate.md`.
 
 #### A home-grown gate must prove it can fail — and that it can pass
 
@@ -106,7 +107,7 @@ The dangerous way a checker breaks is not a crash — it is **fail-open**: nothi
 
 **Over-blocking is not the safe side.** It feels like caution and it is not: a gate that fires on correct work gets muted, worked around, or wedges the pipeline that depends on it, which is the same damage as a gate that checks nothing with the sign reversed. And it is *harder* to notice, because the failure arrives dressed as diligence.
 
-Where this bites hardest is a check that matches text rather than structure — **"the path appears in the string" is not "the write targets that location"**. Our own integrity gate shipped that defect: twelve mutants proved it could fail, none asked whether it could pass. → `02-DOCS/wiki/harness/puertas-y-mecanismos.md`
+Where this bites hardest is a check that matches text rather than structure — **"the path appears in the string" is not "the write targets that location"**. Our own integrity gate shipped that defect: twelve mutants proved it could fail, none asked whether it could pass — and the first real run blocked every reading of a protected file as if it were a write to it.
 
 So when you write the negative control, write the positive one beside it, and prefer matching **structure** (a parsed tool call, a resolved path, an exit code) over matching text that happens to contain the thing you care about.
 
@@ -188,7 +189,7 @@ source_state: 3f9a1c2 (clean)
 
 **A dismissed finding carries evidence, one line each.** A fix is self-evidencing — the test now passes. A dismissal is not: "not a real problem" is indistinguishable from "did not check". Name the command, the `file:line`, or the test that disproves it, or write "ninguno".
 
-Append-only spirit: don't overwrite a prior run's record; a new run is a new dated file. The record is the receipt the `review` and `ship` phases trust.
+Append-only spirit: don't overwrite a prior run's record; a new run is a new dated file — a re-run on the same day writes `<slug>-YYYY-MM-DD-r2.md` (then `-r3`, …). The record is the receipt the `review` and `ship` phases trust.
 
 ### 5 — VERDICT
 

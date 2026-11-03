@@ -2,7 +2,7 @@
 name: sdd-init
 description: "Use when calibrating an existing repo for the rsc SDD chain: detect stack, package manager, test runners and apply/verify commands, refresh the skill registry, and write the runtime config at 02-DOCS/wiki/sdd/config.yaml. NOT the dispatcher that routes SDD phases (that is `asdd`), NOT first-contact user/workspace bootstrap (that is `init`)."
 tags: [sdd, init, config, testing, registry]
-recommends: [sdd, specify, implement, verify]
+recommends: [asdd, constitution, specify, verify]
 profiles: [core, full]
 origin: risco
 ---
@@ -28,13 +28,15 @@ Read-only first:
 
 If `02-DOCS/` does not exist, create only the `02-DOCS/wiki/sdd/` path needed for the config. Do not run full harness scaffolding unless the user asked for `harness`.
 
+**Empty repo — nothing to detect?** Then there is nothing to calibrate yet: `constitution` runs first and decides the stack, and this skill calibrates against that decision (or re-runs once the first manifest exists). Never invent runners for an empty tree.
+
 ## Preflight Choices
 
 Ask only when the answer changes behavior; explain each trade-off in one line, in the register `technical_level` sets.
 
 | Setting | Default | Options |
 | --- | --- | --- |
-| `execution_mode` | `interactive` | `interactive` pauses at review-risk gates; `automatic` chains phases until a blocker/risk appears. |
+| `execution_mode` | `interactive` | `interactive` pauses at review-risk gates; `automatic` chains phases until a blocker/risk appears. `sdd.execution_mode: automatic` is the switch `asdd`'s autopilot reads. |
 | `artifact_store` | `02-DOCS/wiki/sdd` | Keep RSC artifacts in `02-DOCS`; do not create an `openspec/` parallel tree. |
 | `review_budget.line_budget` | `400` | Lower for solo tight review; higher only with explicit approval. |
 | `delivery_strategy.default` | `ask-on-risk` | `ask-on-risk`, `single-pr`, `autochain`, `exception`. |
@@ -158,7 +160,7 @@ End with the standard SDD result envelope:
   "status": "complete",
   "executive_summary": "SDD config calibrated and registry refreshed.",
   "artifact": "02-DOCS/wiki/sdd/config.yaml",
-  "next_recommended": "sdd",
+  "next_recommended": "constitution|specify",
   "risk": "low",
   "skill_resolution": {
     "used": ["sdd-init"],
@@ -186,4 +188,4 @@ End with the standard SDD result envelope:
 
 ## Next
 
-After `sdd-init`, return to `asdd`. If no spec exists, route to `specify`. If the work is ambiguous or architectural, write a proposal first under `02-DOCS/wiki/sdd/proposals/`.
+After `sdd-init`, return to `asdd` with `next_recommended` set to the next phase: `constitution` if there is none (or it is `status: draft`), else `specify` when no spec exists. If the work is ambiguous or architectural, write a proposal first under `02-DOCS/wiki/sdd/proposals/`.

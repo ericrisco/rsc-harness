@@ -46,7 +46,7 @@ if (['--version', '-v', 'version'].includes(rawArgv[0])) {
   process.exit(0);
 }
 const GENERAL_HELP = [
-  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | risk [--base <ref>] [paths…] | review consolidate|ledger|escapes | ingest <file...> | copy check <file> | copy rules | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
+  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | risk [--base <ref>] [paths…] | spec gate [specs…] | review consolidate|ledger|escapes | ingest <file...> | copy check <file> | copy rules | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
   'Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)',
   '   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.',
 ].join('\n');
@@ -77,7 +77,7 @@ const PURGE_HELP = [
 const GLOBAL_VALUE_FLAGS = new Set([
   '--topic', '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--accept-plan',
 ]);
-const COMMANDS = new Set(['ingest', 'copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'risk', 'sello', 'repair', 'uninstall', 'purge']);
+const COMMANDS = new Set(['ingest', 'copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'risk', 'spec', 'sello', 'repair', 'uninstall', 'purge']);
 function positionalTokens(input) {
   const out = [];
   for (let i = 0; i < input.length; i++) {
@@ -1232,6 +1232,19 @@ async function main() {
       if (hits.length) process.exitCode = 1;
       return;
     }
+    case 'spec': {
+      // `spec gate` — the specify phase's exit gate, reachable from a user project. It was only an npm
+      // script inside this package, so the one check ASDD's spec depends on could not run where specs live.
+      const USE = 'Use: npx @ericrisco/rsc spec gate [spec.md ...]\n  Without paths it checks 02-DOCS/wiki/sdd/specs/ of this project. Exits 1 when a spec fails.';
+      if (argv[1] !== 'gate') { say(USE); if (argv[1]) process.exitCode = 1; return; }
+      const { spawnSync } = await import('node:child_process');
+      const { fileURLToPath: toPath } = await import('node:url');
+      const rest = argv.slice(2);
+      const specs = rest.filter((a, i) => !a.startsWith('--') && rest[i - 1] !== '--target');
+      const r = spawnSync(process.execPath, [toPath(new URL('./spec-gate.js', import.meta.url)), ...specs], { stdio: 'inherit', windowsHide: true });
+      process.exitCode = r.status ?? 1;
+      return;
+    }
     case 'risk': {
       // How much review and whose approval a change needs, by WHAT it touches (ASDD, P1/P7). The
       // agent never picks its own tier: this does, from the sello's path table, sello on or off.
@@ -1266,7 +1279,7 @@ async function main() {
       const USE = [
         'Use: npx @ericrisco/rsc review consolidate [report.md|findings.json ...] [--json] [--window <lines>]',
         '  Without files it reads stdin. Each lens report carries its findings in ```json findings blocks.',
-        '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant> | round <slug>/<task> | stats [--json]',
+        '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant|parked> | round <slug>/<task> | stats [--json]',
         '     npx @ericrisco/rsc review escapes [--since <ref>] [--json]',
       ].join('\n');
       if (argv[1] === 'ledger' || argv[1] === 'escapes') {

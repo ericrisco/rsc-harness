@@ -69,7 +69,7 @@ capability:
       - "Includes sdd-init as step zero when 02-DOCS/wiki/sdd/config.yaml is missing, and explains that it detects test commands, strict TDD and .rsc/skill-registry.json"
       - "Applies the invoke rule: a fuzzy idea with no spec on disk routes to specify (and notes constitution runs once per project if not yet present)"
       - "Does NOT itself write the spec or start coding — it hands off to the specify phase skill (../specify/SKILL.md)"
-      - "Notes that artifacts will be written under 02-DOCS/wiki/sdd/ (specs/, plans/, decisions.md) and indexed in the root CLAUDE.md Knowledge map"
+      - "Notes that artifacts will be written under 02-DOCS/wiki/sdd/ (specs/, plans/, decisions.md) and indexed in 02-DOCS/wiki/index.md (never the root CLAUDE.md)"
       - "Mentions standard result envelopes with status, artifact, next_recommended, risk, skill_resolution and evidence"
       - "Defers concrete stack tooling (test runner, build, framework idioms) to the relevant stack skill rather than prescribing it here"
 
