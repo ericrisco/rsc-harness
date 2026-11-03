@@ -115,7 +115,7 @@ review of the task, this first one included. Round 1 is the task's first review,
 | --- | --- |
 | 0 | none — the controls (e) still run |
 | 1 | one fresh-context reviewer; frozen brief in `references/per-task-review.md` |
-| 2 | the three refuters (`refuter-correctness` · `refuter-security` · `refuter-tests`) in parallel, as `../review/SKILL.md` runs them |
+| 2 | the three refuters (`refuter-correctness` · `refuter-security` · `refuter-tests`) in parallel, as `../review/SKILL.md` runs them; then `review ledger panel <slug>/<task> --lenses correctness,security,tests` — the push gate checks it |
 
 Every reviewer gets the **spec**, the **diff as a file** (`scripts/review-package <BASE> <HEAD>`, BASE
 = the task's *recorded* base sha, never `HEAD~1`), the **surrounding code** at that sha (not just the

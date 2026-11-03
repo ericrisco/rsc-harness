@@ -122,6 +122,19 @@ export function round(root, task, { now = new Date().toISOString() } = {}) {
   return { ok: true, round: n, message: `task "${task}": review round ${n} of ${MAX_ROUNDS}` };
 }
 
+// Records that a review panel ran on a task: which lenses, distinct. Self-attested, like the sello's
+// approve — it binds the claim to a task, it does not prove the review was good. The ship guard reads
+// it: a tier-2 branch does not leave the machine without a panel of the required size on its spec.
+export function panel(root, task, lenses, { now = new Date().toISOString() } = {}) {
+  if (!QUALIFIED_TASK.test(task)) {
+    return { ok: false, message: `rsc: qualify the task with its spec slug, e.g. \`review ledger panel <slug>/closing --lenses correctness,security,tests\`.` };
+  }
+  const list = [...new Set(String(lenses || '').split(',').map((l) => l.trim()).filter(Boolean))];
+  if (!list.length) return { ok: false, message: 'rsc: name the lenses that ran: --lenses correctness,security,tests' };
+  append(root, [{ type: 'panel', task, lenses: list, at: now }]);
+  return { ok: true, message: `task "${task}": panel of ${list.length} recorded (${list.join(', ')})` };
+}
+
 export function stats(root) {
   const ledger = readLedger(root);
   const findings = ledger.filter((e) => e.type === 'finding');

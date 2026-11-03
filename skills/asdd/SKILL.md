@@ -51,7 +51,7 @@ Every spec answers four questions, and `spec:gate` refuses one dated 2026-11-03 
 
 ### The risk decides, never the agent
 
-`npx @ericrisco/rsc risk [--base <ref>] [paths…]` classifies a change by **what it touches** (the sello's path table; works with the sello off): tier 0 docs/copy → no reviewer; tier 1 ordinary code → one fresh-context reviewer; tier 2 auth, billing, CI workflows, migrations, secrets, harness config → the three-refuter panel **and human approval**. An agent's approval never counts as a human's.
+`npx @ericrisco/rsc risk [--base <ref>] [paths…]` classifies a change by **what it touches and what it adds** (the sello's path table plus fixed content patterns — password hashing, session cookies, payments, schema changes, secrets — so auth code in `src/app.js` is still auth; works with the sello off): tier 0 docs/copy → no reviewer; tier 1 ordinary code → one fresh-context reviewer; tier 2 auth, billing, CI workflows, migrations, secrets, harness config → the three-refuter panel **and human approval**. An agent's approval never counts as a human's. **Enforced at push:** a tier-2 branch leaves the machine only with a spec linked to it that passes `rsc spec gate` **and** a panel recorded with `rsc review ledger panel <slug>/<task> --lenses correctness,security,tests`.
 
 ### The loop converges
 

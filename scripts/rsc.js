@@ -1262,13 +1262,17 @@ async function main() {
         .map((p) => rel(root, res(process.cwd(), p)).split('\\').join('/'));
       let paths = given;
       let against = null;
+      let from = null;
       if (!given.length) {
         const c = K.changedPaths(root, base || null);
         if (!c.ok) { say(c.message); process.exitCode = 1; return; }
         paths = c.paths;
         against = c.base;
+        from = c.from;
       }
-      const r = { ...K.assess(paths, S.readEffectiveConfig(root)), ...(against ? { base: against } : {}) };
+      // Given paths are read whole (a forecast or a single file); a diff contributes its added lines.
+      const texts = S.changeText(root, from, paths);
+      const r = { ...K.assess(paths, S.readEffectiveConfig(root), texts), ...(against ? { base: against } : {}) };
       say(argv.includes('--json') ? JSON.stringify(r, null, 2) : K.render(r));
       return;
     }
@@ -1279,7 +1283,7 @@ async function main() {
       const USE = [
         'Use: npx @ericrisco/rsc review consolidate [report.md|findings.json ...] [--json] [--window <lines>]',
         '  Without files it reads stdin. Each lens report carries its findings in ```json findings blocks.',
-        '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant|parked> | round <slug>/<task> | stats [--json]',
+        '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant|parked> | round <slug>/<task> | panel <slug>/<task> --lenses a,b,c | stats [--json]',
         '     npx @ericrisco/rsc review escapes [--since <ref>] [--json]',
       ].join('\n');
       if (argv[1] === 'ledger' || argv[1] === 'escapes') {
@@ -1326,6 +1330,13 @@ async function main() {
           const r = L.round(root, a);
           say(r.message);
           if (!r.ok) process.exitCode = 1;
+          return;
+        }
+        if (sub === 'panel') {
+          if (!a || a.startsWith('--')) return fail(USE);
+          const r = L.panel(root, a, str('lenses'));
+          if (!r.ok) return fail(r.message);
+          say(r.message);
           return;
         }
         if (sub === 'stats') {
@@ -1532,7 +1543,7 @@ async function main() {
           if (!candidate) { say(S.MESSAGES.noTrunk()); process.exitCode = 1; return; }
           const paths2 = Object.keys(candidate.files);
           if (!paths2.length) { say('sello: nothing to freeze — the working tree matches the trunk base.'); return; }
-          const risk = S.classifyRisk(paths2, cfg);
+          const risk = S.classifyCandidate(root, candidate, cfg);
           if (risk.configError) say(`⚠️  ${risk.configError}\n   (using the default risk table until it is fixed)`);
           const required = S.lensesRequired(risk.tier, cfg);
           S.writeSello(root, { status: 'frozen', ...candidate, risk, required, lenses: [], createdAt: new Date().toISOString() });

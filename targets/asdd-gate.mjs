@@ -53,6 +53,21 @@ export function linkedSpecs(root, branch, specCompleteness) {
   });
 }
 
+// Largest panel recorded in the review ledger for a task of any of these specs (`<slug>/<task>`).
+function panelSize(root, slugs) {
+  let text = '';
+  try { text = readFileSync(join(root, '.rsc', 'review-ledger.jsonl'), 'utf8'); } catch { return 0; }
+  let best = 0;
+  for (const line of text.split('\n')) {
+    let e;
+    try { e = JSON.parse(line); } catch { continue; }
+    if (e?.type !== 'panel' || typeof e.task !== 'string' || !Array.isArray(e.lenses)) continue;
+    if (!slugs.some((s) => e.task.toLowerCase().replace(/_/g, '-').startsWith(`${s.toLowerCase().replace(/_/g, '-')}/`))) continue;
+    best = Math.max(best, new Set(e.lenses).size);
+  }
+  return best;
+}
+
 /**
  * null when the command may go ahead; the denial text (with its way out, P6) when it may not.
  * `lib` carries the sibling modules so tests and the hook load them the same way.
@@ -71,12 +86,25 @@ export function asddGate(root, command, { sello, specCompleteness }) {
     ...(git(root, 'diff', '--name-only', '--no-renames', '-z', base) || '').split('\0'),
     ...(git(root, 'ls-files', '--others', '--exclude-standard', '-z') || '').split('\0').filter((n) => !sello.NESTED_WORKTREES.test(n)),
   ].filter(Boolean))].filter((n) => !sello.SELLO_STATE_PATHS.includes(n));
-  const { tier, classes } = sello.classifyRisk(paths, cfg);
+  const { tier, classes } = sello.classifyChange(paths, sello.changeText(root, base, paths), cfg);
   if (tier < 2) return null;
   const tierTwo = [...new Set(Object.values(classes))].filter((c) => c !== 'default' && c !== 'docs');
   if (tierTwo.length && tierTwo.every((c) => c === 'harness')) return null;
   const specs = linkedSpecs(root, branch, specCompleteness);
-  if (specs.some((s) => s.ok)) return null;
+  const passing = specs.filter((s) => s.ok);
+  if (passing.length) {
+    // The spec exists; now the review it requires. A tier-2 change gets the full panel (three lenses
+    // by default), recorded against one of its linked specs in the review ledger.
+    const required = sello.lensesRequired(2, cfg);
+    const slugs = passing.map((s) => s.path.split('/').pop().slice(0, -3));
+    const best = panelSize(root, slugs);
+    if (best >= required) return null;
+    return `Branch "${branch}" is risk tier 2 and its spec passes, but no review panel of ${required} lens(es) is recorded for it` +
+      `${best ? ` (largest recorded: ${best})` : ''}. Tier 2 is reviewed by the full panel, not by one reviewer. ` +
+      `Recover: run the ${required} fresh-context refuters (correctness, security, tests) on the branch, then record it — ` +
+      `\`npx @ericrisco/rsc review ledger panel ${slugs[0]}/closing --lenses correctness,security,tests\` — and push again. ` +
+      'To turn this gate off for the project: create `.rsc/.no-asdd-gate`.';
+  }
   const why = [...new Set(Object.values(classes).filter((c) => c !== 'default' && c !== 'docs'))].join(', ');
   const found = specs.length
     ? `The linked spec does not pass the gate: ${specs.map((s) => `${s.path} (missing: ${[...s.missing, ...s.empty].join(', ') || '—'})`).join('; ')}. `
