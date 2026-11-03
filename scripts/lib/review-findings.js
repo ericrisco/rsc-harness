@@ -68,6 +68,7 @@ export function normalizeFinding(f) {
     claim: text(f.claim) || text(f.title) || text(f.summary),
     failure_scenario: text(f.failure_scenario) || text(f.repro),
     evidence: text(f.evidence),
+    class: text(f.class) || text(f.bug_class) || text(f.defect_class),
     notes: [],
   };
   if (!out.severity) {
@@ -140,6 +141,8 @@ export function consolidate(rawFindings, { window = DEFAULT_WINDOW } = {}) {
       claims: uniq(members.map((m) => m.claim)),
       failure_scenarios: uniq(members.map((m) => m.failure_scenario)),
       evidence: uniq(members.map((m) => m.evidence)),
+      // Carried through so `review ledger record` can fingerprint by bug class.
+      class: uniq(members.map((m) => m.class))[0] || '',
       notes: uniq(members.flatMap((m) => m.notes)),
       reported: members.length,
       verify: rank(severity) <= rank('should-fix'),

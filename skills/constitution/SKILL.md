@@ -1,7 +1,7 @@
 ---
 name: constitution
-description: "Use when setting or amending a project's non-negotiables — stack canon, quality bars, conventions, security/a11y floors — as numbered, testable rules later phases obey. First rsc-sdd phase; writes 02-DOCS/wiki/sdd/constitution.md. NOT a feature spec (that is `specify`), NOT the technical plan (that is `plan`), NOT the wiki itself (that is `harness`)."
-tags: [sdd, constitution, principles]
+description: "Use when setting or amending a project's non-negotiables — stack canon, quality bars, conventions, security/a11y floors — as numbered, testable rules later phases obey, and drafting the REVIEW.md the reviewer reads. ASDD's base stage; writes 02-DOCS/wiki/sdd/constitution.md and REVIEW.md at the project root. NOT a feature spec (that is `specify`), NOT the technical plan (that is `plan`), NOT the wiki itself (that is `harness`)."
+tags: [asdd, constitution, principles, review]
 recommends: [specify]
 profiles: [core, full]
 origin: risco
@@ -9,7 +9,7 @@ origin: risco
 
 # constitution — the project's non-negotiable principles
 
-*The first rsc-sdd phase. Run once per project, then amend. It writes down the rules every later phase obeys: stack canon, quality bars, conventions. Everything downstream — specify, plan, analyze, implement, verify, review — reads this file as guardrails.*
+*ASDD's base stage (`../asdd/SKILL.md`). Run once per project, then amend. It writes down the rules every later phase obeys — stack canon, quality bars, conventions — and the `REVIEW.md` the reviewer reads first. Everything downstream — specify, plan, analyze, implement, verify, review — reads these as guardrails.*
 
 A constitution is small, durable, and enforceable. It is **not** a wiki of everything you know about the project (that is what `02-DOCS/wiki/` already is, run by the `harness`). It is the short list of principles that, if violated, mean the work is wrong regardless of whether it runs. If a rule here cannot be checked or pointed at later, it does not belong here — move it to the stack wiki and link it.
 
@@ -17,7 +17,7 @@ Not this phase: *what to build* → `../specify/SKILL.md`; the technical approac
 
 ## Model tier — `heavy` (opt-in routing)
 
-This phase's default model tier is **`heavy`** — it sets the project's non-negotiables, the highest-leverage decisions in the repo. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch in one line when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
+This phase's default model tier is **`heavy`** — it sets the project's non-negotiables, the highest-leverage decisions in the repo. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../asdd/references/model-routing.md` — announce the switch in one line when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
 
 ## Honor the register first
 
@@ -88,6 +88,18 @@ Create `02-DOCS/wiki/sdd/` if it does not exist. Do not overwrite an existing co
 
 **A draft is "complete me", not "amend me".** `rsc onboard` writes a skeleton with `status: draft` in the frontmatter: the template's headings, the facts onboarding knew (goal, kind, scope, workflow, detected stack) and no principle. Keep those facts, run the interview, fill the sections, then on ratification drop `status: draft`, set `version: v1.0.0` and log v1.0.0 in the amendment log.
 
+## REVIEW.md — what the reviewer reads first
+
+With the constitution, draft `REVIEW.md` at the project root (the code repo — the reviewer runs there). It is short, specific to this repo, and ratified with the constitution:
+
+- **What failure looks like here** — the defect classes that actually hurt this project (e.g. "a query without the tenant filter", "a migration that is not reversible").
+- **Paths to skip** — generated code, vendored files, fixtures.
+- **Nit cap** — the most nits one review may report (e.g. 3); the rest are dropped.
+- **Always-human paths** — what must never merge without a person (billing, auth, infra). Listing them here only informs; to be *enforced* they go into `.rsc/sello-config.json` `risk.raise`, which `rsc risk` reads — say so to the user.
+- **Summary starts with a count** — "3 findings: 1 blocker, 2 nits", before anything else.
+
+`review` adds to it when a finding keeps repeating; amend it like the constitution, never silently.
+
 ## Versioning & amendment protocol
 
 The constitution is versioned so `analyze` and `review` can cite "constitution v1.2.0, principle 4".
@@ -118,6 +130,7 @@ The constitution is versioned so `analyze` and `review` can cite "constitution v
 - [ ] The Definition-of-Done checklist is present (what `verify` runs against).
 - [ ] Fixed principles included: human git authorship + decisions logged.
 - [ ] `02-DOCS/wiki/sdd/constitution.md` written with version + ratified date + amendment log.
+- [ ] `REVIEW.md` drafted at the project root; always-human paths mirrored into `.rsc/sello-config.json` `risk.raise` (or the user told why they are not).
 - [ ] Root `CLAUDE.md` `## Knowledge map` pointer has the read-first row for the constitution.
 - [ ] The constitution was shown to the user and explicitly ratified.
 
@@ -133,8 +146,8 @@ Every later rsc-sdd phase reads this file before it works. The harness maintains
 
 ## Result envelope
 
-End with the parseable block every SDD phase shares, so the dispatcher can chain without
-interpreting prose (contract: `../sdd/SKILL.md`):
+End with the parseable block every phase shares, so the dispatcher can chain without
+interpreting prose (contract: `../asdd/SKILL.md`):
 
 ```json result-envelope
 {
@@ -149,10 +162,10 @@ interpreting prose (contract: `../sdd/SKILL.md`):
     "fallback": [],
     "compact_rules": ["Principles are inherited constraints, not choices to re-make.", "Every rule is testable or it is a preference."]
   },
-  "evidence": ["constitution path exists", "rules numbered and testable", "decisions log appended"]
+  "evidence": ["constitution path exists", "rules numbered and testable", "REVIEW.md drafted", "decisions log appended"]
 }
 ```
 
 ## Next in the chain
 
-The constitution is the guardrail; now describe what to build. Hand off to **`../specify/SKILL.md`** — turn a fuzzy intent into a spec (what & why, no implementation), grounded in these principles. The full chain: **constitution → specify → clarify → plan → tasks → analyze → implement → verify → review → ship** (with `debug`, `worktrees`, `parallel` callable on demand). The dispatcher is `../sdd/SKILL.md`.
+The constitution is the guardrail; now describe what to build. Hand off to **`../specify/SKILL.md`** — turn a fuzzy intent into a spec (what & why, no implementation), grounded in these principles. The ASDD stages: **base → spec → plan → per-task loop → closing → learn** (with `debug`, `worktrees`, `parallel` callable on demand). The dispatcher is `../asdd/SKILL.md`.

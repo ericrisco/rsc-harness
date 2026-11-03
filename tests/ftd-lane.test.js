@@ -25,7 +25,7 @@ const SUGGEST_BYTES_BEFORE = 7282;
 
 test('1 · the per-turn gate offers three outcomes, not two', () => {
   assert.match(GATE, /\bFTD\b/, 'the everyday lane must be named');
-  assert.match(GATE, /\bSDD\b/, 'and the formal chain must still exist');
+  assert.match(GATE, /\bASDD\b/, 'and the formal chain must still exist');
   assert.match(GATE, /question|pregunta|answer|inform/i,
     'and the third outcome — a request for information — must be reachable, which is the one the gate never had');
 });
@@ -79,7 +79,7 @@ test('8 · the routing corpus exists and every lane is represented', () => {
   assert.equal(existsSync(path), true, 'the decisor is prose; without a corpus nothing checks it');
   const corpus = JSON.parse(readFileSync(path, 'utf8'));
   const lanes = new Set(corpus.cases.map((c) => c.expect));
-  assert.deepEqual([...lanes].sort(), ['answer', 'ftd', 'sdd']);
+  assert.deepEqual([...lanes].sort(), ['answer', 'asdd', 'ftd']);
   for (const c of corpus.cases) {
     assert.ok(c.request && c.expect && c.why, `every case states its reasoning: ${JSON.stringify(c)}`);
   }
@@ -91,6 +91,6 @@ test('9 · the corpus carries the cases this lane exists because of', () => {
   assert.ok(answers.length >= 3, 'the read-only lane is the new one; it needs more than a token case');
   assert.ok(corpus.cases.some((c) => c.expect === 'ftd' && /grande|big|large|many|varios/i.test(c.why)),
     'a big change that needs no formal artifacts is FTD: size must not select the chain');
-  assert.ok(corpus.cases.some((c) => c.expect === 'sdd' && /(explicit|pide|asks|propos)/i.test(c.why)),
+  assert.ok(corpus.cases.some((c) => c.expect === 'asdd' && /(explicit|pide|asks|propos)/i.test(c.why)),
     'and the chain is entered by request or accepted proposal, never by the harness alone');
 });

@@ -1,6 +1,6 @@
 # Eval harness — `verify` skill
 
-`verify` is the rsc-sdd post-implementation **gate**. These evals check two
+`verify` is the ASDD evidence **gate** (per task and at closing). These evals check two
 things: that it **triggers** at the right moment (someone is about to claim
 "done"/"green"/"ready to merge") and stays quiet on near-misses, and that it
 **measurably changes the behavior** — running the real stack gate, walking the
@@ -28,7 +28,7 @@ pure shell runner.
 Goal: the skill fires when a "done" claim is imminent and never on a near-miss.
 
 1. Configure an agent with the **full catalog of skill descriptions** available
-   for routing (verify + the rsc-sdd phase skills it chains to — implement,
+   for routing (verify + the ASDD phase skills it chains to — implement,
    debug, review, clarify, ship — plus the stack/process skills: fastapi, go,
    nextjs, flutter, postgresdb, secure-coding, deployment, harness, init) so
    routing competes realistically.

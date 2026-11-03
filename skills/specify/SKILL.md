@@ -1,6 +1,6 @@
 ---
 name: specify
-description: "Use when a feature, change, or product idea is still fuzzy and must become an approved WHAT/WHY spec before any planning or code — the brainstorming front door of SDD. Turns a one-line intent into problem, goals, users, scope, behaviour and acceptance criteria, via frontier-round dialogue and 2-3 approaches with a recommendation, carrying zero implementation detail. Fires whenever someone jumps to HOW before WHAT is agreed, in any language. NOT the technical plan (that is `plan`), NOT the de-risking ambiguity sweep (that is `clarify`), NOT project-wide principles (that is `constitution`)."
+description: "Use when a feature, change, or product idea is still fuzzy and must become an approved WHAT/WHY spec before any planning or code — the brainstorming front door of ASDD stage 2 (Spec). Turns a one-line intent into problem, goals, users, out-of-scope, the four ASDD questions (what the user can do, what result they get, what it must respect, how it proves it) and acceptance criteria, via frontier-round dialogue and 2-3 approaches with a recommendation, carrying zero implementation detail. Fires whenever someone jumps to HOW before WHAT is agreed, in any language. NOT the technical plan (that is `plan`), NOT the de-risking ambiguity sweep (that is `clarify`), NOT project-wide principles (that is `constitution`)."
 tags: [sdd, spec, requirements]
 recommends: [clarify, plan]
 profiles: [core, full]
@@ -9,7 +9,7 @@ origin: risco
 
 # Specify — intent becomes a spec
 
-This is the **specify** phase of the rsc-sdd chain: `constitution` → **`specify`** → `clarify` → `plan` → `tasks` → `analyze` → `implement` → `verify` → `review` → `ship`. Its single job is to turn a fuzzy intent into a written specification that states **WHAT** the change is and **WHY** it matters — and nothing about **HOW** it gets built.
+This is the drafting half of ASDD stage 2, **Spec** (`../asdd/SKILL.md`): **`specify`** writes the draft → `clarify` hunts its gaps → the human approves. Its single job is to turn a fuzzy intent into a written specification that states **WHAT** the change is and **WHY** it matters — and nothing about **HOW** it gets built.
 
 A spec is a contract about behaviour and outcomes, readable by a non-technical stakeholder and precise enough that a `plan` can be derived from it. The output is one file: `02-DOCS/wiki/sdd/specs/<slug>.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map; root `CLAUDE.md` keeps only a short pointer).
 
@@ -40,7 +40,7 @@ If, having looked, there is no real objection, **say so in one line and move on 
 **Offer autopilot once, right here.** At this boundary, propose how to run the rest of the chain:
 > *"¿Quieres que lo lleve hasta el final yo solo — spec → plan → código → verify, parando solo si algo es ambiguo — o prefieres que pare a que apruebes en cada fase?"*
 
-A **yes engages autopilot** (`../sdd/SKILL.md`): you still write the spec and every artifact, but you auto-advance through the phases without re-asking — that up-front yes is the approval that satisfies the hard gate above, for the whole run. A **no** (or silence) keeps the default gated flow: write the spec, hand to `clarify`/`plan`, stop for approval before code. Either way the spec gets written; autopilot only changes whether you pause *between* phases — and it still stops for genuine ambiguity, hard failures, or destructive/outward actions (ship still confirms). If `sdd.autopilot: true` in config, autopilot is the default — still surface it once.
+A **yes engages autopilot** (`../asdd/SKILL.md`): you still write the spec and every artifact, but you auto-advance through the phases without re-asking — that up-front yes is the approval that satisfies the hard gate above, for the whole run. A **no** (or silence) keeps the default gated flow: write the spec, hand to `clarify`/`plan`, stop for approval before code. Either way the spec gets written; autopilot only changes whether you pause *between* phases — and it still stops for genuine ambiguity, hard failures, or destructive/outward actions (ship still confirms). If `sdd.autopilot: true` in config, autopilot is the default — still surface it once.
 
 ## The one rule that defines this skill
 
@@ -52,7 +52,7 @@ If you cannot state a requirement without naming the technology, that is a real 
 
 ## Model tier — `balanced` (opt-in routing)
 
-This phase's default model tier is **`balanced`** — it drafts the what/why spec through dialogue, not architecture. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch in one line when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
+This phase's default model tier is **`balanced`** — it drafts the what/why spec through dialogue, not architecture. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../asdd/references/model-routing.md` — announce the switch in one line when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
 
 ## Read the room first (register)
 
@@ -103,8 +103,12 @@ Write these sections into `02-DOCS/wiki/sdd/specs/<slug>.md` using `references/s
 | Cost of not building it | What concretely happens if nobody does this, and what it costs | Softening a genuinely small cost — "not much" IS the finding |
 | The cheapest alternative | What would solve most of it without building this, and why that is not enough | "Nothing" — there is always a manual workaround or a smaller version |
 | Goals | What success delivers, in outcome terms | A "goal" that's actually a HOW |
-| Non-goals / out of scope | What is explicitly NOT done now — adjacent work, deferred features | Silence — unsaid scope becomes assumed scope |
+| Non-goals / out of scope | What is explicitly NOT done now — adjacent work, deferred features, and what an agent could add "just in case" (the dropped token, the QR nobody asked for) | Silence — unsaid scope becomes assumed scope, and a long run fills it |
 | Users & context | Who acts, their context, what they're trying to achieve | An imagined user no one asked for |
+| What the user can do | The action, its starting conditions, who is allowed to do it | A capability with no actor or no precondition |
+| What result they get | The observable result against a reference the **human approved**: a screenshot or sketch for UI, the expected response for an API | An agent judging that two screenshots "look alike" — that is not a reference |
+| What it must respect | Constraints and prior behaviour that must keep working. Consult the project's brain if it has one, otherwise `02-DOCS/wiki/sdd/decisions.md` and existing specs, so the spec never steps on a prior decision | A constraint you remember but did not look up |
+| How it proves it | How the check runs and what evidence remains afterwards | "Yes, I tested it" — that is a claim, not evidence |
 | Behaviour | What the system does, in observable terms, incl. main + edge + error paths | A verb that's actually a HOW ("queries", "caches") |
 | Acceptance criteria | Testable, binary checks that say "done" | Vague critera ("works well", "is fast") |
 | Points to clarify | The typed handoff to `clarify` — see the four types below | An untyped list, or pretending there are none |
@@ -121,7 +125,7 @@ Then they see an empty-cart message and the "pay" button is disabled
 
 A criterion that needs a human to "decide if it's good enough" is not done yet — sharpen it or move the soft part to *Points to clarify*.
 
-**Two of those sections are enforced, not suggested.** For a spec dated 2026-09-06 or later, `spec:gate` refuses the file if *Cost of not building it* or *The cheapest alternative* is missing or still holding the template's guidance. Specs written before that date are exempt — they cannot answer honestly after the fact. The two exist because every other gate in the chain compares artifacts to each other, so a spec that is wrong-but-coherent passes all of them; these are the only two lines that ask whether the thing should exist at all.
+**Six of those sections are enforced, not suggested, each from its own date.** For a spec dated 2026-09-06 or later, `spec:gate` refuses the file if *Cost of not building it* or *The cheapest alternative* is missing or still holding the template's guidance; from 2026-11-03 it also refuses one missing any of the four ASDD questions — *What the user can do*, *What result they get*, *What it must respect*, *How it proves it* (Spanish headings accepted: *Qué podrá hacer el usuario*, *Qué resultado obtiene*, *Qué debe respetar*, *Cómo lo demuestra*). Specs written before each date are exempt — they cannot answer honestly after the fact. The first two ask whether the thing should exist at all, because every other gate compares artifacts to each other and a wrong-but-coherent spec passes all of them. The four make the spec something a long autonomous run can be checked against: tests prove the code works, not that it does what was asked.
 
 ### Points to clarify carry a type
 
@@ -155,7 +159,8 @@ saves you work.
 Run these in order. It is a collaborative dialogue, not a form you fill in silence — and **you do not skip to a design dump.** Track the steps with a todo list so none is dropped.
 
 ```text
-1. EXPLORE context        → profile + sdd config + constitution + existing specs + wiki + recent git
+1. EXPLORE context        → profile + sdd config + constitution + existing specs + decisions log (or the
+                            project's brain) + wiki + recent git
 2. SCOPE check            → if the request is several independent subsystems, DECOMPOSE into sub-specs first,
                             then brainstorm the FIRST one; each gets its own spec → plan → build cycle
 3. RESTATE + OBJECT     → one sentence of what you understood, plus the strongest objection you can
@@ -268,9 +273,24 @@ drop-off, because the friction is the password itself, not the reset.
 ## Non-goals / out of scope
 - Social login (Google/Apple) — deferred.
 - Replacing existing sessions for already-signed-in users.
+- A QR code to sign in from another device — nobody asked for it.
 
 ## Users & context
 A returning user on a new device who does not remember a password.
+
+## What the user can do
+Any registered user, signed out, can request a link to their own email.
+
+## What result they get
+The sign-in screen matches the approved sketch (linked); following the link
+lands them signed in on the page they started from.
+
+## What it must respect
+Existing sessions keep working; the decisions log says unknown emails reveal nothing.
+
+## How it proves it
+An end-to-end check per acceptance criterion; its run log and a screenshot of
+the signed-in page stay in the verification file.
 
 ## Behaviour
 - Main: user enters email → receives a link → following it signs them in.
@@ -296,28 +316,7 @@ Note what is *absent*: no token format, no table, no email provider, no framewor
 
 ## Optional proposal / pre-execution briefing
 
-For a tiny feature, skip this. For ambiguous, architectural, high-risk, high-review-cost or research-heavy work, write a proposal before the spec:
-
-```text
-02-DOCS/wiki/sdd/proposals/<slug>.md
-```
-
-Proposal grammar:
-
-```markdown
-# Proposal — <slug>
-
-## Problem
-## Intent
-## Scope / Non-scope
-## Research input
-## Alternatives considered
-## Tradeoffs
-## Risks
-## Rollback
-## Success criteria
-## Recommendation
-```
+For a tiny feature, skip this. For ambiguous, architectural, high-risk, high-review-cost or research-heavy work, write `02-DOCS/wiki/sdd/proposals/<slug>.md` before the spec, with these sections: Problem · Intent · Scope / Non-scope · Research input · Alternatives considered · Tradeoffs · Risks · Rollback · Success criteria · Recommendation.
 
 The proposal is allowed to mention options and tradeoffs; the spec that follows still stays WHAT/WHY. If research came from a transcript, doc, spike, or external briefing, cite it in `Research input` so the decision trail survives the chat.
 
@@ -333,7 +332,7 @@ repeated here as prohibitions: naming a behaviour makes it more available, not l
 | Name a framework, table, endpoint, or library | That's HOW. Strip it; describe the behaviour instead, or log the open question. |
 | Write "it should work well / be fast / be intuitive" | Not testable. Make it a binary Given/When/Then or move it to Points to clarify. |
 | Hand to `plan`/`implement` before the user approved the written spec | The approval at step 9 is the gate. No design approved → nothing gets built. |
-| Skip non-goals because "it's obvious" | Unsaid scope becomes assumed scope. State what you are *not* doing. |
+| Skip non-goals because "it's obvious" | Unsaid scope becomes assumed scope. State what you are *not* doing, including what an agent would add "just in case". |
 | Resolve every ambiguity yourself to look finished | Inventing answers is worse than naming gaps. List them in Points to clarify. |
 | Start designing the solution because it's clearer | Stay on WHAT/WHY. The plan is a later, separate phase. |
 | Write the spec somewhere other than 02-DOCS/wiki/sdd/specs/ | That's the canonical location the rest of the chain reads. Use it. |
@@ -370,11 +369,11 @@ End with:
 
 ## Next in the chain
 
-A spec is the input to **`clarify`**, not the finish line. End by pointing there:
+A spec is the input to **`clarify`**, not the finish line — both are ASDD stage 2 (**Spec**), which closes only when the human approves. End by pointing there:
 
-> "Spec written to `02-DOCS/wiki/sdd/specs/<slug>.md` with N open points. Next: run **`clarify`** to resolve them and de-risk the spec before planning."
+> "Spec written to `02-DOCS/wiki/sdd/specs/<slug>.md` with N open points. ASDD stage 2 (Spec) continues: run **`clarify`** to hunt its gaps before the human approves and `plan` starts."
 
-If `clarify` surfaces answers, they get baked back into this same spec file. Only once the spec is de-risked does `plan` derive the technical approach.
+If `clarify` surfaces answers, they get baked back into this same spec file. Only once the spec is de-risked and approved does stage 3 (`plan`) derive the technical approach.
 
 ## See Also
 

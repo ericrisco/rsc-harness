@@ -1,7 +1,7 @@
 ---
 name: ship
-description: "Use when a verified, review-approved branch has to land — the close of the rsc SDD chain: safety checks, then three landing options (merge, PR, park/discard), authorship always Eric and never an AI trailer. NOT running the gates (that is `verify`), NOT reading the diff for defects (that is `review`), NOT shipping to a server (that is `deployment`)."
-tags: [sdd, ship, release, pr]
+description: "Use when a verified branch that passed its closing review has to land — the close of rsc ASDD: safety checks, an explainer for the human (what changed, what the checks proved and would not catch), then three landing options (merge, PR with Testing/Risk/How to revert, park/discard). Risk tier 0-1 with CI green may self-merge; tier 2 waits for human approval. Authorship always the human, never an AI trailer. NOT running the gates (that is `verify`), NOT reading the diff for defects (that is `review`), NOT shipping to a server (that is `deployment`)."
+tags: [asdd, ship, release, pr, risk]
 recommends: []
 profiles: [core, full]
 origin: risco
@@ -9,7 +9,7 @@ origin: risco
 
 # Ship — close the development branch
 
-Ship is the **last gate** of the rsc SDD chain: `constitution → specify → clarify → plan → tasks → analyze → implement → verify → review → **ship**`. Everything upstream proved the work is *correct* and *green*; ship is the act of **landing it** — turning an approved branch into merged history, a pull request, or a clean parked branch — without breaking the trunk and without ever forging the author.
+Ship is the **last step** of ASDD's closing stage (`../asdd/SKILL.md`), after the closing review. Everything upstream proved the work is *correct* and *green*; ship is the act of **landing it** — turning an approved branch into merged history, a pull request, or a clean parked branch — without breaking the trunk and without ever forging the author.
 
 This skill owns one decision and its safe execution: **how does this work integrate?** It does not write code, run test gates, or read the diff for defects — those phases already happened. It is the **close, not the open**: creating the isolated branch or worktree is `../worktrees/SKILL.md`, taking the gates green is `../verify/SKILL.md`, reading the diff adversarially is `../review/SKILL.md`, and putting merged code onto a server is `../deployment/SKILL.md`.
 
@@ -36,7 +36,7 @@ git log -1 --format='%an <%ae>%n%n%b' | grep -iE 'co-authored-by.*(claude|anthro
 ## Read these first
 
 1. `02-DOCS/wiki/harness/user-profile.md` — `technical_level`, the register. It sets the words only, never whether you run the safety checklist.
-2. The **review verdict** for this branch — ship runs only on `APPROVE` or `APPROVE WITH NITS`. `CHANGES REQUESTED` loops back to `implement`, not forward to ship. If there is no verdict on record, say so and treat it as a red flag: do not ship a diff that skipped `../review/SKILL.md` — offer to run it first.
+2. The **closing review verdict** for this branch — ship runs only on `APPROVE` or `APPROVE WITH NITS`. `CHANGES REQUESTED` loops back to `implement`, not forward to ship. If there is no verdict on record, say so and treat it as a red flag: do not ship a diff that skipped `../review/SKILL.md` — offer to run it first.
 3. `02-DOCS/wiki/sdd/decisions.md` and the spec/plan slug — so the commit message and PR body describe *what shipped against which spec*, not a vague "various changes".
 
 ## The pre-ship safety checklist
@@ -46,7 +46,9 @@ Run this before presenting the landing options. Any unchecked item is a stop —
 - [ ] **Review verdict is APPROVE / APPROVE WITH NITS** (not CHANGES REQUESTED, not absent).
 - [ ] **Working tree is clean** — `git status --short` is empty. No stray edits sneaking into the merge.
 - [ ] **On a feature branch, not the trunk** — `git rev-parse --abbrev-ref HEAD` is not `main`/`master`. If work landed directly on the trunk, that is its own problem; flag it, don't paper over it.
-- [ ] **Rebased / up to date with the base** — branch is on top of latest `main`; conflicts resolved locally, not punted to the merge.
+- [ ] **Rebased / up to date with the base, and tested there** — branch is on top of latest `main`; conflicts resolved locally, not punted to the merge; the checks re-ran on the rebased branch.
+- [ ] **Risk tier known** — `npx @ericrisco/rsc risk --base main` run; its tier, classes and `human approval` line go into the PR's Risk section.
+- [ ] **Decision queue empty** — no task parked for a human decision in this branch, or the PR says which ones remain.
 - [ ] **No secrets in the diff** — scan the staged/branch diff for keys, tokens, `.env` values (`git diff main... | grep -iE 'api[_-]?key|secret|password|token|BEGIN .*PRIVATE KEY'`). A hit is a blocker; remove it, and rotate it if it was ever pushed.
 - [ ] **Authorship is Eric** — `git config user.email` is Eric's; no AI trailer in any commit on the branch (run the grep above across `main..HEAD`).
 - [ ] **Commit history is intelligible** — squashed or organized so the history reads as deliberate, not "wip wip fix fix".
@@ -59,7 +61,16 @@ echo "behind:   $(git rev-list --count HEAD..origin/main 2>/dev/null || echo '?'
 git log main..HEAD --format='%an <%ae>' | sort -u   # authors on this branch — expect only Eric
 git diff main...HEAD | grep -icE 'api[_-]?key|secret|password|token|BEGIN .*PRIVATE KEY' \
   | sed 's/^/secret-hits: /'
+npx @ericrisco/rsc risk --base main                 # tier, classes, reviewers, human approval
 ```
+
+### The explainer — before the PR, for the human
+
+Before any landing option, give the human a short explainer, in their register: **what the change
+does** (behaviour, not files), **what the checks proved** (which tests, criteria, review tier), and
+**what they would NOT catch** — the untested path, the environment only production has, the
+judgement no test encodes. The last part is the point: it tells the human where to look. It also
+goes into the PR's Testing section.
 
 ### Automated guard (PreToolUse) — you cannot quietly abandon a feature
 
@@ -99,7 +110,7 @@ local merge is a commit on the default branch. Present option 2 (the recommendat
 and say in one line why option 1 is absent and that «desbloquea main» (`npx @ericrisco/rsc main
 unlock`) would bring it back. The branch guard denies the local merge anyway.
 
-Recommend based on repo signals: protected `main` or an existing PR culture (look for `.github/`, prior PRs via `gh pr list`) → recommend **option 2**. A solo project with no protection and a passed review → **option 1** is honest and faster. Never default to a PR ceremony the repo doesn't use, and never force-merge a repo that gates `main`.
+Recommend based on repo signals: protected `main` or an existing PR culture (look for `.github/`, prior PRs via `gh pr list`) → recommend **option 2**. A solo project with no protection and a passed review → **option 1** is honest and faster. Never default to a PR ceremony the repo doesn't use, and never force-merge a repo that gates `main`. A tier-2 change takes option 1 only after human approval, same as a PR.
 
 ### Delivery strategy from SDD config
 
@@ -157,19 +168,27 @@ PR body shape (no generated-with line, ever):
 
 Implements `02-DOCS/wiki/sdd/specs/<slug>.md`. <the user-facing reason>
 
-## How
+## Testing
 
-- <key implementation point>
-- <key implementation point>
+- <what ran: lint / types / tests / verify record; acceptance criteria met, each with its evidence>
+- Closing review: APPROVE (<N> findings, all with an outcome).
+- Not covered: <what these checks would NOT catch — from the explainer>
 
-## Verification
+## Risk
 
-- `verify` phase: lint / types / tests green (see the verification record).
-- Acceptance criteria from the spec: all met.
-- Review verdict: APPROVE.
+Tier <0|1|2> (`rsc risk`): <classes touched>. Human approval: <required|not required>.
+
+## How to revert
+
+<`git revert <merge-sha>` / the squash commit; plus anything a revert alone does not undo — a migration, a flag, data written>
 ```
 
-Then either let the gate run (team/CI) or self-merge once green: `gh pr merge --squash --delete-branch` (or `--merge` to preserve the history). Squash when the branch history is noisy; preserve when each commit is meaningful.
+**Merge policy — by risk tier.** Tier 0-1, CI green and the decision queue empty → you may
+self-merge (autopilot): `gh pr merge --squash --delete-branch` (or `--merge` to preserve the
+history; squash when the branch history is noisy, preserve when each commit is meaningful). **Tier
+2 waits for human approval** — a human's approving review on the PR, or their explicit yes in the
+conversation. An agent's approval never counts as a human's: no refuter, reviewer subagent or bot
+review stands in for it, however clean.
 
 Once it is merged, pull the trunk — `git switch main && git pull --ff-only` — and the cleanup rides along with that pull: `post-merge` fires on a fast-forward too, verified. A squashed pull request is exactly the case the reaper judges by content rather than by commit identity, so it is recognised as landed; the local branch is kept, because git will not delete a squashed branch safely and while it exists the work is recoverable.
 
@@ -205,13 +224,13 @@ The commit is the durable record. Make it describe the change and tie it to the 
 
 ## Model tier — `light` (opt-in routing)
 
-Closing the branch (PR / merge / cleanup) is mechanical, so this phase's default tier is **`light`**. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`; when it is on, follow `../sdd/references/model-routing.md` for resolving and announcing the switch rather than from memory. Routing off or no profile → honor the session model silently, and skip routing on a one-line change. The Eric-only authorship rule is independent of the model and never relaxes.
+Closing the branch (PR / merge / cleanup) is mechanical, so this phase's default tier is **`light`**. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`; when it is on, follow `../asdd/references/model-routing.md` for resolving and announcing the switch rather than from memory. Routing off or no profile → honor the session model silently, and skip routing on a one-line change. The Eric-only authorship rule is independent of the model and never relaxes.
 
 ## What ship shows
 
 Read `technical_level` from `02-DOCS/wiki/harness/user-profile.md`. It changes the words, **never** the safety checklist or the authorship rule. No profile → use analogies and proceed; don't stall the ship to ask.
 
-In the `orient` voice: the checklist result in one line, the three options as one-liners, the recommendation and its *why*, then execute on a yes — e.g. `Clean, rebased, authorship Eric. Recommend PR (main is protected). Open it?`. For a `non-technical` owner, explain the recommended option with an analogy: a protected `main` wants a PR ("asking permission before changing the shared copy"). Explain fast-forward vs `--no-ff` or what squashing trades away only when asked.
+In the `orient` voice: the explainer, the checklist result in one line, the three options as one-liners, the recommendation and its *why*, then execute on a yes — e.g. `Clean, rebased, authorship Eric. Recommend PR (main is protected). Open it?`. For a `non-technical` owner, explain the recommended option with an analogy: a protected `main` wants a PR ("asking permission before changing the shared copy"). Explain fast-forward vs `--no-ff` or what squashing trades away only when asked.
 
 ## Anti-patterns → STOP
 
@@ -219,6 +238,7 @@ In the `orient` voice: the checklist result in one line, the three options as on
 | --- | --- |
 | "I'll add `Co-Authored-By: Claude` / a 'Generated with Claude Code' footer to be transparent" | It forges the record. The work is Eric's — no AI trailer, ever. Strip it. |
 | "Review didn't formally approve but it's obviously fine" | No verdict = not ready. Ship runs on APPROVE only. Route back to review. |
+| "Tier 2, but the three refuters approved — I'll self-merge" | An agent's approval never counts as a human's. Tier 2 waits for human approval. |
 | "The tree has a couple of stray edits, they're harmless" | A dirty tree means the merge is not the reviewed diff. Clean it or stash it first. |
 | "`main` is protected but I'll just force-merge, I'm sure" | Protected means PR. Don't bypass the gate the repo deliberately set. |
 | "I'll rebase and resolve conflicts during the merge" | Resolve before. A conflicted merge commit hides what actually shipped. |
@@ -259,13 +279,13 @@ End with:
     "fallback": [],
     "compact_rules": ["Keep exactly three landing options.", "Archive the final state."]
   },
-  "evidence": ["review verdict", "verification record", "PR/merge/park/discard reference"]
+  "evidence": ["closing review verdict", "rsc risk tier", "verification record", "PR/merge/park/discard reference", "human approval when tier 2"]
 }
 ```
 
 ## Next in the chain
 
-Ship is the end of the SDD loop for a feature. Two onward paths: the merged code still has to reach a **server / release** → hand off to **deployment** (`../deployment/SKILL.md`); or the next feature restarts the loop at **specify** (`../specify/SKILL.md`), or at **constitution** if the project's principles changed. The `sdd` dispatcher (`../sdd/SKILL.md`) routes whichever comes next.
+Ship is the end of the ASDD loop for a feature. Two onward paths: the merged code still has to reach a **server / release** → hand off to **deployment** (`../deployment/SKILL.md`); or the next feature restarts the loop at **specify** (`../specify/SKILL.md`), or at **constitution** if the project's principles changed. The `asdd` dispatcher (`../asdd/SKILL.md`) routes whichever comes next. Later, a revert of what shipped is an escape: `review` turns it into a case (`rsc review escapes`).
 
 ## Orientación (siempre)
 

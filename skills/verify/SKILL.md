@@ -1,7 +1,7 @@
 ---
 name: verify
-description: "Use when implementation is finished and about to be called done or merged — the rsc-sdd evidence gate: runs the stack's scripts/verify.sh (lint, type, test, audit), walks every task done-check and acceptance criterion, records a dated verdict. NOT judging the diff by eye (that is `review`, spec-less `code-review`), NOT diagnosis (that is `debug`)."
-tags: [sdd, verify, test]
+description: "Use when work is about to be called done — the ASDD evidence gate, in two modes: per task inside `implement`'s loop (tests, build, security, traceability) and at closing over the whole branch against main (stack scripts/verify.sh, every done-check and acceptance criterion, rollback plan, dated verdict). A check that did not execute is reported not run, never passed. NOT judging the diff by eye (that is `review`, spec-less `code-review`), NOT diagnosis (that is `debug`)."
+tags: [asdd, sdd, verify, test]
 recommends: [review]
 profiles: [core, full]
 origin: risco
@@ -9,7 +9,7 @@ origin: risco
 
 # verify — the evidence gate before "done"
 
-`verify` is the post-implementation **gate** in the rsc-sdd chain. Implementation just finished; nobody is allowed to call it *done*, *fixed*, *working*, or *ready to merge* until the evidence exists and has been read. This skill produces that evidence: it runs the project's real quality gate, walks every task's done-check and every acceptance criterion from the spec, and records the result. Pass or fail, the verdict is grounded in command output you actually saw — never in a hunch.
+`verify` is the evidence **gate** of ASDD. Nobody is allowed to call work *done*, *fixed*, *working*, or *ready to merge* until the evidence exists and has been read. This skill produces that evidence: it runs the project's real quality gate, walks every task's done-check and every acceptance criterion from the spec, and records the result. Pass or fail, the verdict is grounded in command output you actually saw — never in a hunch.
 
 The one rule everything else serves: **a claim of done is a claim about evidence. No evidence, no claim.** A green feeling is not green output.
 
@@ -19,7 +19,7 @@ Not this phase: still writing tests or production code → `../implement/SKILL.m
 
 ## Model tier — `balanced` (opt-in routing)
 
-This phase's default model tier is **`balanced`** — it runs the checks and interprets failures with judgment. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../sdd/references/model-routing.md` — announce the switch in one line when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
+This phase's default model tier is **`balanced`** — it runs the checks and interprets failures with judgment. Routing is **off** unless `models.enabled: true` in `02-DOCS/wiki/sdd/config.yaml`. When on: resolve this phase's tier (`models.overrides` wins over `models.phases`), map it to a model via `models.tiers`, and apply per `../asdd/references/model-routing.md` — announce the switch in one line when it differs from the session model, and dispatch any `Task`/`parallel` subagents on that model. Routing off or no profile → honor the session model silently. Never fake a switch a tool can't make; skip routing on a one-line change.
 
 ## Read the room first (register)
 
@@ -27,12 +27,23 @@ Before running anything, read `technical_level` in `02-DOCS/wiki/harness/user-pr
 
 Report in the `orient` voice: pass/fail per gate, then one line of *why* per failing check, then what the user should decide next. For a `non-technical` reader, say what each failing check protects with an everyday analogy.
 
-## The gate (run in this order)
+## Two modes
+
+| Mode | When | Scope | Output |
+| --- | --- | --- | --- |
+| **Per task** | step e of `implement`'s loop, every tier | the task's diff: **tests** (affected suite), **build** (compile + types), **security** (stack audit; `../secure-coding/SKILL.md` on input/authz/secrets), **traceability** (every new behaviour traces to a spec criterion — untraced behaviour is a finding) | one line per control in the task's progress entry |
+| **Closing** | ASDD stage 5, once, before `review` and `ship` | the whole branch against main: merge main in (or rebase) and run the full gate below on the result | the dated record, with a rollback plan |
+
+**Both modes, one rule: a check that was not executed is listed as not run** — never as passed, never
+omitted. A task with a control **not run** is not done; a closing record with one is a FAIL.
+
+## The closing gate (run in this order)
 
 ```text
 LOCATE  → find the spec, the task done-checks, and which stack(s) changed
 RUN     → execute the relevant stack scripts/verify.sh (lint, type, test+coverage, audit)
 WALK    → check every task done-check and every spec acceptance criterion against real output
+ROLLBACK→ write how to undo the change (revert sha, migration down, flag off) into the record
 RECORD  → write the verification record under 02-DOCS/wiki/sdd/, index it
 VERDICT → PASS only if every item has passing evidence; otherwise FAIL with the gaps + handoff
 ```
@@ -46,10 +57,10 @@ Never collapse a step. Never write the verdict before RUN and WALK have produced
   non-trivial, mark that as a verification risk and recommend `sdd-init`.
 - Read the spec at `02-DOCS/wiki/sdd/specs/<slug>.md` for its **acceptance criteria**.
 - Read the plan/task list at `02-DOCS/wiki/sdd/plans/<slug>.md` for each task's **done-check**.
-- Read `02-DOCS/wiki/sdd/progress/<slug>.md` if present for apply evidence and
-  completed tasks. Missing progress does not automatically fail, but it is a
-  traceability gap to record.
-- Determine which subprojects/stacks the change touched (from `git status`/`git diff --name-only` and the manifests). That tells you *which* stack `verify.sh` to run — possibly more than one in a monorepo.
+- Read `02-DOCS/wiki/sdd/progress/<slug>.md` for apply evidence, per-task controls and the
+  `## Decision queue`. Missing progress is a traceability gap to record; parked tasks are listed
+  in the record, never counted as done.
+- Determine which subprojects/stacks the branch touched (from `git diff --name-only main...HEAD` and the manifests). That tells you *which* stack `verify.sh` to run — possibly more than one in a monorepo.
 - If the constitution exists (`02-DOCS/wiki/sdd/constitution.md`), note its quality bars (coverage floor, lint level) — they are part of the gate.
 
 If the spec or task list is missing, stop: there is nothing to verify against. Say so and point back up the chain.
@@ -95,7 +106,7 @@ The dangerous way a checker breaks is not a crash — it is **fail-open**: nothi
 
 **Over-blocking is not the safe side.** It feels like caution and it is not: a gate that fires on correct work gets muted, worked around, or wedges the pipeline that depends on it, which is the same damage as a gate that checks nothing with the sign reversed. And it is *harder* to notice, because the failure arrives dressed as diligence.
 
-Where this bites hardest is a check that matches text rather than structure — **"the path appears in the string" is not "the write targets that location"**. Our own integrity gate learned this twice in one day: it flagged a transcript that merely *named* a protected path (the skill body it had been handed named it), then flagged a sandbox directory whose path *contained* the protected one as a substring. Twelve mutants had proven it could fail; not one had asked whether it could pass, so the defect shipped and surfaced on first real use with the filesystem provably untouched. → `02-DOCS/wiki/harness/puertas-y-mecanismos.md`
+Where this bites hardest is a check that matches text rather than structure — **"the path appears in the string" is not "the write targets that location"**. Our own integrity gate shipped that defect: twelve mutants proved it could fail, none asked whether it could pass. → `02-DOCS/wiki/harness/puertas-y-mecanismos.md`
 
 So when you write the negative control, write the positive one beside it, and prefer matching **structure** (a parsed tool call, a resolved path, an exit code) over matching text that happens to contain the thing you care about.
 
@@ -138,6 +149,9 @@ source_state: 3f9a1c2 (clean)
 - [x] AC1 user can place an order — evidence: e2e test green
 - [ ] AC3 duplicate submit is a no-op — UNVERIFIED: no observable proof
 
+## Rollback plan
+- `git revert <merge sha>`; migration `0042` has a tested down step; no flag involved.
+
 ## Capas no ejecutadas
 - **NO-APLICA** — mutation: no logic module changed, only templates.
 - **HERRAMIENTA-AUSENTE** — mypy: not installed in this environment; verify.sh printed SKIP and **nothing ran in its place**.
@@ -153,7 +167,7 @@ source_state: 3f9a1c2 (clean)
 
 **All numbers come from one fresh run made after the last edit.** A figure from mid-task is stale and does not go in the record, however true it was when you saw it.
 
-**Split "didn't run" three ways**, because one `SKIP` list collapses three different confidence claims and they read identically:
+**Every not-run check is listed, labelled.** Split "didn't run" three ways, because one `SKIP` list collapses three different confidence claims and they read identically:
 
 | Label | Means | Reader should conclude |
 |---|---|---|
@@ -178,7 +192,7 @@ Append-only spirit: don't overwrite a prior run's record; a new run is a new dat
 
 ### 5 — VERDICT
 
-- **PASS** only when *every* stack gate that ran is green (no FAILs), *every* task done-check is met with evidence, and *every* acceptance criterion has observable proof. Then, and only then, say it's verified — and point to `review`.
+- **PASS** only when *every* stack gate ran green (none **not run** but `NO-APLICA`), *every* task done-check is met with evidence, *every* acceptance criterion has observable proof, and the rollback plan is written. Then, and only then, say it's verified — and point to `review`. Parked tasks don't block the verdict; they travel to the human with it.
 - **FAIL** the moment any item lacks passing evidence. List the open items precisely (which check, which criterion, what's missing). Do not soften it. A single unverified acceptance criterion fails the whole gate.
 - Hand each failing kind to the right place: a failing test/type error → `debug`; a missing test for a criterion → back to `implement`; a spec ambiguity that surfaced → `clarify`.
 
@@ -187,7 +201,8 @@ Append-only spirit: don't overwrite a prior run's record; a new run is a new dat
 | Anti-pattern | Why it fails / fix |
 | --- | --- |
 | "The tests passed last run, I'll trust that." | Re-run now. Code changed since; stale green is not green. Evidence is current, or it isn't evidence. |
-| "verify.sh printed SKIP for the tests — close enough." | A SKIP is *unverified*, not passing. The criterion it covers is still open until a real run passes. |
+| "verify.sh printed SKIP for the tests — close enough." | A SKIP is **not run**, not passing. The criterion it covers is still open until a real run passes. |
+| "The security audit didn't run, but the task is clearly fine." | List it **not run**. The task is not done until it runs or the human accepts the gap. |
 | "I read the code and the criterion is obviously satisfied." | Reading is `review`. Verifying needs an observable result — a test, a response, a rendered page. |
 | "Lint and types are green, so it's done." | The stack gate proves clean code, not correct behavior. Walk the acceptance criteria too. |
 | "Coverage dipped below the floor but the feature works." | The constitution's coverage bar is part of the gate. Below floor = FAIL, not a footnote. |
@@ -220,9 +235,9 @@ End with:
 }
 ```
 
-## Next in the chain
+## Next in ASDD
 
-A **PASS** record is the entry ticket to the next phase: **`../review/SKILL.md`** (adversarial read of the diff for what the gate can't catch), then **`../ship/SKILL.md`** (PR/merge). A **FAIL** routes back per the VERDICT step. Either way the verification record under `02-DOCS/wiki/sdd/verifications/` travels with the work as its proof.
+Per-task mode returns to `implement`'s loop (step f). A closing **PASS** record is the entry ticket to **`../review/SKILL.md`** (whole-branch adversarial read against the spec), then **`../ship/SKILL.md`** (PR with Testing / Risk / How to revert). A **FAIL** routes back per the VERDICT step. Either way the verification record under `02-DOCS/wiki/sdd/verifications/` travels with the work as its proof.
 
 ## Orientación (siempre)
 

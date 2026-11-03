@@ -1,7 +1,7 @@
-skill: sdd
+skill: asdd
 
-# Cases for the rsc-sdd "sdd" dispatcher / front door.
-# sdd states the SDD method, reads the user's register (technical_level) from
+# Cases for the "asdd" dispatcher / front door (ASDD, successor of sdd in 4.0).
+# asdd states the SDD method, reads the user's register (technical_level) from
 # 02-DOCS/wiki/harness/user-profile.md, and ROUTES to the right phase skill in
 # the chain constitution -> specify -> clarify -> plan -> tasks -> analyze ->
 # implement -> verify -> review -> ship (debug/worktrees/parallel on demand).
@@ -17,7 +17,7 @@ should_trigger:
   - prompt: "I'm somewhere in the middle of building a feature and I've lost track of which step I'm on. Can you orient me?"
     why: "Non-obvious: no SDD jargon, but 'which step am I on' is precisely the dispatcher's 'which phase are you in' job — it asks the one orienting question (is there a written spec?) and routes."
 
-  - prompt: "Run the full sdd flow on this new authentication requirement."
+  - prompt: "Run the full asdd flow on this new authentication requirement."
     why: "Direct request to run the chained flow — the dispatcher owns the flow and routes the first phase; it should not try to do every phase inline itself."
 
   - prompt: "I have a one-paragraph idea for a notifications feature. Take it all the way to a PR the disciplined way."

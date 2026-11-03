@@ -97,10 +97,10 @@ Reply in the person's language, not this text's.
   question and stay read-only; ambiguity slows the lane, it never raises it.
 - Authorises a change? YOU pick the lane, say it and why: simple -> FTD (one
   feature document, tasks checked off against observed proof); big or
-  interlocking decisions -> SDD (spec + clarify approved, then autopilot or not).
+  interlocking decisions -> ASDD (spec + clarify approved, review in every task).
 - Code change: the line below says where it goes in this project. Never open
   a branch on your own. Another session here: .worktrees/<branch>.
-Method: \`ftd\` · chain: \`sdd\` · full decisor in the always-on \`suggest\` body.
+Method: \`ftd\` · chain: \`asdd\` · full decisor in the always-on \`suggest\` body.
 =================================================
 `;
 

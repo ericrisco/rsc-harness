@@ -101,4 +101,5 @@ capability:
       - "Before trusting any home-grown gate that reports green, asks for it to be watched failing on a known-bad input, and states the limit: one negative control proves one bad case reaches the failure path, not that the gate covers the rule it claims to enforce."
       - "Splits layers that did not run into NO-APLICA / HERRAMIENTA-AUSENTE / SUSTITUIDA rather than one undifferentiated SKIP list, and never writes SUSTITUIDA as a pass."
       - "Binds the record to a source state (short commit SHA plus clean/dirty) and takes every number from one fresh run made after the last edit, refusing to reuse mid-task figures."
+      - "Lists every check that did not execute (the mypy SKIP) as 'not run', never as passed, and writes a rollback plan into the closing record."
       - "Gives any dismissed finding its own evidence line (command, file:line, or the test that disproves it) rather than asserting it was not a real problem."

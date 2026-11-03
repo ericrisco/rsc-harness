@@ -222,11 +222,11 @@
 
   /* ================= interactive plan ================= */
   const PLANS = {
-    [tr('software · small', 'software · pequeño')]: { sel: 'orient · ftd · connect-tool · nextjs …', def: tr('sdd   until CI or a 2nd dev', 'sdd   hasta CI o un 2º dev'), exc: tr('video · payments   no evidence', 'vídeo · pagos   sin evidencia'), n: 7 },
-    [tr('software · growing', 'software · creciendo')]: { sel: 'sdd chain · refuters · code guards …', def: tr('nothing deferred', 'nada pospuesto'), exc: tr('content skills   no evidence', 'skills de contenido   sin evidencia'), n: 19 },
-    [tr('operations', 'operaciones')]: { sel: 'harness · connect-tool · invoicing …', def: tr('reporting   until you ask', 'informes   hasta que lo pidas'), exc: tr('sdd · code guards   no code', 'sdd · guardas de código   sin código'), n: 9 },
+    [tr('software · small', 'software · pequeño')]: { sel: 'orient · ftd · connect-tool · nextjs …', def: tr('asdd  until CI or a 2nd dev', 'asdd  hasta CI o un 2º dev'), exc: tr('video · payments   no evidence', 'vídeo · pagos   sin evidencia'), n: 7 },
+    [tr('software · growing', 'software · creciendo')]: { sel: 'asdd chain · refuters · code guards …', def: tr('nothing deferred', 'nada pospuesto'), exc: tr('content skills   no evidence', 'skills de contenido   sin evidencia'), n: 19 },
+    [tr('operations', 'operaciones')]: { sel: 'harness · connect-tool · invoicing …', def: tr('reporting   until you ask', 'informes   hasta que lo pidas'), exc: tr('asdd · code guards   no code', 'asdd · guardas de código   sin código'), n: 9 },
     [tr('research', 'investigación')]: { sel: 'research-ops · knowledge-ops …', def: tr('decision-records   on demand', 'decision-records   bajo demanda'), exc: tr('code guards   no code', 'guardas de código   sin código'), n: 8 },
-    [tr('content', 'contenido')]: { sel: 'content-engine · brand-voice …', def: tr('youtube-api   until a channel', 'youtube-api   hasta tener canal'), exc: tr('sdd · code guards   no code', 'sdd · guardas de código   sin código'), n: 9 },
+    [tr('content', 'contenido')]: { sel: 'content-engine · brand-voice …', def: tr('youtube-api   until a channel', 'youtube-api   hasta tener canal'), exc: tr('asdd · code guards   no code', 'asdd · guardas de código   sin código'), n: 9 },
   };
   const steps = $$('#inSteps li');
   function setStep(k) { steps.forEach((el, i) => { el.classList.toggle('on', i === k); el.classList.toggle('done', i < k); }); }

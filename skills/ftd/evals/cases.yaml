@@ -3,7 +3,7 @@ skill: ftd
 # Cases for FTD — Fast-Track Development, the lane ordinary authorised change takes.
 # FTD keeps ONE feature document per feature in 02-DOCS (intent, scope, checklist,
 # evidence, next step), checks tasks off only against observed proof, and branches when
-# the work writes code. It is NOT the ten-phase chain (sdd), NOT the classification
+# the work writes code. It is NOT the full method (asdd), NOT the classification
 # itself (the decisor lives in the always-on suggest body), and NOT a request for
 # information — those write nothing at all.
 

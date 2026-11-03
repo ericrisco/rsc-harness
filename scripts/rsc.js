@@ -46,7 +46,7 @@ if (['--version', '-v', 'version'].includes(rawArgv[0])) {
   process.exit(0);
 }
 const GENERAL_HELP = [
-  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | review consolidate [reports…] | ingest <file...> | copy check <file> | copy rules | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
+  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | risk [--base <ref>] [paths…] | review consolidate|ledger|escapes | ingest <file...> | copy check <file> | copy rules | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
   'Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)',
   '   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.',
 ].join('\n');
@@ -77,7 +77,7 @@ const PURGE_HELP = [
 const GLOBAL_VALUE_FLAGS = new Set([
   '--topic', '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--accept-plan',
 ]);
-const COMMANDS = new Set(['ingest', 'copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'sello', 'repair', 'uninstall', 'purge']);
+const COMMANDS = new Set(['ingest', 'copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'risk', 'sello', 'repair', 'uninstall', 'purge']);
 function positionalTokens(input) {
   const out = [];
   for (let i = 0; i < input.length; i++) {
@@ -509,7 +509,7 @@ async function selectAgents() {
 // the assistant (with the user present), never blindly from this CLI.
 function printNextSteps(targets, ids) {
   const hasHarness = ids.includes('harness');
-  const hasSdd = ids.includes('sdd') || ids.includes('sdd-init');
+  const hasSdd = ids.includes('asdd') || ids.includes('sdd-init');
   const label = (id) => TARGETS.find((t) => t.id === id)?.label || id;
   const openLine = `Open this project in: ${targets.map((t) => `**${label(t)}**`).join(' · ')}`;
 
@@ -667,7 +667,7 @@ async function wizard(flagTargets, declaredTargets = []) {
       // First, because it is what someone who already has a harness came here for nine times in ten.
       ...(declared ? [{ key: 'update', label: `Update this project — keeps its ${declared.skills.length} skills, refreshes hooks and content` }] : []),
       { key: 'base', label: `Base install — the essentials (${baseIds.length} skills)` },
-      { key: 'sdd', label: 'Base + Spec-Driven Development — the specify → plan → implement → ship flow' },
+      { key: 'asdd', label: 'Base + Agent Spec-Driven Development (ASDD) — spec → plan → review-in-the-loop → ship' },
       { key: 'manual', label: 'Pick skills by hand, by area' },
     ]);
     if (choice === null) { say('\nOK — nothing installed. Anytime: npx @ericrisco/rsc'); return; }
@@ -675,7 +675,7 @@ async function wizard(flagTargets, declaredTargets = []) {
 
     let ids;
     if (choice === 'base') ids = baseIds;
-    else if (choice === 'sdd') ids = skillsForProfile(m, 'core');
+    else if (choice === 'asdd') ids = skillsForProfile(m, 'core');
     else if (choice === 'manual') {
       const picked = await manualSelect();
       if (picked === null) continue;          // backed out → re-show this menu
@@ -1232,11 +1232,96 @@ async function main() {
       if (hits.length) process.exitCode = 1;
       return;
     }
+    case 'risk': {
+      // How much review and whose approval a change needs, by WHAT it touches (ASDD, P1/P7). The
+      // agent never picks its own tier: this does, from the sello's path table, sello on or off.
+      const K = await import('./lib/risk.js');
+      const S = await import('../targets/sello.mjs');
+      const root = S.resolveRoot(process.cwd());
+      const base = flag('base');
+      if (base === true) { say('Use: npx @ericrisco/rsc risk [--base <ref>] [paths…] [--json]'); process.exitCode = 1; return; }
+      const rest = argv.slice(1);
+      // Values of value-taking flags are not paths (`--target` is global). Paths given from a
+      // subdirectory are resolved against the repository root, or the table would never match them.
+      const VALUED = new Set(['--base', '--target']);
+      const { resolve: res, relative: rel } = await import('node:path');
+      const given = rest.filter((a, i) => !a.startsWith('--') && !VALUED.has(rest[i - 1]))
+        .map((p) => rel(root, res(process.cwd(), p)).split('\\').join('/'));
+      let paths = given;
+      let against = null;
+      if (!given.length) {
+        const c = K.changedPaths(root, base || null);
+        if (!c.ok) { say(c.message); process.exitCode = 1; return; }
+        paths = c.paths;
+        against = c.base;
+      }
+      const r = { ...K.assess(paths, S.readEffectiveConfig(root)), ...(against ? { base: against } : {}) };
+      say(argv.includes('--json') ? JSON.stringify(r, null, 2) : K.render(r));
+      return;
+    }
     case 'review': {
       // `review consolidate` — the deterministic half of the refuter panel (P1): the three lenses
       // often report one defect three ways, so grouping happens here, by location and evidence, and
       // only the unique serious findings go on to `finding-verifier`, which is judgement.
-      const USE = 'Use: npx @ericrisco/rsc review consolidate [report.md|findings.json ...] [--json] [--window <lines>]\n  Without files it reads stdin. Each lens report carries its findings in ```json findings blocks.';
+      const USE = [
+        'Use: npx @ericrisco/rsc review consolidate [report.md|findings.json ...] [--json] [--window <lines>]',
+        '  Without files it reads stdin. Each lens report carries its findings in ```json findings blocks.',
+        '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant> | round <slug>/<task> | stats [--json]',
+        '     npx @ericrisco/rsc review escapes [--since <ref>] [--json]',
+      ].join('\n');
+      if (argv[1] === 'ledger' || argv[1] === 'escapes') {
+        // ASDD's fix loop and the reviewer's learning, token-free (P1): rounds capped, repeats caught,
+        // outcomes counted, reverts listed as the cases the reviewer should be scored against.
+        const L = await import('./lib/review-ledger.js');
+        const { resolveRoot } = await import('../targets/sello.mjs');
+        const root = resolveRoot(process.cwd());
+        const str = (name) => { const v = flag(name); return typeof v === 'string' ? v : undefined; };
+        const json = argv.includes('--json');
+        const fail = (msg) => { say(msg); process.exitCode = 1; };
+        if (argv[1] === 'escapes') {
+          const res = L.escapes(root, { since: str('since') || '' });
+          if (!res.ok) return fail(res.message);
+          say(json ? JSON.stringify(res, null, 2) : L.renderEscapes(res));
+          return;
+        }
+        const [, , sub, a, b] = argv;
+        if (sub === 'record') {
+          const { readFileSync } = await import('node:fs');
+          const R = await import('./lib/review-findings.js');
+          const args = argv.slice(3);
+          const file = args.find((x, i) => !x.startsWith('--') && args[i - 1] !== '--task');
+          let raw;
+          try { raw = file ? readFileSync(file, 'utf8') : readFileSync(0, 'utf8'); }
+          catch (e) { return fail(`rsc: cannot read ${e.path || 'stdin'} (${e.code || e.message}).\n${USE}`); }
+          let list;
+          try { const v = JSON.parse(raw); list = Array.isArray(v) ? v : (Array.isArray(v?.findings) ? v.findings : [v]); }
+          catch { const p = R.parseFindings(raw, file || 'stdin'); if (p.errors.length) return fail(p.errors.join('\n')); list = p.findings; }
+          const out = L.record(root, list, { task: str('task') || '' });
+          if (json) say(JSON.stringify(out, null, 2));
+          else say(out.map((f) => `${f.id}  ${f.status === 'repeat' ? `repeat of ${f.repeatOf} — do not raise it again` : 'new'}  ${f.file || '(no file)'}  ${f.claim}`).join('\n') || 'nothing to record');
+          return;
+        }
+        if (sub === 'outcome') {
+          if (!a || !b) return fail(USE);
+          const r = L.outcome(root, a, b);
+          if (!r.ok) return fail(r.message);
+          say(r.message);
+          return;
+        }
+        if (sub === 'round') {
+          if (!a) return fail(USE);
+          const r = L.round(root, a);
+          say(r.message);
+          if (!r.ok) process.exitCode = 1;
+          return;
+        }
+        if (sub === 'stats') {
+          const s = L.stats(root);
+          say(json ? JSON.stringify(s, null, 2) : L.renderStats(s));
+          return;
+        }
+        return fail(USE);
+      }
       if (argv[1] !== 'consolidate') { say(USE); if (argv[1]) process.exitCode = 1; return; }
       const { readFileSync } = await import('node:fs');
       const R = await import('./lib/review-findings.js');

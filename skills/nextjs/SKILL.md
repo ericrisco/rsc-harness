@@ -14,7 +14,7 @@ origin: risco
 > behaviour change** and there is **no approved spec + plan** under `02-DOCS/wiki/sdd/`, STOP and
 > hand off to `../specify/SKILL.md` (brainstorm → spec → plan → tasks); it routes back here once the
 > plan is approved. Build directly only for a genuinely one-line / low-risk change. Method:
-> `../sdd/SKILL.md`.
+> `../asdd/SKILL.md`.
 
 **Not this skill:** Pages Router (`pages/`) — note the difference, defer to the Next.js Pages docs.
 A pure React SPA (Vite/CRA) → `../react/SKILL.md`; React Native / Expo → `../react-native/SKILL.md`;

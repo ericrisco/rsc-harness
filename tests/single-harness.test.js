@@ -42,7 +42,7 @@ test('3 · the installed set contains the three layers, chain included', () => {
   const skills = planFor('operations', 'small').policy.skills;
   for (const id of ['suggest', 'orient', 'harness', 'init']) assert.ok(skills.includes(id), `harness layer: ${id}`);
   assert.ok(skills.includes('ftd'), 'the default lane must be there to be routed to');
-  for (const id of ['sdd', 'specify', 'plan', 'implement', 'verify', 'ship']) {
+  for (const id of ['asdd', 'specify', 'plan', 'implement', 'verify', 'ship']) {
     assert.ok(skills.includes(id), `chain: ${id} — the default install used to contain none of these`);
   }
 });

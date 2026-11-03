@@ -12,7 +12,7 @@ should_trigger:
   - prompt: "Take the approved spec and turn it into working, tested code. I want a checkpoint after every task and the design choices written down somewhere."
     why: "Execute spec→code with per-task checkpoints and decision logging to 02-DOCS — exactly this skill's loop and its decisions.md trail."
   - prompt: "The analyze gate passed. Build it. Write each piece test-first and don't let it drift from the plan."
-    why: "Post-analyze, pre-verify execution with TDD and plan-adherence — the precise slot this skill fills in the SDD chain."
+    why: "Post-analyze, pre-verify execution with TDD and plan-adherence — the precise slot this skill fills in ASDD (stage 4)."
 
 should_not_trigger:
   - prompt: "The feature's all coded and committed. Run the full lint, type-check, test suite and security audit and tell me if it's actually done."
@@ -40,4 +40,6 @@ capability:
       - "Delegates the test mechanics to the FastAPI testing reference (ASGITransport in-process client + dependency_overrides + transactional rollback fixture) rather than hand-rolling a runner"
       - "Stops at a checkpoint after the task (does not barrel into the next task) and reports the checkpoint briefly (task, tests, next task) in the register from technical_level in 02-DOCS/wiki/harness/user-profile.md"
       - "Commits the task as one logical unit and notes authorship is Eric (no Co-Authored-By Claude)"
-      - "Logs any non-obvious choice (e.g. error envelope shape) to 02-DOCS/wiki/sdd/decisions.md, and ties done to the done-check + spec acceptance criterion (not 'looks right'), pointing to verify for the final whole-suite gate"
+      - "Logs any non-obvious choice (e.g. error envelope shape) to 02-DOCS/wiki/sdd/decisions.md, and ties done to the done-check + spec acceptance criterion (not 'looks right'), pointing to verify closing mode for the whole-branch gate"
+      - "Runs `npx @ericrisco/rsc risk` on the task's actual diff instead of choosing a tier itself, and scales review by the printed tier (0 none, 1 one fresh-context reviewer, 2 the three refuters), handing reviewers spec + diff + surrounding code"
+      - "Runs the mandatory controls (tests, build, security, traceability to a spec criterion), reports any that did not execute as 'not run' rather than passed, and caps fixing at 3 rounds via `review ledger round`, parking the task in the decision queue instead of a 4th round"

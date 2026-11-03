@@ -54,8 +54,8 @@ test('9c · the accept command pins the exact version that produced the plan', (
   assert.ok(!line.includes('@latest'), line);
 });
 
-test('9a · sdd is not shown as merely deferred while its skill is installed', () => {
-  const deferredSdd = preview.split('\n').find((l) => l.includes('workflow/sdd'));
+test('9a · asdd is not shown as merely deferred while its skill is installed', () => {
+  const deferredSdd = preview.split('\n').find((l) => l.includes('workflow/asdd'));
   assert.ok(deferredSdd, 'the deferred practice is still listed, so reassess keeps watching it');
   assert.match(deferredSdd, /skill is installed/i, deferredSdd);
   assert.match(deferredSdd, /practice/i, deferredSdd);

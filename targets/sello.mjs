@@ -42,7 +42,7 @@ import { spawnSync } from 'node:child_process';
 // with no switch to stop it, so leaving it out made the lockout permanent.
 export const SELLO_STATE_PATHS = [
   '.rsc/sello.json', '.rsc/sello-config.json', '.rsc/sello-findings.md', '.rsc/sello-log.jsonl',
-  '.rsc/automation-gaps.md',
+  '.rsc/automation-gaps.md', '.rsc/review-ledger.jsonl',
 ];
 
 export function selloPaths(root) {
