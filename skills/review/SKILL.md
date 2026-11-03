@@ -12,7 +12,7 @@ origin: risco
 Tests prove the code works, not that it does what was asked. Review answers that other question: **is the diff correct, well-scoped and faithful to the spec — or did it pass for the wrong reasons?** In ASDD (`../asdd/SKILL.md`) it runs in two modes:
 
 - **Per task** — called from `implement`'s loop after each task's self-check. Depth comes from `npx @ericrisco/rsc risk [--base <ref>] [paths…]` (same path table as the sello, works with the sello off): **tier 0** → no review; **tier 1** → one fresh-context reviewer (a subagent that never saw the implementation conversation); **tier 2** → the three-refuter panel below, and the branch will wait for human approval at ship.
-- **Closing review** — once, before `ship`: the whole branch against the spec. Forty individually-correct tasks can still fail to be the feature together: a criterion nobody owned, two tasks that each assumed the other handled an edge, scope that crept in a slice at a time. Read the spec's acceptance criteria and "must respect" list against `git diff <base>...HEAD`, not the task reviews.
+- **Closing review** — once, before `ship`: the whole branch against the spec. Forty individually-correct tasks can still fail to be the feature together: a criterion nobody owned, two tasks that each assumed the other handled an edge, scope that crept in a slice at a time. Read the spec's acceptance criteria and "must respect" list against `git diff <base>...HEAD`, not the task reviews. Its record — tier, counts, verdict, each finding with its outcome — goes to `02-DOCS/wiki/sdd/reviews/<slug>.md`.
 
 This skill owns **two roles that share one discipline**:
 
@@ -175,21 +175,28 @@ Two extra finding classes the four inputs unlock, neither reachable from a diff:
 report one defect three ways, and a lens hunting for something can overstate what it found. Two
 steps, in this order:
 
-1. **Group (deterministic).** Each lens ends its report with a ` ```json findings ` block. Save the
-   three reports and run `npx @ericrisco/rsc review consolidate <reports…>`. It merges findings on
-   the same file within 3 lines, or quoting the same evidence; keeps the highest severity and every
-   lens that saw it; and downgrades a blocker or should-fix with no `file:line` or failure scenario to
-   a question. Several lenses on one finding is a reason to look first, never a reason to raise its
-   severity.
-2. **Verify (judgement).** For each finding it marks `verify`, dispatch the **`finding-verifier`**
-   agent with that one finding plus the same four inputs, in parallel. It starts from "this is false"
-   and returns **CONFIRMED** (reproduced or traced, with the proof), **REFUTED** (cites the guard that
-   makes it impossible), or **UNPROVEN** (becomes a question). It never gets the lens's reasoning.
+1. **Group (deterministic).** Each lens ends its report with a ` ```json findings ` block — an
+   array of objects in exactly this shape (give it to every reviewer verbatim):
+
+   ```json
+   {"severity":"blocker|should-fix|nit|question","file":"path","line":N,"claim":"…","failure_scenario":"concrete input → wrong result","evidence":"quoted code","class":"bug class"}
+   ```
+
+   Save the reports and run `npx @ericrisco/rsc review consolidate <reports…>`. It merges findings
+   on the same place that say the same thing, or that quote the same evidence; keeps the highest
+   severity and every lens that saw it; and **downgrades a blocker or should-fix with no
+   `file:line` or no `failure_scenario` to a question**. Several lenses on one finding is a reason
+   to look first, never a reason to raise its severity.
+2. **Verify (judgement).** Consolidate marks `verify` on **every blocker and every should-fix**.
+   For each, dispatch the **`finding-verifier`** agent with that one finding plus the same four
+   inputs, in parallel. It starts from "this is false" and returns **CONFIRMED** (reproduced or
+   traced, with the proof), **REFUTED** (cites the guard that makes it impossible), or **UNPROVEN**
+   (becomes a question). It never gets the lens's reasoning.
 
 Report the consolidated count honestly ("11 reported → 4 unique → 2 confirmed"), and list what was
 refuted and why: a refuted finding hidden from the author is a review nobody can audit. At tier 1
-(one reviewer) there is nothing to group, but a blocker still goes to `finding-verifier` before it
-blocks.
+(one reviewer) there is nothing to group, but run `review consolidate` on its one report anyway:
+it applies the downgrade, and every blocker and should-fix still goes to `finding-verifier`.
 
 **A finding blocks only if it survives all three filters** — no exceptions, and eagerness to
 find something is not evidence:
@@ -213,9 +220,10 @@ A review loop that never converges is worse than none: Anthropic saw a single PR
 Four rules, enforced by `npx @ericrisco/rsc review ledger` (`.rsc/review-ledger.jsonl`) rather
 than by memory:
 
-1. **Max 3 rounds per task.** Start each round with `review ledger round <slug>/<task>`; it exits non-zero
-   on the 4th. That is not "try harder": rethink the approach, or park the task in the decision
-   queue and continue with independent work.
+1. **Max 3 rounds per task.** Call `review ledger round <slug>/<task>` before **every** review of
+   the task, the first included: round 1 is the task's first review, not its first fix. It exits
+   non-zero on the 4th. That is not "try harder": rethink the approach, or park the task in the
+   decision queue (a `blocking` entry) and continue with independent work.
 2. **From round 2, re-review only the new diff** — what changed since the last round, not the task
    again from scratch.
 3. **Flag the bug class, not the line.** "Every handler in this file trusts `req.params.id`" — so
@@ -225,9 +233,13 @@ than by memory:
    normalized title — comes back marked `repeat`; it is never re-raised as new. A repeat means the
    last fix missed the class, so say that instead.
 
-**Every finding closes with an outcome**: `review ledger outcome <id> fixed|false|intentional|irrelevant`.
-`review ledger stats` then shows totals per outcome, the false rate and mean rounds per task — the
-only way to tell whether a change to the reviewer made it better or worse.
+**Every finding closes with an outcome**: `review ledger outcome <id> fixed|false|intentional|irrelevant|parked`
+— `parked` when the finding's task went to the decision queue (neither fixed nor dismissed; a human
+decides). `review ledger stats` then shows totals per outcome, the false rate and mean rounds per
+task — the only way to tell whether a change to the reviewer made it better or worse.
+
+The ledger is **local**: it lives in `.rsc/` and is never committed, so it does not travel between
+machines or clones. What lasts is what you write from it — review-evals cases and rules (below).
 
 ---
 

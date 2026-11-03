@@ -72,6 +72,10 @@ COMMIT   → commit this task as one logical unit (authorship = Eric; see ship f
 The order is load-bearing. **Red before green** is not a suggestion — a test you write *after* the
 code tells you nothing about whether it can fail. **Refactor only on green** keeps every cleanup
 reversible against a passing bar. Self-check means evidence: the test output you saw, not "I tested it".
+**ESM (and any language where a missing module fails at load):** a test importing a module that
+does not exist dies on the import, not on the assertion — that red proves nothing. Create the module
+first with a stub export (`export function total() { return 0 }`), then the red must fail on the
+assertion.
 
 ### Four things you may never do to reach green
 
@@ -104,6 +108,9 @@ task's risk forecast. **The agent never picks or argues down its own tier.**
 
 ### c) Review scaled by tier — fresh context
 
+Tier 1 or 2: first call `npx @ericrisco/rsc review ledger round <slug>/<task>` — before **every**
+review of the task, this first one included. Round 1 is the task's first review, not its first fix.
+
 | Tier | Review |
 | --- | --- |
 | 0 | none — the controls (e) still run |
@@ -120,10 +127,13 @@ finding.
 ### d) Consolidate, verify, record
 
 Exactly as `../review/SKILL.md` → *Consolidate, then verify*: `npx @ericrisco/rsc review consolidate
-<reports…>`, then `finding-verifier` on every finding it marks `verify` (tier 1: on every blocker).
-Then `npx @ericrisco/rsc review ledger record <findings.json>`. A finding the ledger already holds
-comes back `repeat`: **never raise it again**. When a finding closes, record its outcome:
-`review ledger outcome <id> fixed|false|intentional|irrelevant`.
+<reports…>` (tier 1 too: it applies the downgrade), then `finding-verifier` on every finding it
+marks `verify` — every blocker and should-fix. Findings use the JSON shape in
+`references/per-task-review.md`. Then `npx @ericrisco/rsc review ledger record <findings.json>`. A
+finding the ledger already holds comes back `repeat`: **never raise it again**. When a finding
+closes, record its outcome: `review ledger outcome <id> fixed|false|intentional|irrelevant|parked`
+(`parked` = its task went to the decision queue). The ledger is local (`.rsc/`, not committed);
+what lasts is the review-evals cases and rules `review` writes from it.
 
 ### e) Mandatory controls — every tier
 
@@ -140,8 +150,8 @@ A control that did not run is reported as **not run**, never as passed — and t
 
 ### f) Fix loop — at most 3 rounds
 
-Each round opens with `npx @ericrisco/rsc review ledger round <slug>/<task>`. It exits non-zero on the 4th
-round with the action to take; obey it (step g).
+Each re-review opens with another `review ledger round <slug>/<task>` (step c). It exits non-zero
+on the 4th round with the action to take; obey it (step g).
 
 - **From round 2, re-review only the new diff** (BASE = the previous round's head).
 - **Fix the bug class, not the line**: name the class and fix every instance in the task's scope.
@@ -153,12 +163,15 @@ round with the action to take; obey it (step g).
 | Situation | Action |
 | --- | --- |
 | Trivial, or no business weight | Fix it and record it in `decisions.md` with the task id |
-| Tier 2, contradicts a decision in `decisions.md`, or no convergence in 3 rounds | Park the task in the **decision queue** and continue with independent tasks |
+| Tier 2, contradicts a decision in `decisions.md`, or no convergence in 3 rounds | Park the task in the **decision queue** (`blocking`) and continue with independent tasks |
 
 The **decision queue** is a `## Decision queue` section in `02-DOCS/wiki/sdd/progress/<slug>.md`, one
-entry per parked task: task id, tier, the question, the options, your recommendation, the evidence
-path. Tasks that depend on a parked task wait; the rest continue. Only a human empties the queue — an
-agent's approval never counts as human.
+entry per item: its kind, task id, tier, the question, the options, your recommendation, the
+evidence path. **Kind is `blocking` or `review-after`.** Tier 2, a contradiction with a recorded
+decision and no convergence are `blocking`: the task is parked, its dependents wait, and the branch
+cannot merge itself. An assumption you took so work could continue is `review-after`: nothing waits
+and it does not stop a self-merge — the human reads it afterwards. Only a human closes an entry —
+an agent's approval never counts as human.
 
 Then append the progress entry and show the checkpoint (below).
 
@@ -167,18 +180,10 @@ Then append the progress entry and show the checkpoint (below).
 
 ## Delegating the test tooling (do not reinvent it)
 
-Write the *intent* of the test here; get the *mechanics* from the stack skill. The discipline is
-yours; the fixtures, runners and idioms are theirs.
-
-| Stack | Where the test mechanics live | What you delegate |
-| --- | --- | --- |
-| FastAPI / async Python | `../fastapi/references/testing.md` | `ASGITransport` in-process client, `dependency_overrides`, transactional rollback fixture, `pytest-asyncio` |
-| Go services | `../go/references/testing.md` | table-driven subtests, `httptest`, interface fakes, golden files, `errors.Is` checks |
-| Next.js / React | `../nextjs/references/testing.md` | Vitest + Testing Library for units, Playwright for flows, server-action / RSC testing |
-| Flutter | `../flutter/references/testing.md` | `flutter test` widget tests, `pump`/`pumpAndSettle`, golden tests, mocked repositories |
-
-If the feature spans two stacks (a Next.js front-end calling a FastAPI back-end), each task names its
-stack and pulls that stack's testing reference — you do not mix idioms inside one task.
+Write the *intent* of the test here; get the *mechanics* (fixtures, runners, idioms) from the stack
+skill's testing reference: `../fastapi/references/testing.md`, `../go/references/testing.md`,
+`../nextjs/references/testing.md`, `../flutter/references/testing.md`. A feature spanning two stacks
+names the stack per task and never mixes idioms inside one task.
 
 ## Skill digestion and resolution
 
@@ -252,9 +257,13 @@ each dispatch self-sufficient and make its return machine-checkable:
 
 - **Carry the task, not your context.** Hand the worker its task brief, its **Interfaces** block
   (`Consumes`/`Produces`, exact signatures — from `tasks`), and the plan's **§0 Global Constraints**.
-  Anything not in those three is invisible to it. Prefer **file paths over pasted text** (use
-  `scripts/task-brief` and `scripts/review-package`, below) — pasted briefs and diffs stay resident
-  in your context and get re-read every turn.
+  Anything not in those three is invisible to it. Prefer **file paths over pasted text** —
+  `scripts/task-brief <plan> <N>` (N as `1`, `001` or `T001`; reads the `tasks` table row plus any
+  `### T1` detail block) and `scripts/review-package` — pasted briefs and diffs stay resident in
+  your context and get re-read every turn.
+- **Native isolation leaves worktrees behind.** A subagent dispatched with worktree isolation
+  works in `.claude/worktrees/`. `rsc risk` ignores that folder, but after you cherry-pick the
+  worker's commits, remove it (`git worktree remove <path>`).
 - **Model is REQUIRED on every dispatch.** Always set the subagent's model explicitly (the
   `developer` agent already pins balanced). An omitted model silently inherits the session's model —
   usually the most expensive one — which is the quiet way fan-out cost explodes.
@@ -271,10 +280,8 @@ each dispatch self-sufficient and make its return machine-checkable:
 
 ## Model tier — `balanced` (opt-in routing)
 
-Default tier **`balanced`** — the bulk of TDD execution. Routing is **off** unless `models.enabled:
-true` in `02-DOCS/wiki/sdd/config.yaml`; when on, resolve and apply it per
-`../asdd/references/model-routing.md` (fan-out on `balanced`, a hard sub-problem escalated to
-`heavy`). Routing off → honor the session model silently.
+Default **`balanced`**. Routing is **off** unless `models.enabled: true` in `config.yaml`; when on,
+apply `../asdd/references/model-routing.md` (hard sub-problem → `heavy`); off → session model.
 
 ## Checkpoints — what to say
 
@@ -327,13 +334,12 @@ outranks the plan, and the plan outranks your in-the-moment preference.
 
 ## Red flags — stop and re-route
 
-- **No plan or no task list** → you cannot implement intent you haven't planned. Route to `plan` /
-  `tasks`.
+- **No plan or no task list** → you cannot implement intent you haven't planned: `plan` / `tasks`.
 - **Unresolved `analyze` findings** (contradiction between constitution ↔ spec ↔ plan ↔ tasks) →
   resolve them before any code; they will only get more expensive after the diff exists.
 - **A task forces a constitution violation** → surface it, stop, kick it back to `analyze`/`plan`.
 - **You're on the default branch** → stop before the first commit and ask: branch or default branch (`worktrees`).
-- **A test won't go red** (wrong reason — import error, syntax) → fix the test before trusting it.
+- **A test won't go red** for the right reason (import error, syntax) → stub the module, fix the test.
 - **The combined suite is red after a parallel merge** → do not checkpoint as done; debug with
   `debug` before continuing.
 - **You're tempted to disable/skip a failing test to "make progress"** → that's the bug talking.
@@ -344,11 +350,11 @@ outranks the plan, and the plan outranks your in-the-moment preference.
 ```text
 - [ ] a) RED for the right reason → GREEN → REFACTOR; committed as one unit (authorship = Eric)
 - [ ] b) `rsc risk` on the task diff; tier recorded
-- [ ] c) review by tier, fresh context, spec + diff + surrounding code, no pre-judging
-- [ ] d) `review consolidate` + `finding-verifier`; `review ledger record`
+- [ ] c) `review ledger round <slug>/<task>` before each review (≤ 3); by tier, fresh context, no pre-judging
+- [ ] d) `review consolidate` + `finding-verifier`; `review ledger record`; outcomes closed
 - [ ] e) tests, build, security, traceability — each passed or **not run**
-- [ ] f) `review ledger round <slug>/<task>` each round; ≤ 3; class fixed, no repeats
-- [ ] g) fixed + logged in decisions.md, or parked in the decision queue
+- [ ] f) re-review only the new diff; class fixed, no repeats
+- [ ] g) fixed + logged in decisions.md, or in the decision queue (`blocking` / `review-after`)
 - [ ] Progress entry appended; skill resolution recorded; checkpoint shown
 ```
 
@@ -375,12 +381,9 @@ End every implementation checkpoint or completed batch with:
 
 ## What this skill is NOT
 
-- **Not the closing gate.** The per-task controls prove each task; the whole branch against main,
-  the rollback plan and the human explanation are stage 5 (`verify` closing mode, `review`, `ship`).
-- **Not spec or plan writing.** If you find the plan is wrong mid-build, stop and amend it via
-  `plan`; don't silently re-architect inside a commit.
-- **Not the deep-debug protocol.** When a test fails for a reason you don't understand, switch to
-  `debug` (reproduce → isolate → hypothesize → fix → verify) instead of guessing.
+- **Not the closing gate** — whole branch, rollback plan and explanation are stage 5 (`verify`, `review`, `ship`).
+- **Not plan writing** — a plan found wrong mid-build is amended via `plan`, never inside a commit.
+- **Not deep debugging** — a failure you don't understand goes to `debug`, not to guessing.
 
 ## Where you are in ASDD
 
@@ -393,4 +396,3 @@ branch. Parked tasks travel in the decision queue for the human.
 ## Orientación (siempre)
 
 Habla con la voz de `orient`: frases cortas, una idea por frase, y cada respuesta se entiende sola. Registro técnico o con analogías según `technical_level` en `02-DOCS/wiki/harness/user-profile.md`. Cierra cada turno con el **bloque-brújula** (📍 dónde estás · ➡️ siguiente, terminando en pregunta; ✅ y 🧭 cuando hay algo hecho o decidido). **Nunca termines en seco.** Protocolo completo: skill `orient` → `skills/orient/references/orientation-contract.md`. (Defiere a `suggest` el "¿instalo la skill que falta?".)
-

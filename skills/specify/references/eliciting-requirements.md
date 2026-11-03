@@ -109,7 +109,7 @@ something `clarify` can validate instead of re-ask.
 ## When to stop
 
 Stop when the frontier is empty: every branch visited, nothing left silently
-assumed. Then run the exit gate (`npm run spec:gate <path>`) on the written
+assumed. Then run the exit gate (`npx @ericrisco/rsc spec gate <path>`) on the written
 file — the bound is a property of the artifact, not of your confidence.
 Lingering unknowns are fine, and belong in *Points to clarify*, typed. Over-asking to feel thorough is itself an anti-pattern: it burns the
 user's patience and pushes them to rubber-stamp answers they haven't thought

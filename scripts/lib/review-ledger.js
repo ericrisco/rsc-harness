@@ -14,7 +14,8 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 export const LEDGER_PATH = '.rsc/review-ledger.jsonl';
-export const OUTCOMES = ['fixed', 'false', 'intentional', 'irrelevant'];
+// `parked`: the finding's task went to the decision queue; neither fixed nor dismissed, a human decides.
+export const OUTCOMES = ['fixed', 'false', 'intentional', 'irrelevant', 'parked'];
 export const MAX_ROUNDS = 3;
 export const EVALS_DIR = '02-DOCS/wiki/sdd/review-evals';
 

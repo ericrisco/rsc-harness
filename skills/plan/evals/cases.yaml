@@ -46,4 +46,4 @@ capability:
       - "Testing strategy maps each acceptance criterion to a test level (unit/contract/integration/e2e), states what each asserts and what it mocks (e.g. the payments provider), and defers the test runner/tooling to the stack skill"
       - "Risks section is ranked with trigger + impact + mitigation per risk (e.g. payments timeout, double-reservation race); does NOT claim zero risk"
       - "Stays stack-neutral above the seam — no framework route decorators, ORM session code, or test-runner flags in the plan"
-      - "Ends by pointing to the tasks phase and notes indexing the plan in the root CLAUDE.md Knowledge map"
+      - "Ends by pointing to the tasks phase and notes indexing the plan in 02-DOCS/wiki/index.md (the Knowledge map), never the root CLAUDE.md"

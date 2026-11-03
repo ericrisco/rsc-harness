@@ -6,7 +6,7 @@
 // Spec: 02-DOCS/wiki/sdd/specs/asdd-v4.md.
 
 import { spawnSync } from 'node:child_process';
-import { SELLO_STATE_PATHS, classifyRisk, lensesRequired, readEffectiveConfig, trunkRef } from '../../targets/sello.mjs';
+import { NESTED_WORKTREES, SELLO_STATE_PATHS, classifyRisk, lensesRequired, readEffectiveConfig, trunkRef } from '../../targets/sello.mjs';
 
 function git(root, args) {
   const r = spawnSync('git', ['-C', root, '-c', 'core.quotePath=false', ...args], { encoding: 'utf8', windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
@@ -24,7 +24,8 @@ export function changedPaths(root, base = null) {
   const mb = head ? (git(root, ['merge-base', 'HEAD', ref]) || '').trim() : '';
   if (!mb) return { ok: false, message: `rsc: cannot find a common ancestor with ${ref}. Pass --base <ref> or the paths themselves: npx @ericrisco/rsc risk <path…>` };
   // --no-renames: a rename reports both paths, so moving a file OUT of a tier-2 place still counts.
-  const diff = (from) => new Set([...nul(git(root, ['diff', '--name-only', '--no-renames', '-z', from])), ...nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z']))]);
+  const diff = (from) => new Set([...nul(git(root, ['diff', '--name-only', '--no-renames', '-z', from])), ...nul(git(root, ['ls-files', '--others', '--exclude-standard', '-z']))]
+    .filter((n) => !NESTED_WORKTREES.test(n) && !SELLO_STATE_PATHS.includes(n)));
   let names = diff(mb);
   let shown = ref;
   // Working straight on the trunk (FTD on an open main), the merge-base IS HEAD, and a change
@@ -34,7 +35,6 @@ export function changedPaths(root, base = null) {
     names = diff('HEAD~1');
     shown = 'HEAD~1 (on the trunk: the last commit)';
   }
-  for (const p of SELLO_STATE_PATHS) names.delete(p);
   return { ok: true, base: shown, paths: [...names].sort() };
 }
 

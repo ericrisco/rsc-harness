@@ -31,7 +31,7 @@ Before asking anything, read `02-DOCS/wiki/harness/user-profile.md` and use its 
 
 The harness may already hold real conventions under `02-DOCS/wiki/stack/*` (e.g. `nextjs.md`, `fastapi.md`, `postgresdb.md`). The constitution does not copy them — it **ratifies the principle and links the detail**. Run this reconciliation pass first:
 
-1. **Read the Knowledge map** — the full index lives in `02-DOCS/wiki/index.md` (root `CLAUDE.md` keeps only a short pointer to it). List every `02-DOCS/wiki/stack/*` article that exists.
+1. **Read the Knowledge map** — `02-DOCS/wiki/index.md`. List every `02-DOCS/wiki/stack/*` article that exists.
 2. **Read each stack article.** Pull out anything already phrased as a rule (a version pin, a lint config, a test threshold, a naming convention).
 3. **For each existing rule, decide:** is it a *project-wide non-negotiable* (→ ratify it as a principle, linking the stack article for detail) or a *local mechanic* (→ leave it in the stack wiki, do not lift it into the constitution)?
 4. **Contradictions are findings, not fixes.** If two stack articles disagree, or a stack article contradicts what the user states now, surface it and let the user resolve — never silently pick a winner.
@@ -72,7 +72,7 @@ For any significant either/or (e.g. "strict types or gradual?", "squash or merge
 
 Two principles are inherited from the rsc ecosystem and appear in every constitution unless the user explicitly overrides them:
 
-- **Git authorship is the human's.** Commits and PRs are authored by the human (Eric, or whoever owns the repo). No `Co-Authored-By` an AI, no "generated with" footer. Enforced at the `ship` phase.
+- **Git authorship is the human's.** Commits and PRs are authored by the responsible person — the configured git user. No `Co-Authored-By` an AI, no "generated with" footer. Enforced at the `ship` phase.
 - **Decisions are logged.** Every significant decision is appended to `02-DOCS/wiki/sdd/decisions.md` (or the harness `decisions.md`) with date, options considered, and the why. The constitution itself is the highest-order decision record.
 
 ## Drafting the constitution
@@ -107,6 +107,7 @@ The constitution is versioned so `analyze` and `review` can cite "constitution v
 - **Semantic-ish versioning.** MAJOR when a principle is removed or reversed (breaks existing work); MINOR when a principle is added or materially tightened; PATCH for wording/clarity with no behavior change.
 - **Amendments are append-only in the log.** Never silently edit a ratified principle — strike it (mark superseded) and add the new one, bump the version, and record date + why in the amendment log.
 - **Ratification.** A new or amended constitution is shown to the user and ratified explicitly before it takes effect. "Ratify" is an explicit yes on the shown draft; walk each change only if the user asks.
+- **In autopilot** (`execution_mode: automatic`, or an up-front "take it all the way"), there is no one to ask: ratify **provisionally** (`status: provisional` in the frontmatter), log it in `decisions.md`, and add a `review-after` entry to the decision queue (`../asdd/SKILL.md`) so the human confirms it later. It does not block the run or a self-merge.
 - **Downstream notice.** When a principle changes mid-project, flag that existing specs/plans may now be inconsistent — `analyze` will catch the drift on the next run.
 
 ## Anti-patterns
@@ -120,7 +121,7 @@ The constitution is versioned so `analyze` and `review` can cite "constitution v
 | "I'll rewrite the existing constitution to match what they said today." | Amend, don't overwrite. Strike + add + bump version + log the why. |
 | "No profile yet, I'll assume they're technical." | Use analogies; ask once "technical or with analogies?" or send them to `init`. |
 | "I'll add a Co-Authored-By so the commit credits the assist." | No. Git authorship is the human's — it's a fixed principle, enforced at `ship`. |
-| "I'll ratify it myself since it's obvious." | The user ratifies. Show the draft, get the explicit yes, then it takes effect. |
+| "I'll ratify it myself since it's obvious." | The user ratifies. Show the draft, get the explicit yes, then it takes effect. Only autopilot ratifies provisionally, as a `review-after` queue entry. |
 
 ## Checklist before handing off
 
@@ -131,18 +132,18 @@ The constitution is versioned so `analyze` and `review` can cite "constitution v
 - [ ] Fixed principles included: human git authorship + decisions logged.
 - [ ] `02-DOCS/wiki/sdd/constitution.md` written with version + ratified date + amendment log.
 - [ ] `REVIEW.md` drafted at the project root; always-human paths mirrored into `.rsc/sello-config.json` `risk.raise` (or the user told why they are not).
-- [ ] Root `CLAUDE.md` `## Knowledge map` pointer has the read-first row for the constitution.
-- [ ] The constitution was shown to the user and explicitly ratified.
+- [ ] The constitution is indexed in `02-DOCS/wiki/index.md` (the Knowledge map) under the `sdd/` topic.
+- [ ] The constitution was shown to the user and explicitly ratified — or, in autopilot, ratified provisionally with a `review-after` queue entry.
 
-## Project grounding (02-DOCS + CLAUDE.md)
+## Project grounding (02-DOCS)
 
-This skill's `02-DOCS` record is the constitution at `02-DOCS/wiki/sdd/constitution.md`. It is a **read-first** pointer entry, so its row stays in the short `## Knowledge map` pointer in the root `CLAUDE.md` (create `CLAUDE.md` if absent, additive only — never delete existing sections) — unlike other sdd artifacts, which are indexed in `02-DOCS/wiki/index.md` (the full Knowledge map that root `CLAUDE.md` points to). Add this row to the root pointer if it is not already present:
+This skill's `02-DOCS` record is the constitution at `02-DOCS/wiki/sdd/constitution.md`, indexed in `02-DOCS/wiki/index.md` (the Knowledge map) like every other sdd artifact:
 
 ```markdown
 | Project constitution (SDD non-negotiables) | `02-DOCS/wiki/sdd/constitution.md` |
 ```
 
-Every later rsc-sdd phase reads this file before it works. The harness maintains and improves the article over the life of the project; this skill is the place that ratifies and amends it.
+Never edit the root `CLAUDE.md` from here: it is owned by `harness` and is tier 2 in `rsc risk`. Every later ASDD phase reads the constitution before it works. The harness maintains and improves the article over the life of the project; this skill is the place that ratifies and amends it.
 
 ## Result envelope
 

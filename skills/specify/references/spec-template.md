@@ -98,7 +98,7 @@ costliest of the four.>
 - **Status** moves `draft` → `clarified` (after the `clarify` phase) → `planned`
   (once `plan` exists). Don't invent other states. An approval obtained as a
   blanket "just run it" is recorded as **approved in autopilot**, not flat.
-- **Before you call it written**, run `npm run spec:gate <path>`. It checks that
+- **Before you call it written**, run `npx @ericrisco/rsc spec gate <path>`. It checks that
   every section here carries content or an explicit open point, and prints the
   clauses it cannot check (the unmarked assumption is yours).
 - **The enforced sections are dated, not retroactive.** `Cost of not building

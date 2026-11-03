@@ -86,6 +86,17 @@ Run in order. The discipline is: find many candidate gaps, keep only the ones th
 
    Then re-read the spec once more: did resolving one gap open a new one? If so, one more short loop. Otherwise, hand it to the human for approval.
 
+## In autopilot — nobody to ask
+
+Under an up-front autopilot yes there is no one to answer, so step 4 changes: **every question that
+would have been asked is recorded instead** as a **suposición tomada** in the spec (your recommended
+answer, its basis, the spec line it came from) and mirrored as a `review-after` entry in the
+**decision queue** (`## Decision queue` in `02-DOCS/wiki/sdd/progress/<slug>.md`; create it if
+absent). The run continues; the human reviews these afterwards and nothing waits on them. Only a gap
+that would make the build **unsafe**, or whose answer would **contradict a recorded decision**, is a
+`blocking` entry — and only `blocking` stops the branch from merging itself. Never ask and wait in
+autopilot; never stay silent about what you assumed.
+
 ## Late gaps — found during implementation
 
 A gap nobody saw until `implement` is running does not stop the run. It goes to the **decision queue** of `implement`'s per-task loop (`../implement/SKILL.md`): the task that needs the answer is parked, independent tasks continue, and when the human answers, the answer is written back into this spec (and its `## Clarifications` log) so the spec stays the contract.
@@ -121,7 +132,7 @@ After baking back, the spec line becomes a bounded, testable behaviour ("rejects
 
 ## Exit gate
 
-The gate is passed when the spec, constitution, prior decisions and profile were all read (settled questions cited, not re-asked); **every typed point in the handoff has its declared outcome** (asked / validated / left deferred / graduated), with nothing silently dropped; every gap checklist row was walked; only questions that change what gets built were asked, one at a time with a recommendation; every other call is a **suposición tomada** in the spec; every answer is baked into the spec body with observable acceptance criteria, logged under `## Clarifications` and bounded under out of scope; and the final re-read opened no new gap.
+The gate is passed when the spec, constitution, prior decisions and profile were all read (settled questions cited, not re-asked); **every typed point in the handoff has its declared outcome** (asked / validated / left deferred / graduated), with nothing silently dropped; every gap checklist row was walked; only questions that change what gets built were asked, one at a time with a recommendation (in autopilot: recorded as assumptions with their `review-after` / `blocking` queue entries); every other call is a **suposición tomada** in the spec; every answer is baked into the spec body with observable acceptance criteria, logged under `## Clarifications` and bounded under out of scope; and the final re-read opened no new gap.
 
 ## Result envelope
 

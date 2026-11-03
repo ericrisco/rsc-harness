@@ -26,8 +26,17 @@ words at dispatch; keep the contract identical.
 Every finding uses `review`'s format and severities (`blocker` / `should-fix` / `nit`, with
 `file:line`, why, repro, fix) and names its **bug class**, so the fix covers every instance. The
 report ends with a ` ```json findings ` block — the input to `review consolidate` and
-`review ledger record` — and one line: `VERDICT: pass` or `VERDICT: changes-needed (<counts>)`.
-Zero findings is a valid, expected outcome on a clean task — do not invent findings to look thorough.
+`review ledger record` — holding an array of objects in exactly this shape:
+
+```json
+{"severity":"blocker|should-fix|nit|question","file":"path","line":N,"claim":"…","failure_scenario":"concrete input → wrong result","evidence":"quoted code","class":"bug class"}
+```
+
+A `blocker` or `should-fix` without `file`+`line` or without `failure_scenario` is downgraded to
+`question` by `review consolidate`; then every remaining blocker and should-fix goes to
+`finding-verifier`. Close the report with one line: `VERDICT: pass` or
+`VERDICT: changes-needed (<counts>)`. Zero findings is a valid, expected outcome on a clean task —
+do not invent findings to look thorough (an empty array is fine).
 
 ## Anti-pre-judging (the reviewer is told this too)
 

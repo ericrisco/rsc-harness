@@ -145,8 +145,8 @@ unit / contract / integration / e2e. Tooling is the stack skill's job — name t
   defend it, not to enumerate every option without choosing.
 - **Empty section = defect.** Every one of the seven must say something real before `tasks` runs.
   If a section genuinely has no content (e.g. no migration), write "none — <why>", not silence.
-- **Index it.** After writing, add the plan to the root `CLAUDE.md` `## Knowledge map` so the
-  harness wiki and later phases can find it.
+- **Index it.** After writing, add the plan to `02-DOCS/wiki/index.md` (the Knowledge map) so the
+  harness wiki and later phases can find it. Never edit the root `CLAUDE.md` — that is `harness`'s, and tier 2.
 - **Global Constraints carry the verbatim values.** §0 is not a summary of §1 — §1 explains *which*
   constraints shape the design and *why*; §0 lists the exact values a blind implementer and the
   reviewer must honor. A value that lives only in prose ("use the project's naming rule") is a value

@@ -28,14 +28,14 @@ test('no skill still points at the retired dispatcher', () => {
 });
 
 const MARKERS = {
-  asdd: [/decision queue/i, /rsc risk/, /review ledger/, /human approv/i],
+  asdd: [/decision queue/i, /rsc risk/, /review ledger/, /human approv/i, /review-after/, /execution_mode: automatic/, /no remote/i],
   specify: [/What the user can do/, /What result they get/, /What it must respect/, /How it proves it/],
-  clarify: [/gap checklist/i, /changes what gets built/, /suposición tomada/, /decision queue/i],
+  clarify: [/gap checklist/i, /changes what gets built/, /suposición tomada/, /decision queue/i, /review-after/],
   tasks: [/risk forecast/i, /rsc risk/],
   implement: [/rsc risk/, /review ledger round/, /decision queue/i, /not run/i, /traceab/i],
-  review: [/closing review/i, /REVIEW\.md/, /review ledger/, /review escapes/],
+  review: [/closing review/i, /REVIEW\.md/, /review ledger/, /review escapes/, /"failure_scenario"/, /parked/],
   verify: [/not run/i, /rollback/i],
-  ship: [/How to revert/, /human approval/i, /rsc risk/],
+  ship: [/How to revert/, /human approval/i, /rsc risk/, /blocking/, /no remote/i],
   constitution: [/REVIEW\.md/],
   ftd: [/rsc risk/, /`asdd`/],
 };
@@ -46,3 +46,24 @@ for (const [id, markers] of Object.entries(MARKERS)) {
     for (const m of markers) assert.match(body, m, `${id} lacks ${m}`);
   });
 }
+
+// Both shapes the 4.0.0 skills used: a checklist item and an instruction. Checked against the old text.
+const WRITES_ROOT_CLAUDE = [
+  /root `?CLAUDE\.md`?\s*`?##\s*Knowledge map`?\s*(pointer )?(has|gets|row)/i,
+  /(add|write|append|update)[^.\n]{0,60}root `?CLAUDE\.md`?[^.\n]{0,40}(Knowledge map|row|index)/i,
+];
+
+test('no ASDD phase asks to edit the root CLAUDE.md (it is tier 2; the index is 02-DOCS/wiki/index.md)', () => {
+  for (const id of ['asdd', 'constitution', 'specify', 'clarify', 'plan', 'tasks', 'analyze', 'implement', 'verify', 'review', 'ship']) {
+    for (const re of WRITES_ROOT_CLAUDE) assert.doesNotMatch(skill(id), re, `${id} still writes the root CLAUDE.md`);
+  }
+  const template = readFileSync(join(ROOT, 'skills', 'plan', 'references', 'plan-template.md'), 'utf8');
+  for (const re of WRITES_ROOT_CLAUDE) assert.doesNotMatch(template, re, 'plan-template still writes the root CLAUDE.md');
+});
+
+test('no skill sends the user to an npm script that only exists inside the rsc package', () => {
+  for (const id of readdirSync(join(ROOT, 'skills'))) {
+    const p = join(ROOT, 'skills', id, 'SKILL.md');
+    if (existsSync(p)) assert.doesNotMatch(readFileSync(p, 'utf8'), /npm run spec:gate/, id);
+  }
+});

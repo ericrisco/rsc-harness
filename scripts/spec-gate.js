@@ -6,14 +6,18 @@
 // the phase's own instrument, and the author's.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, dirname, basename, resolve, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { specCompleteness, statusClaims, checkClaims } from './lib/spec-gate.js';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const DEFAULT_DIR = join(ROOT, '02-DOCS', 'wiki', 'sdd', 'specs');
+// The corpus of the project the gate is run FROM — not of the package that ships the script. Run as
+// `npx @ericrisco/rsc spec gate` in a user project, a package-relative default found nothing.
+function projectRoot() {
+  try { return execFileSync('git', ['rev-parse', '--show-toplevel'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || process.cwd(); }
+  catch { return process.cwd(); }
+}
 
 function defaultTargets() {
+  const DEFAULT_DIR = join(projectRoot(), '02-DOCS', 'wiki', 'sdd', 'specs');
   try {
     return readdirSync(DEFAULT_DIR)
       .filter((f) => f.endsWith('.md') && !f.endsWith('.plan.md'))
