@@ -42,9 +42,15 @@ ${'  - prompt: "n"\n    route_to: "none"\n    why: "w"\n'.repeat(3)}capability:
       - "x"
 `;
 
+// The route_to checks need real YAML parsing (python3 + PyYAML). Without it the script degrades to a
+// structural check and says so; these tests then cannot pass, and failing them would only report the
+// machine, not the gate. They are skipped with the reason, never silently — CI has PyYAML.
+const HAS_YAML = spawnSync('python3', ['-c', 'import yaml'], { encoding: 'utf8' }).status === 0;
+const NEEDS_YAML = { skip: HAS_YAML ? false : 'python3 + PyYAML not installed here: route_to is only checked with real YAML (CI has it)' };
+
 const run = (root) => spawnSync('bash', [join(root, 'scripts', 'eval-lint.sh')], { encoding: 'utf8' });
 
-test('eval-lint: a route_to naming a skill that does not exist FAILS the build', () => {
+test('eval-lint: a route_to naming a skill that does not exist FAILS the build', NEEDS_YAML, () => {
   const root = fixture({ alpha: cases('"ghost-skill"'), beta: cases('"none"') });
   const r = run(root);
   assert.equal(r.status, 1, 'a stale route must fail, or the gate is decorative');
@@ -59,7 +65,7 @@ test('eval-lint: a route_to naming a real sibling PASSES', () => {
   assert.match(r.stdout, /0 failure/);
 });
 
-test('eval-lint: "none" and "external:<name>" are accepted, bare "external:" is not', () => {
+test('eval-lint: "none" and "external:<name>" are accepted, bare "external:" is not', NEEDS_YAML, () => {
   const ok = run(fixture({ alpha: cases('"none"'), beta: cases('"external:claude-api"') }));
   assert.equal(ok.status, 0, ok.stdout);
   const bad = run(fixture({ alpha: cases('"external:"'), beta: cases('"none"') }));
@@ -67,7 +73,7 @@ test('eval-lint: "none" and "external:<name>" are accepted, bare "external:" is 
   assert.match(bad.stdout, /external.*no name/);
 });
 
-test('eval-lint: every target in a multi-value route_to is checked', () => {
+test('eval-lint: every target in a multi-value route_to is checked', NEEDS_YAML, () => {
   // A list, and a string holding several targets — a checker that only looked at the
   // first would let the rest rot.
   const list = run(fixture({ alpha: cases('["beta", "ghost-skill"]'), beta: cases('"none"') }));
