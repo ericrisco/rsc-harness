@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { wireHook } from '../targets/claude.js';
+import { wireHook, unwireHook } from '../targets/claude.js';
 
 // 4.0.5. The 4.0.4 run left two things to the agent's memory: Claude Code's default Co-Authored-By
 // trailer (the agent rebased it out by hand), and a headless run that ended on "¿Sigo así?" while
@@ -55,4 +55,39 @@ test('asdd forbids handing the turn back mid-run and separates "continue" from t
   assert.match(asdd, /not\*\* approval for a tier-2 merge/);
   assert.match(asdd, /in exactly this form/);
   assert.match(read('skills/implement/SKILL.md'), /Wait for every reviewer inside the turn/);
+});
+
+function workspace(settings) {
+  const root = mkdtempSync(join(tmpdir(), 'rsc-405-'));
+  const hookTarget = join(root, '.claude', 'settings.json');
+  if (settings) {
+    mkdirSync(dirname(hookTarget), { recursive: true });
+    writeFileSync(hookTarget, JSON.stringify(settings, null, 2) + '\n');
+  }
+  const paths = { projectRoot: root, hookTarget, skillDir: (id) => join(root, '.claude', 'skills', id) };
+  return { paths, read: () => JSON.parse(readFileSync(hookTarget, 'utf8')) };
+}
+
+test('uninstall takes back the default it wrote', () => {
+  const ws = workspace();
+  wireHook(ws.paths);
+  unwireHook(ws.paths);
+  assert.equal(ws.read().attribution, undefined);
+});
+
+test('uninstall keeps the same value when the person set it before rsc', () => {
+  const ws = workspace({ attribution: { commit: '', pr: '' } });
+  wireHook(ws.paths);
+  unwireHook(ws.paths);
+  assert.deepEqual(ws.read().attribution, { commit: '', pr: '' });
+});
+
+test('uninstall keeps a value the person changed after install', () => {
+  const ws = workspace();
+  wireHook(ws.paths);
+  const s = ws.read();
+  s.attribution.commit = 'Reviewed-by: me';
+  writeFileSync(ws.paths.hookTarget, JSON.stringify(s));
+  unwireHook(ws.paths);
+  assert.deepEqual(ws.read().attribution, { commit: 'Reviewed-by: me', pr: '' });
 });

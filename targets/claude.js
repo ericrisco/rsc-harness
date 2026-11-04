@@ -45,6 +45,8 @@ export function hookWiringOf(entry) {
 // plus the legacy cat-form) from settings.json, across all events. User hooks and
 // other settings are preserved. Empty event arrays (and an empty hooks object) are
 // pruned so we don't leave noise behind.
+const ATTRIBUTION_MARKER = '.rsc/attribution-default';
+
 export function unwireHook(paths) {
   // The bootstrap lives in the COMMITTED tree, so leaving it behind does not just orphan a file the
   // way a stray `.rsc/` entry would — it leaves an executable in something the user pushes. Nothing
@@ -62,10 +64,13 @@ export function unwireHook(paths) {
   if (!existsSync(file)) return removed;
   let settings;
   try { settings = JSON.parse(readFileSync(file, 'utf8')); } catch { return removed; }
-  // wireHook's attribution default goes back out with it; any other value is the person's.
+  // wireHook's attribution default goes back out with it — only when wireHook wrote it (the marker)
+  // and it is still untouched. The same value set by the person before rsc stays theirs.
+  const marker = join(paths.projectRoot, ATTRIBUTION_MARKER);
   const a = settings.attribution;
-  const ours = a && Object.keys(a).length === 2 && a.commit === '' && a.pr === '';
+  const ours = existsSync(marker) && a && Object.keys(a).length === 2 && a.commit === '' && a.pr === '';
   if (ours) delete settings.attribution;
+  try { rmSync(marker, { force: true }); } catch { /* cleanup never fails the uninstall */ }
   if (!settings.hooks) {
     if (!ours) return removed;
     writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
@@ -332,6 +337,8 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // them out by hand. Empty strings hide both. A choice already in the file is the person's and stays.
   if (settings.attribution === undefined && settings.includeCoAuthoredBy === undefined) {
     settings.attribution = { commit: '', pr: '' };
+    mkdirSync(join(paths.projectRoot, '.rsc'), { recursive: true });
+    writeFileSync(join(paths.projectRoot, ATTRIBUTION_MARKER), '');
   }
 
   mkdirSync(dirname(file), { recursive: true });
