@@ -97,7 +97,7 @@ test('ready-to-send messages live in their own section, reached from option 2 on
   assert.match(skill, /Check the support terms/);
 });
 
-test('every reference the skill links to exists, and the bridge kit ships unmodified with its licence (#337)', () => {
+test('every reference the skill links to exists, and the bridge kit ships with its licence and its changes listed (#337)', () => {
   const dir = 'skills/connect-tool';
   const links = [...skill.matchAll(/\]\(((?:references|bridge-kit)\/[^)#]+)\)/g)].map((m) => m[1]);
   for (const file of ['program-types', 'what-to-find-out', 'messages', 'database-bridge', 'file-exchange', 'connect-or-migrate', 'spain']) {
@@ -105,14 +105,31 @@ test('every reference the skill links to exists, and the bridge kit ships unmodi
   }
   for (const link of links) assert.ok(existsSync(join(ROOT, dir, link)), `${link} exists`);
   const upstream = JSON.parse(read(`${dir}/bridge-kit/UPSTREAM.json`));
-  assert.equal(upstream.modified, false);
   assert.match(upstream.commit, /^[0-9a-f]{40}$/);
+  assert.equal(upstream.modified, upstream.changes.length > 0, 'modified is true exactly when changes are listed');
+  for (const change of upstream.changes) {
+    assert.ok(existsSync(join(ROOT, dir, 'bridge-kit', change.file)), `${change.file} exists`);
+    assert.match(read(`${dir}/THIRD_PARTY.md`), new RegExp(change.file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `THIRD_PARTY.md names ${change.file}`);
+  }
   assert.match(read(`${dir}/bridge-kit/LICENSE`), /^MIT License/);
   assert.match(read(`${dir}/THIRD_PARTY.md`), /CC BY 4\.0/, 'the adapted guides carry their attribution');
 });
 
-test('the bridge reference warns that the kit acceptance test can pass on a wrong table name (#337)', () => {
+test('the kit acceptance test only passes a statement on a permission error, and checks the names first (#337)', () => {
+  const sql = read('skills/connect-tool/bridge-kit/sqlserver/03-prueba-solo-lectura.sql');
+  // The names are checked as the admin, before impersonating: ia_lectura cannot see dbo's metadata.
+  assert.ok(sql.indexOf('OBJECT_ID(@t') < sql.indexOf("EXECUTE AS USER = N'ia_lectura'"));
+  for (const permiso of ['SELECT', 'INSERT', 'DELETE', 'UPDATE', 'CREATE TABLE']) {
+    assert.match(sql, new RegExp(`N'${permiso}'`), `tries ${permiso}`);
+  }
+  assert.match(sql, /HAS_PERMS_BY_NAME/);
+  assert.match(sql, /@err = @esperado/);
+  assert.match(sql, /, 229\)/);
+  assert.match(sql, /, 262\);/);
+  // The UPDATE must not read the column, or SELECT's denial would pass as UPDATE's.
+  assert.match(sql, /SET ' \+ QUOTENAME\(@columna\) \+ N' = NULL/);
+  assert.match(sql, /RESULTADO: OK/, 'copia-nocturna.ps1 matches this exact text');
   const bridge = read('skills/connect-tool/references/database-bridge.md');
-  assert.match(bridge, /invalid object name/);
   assert.match(bridge, /Msg 229/);
+  assert.match(bridge, /HAS_PERMS_BY_NAME/);
 });

@@ -4,5 +4,17 @@
   "commit": "99e17ff6b55e861e727185905e5be3664291d183",
   "license": "MIT",
   "copied": "2026-11-01",
-  "modified": false
+  "modified": true,
+  "changes": [
+    {
+      "file": "sqlserver/03-prueba-solo-lectura.sql",
+      "date": "2026-11-02",
+      "why": "The acceptance test passed users who could INSERT, or UPDATE without SELECT. It now checks the names first, tests INSERT, runs each attempt in its own rolled-back transaction, and passes a statement only when HAS_PERMS_BY_NAME denies the permission and the attempt fails with Msg 229 or 262."
+    },
+    {
+      "file": "README.md",
+      "date": "2026-11-02",
+      "why": "The acceptance test's table row now says it also tests INSERT."
+    }
+  ]
 }

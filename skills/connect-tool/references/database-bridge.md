@@ -75,17 +75,19 @@ SQL login.
 
 ### 3. The acceptance test
 
-`bridge-kit/sqlserver/03-prueba-solo-lectura.sql` impersonates `ia_lectura` inside a transaction it
-rolls back, and checks: it **can** read the `ia` views; it **cannot** read the tables directly,
-delete, update or create a table. It must end in `RESULTADO: OK`. Without it, the agent is not
-connected.
+`bridge-kit/sqlserver/03-prueba-solo-lectura.sql` impersonates `ia_lectura` and checks: it **can**
+read an `ia` view; it **cannot** read the tables directly, insert, delete, update or create a
+table. Each attempt runs in its own transaction, rolled back at once. It must end in
+`RESULTADO: OK` (with `sqlcmd -b`, exit code 0). Without it, the agent is not connected.
 
-> **Check this before trusting an OK.** The script counts *any* error on the forbidden statements
-> as a pass. If a placeholder such as `<tabla_facturas_emitidas>` was not replaced, or the table
-> name is wrong, those statements fail with "invalid object name", not with a permission error,
-> and the test reports OK without proving anything. Replace every placeholder with a real table,
-> and confirm that the errors are permission errors (`Msg 229` / `Msg 262`), the same rule as the
-> `test_connection` probes in SKILL.md.
+Fill in its three variables (`@vista`, `@tabla`, `@columna`) with a real view, table and column.
+The script checks that they exist before it starts, so a placeholder left in place or a wrong
+name stops it with a clear `FALLO` instead of an "invalid object name" halfway through. A
+forbidden statement passes only when `HAS_PERMS_BY_NAME` says `ia_lectura` lacks the permission
+**and** the attempt fails with a permission error (`Msg 229`, or `Msg 262` for `CREATE TABLE`), the
+same rule as the `test_connection` probes in SKILL.md. Any other error proves nothing and fails the
+test. The one exception: on a database set to read-only, `CREATE TABLE` answers `Msg 3906` before
+it looks at the permission, so there `HAS_PERMS_BY_NAME` decides.
 
 ### 4. The database MCP server
 
