@@ -61,7 +61,7 @@ Every spec answers four questions, and `spec:gate` refuses one dated 2026-11-03 
 
 Tier 2, a contradiction with a recorded decision, a gap that would make the build unsafe, or no convergence in 3 rounds: the task goes to the **decision queue** (`## Decision queue` in `progress/<slug>.md`) with its evidence, and the agent **continues with the independent tasks**. The run never waits at 2 a.m. for an answer.
 
-Every entry carries a kind, one line each:
+Every entry carries a kind, one line each, in exactly this form (no bold, no other bullet):
 
 ```markdown
 - [blocking] Q3 — <what must be decided>, <evidence>, <task>
@@ -101,6 +101,8 @@ Autopilot does not stop the run for questions — it **parks**: real ambiguity, 
 - `clarify` records its assumptions (`suposición tomada`) → `review-after` entries.
 - `implement` parks `blocking` items and continues with the independent tasks.
 - `ship` lands by the rule below.
+
+**Never hand the turn back mid-run.** No "¿sigo?" / "shall I continue?": not between phases, not while reviewers run. Background reviewers are waited for (their completion notice, or run them in the foreground); ending the turn to wait ends a headless run. A later "continue" from the person resumes the run; it is **not** approval for a tier-2 merge, which needs an explicit yes to that merge.
 
 **Landing — there is always a legal path.** A remote exists → open a PR; self-merge only when `rsc risk` says tier 0-1, CI is green and no `blocking` entry is open; `review-after` entries go into the PR body. No remote → **park**: leave the branch committed, write the explainer, the open entries and the exact merge command for the human into `progress/<slug>.md`, and stop. Never merge locally around the branch guard: when `rsc main status` says `closed: true`, the guard denies it.
 

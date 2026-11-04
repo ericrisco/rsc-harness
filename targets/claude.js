@@ -62,7 +62,15 @@ export function unwireHook(paths) {
   if (!existsSync(file)) return removed;
   let settings;
   try { settings = JSON.parse(readFileSync(file, 'utf8')); } catch { return removed; }
-  if (!settings.hooks) return removed;
+  // wireHook's attribution default goes back out with it; any other value is the person's.
+  const a = settings.attribution;
+  const ours = a && Object.keys(a).length === 2 && a.commit === '' && a.pr === '';
+  if (ours) delete settings.attribution;
+  if (!settings.hooks) {
+    if (!ours) return removed;
+    writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
+    return [...removed, file];
+  }
   for (const event of Object.keys(settings.hooks)) {
     settings.hooks[event] = (settings.hooks[event] || []).filter((e) => {
       const s = hookWiringOf(e);
@@ -318,6 +326,13 @@ export function wireHook(paths, sourceMd, policy = {}) {
     rmSync(join(paths.projectRoot, '.rsc', 'danger-guard.mjs'), { force: true });
   }
   if (!settings.hooks.PreToolUse.length) delete settings.hooks.PreToolUse;
+
+  // Authorship is the responsible person, never an AI trailer (constitution P8). Claude Code's own
+  // default adds a Co-Authored-By line to commits and a footer to PRs, and the 4.0.4 run had to rebase
+  // them out by hand. Empty strings hide both. A choice already in the file is the person's and stays.
+  if (settings.attribution === undefined && settings.includeCoAuthoredBy === undefined) {
+    settings.attribution = { commit: '', pr: '' };
+  }
 
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
