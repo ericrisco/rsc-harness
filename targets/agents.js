@@ -31,7 +31,7 @@ const TIER_MODEL = {
 // (Amp/Zed/Windsurf/Cline/Roo/Continue/Aider/Jules/Antigravity) — there the developer
 // model is advisory (model-routing), not a file.
 const AGENT_TARGETS = {
-  claude: { dir: '.claude/agents', ext: '.md', format: 'md', model: (t) => (t === 'heavy' ? 'opus' : 'sonnet') },
+  claude: { dir: '.claude/agents', ext: '.md', format: 'md', toolsFormat: 'claude', model: (t) => (t === 'heavy' ? 'opus' : 'sonnet') },
   junie: { dir: '.junie/agents', ext: '.md', format: 'md', model: (t) => (t === 'heavy' ? 'opus' : 'sonnet') },
   cursor: { dir: '.cursor/agents', ext: '.md', format: 'md', model: (t) => TIER_MODEL.anthropic[t] },
   // #298 — OpenCode is the one tool people point at a local model or another provider per session, so
@@ -213,6 +213,7 @@ export function writeDeveloperTier(cwd, tier) {
 // OpenCode V1 tool names a declared capability maps to. `read`/`search` need nothing: what the agent
 // may read is the project's policy to decide, and saying `read: true` would be a grant.
 const RESTRICT_TOOLS = { edit: ['edit', 'write', 'patch'], shell: ['bash'] };
+const CLAUDE_TOOLS = { read: ['Read'], search: ['Grep', 'Glob'], edit: ['Edit', 'Write'], shell: ['Bash'] };
 function restrictedTools(tools) {
   if (!tools) return [];
   return Object.entries(RESTRICT_TOOLS).filter(([cap]) => !tools.includes(cap)).flatMap(([, names]) => names);
@@ -232,6 +233,8 @@ function renderMd(spec, model, agent, toolsFormat = spec.toolsFormat) {
     } else if (toolsFormat === 'map') {
       fm.push('tools:');
       for (const tool of agent.tools) fm.push(`  ${tool}: true`);
+    } else if (toolsFormat === 'claude') {
+      fm.push(`tools: ${agent.tools.flatMap((tool) => CLAUDE_TOOLS[tool]).join(', ')}`);
     } else {
       fm.push(`tools: [${agent.tools.join(', ')}]`);
     }
@@ -288,8 +291,7 @@ function writeDigests(cwd, digests) {
   writeFileSync(digestFile(cwd), `${JSON.stringify(ordered, null, 2)}\n`);
 }
 
-// Every rendering rsc could have produced for this agent on this target: either tier, the current
-// model setting, and — for OpenCode — the pre-#298 shape (pinned Anthropic model, `tool: true` map).
+// Every rendering rsc could have produced for this agent on this target.
 // A file with no digest that matches one of these is rsc's and may be replaced; anything else is the
 // user's. Bodies from older releases are not reconstructed: such a file is kept and reported, the safe
 // direction, and `rsc agents reset` is one command away.
@@ -297,8 +299,10 @@ function knownRenderings(target, cwd, agent) {
   const spec = AGENT_TARGETS[target];
   const out = new Set();
   for (const tier of ['balanced', 'heavy']) {
-    out.add(renderAgent(target, spec, resolveModel(target, cwd, tier), agent));
-    out.add(renderAgent(target, spec, spec.model(tier), agent));
+    for (const model of [resolveModel(target, cwd, tier), spec.model(tier)]) {
+      out.add(renderAgent(target, spec, model, agent));
+      if (spec.toolsFormat === 'claude') out.add(renderAgent(target, spec, model, agent, 'list'));
+    }
     if (spec.legacyModel) out.add(renderAgent(target, spec, spec.legacyModel(tier), agent, 'map'));
   }
   return out;

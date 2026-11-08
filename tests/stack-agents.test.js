@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync, existsSync } from 'node:fs';
@@ -101,6 +101,8 @@ test('a requested stack agent renders natively with its declared tools on all 8 
       assert.deepEqual(JSON.parse(text).tools, ['read', 'search']);
     } else if (path.endsWith('.toml')) {
       assert.match(text, /^tools = \["read", "search"\]$/m);
+    } else if (target === 'claude') {
+      assert.match(text, /^tools: Read, Grep, Glob$/m);
     } else if (target === 'opencode') {
       // #298: OpenCode used to get `read: true` / `search: true` — grants that loosened a stricter
       // project policy. It is restrict-only now: a read-only reviewer is denied the edit and shell
@@ -111,6 +113,28 @@ test('a requested stack agent renders natively with its declared tools on all 8 
       assert.match(text, /^tools: \[read, search\]$/m);
     }
   }
+});
+
+test('Claude writes native resolver tools and upgrades untouched legacy reviewers', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'rsc-stack-claude-legacy-'));
+  const names = ['react-reviewer', 'react-build-resolver', 'go-reviewer'];
+  agents.writeAgents('claude', cwd, 'balanced', names);
+
+  const reviewer = agents.agentPath('claude', cwd, 'react-reviewer');
+  const editedReviewer = agents.agentPath('claude', cwd, 'go-reviewer');
+  const resolver = agents.agentPath('claude', cwd, 'react-build-resolver');
+  const oldTools = 'tools: [read, search]';
+  const newTools = 'tools: Read, Grep, Glob';
+  writeFileSync(reviewer, readFileSync(reviewer, 'utf8').replace(newTools, oldTools));
+  const edited = readFileSync(editedReviewer, 'utf8').replace(newTools, oldTools) + '\nMy review checklist.\n';
+  writeFileSync(editedReviewer, edited);
+  unlinkSync(join(cwd, '.rsc', 'agent-digests.json'));
+
+  const result = agents.reconcileAgents('claude', cwd, 'balanced', names, names);
+  assert.deepEqual(result.kept.map(({ name }) => name), ['go-reviewer']);
+  assert.match(readFileSync(reviewer, 'utf8'), /^tools: Read, Grep, Glob$/m);
+  assert.match(readFileSync(resolver, 'utf8'), /^tools: Read, Grep, Glob, Edit, Write, Bash$/m);
+  assert.equal(readFileSync(editedReviewer, 'utf8'), edited);
 });
 
 test('the specialized bodies carry their discriminating stack attacks', () => {
