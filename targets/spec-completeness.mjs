@@ -182,7 +182,7 @@ function parseOpenPoints(lines) {
  *            untyped: string[], unchecked: string[]}}
  */
 export function specCompleteness(markdown) {
-  const lines = String(markdown ?? '').split('\n');
+  const lines = String(markdown ?? '').split(/\r?\n/);
   const sections = new Map(); // family -> body lines
 
   let current = null;

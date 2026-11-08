@@ -70,6 +70,14 @@ test('the same spec passes once the four questions are answered', () => {
   assert.equal(r.ok, true, `missing=${r.missing} empty=${r.empty}`);
 });
 
+test('CRLF preserves the gate verdict, required families and open points', () => {
+  const dated = at(ASDD_FAMILIES_SINCE);
+  for (const lf of [dated + FOUR, dated]) {
+    const crlf = lf.replace(/\n/g, '\r\n');
+    assert.deepEqual(specCompleteness(crlf), specCompleteness(lf));
+  }
+});
+
 test('one question missing is enough to refuse — the proof most of all', () => {
   const noProof = FOUR.replace(/## Cómo lo demuestra[\s\S]*$/, '');
   const r = specCompleteness(at('2027-02-01') + noProof);
