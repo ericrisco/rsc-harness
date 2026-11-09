@@ -33,8 +33,8 @@ should_not_trigger:
     route_to: automation-flows
     why: A specific flow to build on a named platform — design goes to automation-flows, operation to the make skill; not a strategy question.
   - prompt: "How do I rotate and store the API keys my flow uses securely in code?"
-    route_to: secure-coding
-    why: Secrets-engineering implementation detail; §4 sets the policy but secure-coding owns the how.
+    route_to: security-audit
+    why: Secrets-engineering implementation detail; §4 sets the policy but security-audit owns the how.
 
 capability:
   - scenario: "A 30-person Microsoft 365 company asks: 'We do a manual monthly vendor-payment run — pull approved invoices, pay them, notify finance. Should we automate it, on what platform, and how do we not screw it up?' Produce the strategy recommendation."

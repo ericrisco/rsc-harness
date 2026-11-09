@@ -28,7 +28,7 @@ should_not_trigger:
     route_to: technical-writing
     why: "The deliverable is documentation, not source-grounded implementation."
   - prompt: "Audit this webhook handler for SSRF and secret leakage."
-    route_to: secure-coding
+    route_to: security-audit
     why: "Security threat/control review owns the task."
 
 capability:

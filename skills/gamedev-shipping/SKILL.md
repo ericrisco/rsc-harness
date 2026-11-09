@@ -36,7 +36,7 @@ Godot templates·Unity Build Profiles·Unreal Shipping    desktop·web·mobile  
 | Gameplay, shaders, netcode, physics — any runtime logic | `../godot/SKILL.md`, `../unity/SKILL.md`, `../unreal/SKILL.md`, `../gamedev-shaders/SKILL.md`, `../gamedev-multiplayer/SKILL.md`, `../gamedev-physics/SKILL.md` | This skill packages code, it does not write it. The boundary is the export button. |
 | Hosting a normal web app, API or container (Dockerfile, Coolify, Vercel, VPS) | `../deployment/SKILL.md` | A WebAssembly game is *static files*; only its **headers** are special (below). Borrow its Actions + header-setting patterns. |
 | Game feel, economy, narrative | `../game-design/SKILL.md`, `../game-storytelling/SKILL.md` | Design intent, not packaging. |
-| Signing-key and CI secret handling in general | `../secure-coding/SKILL.md` | The practice this skill assumes for keystores/certs. |
+| Signing-key and CI secret handling in general | `../security-audit/SKILL.md` | The practice this skill assumes for keystores/certs. |
 
 ## Decision rules (settle these before touching a build)
 

@@ -13,7 +13,7 @@ origin: risco
 
 A constitution is small, durable, and enforceable. It is **not** a wiki of everything you know about the project (that is what `02-DOCS/wiki/` already is, run by the `harness`). It is the short list of principles that, if violated, mean the work is wrong regardless of whether it runs. If a rule here cannot be checked or pointed at later, it does not belong here — move it to the stack wiki and link it.
 
-Not this phase: *what to build* → `../specify/SKILL.md`; the technical approach for one feature → `../plan/SKILL.md`; setting up `01-TOOLS/` + `02-DOCS/` or capturing general project knowledge → `harness`; concrete stack mechanics (*how* to configure Ruff, pytest, Tailwind tokens) → the relevant stack skill (`../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`, `../design/SKILL.md`, `../secure-coding/SKILL.md`). The constitution *names* the bar; the stack skill *enforces* it.
+Not this phase: *what to build* → `../specify/SKILL.md`; the technical approach for one feature → `../plan/SKILL.md`; setting up `01-TOOLS/` + `02-DOCS/` or capturing general project knowledge → `harness`; concrete stack mechanics (*how* to configure Ruff, pytest, Tailwind tokens) → the relevant stack skill (`../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`, `../design/SKILL.md`, `../security-audit/SKILL.md`). The constitution *names* the bar; the stack skill *enforces* it.
 
 ## Model tier — `heavy` (opt-in routing)
 
@@ -50,7 +50,7 @@ Every principle in the constitution is one numbered, testable statement. A vague
 ```text
 Weak   — "We care about security."
 Strong — "4. No secret is ever committed; secrets load from 01-TOOLS/<provider>/.env
-          (gitignored). Enforced by secure-coding + a pre-commit secret scan."
+          (gitignored). Enforced by security-audit + a pre-commit secret scan."
 ```
 
 ## The interview (requirements-first, batched)

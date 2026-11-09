@@ -17,11 +17,15 @@
 //
 // `sdd` became `asdd` in 4.0.0 (spec asdd-v4): the same phases, with the review moved inside each
 // task of `implement` and scaled by `rsc risk`. Artifacts stay under 02-DOCS/wiki/sdd/.
+//
+// `secure-coding` and `security-scan` folded into `security-audit` in the next release: one skill
+// audits the code and the platforms the project runs on, and joins the default floor.
 export const RETIRED_SKILLS = Object.freeze({
   eli5: 'orient', 'show-me': 'orient', bro: 'unslop',
   'design-loop': 'design', 'design-dna': 'design', 'motion-craft': 'design',
   'ui-engineering': 'ux',
   sdd: 'asdd',
+  'secure-coding': 'security-audit', 'security-scan': 'security-audit',
 });
 
 const retiredTo = (id) => (Object.hasOwn(RETIRED_SKILLS, id) ? RETIRED_SKILLS[id] : id);

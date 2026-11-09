@@ -20,7 +20,7 @@ should_not_trigger:
     route_to: scaling
     why: Orchestration/autoscaling above a single image is scaling's domain.
   - prompt: "Fix the SQL injection in this endpoint."
-    route_to: secure-coding
+    route_to: security-audit
     why: App-level vulnerability, not image/container hardening.
   - prompt: "Install and configure Coolify on my Hetzner box."
     route_to: coolify

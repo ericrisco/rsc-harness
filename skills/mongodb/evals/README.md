@@ -15,7 +15,7 @@ For each prompt, start a fresh agent session with only the `mongodb` skill disco
   avoid the words "index" / "MongoDB" (the COLLSCAN complaint, the Spanish modeling request) to test
   intent recognition over keyword matching.
 - `should_not_trigger`: PASS if the skill does **not** fire. Each names a `route_to` sibling
-  (`postgresdb`, `nodejs`, `secure-coding`, `redis`, `vector-db`); a wrong-but-not-`mongodb` route
+  (`postgresdb`, `nodejs`, `security-audit`, `redis`, `vector-db`); a wrong-but-not-`mongodb` route
   still passes this skill's gate.
 
 Pass bar: ≥ 90% trigger accuracy across all trigger cases.

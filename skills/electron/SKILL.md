@@ -2,7 +2,7 @@
 name: electron
 description: "Use when building, hardening, or shipping a cross-platform Electron desktop app — main/renderer/preload process model, typed contextBridge IPC, locking down nodeIntegration/contextIsolation/sandbox/CSP, or packaging with signing and auto-update. NOT a Rust-backed shell on the native webview (that is tauri), nor the web UI inside it (that is react)."
 tags: [electron, desktop, ipc, security, packaging, auto-update, code-signing]
-recommends: [tauri, react, nodejs, github-actions, secure-coding]
+recommends: [tauri, react, nodejs, github-actions, security-audit]
 origin: risco
 ---
 

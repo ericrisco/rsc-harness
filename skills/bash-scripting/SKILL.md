@@ -2,7 +2,7 @@
 name: bash-scripting
 description: "Use when writing or hardening a shell script that must survive another machine — a CI step, install script, cron job, git hook, devcontainer entrypoint: strict-mode leaks, quoting/word-splitting, arrays, trap cleanup, bash-vs-POSIX portability, ShellCheck findings. NOT CI workflow structure, runners, caching or matrix (that is `github-actions`)."
 tags: [bash, shell, shellcheck, posix, scripting]
-recommends: [github-actions, error-handling, docker, secure-coding]
+recommends: [github-actions, error-handling, docker, security-audit]
 origin: risco
 ---
 

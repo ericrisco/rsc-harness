@@ -35,7 +35,7 @@ never on a near-miss that belongs to another phase.
 1. Configure an agent with the **full catalog of skill descriptions** available
    for routing (debug + the rsc-sdd phases it chains with — implement, verify,
    review, clarify, analyze, ship — plus the stack/process skills: fastapi, go,
-   nextjs, flutter, postgresdb, secure-coding, deployment, harness, init) so
+   nextjs, flutter, postgresdb, security-audit, deployment, harness, init) so
    routing competes realistically.
 2. For each `should_trigger` prompt: feed it cold, record whether `debug` is the
    skill the agent loads. Run **3–5 trials** per prompt (fresh context).

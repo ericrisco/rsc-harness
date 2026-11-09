@@ -2,7 +2,7 @@
 name: postgresdb
 description: Use when PostgreSQL engine behaviour decides the answer — schema and type design, index choice, reading EXPLAIN on a slow query, zero-downtime DDL and backfills, or ops (roles, RLS, pooling, vacuum, partitioning, PITR). PG16, ORM-agnostic. NOT portable query logic (that is `sql`), NOT a managed provider's platform surface (that is `neon`).
 tags: [postgres, sql, database, migrations]
-recommends: [secure-coding]
+recommends: [security-audit]
 origin: risco
 ---
 

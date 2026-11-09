@@ -2,7 +2,7 @@
 name: python
 description: "Use when the task is Python itself, in any framework or none: PEP 695 generics, mypy --strict typing, dataclass/Protocol/TypedDict/Enum choices, asyncio.TaskGroup, stdlib idioms, src/ layout + pyproject.toml with uv, ruff+mypy+pytest gate. NOT a FastAPI/ASGI service (that is fastapi), NOT a deep pytest suite (that is testing-py)."
 tags: [python, typing, async, packaging, uv]
-recommends: [fastapi, secure-coding, deployment]
+recommends: [fastapi, security-audit, deployment]
 origin: risco
 ---
 
@@ -29,7 +29,7 @@ annotations`), PEP 750 template strings (`t"..."`), and `compression.zstd`. Tool
   property-based testing -> `testing-py` (this skill keeps only the *baseline*: a few tests
   so `verify.sh` has something to run, then hands off).
 - Language-agnostic threat modeling / authz / OWASP review ->
-  [`secure-coding`](../secure-coding/SKILL.md) (this skill keeps Python-specific safety: no
+  [`security-audit`](../security-audit/SKILL.md) (this skill keeps Python-specific safety: no
   `eval`/`pickle` of untrusted data, `subprocess` without `shell=True`, `secrets` over `random`).
 - Containerfile / CI pipeline / deploy mechanics -> [`deployment`](../deployment/SKILL.md)
   (this skill ships only a uv-based CI note).
@@ -280,7 +280,7 @@ stop at the baseline and hand off.
 
 ## Security (embedded, Python-specific)
 
-Generic threat modeling and authz live in [`secure-coding`](../secure-coding/SKILL.md); these Python-specific controls stay here:
+Generic threat modeling and authz live in [`security-audit`](../security-audit/SKILL.md); these Python-specific controls stay here:
 
 ```python
 # Bad                                          # Good

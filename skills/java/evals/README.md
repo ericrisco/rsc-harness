@@ -4,7 +4,7 @@ These are routing/trigger fixtures plus one capability rubric, not an automated 
 `cases.yaml` is the fixture; this file is how to run it by hand or with a grader-agent.
 
 **Triggering.** Load the full skill catalog so the routing layer sees every sibling
-(spring-boot, kotlin-android, secure-coding, deployment, postgresdb, go, python, harness, …).
+(spring-boot, kotlin-android, security-audit, deployment, postgresdb, go, python, harness, …).
 Feed each `should_trigger.prompt` in a fresh session and confirm the agent invokes the `java`
 skill; feed each `should_not_trigger.prompt` and confirm it does NOT fire `java` and instead
 routes to the stated `route_to` sibling. LLM routing is non-deterministic, so run 3–5 trials

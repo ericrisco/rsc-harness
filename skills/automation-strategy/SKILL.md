@@ -94,7 +94,7 @@ These are the guarantees every automation must meet regardless of platform. This
 - **Error paths, retries & backoff.** Every automation has a defined destination for failure. Retry **transient** errors (timeouts, 429/5xx) with backoff and a cap; do **not** retry **permanent** errors (400/validation) — route them out. A flow with no error path isn't finished.
 - **Dead-letter.** After retries are exhausted, the failed item lands in a durable place a human can inspect and replay — a queue, a table, an "incomplete executions" store. Dropped-on-the-floor failures are invisible data loss.
 - **Observability & alerting.** Emit success/failure counts; put a **heartbeat on scheduled jobs and alert on silence** (a cron that stops firing is the failure you never hear about). Route alerts to a named owner, not a dead inbox.
-- **Secrets handling.** Credentials in the platform's credential store / a vault, referenced by name — never pasted inline where an export leaks them. Least privilege, and a rotation plan. Engineering detail → `../secure-coding/SKILL.md`.
+- **Secrets handling.** Credentials in the platform's credential store / a vault, referenced by name — never pasted inline where an export leaks them. Least privilege, and a rotation plan. Engineering detail → `../security-audit/SKILL.md`.
 - **Versioning & environments.** Separate **dev/staging from prod**; export before you edit; keep a rollback. Changes to a live automation are production changes and deserve the same care.
 - **Avoid fan-out storms.** Cap concurrency, batch, and rate-limit. Watch for **echo loops** (flow A writes a record that triggers flow B that triggers flow A) and for a single event fanning out into thousands of downstream calls that trip rate limits or blow the bill.
 

@@ -2,7 +2,7 @@
 name: dynamodb
 description: "Use when modeling or operating a DynamoDB table: deriving partition/sort keys from access patterns, single-table vs table-per-entity, adding a GSI/LSI, on-demand vs provisioned capacity, or diagnosing hot-partition throttling. NOT relational schema/SQL/EXPLAIN (that is `postgresdb`), NOT aggregation-pipeline document modeling (that is `mongodb`)."
 tags: [dynamodb, nosql, single-table-design, aws, data-modeling]
-recommends: [postgresdb, mongodb, redis, vector-db, aws-essentials, deployment, secure-coding]
+recommends: [postgresdb, mongodb, redis, vector-db, aws-essentials, deployment, security-audit]
 origin: risco
 ---
 
@@ -201,4 +201,4 @@ Relational schema / SQL / EXPLAIN / indexing → `../postgresdb/SKILL.md`; MySQL
 document modeling + aggregation pipeline → `mongodb`; cache / queue / rate-limiter → `redis`; vector
 store / semantic search → `vector-db`; AWS account / IAM / VPC setup → `aws-essentials`; provisioning the
 table in CI/CD → `../deployment/SKILL.md`; API-layer auth/secrets in front of the table →
-`../secure-coding/SKILL.md`.
+`../security-audit/SKILL.md`.

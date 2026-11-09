@@ -118,5 +118,5 @@ the same publisher identity for every release.
 ## Secrets
 
 Certificates, Apple app-specific passwords, and signing keys are CI secrets — never commit
-them. Storage/rotation policy belongs to `secure-coding`; this reference only covers where the
+them. Storage/rotation policy belongs to `security-audit`; this reference only covers where the
 Electron flow consumes them (`process.env`, CI secret store).

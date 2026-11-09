@@ -24,8 +24,8 @@ should_not_trigger:
     route_to: verify
     why: Running the gates to prove green is the verify phase; code-review judges whether green is correct.
   - prompt: "threat-model this upload endpoint for OWASP issues with fixed diffs"
-    route_to: secure-coding
-    why: A deep STRIDE/OWASP exploitability pass with vulnerable→fixed diffs is secure-coding; code-review does only a boundary pass.
+    route_to: security-audit
+    why: A deep STRIDE/OWASP exploitability pass with vulnerable→fixed diffs is security-audit; code-review does only a boundary pass.
   - prompt: "this test is flaky, find the root cause"
     route_to: debug
     why: Root-causing one confirmed failure is debug; code-review surveys a change for latent defects.

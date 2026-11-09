@@ -10,7 +10,7 @@ the answer measurably better?).
 
 - One agent, the full skill catalog discoverable by description only (`fastapi`,
   `nextjs`, `go`, `postgresdb`, `flutter`, `design`, `marketing`, `presentations`,
-  `course-storytelling`, `building-agents`, `secure-coding`, `deployment`, `harness`,
+  `course-storytelling`, `building-agents`, `security-audit`, `deployment`, `harness`,
   `init`). The agent must choose which skill(s) to load — do not pre-load any.
 - Run each prompt in a fresh session (no memory carryover between trials).
 

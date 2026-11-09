@@ -52,7 +52,7 @@ should_not_trigger:
     why: "Despite the word 'CTA', this is pure SQL schema/constraint work owned by postgresdb, not conversion copy."
 
   - prompt: "Add a honeypot field and rate-limit the newsletter signup endpoint to stop spam submissions."
-    route_to: "secure-coding"
+    route_to: "security-audit"
     why: "Abuse prevention / input hardening on a form endpoint is a security concern, not the words on the page."
 
   - prompt: "Design the motion and scroll-reveal animations for the features section of our marketing site."

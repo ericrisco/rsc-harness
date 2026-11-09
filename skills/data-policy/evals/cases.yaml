@@ -27,7 +27,7 @@ should_not_trigger:
     route_to: compliance
     why: "Audit posture / framework control mapping, not data-lifecycle rules."
   - prompt: "Encrypt the PII at rest and harden the database access."
-    route_to: secure-coding
+    route_to: security-audit
     why: "Security controls on the systems, not the governance policy they enforce."
   - prompt: "Write the TTL migration to actually drop the old partitions."
     route_to: db-migrations

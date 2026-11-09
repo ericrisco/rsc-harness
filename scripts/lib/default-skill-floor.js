@@ -26,7 +26,11 @@
 // `tidy` joined in 3.8.0: "limpia el harness" / "actualiza todo" — every repo on its default branch,
 // pushed, pulled, no landed branch or worktree left. Leftovers pile up in every workspace, not only in
 // the ones that picked a profile with git skills, and the person asks for it in their own words.
-export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux', 'tidy']);
+//
+// `security-audit` joined in the next release, in place of the two security skills it retired (see
+// retired-skills.js): it audits the code and the project's platforms, and a security audit request
+// must work in any project the first time it is asked. Only its description is paid for on other turns.
+export const DEFAULT_SKILL_FLOOR = Object.freeze(['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux', 'tidy', 'security-audit']);
 
 export function withDefaultSkillFloor(skillIds = []) {
   return [...new Set([...DEFAULT_SKILL_FLOOR, ...skillIds])];

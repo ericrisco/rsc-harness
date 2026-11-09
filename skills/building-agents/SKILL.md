@@ -2,7 +2,7 @@
 name: building-agents
 description: "Use when building or restructuring an LLM agent — provider adapter, tool calling, structured output, RAG, agent loop, eval gate, cost routing, tracing, MCP server — model-agnostic across OpenAI/Anthropic/Gemini/OSS so a model swap is a config change. NOT vector-store SQL alone (that is `postgresdb`) or service deployment (that is `deployment`)."
 tags: [agents, llm, mcp, rag, evals, ai]
-recommends: [secure-coding, deployment]
+recommends: [security-audit, deployment]
 origin: risco
 ---
 
@@ -382,5 +382,5 @@ In a project with a `02-DOCS/` layer ([`harness`](../harness/SKILL.md)), read `0
 
 ## See also
 
-- Stacks the examples target: [`fastapi`](../fastapi/SKILL.md), [`nextjs`](../nextjs/SKILL.md), [`go`](../go/SKILL.md), [`postgresdb`](../postgresdb/SKILL.md), [`flutter`](../flutter/SKILL.md). Harden with [`secure-coding`](../secure-coding/SKILL.md), ship with [`deployment`](../deployment/SKILL.md).
+- Stacks the examples target: [`fastapi`](../fastapi/SKILL.md), [`nextjs`](../nextjs/SKILL.md), [`go`](../go/SKILL.md), [`postgresdb`](../postgresdb/SKILL.md), [`flutter`](../flutter/SKILL.md). Harden with [`security-audit`](../security-audit/SKILL.md), ship with [`deployment`](../deployment/SKILL.md).
 - External (no sibling here; use if your environment provides them): `claude-api` for Anthropic-SDK-only tuning, `deep-research` for the research-harness fan-out / verify pattern.

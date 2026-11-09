@@ -39,7 +39,7 @@ Ask in short batches, only what changes the plan.
    - A **web or mobile UI** → `nextjs` or `flutter`, `design`.
    - **AI agents** (tools, RAG, autonomous loops) → `building-agents`.
    - **Marketing / landing / decks / teaching** around it → `marketing`, `presentations`, `course-storytelling`.
-   - It will be **shipped / needs security** → `secure-coding`, `deployment`.
+   - It will be **shipped / needs security** → `security-audit`, `deployment`.
 3. **Audience & scale.** Who uses it? Roughly how many users, how many at once?
 4. **Constraints.** Budget, timeline, data region / residency, compliance, must-use technologies.
 5. **Existing tools/providers** already chosen or in play (auth, payments, email, hosting, analytics).

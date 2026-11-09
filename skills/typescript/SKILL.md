@@ -2,7 +2,7 @@
 name: typescript
 description: "Use when writing or fixing TypeScript type code (.ts/.tsx/.d.ts), modeling data with generics/unions/branded types, diagnosing narrowing failures, or configuring tsconfig and the build toolchain. NOT runtime code, fs/streams/http (that is `nodejs`); NOT component/route typing (that is `react`/`nextjs`); NOT ORM type-gen (that is `drizzle-orm`)."
 tags: [typescript, types, generics, tsconfig, type-safety]
-recommends: [nodejs, secure-coding, drizzle-orm]
+recommends: [nodejs, security-audit, drizzle-orm]
 origin: risco
 ---
 
@@ -28,7 +28,7 @@ Three layers, three owners. **Language + compiler config lives here** — generi
 A `tsconfig` question is here; a "stream backpressure" question is `nodejs`; a "type my
 `useReducer` state" question is `react`. Also delegate: ORM schema-to-type generation ->
 `drizzle-orm` / `prisma-orm`; REST/contract shape design -> `api-design`; test runner and E2E
-setup -> `testing-web` / `e2e-testing`; injection/authz review -> `secure-coding`; Python
+setup -> `testing-web` / `e2e-testing`; injection/authz review -> `security-audit`; Python
 typing -> `python`; Go -> `go`.
 
 ## Decision rules

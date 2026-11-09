@@ -2,7 +2,7 @@
 name: google-workspace
 description: "Use when server-side code reads or writes Gmail, Drive, Calendar, or Sheets with a GCP service account and no human in the OAuth loop: picking the auth mode (app-owned vs domain-wide delegation vs keyless), scoping to least privilege, building the authed Node/Python client, staying under per-user quota, and debugging unauthorized_client / 403 / 429. NOT SMTP providers or deliverability (that is `email-connector`), NOT slot-finding and booking UX (that is `calendar-scheduling`)."
 tags: [google-workspace, gmail-api, drive-api, calendar-api, sheets-api, service-account, domain-wide-delegation, oauth-scopes]
-recommends: [email-connector, calendar-scheduling, spreadsheet-ops, document-processing, automation-flows, secure-coding, webhooks]
+recommends: [email-connector, calendar-scheduling, spreadsheet-ops, document-processing, automation-flows, security-audit, webhooks]
 origin: risco
 ---
 
@@ -243,4 +243,4 @@ def with_backoff(call, max_retries=6, max_backoff=64):
 | Pasting raw text into Gmail `raw` | API needs base64url RFC 822, not plain text → 400 | Build a MIME message, `base64url`-encode it |
 
 Before this connector ships, run the secret-handling and key-rotation pass in
-`../secure-coding/SKILL.md`.
+`../security-audit/SKILL.md`.

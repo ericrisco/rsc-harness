@@ -16,7 +16,7 @@ pure shell runner.
   phrasings like "are we ready for review yet?" and "prove the fix works").
 - `should_not_trigger` — near-misses that must route to a real sibling
   (`route_to`): writing tests (`fastapi`), debugging a flaky test (`go`),
-  building the gate script (`nextjs`), security audit (`secure-coding`),
+  building the gate script (`nextjs`), security audit (`security-audit`),
   migration/constraint checks (`postgresdb`). The recurring trap: anything that
   WRITES or RUNS code, or OWNS the tooling, is a stack skill — `verify` only
   orchestrates and judges.
@@ -30,7 +30,7 @@ Goal: the skill fires when a "done" claim is imminent and never on a near-miss.
 1. Configure an agent with the **full catalog of skill descriptions** available
    for routing (verify + the ASDD phase skills it chains to — implement,
    debug, review, clarify, ship — plus the stack/process skills: fastapi, go,
-   nextjs, flutter, postgresdb, secure-coding, deployment, harness, init) so
+   nextjs, flutter, postgresdb, security-audit, deployment, harness, init) so
    routing competes realistically.
 2. For each `should_trigger` prompt: feed it cold, record whether `verify` is
    the skill the agent loads. Run **3–5 trials** per prompt (fresh context).

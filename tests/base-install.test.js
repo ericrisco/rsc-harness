@@ -23,7 +23,8 @@ const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
 // 7 since 3.0.13: `connect-tool` (#303), the method for connecting any tool the user names.
 // 8 since 3.3.0: `design`, rebuilt and always installed (spec design-from-scratch).
 // 10 since 3.8.0: `tidy`, the workspace-wide sync and cleanup ("limpia el harness").
-const BASE = ['connect-tool', 'design', 'ftd', 'harness', 'init', 'orient', 'suggest', 'tidy', 'unslop', 'ux'];
+// 11 since `security-audit`, which audits code and platforms (two retired skills folded into it).
+const BASE = ['connect-tool', 'design', 'ftd', 'harness', 'init', 'orient', 'security-audit', 'suggest', 'tidy', 'unslop', 'ux'];
 
 test('the base install is exactly the declared set', () => {
   assert.deepEqual(skillsForProfile(manifest, 'minimal').sort(), [...BASE].sort());

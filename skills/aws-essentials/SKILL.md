@@ -1,8 +1,8 @@
 ---
 name: aws-essentials
-description: "Use when standing up the core AWS surface a small product needs: hardening a fresh account, a private S3 bucket, encrypted RDS Postgres, ECS Fargate vs EC2, CloudFront + OAC, or scoping an IAM policy to least privilege. NOT the CI pipeline that ships the container (that is `deployment`), NOT app-code access-control review (that is `secure-coding`)."
+description: "Use when standing up the core AWS surface a small product needs: hardening a fresh account, a private S3 bucket, encrypted RDS Postgres, ECS Fargate vs EC2, CloudFront + OAC, or scoping an IAM policy to least privilege. NOT the CI pipeline that ships the container (that is `deployment`), NOT app-code access-control review (that is `security-audit`)."
 tags: [aws, cloud, iam, s3, infrastructure]
-recommends: [deployment, secure-coding, dynamodb, postgresdb]
+recommends: [deployment, security-audit, dynamodb, postgresdb]
 origin: risco
 ---
 
@@ -50,7 +50,7 @@ Two principal types. **IAM users** = long-lived humans/keys; avoid them for work
 = an identity something *assumes* to get temporary credentials — this is what ECS tasks, Lambda,
 CI, and federated humans use. Default to roles: a temporary credential beats a long-lived `AKIA…`
 key that lives forever in a `.env`. (IAM governs who may call AWS APIs; access control *inside*
-your app code is `../secure-coding/SKILL.md`.)
+your app code is `../security-audit/SKILL.md`.)
 
 A policy is a JSON document. The four parts that matter:
 

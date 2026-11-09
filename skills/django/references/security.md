@@ -78,4 +78,4 @@ Avoid `.extra()` (deprecated, injection-prone). Prefer the ORM or `Func`/`RawSQL
 
 - Validate uploaded content type and size; store outside the web root; never trust the filename.
 - Any server-side fetch of a user-supplied URL is SSRF-prone — allowlist hosts, block internal
-  ranges. Cross-stack SSRF/threat-modeling depth is `secure-coding`.
+  ranges. Cross-stack SSRF/threat-modeling depth is `security-audit`.

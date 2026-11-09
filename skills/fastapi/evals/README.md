@@ -10,7 +10,7 @@ Goal: the `fastapi` skill fires on in-scope prompts and stays silent on near-mis
 
 1. Load **only** the `fastapi` skill description into the agent (plus the bare names of the
    sibling skills for routing: nextjs, go, postgresdb, flutter, design, marketing,
-   presentations, course-storytelling, building-agents, secure-coding, deployment, harness,
+   presentations, course-storytelling, building-agents, security-audit, deployment, harness,
    init). Do **not** load the skill bodies.
 2. For each prompt in `should_trigger` and `should_not_trigger`, ask the agent which skill
    (if any) it would invoke. Run **3–5 trials per prompt** (temperature as in production) to
@@ -44,7 +44,7 @@ Goal: the skill measurably improves the answer, not just gates it.
 - Keep prompts varied and realistic; some deliberately omit the word "FastAPI" so triggering
   rests on the async-Python-HTTP-service signal, not keyword matching.
 - Near-misses route to the genuinely correct sibling (Next.js → nextjs, raw SQL → postgresdb,
-  generic security → secure-coding, Docker/CI → deployment) or to `none` (Flask, framework-
+  generic security → security-audit, Docker/CI → deployment) or to `none` (Flask, framework-
   agnostic REST contract questions).
 - This is judgment-based, not byte-exact; record trial counts and the judge (human or model)
   alongside results for reproducibility.

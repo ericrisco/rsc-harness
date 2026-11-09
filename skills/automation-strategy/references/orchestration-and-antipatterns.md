@@ -58,7 +58,7 @@ loss; you find out when a customer does.
   pasted inline in a node/step where an export or a screenshot leaks them.
 - **Least privilege** — scope each token to what the automation actually needs.
 - **Rotation plan** — tokens expire; a rotation nobody owns becomes a 2 a.m. outage. Engineering
-  detail lives in `../../secure-coding/SKILL.md`.
+  detail lives in `../../security-audit/SKILL.md`.
 
 ### 6. Versioning & environments
 

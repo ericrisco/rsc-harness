@@ -2,7 +2,7 @@
 name: expo
 description: "Use when shipping a React Native app with Expo — EAS Build/Submit/Update, eas.json profiles and channels, config plugins, prebuild/CNG, runtime-version policy, OTA updates that never land, SDK upgrades, the New Architecture. NOT RN UI, navigation or native-module authoring (that is `react-native`), NOT a Dart app (that is `flutter`)."
 tags: [expo, eas, react-native, mobile, ota-updates, app-store]
-recommends: [react-native, github-actions, ship, deployment, secure-coding]
+recommends: [react-native, github-actions, ship, deployment, security-audit]
 origin: risco
 ---
 
@@ -180,7 +180,7 @@ it for free once both the build and the update are on SDK 55+.
   scoped by profile, not committed plaintext.
 - **Never commit** a keystore (`*.jks`/`*.keystore`), `*.p12`, or
   `*.mobileprovision`, and never put API keys in `app.config`/`app.json` — anything
-  in app config ships inside the public bundle. See `../secure-coding/SKILL.md`.
+  in app config ships inside the public bundle. See `../security-audit/SKILL.md`.
 
 ## EAS Workflows
 

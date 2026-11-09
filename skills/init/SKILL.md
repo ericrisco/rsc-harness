@@ -126,7 +126,7 @@ command over for another tab. Never install without the confirm; it changes thei
 | Software frontend | `nextjs` / `flutter`, `design` |
 | Marketing / landing / decks / teaching | `marketing`, `presentations`, `course-storytelling` |
 | AI agents | `building-agents` |
-| Shipping, security, wiring external tools | `secure-coding`, `deployment` |
+| Shipping, security, wiring external tools | `security-audit`, `deployment` |
 
 Show the shortlist with a one-line *why* per skill in their language, confirm, install. Recommend
 only what discovery justified — no "you'll probably want agents too".
@@ -198,7 +198,7 @@ never fails).
 
 - `harness` — the scaffolder this hands off to; builds `01-TOOLS/` + `02-DOCS/` from the profile.
 - `deployment` — invoked when the deploy decision above is actually made.
-- `secure-coding` — recommended whenever software is being shipped.
+- `security-audit` — recommended whenever software is being shipped.
 - Stack skills (`fastapi`, `go`, `nextjs`, `flutter`, `building-agents`…) are recommended at runtime
   by Phase 3 from discovery, never hardwired here.
 - References: `references/accompaniment-and-profile.md`, `references/discovery.md`,

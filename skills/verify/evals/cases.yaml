@@ -49,8 +49,8 @@ should_not_trigger:
     why: "Building/owning the stack gate script itself is the nextjs skill's job; verify consumes that script, it does not create the stack's tooling."
 
   - prompt: "Audit this auth endpoint for injection and broken access control before we trust it."
-    route_to: "secure-coding"
-    why: "A security audit of code is owned by secure-coding; verify may invoke that audit as part of the gate but the hands-on review belongs to the security skill."
+    route_to: "security-audit"
+    why: "A security audit of code is owned by security-audit; verify may invoke that audit as part of the gate but the hands-on review belongs to the security skill."
 
   - prompt: "Check that this migration applies cleanly and the CHECK constraint behaves as expected."
     route_to: "postgresdb"

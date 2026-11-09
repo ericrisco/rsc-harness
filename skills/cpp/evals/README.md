@@ -3,7 +3,7 @@
 These cases are run by the rsc skill-eval harness (a Claude agent with the full skill catalog
 loaded), or read manually. They measure two things: **triggering** — that the `cpp` skill's
 description fires on each `should_trigger` prompt and stays quiet on the `should_not_trigger`
-near-misses, routing each of those to the named real sibling (`rust`, `secure-coding`,
+near-misses, routing each of those to the named real sibling (`rust`, `security-audit`,
 `deployment`, `go`, `harness`) instead; and **capability** — that, with `SKILL.md` and its
 references loaded, a graded model's generated C++ satisfies the `capability.must_include` rubric
 (RAII over raw resources, smart-pointer ownership, no `new`/`delete`, target-based CMake with

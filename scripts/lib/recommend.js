@@ -19,7 +19,7 @@ const OUTCOMES = {
   presentations: 'On-brand presentations',
   'course-storytelling': 'Teach so it actually lands',
   'building-agents': 'Your own AI agent',
-  'secure-coding': 'Make it secure',
+  'security-audit': 'Make it secure',
   deployment: 'Put it online',
   godot: 'Your game (Godot)',
   unity: 'Your game (Unity)',

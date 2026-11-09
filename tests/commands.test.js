@@ -21,7 +21,7 @@ test('the fixed catalog contains exactly the approved 20 thin entries', () => {
   assert.deepEqual(commands.fixedCommandNames().sort(), [
     'analyze', 'build-fix', 'checkpoint', 'clarify', 'debug', 'harness-audit', 'implement',
     'learn', 'plan', 'refactor-clean', 'resume-session', 'review', 'save-session',
-    'security-scan', 'ship', 'specify', 'tasks', 'test-coverage', 'update-docs', 'verify',
+    'security-audit', 'ship', 'specify', 'tasks', 'test-coverage', 'update-docs', 'verify',
   ].sort());
 });
 

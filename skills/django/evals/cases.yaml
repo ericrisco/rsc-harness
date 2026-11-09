@@ -24,7 +24,7 @@ should_not_trigger:
     route_to: postgresdb
     why: DB-side query plan and indexing strategy, ORM-agnostic.
   - prompt: "Do a STRIDE threat model of our payment flow."
-    route_to: secure-coding
+    route_to: security-audit
     why: Cross-stack threat modeling, not Django middleware/CSP knobs.
   - prompt: "Should this REST API use cursor or offset pagination, and what status code for a partial update?"
     route_to: api-design

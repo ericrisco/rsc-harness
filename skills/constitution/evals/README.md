@@ -11,7 +11,7 @@ skills loaded) plus a human spot-check.
 
 - `should_trigger` — prompts that MUST load `constitution`.
 - `should_not_trigger` — near-misses that must route elsewhere (`route_to` names
-  a real sibling in this repo: `harness`, `init`, `fastapi`, `secure-coding`,
+  a real sibling in this repo: `harness`, `init`, `fastapi`, `security-audit`,
   `design`).
 - `capability` — a scenario with a `must_include` rubric to grade with vs without.
 
@@ -21,7 +21,7 @@ Goal: the skill fires when it should and never on a near-miss.
 
 1. Configure an agent with the **full catalog of skill descriptions** available
    for routing (constitution + its rsc-sdd phase siblings once they exist, plus
-   harness, init, fastapi, nextjs, go, postgresdb, flutter, design, secure-coding,
+   harness, init, fastapi, nextjs, go, postgresdb, flutter, design, security-audit,
    deployment, marketing, presentations, course-storytelling, building-agents) so
    routing competes realistically.
 2. For each `should_trigger` prompt: feed it cold, record whether `constitution`

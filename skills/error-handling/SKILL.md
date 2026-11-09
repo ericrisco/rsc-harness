@@ -2,7 +2,7 @@
 name: error-handling
 description: "Use when designing the reaction to a class of failures — typed error taxonomies, retry/backoff/timeout policy, circuit breakers, React/Next error boundaries, and the user-message vs operator-log split. NOT diagnosing one specific crash (that is debug), NOT logs/metrics/traces (that is observability), NOT the wire error envelope (that is api-design)."
 tags: [error-handling, resilience, retry, circuit-breaker, error-boundary, typed-errors, fault-tolerance]
-recommends: [debug, observability, monitoring, api-design, secure-coding, testing-web, nextjs]
+recommends: [debug, observability, monitoring, api-design, security-audit, testing-web, nextjs]
 origin: risco
 ---
 

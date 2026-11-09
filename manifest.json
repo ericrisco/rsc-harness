@@ -1,7 +1,7 @@
 {
-  "version": "4.0.5",
+  "version": "4.1.0",
   "counts": {
-    "skills": 274,
+    "skills": 273,
     "agents": 34,
     "commands": 53,
     "fixedCommands": 20
@@ -101,7 +101,7 @@
       ],
       "recommends": [
         "building-agents",
-        "secure-coding",
+        "security-audit",
         "agent-eval"
       ],
       "profiles": []
@@ -182,7 +182,7 @@
       "recommends": [
         "typescript",
         "testing-web",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -205,7 +205,7 @@
         "automation-flows",
         "api-design",
         "data-scraper",
-        "secure-coding",
+        "security-audit",
         "error-handling",
         "structured-extraction"
       ],
@@ -213,7 +213,7 @@
     },
     {
       "id": "api-design",
-      "description": "Use when settling the contract of an API you expose, before implementation: resources/URLs, REST vs GraphQL, versioning, one RFC 9457 error envelope, pagination, idempotency — emitted as OpenAPI 3.1. NOT implementing the endpoints (that is `fastapi`/`nestjs`/`go`/`nodejs`), NOT auth hardening (that is `secure-coding`), NOT consuming a third-party API (that is `api-connector-builder`).",
+      "description": "Use when settling the contract of an API you expose, before implementation: resources/URLs, REST vs GraphQL, versioning, one RFC 9457 error envelope, pagination, idempotency — emitted as OpenAPI 3.1. NOT implementing the endpoints (that is `fastapi`/`nestjs`/`go`/`nodejs`), NOT auth hardening (that is `security-audit`), NOT consuming a third-party API (that is `api-connector-builder`).",
       "tags": [
         "api-design",
         "rest",
@@ -230,7 +230,7 @@
         "nestjs",
         "go",
         "nodejs",
-        "secure-coding",
+        "security-audit",
         "webhooks",
         "api-connector-builder",
         "code-review"
@@ -372,7 +372,7 @@
     },
     {
       "id": "aws-essentials",
-      "description": "Use when standing up the core AWS surface a small product needs: hardening a fresh account, a private S3 bucket, encrypted RDS Postgres, ECS Fargate vs EC2, CloudFront + OAC, or scoping an IAM policy to least privilege. NOT the CI pipeline that ships the container (that is `deployment`), NOT app-code access-control review (that is `secure-coding`).",
+      "description": "Use when standing up the core AWS surface a small product needs: hardening a fresh account, a private S3 bucket, encrypted RDS Postgres, ECS Fargate vs EC2, CloudFront + OAC, or scoping an IAM policy to least privilege. NOT the CI pipeline that ships the container (that is `deployment`), NOT app-code access-control review (that is `security-audit`).",
       "tags": [
         "aws",
         "cloud",
@@ -382,7 +382,7 @@
       ],
       "recommends": [
         "deployment",
-        "secure-coding",
+        "security-audit",
         "dynamodb",
         "postgresdb"
       ],
@@ -400,7 +400,7 @@
       ],
       "recommends": [
         "postgresdb",
-        "secure-coding",
+        "security-audit",
         "monitoring"
       ],
       "profiles": []
@@ -419,7 +419,7 @@
         "github-actions",
         "error-handling",
         "docker",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -495,7 +495,7 @@
         "ai"
       ],
       "recommends": [
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -603,7 +603,7 @@
         "nextjs",
         "react",
         "gdpr-privacy",
-        "secure-coding",
+        "security-audit",
         "vercel"
       ],
       "profiles": []
@@ -688,7 +688,7 @@
         "domains-dns",
         "postgresdb",
         "redis",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -703,7 +703,7 @@
       ],
       "recommends": [
         "review",
-        "secure-coding",
+        "security-audit",
         "verify"
       ],
       "profiles": []
@@ -793,7 +793,7 @@
     },
     {
       "id": "compliance",
-      "description": "Use when scoping which regulatory frameworks bind a business — SOC 2, ISO 27001, HIPAA, PCI DSS, EU AI Act, DORA, NIS2 — building a control register with owners and evidence, or standing up the cadence that keeps it audit-ready. NOT drafting privacy-policy/ROPA/DPA or ToS text (that is gdpr-privacy, terms-conditions), NOT hardening code (that is secure-coding).",
+      "description": "Use when scoping which regulatory frameworks bind a business — SOC 2, ISO 27001, HIPAA, PCI DSS, EU AI Act, DORA, NIS2 — building a control register with owners and evidence, or standing up the cadence that keeps it audit-ready. NOT drafting privacy-policy/ROPA/DPA or ToS text (that is gdpr-privacy, terms-conditions), NOT hardening code (that is security-audit).",
       "tags": [
         "compliance",
         "soc2",
@@ -807,7 +807,7 @@
         "terms-conditions",
         "data-policy",
         "contracts",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -1054,7 +1054,7 @@
       ],
       "recommends": [
         "rust",
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -1071,7 +1071,7 @@
       ],
       "recommends": [
         "postgresdb",
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -1183,7 +1183,7 @@
         "gdpr-privacy",
         "compliance",
         "contracts",
-        "secure-coding",
+        "security-audit",
         "db-migrations",
         "postgresdb"
       ],
@@ -1259,7 +1259,7 @@
         "review",
         "code-review",
         "decision-records",
-        "security-scan"
+        "security-audit"
       ],
       "profiles": [
         "core",
@@ -1326,7 +1326,7 @@
         "coolify"
       ],
       "recommends": [
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -1414,7 +1414,7 @@
       ],
       "recommends": [
         "postgresdb",
-        "secure-coding",
+        "security-audit",
         "deployment",
         "testing-py",
         "api-design"
@@ -1423,7 +1423,7 @@
     },
     {
       "id": "docker",
-      "description": "Use when authoring or auditing a Dockerfile, shrinking a bloated image, hardening a container that runs as root, picking a base image, or wiring a Compose dev loop with hot reload. NOT CI builds or deploy-to-host (that is `deployment`), NOT k8s autoscaling (that is `scaling`), NOT app-level injection or secrets-in-code (that is `secure-coding`).",
+      "description": "Use when authoring or auditing a Dockerfile, shrinking a bloated image, hardening a container that runs as root, picking a base image, or wiring a Compose dev loop with hot reload. NOT CI builds or deploy-to-host (that is `deployment`), NOT k8s autoscaling (that is `scaling`), NOT app-level injection or secrets-in-code (that is `security-audit`).",
       "tags": [
         "docker",
         "containers",
@@ -1433,7 +1433,7 @@
       ],
       "recommends": [
         "deployment",
-        "secure-coding",
+        "security-audit",
         "scaling",
         "github-actions"
       ],
@@ -1548,7 +1548,7 @@
         "vector-db",
         "aws-essentials",
         "deployment",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -1611,7 +1611,7 @@
         "react",
         "nodejs",
         "github-actions",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -1651,7 +1651,7 @@
         "email-deliverability",
         "newsletter",
         "webhooks",
-        "secure-coding",
+        "security-audit",
         "api-connector-builder",
         "automation-flows"
       ],
@@ -1719,7 +1719,7 @@
         "observability",
         "monitoring",
         "api-design",
-        "secure-coding",
+        "security-audit",
         "testing-web",
         "nextjs"
       ],
@@ -1741,7 +1741,7 @@
         "github-actions",
         "ship",
         "deployment",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -1801,7 +1801,7 @@
       ],
       "recommends": [
         "postgresdb",
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -1886,7 +1886,7 @@
         "auth"
       ],
       "recommends": [
-        "secure-coding",
+        "security-audit",
         "gcp-essentials",
         "nextjs"
       ],
@@ -2159,7 +2159,7 @@
         "aws-essentials",
         "docker",
         "github-actions",
-        "secure-coding",
+        "security-audit",
         "postgresdb",
         "deployment",
         "monitoring",
@@ -2189,7 +2189,7 @@
         "terms-conditions",
         "contracts",
         "compliance",
-        "secure-coding",
+        "security-audit",
         "email-deliverability"
       ],
       "profiles": []
@@ -2228,7 +2228,7 @@
         "git-workflow",
         "ship",
         "deployment",
-        "secure-coding",
+        "security-audit",
         "aws-essentials",
         "vercel"
       ],
@@ -2236,7 +2236,7 @@
     },
     {
       "id": "go",
-      "description": "Use when writing, reviewing, testing, or shipping Go code and HTTP services: idioms, `%w` error wrapping, goroutine/context/errgroup concurrency, net/http 1.22 routing, log/slog, project layout, table-driven tests, Go hardening. NOT language-agnostic threat modeling (that is `secure-coding`), NOT Dockerfile/CI shipping (that is `deployment`).",
+      "description": "Use when writing, reviewing, testing, or shipping Go code and HTTP services: idioms, `%w` error wrapping, goroutine/context/errgroup concurrency, net/http 1.22 routing, log/slog, project layout, table-driven tests, Go hardening. NOT language-agnostic threat modeling (that is `security-audit`), NOT Dockerfile/CI shipping (that is `deployment`).",
       "tags": [
         "go",
         "golang",
@@ -2246,7 +2246,7 @@
       ],
       "recommends": [
         "postgresdb",
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -2293,7 +2293,7 @@
         "spreadsheet-ops",
         "document-processing",
         "automation-flows",
-        "secure-coding",
+        "security-audit",
         "webhooks"
       ],
       "profiles": []
@@ -2356,7 +2356,7 @@
       "recommends": [
         "coolify",
         "docker",
-        "secure-coding",
+        "security-audit",
         "domains-dns",
         "backups",
         "monitoring"
@@ -2397,7 +2397,7 @@
       "recommends": [
         "fastapi",
         "django",
-        "secure-coding",
+        "security-audit",
         "accessibility"
       ],
       "profiles": []
@@ -2606,7 +2606,7 @@
       ],
       "recommends": [
         "spring-boot",
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -2719,7 +2719,7 @@
         "mysql",
         "redis",
         "api-design",
-        "secure-coding",
+        "security-audit",
         "testing-web"
       ],
       "profiles": []
@@ -3121,7 +3121,7 @@
         "indexing"
       ],
       "recommends": [
-        "secure-coding",
+        "security-audit",
         "harness"
       ],
       "profiles": []
@@ -3282,7 +3282,7 @@
       ],
       "recommends": [
         "design",
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -3367,7 +3367,7 @@
         "webhooks",
         "automation-flows",
         "spreadsheet-ops",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -3564,7 +3564,7 @@
       ],
       "recommends": [
         "laravel",
-        "secure-coding",
+        "security-audit",
         "mysql"
       ],
       "profiles": []
@@ -3653,7 +3653,7 @@
         "migrations"
       ],
       "recommends": [
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -3855,7 +3855,7 @@
       ],
       "recommends": [
         "fastapi",
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -4227,7 +4227,7 @@
       "recommends": [
         "rails",
         "testing-web",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -4269,7 +4269,7 @@
       "recommends": [
         "go",
         "postgresdb",
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -4387,37 +4387,31 @@
       ]
     },
     {
-      "id": "secure-coding",
-      "description": "Use when securing application code: threat-modeling a feature, security-reviewing a diff, hardening auth/authz, secrets, CORS/CSP, or fixing OWASP-class bugs (access control, injection, SSRF, supply chain) in FastAPI, Next.js, Go or Flutter. NOT running the scanners (that is security-scan), NOT agent prompt-injection guardrails (that is agent-safety).",
+      "id": "security-audit",
+      "description": "Use when asking if a project, diff or feature is secure: security audit or review, vulnerabilities, injection (SQL, XSS), broken access control, auth and JWT, CORS, SSRF, uploads, rate limits, encryption, secrets and API keys (store, rotate, leaked in git), CVE and dependency scans, CI supply chain, threat models, OWASP fixes. Audits the code and its platforms (GitHub, Vercel, Postgres, Hetzner servers…) read-only with check scripts, fixes what the user approves, re-checks, reports in HTML. NOT agent guardrails (that is agent-safety).",
       "tags": [
         "security",
+        "audit",
         "owasp",
-        "stride",
-        "auth",
-        "review"
-      ],
-      "recommends": [
-        "deployment"
-      ],
-      "profiles": []
-    },
-    {
-      "id": "security-scan",
-      "description": "Use when automated scanners drive a security sweep of a repo or app — SAST, dependency/lockfile CVEs, secrets in the tree or git history, IaC misconfig — and the raw output has to become one deduped, exploitability-ranked report CI can gate on. NOT threat-modeling, OWASP design reasoning, or hand-authoring the fix (that is `secure-coding`).",
-      "tags": [
-        "security",
+        "threat-model",
+        "platforms",
         "sast",
-        "sca",
         "secrets",
         "scanning",
-        "owasp"
+        "review",
+        "hardening"
       ],
       "recommends": [
-        "secure-coding",
-        "github-actions",
-        "verify"
+        "agent-safety",
+        "connect-tool",
+        "deployment",
+        "github-actions"
       ],
-      "profiles": []
+      "profiles": [
+        "minimal",
+        "core",
+        "full"
+      ]
     },
     {
       "id": "seo-geo",
@@ -4749,7 +4743,7 @@
       "recommends": [
         "java",
         "postgresdb",
-        "secure-coding",
+        "security-audit",
         "deployment"
       ],
       "profiles": []
@@ -4810,7 +4804,7 @@
         "webhooks",
         "invoicing",
         "pricing",
-        "secure-coding",
+        "security-audit",
         "nodejs"
       ],
       "profiles": []
@@ -4870,7 +4864,7 @@
         "postgresdb",
         "nextjs",
         "db-migrations",
-        "secure-coding",
+        "security-audit",
         "drizzle-orm"
       ],
       "profiles": []
@@ -4950,7 +4944,7 @@
         "rust",
         "electron",
         "react",
-        "secure-coding",
+        "security-audit",
         "github-actions"
       ],
       "profiles": []
@@ -5014,7 +5008,7 @@
       ],
       "recommends": [
         "go",
-        "secure-coding",
+        "security-audit",
         "testing-py",
         "e2e-testing"
       ],
@@ -5199,7 +5193,7 @@
       ],
       "recommends": [
         "nodejs",
-        "secure-coding",
+        "security-audit",
         "drizzle-orm"
       ],
       "profiles": []
@@ -5533,7 +5527,7 @@
       "recommends": [
         "design",
         "deployment",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -5555,7 +5549,7 @@
         "api-connector-builder",
         "automation-flows",
         "redis",
-        "secure-coding"
+        "security-audit"
       ],
       "profiles": []
     },
@@ -5616,7 +5610,7 @@
       ],
       "recommends": [
         "php",
-        "secure-coding",
+        "security-audit",
         "performance",
         "mysql",
         "shopify"
@@ -6451,10 +6445,10 @@
       "backing": "memory:save"
     },
     {
-      "id": "security-scan",
-      "description": "Run the security-scan skill through a short, non-duplicating entry point.",
+      "id": "security-audit",
+      "description": "Run the security-audit skill through a short, non-duplicating entry point.",
       "kind": "skill",
-      "backing": "security-scan"
+      "backing": "security-audit"
     },
     {
       "id": "ship",

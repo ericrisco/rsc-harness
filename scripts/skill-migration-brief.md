@@ -140,7 +140,7 @@ A skill's `description` is in context for everyone who installs it, so migrate b
 1. `minimal` profile — in every rsc install.
 2. `core` profile — the default install (the SDD chain plus the control plane).
 3. High-install stack skills — `nextjs`, `react`, `fastapi`, `postgresdb`, `design`, `typescript`,
-   `python`, `go`, `flutter`, `secure-coding`, `deployment`.
+   `python`, `go`, `flutter`, `security-audit`, `deployment`.
 4. Everything else.
 
 If a run is cut short, this ordering means the part that was finished is the part that everyone pays for.

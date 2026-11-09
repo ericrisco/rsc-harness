@@ -338,8 +338,7 @@
   "t": "Ship & operate · quality & security",
   "ids": [
    "code-review",
-   "security-scan",
-   "secure-coding",
+   "security-audit",
    "testing-py",
    "testing-web",
    "testing-go",

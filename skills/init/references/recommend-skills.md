@@ -14,14 +14,14 @@ and prints commands the user runs.
 | Web or mobile UI | `nextjs` or `flutter`, `design` | The screens people actually see and tap. |
 | Marketing / landing / decks / teaching | `marketing`, `presentations`, `course-storytelling` | The words, slides, and lessons that explain and sell it. |
 | AI agents | `building-agents` | Agents that use tools and reason over your data. |
-| Security & shipping / ops (incl. non-code company harness connecting tools) | `secure-coding`, `deployment` | Ship it safely and wire up the external tools (email, payments, hosting). |
+| Security & shipping / ops (incl. non-code company harness connecting tools) | `security-audit`, `deployment` | Ship it safely and wire up the external tools (email, payments, hosting). |
 
 Recommend a skill **only if discovery justified it** — same discipline as "no
 speculative tools". Don't recommend `building-agents` because agents are trendy;
 recommend it because the user said they want an agent.
 
 Note on the non-code harness: a company/ops/research/content harness almost
-always wants `harness` (the structure) + `deployment`/`secure-coding` (to connect
+always wants `harness` (the structure) + `deployment`/`security-audit` (to connect
 external tools and handle credentials securely), and often `marketing`. It
 usually does NOT want `fastapi`/`nextjs` unless they're also building software.
 
@@ -44,7 +44,7 @@ npx @ericrisco/rsc add harness        # the control plane — scaffolds and gove
 npx @ericrisco/rsc add fastapi postgresdb   # the API and the database
 npx @ericrisco/rsc add nextjs design  # the web UI people see
 npx @ericrisco/rsc add marketing      # the words for your landing page
-npx @ericrisco/rsc add secure-coding deployment   # ship it safely
+npx @ericrisco/rsc add security-audit deployment   # ship it safely
 
 Once they're installed, run the harness skill and I'll build the project structure.
 ```
@@ -56,7 +56,7 @@ You're organizing how your agency runs — client emails, contracts, invoicing,
 and you want it all findable. That's a non-code harness; install:
 
 npx @ericrisco/rsc add harness        # your 01-TOOLS (connections) + 02-DOCS (your second brain)
-npx @ericrisco/rsc add secure-coding deployment   # connect email, payments, drive — and keep credentials safe
+npx @ericrisco/rsc add security-audit deployment   # connect email, payments, drive — and keep credentials safe
 npx @ericrisco/rsc add marketing      # for the proposals, decks and copy you send clients
 
 Once installed, run the harness skill and I'll set up the structure that holds it all.
@@ -70,7 +70,7 @@ You want an AI agent that answers questions over your own documents. Install:
 npx @ericrisco/rsc add harness            # the control plane
 npx @ericrisco/rsc add building-agents    # agent loops, tools, RAG
 npx @ericrisco/rsc add fastapi postgresdb # an API + database to serve it
-npx @ericrisco/rsc add secure-coding deployment   # ship it safely
+npx @ericrisco/rsc add security-audit deployment   # ship it safely
 
 Then run the harness skill.
 ```

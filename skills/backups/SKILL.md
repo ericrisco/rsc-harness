@@ -2,7 +2,7 @@
 name: backups
 description: "Use when designing or auditing a backup-and-restore program that must survive a real disaster: setting defensible RPO/RTO targets, laying out 3-2-1-1-0 copies that are offsite and immutable, wiring point-in-time recovery, and proving restores work on a schedule. NOT tuning Postgres internals or writing the archive_command (that is `postgresdb`)."
 tags: [backups, disaster-recovery, pitr, rpo-rto, restore]
-recommends: [postgresdb, secure-coding, monitoring]
+recommends: [postgresdb, security-audit, monitoring]
 origin: risco
 ---
 
@@ -14,7 +14,7 @@ One question decides whether you have backups or a hope: **if you restored right
 
 If the answer is "we have a nightly job and it hasn't errored," you do not have backups. You have a job. A backup you have never restored is an untested assertion about the future. This skill exists to turn that assertion into evidence: pick the numbers, lay out the copies so ransomware can't reach them, and run a *real* restore on a schedule so the answer becomes "yes, we restored it last Tuesday in 41 minutes."
 
-This is the cross-engine **strategy + verification** skill. Engine-specific SQL knobs (the actual `archive_command`, VACUUM, schema migrations) belong to `../postgresdb/SKILL.md`. Encryption-key management as a general security control belongs to `../secure-coding/SKILL.md`.
+This is the cross-engine **strategy + verification** skill. Engine-specific SQL knobs (the actual `archive_command`, VACUUM, schema migrations) belong to `../postgresdb/SKILL.md`. Encryption-key management as a general security control belongs to `../security-audit/SKILL.md`.
 
 ## 1. Decide RPO and RTO first — numbers, not adjectives
 

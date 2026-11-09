@@ -28,7 +28,7 @@ UI/nav/perf references. For a single-file throwaway sample, say architecture is 
 impose layering.
 
 Around the edges: `harness` owns the workspace `01-TOOLS`/`02-DOCS` layer and flavor secrets; `fastapi`,
-`go` and `nextjs` build the backends this app talks to; `secure-coding` reviews token handling and
+`go` and `nextjs` build the backends this app talks to; `security-audit` reviews token handling and
 deep-link validation; `deployment` handles store/CI release; `design` owns the Material 3 token system.
 
 ## Decision rules

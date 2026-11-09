@@ -4,7 +4,7 @@ Concrete, FastAPI-specific hardening on Python 3.12+: argon2-cffi 23+ password h
 2.10+ with validated claims and **pinned algorithms**, RBAC dependencies, env-specific CORS,
 shared-store rate limiting, injection-proof queries, `SecretStr` handling, log redaction,
 security headers, and dependency auditing. For language-agnostic theory, **See Also
-`secure-coding`**.
+`security-audit`**.
 
 ## Password hashing
 
@@ -325,6 +325,6 @@ open update PRs automatically. Treat a failing audit as a build break, not a war
 
 ## See Also
 
-- [`secure-coding`](../../secure-coding/SKILL.md) — language-agnostic injection, authz, and secret-handling rules (never leak internals through error responses).
+- [`security-audit`](../../security-audit/SKILL.md) — language-agnostic injection, authz, and secret-handling rules (never leak internals through error responses).
 - [`production.md`](production.md) — TLS termination, proxy headers, observability.
 - [`postgresdb`](../../postgresdb/SKILL.md) — row-level security, DB roles/grants, and PgBouncer auth.

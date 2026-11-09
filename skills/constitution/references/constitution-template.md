@@ -52,7 +52,7 @@ version: v1.0.0
 ## 5. Security & privacy floor
 
 12. No secret is ever committed. Secrets load from `01-TOOLS/<provider>/.env` (gitignored).
-    Baseline: `secure-coding`.
+    Baseline: `security-audit`.
 13. <authn/z baseline, data residency, dependency policy> as applicable.
 
 ## 6. UX / accessibility floor (if there is a UI)

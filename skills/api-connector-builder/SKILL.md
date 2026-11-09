@@ -2,7 +2,7 @@
 name: api-connector-builder
 description: "Use when writing a client for someone else's REST or GraphQL API: auth flow choice and token refresh, pagination to exhaustion, retry-with-jitter on transient failures only, rate-limit-aware throttling. NOT inbound callbacks (that is `webhooks`), NOT chaining services (that is `automation-flows`), NOT designing your own API (that is `api-design`)."
 tags: [api, rest, graphql, oauth, pagination, retries, rate-limiting, http-client, connector]
-recommends: [webhooks, automation-flows, api-design, data-scraper, secure-coding, error-handling, structured-extraction]
+recommends: [webhooks, automation-flows, api-design, data-scraper, security-audit, error-handling, structured-extraction]
 origin: risco
 ---
 

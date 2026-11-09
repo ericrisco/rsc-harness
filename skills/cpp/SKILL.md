@@ -2,7 +2,7 @@
 name: cpp
 description: "Use when writing, reviewing, modernizing, building, or debugging C++ - RAII and resource lifetime, smart-pointer ownership, move semantics and the Rule of Zero/Five, target-based CMake with FetchContent, and killing undefined behavior with ASan/UBSan/TSan plus clang-tidy. NOT borrow-checker / Result-Option / cargo memory safety (that is rust)."
 tags: [cpp, c++, modern-cpp, raii, cmake]
-recommends: [rust, secure-coding, deployment]
+recommends: [rust, security-audit, deployment]
 origin: risco
 ---
 
@@ -26,7 +26,7 @@ behind confirmed compiler support. Compiler matrix:
 Delegate: borrow-checker, `Result`/`Option`, cargo, ownership-via-compiler ->
 [`rust`](../rust/SKILL.md) — C++ buys safety with discipline (RAII + smart pointers +
 sanitizers); do not conflate the mechanisms. Language-agnostic threat modeling, authz,
-OWASP-class review -> [`secure-coding`](../secure-coding/SKILL.md); the C++-specific
+OWASP-class review -> [`security-audit`](../security-audit/SKILL.md); the C++-specific
 memory/UB controls (bounds, lifetime, integer overflow, format-string, sanitizers) stay
 **here**. Containerizing and shipping the binary -> [`deployment`](../deployment/SKILL.md);
 this skill stops at the CMake build + a sanitizer-CI note.

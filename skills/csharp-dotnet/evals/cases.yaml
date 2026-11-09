@@ -21,7 +21,7 @@ should_not_trigger:
     route_to: spring-boot
     why: JVM/Java backend — explicitly delegated; this skill is the .NET counterpart only.
   - prompt: "Threat-model my multi-tenant authorization boundaries against OWASP."
-    route_to: secure-coding
+    route_to: security-audit
     why: Framework-neutral threat modeling; this skill keeps only the concrete .NET controls.
   - prompt: "Tune this slow Postgres query and design the right indexes."
     route_to: postgresdb

@@ -2,7 +2,7 @@
 name: java
 description: "Use when writing, reviewing or refactoring modern Java (21+, 25 LTS) — records and sealed interfaces as algebraic data types, exhaustive pattern-matching switch over instanceof ladders, virtual-thread concurrency, structured concurrency and ScopedValue replacing ThreadLocal, Stream and Optional pipelines, compact-constructor validation, parametrized JDBC, and the Maven/Gradle build surface. NOT Spring framework wiring (that is `spring-boot`)."
 tags: [java, jvm, records, virtual-threads, sealed-types]
-recommends: [spring-boot, secure-coding, deployment]
+recommends: [spring-boot, security-audit, deployment]
 origin: risco
 ---
 
@@ -37,7 +37,7 @@ a getter/setter bean, or a manual `ExecutorService` sized to a core count, stop.
   This skill is the plain-JDK layer underneath; framework wiring is out of scope by topic.
 - **Kotlin** on the JVM (Android or server) -> `kotlin-android`. Java and Kotlin interop but
   are different languages; coroutines and Kotlin null-safety belong there.
-- **Language-agnostic threat modeling / OWASP / authz** -> `secure-coding`. This skill keeps
+- **Language-agnostic threat modeling / OWASP / authz** -> `security-audit`. This skill keeps
   only Java-specific controls (parametrized JDBC, compact-constructor validation, sane deser).
 - **Containerfile / CI pipeline / shipping** -> `deployment`. This skill keeps only a
   jlink/jpackage note and the JDK base-image choice.
@@ -322,7 +322,7 @@ Sibling skills (link only those present under `skills/`):
 
 - `spring-boot` - the Spring framework surface (controllers, beans, autoconfiguration); this
   skill is the plain-JDK/language layer underneath it.
-- [`secure-coding`](../secure-coding/SKILL.md) - threat modeling and language-agnostic
+- [`security-audit`](../security-audit/SKILL.md) - threat modeling and language-agnostic
   authz/abuse/OWASP review (this skill keeps the Java-specific controls).
 - [`deployment`](../deployment/SKILL.md) - Docker, CI, and shipping (this skill keeps only the
   jlink/jpackage note and base-image choice).

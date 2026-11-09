@@ -2,7 +2,7 @@
 name: email-connector
 description: "Use when wiring server code to send transactional or bulk email via Resend, SendGrid, or Postmark: a provider-agnostic sendEmail() seam, idempotent retries, 100-cap batches with partial failures, transactional-vs-broadcast streams, bounce webhooks feeding a suppression list. NOT SPF/DKIM/DMARC inbox reputation (that is `email-deliverability`)."
 tags: [email, transactional-email, resend, sendgrid, postmark, webhooks, idempotency]
-recommends: [email-deliverability, newsletter, webhooks, secure-coding, api-connector-builder, automation-flows]
+recommends: [email-deliverability, newsletter, webhooks, security-audit, api-connector-builder, automation-flows]
 origin: risco
 ---
 
@@ -267,7 +267,7 @@ before I ever send) is `../lead-gen/SKILL.md` / `../email-deliverability/SKILL.m
 
 | Anti-pattern | Why it bites | Do instead |
 |--------------|--------------|------------|
-| API key hard-coded (`re_…`, `SG.…`, server token) | Committed credential = send-as-you abuse | Read from `process.env`; rotate via `../secure-coding/SKILL.md` |
+| API key hard-coded (`re_…`, `SG.…`, server token) | Committed credential = send-as-you abuse | Read from `process.env`; rotate via `../security-audit/SKILL.md` |
 | No idempotency key on transactional sends | Queue/serverless retry double-sends | Deterministic `event:userId:version` key |
 | One stream for everything | Marketing hit poisons reset/receipt deliverability | Split From + subdomain + stream (Step 6) |
 | String-concatenated HTML with user input | XSS + broken layout | React Email component or `d-` dynamic template |

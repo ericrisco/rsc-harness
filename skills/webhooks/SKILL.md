@@ -2,7 +2,7 @@
 name: webhooks
 description: "Use when building the receiving end of a webhook — a provider-agnostic endpoint that proves pushed events are authentic and never processes one twice: raw-body HMAC, ~5-min replay window, idempotency on the event id, fast-ack-then-queue. NOT the Stripe-Signature scheme (that is stripe), NOT outbound clients you call (that is api-connector-builder)."
 tags: [webhooks, inbound-webhooks, hmac-verification, idempotency, signature-verification, queue, connectors]
-recommends: [stripe, email-connector, api-connector-builder, automation-flows, redis, secure-coding]
+recommends: [stripe, email-connector, api-connector-builder, automation-flows, redis, security-audit]
 profiles: []
 origin: risco
 ---
@@ -25,7 +25,7 @@ happens to the event afterward is a different job:
 - Multi-step orchestration after the event lands → `automation-flows`.
 - Broker/queue tuning (BullMQ concurrency, DLQ ops) → `redis`.
 - Constant-time compare, secret handling, supply-chain hygiene →
-  `../secure-coding/SKILL.md`.
+  `../security-audit/SKILL.md`.
 
 ## The pipeline
 

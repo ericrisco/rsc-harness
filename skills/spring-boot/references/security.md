@@ -2,7 +2,7 @@
 
 SKILL.md has the headline: one `SecurityFilterChain` bean, lambda DSL,
 `authorizeHttpRequests` + `requestMatchers`, stateless for token APIs. This is the depth.
-The language-agnostic authz/secret reasoning is `../secure-coding/SKILL.md`; this file is the
+The language-agnostic authz/secret reasoning is `../security-audit/SKILL.md`; this file is the
 Spring wiring.
 
 ## JWT resource server (validate tokens minted elsewhere)

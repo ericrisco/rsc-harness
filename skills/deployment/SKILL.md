@@ -2,7 +2,7 @@
 name: deployment
 description: "Use when taking an app from source to live: choosing the deploy target from requirements (Hetzner+Coolify vs Vercel vs a third), then wiring container → CI → registry → host with build secrets, healthchecks and rollback. NOT one platform's mechanics (that is `coolify`, `vercel`, `railway`, `render`), NOT the Dockerfile alone (that is `docker`)."
 tags: [deploy, docker, ci, github-actions, coolify]
-recommends: [secure-coding]
+recommends: [security-audit]
 origin: risco
 ---
 
@@ -369,6 +369,6 @@ block the task on this.
 ## Hand off
 
 - Platform mechanics once the target is chosen: `../coolify/SKILL.md`, `../vercel/SKILL.md`, `../railway/SKILL.md`, `../render/SKILL.md`, `../fly-io/SKILL.md`, `../hetzner/SKILL.md`.
-- `../secure-coding/SKILL.md` — input validation, authn/z, and secret-handling this skill assumes the app already does.
+- `../security-audit/SKILL.md` — input validation, authn/z, and secret-handling this skill assumes the app already does.
 - `../harness/SKILL.md` — 01-TOOLS provider creds (Stripe, Postgres, OAuth…) that become runtime env on the target.
 - `../fastapi/SKILL.md`, `../nextjs/SKILL.md`, `../go/SKILL.md`, `../flutter/SKILL.md`, `../postgresdb/SKILL.md` — the application code that runs inside the container; this skill stops at that boundary.

@@ -3,7 +3,7 @@
 These cases are read by an **agent harness** (a Claude agent with the skill catalog loaded),
 not a plain shell script. `cases.yaml` is the fixture; this file is the procedure. Two things
 are measured: **triggering** (does `python` fire on language-level prompts and stay silent on
-near-misses that belong to `fastapi`, `testing-py`, `django`, `secure-coding`, `deployment`?)
+near-misses that belong to `fastapi`, `testing-py`, `django`, `security-audit`, `deployment`?)
 and **capability** (does loading the skill make a scaffold answer measurably better?).
 
 **Triggering:** load the full sibling descriptions, start a fresh session per prompt, feed each

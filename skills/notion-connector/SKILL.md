@@ -2,7 +2,7 @@
 name: notion-connector
 description: "Use when wiring server code or a cron job to Notion as an ops backend over its HTTP API: pushing or mirroring database rows, two-way sync without duplicates, page blocks, or an integration broken by the 2025-09-03 data-source split. NOT generic REST wiring (that is `api-connector-builder`), NOT inbound Notion webhook events (that is `webhooks`)."
 tags: [notion, ops-backend, api-integration, databases, sync]
-recommends: [api-connector-builder, webhooks, automation-flows, spreadsheet-ops, secure-coding]
+recommends: [api-connector-builder, webhooks, automation-flows, spreadsheet-ops, security-audit]
 origin: risco
 ---
 
@@ -22,14 +22,14 @@ rate-limit/pagination discipline that the API forces on you.
 | Receiving + verifying *inbound* Notion webhook events | `../webhooks/SKILL.md` |
 | Notion is one node in a multi-tool sequence | `../automation-flows/SKILL.md` |
 | CSV/tabular bulk transforms, column mechanics | `../spreadsheet-ops/SKILL.md` |
-| Token handling, secret rotation, never-client-side rules | `../secure-coding/SKILL.md` |
+| Token handling, secret rotation, never-client-side rules | `../security-audit/SKILL.md` |
 
 ## Setup (4 steps)
 
 1. **Create an internal integration** in Notion → Settings → Integrations. Copy
    the secret — it looks like `ntn_...` (older ones `secret_...`).
 2. **Put the token in an env var**, never in client-side JS, never committed. It
-   is a bearer secret; treat it like a password. See `../secure-coding/SKILL.md`.
+   is a bearer secret; treat it like a password. See `../security-audit/SKILL.md`.
 3. **Share the target database/page with the integration** in the Notion UI
    (the page `•••` menu → Connections). *Skip this and every call 404s or
    returns empty* — the integration sees nothing it was not explicitly granted.

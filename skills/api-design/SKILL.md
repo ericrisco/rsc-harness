@@ -1,8 +1,8 @@
 ---
 name: api-design
-description: "Use when settling the contract of an API you expose, before implementation: resources/URLs, REST vs GraphQL, versioning, one RFC 9457 error envelope, pagination, idempotency — emitted as OpenAPI 3.1. NOT implementing the endpoints (that is `fastapi`/`nestjs`/`go`/`nodejs`), NOT auth hardening (that is `secure-coding`), NOT consuming a third-party API (that is `api-connector-builder`)."
+description: "Use when settling the contract of an API you expose, before implementation: resources/URLs, REST vs GraphQL, versioning, one RFC 9457 error envelope, pagination, idempotency — emitted as OpenAPI 3.1. NOT implementing the endpoints (that is `fastapi`/`nestjs`/`go`/`nodejs`), NOT auth hardening (that is `security-audit`), NOT consuming a third-party API (that is `api-connector-builder`)."
 tags: [api-design, rest, graphql, openapi, versioning, pagination, http, rfc9457, contract-design]
-recommends: [fastapi, nestjs, go, nodejs, secure-coding, webhooks, api-connector-builder, code-review]
+recommends: [fastapi, nestjs, go, nodejs, security-audit, webhooks, api-connector-builder, code-review]
 origin: risco
 ---
 
@@ -176,7 +176,7 @@ Hand off to the builder:
 - Node generally → [`../nodejs/SKILL.md`](../nodejs/SKILL.md)
 
 Adjacent concerns you do **not** own:
-- Auth hardening, OWASP, CORS/CSP threat-modeling → [`../secure-coding/SKILL.md`](../secure-coding/SKILL.md) (you only place 401/403/scopes in the contract)
+- Auth hardening, OWASP, CORS/CSP threat-modeling → [`../security-audit/SKILL.md`](../security-audit/SKILL.md) (you only place 401/403/scopes in the contract)
 - Receiving inbound webhooks (HMAC verify, replay, dedupe) → [`../webhooks/SKILL.md`](../webhooks/SKILL.md)
 - Building an outbound client to a third-party API → [`../api-connector-builder/SKILL.md`](../api-connector-builder/SKILL.md)
 - Reviewing handler code (not the design) → [`../code-review/SKILL.md`](../code-review/SKILL.md)

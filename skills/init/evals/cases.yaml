@@ -50,8 +50,8 @@ should_not_trigger:
     why: "Concrete frontend build with a named framework — the nextjs stack skill. init would only ever recommend the nextjs skill, not scaffold the app itself."
 
   - prompt: "Review this auth code for security issues like injection and broken access control."
-    route_to: "secure-coding"
-    why: "A security-only review of existing code, no bootstrapping or profiling involved — squarely the secure-coding skill, not the front-door init."
+    route_to: "security-audit"
+    why: "A security-only review of existing code, no bootstrapping or profiling involved — squarely the security-audit skill, not the front-door init."
 
 capability:
   - scenario: "A non-technical founder says: 'I want to build an app to connect dog owners but I don't know where to start.' Show how init opens the engagement."

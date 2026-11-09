@@ -28,7 +28,7 @@ and lose fast. Treat this as ops on a domain, not a code change.
 - **Consent, lawful basis, retention of the address list** → `gdpr-privacy` and
   `data-policy`. Unsubscribe *mechanics* live here; consent *law* does not.
 - **Handling the DKIM private key and provider API secrets** →
-  `../secure-coding/SKILL.md`.
+  `../security-audit/SKILL.md`.
 
 ## The three records that must align
 

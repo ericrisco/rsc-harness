@@ -2,7 +2,7 @@
 name: spring-boot
 description: "Use when building, reviewing, testing, securing or configuring a Spring Boot 4 / Framework 7 backend — controllers, services, Spring Data JPA, application.yml, SecurityFilterChain, slice tests. NOT plain modern-Java language work like records or virtual threads (that is `java`); NOT engine-level SQL schema/index/EXPLAIN (that is `postgresdb`)."
 tags: [java, spring, jpa, security, backend]
-recommends: [java, postgresdb, secure-coding, deployment]
+recommends: [java, postgresdb, security-audit, deployment]
 origin: risco
 ---
 
@@ -32,7 +32,7 @@ The modern idioms below replace every one of them.
 - Engine-level SQL: schema/index design, `EXPLAIN`, partitioning, zero-downtime DDL ->
   [`../postgresdb/SKILL.md`](../postgresdb/SKILL.md) (this skill drives the JPA layer above it).
 - Language-agnostic injection/authz/secret theory ->
-  [`../secure-coding/SKILL.md`](../secure-coding/SKILL.md).
+  [`../security-audit/SKILL.md`](../security-audit/SKILL.md).
 - Dockerfile/Compose/CI/CD mechanics -> [`../deployment/SKILL.md`](../deployment/SKILL.md)
   (keep only a build note here).
 
@@ -242,7 +242,7 @@ Order `requestMatchers` from most specific to least — the first match wins, so
 `permitAll` placed early opens routes you meant to lock. Full JWT/OAuth2 client, method
 security, CORS, and CSRF posture (token vs cookie apps) live in
 [`references/security.md`](references/security.md). For the language-agnostic authz/secret
-principles behind these rules, see [`../secure-coding/SKILL.md`](../secure-coding/SKILL.md).
+principles behind these rules, see [`../security-audit/SKILL.md`](../security-audit/SKILL.md).
 
 ## Testing
 

@@ -13,7 +13,7 @@ origin: risco
 
 The one rule everything else serves: **a claim of done is a claim about evidence. No evidence, no claim.** A green feeling is not green output.
 
-This is a process skill. It does not own the lint/type/test tooling — the **stack skills do** (`../fastapi/SKILL.md`, `../go/SKILL.md`, `../nextjs/SKILL.md`, `../flutter/SKILL.md`, each shipping `scripts/verify.sh`; data-layer checks come from `../postgresdb/SKILL.md`, security from `../secure-coding/SKILL.md`). `verify` orchestrates them and judges the whole against the spec.
+This is a process skill. It does not own the lint/type/test tooling — the **stack skills do** (`../fastapi/SKILL.md`, `../go/SKILL.md`, `../nextjs/SKILL.md`, `../flutter/SKILL.md`, each shipping `scripts/verify.sh`; data-layer checks come from `../postgresdb/SKILL.md`, security from `../security-audit/SKILL.md`). `verify` orchestrates them and judges the whole against the spec.
 
 Not this phase: still writing tests or production code → `../implement/SKILL.md` (TDD lives there); a check is failing and you need to know *why* → `../debug/SKILL.md` (`verify` reports the failure and hands off, it does not diagnose); reading the diff adversarially for design/correctness smells a test can't catch → `../review/SKILL.md`, or `../code-review/SKILL.md` when there is no spec/plan chain to key off; nothing to verify *against* → you're earlier in the chain, go to `../specify/SKILL.md` / `../plan/SKILL.md` / `../tasks/SKILL.md` first.
 
@@ -31,7 +31,7 @@ Report in the `orient` voice: pass/fail per gate, then one line of *why* per fai
 
 | Mode | When | Scope | Output |
 | --- | --- | --- | --- |
-| **Per task** | step e of `implement`'s loop, every tier | the task's diff: **tests** (affected suite), **build** (compile + types), **security** (stack audit; `../secure-coding/SKILL.md` on input/authz/secrets), **traceability** (every new behaviour traces to a spec criterion — untraced behaviour is a finding) | one line per control in the task's progress entry |
+| **Per task** | step e of `implement`'s loop, every tier | the task's diff: **tests** (affected suite), **build** (compile + types), **security** (stack audit; `../security-audit/SKILL.md` on input/authz/secrets), **traceability** (every new behaviour traces to a spec criterion — untraced behaviour is a finding) | one line per control in the task's progress entry |
 | **Closing** | ASDD stage 5, once, before `review` and `ship` | the whole branch against main: merge main in (or rebase) and run the full gate below on the result | the dated record, with a rollback plan |
 
 **Both modes, one rule: a check that was not executed is listed as not run** — never as passed, never
@@ -84,7 +84,7 @@ If `config.yaml` provides `testing.commands.verify`, run those commands first or
 | Next.js / React | `./scripts/verify.sh` (`../nextjs`) | eslint, tsc --noEmit, test, build |
 | Flutter / Dart | `./scripts/verify.sh` (`../flutter`) | `dart format`, `flutter analyze`, `flutter test` |
 | Postgres / data layer | migration + query checks (`../postgresdb`) | schema/migration apply, constraint + query checks |
-| Security-sensitive change | audit per `../secure-coding` | input/authz/secrets review, dependency vuln scan |
+| Security-sensitive change | audit per `../security-audit` | input/authz/secrets review, dependency vuln scan |
 
 Rules for RUN:
 

@@ -49,7 +49,7 @@ coverage = points / total bullets.
   (slow-query, multi-tenant isolation, duplicate-job-processing) — these test intent
   recognition, not keyword matching.
 - Near-misses route to the genuinely correct sibling (`fastapi`, `flutter`,
-  `deployment`, `secure-coding`) or `none` when the request is out of every sibling's
+  `deployment`, `security-audit`) or `none` when the request is out of every sibling's
   scope (Prisma ORM trap, Redis caching).
 - This is judgment-based grading. Record trial counts and the per-bullet verdicts so a
   reviewer can audit; don't report a bare pass/fail.

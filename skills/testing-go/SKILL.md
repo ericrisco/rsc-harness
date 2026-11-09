@@ -2,7 +2,7 @@
 name: testing-go
 description: "Use when writing or running Go tests — table-driven cases, named subtests, parallel isolation, fakes instead of mock frameworks, coverage profiles, benchmarks, fuzzing, golden files, and testing concurrent goroutines deterministically. NOT general Go code or modules (that is `go`), NOT pytest fixtures (that is `testing-py`), NOT browser user flows (that is `e2e-testing`)."
 tags: [go, testing, table-driven-tests, benchmarks, coverage, synctest, mocks, fuzzing]
-recommends: [go, secure-coding, testing-py, e2e-testing]
+recommends: [go, security-audit, testing-py, e2e-testing]
 origin: risco
 ---
 

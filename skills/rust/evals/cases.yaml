@@ -16,8 +16,8 @@ should_trigger:
 
 should_not_trigger:
   - prompt: "Do a threat model and OWASP-style authz review of my multi-tenant app's permission boundaries."
-    route_to: "secure-coding"
-    why: "Language-agnostic threat modeling and authz/abuse review is delegated to secure-coding; only Rust-specific controls stay here."
+    route_to: "security-audit"
+    why: "Language-agnostic threat modeling and authz/abuse review is delegated to security-audit; only Rust-specific controls stay here."
   - prompt: "Write a multi-stage Dockerfile and a GitHub Actions CI pipeline to build and deploy my Rust service."
     route_to: "deployment"
     why: "Containerfile / CI / shipping is delegated to deployment; this skill ships only a Docker note plus release-profile flags."

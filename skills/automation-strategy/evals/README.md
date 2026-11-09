@@ -5,7 +5,7 @@ automate (with the stability trap), four-way platform selection, ROI / build-vs-
 "our automations keep breaking", ecosystem-fit selection, and TCO/over-automation post-mortems, with
 Spanish phrasing. `should_not_trigger` lists adjacent prompts routed to the sibling that owns them —
 concrete builds/artifacts → automation-flows, driving a live platform → the n8n/make skills, code
-clients → api-connector-builder, webhook receipt → webhooks, secrets engineering → secure-coding.
+clients → api-connector-builder, webhook receipt → webhooks, secrets engineering → security-audit.
 `capability` is one end-to-end strategy scenario whose `must_include` rubric checks the §1 gate,
 human-in-the-loop on the irreversible step, maintenance-inclusive payback, billing-unit + ecosystem
 platform routing, the honest Zapier/Power-Automate API-creation limits, the orchestration guarantees,

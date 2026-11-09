@@ -2,7 +2,7 @@
 name: wordpress
 description: "Use when building or hardening WordPress sites or WooCommerce stores and treating WordPress as the product rather than just writing PHP — block themes with theme.json, plugins with block.json and proper hooks, wp-config security hardening, performance (object cache, asset loading, autoloaded options), and WP-CLI operations. NOT a Laravel app (that is `laravel`)."
 tags: [wordpress, woocommerce, block-themes, wp-cli, php, security-hardening, performance]
-recommends: [php, secure-coding, performance, mysql, shopify]
+recommends: [php, security-audit, performance, mysql, shopify]
 origin: risco
 ---
 
@@ -153,7 +153,7 @@ define( 'FORCE_SSL_ADMIN', true );
 
 Use **Application Passwords** (WP 5.6+) for REST/API machine auth — individually revocable, cannot log into `wp-login.php`, and the right answer when a script or [nextjs](../nextjs/SKILL.md) front end needs to talk to WP. Never reuse the admin password in a script.
 
-For the full block — file-permission matrix (dirs 755 / files 644 / wp-config 600), `DISALLOW_FILE_MODS`, nginx/.htaccess security headers, login lockdown, XML-RPC and user-enumeration disabling, version-disclosure removal — see [references/hardening.md](references/hardening.md). Generic OWASP/threat-modeling not tied to the WP attack surface is [secure-coding](../secure-coding/SKILL.md).
+For the full block — file-permission matrix (dirs 755 / files 644 / wp-config 600), `DISALLOW_FILE_MODS`, nginx/.htaccess security headers, login lockdown, XML-RPC and user-enumeration disabling, version-disclosure removal — see [references/hardening.md](references/hardening.md). Generic OWASP/threat-modeling not tied to the WP attack surface is [security-audit](../security-audit/SKILL.md).
 
 ## Performance
 

@@ -23,8 +23,8 @@ should_not_trigger:
     route_to: "deployment"
     why: "Container build and CI/CD mechanics are deployment work, not GCP service setup."
   - prompt: "Review this authentication code for injection and broken authorization."
-    route_to: "secure-coding"
-    why: "Application security review belongs to secure-coding."
+    route_to: "security-audit"
+    why: "Application security review belongs to security-audit."
 
 capability:
   - scenario: "A developer says: 'I need a private Cloud Run API connected to Cloud SQL and a bucket, with least-privilege IAM. Give me the safe gcloud shape.'"
