@@ -56,10 +56,15 @@ const SECRET_PATTERNS = [
   ['Google API key', /\bAIza[0-9A-Za-z_-]{35}/],
   ['Bearer token', /\bBearer[ \t]{1,8}[A-Za-z0-9\-._~+/]{24,1024}/],
   ['Basic credentials', /\bAuthorization["']?[ \t]{0,4}[:=][ \t]{0,4}["']?Basic[ \t]{1,8}[A-Za-z0-9+/]{8,1024}/i],
-  // Only JWT-shaped triples whose header starts `eyJ` (base64 of `{"`): plain `a.b.c` is a hostname.
-  ['JWT', /\beyJ[A-Za-z0-9_-]{8,1024}\.[A-Za-z0-9_-]{8,1024}\.[A-Za-z0-9_-]{8,1024}/],
+  // A JWT is recognised by its start: header and payload both begin `eyJ` (base64 of `{"`), so a plain
+  // `a.b.c` hostname never matches. Matching only the start keeps the match short (well inside the
+  // chunk overlap) however long the payload is: tokens with group claims run to several KB.
+  ['JWT', /\beyJ[A-Za-z0-9_-]{8,512}\.eyJ[A-Za-z0-9_-]{8}/],
 ];
-const KEYWORD = '(?<![A-Za-z0-9])(?:password|passwd|secret|token|api[_-]?key)[A-Za-z0-9_-]{0,32}';
+// A credential NAME ends in the keyword: `password`, `client_secret`, `GITHUB_TOKEN`, `accessToken`.
+// `token_endpoint`, `tokenUrl`, `tokenizer` or `passwordResetLink` only start with it and are not names
+// of a credential.
+const KEYWORD = '(?<![A-Za-z0-9])(?:[A-Za-z0-9]{1,32}[_-]?)?(?:password|passwd|secret|token|api[_-]?key)s?(?![A-Za-z0-9_-])';
 // `scheme://user:pass@host`. The password is tested separately so `:<password>@`, `:****@` pass.
 const URL_CREDENTIALS = /\b[A-Za-z][A-Za-z0-9+.-]{0,19}:\/\/[^\s:/@'"<>]{1,128}:([^\s/@'"]{1,256})@[A-Za-z0-9[]/g;
 // A quoted literal assigned to a credential name: `password: "…"`, `"api_key": "…"`, `token = '…'`.
@@ -67,7 +72,7 @@ const QUOTED_ASSIGNMENT = new RegExp(`${KEYWORD}["']?[ \\t]{0,8}[:=][ \\t]{0,8}(
 // An unquoted `.env`-style line: `NAME=value` at the start of the line, the whole rest of the line
 // being one token with no call, no member access, no space.
 const ENV_ASSIGNMENT = /^[ \t]{0,8}(?:export[ \t]{1,4})?([A-Za-z_][A-Za-z0-9_]{0,63})=([A-Za-z0-9+/=_.~!@#$%^&*:-]{16,256})[ \t]{0,8}\r?$/;
-const ENV_NAME = /(?:password|passwd|secret|token|api[_-]?key)/i;
+const ENV_NAME = /(?:password|passwd|secret|token|api[_-]?key)s?$/i;
 const REDACTED_VALUE = /\*{3,}|redacted|^<.*>$|^\$\{|^\$[A-Z_]|^(?:process\.env|os\.environ|env\.|getenv)|^x{6,}$/i;
 const PLACEHOLDER_PASSWORD = /^(?:pass(?:word)?|pwd|secret|changeme|\*+|x+|\.{3}|<[^>]*>|\$\{[^}]*\}|\$[A-Za-z_][A-Za-z0-9_]*|\[[^\]]*\]|%[A-Za-z0-9_]+%?)$/i;
 // `a.b.c`: a member access, not a value.
@@ -87,7 +92,7 @@ function chunkKinds(text, kinds) {
   }
   if (!kinds.has('credential assignment')) {
     for (const m of text.matchAll(QUOTED_ASSIGNMENT)) {
-      if (!REDACTED_VALUE.test(m[2]) && looksRandom(m[2])) { kinds.add('credential assignment'); break; }
+      if (!REDACTED_VALUE.test(m[2]) && !m[2].includes('://') && looksRandom(m[2])) { kinds.add('credential assignment'); break; }
     }
   }
 }
@@ -449,6 +454,9 @@ export function validate(auditDir) {
     for (const e of entries) {
       const rel = relDir ? `${relDir}/${e.name}` : e.name;
       if (!relDir && (e.name === 'findings.json' || e.name === 'report.html' || e.name === 'scratch')) continue;
+      // A name can carry a secret too (`evidence/ghp_….txt`); report it without echoing the name.
+      const nameKinds = secretKinds(e.name);
+      if (nameKinds.length) err('audit-dir', `a file or directory name under ${show(relDir || '.')} contains a likely live secret (${nameKinds.join(', ')})`);
       if (e.isSymbolicLink()) err('audit-dir', `${show(rel)} is a symlink; symlinks inside the audit dir are refused`);
       else if (e.isDirectory()) scanDir(join(dirAbs, e.name), rel, depth + 1);
       else if (e.isFile()) {

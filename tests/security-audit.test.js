@@ -675,3 +675,36 @@ test('a not_run recheck artifact is still checked', () => {
   expectError(check((d) => { d.findings[1].fix.recheck.artifact = 'evidence/gone.txt'; }), /findings\[1\]\.fix\.recheck\.artifact: .*does not exist/);
   expectError(check((d) => { d.findings[1].fix.recheck.artifact = '../../x'; }), /findings\[1\]\.fix\.recheck\.artifact: .*escape/);
 });
+
+test('names that only start with a credential word are not flagged', () => {
+  for (const line of [
+    'tokenUrl: "https://oauth2.googleapis.com/token"',
+    '"token_endpoint": "https://accounts.google.com/o/oauth2/token"',
+    'tokenizer: "bert-base-uncased-v2-Model"',
+    'passwordResetLink: "auth.password.reset.link2"',
+    'TOKEN_URL=https://auth.example.com/oauth/token',
+    'SECRET_ARN=arn:aws:secretsmanager:eu-west-1:123456789012:secret:app-Ab12Cd',
+    '{"issuer":"https://idp.example.com","token_endpoint":"https://idp.example.com/oauth2/v1/token"}',
+  ]) assert.deepEqual(secretKinds(line), [], line);
+  for (const line of ['accessToken: "Zx9Yw8Vu7Ts6Rq5Po4Nm3"', 'DB_PASSWORD=Zx9Yw8Vu7Ts6Rq5Po4Nm3', '"client_secret": "Zx9Yw8Vu7Ts6Rq5Po4Nm3"']) {
+    assert.ok(secretKinds(line).length > 0, line);
+  }
+});
+
+test('long JWTs are caught anywhere in a long line', () => {
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const jwt = `${b64({ alg: 'RS256', typ: 'JWT' })}.${b64({ sub: 'u1', groups: Array.from({ length: 60 }, (_, i) => `group-${i}-aaaaaaaaaaaaaaaaaaaa`) })}.${'s'.repeat(342)}`;
+  assert.ok(jwt.length > 2000);
+  assert.ok(secretKinds(`{"access_token":"${jwt}"}`).includes('JWT'));
+  assert.ok(secretKinds(`Set-Cookie: session=${jwt}; HttpOnly`).includes('JWT'));
+  for (const offset of [0, 2990, 3500, 7000]) assert.ok(secretKinds(`${'x'.repeat(offset)} ${jwt}`).includes('JWT'), `offset ${offset}`);
+});
+
+test('a secret in a file name inside the audit dir fails without echoing it', () => {
+  const fx = fixture();
+  const name = `${AWS_KEY}.txt`;
+  writeFileSync(join(fx.audit, 'evidence', name), 'nothing secret here\n');
+  const r = validate(write(fx));
+  expectError(r, /name .*likely live secret \(AWS access key id\)/);
+  assert.ok(!r.errors.join('\n').includes(AWS_KEY));
+});
