@@ -12,7 +12,7 @@ pass: record | broken: roll back now, report → revoke write access
 
 ## 1. Present the findings
 
-One message (or the rendered report: `scripts/render-report.js <audit-dir> --lang <user language>`)
+One message (or the rendered report: `scripts/render-report.mjs <audit-dir> --lang <user language>`)
 with every `confirmed` and `needs_validation` finding, most severe first. For each one, in plain
 language and the user's technical level:
 
@@ -121,7 +121,11 @@ scoped only to that change: one repo with only the Administration permission for
 one Cloudflare zone with only the setting being changed; one Hetzner project token for one firewall
 change; a Postgres session with the one privilege needed. Shortest expiry the vendor offers.
 
-Hand-over follows `secrets-discipline.md` (env var set by the user, keychain, gitignored `.env`).
+Hand-over follows `secrets-discipline.md`: the user stores the credential in the OS keychain or
+their secret manager through a hidden prompt, and the fix command reads it from there (or from
+stdin) inside a subshell. Never an `export` in the agent's shell, where the project's test suite
+and scripts would inherit it; never a token pasted in the chat, even if the user insists (ask them
+to revoke it and make a new one).
 Set the platform's `access: write_for_fix` while it is in use. After the fix (or the rollback),
 the user revokes it, or it expires; record the revocation step in `user_actions` until the user
 confirms. Then set `access` back to `read_only`.
@@ -191,6 +195,6 @@ the plan does not include the feature, or the rollback could not be made safe. T
 - Every write credential revoked or listed in `user_actions` with how to revoke it.
 - Every read-only audit credential listed in `user_actions` with how to revoke it, unless the user
   wants to keep it for scheduled re-checks.
-- `scripts/validate-findings.js <audit-dir>` passes; render the report again in the user's language.
+- `scripts/validate-findings.mjs <audit-dir>` passes; render the report again in the user's language.
 - Tell the user, in short sentences: what changed, what the checks proved, what is still open and
   who has to do it.

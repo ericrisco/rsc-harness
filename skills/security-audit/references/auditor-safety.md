@@ -46,7 +46,7 @@ A secret (API key, token, password, private key, connection string with credenti
 - Command outputs and artifacts are scrubbed before promotion; the stored copy has the value replaced by `[REDACTED:<type>]`, and the manifest notes it ([isolated execution](isolated-execution.md#promoting-artifacts)).
 - Never use the secret: do not test whether it is live, do not call the service with it.
 - Add a `user_actions[]` entry: rotate it at the provider, then remove it from the repo and its history, in that order (removing without rotating leaves it valid in every existing clone).
-- `scripts/validate-findings.js` fails if a value that looks like a secret is visible anywhere in the audit directory. Fix the redaction; do not weaken the check.
+- `scripts/validate-findings.mjs` fails if a value that looks like a secret is visible anywhere in the audit directory: every key and string of `findings.json` and every file below it (`ledger.json`, `architecture.md`, `evidence/`, `fixes/`…). Two exceptions: `report.html`, which is rendered only from data that already passed, and `scratch/`, which holds hunters' raw working files and is deleted at the end of the run. A symlink in the directory or a file over 2 MB fails too. Fix the redaction; do not weaken the check.
 
 ## The audit directory
 

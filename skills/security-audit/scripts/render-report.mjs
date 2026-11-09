@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 // Renders an audit directory written by the `security-audit` skill into one self-contained page:
 //
-//   node render-report.js <audit-dir> [--lang en|es]
+//   node render-report.mjs <audit-dir> [--lang en|es]
 //
-// It validates first (validate-findings.js) and refuses to render anything the validator rejects, so
+// It validates first (validate-findings.mjs) and refuses to render anything the validator rejects, so
 // the report can never show a claim the disk does not back. Output: `<audit-dir>/report.html`, mode
 // 0600 — the page lists unfixed vulnerabilities, so it is readable by its owner only. The page makes no
 // external request: inline CSS, no scripts, light/dark from the reader's system, phone-width safe.
 //
 // The fixed text (headings, explanations, enum labels) is translated; what the auditor wrote
 // (titles, impacts, steps) is shown exactly as written, HTML-escaped.
-import { chmodSync, lstatSync, writeFileSync } from 'node:fs';
+import { closeSync, constants, fchmodSync, lstatSync, openSync, writeSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { realpathSync } from 'node:fs';
-import { validate } from './validate-findings.js';
+import { validate } from './validate-findings.mjs';
 
 const T = {
   en: {
@@ -264,8 +264,19 @@ export function writeReport(auditDir, opts) {
   let st = null;
   try { st = lstatSync(out); } catch { /* not there yet */ }
   if (st && !st.isFile()) throw new Error(`refusing to write ${out}: it exists and is not a regular file`);
-  writeFileSync(out, html, { mode: 0o600 });
-  chmodSync(out, 0o600); // `mode` only applies on creation; an older report keeps its old mode otherwise
+  // A hard link would make the write land in another file too (anywhere on the same volume).
+  if (st && st.nlink > 1) throw new Error(`refusing to write ${out}: it has another hard link; delete it and render again`);
+  // O_NOFOLLOW closes the gap between the check above and the open: a symlink planted in between
+  // makes the open fail instead of writing through it.
+  const { O_WRONLY, O_CREAT, O_TRUNC, O_NOFOLLOW } = constants;
+  const fd = openSync(out, O_WRONLY | O_CREAT | O_TRUNC | (O_NOFOLLOW ?? 0), 0o600);
+  try {
+    fchmodSync(fd, 0o600); // the mode argument only applies on creation; an older report keeps its old mode otherwise
+    const buf = Buffer.from(html, 'utf8');
+    for (let off = 0; off < buf.length;) off += writeSync(fd, buf, off, buf.length - off);
+  } finally {
+    closeSync(fd);
+  }
   return out;
 }
 
@@ -280,7 +291,7 @@ function main(argv) {
     else dir = argv[i];
   }
   if (!dir || !T[lang]) {
-    console.error('usage: render-report.js <audit-dir> [--lang en|es]');
+    console.error('usage: render-report.mjs <audit-dir> [--lang en|es]');
     return 2;
   }
   try {

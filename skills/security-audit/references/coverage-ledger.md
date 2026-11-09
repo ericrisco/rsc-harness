@@ -78,8 +78,8 @@ When a critic re-opens a `done` or `blocked` unit, push its current live fields 
 
 ## Claiming coverage honestly
 
-- **Complete** coverage needs every in-scope unit `done` or `blocked` with evidence, plus a clean final critic pass (below). Only then may `run.status` be `complete`.
-- **Partial** is the honest answer for everything else: `quick` profile, scoped run, budget stop, interrupted run not yet resumed, unverified candidates, a mandatory critic that could not run. Set `run.status: "partial"` and a `partial_reason` that names the cause in one line (`quick profile`, `budget exhausted before wave 3`, `scoped to packages/billing`, `4 candidates not verified`).
+- **Complete** coverage needs every in-scope unit `done` with evidence, every detected platform `reviewed`, and a clean final critic pass (below). Only then may `run.status` be `complete`. A run with no units and no platforms reviewed nothing and is never complete; `validate-findings.mjs` refuses all of these.
+- **Partial** is the honest answer for everything else: a `blocked` or `not_reviewed` unit (its `reason` says why), a platform not reviewed, `quick` profile, scoped run, budget stop, interrupted run not yet resumed, unverified candidates, a mandatory critic that could not run. Set `run.status: "partial"` and a `partial_reason` that names the cause in one line (`quick profile`, `budget exhausted before wave 3`, `scoped to packages/billing`, `4 candidates not verified`).
 - The report's coverage section is derived from the ledger counts, never written freehand.
 - A unit closed without paths and checks is a critic target, not coverage.
 
@@ -126,7 +126,7 @@ Pick the profile from the request; otherwise propose one from target size and st
 | Verifiers per candidate | 1 (candidate and final checks merged) | 2 (separate fresh agents) | 2, plus an independent second hunter pass on units carried from a same-source prior run |
 | **Default budget** | **25** | **70** | **180** |
 
-Profiles change breadth and redundancy. They never lower the evidence bar: the candidate gate, the isolation rules, `needs_validation` discipline, `scripts/validate-findings.js`, and independent verification of every `confirmed` finding apply in every profile.
+Profiles change breadth and redundancy. They never lower the evidence bar: the candidate gate, the isolation rules, `needs_validation` discipline, `scripts/validate-findings.mjs`, and independent verification of every `confirmed` finding apply in every profile.
 
 ### Spending the budget
 
@@ -169,4 +169,4 @@ When no prior run exists, the report says so.
 
 After every update to `ledger.json`, the coordinator checks it against the status table above (unique sorted ids, owner and evidence rules per status, unit paths equal to the union of check paths, every artifact under `evidence/`). An invalid ledger drives no further assignment.
 
-Whenever `findings.json` is written (after each verification batch and before rendering), run `node scripts/validate-findings.js <audit-dir>`. It checks that cited files and lines exist, evidence files exist inside the audit directory, units and findings reference each other correctly, and no secret is visible. Fix every error before assigning more work or claiming coverage. A passing validator proves structure and consistency, not that the findings are true.
+Whenever `findings.json` is written (after each verification batch and before rendering), run `node scripts/validate-findings.mjs <audit-dir>`. It checks that cited files and lines exist, evidence files exist inside the audit directory, units and findings reference each other correctly, and no secret is visible. Fix every error before assigning more work or claiming coverage. A passing validator proves structure and consistency, not that the findings are true.

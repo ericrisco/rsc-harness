@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ericrisco/rsc/skills/security-audit/schema/findings.schema.json",
   "title": "security-audit findings.json",
-  "description": "Contract of <project>/02-DOCS/security/audit-<YYYY-MM-DD>/findings.json. Documentation only: scripts/validate-findings.js enforces these rules by hand (no ajv) and adds the disk checks a schema cannot express — cited files and lines exist under project_root, evidence files exist non-empty inside the audit dir, no '..'/absolute/symlink escapes, coverage cross-references resolve, 'complete' runs left nothing unreviewed, no likely live secret in any string or evidence file, file <= 5 MB and nesting <= 32.",
+  "description": "Contract of <project>/02-DOCS/security/audit-<YYYY-MM-DD>/findings.json. Documentation only: scripts/validate-findings.mjs enforces these rules by hand (no ajv) and adds the disk checks a schema cannot express — cited files and lines exist under project_root, evidence files exist non-empty under evidence/ or fixes/ of the audit dir, no '..'/absolute/symlink escapes, coverage cross-references resolve, 'complete' runs reviewed something and left nothing unreviewed, tool_path is a real 01-TOOLS/security/<platform>/ dir with a README.md and a check, no likely live secret in any key or string of findings.json nor in any file of the audit dir (report.html and scratch/ excepted; symlinks refused; files over 2 MB refused), findings.json <= 5 MB, cited project files <= 5 MB, nesting <= 32.",
   "type": "object",
   "required": ["run", "findings", "coverage", "platforms"],
   "properties": {
@@ -16,7 +16,7 @@
         "project_root": { "type": "string", "description": "Absolute path of the audited project; must be an existing directory. Every locations[].path is relative to it." },
         "scope": { "type": "object", "description": "Free-form description of what was in scope (paths, platforms, exclusions)." },
         "profile": { "enum": ["quick", "standard", "deep"], "description": "Depth of the run." },
-        "status": { "enum": ["complete", "partial"], "description": "'complete' is refused while any coverage unit is not done or any platform is not reviewed." },
+        "status": { "enum": ["complete", "partial"], "description": "'complete' is refused while any coverage unit is not done or any platform is not reviewed, and when there are no units and no platforms at all." },
         "partial_reason": { "type": "string", "minLength": 1, "description": "Why the run is partial. Required when status is partial." }
       },
       "if": { "properties": { "status": { "const": "partial" } } },
@@ -102,7 +102,7 @@
             "required": ["kind", "path", "summary"],
             "properties": {
               "kind": { "enum": ["artifact", "command_output", "source"] },
-              "path": { "$ref": "#/$defs/relPath", "description": "Relative to the audit dir." },
+              "path": { "$ref": "#/$defs/relPath", "description": "Relative to the audit dir, under evidence/ or fixes/ (never findings.json, ledger.json or report.html)." },
               "summary": { "type": "string", "minLength": 1 }
             }
           }
@@ -122,7 +122,7 @@
               "properties": {
                 "command": { "type": "string", "minLength": 1 },
                 "result": { "enum": ["pass", "fail", "not_run"] },
-                "artifact": { "$ref": "#/$defs/relPath", "description": "Recheck output, relative to the audit dir. Required when result is pass or fail." }
+                "artifact": { "$ref": "#/$defs/relPath", "description": "Recheck output, relative to the audit dir, under evidence/ or fixes/. Required when result is pass or fail; checked whenever present." }
               },
               "if": { "properties": { "result": { "enum": ["pass", "fail"] } } },
               "then": { "required": ["artifact"] }
@@ -167,7 +167,7 @@
         "access": { "enum": ["read_only", "write_for_fix", "none"] },
         "status": { "enum": ["reviewed", "not_reviewed"] },
         "reason": { "type": "string", "minLength": 1, "description": "Required when not_reviewed." },
-        "tool_path": { "type": "string", "pattern": "^01-TOOLS/", "description": "Tool used to review it, relative to project_root; must exist there (no '..', not a symlink). Required when reviewed." }
+        "tool_path": { "type": "string", "pattern": "^01-TOOLS/security/[a-z0-9][a-z0-9._-]{0,63}/?$", "description": "Tool used to review it: 01-TOOLS/security/<platform>/, relative to project_root. Must be a real directory (no symlink anywhere on the way) holding a README.md and at least one other regular file. Required when reviewed." }
       },
       "allOf": [
         { "if": { "properties": { "status": { "const": "not_reviewed" } } }, "then": { "required": ["reason"] } },

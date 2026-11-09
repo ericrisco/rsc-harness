@@ -86,7 +86,9 @@ Run these from outside, against hosts the user confirmed as theirs, at low rate:
   reflected plus `Access-Control-Allow-Credentials: true`.
 - **Exposed files**: a `GET` (no crawling) for a short fixed list: `/.git/HEAD`, `/.env`,
   `/.DS_Store`, source maps for production bundles, `/server-status`, framework debug pages.
-  A `200` with real content is a finding; the content is not saved beyond the first line.
+  A `200` with real content is a finding. Record only the status code, the `Content-Type`, the size
+  in bytes and, for `/.env` and similar, a count of lines that look like `KEY=value`. Never keep any
+  of the content, not even the first line: it is the secret itself.
 - **Open ports**: a TCP connect test (no banner grabbing beyond the protocol greeting, no login
   attempts) to the user's own IPs on a short list: 22, 80, 443, 3000, 5432, 3306, 6379, 27017,
   8000, 8080, 9200, 2375/2376 (Docker API), 6001/6002 (Coolify). Anything beyond 80/443 answering
@@ -451,15 +453,20 @@ confirm the current screen and scope names in the vendor's docs before telling t
 | DNS / domains | None needed for records. Registrar and DNS provider settings: manual. | — |
 | Stripe | Restricted key (`rk_…`) with **Read** on the resources checked (webhook endpoints, account) and None on the rest, test mode first to prove the script. | Stripe docs: restricted API keys |
 
-**Handing it over.** Follow `secrets-discipline.md`. In short, best first:
+**Handing it over.** Follow `secrets-discipline.md`. In short:
 
-1. The user sets an environment variable in their own shell (`export HCLOUD_TOKEN=…` typed by
-   them), and the agent runs the check in that shell.
-2. The OS keychain (macOS `security`, `secret-tool`, `pass`), read by the script at run time.
-3. `01-TOOLS/security/<platform>/.env`, gitignored and `chmod 600`, filled by the user in their
-   editor. Confirm `git check-ignore` before anyone writes the value.
+1. The user stores the credential in the OS keychain or their secret manager, typing it into a
+   hidden prompt in their own terminal (macOS `security add-generic-password … -w`, Linux
+   `secret-tool store`, `pass insert`).
+2. The check reads it from there at run time, or receives it on stdin from a subshell that read it
+   from there. Never an `export` in the agent's shell: every child process (the project's test
+   suite, package scripts, hooks) would inherit it.
+3. Only if the platform's own tooling needs a file: `01-TOOLS/security/<platform>/.env`,
+   `chmod 600`, filled by the user in their editor, after `git check-ignore -q` has confirmed the
+   path is ignored. If git does not report it ignored, stop until it is.
 
-Pasting in chat is the last resort, only when the user insists, and the token is revoked at the end.
+Never accept a token pasted in the chat, even if the user insists: the value is now in the
+transcript. Ask them to revoke it and create a fresh one through step 1.
 At the end of the audit, list every credential created, with where to revoke it, under
 `user_actions` ("Revoke the audit token in GitHub: Settings > Developer settings > …").
 
@@ -492,10 +499,11 @@ who is not available:
 3. The platform is recorded `status: not_reviewed`, `access: none`, with `reason` saying exactly
    why ("Vercel offers no read-only token; user declined a full-access token"). The report shows it
    as not reviewed. **Never** as passed.
-4. If the user sends the answers back, the agent turns them into a fixture (section "Writing the
-   check script") and runs the check against it offline, so the result still comes from code.
-   The platform becomes `reviewed`, `access: none`, and the evidence says the input was supplied by
-   the user.
+4. If the user sends the answers back, the agent stores them only in the audit directory
+   (`evidence/<platform>-user/`, redacted like any evidence), never in `01-TOOLS/`, and runs the
+   check against them offline (`check --fixture <audit-dir>/evidence/<platform>-user`), so the
+   result still comes from code. The platform becomes `reviewed`, `access: none`, and the evidence
+   says the input was supplied by the user.
 
 ## (e) From check output to findings
 
@@ -531,7 +539,7 @@ script (no tokens, no secret values, no personal data beyond account emails the 
 - The platform entry: `status: reviewed`, `access: read_only`, `tool_path:
   01-TOOLS/security/<platform>/`.
 
-Run `scripts/validate-findings.js <audit-dir>` after adding platform findings.
+Run `scripts/validate-findings.mjs <audit-dir>` after adding platform findings.
 
 ## Writing the check script
 
@@ -550,11 +558,17 @@ pick the least dangerous route, least-privilege credential, prove it with a test
   check            the read-only check (check.sh / check.mjs / check.py: the project's language,
                    or bash + curl + jq, or Node with no dependencies)
   test             proves the check (test.sh / test.mjs / test.py)
-  fixtures/        recorded, redacted responses: pass/ and fail/ per check
+  fixtures/        synthetic responses: pass/ and fail/ per check (see "test: rules")
 ```
 
 `<platform>` is lowercase (`github`, `vercel`, `cloudflare`, `hetzner`, `postgres`, `dns`,
-`vps-<host>`). Add a row to `01-TOOLS/README.md`. `.env` is gitignored before it exists.
+`vps-<host>`). Add a row to `01-TOOLS/README.md`. Any `.env` under `01-TOOLS/security/` is
+gitignored before it exists: add the rule, then confirm with `git check-ignore -q <path>` before
+anything is written to it.
+
+`01-TOOLS/` is committed, and rsc's knowledge sync pushes it to git. Nothing in this folder may
+describe the live platform: no recorded response, no real identifier, IP, hostname or secret. Live
+output goes only to the gitignored audit directory, as evidence.
 
 ### README.md
 
@@ -623,9 +637,11 @@ The test runs offline by default and must:
 4. With `--live`, prove the credential is read-only (scope listing, or the rolled-back write that
    must fail with a permission error, as in `connect-tool`) and make one cheap read.
 
-Fixtures are real responses recorded once from the live platform, with identifiers and anything
-personal replaced. The failing fixture is the same response with only the setting under test
-changed, so the test shows the check reacts to that setting and nothing else.
+Fixtures are **synthetic**: written by hand from the response shape the vendor documents, with
+made-up values (`example-org`, `203.0.113.10`, `app.example.com`, fake tokens). Never a recorded live
+response, never a real identifier, IP, hostname or secret, because `01-TOOLS/` is committed and
+synced. The failing fixture is the passing one with only the setting under test changed, so the
+test shows the check reacts to that setting and nothing else.
 
 ### Re-running after a fix
 

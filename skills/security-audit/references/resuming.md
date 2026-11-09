@@ -51,5 +51,5 @@ If the session must end before the run does (context is running out, the owner s
 
 1. Let in-flight agents finish if possible; otherwise leave their units `in_progress` (resume will reset them).
 2. Write `findings.json` with `run.status: "partial"` and `partial_reason: "interrupted: resume pending"`, and `coverage.units[]` consolidated from the ledger (units still `pending` or `in_progress` appear there as `not_reviewed` with reason `interrupted`; `ledger.json` keeps their true state for resume).
-3. Run `scripts/validate-findings.js <audit-dir>`.
+3. Run `scripts/validate-findings.mjs <audit-dir>`.
 4. Tell the owner the directory and the next step: resume the audit.

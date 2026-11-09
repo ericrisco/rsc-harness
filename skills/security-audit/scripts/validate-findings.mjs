@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Validates an audit directory written by the `security-audit` skill:
 //
-//   node validate-findings.js <audit-dir>
+//   node validate-findings.mjs <audit-dir>
 //
 // The audit dir holds `findings.json` plus the evidence files it cites. This is the deterministic half
 // of the skill: the model writes findings.json, and this script refuses any claim the files on disk do
@@ -13,11 +13,14 @@
 //
 // Every error is `<json path>: <message>`. Messages never echo a value that could be a secret: the
 // JSON path says where to look.
-import { lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { lstatSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { isAbsolute, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const MAX_BYTES = 5 * 1024 * 1024;
+// Every other file in the audit dir is scanned for secrets; above this it is refused, not scanned.
+export const MAX_SCAN_BYTES = 2 * 1024 * 1024;
+const MAX_SCAN_FILES = 5000;
 export const MAX_DEPTH = 32;
 
 const VERDICTS = ['confirmed', 'needs_validation', 'rejected'];
@@ -31,34 +34,78 @@ const RECHECK_RESULTS = ['pass', 'fail', 'not_run'];
 const UNIT_STATUS = ['done', 'blocked', 'not_reviewed'];
 const ACCESS = ['read_only', 'write_for_fix', 'none'];
 const PLATFORM_STATUS = ['reviewed', 'not_reviewed'];
+const TOOL_PATH = /^01-TOOLS\/security\/[a-z0-9][a-z0-9._-]{0,63}\/?$/;
 
 // Likely live secrets. Each pattern is deliberately narrow: a validator that cries wolf on every
 // base64 blob gets switched off. Redacted forms (`sk_live_****`, `[REDACTED]`) do not match because
 // the character classes exclude `*`, `[` and `]`.
+//
+// Every pattern is linear: it starts with a literal, every quantifier has an upper bound, and no two
+// optional parts can match the same text. On top of that, text is scanned in bounded chunks
+// (scanText), so even a pathological line costs at most CHUNK × bound per chunk.
 const SECRET_PATTERNS = [
-  ['PEM private key', /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/],
+  ['PEM private key', /-----BEGIN [A-Z0-9 ]{0,40}PRIVATE KEY-----/],
   ['AWS access key id', /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/],
-  ['GitHub token', /\b(?:gh[posu]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/],
-  ['Slack token', /\bxox[abpr]-[A-Za-z0-9-]{10,}/],
-  ['Stripe live key', /\b(?:sk|rk)_live_[A-Za-z0-9]{8,}/],
-  ['Bearer token', /\bBearer\s+[A-Za-z0-9\-._~+/]{24,}=*/],
+  ['GitHub token', /\b(?:gh[posu]_[A-Za-z0-9]{20,255}|github_pat_[A-Za-z0-9_]{20,255})/],
+  ['Slack token', /\bxox[abpr]-[A-Za-z0-9-]{10,255}/],
+  ['Stripe key', /\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{8,255}/],
+  ['Stripe webhook secret', /\bwhsec_[A-Za-z0-9+/=]{16,255}/],
+  ['Supabase secret key', /\bsb_secret_[A-Za-z0-9_-]{16,255}/],
+  ['Anthropic key', /\bsk-ant-[A-Za-z0-9_-]{20,255}/],
+  ['OpenAI key', /\bsk-(?:proj|svcacct|admin)-[A-Za-z0-9_-]{20,255}|\bsk-[A-Za-z0-9]{40,255}/],
+  ['Google API key', /\bAIza[0-9A-Za-z_-]{35}/],
+  ['Bearer token', /\bBearer[ \t]{1,8}[A-Za-z0-9\-._~+/]{24,1024}/],
+  ['Basic credentials', /\bAuthorization["']?[ \t]{0,4}[:=][ \t]{0,4}["']?Basic[ \t]{1,8}[A-Za-z0-9+/]{8,1024}/i],
   // Only JWT-shaped triples whose header starts `eyJ` (base64 of `{"`): plain `a.b.c` is a hostname.
-  ['JWT', /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/],
+  ['JWT', /\beyJ[A-Za-z0-9_-]{8,1024}\.[A-Za-z0-9_-]{8,1024}\.[A-Za-z0-9_-]{8,1024}/],
 ];
-// `password = <16+ chars>` and friends, including prefixed names (`client_secret`, `GITHUB_TOKEN`)
-// and JSON/YAML forms (`"api_key": "..."`). The value is tested separately so redactions and
-// references (`process.env.X`, `${VAR}`) pass.
-const ASSIGNMENT = /[A-Za-z0-9_-]*(?:password|passwd|secret|token|api[_-]?key)["']?\s*[:=]\s*["']?([^\s"'`,;]{16,})/gi;
+const KEYWORD = '(?<![A-Za-z0-9])(?:password|passwd|secret|token|api[_-]?key)[A-Za-z0-9_-]{0,32}';
+// `scheme://user:pass@host`. The password is tested separately so `:<password>@`, `:****@` pass.
+const URL_CREDENTIALS = /\b[A-Za-z][A-Za-z0-9+.-]{0,19}:\/\/[^\s:/@'"<>]{1,128}:([^\s/@'"]{1,256})@[A-Za-z0-9[]/g;
+// A quoted literal assigned to a credential name: `password: "…"`, `"api_key": "…"`, `token = '…'`.
+const QUOTED_ASSIGNMENT = new RegExp(`${KEYWORD}["']?[ \\t]{0,8}[:=][ \\t]{0,8}(["'\`])([A-Za-z0-9+/=_.~!@#$%^&*:-]{16,256})\\1`, 'gi');
+// An unquoted `.env`-style line: `NAME=value` at the start of the line, the whole rest of the line
+// being one token with no call, no member access, no space.
+const ENV_ASSIGNMENT = /^[ \t]{0,8}(?:export[ \t]{1,4})?([A-Za-z_][A-Za-z0-9_]{0,63})=([A-Za-z0-9+/=_.~!@#$%^&*:-]{16,256})[ \t]{0,8}\r?$/;
+const ENV_NAME = /(?:password|passwd|secret|token|api[_-]?key)/i;
 const REDACTED_VALUE = /\*{3,}|redacted|^<.*>$|^\$\{|^\$[A-Z_]|^(?:process\.env|os\.environ|env\.|getenv)|^x{6,}$/i;
+const PLACEHOLDER_PASSWORD = /^(?:pass(?:word)?|pwd|secret|changeme|\*+|x+|\.{3}|<[^>]*>|\$\{[^}]*\}|\$[A-Za-z_][A-Za-z0-9_]*|\[[^\]]*\]|%[A-Za-z0-9_]+%?)$/i;
+// `a.b.c`: a member access, not a value.
+const MEMBER_ACCESS = /^[A-Za-z_$][\w$]{0,63}(?:\.[A-Za-z_$][\w$]{0,63}){1,8}$/;
+// A random-looking literal has a digit or mixes upper and lower case; `my-app-name` does not.
+const looksRandom = (v) => /[0-9]/.test(v) || (/[a-z]/.test(v) && /[A-Z]/.test(v));
+
+export const CHUNK = 4096;
+const OVERLAP = 1100; // longer than any single pattern can match, so a secret across a chunk edge is still seen
+
+function chunkKinds(text, kinds) {
+  for (const [kind, re] of SECRET_PATTERNS) if (!kinds.has(kind) && re.test(text)) kinds.add(kind);
+  if (!kinds.has('URL credentials')) {
+    for (const m of text.matchAll(URL_CREDENTIALS)) {
+      if (!PLACEHOLDER_PASSWORD.test(m[1]) && !REDACTED_VALUE.test(m[1])) { kinds.add('URL credentials'); break; }
+    }
+  }
+  if (!kinds.has('credential assignment')) {
+    for (const m of text.matchAll(QUOTED_ASSIGNMENT)) {
+      if (!REDACTED_VALUE.test(m[2]) && looksRandom(m[2])) { kinds.add('credential assignment'); break; }
+    }
+  }
+}
 
 /** Returns the kinds of likely live secret found in `text` (never the values). */
 export function secretKinds(text) {
-  const kinds = [];
-  for (const [kind, re] of SECRET_PATTERNS) if (re.test(text)) kinds.push(kind);
-  for (const m of text.matchAll(ASSIGNMENT)) {
-    if (!REDACTED_VALUE.test(m[1])) { kinds.push('credential assignment'); break; }
+  const kinds = new Set();
+  let start = 0;
+  for (const line of String(text).split('\n')) {
+    // The `.env` rule only looks at the start of a line.
+    const m = ENV_ASSIGNMENT.exec(line.length > 512 ? line.slice(0, 512) : line);
+    if (m && ENV_NAME.test(m[1]) && !REDACTED_VALUE.test(m[2]) && !MEMBER_ACCESS.test(m[2])) kinds.add('credential assignment');
+    for (start = 0; start < line.length; start += CHUNK - OVERLAP) {
+      chunkKinds(line.slice(start, start + CHUNK), kinds);
+      if (start + CHUNK >= line.length) break;
+    }
   }
-  return kinds;
+  return [...kinds];
 }
 
 // Shows a value in an error only when it is short, boring and secret-free (ids, enum values).
@@ -91,7 +138,7 @@ function rawDepth(text) {
 // Resolves `rel` inside `baseReal` (an already-realpath'd directory) under the escape rules shared by
 // code locations and evidence: relative only, no `..`, no symlink anywhere on the way, a regular file
 // at the end, and its realpath still inside the base. Returns { abs, size } or { error }.
-function resolveInside(baseReal, rel, baseName) {
+function resolveInside(baseReal, rel, baseName, { dir = false } = {}) {
   if (!isStr(rel)) return { error: 'must be a non-empty relative path' };
   if (rel.includes('\0') || isAbsolute(rel) || /^[A-Za-z]:/.test(rel) || rel.startsWith('\\')) {
     return { error: `absolute paths escape ${baseName}; use a path relative to it` };
@@ -105,14 +152,15 @@ function resolveInside(baseReal, rel, baseName) {
     try { st = lstatSync(cur); } catch { return { error: `does not exist under ${baseName}` }; }
     if (st.isSymbolicLink()) return { error: `goes through a symlink; symlinks are refused (they can escape ${baseName})` };
     const last = i === segments.length - 1;
-    if (last && !st.isFile()) return { error: 'is not a regular file' };
+    if (last && !dir && !st.isFile()) return { error: 'is not a regular file' };
+    if (last && dir && !st.isDirectory()) return { error: 'is not a directory' };
     if (!last && !st.isDirectory()) return { error: `does not exist under ${baseName}` };
   }
-  if (segments.length === 0) return { error: 'must name a file' };
+  if (segments.length === 0) return { error: dir ? 'must name a directory' : 'must name a file' };
   let real;
   try { real = realpathSync(cur); } catch { return { error: `does not exist under ${baseName}` }; }
   if (!real.startsWith(baseReal + sep)) return { error: `path would escape ${baseName}` };
-  return { abs: real, size: statSync(real).size };
+  return { abs: real, size: statSync(real).size, rel: real.slice(baseReal.length + 1) };
 }
 
 function lineCount(text) {
@@ -193,6 +241,11 @@ export function validate(auditDir) {
   const checkEvidencePath = (rel, p) => {
     const r = resolveInside(auditReal, rel, 'the audit dir');
     if (r.error) { err(p, r.error); return; }
+    const top = r.rel.split(sep);
+    if (top.length < 2 || (top[0] !== 'evidence' && top[0] !== 'fixes')) {
+      err(p, 'must be under evidence/ or fixes/ of the audit dir; the audit records cannot be their own evidence');
+      return;
+    }
     if (r.size === 0) { err(p, 'is empty; evidence must hold the observed output'); return; }
     if (!evidenceSeen.has(r.abs)) evidenceSeen.set(r.abs, p);
   };
@@ -243,6 +296,7 @@ export function validate(auditDir) {
       if (!projectReal) return; // already reported on run.project_root
       const r = resolveInside(projectReal, loc.path, 'project_root');
       if (r.error) { err(`${lp}.path`, r.error); return; }
+      if (r.size > MAX_BYTES) { err(`${lp}.path`, `is ${r.size} bytes; a cited file larger than 5 MB is refused`); return; }
       const lines = lineCount(readFileSync(r.abs, 'utf8'));
       if (okEnd && loc.line_end > lines) err(`${lp}.line_end`, `${loc.line_end} is beyond the end of the file (${lines} lines)`);
       else if (okStart && loc.line_start > lines) err(`${lp}.line_start`, `${loc.line_start} is beyond the end of the file (${lines} lines)`);
@@ -328,15 +382,16 @@ export function validate(auditDir) {
     if (pl.status === 'reviewed') {
       // A platform is only "reviewed" through a tool the user can rerun: it must exist in 01-TOOLS/.
       if (!isStr(pl.tool_path)) err(`${p}.tool_path`, 'is required when status is reviewed');
-      else if (!/^01-TOOLS\//.test(pl.tool_path)) err(`${p}.tool_path`, 'must start with 01-TOOLS/ (relative to project_root)');
+      else if (!TOOL_PATH.test(pl.tool_path)) err(`${p}.tool_path`, 'must be 01-TOOLS/security/<platform>/ (one lowercase platform slug, relative to project_root)');
       else if (projectReal) {
-        const segs = pl.tool_path.split('/');
-        if (segs.includes('..')) err(`${p}.tool_path`, 'path would escape project_root: ".." segments are refused');
+        const r = resolveInside(projectReal, pl.tool_path, 'project_root', { dir: true });
+        if (r.error) err(`${p}.tool_path`, r.error);
         else {
-          let st2;
-          try { st2 = lstatSync(join(projectReal, pl.tool_path)); } catch { /* reported below */ }
-          if (!st2) err(`${p}.tool_path`, 'does not exist under project_root');
-          else if (st2.isSymbolicLink()) err(`${p}.tool_path`, 'is a symlink; symlinks are refused');
+          const entries = readdirSync(r.abs, { withFileTypes: true });
+          const readme = entries.some((e) => e.name === 'README.md' && e.isFile());
+          const other = entries.some((e) => e.name !== 'README.md' && e.isFile());
+          if (!readme) err(`${p}.tool_path`, 'has no README.md; the tool must say what it checks and how to rerun it');
+          else if (!other) err(`${p}.tool_path`, 'holds only a README.md; it needs the check itself (at least one other file)');
         }
       }
     }
@@ -344,6 +399,7 @@ export function validate(auditDir) {
 
   // ---- complete means complete ----
   if (run.status === 'complete') {
+    if (units.length === 0 && platforms.length === 0) err('run.status', 'complete is refused: nothing was reviewed (no coverage units and no platforms)');
     units.forEach((u, i) => {
       if (isObj(u) && u.status !== 'done') err('run.status', `complete is refused while coverage.units[${i}] is ${show(u.status)}; set status to partial with a partial_reason`);
     });
@@ -361,26 +417,58 @@ export function validate(auditDir) {
     strList(a, 'steps', p);
   });
 
-  // ---- secrets: every string in findings.json, then every evidence file ----
+  // ---- secrets: every key and string in findings.json, then every other file in the audit dir ----
+  // A key is shown in a path only when it is a short plain identifier with no secret shape; anything
+  // else is `[key#N]` (its position), so an error path can never carry the secret it reports.
   const walk = (v, p) => {
     if (typeof v === 'string') {
       const kinds = secretKinds(v);
       if (kinds.length) err(p || '(root)', `contains a likely live secret (${kinds.join(', ')}); redact it (e.g. sk_live_****) — value not shown`);
     } else if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${p}[${i}]`));
     else if (isObj(v)) {
-      for (const [k, x] of Object.entries(v)) walk(x, /^[A-Za-z_][A-Za-z0-9_]*$/.test(k) ? (p ? `${p}.${k}` : k) : `${p}[${JSON.stringify(k)}]`);
+      Object.entries(v).forEach(([k, x], n) => {
+        const keyKinds = secretKinds(k);
+        const plain = keyKinds.length === 0 && /^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(k);
+        const kp = plain ? (p ? `${p}.${k}` : k) : `${p}[key#${n}]`;
+        if (keyKinds.length) err(kp, `key contains a likely live secret (${keyKinds.join(', ')}); redact it — value not shown`);
+        walk(x, kp);
+      });
     }
   };
   walk(doc, '');
-  for (const [abs, p] of evidenceSeen) {
-    const rel = abs.slice(auditReal.length + 1);
+
+  // Every regular file in the audit dir except findings.json (walked above), report.html (rendered
+  // from validated data) and scratch/ (hunters' raw working files, deleted at the end of the run).
+  // A symlink could point anywhere, so it is refused rather than followed or skipped.
+  const files = [];
+  const scanDir = (dirAbs, relDir, depth) => {
+    if (depth > MAX_DEPTH) { err('audit-dir', `${show(relDir)} is nested deeper than ${MAX_DEPTH} levels`); return; }
+    let entries;
+    try { entries = readdirSync(dirAbs, { withFileTypes: true }); } catch { err('audit-dir', `${show(relDir)} cannot be read`); return; }
+    entries.sort((x, y) => (x.name < y.name ? -1 : x.name > y.name ? 1 : 0));
+    for (const e of entries) {
+      const rel = relDir ? `${relDir}/${e.name}` : e.name;
+      if (!relDir && (e.name === 'findings.json' || e.name === 'report.html' || e.name === 'scratch')) continue;
+      if (e.isSymbolicLink()) err('audit-dir', `${show(rel)} is a symlink; symlinks inside the audit dir are refused`);
+      else if (e.isDirectory()) scanDir(join(dirAbs, e.name), rel, depth + 1);
+      else if (e.isFile()) {
+        if (files.length >= MAX_SCAN_FILES) { err('audit-dir', `more than ${MAX_SCAN_FILES} files; not all were scanned`); return; }
+        files.push([join(dirAbs, e.name), rel]);
+      } else err('audit-dir', `${show(rel)} is not a regular file or directory`);
+    }
+  };
+  scanDir(auditReal, '', 0);
+  for (const [abs, rel] of files) {
+    const p = evidenceSeen.get(abs) ?? 'audit-dir';
+    const size = statSync(abs).size;
+    if (size > MAX_SCAN_BYTES) { err(p, `${show(rel)} is ${size} bytes: too large to scan; redact or trim it below 2 MB`); continue; }
     const lines = readFileSync(abs, 'utf8').split('\n');
     let reported = 0;
     for (let n = 0; n < lines.length; n++) {
       const kinds = secretKinds(lines[n]);
       if (!kinds.length) continue;
-      if (++reported > 20) { err(p, `${rel}: more lines with likely secrets not listed`); break; }
-      err(p, `${show(rel)} line ${n + 1} contains a likely live secret (${kinds.join(', ')}); redact the evidence file — value not shown`);
+      if (++reported > 20) { err(p, `${show(rel)}: more lines with likely secrets not listed`); break; }
+      err(p, `${show(rel)} line ${n + 1} contains a likely live secret (${kinds.join(', ')}); redact the file — value not shown`);
     }
   }
 
@@ -391,7 +479,7 @@ export function validate(auditDir) {
 function main(argv) {
   const dir = argv[0];
   if (!dir || dir === '-h' || dir === '--help') {
-    console.error('usage: validate-findings.js <audit-dir>');
+    console.error('usage: validate-findings.mjs <audit-dir>');
     return 2;
   }
   const r = validate(resolve(dir));

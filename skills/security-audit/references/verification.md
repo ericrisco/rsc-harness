@@ -68,7 +68,7 @@ Only `confirmed` gets severity. It is set from the **demonstrated** result and c
 
 ## Writing `findings.json`
 
-After all candidates are decided (or the run stops), the coordinator writes every record to `findings.json`, sorted by id, using the contract in SKILL.md. Each linked unit in `coverage.units[]` lists the ids it produced. Then run `node scripts/validate-findings.js <audit-dir>` and fix every error. Passing proves structure, file and line existence, evidence placement and absence of visible secrets; it does not prove truth.
+After all candidates are decided (or the run stops), the coordinator writes every record to `findings.json`, sorted by id, using the contract in SKILL.md. Each linked unit in `coverage.units[]` lists the ids it produced. Then run `node scripts/validate-findings.mjs <audit-dir>` and fix every error. Passing proves structure, file and line existence, evidence placement and absence of visible secrets; it does not prove truth.
 
 ## Second verification of final records
 
@@ -115,4 +115,4 @@ A test that only passes after the fix, with no recorded failure before it, prove
 
 ## After verification
 
-Only records that passed the second check feed the report. `scripts/render-report.js <audit-dir> [--lang es|en]` builds `report.html` from `findings.json`; prose never changes a verdict, a severity, a missing fact or an impact. A clean run may have zero confirmed findings. Say so, state the remaining coverage and validation limits, and do not invent low-severity findings to fill the page.
+Only records that passed the second check feed the report. `scripts/render-report.mjs <audit-dir> [--lang es|en]` builds `report.html` from `findings.json`; prose never changes a verdict, a severity, a missing fact or an impact. A clean run may have zero confirmed findings. Say so, state the remaining coverage and validation limits, and do not invent low-severity findings to fill the page.
