@@ -18,8 +18,8 @@ should_trigger:
 
 should_not_trigger:
   - prompt: "Do a threat model and OWASP-style authz review of my multi-tenant app's permission boundaries."
-    route_to: "secure-coding"
-    why: "Language-agnostic threat modeling and authz/abuse review is explicitly delegated to secure-coding; only Go-specific controls stay here."
+    route_to: "security-audit"
+    why: "Language-agnostic threat modeling and authz/abuse review is explicitly delegated to security-audit; only Go-specific controls stay here."
   - prompt: "Write a multi-stage Dockerfile and a GitHub Actions CI pipeline to build and deploy my service to Hetzner."
     route_to: "deployment"
     why: "Containerfile / CI / shipping is delegated to deployment; this skill ships only a Docker note plus ldflags."

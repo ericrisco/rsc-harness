@@ -2,7 +2,7 @@
 name: mongodb
 description: "Use when modeling MongoDB documents (embed versus reference, the 16MB cap, bucket and subset patterns), choosing or fixing indexes (compound order by the ESR rule, partial, TTL, multikey, reading explain), writing aggregation pipelines that stay index-eligible, running multi-document transactions with retry, or operating and securing a deployment (replica set, read/write concern, Atlas tiers, Vector Search, Queryable Encryption). MongoDB 8.2, driver-agnostic. NOT relational schema, SQL or EXPLAIN ANALYZE (that is `postgresdb`)."
 tags: [mongodb, nosql, database, aggregation, indexing]
-recommends: [secure-coding, harness]
+recommends: [security-audit, harness]
 profiles: []
 origin: risco
 ---
@@ -334,7 +334,7 @@ No `02-DOCS/` layer? Skip silently (optionally suggest `harness`). Technical con
   semantics, replica-set requirement, Atlas tiers, Search/Vector Search, Queryable Encryption, RBAC,
   pooling, change streams.
 - Sibling skills: [`harness`](../harness/SKILL.md) (scaffolds the `01-TOOLS/MONGODB` operational
-  tool) and [`secure-coding`](../secure-coding/SKILL.md) (auth, encryption, least-privilege).
+  tool) and [`security-audit`](../security-audit/SKILL.md) (auth, encryption, least-privilege).
 - For relational work — SQL, foreign keys, `EXPLAIN ANALYZE`, MVCC — use
   [`postgresdb`](../postgresdb/SKILL.md), not this skill. Different engine and planner.
 - Out of scope here — external tools with their own docs: ODM/driver API surface (Mongoose hooks,

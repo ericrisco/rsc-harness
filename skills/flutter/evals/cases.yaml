@@ -40,8 +40,8 @@ should_not_trigger:
     why: "Pure SQL/database tuning has nothing to do with the Flutter client; routes to the database skill."
 
   - prompt: "Review how we store the OAuth refresh token and validate incoming deep-link URLs for injection — is it secure?"
-    route_to: "secure-coding"
-    why: "A security-only audit of token storage and deep-link validation belongs to secure-coding; the SKILL itself points token handling/deep-link validation to that sibling."
+    route_to: "security-audit"
+    why: "A security-only audit of token storage and deep-link validation belongs to security-audit; the SKILL itself points token handling/deep-link validation to that sibling."
 
   - prompt: "Build the marketing landing page and SEO metadata for our app's website in Next.js."
     route_to: "nextjs"

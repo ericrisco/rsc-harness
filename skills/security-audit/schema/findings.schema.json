@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ericrisco/rsc/skills/security-audit/schema/findings.schema.json",
+  "title": "security-audit findings.json",
+  "description": "Contract of <project>/02-DOCS/security/audit-<YYYY-MM-DD>/findings.json. Documentation only: scripts/validate-findings.mjs enforces these rules by hand (no ajv) and adds the disk checks a schema cannot express — cited files and lines exist under project_root, evidence files exist non-empty under evidence/ or fixes/ of the audit dir, no '..'/absolute/symlink escapes, coverage cross-references resolve, 'complete' runs reviewed something and left nothing unreviewed, tool_path is a real 01-TOOLS/security/<platform>/ dir with a README.md and a check, no likely live secret in any key or string of findings.json nor in any file of the audit dir (report.html and scratch/ excepted; symlinks refused; files over 2 MB refused), findings.json <= 5 MB, cited project files <= 5 MB, nesting <= 32.",
+  "type": "object",
+  "required": ["run", "findings", "coverage", "platforms"],
+  "properties": {
+    "run": {
+      "type": "object",
+      "description": "One audit run.",
+      "required": ["id", "started_at", "project_root", "scope", "profile", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "description": "Run id, e.g. audit-2026-11-09." },
+        "started_at": { "type": "string", "format": "date-time", "description": "ISO 8601 start time." },
+        "project_root": { "type": "string", "description": "Absolute path of the audited project; must be an existing directory. Every locations[].path is relative to it." },
+        "scope": { "type": "object", "description": "Free-form description of what was in scope (paths, platforms, exclusions)." },
+        "profile": { "enum": ["quick", "standard", "deep"], "description": "Depth of the run." },
+        "status": { "enum": ["complete", "partial"], "description": "'complete' is refused while any coverage unit is not done or any platform is not reviewed, and when there are no units and no platforms at all." },
+        "partial_reason": { "type": "string", "minLength": 1, "description": "Why the run is partial. Required when status is partial." }
+      },
+      "if": { "properties": { "status": { "const": "partial" } } },
+      "then": { "required": ["partial_reason"] }
+    },
+    "findings": {
+      "type": "array",
+      "description": "Every candidate examined, including rejected ones.",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["units"],
+      "properties": {
+        "units": {
+          "type": "array",
+          "description": "What was (and was not) reviewed. Every confirmed or needs_validation finding must be referenced by at least one unit; every referenced id must exist.",
+          "items": { "$ref": "#/$defs/unit" }
+        }
+      }
+    },
+    "platforms": {
+      "type": "array",
+      "description": "Platforms the project uses (GitHub, Vercel, Postgres, Hetzner...).",
+      "items": { "$ref": "#/$defs/platform" }
+    },
+    "user_actions": {
+      "type": "array",
+      "description": "Things only the user can do (rotate a key, click a setting).",
+      "items": {
+        "type": "object",
+        "required": ["title", "steps"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "steps": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "relPath": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Relative path: no leading '/', no drive letter, no '..' segment, no symlink on the way, must resolve to a regular file inside its base.",
+      "not": { "pattern": "(^[/\\\\])|(^[A-Za-z]:)|(^|[/\\\\])\\.\\.([/\\\\]|$)" }
+    },
+    "finding": {
+      "type": "object",
+      "required": ["id", "title", "verdict", "surface", "class"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^F-\\d{3,}$", "description": "Unique id, F-001 style." },
+        "title": { "type": "string", "minLength": 1 },
+        "verdict": { "enum": ["confirmed", "needs_validation", "rejected"], "description": "confirmed = proven by an artifact or command output on disk; needs_validation = plausible, one named fact missing; rejected = ruled out." },
+        "severity": { "enum": ["critical", "high", "medium", "low"], "description": "Required for confirmed, forbidden otherwise." },
+        "surface": { "enum": ["code", "platform"] },
+        "platform": { "type": "string", "minLength": 1, "description": "Platform name. Required when surface is platform." },
+        "class": { "type": "string", "minLength": 1, "description": "Attack class id (e.g. idor, sqli, ssrf)." },
+        "principal": { "type": "string", "minLength": 1, "description": "Who can trigger it. Required unless rejected." },
+        "boundary": { "type": "string", "minLength": 1, "description": "Trust boundary crossed. Required unless rejected." },
+        "impact": { "type": "string", "minLength": 1, "description": "Concrete result. Required unless rejected." },
+        "locations": {
+          "type": "array",
+          "description": "Where the finding lives. Code: a file and line range, and a confirmed or needs_validation code finding needs at least one (line_start <= line_end <= the file's line count). Platform: the resource the setting was read from, e.g. hetzner:server/app-01/firewall.",
+          "items": {
+            "type": "object",
+            "oneOf": [
+              { "required": ["path", "line_start", "line_end"] },
+              { "required": ["resource"] }
+            ],
+            "properties": {
+              "path": { "$ref": "#/$defs/relPath", "description": "Relative to run.project_root (code findings)." },
+              "line_start": { "type": "integer", "minimum": 1 },
+              "line_end": { "type": "integer", "minimum": 1 },
+              "resource": { "type": "string", "minLength": 1, "description": "Platform findings: <platform>:<resource path>." }
+            }
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "description": "Evidence files inside the audit dir. A confirmed finding needs at least one of kind artifact or command_output; files must exist and be non-empty, and must contain no live secret.",
+          "items": {
+            "type": "object",
+            "required": ["kind", "path", "summary"],
+            "properties": {
+              "kind": { "enum": ["artifact", "command_output", "source"] },
+              "path": { "$ref": "#/$defs/relPath", "description": "Relative to the audit dir, under evidence/ or fixes/ (never findings.json, ledger.json or report.html)." },
+              "summary": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "missing_evidence": { "type": "string", "minLength": 1, "description": "The exact fact still missing. Required for needs_validation." },
+        "rejection_reason": { "type": "string", "minLength": 1, "description": "Why it was ruled out. Required for rejected." },
+        "fix": {
+          "type": "object",
+          "required": ["proposal", "status"],
+          "properties": {
+            "proposal": { "type": "string", "minLength": 1 },
+            "status": { "enum": ["proposed", "approved", "applied", "declined", "rolled_back", "manual"] },
+            "rollback": { "type": "string", "minLength": 1, "description": "How to undo the fix. Required when status is applied or rolled_back." },
+            "recheck": {
+              "type": "object",
+              "required": ["command", "result"],
+              "properties": {
+                "command": { "type": "string", "minLength": 1 },
+                "result": { "enum": ["pass", "fail", "not_run"] },
+                "artifact": { "$ref": "#/$defs/relPath", "description": "Recheck output, relative to the audit dir, under evidence/ or fixes/. Required when result is pass or fail; checked whenever present." }
+              },
+              "if": { "properties": { "result": { "enum": ["pass", "fail"] } } },
+              "then": { "required": ["artifact"] }
+            }
+          },
+          "if": { "properties": { "status": { "enum": ["applied", "rolled_back"] } } },
+          "then": { "required": ["rollback"] }
+        },
+        "manual_steps": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Steps the user must do by hand; shown in 'Your steps' while the finding is open." }
+      },
+      "allOf": [
+        { "if": { "properties": { "verdict": { "const": "confirmed" } } }, "then": { "required": ["severity", "evidence", "principal", "boundary", "impact"] }, "else": { "not": { "required": ["severity"] } } },
+        { "if": { "properties": { "verdict": { "const": "needs_validation" } } }, "then": { "required": ["missing_evidence", "principal", "boundary", "impact"] } },
+        { "if": { "properties": { "verdict": { "const": "rejected" } } }, "then": { "required": ["rejection_reason"] } },
+        { "if": { "properties": { "surface": { "const": "platform" } } }, "then": { "required": ["platform"] } },
+        { "if": { "properties": { "surface": { "const": "code" }, "verdict": { "enum": ["confirmed", "needs_validation"] } } }, "then": { "required": ["locations"], "properties": { "locations": { "minItems": 1 } } } },
+        { "if": { "properties": { "verdict": { "const": "confirmed" } } }, "then": { "properties": { "evidence": { "contains": { "properties": { "kind": { "enum": ["artifact", "command_output"] } } } } } } }
+      ]
+    },
+    "unit": {
+      "type": "object",
+      "required": ["id", "surface", "area", "boundary", "class", "status", "findings"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "description": "Unique unit id." },
+        "surface": { "enum": ["code", "platform"] },
+        "area": { "type": "string", "minLength": 1 },
+        "boundary": { "type": "string", "minLength": 1 },
+        "class": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["done", "blocked", "not_reviewed"] },
+        "reason": { "type": "string", "minLength": 1, "description": "Required unless status is done." },
+        "findings": { "type": "array", "items": { "type": "string" }, "description": "Ids of findings this unit produced; each must exist." }
+      },
+      "if": { "not": { "properties": { "status": { "const": "done" } } } },
+      "then": { "required": ["reason"] }
+    },
+    "platform": {
+      "type": "object",
+      "required": ["name", "detected_by", "access", "status"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "detected_by": { "type": "string", "minLength": 1, "description": "What revealed it (a config file, a dependency)." },
+        "access": { "enum": ["read_only", "write_for_fix", "none"] },
+        "status": { "enum": ["reviewed", "not_reviewed"] },
+        "reason": { "type": "string", "minLength": 1, "description": "Required when not_reviewed." },
+        "tool_path": { "type": "string", "pattern": "^01-TOOLS/security/[a-z0-9][a-z0-9._-]{0,63}/?$", "description": "Tool used to review it: 01-TOOLS/security/<platform>/, relative to project_root. Must be a real directory (no symlink anywhere on the way) holding a README.md and at least one other regular file. Required when reviewed." }
+      },
+      "allOf": [
+        { "if": { "properties": { "status": { "const": "not_reviewed" } } }, "then": { "required": ["reason"] } },
+        { "if": { "properties": { "status": { "const": "reviewed" } } }, "then": { "required": ["tool_path"] } }
+      ]
+    }
+  }
+}

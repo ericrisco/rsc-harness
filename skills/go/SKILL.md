@@ -1,8 +1,8 @@
 ---
 name: go
-description: "Use when writing, reviewing, testing, or shipping Go code and HTTP services: idioms, `%w` error wrapping, goroutine/context/errgroup concurrency, net/http 1.22 routing, log/slog, project layout, table-driven tests, Go hardening. NOT language-agnostic threat modeling (that is `secure-coding`), NOT Dockerfile/CI shipping (that is `deployment`)."
+description: "Use when writing, reviewing, testing, or shipping Go code and HTTP services: idioms, `%w` error wrapping, goroutine/context/errgroup concurrency, net/http 1.22 routing, log/slog, project layout, table-driven tests, Go hardening. NOT language-agnostic threat modeling (that is `security-audit`), NOT Dockerfile/CI shipping (that is `deployment`)."
 tags: [go, golang, http, backend, service]
-recommends: [postgresdb, secure-coding, deployment]
+recommends: [postgresdb, security-audit, deployment]
 origin: risco
 ---
 
@@ -20,7 +20,7 @@ Go error handling and HTTP contract design (status-code taxonomy, REST resource 
 **here** — this skill is the canonical authority for both in Go. Delegate outward:
 
 - Language-agnostic abuse/authz review, threat modeling, OWASP-class bugs ->
-  [`secure-coding`](../secure-coding/SKILL.md). This skill keeps the Go-specific controls:
+  [`security-audit`](../security-audit/SKILL.md). This skill keeps the Go-specific controls:
   SQL params, server timeouts, `govulncheck`, TLS defaults.
 - Containerfile / k8s / CI pipeline authoring -> [`deployment`](../deployment/SKILL.md).
   This skill ships only a Docker note + `ldflags`.
@@ -322,7 +322,7 @@ tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12} // do not hand-pick cipher s
 
 Run `govulncheck ./...` in CI; keep deps honest with `go mod tidy` + `go mod verify`. Read
 secrets from env / a secret manager, never log them; redact tokens with slog `ReplaceAttr`.
-Deeper authz/abuse review -> `secure-coding`.
+Deeper authz/abuse review -> `security-audit`.
 
 ## Production
 

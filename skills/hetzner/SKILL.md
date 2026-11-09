@@ -2,7 +2,7 @@
 name: hetzner
 description: "Use when provisioning or hardening a Hetzner Cloud VPS: picking the plan/location (CX/CPX/CAX/CCX), bringing it up reproducibly with hcloud + cloud-init, locking down SSH, and wiring the Cloud Firewall to hand off a Docker-ready host. NOT app deploys on Coolify (that is `coolify`), NOT Dockerfiles (that is `docker`), NOT another provider (that is `digitalocean`)."
 tags: [hetzner, vps, cloud-firewall, hcloud, ssh-hardening, cloud-init, self-hosting]
-recommends: [coolify, docker, secure-coding, domains-dns, backups, monitoring]
+recommends: [coolify, docker, security-audit, domains-dns, backups, monitoring]
 origin: risco
 ---
 

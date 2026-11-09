@@ -2,7 +2,7 @@
 name: stripe
 description: "Use when wiring an app to Stripe for payments, subscriptions, Checkout, webhooks or the billing portal — adding a paywall or paid plan, charging recurring fees, and debugging why a completion event never fires, why signature verification fails, or why a webhook fires twice and duplicates the order. NOT a generic non-Stripe inbound event receiver (that is `webhooks`), NOT the invoice document's legal form (that is `invoicing`), NOT deciding what to charge (that is `pricing`)."
 tags: [stripe, payments, subscriptions, checkout, webhooks, billing, saas]
-recommends: [webhooks, invoicing, pricing, secure-coding, nodejs]
+recommends: [webhooks, invoicing, pricing, security-audit, nodejs]
 profiles: []
 origin: risco
 ---
@@ -266,4 +266,4 @@ Compact checklist; depth in [`references/going-live.md`](references/going-live.m
 - `webhooks` — generic, non-Stripe inbound event receivers.
 - [invoicing](../invoicing/SKILL.md) — the invoice document and its legal form.
 - [pricing](../pricing/SKILL.md) — deciding tiers and amounts before you wire them.
-- [secure-coding](../secure-coding/SKILL.md) — secret handling, key restriction.
+- [security-audit](../security-audit/SKILL.md) — secret handling, key restriction.

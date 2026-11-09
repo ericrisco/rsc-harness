@@ -24,7 +24,7 @@ should_not_trigger:
     route_to: api-design
     why: "Transport-agnostic contract design discipline, not implementing an API in Laravel."
   - prompt: "Do an OWASP threat-model and security review of our auth flow across the whole stack."
-    route_to: secure-coding
+    route_to: security-audit
     why: "Cross-stack appsec discipline; Laravel keeps only framework-native guards."
   - prompt: "Set up Playwright browser E2E tests for the signup funnel."
     route_to: testing-web

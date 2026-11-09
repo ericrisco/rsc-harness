@@ -2,7 +2,7 @@
 name: nextjs
 description: "Use when building, reviewing, testing, securing, or optimizing a Next.js App Router app: Server vs Client boundaries, `use server` actions, route handlers, the v15 vs v16 `use cache` caching model, metadata/SEO, auth, and Core Web Vitals. NOT framework-agnostic React or a Vite SPA (that is `react`), and NOT visual/UI design (that is `design`)."
 tags: [nextjs, react, frontend, web, seo, ssr]
-recommends: [design, secure-coding, deployment]
+recommends: [design, security-audit, deployment]
 origin: risco
 ---
 
@@ -20,7 +20,7 @@ origin: risco
 A pure React SPA (Vite/CRA) → `../react/SKILL.md`; React Native / Expo → `../react-native/SKILL.md`;
 a generic React question with no Next/RSC dimension → keep it brief, from `references/react.md`.
 Non-Next backends → `../fastapi/SKILL.md`, `../go/SKILL.md`; the data layer behind the DAL →
-`../postgresdb/SKILL.md`; framework-agnostic security → `../secure-coding/SKILL.md`, complemented here, never duplicated.
+`../postgresdb/SKILL.md`; framework-agnostic security → `../security-audit/SKILL.md`, complemented here, never duplicated.
 
 ## First: detect the project's version & caching model
 
@@ -350,7 +350,7 @@ on every review:
 - **Never put secrets in `NEXT_PUBLIC_*`** — they ship to the browser; proxy via a Route Handler and
   mark server-only modules with `import 'server-only'`.
 - SSRF: allowlist host/scheme before `fetch` in Route Handlers; block internal/metadata ranges.
-- CSP with a nonce via `proxy.ts`/headers. See also `../secure-coding/SKILL.md`.
+- CSP with a nonce via `proxy.ts`/headers. See also `../security-audit/SKILL.md`.
 
 ## Performance (deep dive → references/performance.md)
 

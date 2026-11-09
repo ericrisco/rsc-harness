@@ -22,7 +22,7 @@ should_not_trigger:
     route_to: wordpress
     why: "WP hooks and the_title filter are WordPress APIs, not framework-agnostic PHP."
   - prompt: "Do a threat model and OWASP review of my login flow."
-    route_to: secure-coding
+    route_to: security-audit
     why: "Generic appsec discipline; this skill keeps only PHP-native controls like PDO and password_hash."
   - prompt: "Design the REST resource naming and status codes for my API."
     route_to: api-design

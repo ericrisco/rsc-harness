@@ -2,7 +2,7 @@
 name: csharp-dotnet
 description: "Use when writing, reviewing, testing, or shipping C# / .NET code — ASP.NET Core APIs (minimal APIs vs controllers), EF Core data access, async correctness, solution layout in .cs/.csproj/.sln. NOT a Java/Spring backend (that is spring-boot), NOT a Node/TypeScript backend (that is nestjs), NOT framework-neutral REST naming (that is api-design)."
 tags: [csharp, dotnet, aspnetcore, efcore, async]
-recommends: [postgresdb, secure-coding, deployment]
+recommends: [postgresdb, security-audit, deployment]
 origin: risco
 ---
 
@@ -26,7 +26,7 @@ which TFM it requires.
 |---|---|
 | Java / Spring Boot backend | `spring-boot` |
 | Node / NestJS TypeScript backend | `nestjs` |
-| Language-agnostic threat modeling, OWASP authz/abuse review | `../secure-coding/SKILL.md` |
+| Language-agnostic threat modeling, OWASP authz/abuse review | `../security-audit/SKILL.md` |
 | Raw Postgres schema/index/query tuning | `../postgresdb/SKILL.md` |
 | Framework-neutral REST resource taxonomy | `api-design` |
 | Dockerfile / CI pipeline / deploy target | `../deployment/SKILL.md` |
@@ -230,7 +230,7 @@ and raw-SQL safety in full are in **references/efcore.md**. Schema/index tuning 
 ## .NET security controls
 
 Keep only the .NET-specific controls here; threat modeling and OWASP review go to
-`../secure-coding/SKILL.md`.
+`../security-audit/SKILL.md`.
 
 - **Parameterized data access** — EF LINQ / parameterized `FromSql` / ADO.NET
   `SqlParameter`. Never concatenate user input into SQL. Why: SQL injection.

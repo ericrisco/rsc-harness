@@ -2,7 +2,7 @@
 name: fastapi
 description: "Use when building, reviewing, testing, securing or shipping a FastAPI / async Python service — routers, Pydantic v2 schemas, dependency injection, async SQLAlchemy 2.0, OAuth2/JWT, ASGITransport tests, production wiring. NOT language-level Python or packaging (that is `python`), NOT engine-level SQL (that is `postgresdb`), NOT framework-agnostic REST contracts (that is `api-design`)."
 tags: [python, api, async, backend, rest]
-recommends: [postgresdb, secure-coding, deployment]
+recommends: [postgresdb, security-audit, deployment]
 origin: risco
 ---
 
@@ -28,7 +28,7 @@ notebooks and CLI-only scripts (no skill); language-level Python, typing and pac
 cursor vs offset → [`api-design`](../api-design/SKILL.md) (this skill covers their FastAPI *implementation*);
 engine-level schema, indexing, EXPLAIN, zero-downtime migrations, PgBouncer →
 [`postgresdb`](../postgresdb/SKILL.md); language-agnostic injection / secret / authz theory →
-[`secure-coding`](../secure-coding/SKILL.md); Dockerfile, Compose and CI/CD mechanics →
+[`security-audit`](../security-audit/SKILL.md); Dockerfile, Compose and CI/CD mechanics →
 [`deployment`](../deployment/SKILL.md) (this skill keeps only a Docker *note*).
 
 ## Decision rules
@@ -353,7 +353,7 @@ Keep this envelope identical across every handler — one `code`/`message`/`deta
 clients parse errors once. Subclass `AppError` per failure (each fixes a `code` + status):
 `NotFoundError` (404), `ConflictError` (409), `Unauthorized` (401), `Forbidden` (403) — full
 hierarchy in → [`references/production.md`](references/production.md) (AppError subclasses).
-[`secure-coding`](../secure-coding/SKILL.md) has the why: error responses must never leak internals
+[`security-audit`](../security-audit/SKILL.md) has the why: error responses must never leak internals
 (stack traces, SQL, secrets).
 
 ## Async SQLAlchemy 2.0 (essentials)
@@ -431,7 +431,7 @@ pinned), `get_current_user`/`require_roles` RBAC, CORS, shared-store rate limiti
 `SecretStr` + log redaction, security headers, `pip-audit` — lives in
 → [`references/security.md`](references/security.md) — including the exact `argon2.PasswordHasher().hash(pw)` and
 `jwt.decode(t, key, algorithms=[...], audience=..., issuer=...)` calls. See
-[`secure-coding`](../secure-coding/SKILL.md) for the language-agnostic theory.
+[`security-audit`](../security-audit/SKILL.md) for the language-agnostic theory.
 
 ## Production
 

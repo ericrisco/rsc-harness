@@ -2,7 +2,7 @@
 name: code-review
 description: "Use to judge a concrete diff, branch, or GitHub PR on its own merits with no rsc-SDD spec/plan chain to key off — the spec-less giving pass behind /code-review: only findings you can defend, one verdict, read-only unless --comment or --fix. NOT the SDD gate keyed to 02-DOCS/wiki/sdd/ that also processes incoming review comments (that is `review`)."
 tags: [code-review, pr-review, quality, correctness]
-recommends: [review, secure-coding, verify]
+recommends: [review, security-audit, verify]
 origin: risco
 ---
 
@@ -43,7 +43,7 @@ Run these in order. Passes 1–5 are correctness/safety and are blocking-eligibl
 | 5 | Tests as evidence | Do the tests prove the change? | Tests assert nothing, test the mock, miss the new branch, were deleted to go green |
 | 6 | Reuse / simplification / efficiency | Could existing code do this? | Reimplemented helper, copy-paste divergence, N+1, needless allocation in a hot loop |
 
-Pass 4 is a **boundary** pass — trace untrusted input to its sink and flag the reachable ones. For a real STRIDE/OWASP threat model with exploitability ranking and vulnerable→fixed diffs, hand off to `../secure-coding/SKILL.md`.
+Pass 4 is a **boundary** pass — trace untrusted input to its sink and flag the reachable ones. For a real STRIDE/OWASP threat model with exploitability ranking and vulnerable→fixed diffs, hand off to `../security-audit/SKILL.md`.
 
 Adjacent jobs, delegated by name: running the lint/type/test gates until they are green is `../verify/SKILL.md` (this skill judges whether green is *correct*); root-causing one confirmed failure is `../debug/SKILL.md`; cross-checking spec/plan/tasks *before* code exists is `../analyze/SKILL.md`.
 

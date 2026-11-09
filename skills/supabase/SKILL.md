@@ -2,7 +2,7 @@
 name: supabase
 description: "Use when building on Supabase as a backend over managed Postgres — wiring the supabase-js or SSR client, writing or debugging Row Level Security, cookie-based Auth, Storage buckets, Realtime, and Edge Functions, including local versus server JWT verification and the service-role key. NOT raw Postgres tuning (that is `postgresdb`)."
 tags: [supabase, postgres, rls, auth, edge-functions, realtime, storage, baas]
-recommends: [postgresdb, nextjs, db-migrations, secure-coding, drizzle-orm]
+recommends: [postgresdb, nextjs, db-migrations, security-audit, drizzle-orm]
 origin: risco
 ---
 

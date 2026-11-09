@@ -13,7 +13,7 @@ Goal: the `go` skill fires on `should_trigger` prompts and stays silent on
 Setup:
 - Load the **full skill catalog descriptions** (the routing layer sees every sibling:
   fastapi, nextjs, go, postgresdb, flutter, design, marketing, presentations,
-  course-storytelling, building-agents, secure-coding, deployment, harness, init).
+  course-storytelling, building-agents, security-audit, deployment, harness, init).
 - For each prompt, start a fresh agent session (no prior context bleed).
 
 Procedure:

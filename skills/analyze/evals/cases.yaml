@@ -34,7 +34,7 @@ should_trigger:
 # rather than the SDD planning artifacts.
 should_not_trigger:
   - prompt: "The login test is failing with a 500 and I can't tell why — help me find the root cause."
-    route_to: "secure-coding"
+    route_to: "security-audit"
     why: "A failing test / runtime fault is root-cause debugging on code, not a planning-artifact cross-check; analyze never opens source files. (Routes to the nearest existing repo skill for the auth fault.)"
 
   - prompt: "Run the lint, type-check and test suite and tell me if the FastAPI service is ready to ship."
@@ -46,7 +46,7 @@ should_not_trigger:
     why: "Authoring the plan/architecture is plan-phase work delegated to the stack skill; analyze checks an existing plan, it does not write one."
 
   - prompt: "Review this pull request diff for correctness bugs and cleanups."
-    route_to: "secure-coding"
+    route_to: "security-audit"
     why: "Adversarial review of a code diff is code review, not a constitution/spec/plan/tasks consistency report on planning artifacts."
 
   - prompt: "Audit my workspace and set up 01-TOOLS and 02-DOCS with a Knowledge map."

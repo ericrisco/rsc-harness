@@ -2,7 +2,7 @@
 name: laravel
 description: "Use when building or extending a Laravel 11/12 app — Eloquent models, migrations and relationships, routing with controllers and Form Requests, queues and background jobs, framework-native security (validation, mass-assignment, policies, signed URLs, rate limiting), and Pest/PHPUnit feature tests. NOT pure PHP language or toolchain work (that is `php`)."
 tags: [laravel, php, eloquent, queues, pest, artisan]
-recommends: [php, mysql, redis, api-design, secure-coding, testing-web]
+recommends: [php, mysql, redis, api-design, security-audit, testing-web]
 origin: risco
 ---
 
@@ -218,7 +218,7 @@ Worker deployment, Horizon config, the retry/backoff/timeout matrix, `failed_job
 CSRF protection is automatic on `web` routes; do not disable it. **Read config through
 `config()`, never `env()` outside `config/*.php`** — once configs are cached (`config:cache`
 in prod) `env()` returns `null` everywhere else. Cross-stack OWASP/threat-modeling is the
-**secure-coding** skill; the table above is the framework-native layer this skill owns.
+**security-audit** skill; the table above is the framework-native layer this skill owns.
 
 ## Testing
 
@@ -296,6 +296,6 @@ is no Laravel project or no `vendor/` dir, so it never blocks a non-Laravel repo
   `failed_jobs` + `queue:retry`, worker deployment (supervisor, `queue:work` flags),
   graceful restarts.
 - PHP language/toolchain underneath Laravel: [../php/SKILL.md](../php/SKILL.md).
-- Cross-stack OWASP/threat-modeling: [../secure-coding/SKILL.md](../secure-coding/SKILL.md).
+- Cross-stack OWASP/threat-modeling: [../security-audit/SKILL.md](../security-audit/SKILL.md).
 - API contract design, MySQL/Redis server tuning, browser E2E strategy: the **api-design**,
   **mysql** / **redis**, and **testing-web** skills respectively.

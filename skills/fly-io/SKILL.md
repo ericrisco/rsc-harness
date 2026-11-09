@@ -149,7 +149,7 @@ fly secrets unset OLD_KEY
 fly secrets set STRIPE_KEY=sk_live_51H...
 ```
 
-Treat secret hygiene as non-negotiable — see ../secure-coding/SKILL.md.
+Treat secret hygiene as non-negotiable — see ../security-audit/SKILL.md.
 
 ## Scaling: pick the right lever
 

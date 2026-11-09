@@ -21,7 +21,7 @@ should_not_trigger:
     route_to: fastapi
     why: build-time framework implementation, not contract design.
   - prompt: "Threat-model this endpoint and check the CORS and CSP config for OWASP issues"
-    route_to: secure-coding
+    route_to: security-audit
     why: security/hardening lens, not the API shape.
   - prompt: "Verify the incoming Stripe webhook signature and dedupe replayed events"
     route_to: webhooks

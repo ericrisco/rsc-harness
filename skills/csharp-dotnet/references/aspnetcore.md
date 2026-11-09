@@ -96,4 +96,4 @@ Use `IOptionsSnapshot<T>` in scoped services when values can change at runtime; 
 
 ## Auth defaults
 
-ASP.NET Core 10 is secure-by-default. Still: configure authentication then authorization in the right middleware order, prefer policy-based authorization (`RequireAuthorization("policy")`) over scattered role checks, enforce HTTPS redirection + HSTS in production, and keep token/cookie protection on the Data Protection key ring (persisted and shared across instances). Threat modeling beyond these knobs is `secure-coding`.
+ASP.NET Core 10 is secure-by-default. Still: configure authentication then authorization in the right middleware order, prefer policy-based authorization (`RequireAuthorization("policy")`) over scattered role checks, enforce HTTPS redirection + HSTS in production, and keep token/cookie protection on the Data Protection key ring (persisted and shared across instances). Threat modeling beyond these knobs is `security-audit`.

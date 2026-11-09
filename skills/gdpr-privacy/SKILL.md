@@ -2,7 +2,7 @@
 name: gdpr-privacy
 description: "Use when producing the GDPR artifacts a product publishes or hands over: a privacy policy true to what it processes, a cookie/consent banner, a lawful basis per purpose, an Art. 28 DPA, an SCC transfer mechanism, or a DSAR flow. Drafts for counsel review. NOT internal retention rules (that is `data-policy`), NOT consumer ToS (that is `terms-conditions`)."
 tags: [gdpr, privacy, data-protection, cookies, consent, lawful-basis, dpa, scc, dsar, ropa, dpia, rgpd]
-recommends: [data-policy, terms-conditions, contracts, compliance, secure-coding, email-deliverability]
+recommends: [data-policy, terms-conditions, contracts, compliance, security-audit, email-deliverability]
 origin: risco
 ---
 
@@ -138,7 +138,7 @@ Hand off what isn't yours:
 - The user-facing Terms of Service / EULA → `../terms-conditions/SKILL.md`.
 - The commercial paper around a DPA (liability, indemnity, the MSA) → `../contracts/SKILL.md`.
 - SOC 2 / ISO 27001 / audit-evidence posture → `../compliance/SKILL.md`.
-- The Article 32 code-level controls (encryption, authz, secrets) → `../secure-coding/SKILL.md`.
+- The Article 32 code-level controls (encryption, authz, secrets) → `../security-audit/SKILL.md`.
 - Email opt-in mechanics / SPF / DKIM / list hygiene → `../email-deliverability/SKILL.md` (the *consent* substance stays here).
 
 ## Anti-patterns

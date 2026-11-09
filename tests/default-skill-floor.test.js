@@ -10,12 +10,14 @@ test('the default floor equips unslop without making it runtime always-on', () =
   // `design` added in 3.3.0: rebuilt from taste-skill and installed everywhere (design-from-scratch).
   // `ux` added in 3.4.0: flows, states and usability, in place of the retired `ui-engineering`.
   // `tidy` added in 3.8.0: every repo on main, pushed, pulled, no leftovers ("limpia el harness").
-  assert.deepEqual(DEFAULT_SKILL_FLOOR, ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux', 'tidy']);
+  // `security-audit` added next: it replaced two retired security skills, and a security
+  // audit request must work in any project the first time it is asked.
+  assert.deepEqual(DEFAULT_SKILL_FLOOR, ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux', 'tidy', 'security-audit']);
 });
 
 test('the default floor is stable, ordered and deduplicated for every install path', () => {
   assert.deepEqual(
     withDefaultSkillFloor(['unslop', 'fastapi', 'orient', 'postgresdb']),
-    ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux', 'tidy', 'fastapi', 'postgresdb'],
+    ['orient', 'suggest', 'unslop', 'ftd', 'connect-tool', 'design', 'ux', 'tidy', 'security-audit', 'fastapi', 'postgresdb'],
   );
 });

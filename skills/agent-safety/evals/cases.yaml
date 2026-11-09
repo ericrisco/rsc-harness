@@ -19,7 +19,7 @@ should_not_trigger:
     route_to: building-agents
     why: Construction of the agent (loop/tools), not constraining one that already runs.
   - prompt: "Is this Express auth endpoint vulnerable to broken access control?"
-    route_to: secure-coding
+    route_to: security-audit
     why: Plain web/app OWASP on an endpoint; no model, tools, or autonomy involved.
   - prompt: "Measure whether my agent answers correctly with a golden set."
     route_to: agent-eval

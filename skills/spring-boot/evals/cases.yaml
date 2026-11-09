@@ -30,7 +30,7 @@ should_not_trigger:
     route_to: deployment
     why: "Container/CI mechanics, not Spring framework code."
   - prompt: "Explain how SQL injection defenses work in general."
-    route_to: secure-coding
+    route_to: security-audit
     why: "Language-agnostic security theory, not the Spring security surface."
 
 capability:

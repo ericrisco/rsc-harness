@@ -141,7 +141,7 @@ These are `verify`'s per-task mode (`../verify/SKILL.md`):
 
 - **Tests** — the affected suite, not just the new test (`testing.commands.apply`).
 - **Build** — the project compiles and type-checks.
-- **Security** — the stack's audit; `../secure-coding/SKILL.md` when input, authz or secrets are touched.
+- **Security** — the stack's audit; `../security-audit/SKILL.md` when input, authz or secrets are touched.
 - **Traceability** — every new behaviour in the diff traces to a spec acceptance criterion.
   **Untraced behaviour is a finding.** This is the control that catches the unrequested feature: a
   QR nobody asked for passes every test.

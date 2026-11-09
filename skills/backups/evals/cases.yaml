@@ -25,8 +25,8 @@ should_not_trigger:
     route_to: monitoring
     why: "The skill decides WHAT to alert on; wiring the actual alerting/dashboards/paging is monitoring's domain."
   - prompt: "Rotate the KMS key we use for encryption at rest and manage key access."
-    route_to: secure-coding
-    why: "Key management as a general security control belongs to secure-coding, not backup strategy."
+    route_to: security-audit
+    why: "Key management as a general security control belongs to security-audit, not backup strategy."
   - prompt: "Set up cross-region read replicas to reduce read latency for European users."
     route_to: postgresdb
     why: "Replication for performance/availability topology is a database concern; a replica is explicitly not a backup."

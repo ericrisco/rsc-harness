@@ -2,7 +2,7 @@
 name: htmx
 description: "Use when adding interactivity to a server-rendered app (FastAPI/Jinja, Django, Rails, Laravel, Go templates, Express) without adopting a JS framework — hx-get/post/put/delete with hx-target, hx-swap and hx-trigger, returning HTML fragments instead of JSON, out-of-band swaps, active search, infinite scroll, inline edit and polling. NOT a client-state SPA with routing and a store (that is `react` or `nextjs`)."
 tags: [htmx, hypermedia, frontend, server-rendered, html]
-recommends: [fastapi, django, secure-coding, accessibility]
+recommends: [fastapi, django, security-audit, accessibility]
 origin: risco
 ---
 
@@ -49,7 +49,7 @@ yet. Pin to 2.x:
 - How to structure the server framework itself (routers, ORM, controllers) → ../fastapi/SKILL.md,
   `django`, `rails`, `laravel`. This skill owns the *htmx contract* (which fragment, which
   header, which swap), not framework internals. Cross-link, do not duplicate.
-- Generic XSS/CSP/auth theory → ../secure-coding/SKILL.md. Keep only the htmx-specific notes here.
+- Generic XSS/CSP/auth theory → ../security-audit/SKILL.md. Keep only the htmx-specific notes here.
 - Focus management and ARIA live regions after a swap → `accessibility`.
 - Browser E2E of swaps → `testing-web` / `e2e-testing`.
 - Purely-client state (Alpine, vanilla sprinkles) → out of scope; htmx is for server round-trips.
@@ -195,7 +195,7 @@ Request headers htmx sends (read these server-side): `HX-Request`, `HX-Target`, 
 ## Security (htmx-specific only)
 
 htmx makes HTML more expressive, so **injected HTML is an XSS surface**. The htmx-specific rules
-(generic theory lives in ../secure-coding/SKILL.md):
+(generic theory lives in ../security-audit/SKILL.md):
 
 - **Keep your template engine's auto-escaping on.** Never `| safe` / `|safe` user-controlled
   content. Manually rendering raw user HTML re-introduces XSS that escaping had closed.
@@ -255,7 +255,7 @@ Modifiers worth knowing: `throttle:<time>`, `queue:first|last|all|none`, `from:<
 ## See also
 
 - ../fastapi/SKILL.md — FastAPI routes/templates that serve these fragments.
-- ../secure-coding/SKILL.md — the general XSS/CSP/auth theory this skill defers to.
+- ../security-audit/SKILL.md — the general XSS/CSP/auth theory this skill defers to.
 - ../nextjs/SKILL.md — when the requirement really is a React/SPA app, not hypermedia.
 - `django`, `rails`, `laravel` — other server frameworks (the htmx contract is identical).
 - `accessibility` — focus and ARIA after a DOM swap.

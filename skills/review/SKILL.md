@@ -21,7 +21,7 @@ This skill owns **two roles that share one discipline**:
 
 The discipline is the same in both directions: **every finding and every rebuttal carries evidence — no agreement without verification, no objection without a defect.** A reviewer who waves through a bug to be agreeable, and an author who edits working code because a comment *sounded* authoritative, are making the same mistake. Everything below is in service of that one rule.
 
-**Route out** when the ask isn't this gate: a deep OWASP / threat-model pass belongs to `../secure-coding/SKILL.md` (review folds its findings in, but the dedicated pass is owned there); a "is this idiomatic React/FastAPI/Go/SQL" question belongs to the stack skill (`../nextjs/SKILL.md`, `../fastapi/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`) — pull the idiom there, then judge against it here.
+**Route out** when the ask isn't this gate: a deep OWASP / threat-model pass belongs to `../security-audit/SKILL.md` (review folds its findings in, but the dedicated pass is owned there); a "is this idiomatic React/FastAPI/Go/SQL" question belongs to the stack skill (`../nextjs/SKILL.md`, `../fastapi/SKILL.md`, `../go/SKILL.md`, `../postgresdb/SKILL.md`, `../flutter/SKILL.md`) — pull the idiom there, then judge against it here.
 
 ## Read these first
 
@@ -41,7 +41,7 @@ A review's value is its signal-to-noise. Every finding you report costs the auth
 - **Common false positives to skip:** patterns guarded two functions up; "unsafe" calls on values that are provably constant/internal; missing checks the framework already enforces; style the linter owns; defects behind a flag that's off everywhere (note as `nit`, not blocker); test-only or generated code held to prod standards.
 - **No severity inflation.** A `should-fix` dressed as a `blocker` burns the same trust as a missed bug. Rank by actual blast radius and reachability — if everything is a blocker, nothing is.
 
-This skill is the discipline; the **`rsc-review` bundle is it executed** — `/code-review [pr]` fans a diff out to the per-language reviewer fleet and aggregates one ranked verdict, `/security-scan` merges automated scanners with the `security-reviewer` agent into an exploitability-ranked report. Both enforce the same evidence bar and confidence filtering described here.
+This skill is the discipline; the **`rsc-review` bundle is it executed** — `/code-review [pr]` fans a diff out to the per-language reviewer fleet and aggregates one ranked verdict, and when the user wants a security audit, `/security-audit` runs it over the code and the platforms the project uses. Both enforce the same evidence bar and confidence filtering described here.
 
 ---
 

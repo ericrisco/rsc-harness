@@ -48,8 +48,8 @@ should_not_trigger:
     why: "The constitution NAMES the coverage bar; the concrete lint/test config is a stack mechanic owned by fastapi — the skill explicitly defers this."
 
   - prompt: "Add input validation and proper authz to our login endpoint so it can't be abused."
-    route_to: "secure-coding"
-    why: "Implementing the security baseline is secure-coding; the constitution only ratifies the principle (e.g. 'authn/z baseline met') and links the enforcer."
+    route_to: "security-audit"
+    why: "Implementing the security baseline is security-audit; the constitution only ratifies the principle (e.g. 'authn/z baseline met') and links the enforcer."
 
   - prompt: "Pick the type scale, color tokens, and spacing system for our app's design language."
     route_to: "design"

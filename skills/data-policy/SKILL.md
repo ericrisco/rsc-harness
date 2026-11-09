@@ -2,7 +2,7 @@
 name: data-policy
 description: "Use when building internal data-governance machinery: a retention schedule (period, lawful basis, expiry action, system where deletion runs), an Art. 6 lawful-basis register, an Art. 30 ROPA, or a consent capture/withdrawal model. NOT the public privacy notice or DSAR handling (that is `gdpr-privacy`), NOT SOC 2 posture (that is `compliance`)."
 tags: [data-governance, retention, gdpr, ropa, consent, lawful-basis, privacy, data-minimization]
-recommends: [gdpr-privacy, compliance, contracts, secure-coding, db-migrations, postgresdb]
+recommends: [gdpr-privacy, compliance, contracts, security-audit, db-migrations, postgresdb]
 origin: risco
 ---
 
@@ -136,7 +136,7 @@ For cross-border transfers, name the mechanism in the ROPA row (e.g. SCCs) and p
 
 Retention periods are jurisdiction- and sector-specific, so a period you assert as final is legal advice you are not qualified to give — that is why this line has no exceptions. **You produce governance drafts, not legal sign-off.** Every policy you emit ends with a statement that a qualified DPO or privacy counsel must validate the schedule and lawful-basis register before adoption, and that this is not legal advice. You never assert a period is universally lawful.
 
-Hand off the edges: public-facing privacy notice + data-subject access/erasure (DSAR) handling -> `../gdpr-privacy/SKILL.md`; audit posture, SOC 2 / ISO 27001, control mapping -> `../compliance/SKILL.md`; a negotiated DPA's contractual clauses or a two-party data contract -> `../contracts/SKILL.md`; encryption, access hardening, threat controls on the systems -> `../secure-coding/SKILL.md`; the actual deletion mechanics in the database -> `../db-migrations/SKILL.md` / `../postgresdb/SKILL.md`.
+Hand off the edges: public-facing privacy notice + data-subject access/erasure (DSAR) handling -> `../gdpr-privacy/SKILL.md`; audit posture, SOC 2 / ISO 27001, control mapping -> `../compliance/SKILL.md`; a negotiated DPA's contractual clauses or a two-party data contract -> `../contracts/SKILL.md`; encryption, access hardening, threat controls on the systems -> `../security-audit/SKILL.md`; the actual deletion mechanics in the database -> `../db-migrations/SKILL.md` / `../postgresdb/SKILL.md`.
 
 ## Anti-patterns
 

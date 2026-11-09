@@ -2,7 +2,7 @@
 name: angular
 description: "Use when building, refactoring, or debugging Angular (v20/21+): standalone components, signals, zoneless change detection, @if/@for/@defer control flow, inject() DI, resource()/httpResource(), RxJS interop, NgRx SignalStore, ng CLI. NOT React (that is react), NOT Next.js (that is nextjs), NOT a TypeScript language question (that is typescript)."
 tags: [angular, frontend, web, signals, typescript, spa]
-recommends: [typescript, testing-web, secure-coding]
+recommends: [typescript, testing-web, security-audit]
 origin: risco
 ---
 

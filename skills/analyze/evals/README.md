@@ -26,7 +26,7 @@ and never on a near-miss.
 
 1. Configure an agent with the **full catalog of skill descriptions** available
    for routing (analyze + harness, init, the stack skills fastapi/nextjs/go/
-   flutter/postgresdb, secure-coding, deployment, design, marketing,
+   flutter/postgresdb, security-audit, deployment, design, marketing,
    presentations, course-storytelling, building-agents) so routing competes
    realistically. When the other rsc-sdd phase skills (clarify, plan, tasks,
    implement, verify, review, debug) are added to the repo, include them too —

@@ -2,7 +2,7 @@
 name: gcp-essentials
 description: "Use when running a small product on core Google Cloud via the gcloud CLI: a project, Cloud Run deploys, a locked-down Cloud Storage bucket, managed Cloud SQL, and least-privilege IAM wiring them together. NOT AWS (that is `aws-essentials`), NOT the CI pipeline that ships the image (that is `deployment`), NOT Postgres schema/query tuning (that is `postgresdb`)."
 tags: [gcp, cloud-run, cloud-sql, cloud-storage, iam, gcloud, serverless, devops]
-recommends: [aws-essentials, docker, github-actions, secure-coding, postgresdb, deployment, monitoring, backups]
+recommends: [aws-essentials, docker, github-actions, security-audit, postgresdb, deployment, monitoring, backups]
 origin: risco
 ---
 
@@ -24,7 +24,7 @@ Out of scope, route elsewhere: AWS -> [`../aws-essentials/SKILL.md`](../aws-esse
 Building/shipping the image itself -> [`../docker/SKILL.md`](../docker/SKILL.md)
 / [`../github-actions/SKILL.md`](../github-actions/SKILL.md) / [`../deployment/SKILL.md`](../deployment/SKILL.md).
 Postgres schema/index/query tuning -> [`../postgresdb/SKILL.md`](../postgresdb/SKILL.md).
-App-level injection/secret-handling review -> [`../secure-coding/SKILL.md`](../secure-coding/SKILL.md).
+App-level injection/secret-handling review -> [`../security-audit/SKILL.md`](../security-audit/SKILL.md).
 Logging/alerting/SLOs as a practice -> [`../monitoring/SKILL.md`](../monitoring/SKILL.md).
 Backup strategy as a discipline -> [`../backups/SKILL.md`](../backups/SKILL.md).
 One-click PaaS where you never touch IAM/VPC -> [`../vercel/SKILL.md`](../vercel/SKILL.md)

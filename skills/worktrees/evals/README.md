@@ -20,7 +20,7 @@ debug protocol, the workspace bootstrap).
    skills for routing: the rsc-sdd phases (constitution, specify, clarify, plan, tasks, analyze,
    implement, verify, review, ship, debug, parallel) and the stack/other skills (fastapi, nextjs,
    go, postgresdb, flutter, design, marketing, presentations, course-storytelling, building-agents,
-   secure-coding, deployment, harness, init). Do **not** load any skill bodies.
+   security-audit, deployment, harness, init). Do **not** load any skill bodies.
 2. For each prompt in `should_trigger` and `should_not_trigger`, ask the agent which skill (if any)
    it would invoke. Run **3–5 trials per prompt** at production temperature to catch flakiness.
 3. Score:

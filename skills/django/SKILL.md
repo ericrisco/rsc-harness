@@ -2,7 +2,7 @@
 name: django
 description: "Use when building, reviewing, securing, testing or shipping a Django app — models, migrations, QuerySets/managers, FBV/CBV views, forms, the admin, settings split, and Django REST Framework (serializers, ModelViewSet, permissions). NOT async FastAPI/Pydantic services (that is `fastapi`), NOT Postgres schema/index work (that is `postgresdb`)."
 tags: [python, django, orm, drf, backend, web]
-recommends: [postgresdb, secure-coding, deployment, testing-py, api-design]
+recommends: [postgresdb, security-audit, deployment, testing-py, api-design]
 origin: risco
 ---
 
@@ -37,7 +37,7 @@ add a dependency.
 |---|---|
 | Async service, `fastapi`/`pydantic`/uvicorn, async SQLAlchemy | `fastapi` |
 | Postgres schema design, EXPLAIN ANALYZE, indexing strategy, RLS, pooling | `postgresdb` |
-| Cross-stack OWASP/STRIDE threat modeling | `secure-coding` |
+| Cross-stack OWASP/STRIDE threat modeling | `security-audit` |
 | Container/Compose/CI, gunicorn prod tuning, collectstatic pipeline | `deployment` |
 | REST contract design (cursor vs offset, status codes, versioning) | `api-design` |
 | ruff/uv/general type hints, packaging | `python` |

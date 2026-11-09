@@ -2,7 +2,7 @@
 name: php
 description: "Use when writing, reviewing or modernizing PHP (8.3-8.5) outside Laravel — strict types, union and intersection types, readonly classes, backed enums, property hooks and asymmetric visibility, the pipe operator and clone-with, Composer with PSR-4, PER-CS style, PSR interop, and the quality toolchain (PHPStan, Pint, Rector, PHPUnit/Pest). NOT Eloquent, Blade or Artisan (that is `laravel`)."
 tags: [php, php8, composer, psr, enums, types, static-analysis]
-recommends: [laravel, secure-coding, mysql]
+recommends: [laravel, security-audit, mysql]
 origin: risco
 ---
 
@@ -37,7 +37,7 @@ them.
 | Eloquent, Blade, Artisan, container bindings, queues | laravel | the PHP *underneath* Laravel only |
 | WP hooks, the loop, `wp_*`, `$wpdb` | wordpress | nothing WP-specific |
 | Shopify app/theme SDK work | shopify | nothing Shopify-specific |
-| OWASP threat modeling, authz/abuse review | secure-coding | PHP-native controls (PDO, `password_hash`, escaping) |
+| OWASP threat modeling, authz/abuse review | security-audit | PHP-native controls (PDO, `password_hash`, escaping) |
 | REST resource naming, status-code contract as a discipline | api-design | PHP request/response code only |
 | DB schema/index tuning | mysql / postgresdb | PDO usage from the PHP side |
 
@@ -309,7 +309,7 @@ in `finally`; catch `\Throwable` only at a process boundary (CLI entry, request 
 
 ## Security controls (PHP-native)
 
-Generic appsec (OWASP, authz, threat modeling) is [../secure-coding/SKILL.md](../secure-coding/SKILL.md).
+Generic appsec (OWASP, authz, threat modeling) is [../security-audit/SKILL.md](../security-audit/SKILL.md).
 The PHP-specific controls below stay here.
 
 | Control | API | Why |
@@ -393,5 +393,5 @@ configs — `phpstan.neon`, `pint.json`, `rector.php`, `phpunit.xml` — are in
 - [references/tooling.md](references/tooling.md) — full `phpstan.neon`, `pint.json`,
   `.php-cs-fixer.dist.php`, `rector.php`, `phpunit.xml` / Pest, composer scripts, CI snippet.
 - Laravel framework surface (Eloquent, Blade, Artisan): the **laravel** skill.
-- Generic appsec / OWASP: [../secure-coding/SKILL.md](../secure-coding/SKILL.md).
+- Generic appsec / OWASP: [../security-audit/SKILL.md](../security-audit/SKILL.md).
 - DB schema/index tuning: the **mysql** / [../postgresdb/SKILL.md](../postgresdb/SKILL.md) skills.

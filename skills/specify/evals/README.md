@@ -27,7 +27,7 @@ ambiguity sweep, or project-wide principles.
    (the SDD phases — constitution, specify, clarify, plan, tasks, analyze,
    implement, verify, review, ship — plus the stack/process skills: fastapi,
    nextjs, go, postgresdb, flutter, design, marketing, presentations,
-   course-storytelling, building-agents, secure-coding, deployment, harness,
+   course-storytelling, building-agents, security-audit, deployment, harness,
    init) so routing competes realistically.
 2. For each `should_trigger` prompt: feed it cold, record whether `specify` is
    the skill the agent loads. Run **3-5 trials** per prompt (fresh context).

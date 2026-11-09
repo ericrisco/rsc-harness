@@ -2,7 +2,7 @@
 name: github-actions
 description: "Use when authoring or fixing GitHub Actions CI/CD — workflows under .github/workflows, triggers, job matrix, caching, token permissions, OIDC cloud deploys, environment gates, reusable workflows. NOT the Dockerfile or image build strategy (that is `docker`), NOT the branching model (that is `git-workflow`), NOT release readiness (that is `ship`)."
 tags: [github-actions, ci-cd, workflows, oidc, caching]
-recommends: [docker, git-workflow, ship, deployment, secure-coding, aws-essentials, vercel]
+recommends: [docker, git-workflow, ship, deployment, security-audit, aws-essentials, vercel]
 origin: risco
 ---
 
@@ -19,7 +19,7 @@ This skill owns the workflow layer — the `.github/workflows/*.yml` files, thei
 | Release readiness checklist, changelog, the shipping decision | `../ship/SKILL.md` | Whether to release is a decision; this skill only automates the mechanics. |
 | Blue/green, canary, rollback *theory* | `../deployment/SKILL.md` | Actions triggers the deploy; the strategy is deployment's. |
 | Choosing the host and its deploy primitives | `../vercel/SKILL.md`, `../aws-essentials/SKILL.md` | Actions *triggers* the deploy; the host owns the target. |
-| Triaging SAST/CVE findings, threat modeling | `../secure-coding/SKILL.md` | This skill runs a scanner *as a job*; it does not interpret the report. |
+| Triaging SAST/CVE findings, threat modeling | `../security-audit/SKILL.md` | This skill runs a scanner *as a job*; it does not interpret the report. |
 
 ## Decide the trigger first
 

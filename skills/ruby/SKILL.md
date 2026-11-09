@@ -2,7 +2,7 @@
 name: ruby
 description: "Use when writing or refactoring plain Ruby outside Rails — scripts, CLIs, gems, libraries: Enumerable chains and blocks, module mixins and value objects, Bundler/gemspec packaging, whether metaprogramming earns its keep, Minitest or RSpec, Ruby 3.4/4.0 frozen-string hygiene. NOT Rails, ActiveRecord, or ActiveSupport idioms (that is `rails`)."
 tags: [ruby, gems, bundler, metaprogramming, rspec, minitest, enumerable]
-recommends: [rails, testing-web, secure-coding]
+recommends: [rails, testing-web, security-audit]
 profiles: []
 origin: risco
 ---

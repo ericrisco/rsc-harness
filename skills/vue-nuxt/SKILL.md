@@ -2,7 +2,7 @@
 name: vue-nuxt
 description: "Use when building or reviewing a Vue 3 + Nuxt 4 app — `<script setup>` reactivity, SSR/SSG/hybrid `routeRules`, the `app/`+`server/` layout, SSR-safe fetching (`useFetch`/`useAsyncData`) and state (`useState`/Pinia), Nitro routes, hydration mismatches, Nuxt 3→4 migration. NOT React/RSC (that is nextjs), NOT a static islands site (that is astro)."
 tags: [vue, nuxt, frontend, web, ssr]
-recommends: [design, deployment, secure-coding]
+recommends: [design, deployment, security-audit]
 origin: risco
 ---
 
@@ -22,7 +22,7 @@ Backend not in Nitro/JS → [`fastapi`](../fastapi/SKILL.md), [`go`](../go/SKILL
 [`laravel`](../laravel/SKILL.md). Test *strategy* beyond the Vitest + `@vue/test-utils` +
 `@nuxt/test-utils` setup named here → [`e2e-testing`](../e2e-testing/SKILL.md) /
 [`testing-web`](../testing-web/SKILL.md). Generic security review →
-[`secure-coding`](../secure-coding/SKILL.md); SEO/content strategy →
+[`security-audit`](../security-audit/SKILL.md); SEO/content strategy →
 [`marketing`](../marketing/SKILL.md); component visual language → [`design`](../design/SKILL.md).
 
 ## First: detect Nuxt vs plain Vue, and the version

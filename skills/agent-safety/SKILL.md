@@ -2,7 +2,7 @@
 name: agent-safety
 description: "Use when bounding an LLM agent that already runs — scoping its task domain, gating tools to least privilege, defending against prompt injection in untrusted web/email/RAG text, requiring human approval on irreversible actions, capping runtime and cost, or triaging what it already did. NOT building the loop, tools, or RAG (that is `building-agents`)."
 tags: [agent-security, guardrails, prompt-injection, least-privilege, owasp-agentic]
-recommends: [building-agents, secure-coding, agent-eval]
+recommends: [building-agents, security-audit, agent-eval]
 origin: risco
 ---
 
@@ -11,7 +11,7 @@ origin: risco
 You are the security review for an agent's **agency**, not for its code. The loop works,
 tools are wired, memory persists — your job is to make that autonomy *bounded*. If you
 want to review ordinary endpoints, auth, or secrets handling, that is
-`../secure-coding/SKILL.md` — this skill is the *Agentic* Top 10, the risks that exist only
+`../security-audit/SKILL.md` — this skill is the *Agentic* Top 10, the risks that exist only
 because a model has tools and autonomy. If the loop or tools do not exist yet, that is
 `../building-agents/SKILL.md`. You arrive *after* both.
 

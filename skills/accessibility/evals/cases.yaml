@@ -30,7 +30,7 @@ should_not_trigger:
     route_to: design
     why: Visual intent and design tokens; this skill checks the contrast/target-size outcome, not the aesthetic.
   - prompt: "Sanitize this user input to prevent XSS."
-    route_to: secure-coding
+    route_to: security-audit
     why: Security hardening, unrelated to accessibility conformance.
 
 capability:

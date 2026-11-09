@@ -2,7 +2,7 @@
 name: decision-challenge
 description: "Use when a high-impact plan, migration or architecture claim needs a bounded adversarial challenge before commitment. Isolates claims from persuasion, attacks assumptions, reconciles doubts with evidence and emits proceed/hold/stop. NOT a finished-diff review (`review`/`code-review`), NOT SDD artifact consistency (`analyze`)."
 tags: [adversarial-review, decision-quality, assumptions, risk, preflight]
-recommends: [analyze, review, code-review, decision-records, security-scan]
+recommends: [analyze, review, code-review, decision-records, security-audit]
 profiles: [core, full]
 origin: risco
 ---
@@ -106,7 +106,7 @@ PROCEED / HOLD / STOP — reason — unlock condition.
 | The author’s explanation counts as independent evidence | Isolate claims and require an observation outside the persuasion. |
 | Another model/agent is mandatory | Use fresh context only when authority, tooling and data boundaries allow it. |
 | Executive pressure relabels a blocker as accepted risk | Require an accountable owner with authority over the consequence. |
-| Domain controls are recreated generically | Route security to `security-scan` and AI quality experiments to `agent-eval`. |
+| Domain controls are recreated generically | Route security to `security-audit` and AI quality experiments to `agent-eval`. |
 
 ## Orientación (siempre)
 

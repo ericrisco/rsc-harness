@@ -4,7 +4,7 @@
 this skill — including the non-obvious "`POST /v1/databases/:id/query` returns
 404" post-2025-09-03 symptom and a Spanish phrasing), `should_not_trigger`
 (prompts that belong to a named sibling — `api-connector-builder`, `webhooks`,
-`automation-flows`, `spreadsheet-ops`, `secure-coding` — marking the generic-REST,
+`automation-flows`, `spreadsheet-ops`, `security-audit` — marking the generic-REST,
 inbound-event, orchestration, bulk-CSV, and secret-handling boundaries), and one
 `capability` scenario with a `must_include` rubric. There is no live runner and
 no Notion calls: route each trigger prompt through your skill-selection harness

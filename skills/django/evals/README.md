@@ -4,7 +4,7 @@
 by reading each prompt and checking the skill behaves: every `should_trigger` prompt should make
 the `django` skill fire (including the non-obvious template-N+1 case and the Spanish phrasings),
 and every `should_not_trigger` prompt should route to the named sibling (`fastapi`, `postgresdb`,
-`secure-coding`, `api-design`) instead. For the `capability` case, draft the answer and confirm it
+`security-audit`, `api-design`) instead. For the `capability` case, draft the answer and confirm it
 hits every line in `must_include` — model with FK + Meta, explicit `ModelSerializer`, `ModelViewSet`
 with `permission_classes`, owner-scoped `get_queryset` with `select_related`, router registration,
 `perform_create` setting the owner, the `APIClient.force_authenticate` 403/200 test, and the

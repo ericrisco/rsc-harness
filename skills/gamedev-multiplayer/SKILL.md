@@ -22,7 +22,7 @@ Route elsewhere when the ask is not netcode:
 | Physics determinism, collision, character controllers | [`gamedev-physics`](../gamedev-physics/SKILL.md) | Netcode *consumes* determinism; it does not own the physics fix. |
 | Matchmaking, lobby backend, dedicated-server hosting, relays, DB, game-server CI | [`deployment`](../deployment/SKILL.md) | Running the fleet, not designing the in-game net layer. |
 | Web realtime — chat, presence, a generic WebSocket app | [`webhooks`](../webhooks/SKILL.md) | Not a game world/simulation. |
-| General threat modeling, authz review | [`secure-coding`](../secure-coding/SKILL.md) | This skill keeps only the game-specific anti-cheat controls. |
+| General threat modeling, authz review | [`security-audit`](../security-audit/SKILL.md) | This skill keeps only the game-specific anti-cheat controls. |
 
 ## Version contract — read first
 

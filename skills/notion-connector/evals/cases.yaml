@@ -30,8 +30,8 @@ should_not_trigger:
     route_to: spreadsheet-ops
     why: "Spreadsheet-shaped bulk transform mechanics with no Notion API involved — spreadsheet-ops owns this."
   - prompt: "Where should I store the Notion integration token and how do I rotate it safely?"
-    route_to: secure-coding
-    why: "Secret storage/rotation policy is the secure-coding skill; this skill only says 'env var, never client-side' and defers the how."
+    route_to: security-audit
+    why: "Secret storage/rotation policy is the security-audit skill; this skill only says 'env var, never client-side' and defers the how."
 
 capability:
   - scenario: "Build a nightly job that upserts records from our app DB into a Notion database keyed by an external id, paginating safely and never duplicating rows. We only have the database_id."

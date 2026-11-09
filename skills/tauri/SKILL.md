@@ -2,7 +2,7 @@
 name: tauri
 description: "Use when building a lightweight cross-platform desktop (or v2 mobile) app with Tauri — a Rust core plus the OS-native WebView: Rust commands and IPC, streaming to the frontend, the default-deny capabilities/permissions ACL, bundling and signed auto-updates. NOT a Chromium+Node shell needing Node APIs in a main process (that is electron)."
 tags: [tauri, desktop, rust, cross-platform, ipc, webview]
-recommends: [rust, electron, react, secure-coding, github-actions]
+recommends: [rust, electron, react, security-audit, github-actions]
 origin: risco
 ---
 
@@ -23,7 +23,7 @@ so the same Rust core can ship to mobile.
 This skill owns the **shell**: commands, IPC, the security ACL, the bundler, the updater.
 It does **not** own the Rust language itself (that is the `rust` skill), the web UI inside
 the window (the `react`/`nextjs` skills), a Chromium+Node shell (`../electron/SKILL.md`), or
-app-code hardening beyond the IPC boundary (`../secure-coding/SKILL.md`).
+app-code hardening beyond the IPC boundary (`../security-audit/SKILL.md`).
 
 ## Pick your starting shape
 

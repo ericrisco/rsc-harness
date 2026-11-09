@@ -46,7 +46,7 @@ const FIXED_COMMANDS = Object.freeze([
     body: `Use the sello backing for this checkpoint: {{ARGS}}\nRun \`npx @ericrisco/rsc sello freeze\`, complete the required review, then run \`sello approve\` only with the observed lenses. Do not treat freeze as approval.`,
   },
   skillCommand('harness-audit', 'harness'),
-  skillCommand('security-scan', 'security-scan'),
+  skillCommand('security-audit', 'security-audit'),
   {
     name: 'learn', kind: 'memory', backing: 'memory:learn',
     description: 'Propose one local lesson; saving still requires individual explicit approval.',

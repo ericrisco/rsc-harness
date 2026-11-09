@@ -2,7 +2,7 @@
 name: chrome-extension
 description: "Use when building or shipping a Manifest V3 browser extension and hitting its quirks — service worker dying and losing state, permission warnings, a Chrome Web Store rejection, content-script/worker/popup messaging, or an MV2-to-V3 migration. NOT a generic web app (that is `nextjs`), NOT a desktop shell (that is `electron`)."
 tags: [chrome-extension, manifest-v3, browser-extension, service-worker, chrome-web-store]
-recommends: [nextjs, react, gdpr-privacy, secure-coding, vercel]
+recommends: [nextjs, react, gdpr-privacy, security-audit, vercel]
 origin: risco
 ---
 

@@ -2,7 +2,7 @@
 name: rust
 description: "Use when writing, reviewing, testing, or shipping Rust — ownership and the borrow checker (move/borrow/clone, Arc/RefCell, lifetimes), errors with Result/`?`/thiserror/anyhow, async on tokio, axum 0.8 services, cargo test, and sqlx + cargo-audit hardening. NOT the same service in Go (that is `go`), NOT a desktop webview shell (that is `tauri`)."
 tags: [rust, tokio, axum, async, backend, service]
-recommends: [go, postgresdb, secure-coding, deployment]
+recommends: [go, postgresdb, security-audit, deployment]
 origin: risco
 ---
 
@@ -254,7 +254,7 @@ sqlx::query_as!(User, "SELECT id, name FROM users WHERE id = $1", id).fetch_one(
 `#![forbid(unsafe_code)]` at the crate root; run `cargo audit` (RustSec advisories) and `cargo deny` (license
 + ban + advisory policy) in CI; never `.unwrap()` on untrusted input — a malicious request becomes a
 panic. Read secrets from env or a secret manager, never hardcode or log them. Deeper authz / threat
-modeling -> [`secure-coding`](../secure-coding/SKILL.md). Pure SQL schema/index/plan tuning ->
+modeling -> [`security-audit`](../security-audit/SKILL.md). Pure SQL schema/index/plan tuning ->
 [`postgresdb`](../postgresdb/SKILL.md); this skill covers only the Rust-side sqlx query.
 
 ## Production

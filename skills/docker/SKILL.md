@@ -1,8 +1,8 @@
 ---
 name: docker
-description: "Use when authoring or auditing a Dockerfile, shrinking a bloated image, hardening a container that runs as root, picking a base image, or wiring a Compose dev loop with hot reload. NOT CI builds or deploy-to-host (that is `deployment`), NOT k8s autoscaling (that is `scaling`), NOT app-level injection or secrets-in-code (that is `secure-coding`)."
+description: "Use when authoring or auditing a Dockerfile, shrinking a bloated image, hardening a container that runs as root, picking a base image, or wiring a Compose dev loop with hot reload. NOT CI builds or deploy-to-host (that is `deployment`), NOT k8s autoscaling (that is `scaling`), NOT app-level injection or secrets-in-code (that is `security-audit`)."
 tags: [docker, containers, dockerfile, compose, image-security]
-recommends: [deployment, secure-coding, scaling, github-actions]
+recommends: [deployment, security-audit, scaling, github-actions]
 origin: risco
 ---
 
@@ -29,7 +29,7 @@ references Dockerfiles and leans on you for the image internals.
 |---|---|---|
 | CI build, registry push, deploy to host, rollback | `../deployment/SKILL.md` | You build + harden the image; it moves the image through CI to prod |
 | k8s manifests, HPA autoscaling, ingress | `scaling` | Orchestration above a single image |
-| App SQL injection, secrets in source, dep CVE triage | `../secure-coding/SKILL.md` | You cover only *image/container* hardening |
+| App SQL injection, secrets in source, dep CVE triage | `../security-audit/SKILL.md` | You cover only *image/container* hardening |
 | Install/operate a self-hosted PaaS | `../coolify/SKILL.md` | Host operation, not the image |
 | Containerless PaaS deploy mechanics | `../railway/SKILL.md`, `../fly-io/SKILL.md` | Platform deploy, not the Dockerfile |
 

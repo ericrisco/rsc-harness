@@ -1,7 +1,7 @@
 # Next.js security — auth, CSRF, XSS, CSP, env, SSRF
 
 Deep dive behind the "Security" section of `SKILL.md`. Next.js-specific layer; complements the
-generic `../secure-coding/SKILL.md` rather than duplicating it. Sources: authjs.dev
+generic `../security-audit/SKILL.md` rather than duplicating it. Sources: authjs.dev
 session-management/protecting, the Next.js security model docs.
 
 ## Auth on every Server Action / Route Handler / DAL
@@ -234,6 +234,6 @@ export async function setSession(token: string) {
 
 ## See Also
 
-Complements `../secure-coding/SKILL.md` (generic). This file is the Next.js-specific layer; for the
+Complements `../security-audit/SKILL.md` (generic). This file is the Next.js-specific layer; for the
 auth wiring and DAL pattern in context see the "Auth" section of `../nextjs/SKILL.md` and
 `data-and-caching.md`.

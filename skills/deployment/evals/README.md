@@ -16,7 +16,7 @@ skill measurably improve the answer).
 
 For trigger tests, load the **full catalog** of skills (deployment + all siblings: fastapi,
 nextjs, go, postgresdb, flutter, design, marketing, presentations, course-storytelling,
-building-agents, secure-coding, harness, init) so routing is realistic.
+building-agents, security-audit, harness, init) so routing is realistic.
 
 1. For each `should_trigger` prompt: feed it to the agent, run **3–5 trials**.
    - PASS if the agent invokes the `deployment` skill.

@@ -3,7 +3,7 @@
 These cases are the trigger contract and capability rubric for the `agent-safety` skill.
 `should_trigger` and `should_not_trigger` assert that the description routes correctly —
 each negative names the real sibling it should route to instead (building-agents,
-secure-coding, agent-eval, prompt-engineering, cost-tracking). Run them through the repo's
+security-audit, agent-eval, prompt-engineering, cost-tracking). Run them through the repo's
 eval harness if one is wired up, or read them directly as the routing spec when reviewing
 the description. The `capability` block is not a pass/fail script: it is a rubric a human or
 an LLM-as-judge scores a sample guardrail design against — the design must cover every

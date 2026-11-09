@@ -27,7 +27,7 @@ should_not_trigger:
     route_to: shopify
     why: Different commerce platform entirely.
   - prompt: "Do an OWASP threat model of my Express API and its auth flow"
-    route_to: secure-coding
+    route_to: security-audit
     why: Generic web security not tied to the WordPress attack surface.
   - prompt: "Build a Next.js front end that reads the WordPress REST API and renders posts"
     route_to: nextjs

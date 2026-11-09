@@ -17,7 +17,7 @@ human spot-check, because triggering and copy quality are judgment calls.
 Goal: the skill fires when it should and never on a near-miss.
 
 1. Configure an agent with the **full catalog of skill descriptions** available
-   for routing (marketing + design, nextjs, postgresdb, secure-coding, go,
+   for routing (marketing + design, nextjs, postgresdb, security-audit, go,
    flutter, presentations, course-storytelling, building-agents, deployment,
    harness, init) so routing competes realistically.
 2. For each `should_trigger` prompt: feed it cold, record whether `marketing`

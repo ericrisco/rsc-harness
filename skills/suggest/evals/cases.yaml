@@ -39,8 +39,8 @@ should_not_trigger:
     why: "Trivial mechanical edit — nothing to install; the detector must stay silent and not interrupt the flow."
 
   - prompt: "Revisa este código de login por inyección y control de acceso."
-    route_to: "secure-coding"
-    why: "A security review is squarely owned by the secure-coding skill; if it is installed the detector defers to it rather than proposing anything."
+    route_to: "security-audit"
+    why: "A security review is squarely owned by the security-audit skill; if it is installed the detector defers to it rather than proposing anything."
 
   - prompt: "Optimiza esta query de Postgres que va lenta."
     route_to: "postgresdb"

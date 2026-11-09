@@ -4,7 +4,7 @@ should_trigger:
   - prompt: "Set up an S3 bucket for user profile uploads on AWS"
     why: Core S3 provisioning — the bucket-defaults + presigned-URL path this skill owns.
   - prompt: "This IAM role has AdministratorAccess, tighten it to least privilege"
-    why: Cloud IAM scoping. Non-obvious that this is aws-essentials and not secure-coding — it is the cloud-identity surface, not app-code access control.
+    why: Cloud IAM scoping. Non-obvious that this is aws-essentials and not security-audit — it is the cloud-identity surface, not app-code access control.
   - prompt: "Spin up an encrypted Postgres on RDS with Multi-AZ"
     why: RDS provisioning, including the encrypt-at-create gotcha this skill warns about.
   - prompt: "monta CloudFront delante del meu bucket S3 privat"
@@ -21,7 +21,7 @@ should_not_trigger:
     route_to: deployment
     why: Containerization + CI pipeline (incl. OIDC to ECR), not infra provisioning. This skill ends where the container starts shipping.
   - prompt: "Review this login handler for broken access control"
-    route_to: secure-coding
+    route_to: security-audit
     why: App-code OWASP review, not cloud IAM least-privilege.
   - prompt: "Model a single-table DynamoDB schema for my app"
     route_to: dynamodb

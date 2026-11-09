@@ -24,7 +24,7 @@ should_not_trigger:
     route_to: terms-conditions
     why: A one-to-many published legal document, not a control register or cadence.
   - prompt: "Fix the SQL injection and harden the auth on our API endpoints."
-    route_to: secure-coding
+    route_to: security-audit
     why: Code-level hardening (the evidence source), not the program-level control mapping.
   - prompt: "Review this vendor MSA and DPA before we sign it."
     route_to: contracts

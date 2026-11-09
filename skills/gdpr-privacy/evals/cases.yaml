@@ -32,7 +32,7 @@ should_not_trigger:
     route_to: compliance
     why: Standards/audit posture, not a GDPR data-subject artifact.
   - prompt: "Implement field-level encryption and fix the auth on our API."
-    route_to: secure-coding
+    route_to: security-audit
     why: Art. 32 code-level controls are engineering, not the privacy disclosure layer.
 
 capability:

@@ -115,7 +115,7 @@ that gate, not this skill, is what licenses the word "done".
 | Next.js / React | `../nextjs/references/testing.md` | Vitest `--no-isolate`/`.only`, Playwright trace viewer, RSC vs client boundary errors, hydration mismatches |
 | Flutter / Dart | `../flutter/references/testing.md` | `flutter test --plain-name`, widget pump/settle timing, DevTools, golden diffs |
 | Postgres / data layer | `../postgresdb/SKILL.md` | `EXPLAIN ANALYZE`, isolation-level/locking races, constraint violations, migration-order bugs |
-| Security-shaped failure | `../secure-coding/SKILL.md` | auth/authz edge cases, injection, secret/leak paths surfacing as "weird" failures |
+| Security-shaped failure | `../security-audit/SKILL.md` | auth/authz edge cases, injection, secret/leak paths surfacing as "weird" failures |
 
 If the failure spans two stacks (a Next.js call into a FastAPI endpoint), reproduce at the boundary
 first — isolate which side actually fails before you open either stack's debugger.

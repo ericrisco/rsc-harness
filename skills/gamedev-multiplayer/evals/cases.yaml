@@ -30,8 +30,8 @@ should_not_trigger:
     route_to: "webhooks"
     why: "Generic web realtime that is not a game world/simulation is not this skill's domain."
   - prompt: "Do a general threat model and authz review of my app's permission boundaries."
-    route_to: "secure-coding"
-    why: "Language/domain-agnostic threat modeling is secure-coding; this skill keeps only game-specific anti-cheat controls."
+    route_to: "security-audit"
+    why: "Language/domain-agnostic threat modeling is security-audit; this skill keeps only game-specific anti-cheat controls."
 
 capability:
   - scenario: "In Godot 4.x, wire a server-authoritative 'fire weapon' from a client so the server validates and applies the shot, with the same code working on a listen-server host. Show the RPC and the authority handling."

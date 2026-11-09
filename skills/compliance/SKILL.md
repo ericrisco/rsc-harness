@@ -1,8 +1,8 @@
 ---
 name: compliance
-description: "Use when scoping which regulatory frameworks bind a business — SOC 2, ISO 27001, HIPAA, PCI DSS, EU AI Act, DORA, NIS2 — building a control register with owners and evidence, or standing up the cadence that keeps it audit-ready. NOT drafting privacy-policy/ROPA/DPA or ToS text (that is gdpr-privacy, terms-conditions), NOT hardening code (that is secure-coding)."
+description: "Use when scoping which regulatory frameworks bind a business — SOC 2, ISO 27001, HIPAA, PCI DSS, EU AI Act, DORA, NIS2 — building a control register with owners and evidence, or standing up the cadence that keeps it audit-ready. NOT drafting privacy-policy/ROPA/DPA or ToS text (that is gdpr-privacy, terms-conditions), NOT hardening code (that is security-audit)."
 tags: [compliance, soc2, iso27001, audit-readiness, controls, governance]
-recommends: [gdpr-privacy, terms-conditions, data-policy, contracts, secure-coding]
+recommends: [gdpr-privacy, terms-conditions, data-policy, contracts, security-audit]
 origin: risco
 ---
 
@@ -29,7 +29,7 @@ here.
 - Internal retention/classification policy *text* → `../data-policy/SKILL.md`.
 - Commercial contract / MSA / DPA clause drafting → `../contracts/SKILL.md`.
 - Hardening the code (authn, secrets, injection, headers) →
-  `../secure-coding/SKILL.md`.
+  `../security-audit/SKILL.md`.
 
 ## Step 1 — Scope to the frameworks that actually bind
 
