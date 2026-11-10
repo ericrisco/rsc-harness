@@ -253,3 +253,7 @@ test('task-brief: a row inside its own heading block is printed once', () => {
   assert.equal(text.split('| ID | Task |').length - 1, 1, text);
   assert.match(text, /after/);
 });
+
+test('task-brief: its awk uses no regex intervals, which mawk does not read', () => {
+  assert.doesNotMatch(readFileSync(BRIEF, 'utf8'), /\{\d+,\d*\}/);
+});
