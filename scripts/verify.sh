@@ -9,9 +9,11 @@ echo "▸ test";           node --test
 echo "▸ eval-lint";      bash scripts/eval-lint.sh
 echo "▸ drift-check";    npm run --silent drift:check
 echo "▸ cleanup gate"
-if grep -rIn -E "sync-bundles|\.claude-plugin/marketplace|/plugin install [^\"' ]*@rsc-skills" . \
+# The fingerprints are split so this file does not match them itself (CI greps it too).
+residue="sync-""bundles|\\.claude-""plugin/marketplace|/plugin install [^\"' ]*@rsc-""skills"
+if grep -rIn -E "$residue" . \
   --exclude-dir=node_modules --exclude-dir=.git \
-  --exclude-dir=docs --exclude-dir=skill-build --exclude-dir=.github --exclude=verify.sh; then
+  --exclude-dir=docs --exclude-dir=skill-build --exclude-dir=.github; then
   echo "✗ old marketplace-distribution residue found" >&2
   exit 1
 fi
