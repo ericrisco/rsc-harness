@@ -677,3 +677,5 @@ craft bar in them is the original author's.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+*Made in Andorra*
