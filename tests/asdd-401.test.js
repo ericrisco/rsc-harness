@@ -257,3 +257,11 @@ test('task-brief: a row inside its own heading block is printed once', () => {
 test('task-brief: its awk uses no regex intervals, which mawk does not read', () => {
   assert.doesNotMatch(readFileSync(BRIEF, 'utf8'), /\{\d+,\d*\}/);
 });
+
+test('task-brief: its single-quoted awk program has no stray quote that would end it early', () => {
+  const src = readFileSync(BRIEF, 'utf8');
+  const start = src.indexOf("awk -v n=\"$N\" '") + "awk -v n=\"$N\" '".length;
+  const end = src.indexOf("' \"$PLAN_FILE\"", start);
+  assert.ok(start > 0 && end > start, 'awk program not located');
+  assert.doesNotMatch(src.slice(start, end), /'/);
+});

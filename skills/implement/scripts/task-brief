@@ -61,7 +61,7 @@ CONTENT="$(awk -v n="$N" '
     t = $0; sub(/^\*\*/, "", t); sub(/[^Tt0-9].*$/, "", t)
     if (idnum(t) == n) { bold = 1; found = 1; print ""; print; next }
   }
-  # `###?` rather than a brace interval: mawk (Debian's default awk) does not read intervals.
+  # `###?` rather than a brace interval: mawk (the default awk on Debian) does not read intervals.
   /^###?[[:space:]]/ {
     if (printing) { printing = 0 }
     if (match($0, /^###?[[:space:]]+[Tt][0-9]+([[:space:](]|-|$)/)) {
