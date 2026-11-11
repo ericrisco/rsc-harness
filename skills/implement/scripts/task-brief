@@ -61,10 +61,11 @@ CONTENT="$(awk -v n="$N" '
     t = $0; sub(/^\*\*/, "", t); sub(/[^Tt0-9].*$/, "", t)
     if (idnum(t) == n) { bold = 1; found = 1; print ""; print; next }
   }
-  /^#{2,3}[[:space:]]/ {
+  # `###?` rather than a brace interval: mawk (the default awk on Debian) does not read intervals.
+  /^###?[[:space:]]/ {
     if (printing) { printing = 0 }
-    if (match($0, /^#{2,3}[[:space:]]+[Tt][0-9]+([[:space:](]|-|$)/)) {
-      t = $0; sub(/^#{2,3}[[:space:]]+/, "", t); sub(/[^Tt0-9].*$/, "", t)
+    if (match($0, /^###?[[:space:]]+[Tt][0-9]+([[:space:](]|-|$)/)) {
+      t = $0; sub(/^###?[[:space:]]+/, "", t); sub(/[^Tt0-9].*$/, "", t)
       if (idnum(t) == n) { printing = 1; found = 1; print ""; print; next }
     }
   }
