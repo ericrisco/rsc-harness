@@ -1,3 +1,4 @@
+import { ensureClaudeBootstrap, claudeLifecycleCommand, pruneClaudeBootstrap } from './claude-lifecycle.js';
 import {
   appendFileSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
@@ -83,6 +84,7 @@ function handler(target, event) {
     command: `node ${unixScript} ${target} ${event}`,
     timeout: target === 'gemini' ? 5000 : event === 'end' && target === 'codex' ? 3 : 5,
   };
+  if (target === 'claude') value.command = claudeLifecycleCommand('session-memory-adapter.mjs', target, event);
   if (target === 'codex') {
     value.commandWindows = `node \"$((git rev-parse --show-toplevel).Trim())/.rsc/session-memory-adapter.mjs\" ${target} ${event}`;
     value.additionalContextLimit = 1400;
@@ -184,6 +186,8 @@ export function wireMemory(target, cwd = process.cwd()) {
     return { mode: 'degraded', reason: 'rule-collision', paths: [] };
   }
 
+  if (target === 'claude') ensureClaudeBootstrap(cwd);
+
   const [core, adapter, cli] = commonPaths(cwd);
   mkdirSync(dirname(core), { recursive: true });
   copyFileSync(join(HERE, 'session-memory-core.mjs'), core);
@@ -264,6 +268,7 @@ export function unwireMemory(target, cwd = process.cwd()) {
     const rule = join(cwd, '.cursor', 'rules', 'rsc-memory.mdc');
     if (existsSync(rule) && readFileSync(rule, 'utf8').includes('rsc-memory:managed')) { rmSync(rule, { force: true }); touched.push(rule); }
   }
+  if (target === 'claude') pruneClaudeBootstrap(cwd);
   return touched;
 }
 
