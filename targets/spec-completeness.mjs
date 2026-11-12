@@ -182,7 +182,8 @@ function parseOpenPoints(lines) {
  *            untyped: string[], unchecked: string[]}}
  */
 export function specCompleteness(markdown) {
-  const lines = String(markdown ?? '').split('\n');
+  const text = String(markdown ?? '').replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  const lines = text.split('\n');
   const sections = new Map(); // family -> body lines
 
   let current = null;
@@ -197,7 +198,7 @@ export function specCompleteness(markdown) {
     if (current && sections.has(current)) sections.get(current).push(line);
   }
 
-  const families = requiredFamilies(markdown);
+  const families = requiredFamilies(text);
   const missing = families.filter((f) => !sections.has(f));
   const empty = families.filter((f) => sections.has(f) && !hasSubstance(sections.get(f)));
 
