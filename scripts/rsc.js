@@ -78,6 +78,13 @@ const GLOBAL_VALUE_FLAGS = new Set([
   '--topic', '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--accept-plan',
 ]);
 const COMMANDS = new Set(['ingest', 'copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'risk', 'spec', 'sello', 'repair', 'uninstall', 'purge']);
+// Sync preserves project decisions. Only these explicit transitions clear an opt-out;
+// a missing local marker alone does not revoke a teammate's declared decision.
+const EXPLICIT_REARMS = {
+  main: { lock: ['trunk-guard'], unlock: ['trunk-open'] },
+  isolation: { on: ['worktree-isolation'] },
+  'knowledge-sync': { on: ['knowledge-sync'] },
+};
 function positionalTokens(input) {
   const out = [];
   for (let i = 0; i < input.length; i++) {
@@ -920,7 +927,8 @@ async function main() {
           const lock = join(root, '.rsc', '.no-trunk-open');
           if (sub === ON) writeFileSync(lock, ''); else rmSync(lock, { force: true });
         }
-        for (const t of targets) await syncInstalled({ target: t, cwd: root });
+        const rearmOptOuts = EXPLICIT_REARMS[cmd]?.[sub] || [];
+        for (const t of targets) await syncInstalled({ target: t, cwd: root, rearmOptOuts });
         say(isMain
           ? (sub === OFF
             ? 'rsc main unlock: the agent may now work on the default branch in this project. Commit .rsc.json so the team gets the same decision.'
@@ -954,7 +962,8 @@ async function main() {
         mkdirSync(join(root, '.rsc'), { recursive: true });
         if (sub === 'off') writeFileSync(marker, '');
         else rmSync(marker, { force: true });
-        for (const t of targets) await syncInstalled({ target: t, cwd: root });
+        const rearmOptOuts = EXPLICIT_REARMS[cmd]?.[sub] || [];
+        for (const t of targets) await syncInstalled({ target: t, cwd: root, rearmOptOuts });
         say(sub === 'off'
           ? 'rsc knowledge-sync off: 01-TOOLS/ and 02-DOCS/ no longer sync on their own in this project. Commit .rsc.json so the team gets the same decision.'
           : 'rsc knowledge-sync on: 01-TOOLS/ and 02-DOCS/ go up when a turn ends and come down before each message. Commit .rsc.json so the team gets the same decision.');
@@ -1237,6 +1246,28 @@ async function main() {
       // script inside this package, so the one check ASDD's spec depends on could not run where specs live.
       const USE = 'Use: npx @ericrisco/rsc spec gate [spec.md ...]\n  Without paths it checks 02-DOCS/wiki/sdd/specs/ of this project. Exits 1 when a spec fails.';
       if (argv[1] !== 'gate') { say(USE); if (argv[1]) process.exitCode = 1; return; }
+      if (argv.includes('--branch-check')) {
+        const S = await import('../targets/sello.mjs');
+        const { branchCheck } = await import('../targets/asdd-gate.mjs');
+        const { specCompleteness } = await import('../targets/spec-completeness.mjs');
+        const { git } = await import('../targets/risk-policy.mjs');
+        const { resolve, relative, isAbsolute } = await import('node:path');
+        const rawRepo = flag('repo'); const branch = flag('branch');
+        try {
+          if (rawRepo === true || branch === true) throw new Error('--repo and --branch require values');
+          const at = typeof rawRepo === 'string' ? resolve(rawRepo) : process.cwd();
+          const repo = (git(at, 'rev-parse', '--show-toplevel') || '').trim();
+          if (!repo) throw new Error('not a Git repository; pass --repo <directory>');
+          if (branch && (branch.startsWith('-') || git(repo, 'rev-parse', '--verify', '--quiet', `${branch}^{commit}`) === null)) throw new Error('unknown branch; pass an existing branch name');
+          const caller = (git(process.cwd(), 'rev-parse', '--show-toplevel') || '').trim();
+          const offset = caller ? relative(caller, repo) : '..';
+          const workspace = caller && !isAbsolute(offset) && offset !== '..' && !offset.startsWith('../') && !offset.startsWith('..\\')
+            ? S.policyRoot(caller) : S.policyRoot(repo);
+          const denial = branchCheck(workspace, repo, { sello: S, specCompleteness }, { branch, strict: true });
+          say(denial || 'RSC_BRANCH_CHECK_PASS'); process.exitCode = denial ? 2 : 0;
+        } catch (e) { say(`RSC_BRANCH_CHECK_ERROR: ${e.message}`); process.exitCode = 1; }
+        return;
+      }
       const { spawnSync } = await import('node:child_process');
       const { fileURLToPath: toPath } = await import('node:url');
       const rest = argv.slice(2);
@@ -1251,6 +1282,10 @@ async function main() {
       const K = await import('./lib/risk.js');
       const S = await import('../targets/sello.mjs');
       const root = S.resolveRoot(process.cwd());
+      const workspace = S.policyRoot(root);
+      const local = S.readEffectiveConfig(workspace);
+      const policy = S.readPolicy(root, { workspace, localConfig: local, preview: argv.includes('--policy-preview') });
+      const cfg = S.mergePolicyConfig(local, policy);
       const base = flag('base');
       if (base === true) { say('Use: npx @ericrisco/rsc risk [--base <ref>] [paths…] [--json]'); process.exitCode = 1; return; }
       const rest = argv.slice(1);
@@ -1264,7 +1299,7 @@ async function main() {
       let against = null;
       let from = null;
       if (!given.length) {
-        const c = K.changedPaths(root, base || null);
+        const c = K.changedPaths(root, base || null, cfg);
         if (!c.ok) { say(c.message); process.exitCode = 1; return; }
         paths = c.paths;
         against = c.base;
@@ -1272,7 +1307,7 @@ async function main() {
       }
       // Given paths are read whole (a forecast or a single file); a diff contributes its added lines.
       const texts = S.changeText(root, from, paths);
-      const r = { ...K.assess(paths, S.readEffectiveConfig(root), texts), ...(against ? { base: against } : {}) };
+      const r = { ...K.assess(paths, cfg, texts, S.changeDetails(root, from, paths)), policySource: policy.source, ...(against ? { base: against } : {}) };
       say(argv.includes('--json') ? JSON.stringify(r, null, 2) : K.render(r));
       return;
     }

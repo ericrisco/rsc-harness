@@ -16,8 +16,7 @@ const nul = (out) => (out || '').split('\0').filter(Boolean);
 
 // Every path that differs from the base (committed, staged, unstaged or untracked). The base is the
 // merge-base with `--base`, or with the trunk when none is given.
-export function changedPaths(root, base = null) {
-  const cfg = readEffectiveConfig(root);
+export function changedPaths(root, base = null, cfg = readEffectiveConfig(root)) {
   const ref = base || trunkRef(root, cfg);
   if (!ref) return { ok: false, message: 'rsc: no base to compare against. Pass --base <ref> or the paths themselves: npx @ericrisco/rsc risk <path…>' };
   const head = git(root, ['rev-parse', 'HEAD']);
@@ -45,8 +44,8 @@ export function changedPaths(root, base = null) {
 
 // `texts` is what the change adds per path (sello.changeText): content signals raise a path that its
 // name alone would leave at tier 1 — auth code in `src/app.js`.
-export function assess(paths, cfg = null, texts = {}) {
-  const { tier, classes, configError, content } = classifyChange(paths, texts, cfg);
+export function assess(paths, cfg = null, texts = {}, details = {}) {
+  const { tier, classes, configError, content, rules } = classifyChange(paths, texts, cfg, details);
   return {
     tier,
     classes: [...new Set(Object.values(classes))].sort(),
@@ -56,6 +55,7 @@ export function assess(paths, cfg = null, texts = {}) {
     escalate: tier >= 2 ? 'asdd' : null,
     paths: classes,
     content,
+    rules,
     ...(configError ? { configError } : {}),
   };
 }
@@ -69,6 +69,8 @@ export function render(r) {
     `human approval: ${r.humanApproval ? 'required' : 'not required'}`,
     ...(r.base ? [`base: ${r.base}`] : []),
     ...(r.escalate ? ['escalate: asdd — tier 2 needs a spec linked to this branch (`branch: <name>` in its frontmatter) that passes `npx @ericrisco/rsc spec gate`; push and PR are refused until it exists. Write it now, before more code.'] : []),
+    ...(r.policySource ? [`policy: ${r.policySource}`] : []),
+    ...(r.rules || []).map(r => `  rule: ${r.class} in ${r.path}: ${r.because}`),
     ...(r.configError ? [`config ignored: ${r.configError}`] : []),
     ...(r.content || []).slice(0, 10).map((h) => `  content: ${h.class} in ${h.path} ("${h.match}")`),
     ...top.slice(0, 20).map(([p, c]) => `  ${c.padEnd(10)} ${p}`),
