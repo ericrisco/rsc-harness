@@ -1,3 +1,4 @@
+import { pruneClaudeBootstrap } from './claude-lifecycle.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, rmSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -48,12 +49,7 @@ export function hookWiringOf(entry) {
 const ATTRIBUTION_MARKER = '.rsc/attribution-default';
 
 export function unwireHook(paths) {
-  // The bootstrap lives in the COMMITTED tree, so leaving it behind does not just orphan a file the
-  // way a stray `.rsc/` entry would — it leaves an executable in something the user pushes. Nothing
-  // else removes it: uninstall and purge only ever knew about `.rsc/`.
-  try {
-    rmSync(join(paths.projectRoot, '.claude', 'rsc-bootstrap.mjs'), { force: true });
-  } catch { /* never let cleanup be the thing that fails */ }
+  const finish = (removed) => { pruneClaudeBootstrap(paths.projectRoot); return removed; };
 
   // The shadow CLAUDE.md exists only to keep the hook from being doubled by a natively-read
   // AGENTS.md. Unwiring the hook removes the reason for it. Only ever takes back an untouched one.
@@ -61,9 +57,9 @@ export function unwireHook(paths) {
   const removed = shadow ? [shadow] : [];
 
   const file = paths.hookTarget;
-  if (!existsSync(file)) return removed;
+  if (!existsSync(file)) return finish(removed);
   let settings;
-  try { settings = JSON.parse(readFileSync(file, 'utf8')); } catch { return removed; }
+  try { settings = JSON.parse(readFileSync(file, 'utf8')); } catch { return finish(removed); }
   // wireHook's attribution default goes back out with it — only when wireHook wrote it (the marker)
   // and it is still untouched. The same value set by the person before rsc stays theirs.
   const marker = join(paths.projectRoot, ATTRIBUTION_MARKER);
@@ -72,9 +68,9 @@ export function unwireHook(paths) {
   if (ours) delete settings.attribution;
   try { rmSync(marker, { force: true }); } catch { /* cleanup never fails the uninstall */ }
   if (!settings.hooks) {
-    if (!ours) return removed;
+    if (!ours) return finish(removed);
     writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
-    return [...removed, file];
+    return finish([...removed, file]);
   }
   for (const event of Object.keys(settings.hooks)) {
     settings.hooks[event] = (settings.hooks[event] || []).filter((e) => {
@@ -85,7 +81,7 @@ export function unwireHook(paths) {
   }
   if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
   writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
-  return [...removed, file];
+  return finish([...removed, file]);
 }
 
 // SessionStart runs a project-local session-start.mjs via `node`: it prints

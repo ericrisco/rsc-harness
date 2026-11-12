@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { claudeBootstrapPath } from '../targets/claude-lifecycle.js';
 import { rmSync, rmdirSync, existsSync, cpSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync, appendFileSync, readdirSync, renameSync } from 'node:fs';
 import { join, dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -115,6 +116,8 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.alwaysOn !== false });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
+  // Knowledge/memory wiring also needs this shared dependency without suggest.
+  if (target === 'claude') out.push(claudeBootstrapPath(cwd));
   // Pi can move its managed block when the native context-file precedence changes.
   if (target === 'pi') out.push(...paths.contextFiles);
   if (policy?.context7 === false) out.push(join(cwd, '.rsc', '.no-context7'));
