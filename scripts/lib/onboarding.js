@@ -15,6 +15,8 @@ export const ONBOARDING_VALUES = Object.freeze({
   softwareScope: ['small', 'growing', 'complex'],
   // How code changes land: straight on the default branch, or on branches closed with a pull request.
   workflow: ['main', 'branches'],
+  // Whether rsc may use emoji: in replies, in the commits it asks for, in its own output. `off` is `.rsc/.no-emoji`.
+  emoji: ['on', 'off'],
 });
 
 const ignored = new Set([
@@ -59,6 +61,8 @@ export function normalizeOnboarding(raw = {}) {
   const workflow = needsScope
     ? (clean(raw.workflow) ? oneOf('workflow', clean(raw.workflow).toLowerCase(), ONBOARDING_VALUES.workflow) : recommendedWorkflow(softwareScope))
     : 'main';
+  // Asked at install for every kind of project. Absent → on: nothing changes for whoever does not choose.
+  const emoji = clean(raw.emoji) ? oneOf('emoji', clean(raw.emoji).toLowerCase(), ONBOARDING_VALUES.emoji) : 'on';
   return {
     schemaVersion,
     technicalLevel,
@@ -66,6 +70,7 @@ export function normalizeOnboarding(raw = {}) {
     goal,
     ...(needsScope ? { softwareScope } : {}),
     workflow,
+    emoji,
     targets,
   };
 }
@@ -340,6 +345,8 @@ export function buildOnboardingPlan(record, evidence) {
     '02-DOCS/wiki/harness/installation-plan.md',
     '.rsc/.no-context7',
     // The install-time workflow answer (applyWorkflowDecision): the one marker it writes.
+    // `emoji: off` is the one marker it writes; `on` writes none, and removes it.
+    ...(normalized.emoji === 'off' ? ['.rsc/.no-emoji'] : []),
     ...(normalized.workflow === 'branches' ? ['.rsc/.no-trunk-open'] : normalized.workflow === 'main' ? ['.rsc/.no-trunk-guard'] : []),
     ...normalized.targets.flatMap((target) => managedPathsForInstall({ skillIds: skills, target, cwd: root, policy })
       .map((path) => relative(root, path).split(sep).join('/'))),

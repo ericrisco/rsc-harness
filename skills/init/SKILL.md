@@ -137,7 +137,7 @@ cargan al arrancar la sesión."* Full skill map and sample printouts → `refere
 
 ### Phase 4 — GROUND
 
-Five checks once the skills are in. The SessionStart hook nudges each of these too; doing them here
+Six checks once the skills are in. The SessionStart hook nudges each of these too; doing them here
 means the user starts clean.
 
 1. **Version control.** No `.git/` → offer `git init`; the SDD chain and the ship guard assume it.
@@ -163,6 +163,12 @@ means the user starts clean.
 
    Yes, or no clear answer → do nothing; it is on. No → create `.rsc/.no-auto-update`: every
    release then asks. It is a project switch, recorded in `.rsc.json` on the next sync.
+6. **Emoji.** Ask once, yes by default (`onboard` asks the same, and takes `--emoji <on|off>`):
+   > *"¿Quieres emoji en las respuestas, los commits y los mensajes de rsc? (sí | no; por defecto sí)"*
+
+   Yes, or no clear answer → do nothing; it is on. No → run `npx @ericrisco/rsc emoji off`: it writes
+   `.rsc/.no-emoji`, and from the next session no reply, commit or rsc message carries an emoji
+   (`emoji on` undoes it). It is a project switch, recorded in `.rsc.json` on the next sync.
 
 ### Phase 5 — HANDOFF
 

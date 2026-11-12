@@ -262,6 +262,8 @@ export function doctor({ target, home, cwd }) {
     gitmojiGuard: state.policy?.gitmojiGuard === false
       ? 'deferred'
       : existsSync(join(root, '.rsc', '.no-gitmoji')) ? 'opted-out' : 'armed',
+    // `rsc emoji on|off`: whether rsc may use emoji at all in this project.
+    emoji: existsSync(join(root, '.rsc', '.no-emoji')) ? 'off' : 'on',
     // The reverse of the same honesty, one level up: a gate the TEAM disarmed in the committed
     // manifest and that is still armed on this machine. Nothing is applied from here — a pull
     // never rewrites somebody's machine — so the only thing owed is saying it out loud, and

@@ -37,6 +37,8 @@ test('normalizes an agent record to the same values used by the terminal adapter
     softwareScope: 'small',
     // Not asked in these answers → the recommendation for the scope: small code works on main.
     workflow: 'main',
+    // Not asked either → on: nothing changes for whoever does not choose.
+    emoji: 'on',
     targets: ['codex'],
   });
   assert.throws(() => normalizeOnboarding(answers({ goal: ' ' })), /goal/);

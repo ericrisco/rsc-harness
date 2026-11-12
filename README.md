@@ -235,6 +235,8 @@ project. rsc handles four things by default:
 | **The agent picks the method** | FTD for simple changes, ASDD for complex ones. The agent decides and says why. | Ask for the other lane |
 | **Knowledge reaches everyone** | `01-TOOLS/`, `02-DOCS/wiki/` and `02-DOCS/attachments/` travel through one exchange branch, `rsc/knowledge`, and reach `main` inside your normal pull requests. | `rsc knowledge-sync off` |
 
+**Emoji.** The install asks once whether rsc may use emoji (`--emoji <on|off>`, default on). With it off, rsc writes `.rsc/.no-emoji` and uses none: not in replies, not in commits, not in its own output. Change it later with `rsc emoji <on|off>`; `rsc doctor` reports it.
+
 **How it knows a project is complex.** A hook counts what anyone can check: a CI setup, a deployment
 file (`Dockerfile`, `vercel.json`, `fly.toml`…) or at least two people in the last 50 commits. The
 answer you gave at install always wins over this detection.

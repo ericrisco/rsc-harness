@@ -18,6 +18,10 @@
 // read. Anything it cannot read with certainty (editor commit, -F file, --amend
 // --no-edit, an unparseable command) is ALLOWED: a guard that guesses is a guard that
 // gets turned off. Every deny names its recovery. Opt out with .rsc/.no-gitmoji.
+//
+// With .rsc/.no-emoji (`rsc emoji off`) the guard turns around: it no longer asks for a gitmoji and
+// refuses an inline commit that carries one. It wins over .no-gitmoji: that file turns the convention
+// off, not the ban on emoji.
 import { fileURLToPath } from 'node:url';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
@@ -219,6 +223,20 @@ export const SUGGESTIONS = [
   ['perf', '⚡️'], ['chore', '🔧'], ['ci', '👷'], ['style', '🎨'], ['revert', '⏪️'],
 ];
 
+// Any emoji or :shortcode: anywhere in the message — with emoji off, none may be there.
+const ANY_EMOJI = /\p{Extended_Pictographic}|(?:^|\s):[a-z0-9_+-]{2,}:(?=\s|$)/u;
+export const hasEmoji = (message) => ANY_EMOJI.test(String(message ?? '').split(/\r?\n/, 1)[0]);
+
+export function denyEmojiMessage(message) {
+  const subject = String(message ?? '').split(/\r?\n/, 1)[0].trim();
+  const clean = subject.replace(/\p{Extended_Pictographic}\uFE0F?\s*/gu, '').replace(/(?:^|\s):[a-z0-9_+-]{2,}:(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim();
+  return [
+    'This commit message carries an emoji.',
+    'Emoji are off in this project (.rsc/.no-emoji): a commit says what changed in words, as Conventional Commits does: type(scope): subject.',
+    `Recover: re-run the commit without the emoji or the :shortcode: — \`${clean || '<type>(<scope>): <subject>'}\`. To allow emoji again, run \`rsc emoji on\`.`,
+  ].join('\n');
+}
+
 export function denyMessage(message) {
   const subject = String(message ?? '').split(/\r?\n/, 1)[0].trim();
   const type = subject.match(/^([a-zA-Z]+)(\([^)\n]*\))?!?:/)?.[1]?.toLowerCase();
@@ -266,7 +284,8 @@ if (isMainModule(import.meta.url)) {
   const root = process.argv[2] || process.cwd();
   const allow = () => process.exit(0);
 
-  if (existsSync(join(root, '.rsc', '.no-gitmoji'))) allow();
+  const emojiOff = existsSync(join(root, '.rsc', '.no-emoji'));
+  if (!emojiOff && existsSync(join(root, '.rsc', '.no-gitmoji'))) allow();
 
   let input = {};
   try { input = JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { allow(); }
@@ -276,7 +295,7 @@ if (isMainModule(import.meta.url)) {
 
   let offender = null;
   try {
-    offender = commitMessages(command).find((m) => !hasGitmoji(m)) ?? null;
+    offender = commitMessages(command).find((m) => (emojiOff ? hasEmoji(m) : !hasGitmoji(m))) ?? null;
   } catch { allow(); } // any parsing surprise → allow (fail open, by design)
   if (offender === null) allow();
 
@@ -284,7 +303,7 @@ if (isMainModule(import.meta.url)) {
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
       permissionDecision: 'deny',
-      permissionDecisionReason: denyMessage(offender),
+      permissionDecisionReason: emojiOff ? denyEmojiMessage(offender) : denyMessage(offender),
     },
   }));
   process.exit(0);

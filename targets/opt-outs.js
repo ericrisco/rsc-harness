@@ -23,6 +23,7 @@ export const PROJECT_OPT_OUTS = [
   'claudemd-check',   // the root CLAUDE.md context budget
   'copy-guard',       // the Stop hook that enforces the project's banned phrases in delivered copy
   'danger-guard',     // foot-gun denial, keyed to the committed user profile
+  'emoji',            // «no emoji»: no reply, commit or message of rsc carries one, for the whole team
   'feature-gate',     // per-turn re-injection of the SDD gate
   'ftd-close',        // a landed branch's feature documents marked done by the post-merge hook
   'ftd-nudge',        // once-per-session reminder: code changed and no feature document yet

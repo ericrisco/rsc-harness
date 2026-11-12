@@ -83,6 +83,7 @@ export function generatedHookFiles({ target, cwd, policy }) {
     join(cwd, '.rsc', 'worklog-checkpoint.mjs'),
     join(cwd, '.rsc', 'hook-once.mjs'),
     join(cwd, '.rsc', 'shell-unwrap.mjs'),
+    join(cwd, '.rsc', 'emoji-policy.mjs'),
     join(cwd, '.rsc', 'worktree-reaper.mjs'),
     join(cwd, '.rsc', 'auto-update.mjs'),
     join(cwd, '.rsc', 'memslop-offer.mjs'),

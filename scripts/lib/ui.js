@@ -1,6 +1,7 @@
 import { createInterface } from 'node:readline/promises';
 import { emitKeypressEvents } from 'node:readline';
 import { stdin, stdout } from 'node:process';
+import { plain } from '../../targets/emoji-policy.mjs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -11,8 +12,12 @@ export async function ask(question) {
   return a.trim();
 }
 
+// With emoji off in the project, what is said goes out in words. One switch here, not one `if` per message.
+let plainOutput = false;
+export const setPlainOutput = (on) => { plainOutput = Boolean(on); };
+
 export function say(...lines) {
-  console.log(...lines);
+  console.log(...(plainOutput ? lines.map((line) => (typeof line === 'string' ? plain(line) : line)) : lines));
 }
 
 export function yes(s) {

@@ -829,3 +829,43 @@ test('ks64 · each incoming file is credited to its own author, and your own com
   assert.match(said, /de ti, desde otra rama: 02-DOCS\/wiki\/de-eric\.md/, said);
   assert.doesNotMatch(said, /de Ana: [^;]*de-eric/, said);
 });
+
+// ------------------------------------------------------------------ emoji off
+
+const PICTO = /\p{Extended_Pictographic}/u;
+
+test('ks-emoji-off · with .rsc/.no-emoji every commit and every message of knowledge-sync is written without emoji', () => {
+  const { remote, eric, ana } = team();
+  write(eric, '.rsc/.no-emoji', '');
+  write(ana, '.rsc/.no-emoji', '');
+  const announced = String(onRequest(eric, { spawnFetch: false }));
+  assert.match(announced, /sincronización del conocimiento/);
+  assert.doesNotMatch(announced, PICTO, 'the announcement carries an emoji');
+
+  write(ana, '02-DOCS/wiki/de-ana.md', 'ana\n');
+  turn(ana);
+  const up = git(remote, 'log', '-1', '--format=%s', K);
+  assert.match(up, /^docs\(auto\): 02-DOCS\/wiki\/de-ana\.md/);
+  assert.doesNotMatch(up, PICTO);
+
+  const said = String(message(eric));
+  assert.match(said, /Ana/);
+  assert.doesNotMatch(said, PICTO, 'the notice carries an emoji');
+  const sync = git(eric, 'log', '-1', '--format=%s');
+  assert.match(sync, /^docs\(auto\): sync desde rsc\/knowledge/);
+  assert.doesNotMatch(sync, PICTO);
+});
+
+test('ks-emoji-off · a docs(auto) commit without emoji still counts as rsc\'s own, and goes up without emoji', () => {
+  const { remote, eric } = team();
+  quiet(eric);
+  write(eric, '.rsc/.no-emoji', '');
+  git(eric, 'switch', '-q', '-c', 'feat/x');
+  write(eric, '02-DOCS/wiki/ftd/x.md', '# x\n');
+  write(eric, 'src/app.js', 'code v2\n');
+  git(eric, 'add', '-A'); git(eric, 'commit', '-q', '-m', 'feat: x');
+  turn(eric);
+  const msg = git(remote, 'log', '-1', '--format=%B', K);
+  assert.match(msg, /^docs\(auto\): 02-DOCS\/wiki\/ftd\/x\.md \[skip ci\]/);
+  assert.doesNotMatch(msg, PICTO);
+});

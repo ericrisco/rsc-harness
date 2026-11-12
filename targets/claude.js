@@ -131,6 +131,8 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // Shared by every PreToolUse guard (and the sello): what a Bash command really runs, `bash -c` and
   // `eval` unwrapped. A sibling for the same reason, and here because the danger guard needs it too.
   copyFileSync(join(HERE, 'shell-unwrap.mjs'), join(paths.projectRoot, '.rsc', 'shell-unwrap.mjs'));
+  // `rsc emoji off`: session-start reads it to give the always-on body in words.
+  copyFileSync(join(HERE, 'emoji-policy.mjs'), join(paths.projectRoot, '.rsc', 'emoji-policy.mjs'));
   // Same reason: session-start imports the reaper for the landed-worktree sweep, so it travels as a
   // sibling too. Missing it does not break startup — the sweep is wrapped — it just goes silent.
   copyFileSync(join(HERE, 'worktree-reaper.mjs'), join(paths.projectRoot, '.rsc', 'worktree-reaper.mjs'));

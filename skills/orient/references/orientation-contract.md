@@ -68,6 +68,10 @@ Simple is never childish: adult tone, no baby talk, no exclamation marks.
 ```
 
 - 📍 and ➡️ every time. ✅ and 🧭 only when they carry something.
+- Emoji off (`.rsc/.no-emoji`, set by `rsc emoji off`): the block has no glyph. Its lines open with
+  `Dónde estás:`, `Hecho:`, `Decidido:` and `Siguiente:`, the same rules apply, and the session-start
+  hook gives this form in the injected text. The ban covers every reply, commit, pull request and
+  document in that project, even when another skill or a template shows an emoji: write the word.
 - Each line follows the voice above: one sentence, stands alone.
 - No turn ends in seco: a turn that finishes an action, reaches a fork, or could leave the person
   unsure ends with the block.
