@@ -15,7 +15,7 @@
 Keep your project knowledge, skills and working rules together across the assistants you already use.
 Start with your goal. Review what rsc proposes to install. Accept the plan before it changes your project.
 
-**MIT licensed · project-local setup · 18 assistant targets**
+**MIT licensed · project-local setup · 19 assistant targets**
 
 Give this URL to your agent and paste the request in the chat:
 
@@ -373,17 +373,31 @@ The wizard asks which ones; `--target a,b` does it non-interactively.
 | `amp` | `.amp/rsc/<id>/` → symlink | block in `AGENTS.md` |
 | `opencode` | `.opencode/rsc/<id>/` → symlink | block in `AGENTS.md` |
 | `deepseek` | `.dsh/skills/<id>/` → symlink (discovered natively) | block in `AGENTS.md` |
+| `pi` | `.pi/skills/<id>/` → symlink (copy on Windows; discovered natively) | block in Pi's selected project context file |
 | `jules` | `.jules/rsc/<id>/` → symlink | block in `AGENTS.md` |
 | `junie` | `.junie/rsc/<id>/` → symlink | block in `.junie/guidelines.md` |
 | `kiro` | `.kiro/rsc/<id>/` → symlink | doc in `.kiro/steering/rsc-suggest.md` |
 | `aider` | `.aider/rsc/<id>/` → symlink | block in `CONVENTIONS.md` |
 
 > `codex`, `zed`, `amp`, `opencode`, `deepseek` and `jules` share one root `AGENTS.md`; the block is
-> written once.
+> written once. Pi shares it when that is the context file its native loader selects.
 
 > **DeepSeek Harness** (`dsh`) has no project-level hooks, so once per machine rsc adds one marked
 > block to `~/.dsh/cordis.patch.yml` that runs the hooks of whichever project the session is in.
 > Restart dsh once after the first install; delete the block to turn it off.
+
+> **Pi:** select `--target pi` during onboarding, then run `/reload` in Pi to discover the
+> installed skills. Invoke one explicitly with `/skill:<id>`. Pi loads project resources after
+> project trust is granted; rsc preserves your `.pi/settings.json` and extensions.
+> This target uses Pi's [native skills and context files](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/configuration.md).
+> Its [context loader](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/resource-loader.ts)
+> selects the first readable file in this order: `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`,
+> `CLAUDE.md`, `CLAUDE.MD`. rsc adds its marked block to that file, preserving your instructions;
+> it creates `AGENTS.md` only when none exists. If a new override hides the block, doctor reports
+> the missing wiring and sync writes the block into the selected file.
+> It does not install a custom extension, subagents, automatic session-memory hooks, or tool guards.
+> Pi has no built-in subagents; skills that require independent reviewers need an external review.
+> The instructions request an update check on the first turn, as for other targets without a wired session hook.
 
 | Targets | Stack agents | Native commands | Session memory |
 | --- | --- | --- | --- |
@@ -392,6 +406,7 @@ The wizard asks which ones; `--target a,b` does it non-interactively.
 | Cursor desktop | yes | yes | assisted |
 | Gemini CLI, OpenCode | yes | yes | full |
 | DeepSeek Harness | unsupported | unsupported | full (machine bridge) |
+| Pi | unsupported | native `/skill:<id>` (no generated command files) | unsupported |
 | GitHub Copilot | yes | yes | unsupported |
 | Junie, Kiro | yes | unsupported | unsupported |
 | Windsurf, Cline, Roo | unsupported | yes | unsupported |

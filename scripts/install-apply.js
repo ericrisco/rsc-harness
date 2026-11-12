@@ -115,6 +115,8 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.alwaysOn !== false });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
+  // Pi can move its managed block when the native context-file precedence changes.
+  if (target === 'pi') out.push(...paths.contextFiles);
   if (policy?.context7 === false) out.push(join(cwd, '.rsc', '.no-context7'));
   if (policy?.memory !== false) out.push(...memoryManagedPaths(target, cwd));
   out.push(...updateManagedPaths(target, cwd));

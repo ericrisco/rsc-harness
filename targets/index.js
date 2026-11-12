@@ -1,4 +1,4 @@
-import { existsSync, lstatSync, mkdirSync, rmSync, symlinkSync, cpSync, readFileSync } from 'node:fs';
+import { existsSync, lstatSync, statSync, mkdirSync, rmSync, symlinkSync, cpSync, readFileSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { homedir } from 'node:os';
 import * as claudeAdapter from './claude.js';
@@ -46,6 +46,8 @@ const SPEC = {
   opencode: { root: '.opencode/rsc', hook: 'AGENTS.md', adapter: 'md' },
   // DeepSeek Harness discovers <root>/.dsh/skills/<name>/SKILL.md natively.
   deepseek: { root: '.dsh/skills', hook: 'AGENTS.md', adapter: 'md' },
+  // Pi discovers skills natively; targetPaths follows its context-file precedence.
+  pi: { root: '.pi/skills', hook: 'AGENTS.md', adapter: 'md' },
   amp: { root: '.amp/rsc', hook: 'AGENTS.md', adapter: 'md' },
   jules: { root: '.jules/rsc', hook: 'AGENTS.md', adapter: 'md' },
   zed: { root: '.zed/rsc', hook: 'AGENTS.md', adapter: 'md' },
@@ -81,6 +83,7 @@ export const TARGETS = [
   { id: 'amp', label: 'Amp', hint: 'AGENTS.md' },
   { id: 'opencode', label: 'opencode', hint: 'AGENTS.md' },
   { id: 'deepseek', label: 'DeepSeek Harness', hint: '.dsh/skills/' },
+  { id: 'pi', label: 'Pi', hint: '.pi/skills/' },
   { id: 'jules', label: 'Jules', hint: 'AGENTS.md' },
   { id: 'junie', label: 'JetBrains Junie', hint: '.junie/guidelines.md' },
   { id: 'kiro', label: 'Kiro', hint: '.kiro/steering/' },
@@ -122,6 +125,7 @@ export function detectTarget(cwd = process.cwd()) {
   if (has('.zed')) return 'zed';
   if (has('.opencode')) return 'opencode';
   if (has('.dsh')) return 'deepseek';
+  if (has('.pi')) return 'pi';
   if (has('.amp')) return 'amp';
   if (has('.jules')) return 'jules';
   if (has('.antigravity')) return 'antigravity';
@@ -156,16 +160,41 @@ export function resolveTargets({ cwd = process.cwd(), flagValue } = {}) {
   return { ids: [detectTarget(cwd)], ambiguous: null, source: 'heuristic' };
 }
 
+// Pi loads only the first readable context file in a directory. Creating AGENTS.md
+// beside an existing CLAUDE.md would hide the user's instructions; an override
+// would hide a block written into AGENTS.md. Match the native loader's order.
+function fileIdentity(file) {
+  try { const { dev, ino } = statSync(file); return `${dev}:${ino}`; }
+  catch { return file; }
+}
+
+function piContextFiles(cwd) {
+  const seen = new Set();
+  return ['AGENTS.override.md', 'AGENTS.md', 'AGENTS.MD', 'CLAUDE.md', 'CLAUDE.MD']
+    .map((name) => join(cwd, name)).filter((file) => {
+    try {
+      if (!statSync(file).isFile()) return false;
+      readFileSync(file, 'utf8');
+      const identity = fileIdentity(file);
+      if (seen.has(identity)) return false;
+      seen.add(identity);
+      return true;
+    } catch { return false; } // Pi skips unreadable and non-file candidates too.
+  });
+}
+
 export function targetPaths(target, home = homedir(), cwd = process.cwd()) {
   const s = SPEC[target];
   if (!s) throw new Error(`unknown target ${target}`);
   const rootAbs = join(cwd, ...s.root.split('/'));
+  const contextFiles = target === 'pi' ? piContextFiles(cwd) : null;
   return {
     root: rootAbs,
     projectRoot: cwd,
     skillDir: (id) => (s.skillExt ? join(rootAbs, `${id}${s.skillExt}`) : join(rootAbs, id)),
     stateFile: join(rootAbs, '.rsc-state.json'),
-    hookTarget: join(cwd, ...s.hook.split('/')),
+    hookTarget: contextFiles ? contextFiles[0] || join(cwd, 'AGENTS.md') : join(cwd, ...s.hook.split('/')),
+    ...(contextFiles ? { contextFiles } : {}),
   };
 }
 
@@ -174,14 +203,34 @@ export function writeSkill(target, id, fromDir, toPath) {
 }
 
 export function wireHook(target, paths, sourceMd, policy) {
+  if (target === 'pi') {
+    // Sync migrates Pi's block when native precedence changes. Keep any old
+    // location still used by another target; the installer backs these up first.
+    const shared = sharedHookFiles(target, paths.projectRoot);
+    for (const file of paths.contextFiles || []) {
+      if (fileIdentity(file) !== fileIdentity(paths.hookTarget) && !shared.has(fileIdentity(file))) mdAdapter.unwireHook({ ...paths, hookTarget: file });
+    }
+  }
   return ADAPTER[SPEC[target].adapter].wireHook(paths, sourceMd, policy);
+}
+
+function sharedHookFiles(target, cwd) {
+  return new Set(installedTargets(cwd).filter((other) => other !== target)
+    .map((other) => fileIdentity(targetPaths(other, undefined, cwd).hookTarget)));
 }
 
 // Inverse of wireHook — remove rsc's always-on surface for a target (settings.json
 // hook entries / AGENTS-block / cursor rule file). Returns the paths it touched.
 export function unwireHook(target, paths) {
+  // AGENTS.md is shared by several targets. Removing one install must not remove
+  // the always-on instructions of another install that still reads this file.
+  const shared = sharedHookFiles(target, paths.projectRoot);
   const adapter = ADAPTER[SPEC[target].adapter];
-  return adapter.unwireHook ? adapter.unwireHook(paths) : [];
+  // A new override can change Pi's selected context since installation. Remove
+  // its marked blocks from previous context files too; never the user's prose.
+  const files = target === 'pi' ? piContextFiles(paths.projectRoot) : [paths.hookTarget];
+  return files.filter((file) => !shared.has(fileIdentity(file))).flatMap((file) =>
+    adapter.unwireHook ? adapter.unwireHook({ ...paths, hookTarget: file }) : []);
 }
 
 // Every known target id — used by `purge` to sweep all assistants, installed or not.
