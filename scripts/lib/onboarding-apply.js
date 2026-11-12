@@ -99,7 +99,7 @@ function recoveryCommand(plan, planId) {
     `--goal-base64 ${encodeGoal(record.goal)}`,
     ...(record.softwareScope ? [`--software-scope ${record.softwareScope}`] : []),
     ...(record.workflow ? [`--workflow ${record.workflow}`] : []),
-    ...(record.emoji ? [`--emoji ${record.emoji}`] : []),
+    ...(record.emoji === 'off' ? ['--emoji off'] : []),
     `--target ${record.targets.join(',')}`,
     `--accept-plan ${planId}`,
   ].join(' ');
@@ -272,10 +272,10 @@ export function applyWorkflowDecision(cwd, workflow) {
 /**
  * The install-time answer «emoji on | off» is the project's `.rsc/.no-emoji`, the same marker
  * `rsc emoji off` writes (a PROJECT opt-out, recorded in .rsc.json by the install below, rebuilt in a
- * clone). `on` writes nothing and removes it. A plan from before the field says nothing: untouched.
+ * clone). A record without `emoji` is `on`: the marker goes. It is NOT a governed path: `rsc emoji`
+ * changes it later, and a digest of it would read that change as drift.
  */
 export function applyEmojiDecision(cwd, emoji) {
-  if (emoji !== 'on' && emoji !== 'off') return;
   const marker = join(cwd, '.rsc', '.no-emoji');
   if (emoji === 'off') {
     mkdirSync(dirname(marker), { recursive: true });

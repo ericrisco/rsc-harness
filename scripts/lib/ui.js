@@ -16,9 +16,19 @@ export async function ask(question) {
 let plainOutput = false;
 export const setPlainOutput = (on) => { plainOutput = Boolean(on); };
 
+// JSON is data: a program reads it, so what it says is never reworded.
+const isJson = (line) => { try { return typeof JSON.parse(line) === 'object'; } catch { return false; } };
+
 export function say(...lines) {
-  console.log(...(plainOutput ? lines.map((line) => (typeof line === 'string' ? plain(line) : line)) : lines));
+  console.log(...(plainOutput ? lines.map((line) => (typeof line === 'string' && !isJson(line) ? plain(line) : line)) : lines));
 }
+
+// The glyphs of the screen. With emoji off the banner and the menus draw none: plain marks instead.
+const SPARK = ['\u2726', '\u2727', '\u22C6', '\u273A', '\u00B7', '*'];
+export const sparkleGlyphs = (off = plainOutput) => (off ? ['\u00B7', '*'] : SPARK);
+const glyph = () => (plainOutput
+  ? { pointer: '>', on: '[x]', off: '[ ]', updown: 'up/down', edge: '*' }
+  : { pointer: '\u276F', on: '\u25C9', off: '\u25EF', updown: '\u2191\u2193', edge: '\u2726' });
 
 export function yes(s) {
   return /^(s|si|sí|y|yes|ok|sure|yeah)/i.test(s.trim());
@@ -67,7 +77,6 @@ function hsl(h, s = 1, l = 0.6) {
 }
 
 // One frame: rainbow per character, diagonal phase, revealed up to `cols`.
-const SPARK = ['✦', '✧', '⋆', '✺', '·', '*'];
 const SPARK_C = ['\x1b[1;97m', '\x1b[1;93m', '\x1b[1;96m']; // bright white / yellow / cyan
 
 // `n` random twinkles as a Map "r,c" -> pre-coloured glyph string.
@@ -76,7 +85,8 @@ function sparkles(n, rows, W) {
   for (let i = 0; i < n; i++) {
     const r = Math.floor(Math.random() * rows);
     const c = Math.floor(Math.random() * W);
-    const g = SPARK[Math.floor(Math.random() * SPARK.length)];
+    const glyphs = sparkleGlyphs();
+    const g = glyphs[Math.floor(Math.random() * glyphs.length)];
     m.set(`${r},${c}`, SPARK_C[Math.floor(Math.random() * SPARK_C.length)] + g);
   }
   return m;
@@ -120,7 +130,7 @@ export async function banner(skillCount = 'all') {
     first = false;
     const edge = new Map();
     const er = Math.floor(Math.random() * rows);
-    edge.set(`${er},${Math.min(cols - 1, W - 1)}`, '\x1b[1;97m✦');
+    edge.set(`${er},${Math.min(cols - 1, W - 1)}`, `\x1b[1;97m${glyph().edge}`);
     if (Math.random() < 0.5) edge.set(`${Math.floor(Math.random() * rows)},${Math.min(cols, W - 1)}`, '\x1b[1;93m·');
     stdout.write(frame(0, cols, edge));
     await sleep(12);
@@ -177,9 +187,9 @@ function tuiSelect(question, options) {
     const paint = makePainter();
     const render = () => paint([
       C.bold(question),
-      C.dim('  ↑↓ move · enter select · esc back'),
+      C.dim(`  ${glyph().updown} move · enter select · esc back`),
       ...options.map((o, idx) =>
-        idx === i ? `${C.cyan('❯')} ${C.cyan(o.label)}` : `  ${o.label}`),
+        idx === i ? `${C.cyan(glyph().pointer)} ${C.cyan(o.label)}` : `  ${o.label}`),
     ]);
     render();
     const stop = captureKeys((str, key) => {
@@ -205,14 +215,14 @@ function tuiChecklist(title, items) {
       const rows = [];
       for (let r = top; r < top + VISIBLE; r++) {
         const it = items[r];
-        const box = sel.has(r) ? C.green('◉') : '◯';
+        const box = sel.has(r) ? C.green(glyph().on) : glyph().off;
         const line = `${box} ${it.label}`;
-        rows.push(r === cur ? `${C.cyan('❯')} ${C.cyan(line)}` : `  ${line}`);
+        rows.push(r === cur ? `${C.cyan(glyph().pointer)} ${C.cyan(line)}` : `  ${line}`);
       }
       const more = items.length > VISIBLE ? C.dim(`  (${cur + 1}/${items.length})`) : '';
       paint([
         C.bold(title),
-        C.dim('  ↑↓ move · space toggle · a all · enter confirm · esc back') + more,
+        C.dim(`  ${glyph().updown} move · space toggle · a all · enter confirm · esc back`) + more,
         ...rows,
       ]);
     };

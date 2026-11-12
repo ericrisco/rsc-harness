@@ -223,7 +223,7 @@ function renderPlan(plan, planId) {
     `--goal-base64 ${encodeGoal(plan.record.goal)}`,
     ...(plan.record.softwareScope ? [`--software-scope ${plan.record.softwareScope}`] : []),
     ...(plan.record.workflow ? [`--workflow ${plan.record.workflow}`] : []),
-    ...(plan.record.emoji ? [`--emoji ${plan.record.emoji}`] : []),
+    ...(plan.record.emoji === 'off' ? ['--emoji off'] : []),
     `--target ${plan.record.targets.join(',')}`,
     `--accept-plan ${planId}`,
   ];
@@ -386,7 +386,8 @@ function runReassessment() {
     `--goal-base64 ${encodeGoal(record.goal)}`,
     ...(record.softwareScope ? [`--software-scope ${record.softwareScope}`] : []),
     ...(record.workflow ? [`--workflow ${record.workflow}`] : []),
-    ...(record.emoji ? [`--emoji ${record.emoji}`] : []),
+    // What the project holds now (the marker), not what the receipt said when it was accepted.
+    ...(emojiOff(process.cwd()) ? ['--emoji off'] : []),
     `--target ${record.targets.join(',')}`,
   ].join(' '));
   say('Show the new plan and ask the user to accept its id before applying it.');

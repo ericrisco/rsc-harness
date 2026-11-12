@@ -34,20 +34,23 @@ const planId = (cwd, args) => run(cwd, ['onboard', ...args]).stdout.match(/Plan 
 
 test('emoji 1a: onboarding knows emoji on|off, defaults to on, and rejects anything else', () => {
   assert.deepEqual(ONBOARDING_VALUES.emoji, ['on', 'off']);
-  assert.equal(normalizeOnboarding(answers()).emoji, 'on');
+  assert.ok(!('emoji' in normalizeOnboarding(answers())), 'on is the absence of the key: the record of a plan that does not choose is what it always was');
+  assert.ok(!('emoji' in normalizeOnboarding(answers({ emoji: 'on' }))));
   assert.equal(normalizeOnboarding(answers({ emoji: ' OFF ' })).emoji, 'off');
   assert.equal(normalizeOnboarding(answers({ projectKind: 'operations', emoji: 'off' })).emoji, 'off', 'also for non-software projects');
   assert.throws(() => normalizeOnboarding(answers({ emoji: 'maybe' })), /emoji/);
 });
 
-test('emoji 1b: the value is part of the plan record and of the plan id; off governs its marker', () => {
+test('emoji 1b: off is part of the plan record and of the plan id; on changes nothing', () => {
   const dir = fresh();
   const on = buildOnboardingPlan(normalizeOnboarding(answers({ emoji: 'on' })), scanProject(dir));
   const off = buildOnboardingPlan(normalizeOnboarding(answers({ emoji: 'off' })), scanProject(dir));
   assert.equal(off.record.emoji, 'off');
   assert.notEqual(identifyPlan(on), identifyPlan(off));
-  assert.ok(off.governedPaths.includes('.rsc/.no-emoji'));
-  assert.ok(!on.governedPaths.includes('.rsc/.no-emoji'));
+  const none = buildOnboardingPlan(normalizeOnboarding(answers()), scanProject(dir));
+  assert.equal(identifyPlan(on), identifyPlan(none), 'emoji on is the same plan, with the same id, as not choosing');
+  assert.deepEqual(on, none);
+  assert.ok(!off.governedPaths.includes('.rsc/.no-emoji'), 'the marker is a decision changeable later, not a digested path');
 });
 
 test('emoji 1c: the preview asks the question in Spanish and the accept line repeats --emoji', () => {
@@ -55,11 +58,10 @@ test('emoji 1c: the preview asks the question in Spanish and the accept line rep
   const out = run(cwd, ['onboard', ...software]).stdout;
   assert.match(out, /AGENT: ask the person «¿Quieres emoji en las respuestas, los commits y los mensajes de rsc\? \(sí \| no; por defecto sí\)»/);
   assert.match(out, /--emoji <on\|off>/);
-  assert.match(out, /--emoji on /);
+  assert.doesNotMatch(out.split('\n').find((l) => l.startsWith('Accept exactly')), /--emoji/, 'on is not repeated');
   const off = run(cwd, ['onboard', ...software, '--emoji', 'off']).stdout;
   assert.match(off, /Emoji: off/);
   assert.match(off, /Accept exactly this plan: .*--emoji off .*--accept-plan/);
-  assert.ok(off.split('\n').some((l) => l.trim() === '.rsc/.no-emoji'), 'the marker is a managed path');
   const bad = run(cwd, ['onboard', ...software, '--emoji', 'quizas']);
   assert.notEqual(bad.status, 0);
 });

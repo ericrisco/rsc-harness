@@ -196,7 +196,7 @@ function fingerprintFiles(worktree, files) {
 
 // `📥 docs(auto): sync desde rsc/knowledge` — written by knowledge-sync.mjs when it imports the team's
 // documents. Authored locally, but its content is other people's.
-const KNOWLEDGE_IMPORT = /^(?:\S+\s+)?docs\(auto\): sync desde /u;
+export const KNOWLEDGE_IMPORT = /^(?:\S+\s+)?docs\(auto\): sync desde /u;
 
 // Where the agent is — branch and worktree — and nothing else: two processes, not a full snapshot.
 function position(cwd) {

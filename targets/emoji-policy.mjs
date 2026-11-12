@@ -14,21 +14,35 @@ export const emojiOff = (root) => existsSync(join(root || process.cwd(), '.rsc',
 
 // What a glyph says in the output of a command. A table, so nothing hides in an `if`.
 const WORDS = new Map([
-  ['✅', 'ok:'], ['✔', 'ok:'], ['✓', 'ok:'],
-  ['⚠', 'warning:'],
-  ['⛔', 'blocked:'], ['❌', 'failed:'], ['✗', 'failed:'], ['✖', 'failed:'],
-  ['→', '->'], ['➡', '->'], ['←', '<-'], ['⬅', '<-'], ['↔', '<->'],
+  ['\u2705', 'ok:'], ['\u2714', 'ok:'], ['\u2713', 'ok:'],
+  ['\u26A0', 'warning:'],
+  ['\u26D4', 'blocked:'], ['\u274C', 'failed:'], ['\u2717', 'failed:'], ['\u2716', 'failed:'],
+  ['\u2192', '->'], ['\u27A1', '->'], ['\u2190', '<-'], ['\u2B05', '<-'], ['\u2194', '<->'],
 ]);
-// A glyph, its variation selector, and the one space after it when it is only dropped.
-const GLYPH = /([✅✔✓⚠⛔❌✗✖→➡←⬅↔])️?/gu;
-const DROPPED = /(?:\p{Extended_Pictographic}|[↻✦✧✶✺])️?[ \t]?/gu;
 
-/** Output for a project with emoji off: glyphs as words, any other pictograph dropped. Plain text is untouched. */
+// THE definition of a symbol that does not go in a project with emoji off, used by `plain`, by the
+// commit guard and by whoever else needs it: pictographs except (c), (r) and (tm), which are text;
+// regional indicators (flags); arrows; check and cross marks; stars and sparkles. A symbol is the
+// glyph with what clings to it: variation selector, skin tone, keycap, and a ZWJ chain.
+const BASE = '(?:(?![\\u00A9\\u00AE\\u2122])\\p{Extended_Pictographic}|\\p{Regional_Indicator}'
+  + '|[\\u2190-\\u21FF\\u27F0-\\u27FF\\u2900-\\u297F\\u2B00-\\u2BFF\\u2794-\\u27BF\\u2713\\u2717\\u2718\\u2605\\u2606\\u2726\\u2727\\u22C6\\u273A])';
+const CLUSTER = `(?:[0-9#*]\\uFE0F?\\u20E3|${BASE}(?:[\\uFE0F\\u20E3]|\\p{Emoji_Modifier}|\\u200D${BASE})*|[\\uFE0F\\u200D\\u20E3])`;
+const SYMBOL = new RegExp(CLUSTER, 'u');
+const DROPPED = new RegExp(`${CLUSTER}[ \\t]?`, 'gu');
+const WORD_GLYPH = /([\u2705\u2714\u2713\u26A0\u26D4\u274C\u2717\u2716\u2192\u27A1\u2190\u2B05\u2194])\uFE0F?([ \t]*)/gu;
+
+/** Does this text carry a symbol that emoji off does not allow? */
+export const hasSymbol = (text) => SYMBOL.test(String(text));
+/** The text without those symbols (and the one space after each). */
+export const stripSymbols = (text) => String(text).replace(DROPPED, '');
+
+/**
+ * Output for a project with emoji off: the glyphs that mean something as words, any other symbol
+ * dropped. Only the space right after a replaced glyph is normalized; text that is not a symbol,
+ * padding included, is untouched.
+ */
 export function plain(text) {
-  return String(text)
-    .replace(GLYPH, (_, glyph) => WORDS.get(glyph))
-    .replace(/(ok:|warning:|blocked:|failed:)[ \t]+/g, '$1 ')
-    .replace(DROPPED, '');
+  return stripSymbols(String(text).replace(WORD_GLYPH, (_, glyph, space) => WORDS.get(glyph) + (space ? ' ' : '')));
 }
 
 // The closing block of `orient`, in words: the same lines, the same meaning.
