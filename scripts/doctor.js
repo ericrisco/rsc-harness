@@ -1,3 +1,4 @@
+import { readPolicy } from '../targets/risk-policy.mjs';
 import { hooksDir, hooksDirIsOurs, classifyWorktrees } from '../targets/worktree-reaper.mjs';
 import { existsSync, readFileSync, readdirSync, statSync, realpathSync } from 'node:fs';
 import { join, dirname, relative, sep } from 'node:path';
@@ -320,6 +321,7 @@ export function doctor({ target, home, cwd }) {
     worktreeHygiene: worktreeHygiene(root),
     ownSkills: ownSkillsIn(paths, readProjectManifest(root)?.ownSkills || []),
     sello: selloStatus(root),
+    asddGate: existsSync(join(root, '.rsc', '.no-asdd-gate')) ? { state: 'off-by-choice' } : existsSync(join(root, '.rsc', 'asdd-gate.mjs')) ? (() => { const p = readPolicy(root); return { state: p.error ? 'invalid-policy' : p.trunk ? 'ready' : 'no-trunk', trunk: p.trunk, policySource: p.source, ...(p.error || !p.trunk ? { action: p.error || 'Set origin/HEAD or configure a trunk before relying on ASDD branch checks.' } : {}) }; })() : { state: 'not-installed' },
     // An inert gate must never read as an armed one (the same rule the sello follows):
     // the gitmoji guard has a per-project kill switch, so say which state it is in.
     gitmojiGuard: state.policy?.gitmojiGuard === false

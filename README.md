@@ -701,6 +701,67 @@ Most of this catalog is written here. These are not, and they keep their author'
 Adapted, not mirrored: each carries rsc frontmatter, routing evals and hand-offs to its siblings. The
 craft bar in them is the original author's.
 
+### Shared risk policy and external branch checks
+
+Commit `.rsc-risk.json` at the workspace root to share risk rules across clones and submodules:
+
+```json
+{
+  "version": 1,
+  "trunks": ["develop", "integration"],
+  "repositories": { "Catman": { "trunks": ["develop"] } },
+  "testRepos": ["CatmanTest"],
+  "rules": [
+    { "class": "schema", "tier": 2, "path": "\\.Table\\.al$",
+      "removed": "^\\s*field\\s*\\(", "productionOnly": true,
+      "because": "Removing a field changes the stored schema." },
+    { "class": "api", "tier": 2, "path": "\\.Page\\.al$",
+      "contains": "PageType\\s*=\\s*API", "removed": "APIVersion",
+      "because": "The API contract changes." },
+    { "class": "platform", "tier": 2, "path": "(^|/)app\\.json$",
+      "jsonKeys": ["dependencies", "idRanges", "runtime"],
+      "because": "Dependencies or platform requirements change." },
+    { "class": "editor", "tier": 0, "path": "^\\.vscode/settings\\.json$",
+      "because": "Editor preferences only." }
+  ]
+}
+```
+
+Rules can also use `added`, `deleted: true` and `repos: ["relative/path"]`. Conditions in one rule
+must all match. `contains` reads the file before and after the change; `added` and `removed` read
+changed lines with whitespace differences ignored. JSON keys are top-level keys. Renames are
+checked as both old and new paths. Matching rules take their highest tier; explicit zero replaces
+ordinary-code defaults, but built-in risk classes and the secrets/harness floors still apply.
+Patterns are case-insensitive and limited to 200 characters; repeated groups, lookarounds and
+backreferences are rejected. Content lines over 2,000 characters are skipped. Rule evaluation has
+a hard one-second timeout and an 8 MiB input budget: exceeding either reports an error at tier 2.
+At most 64 rules and 16 trunk candidates are supported.
+
+`rsc risk` and the push gate use the policy **from the workspace trunk**, including repository
+settings and exemptions. A proposed policy cannot relax its own outgoing branch. A policy first
+added on a feature branch stays inactive until it lands. Use `rsc risk --policy-preview` to inspect
+the proposed policy explicitly; the output identifies its source. Local `.rsc/sello-config.json`
+remains available for existing settings and bootstrap. Initial trunk discovery uses `origin/HEAD`,
+then `main`, `master` or `develop`; for another name, set the remote HEAD or the local `trunk` first.
+Once a trusted policy exists, its trunk candidates select the nearest branch by commits ahead.
+`rsc doctor` reports an installed ASDD gate that cannot find a trunk.
+
+Specs accept `branches: [feature/a, fix/b]` or a YAML block list, as well as the existing `branch:`.
+An FTD under `02-DOCS/wiki/ftd/` can link its branch to a spec with `spec: <slug>`. Optional trusted
+`asddGate` settings are `require: "spec"` (default: full panel), `exemptBranches: ["^chore/back-merge-"]`
+and `cherryPickSuffix: "-master"`. These settings take effect after the policy reaches the trunk.
+
+External PR tools can run `rsc spec gate --branch-check --repo <directory> [--branch <name>]` from
+the workspace, or run the same command inside a submodule. Exit `0` means allowed, `2` means denied,
+and `1` means the check could not run. `--branch` evaluates that branch even when it is not checked
+out. The hook resolves ordinary `git -C`, directory changes, shell `-c`/`eval` wrappers and `gh pr`
+commands. Arbitrary scripts, aliases and shell functions need the explicit CLI check; their bodies
+cannot be inferred from the shell invocation. This is a local review aid, not a remote-server policy.
+
+Sync preserves opt-outs declared by teammates in `.rsc.json`. Existing local markers remain local
+choices; doctor reports differences. To explicitly re-arm a team gate, remove its local marker and
+run an explicit install, which records the new decision; sync alone does not erase the declaration.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

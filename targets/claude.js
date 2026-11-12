@@ -134,6 +134,7 @@ export function wireHook(paths, sourceMd, policy = {}) {
   // Same reason: session-start imports the reaper for the landed-worktree sweep, so it travels as a
   // sibling too. Missing it does not break startup — the sweep is wrapped — it just goes silent.
   copyFileSync(join(HERE, 'worktree-reaper.mjs'), join(paths.projectRoot, '.rsc', 'worktree-reaper.mjs'));
+  copyFileSync(join(HERE, 'risk-policy.mjs'), join(paths.projectRoot, '.rsc', 'risk-policy.mjs'));
   // session-start imports the shared update check, so it travels as a sibling too.
   copyFileSync(join(HERE, 'auto-update.mjs'), join(paths.projectRoot, '.rsc', 'auto-update.mjs'));
   // session-start imports the optional MemSlop offer lazily, so it travels as a sibling too.

@@ -16,6 +16,7 @@
 //
 // Imported by `.rsc/session-start.mjs` (the sweep) and by `scripts/rsc.js` (`rsc worktrees`), so the
 // rule exists once and both entry points cannot drift apart. Same shape as `sello.mjs`.
+import { readPolicy } from './risk-policy.mjs';
 import { existsSync, realpathSync, mkdirSync, readFileSync, readdirSync, writeFileSync, renameSync, chmodSync, copyFileSync } from 'node:fs';
 import { join, resolve, dirname, basename, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -111,7 +112,8 @@ export function resolveMainRoot(cwd = process.cwd()) {
 }
 
 /** Is this ref one of the trunk names? Deleting one is never a side effect of a cleanup. */
-export function isTrunkName(branch) {
+export function isTrunkName(branch, root = null) {
+  if (root && resolveTrunk(root)?.replace(/^origin\//, '') === branch) return true;
   return TRUNKS.some((t) => t === branch || t.endsWith(`/${branch}`));
 }
 
@@ -122,7 +124,7 @@ export function isCleanupEnabled(root) {
 
 /** The first trunk ref that actually exists, or null when there is nothing to compare against. */
 export function resolveTrunk(root) {
-  return TRUNKS.find((ref) => git(root, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]).ok) || null;
+  return readPolicy(root).trunk;
 }
 
 /** Every working tree git knows about. The first entry is always the main one. */
@@ -419,7 +421,7 @@ export function reapWorktree(root, targetPath, { confirmed = false } = {}) {
   // `-d` refuses an unmerged branch, which is the recovery net — but it happily deletes the TRUNK,
   // which is an ancestor of everything. A sibling checkout of `main` classified as ambiguous, the user
   // confirmed removing a stray directory, and the trunk ref went with it.
-  const branchDeleted = candidate.branch && !isTrunkName(candidate.branch)
+  const branchDeleted = candidate.branch && !isTrunkName(candidate.branch, root)
     ? git(root, ['branch', '-d', candidate.branch]).ok
     : false;
   // No `git worktree prune` here. It has no expiry of its own, so running it while another worktree's
@@ -509,7 +511,7 @@ export function reapMergedBranches(root) {
     for (const line of refs.out.split('\n').filter(Boolean)) {
       const [branch, track = ''] = line.split('\0');
       const keep = (reason) => out.kept.push({ branch, reason });
-      if (branch === defaultName || isTrunkName(branch) || KEEP_BRANCHES.includes(branch)) continue;
+      if (branch === defaultName || isTrunkName(branch, root) || KEEP_BRANCHES.includes(branch)) continue;
       if (branch === current) { keep('current branch'); continue; }
       if (checkedOut.has(branch)) { keep('checked out in a worktree'); continue; }
       if (!git(root, ['merge-base', '--is-ancestor', `refs/heads/${branch}`, trunk]).ok) continue; // live work

@@ -358,20 +358,20 @@ test('ship-guard: .no-ship-guard opts out of branch hygiene but NOT of the sello
 
 test('sello: a non-main trunk is honored via config, and an inert gate says so (B7)', () => {
   const root = mkdtempSync(join(tmpdir(), 'rsc-sello-dev-'));
-  g(root, 'init', '-b', 'develop');
+  g(root, 'init', '-b', 'release-trunk');
   g(root, 'config', 'user.email', 't@t'); g(root, 'config', 'user.name', 'T');
   writeFileSync(join(root, 'app.js'), 'x\n');
   g(root, 'add', '.'); g(root, 'commit', '-m', 'init');
   g(root, 'checkout', '-b', 'feature');
   mkdirSync(join(root, '.rsc'), { recursive: true });
   writeFileSync(join(root, 'src.js'), 'unreviewed\n');
-  // No trunk configured → stands down, but LABELS itself instead of lying.
+  // A non-conventional trunk (develop is now discovered) → stands down, but LABELS itself instead of lying.
   enable(root);
   const inert = checkSello(root);
   assert.equal(inert.code, 'no-trunk');
   assert.match(inert.warning, /Recover:/);
   // Configured → the gate works normally.
-  enable(root, { trunk: 'develop' });
+  enable(root, { trunk: 'release-trunk' });
   assert.equal(checkSello(root).code, 'no-review');
 });
 
