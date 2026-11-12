@@ -4,6 +4,7 @@ import { join, dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { planInstall } from './install-plan.js';
+import { installedCli, materializeCliInstructions } from './lib/cli-invocation.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
 import { shadowTarget } from '../targets/agents-md-shadow.js';
 import {
@@ -59,13 +60,16 @@ function writeBaseVersions(cwd, versions) {
 // overwriting on a version change is safe. Mutates `baseVersions` with the new mark.
 function ensureBase(id, cwd, baseVersions) {
   const dest = baseDir(id, cwd);
-  const stale = baseVersions[id] !== CLI_VERSION;
+  const local = installedCli();
+  const stamp = `${CLI_VERSION}:${local ? 'rsc' : 'npx'}`;
+  const stale = baseVersions[id] !== stamp;
   if (stale && existsSync(dest)) rmSync(dest, { recursive: true, force: true });
   if (!existsSync(dest)) {
     mkdirSync(dirname(dest), { recursive: true });
     cpSync(join(ROOT, 'skills', id), dest, { recursive: true });
+    materializeCliInstructions(dest, local);
   }
-  baseVersions[id] = CLI_VERSION;
+  baseVersions[id] = stamp;
   return dest;
 }
 

@@ -119,6 +119,12 @@ load progressively: only their description is paid for until a task needs them.
 
 Prefer a short `rsc` command? `npm install -g @ericrisco/rsc`.
 
+When an executable `rsc` is already on PATH, install and sync write operational skill and
+command instructions using that installed CLI. This also applies to unversioned commands
+suggested by hooks. Explicit versions such as `@4.1.1` and `@latest` keep their meaning.
+No execution permission is added for this choice. If the CLI is removed, run sync using the
+version declared in `.rsc.json` to restore the `npx` instructions.
+
 > **Run it inside the project you are equipping, not inside a clone of this repo.** The catalog's own
 > `package.json` is named `@ericrisco/rsc`, so `npx @ericrisco/rsc` from within a clone resolves to
 > the local bin and fails with `sh: rsc: command not found`. Working on the catalog itself? Use
