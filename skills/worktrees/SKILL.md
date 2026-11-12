@@ -86,6 +86,12 @@ Only once the tree state is understood and the user's WIP is accounted for do yo
 
 ## Creating the workspace — native first, git fallback
 
+**Orca-managed project:** use Orca's lifecycle instead; do not bypass its setup or teardown hooks
+with a native assistant worktree tool or plain Git. Follow [Orca setup and cleanup](references/orca.md).
+Declare `"worktreeManager": "orca"` in `.rsc.json` so cleanup retains these checkouts even on a
+machine without the Orca CLI. A shared worktree or parent/child relationship alone does not prove
+that two agent sessions belong to the same task; verify their identities before sharing changes.
+
 **Prefer the native worktree tool when it's available in your environment.** An `EnterWorktree`-style
 tool typically creates an isolated worktree (often under something like `.claude/worktrees/`, though
 the exact location is tool-dependent), switches the session into it, and tracks it for clean exit —

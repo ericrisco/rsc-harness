@@ -34,6 +34,13 @@ should_not_trigger:
     why: "Bootstrapping the workspace control plane is the harness skill; nothing to do with git isolation for a feature."
 
 capability:
+  - scenario: "The project uses Orca, creates worktrees on origin/develop, and runs setup and teardown hooks. Another session is active in this checkout. Create independent work and explain cleanup."
+    must_include:
+      - "Checks Orca's returned checkout path and actual session identities; workspace lineage alone never suppresses a concurrency warning"
+      - "Uses orca worktree create with --no-parent and the declared origin/develop base, then waits for setup"
+      - "Runs sync with the exact catalogVersion in .rsc.json, never @latest, and stops setup on failure"
+      - "Declares worktreeManager: orca so rsc retains externally managed checkouts even without the CLI"
+      - "Uses Orca removal with --run-hooks after verifying the worktree is safe; never plain git worktree remove"
   - scenario: "User says: 'I'm on main with a clean tree, the plan for the order-reservation feature (slug: order-reservation) is approved, and I'm about to implement it. My editor and a dev server are open against the current files. Set up isolation.' The agent has the worktrees skill loaded and a native worktree tool available."
     must_include:
       - "Runs the pre-flight gate: confirms it's a git repo, checks current branch (main), and checks `git status --short` for tree state before creating anything"
