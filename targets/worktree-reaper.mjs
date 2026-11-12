@@ -181,7 +181,36 @@ export function atWorkspaceRoot(p, home) {
   return home.startsWith(ws + sep) && home !== ws;
 }
 
+// External managers own more than Git's directory (setup/teardown hooks, submodules and their
+// registry). A matching branch name never grants us their lifecycle. The committed setting is
+// authoritative even when the manager's executable is absent, e.g. a clone on another machine.
+function orcaOwnership(root, path) {
+  for (const dir of new Set([root, path])) {
+    const manifest = join(dir, '.rsc.json');
+    if (!existsSync(manifest)) continue;
+    try {
+      if (JSON.parse(readFileSync(manifest, 'utf8'))?.worktreeManager === 'orca') return 'orca';
+    } catch { return 'manager-unknown'; }
+  }
+  const r = spawnSync('orca', ['worktree', 'current', '--json'], {
+    cwd: path, encoding: 'utf8', windowsHide: true, timeout: 1500, killSignal: 'SIGKILL', maxBuffer: 256 * 1024,
+  });
+  if (r.error?.code === 'ENOENT') return null;
+  if (r.error || r.status !== 0) return 'manager-unknown';
+  try {
+    const result = JSON.parse(r.stdout)?.result;
+    // Only an explicit empty result is evidence this checkout is unmanaged. A malformed response,
+    // timeout or caller identity resolving a different checkout must not authorise plain Git removal.
+    if (result && Object.hasOwn(result, 'worktree') && result.worktree === null) return null;
+    const wt = result?.worktree;
+    return typeof wt?.id === 'string' && wt.id && typeof wt.path === 'string' && real(wt.path) === real(path)
+      ? 'orca' : 'manager-unknown';
+  } catch { return 'manager-unknown'; }
+}
+
 export function provenanceOf(root, wt) {
+  const manager = orcaOwnership(root, wt.path);
+  if (manager) return manager;
   const p = wt.path;
   const home = real(root);
   const inside = (dir) => p === dir || p.startsWith(dir + sep);
@@ -320,6 +349,7 @@ export function classifyWorktrees(root) {
 
       const provenance = provenanceOf(root, wt);
       if (provenance === 'foreign') return { ...base, reasons: ['foreign'] };
+      if (provenance === 'orca' || provenance === 'manager-unknown') return { ...base, reasons: [provenance] };
 
       if (wt.locked) return { ...base, reasons: ['locked'] };
 
@@ -651,6 +681,12 @@ export function refusal(candidate) {
   const d = candidate.details || {};
   const parts = (candidate.reasons || []).map((reason) => {
     switch (reason) {
+      case 'orca':
+        return 'Orca manages this checkout, so rsc will not remove it through Git, even with --confirm. ' +
+          'After reviewing its state, use `orca worktree rm --worktree path:<checkout> --run-hooks --json` with its exact path so Orca runs teardown hooks.';
+      case 'manager-unknown':
+        return 'worktree-manager ownership could not be verified; nothing was removed. Check `.rsc.json` and run `orca worktree current --json` from that checkout. ' +
+          'If Orca owns it, remove it through `orca worktree rm --worktree path:<checkout> --run-hooks --json` after reviewing its state.';
       case 'foreign':
         return 'it was not created by rsc, so it is not ours to delete. Remove it yourself with `git worktree remove` if you want it gone.';
       case 'not-integrated':

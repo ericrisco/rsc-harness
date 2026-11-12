@@ -235,6 +235,7 @@ export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalog
     memory: prev.memory,
     gitPermissions: gitPermissions ?? prev.gitPermissions,
     agentModels: prev.agentModels,
+    worktreeManager: prev.worktreeManager,
     onboarding: onboarding ?? prev.onboarding,
   });
 }

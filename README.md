@@ -241,6 +241,12 @@ project. rsc handles four things by default:
 | **The agent picks the method** | FTD for simple changes, ASDD for complex ones. The agent decides and says why. | Ask for the other lane |
 | **Knowledge reaches everyone** | `01-TOOLS/`, `02-DOCS/wiki/` and `02-DOCS/attachments/` travel through one exchange branch, `rsc/knowledge`, and reach `main` inside your normal pull requests. | `rsc knowledge-sync off` |
 
+**Orca worktrees.** Set `"worktreeManager": "orca"` in `.rsc.json` to retain externally managed
+checkouts even when Orca is unavailable. rsc also recognises a matching Orca CLI response, and never
+removes these checkouts through plain Git. [Setup and cleanup](skills/worktrees/references/orca.md)
+use the pinned harness version and Orca's lifecycle hooks; workspace lineage does not silence
+warnings about unverified concurrent sessions.
+
 **How it knows a project is complex.** A hook counts what anyone can check: a CI setup, a deployment
 file (`Dockerfile`, `vercel.json`, `fly.toml`…) or at least two people in the last 50 commits. The
 answer you gave at install always wins over this detection.
