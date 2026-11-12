@@ -23,10 +23,11 @@ const WORDS = new Map([
 // THE definition of a symbol that does not go in a project with emoji off, used by `plain`, by the
 // commit guard and by whoever else needs it: pictographs except (c), (r) and (tm), which are text;
 // regional indicators (flags); arrows; check and cross marks; stars and sparkles. A symbol is the
-// glyph with what clings to it: variation selector, skin tone, keycap, and a ZWJ chain.
+// glyph with what clings to it: variation selector, skin tone, keycap, and a ZWJ chain. A joiner, a
+// selector or a keycap mark alone is not one: they are part of other scripts' text.
 const BASE = '(?:(?![\\u00A9\\u00AE\\u2122])\\p{Extended_Pictographic}|\\p{Regional_Indicator}'
   + '|[\\u2190-\\u21FF\\u27F0-\\u27FF\\u2900-\\u297F\\u2B00-\\u2BFF\\u2794-\\u27BF\\u2713\\u2717\\u2718\\u2605\\u2606\\u2726\\u2727\\u22C6\\u273A])';
-const CLUSTER = `(?:[0-9#*]\\uFE0F?\\u20E3|${BASE}(?:[\\uFE0F\\u20E3]|\\p{Emoji_Modifier}|\\u200D${BASE})*|[\\uFE0F\\u200D\\u20E3])`;
+const CLUSTER = `(?:[0-9#*]\\uFE0F?\\u20E3|${BASE}(?:[\\uFE0F\\u20E3]|\\p{Emoji_Modifier}|\\u200D${BASE})*)`;
 const SYMBOL = new RegExp(CLUSTER, 'u');
 const DROPPED = new RegExp(`${CLUSTER}[ \\t]?`, 'gu');
 const WORD_GLYPH = /([\u2705\u2714\u2713\u26A0\u26D4\u274C\u2717\u2716\u2192\u27A1\u2190\u2B05\u2194])\uFE0F?([ \t]*)/gu;

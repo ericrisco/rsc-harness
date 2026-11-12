@@ -231,7 +231,9 @@ function directMessages(cmd, full) {
   }
 
   const out = [];
-  for (const segment of commandSegments(cmd)) {
+  // Quote-aware only for the emoji ban (which reads whole messages); the gitmoji rule keeps the
+  // plain split it always had, so with emoji on every decision is the one it always was.
+  for (const segment of full ? commandSegments(cmd) : cmd.split(SEPARATORS)) {
     if (!readableCommit(segment)) continue;
     const msg = inlineMessage(segment, full);
     if (msg === null) continue;                       // editor commit — cannot read it here

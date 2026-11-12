@@ -79,11 +79,11 @@ test('r1-3: with off the guard reads the whole message, every -m, and every symb
 });
 
 test('r1-3b: one definition of a symbol that off does not allow, shared by the guard and plain()', () => {
-  for (const s of ['\u{1F389}', '✓', '→', '★', '1️⃣', '\u{1F1EA}\u{1F1F8}', '❤️‍\u{1F525}', '️', '‍']) {
+  for (const s of ['\u{1F389}', '✓', '→', '★', '1️⃣', '\u{1F1EA}\u{1F1F8}', '❤️‍\u{1F525}']) {
     assert.ok(hasSymbol(`a ${s} b`), JSON.stringify(s));
     assert.ok(!hasSymbol(stripSymbols(`a ${s} b`)), `stripped: ${JSON.stringify(s)}`);
   }
-  for (const s of ['©', '®', '™', 'café', '日本', '•', '—', '…', '1', '#', '*']) assert.ok(!hasSymbol(`a ${s} b`), JSON.stringify(s));
+  for (const s of ['©', '®', '™', 'café', '日本', '•', '—', '…', '1', '#', '*', '\uFE0F', '\u200D', '\u200C', '\u20E3']) assert.ok(!hasSymbol(`a ${s} b`), JSON.stringify(s));
 });
 
 test('r1-4: plain() leaves text that is not emoji alone, and leaves nothing invisible behind', () => {
@@ -123,4 +123,38 @@ test('r1-7: the forms without emoji of rsc own commits are recognized', () => {
   assert.ok(KNOWLEDGE_IMPORT.test('\u{1F4E5} docs(auto): sync desde rsc/knowledge'));
   assert.ok(!KNOWLEDGE_IMPORT.test('fix: sync desde otro sitio'));
   assert.ok(!KNOWLEDGE_IMPORT.test('docs(auto): notes'));
+});
+
+test('r1-8: a joiner, a selector or a keycap on their own are not a symbol; they only count inside an emoji sequence', () => {
+  const devanagari = '\u0915\u094D\u200D\u0937';
+  assert.ok(!hasSymbol(devanagari));
+  assert.equal(plain(devanagari), devanagari);
+  assert.equal(stripSymbols(devanagari), devanagari);
+  assert.equal(plain('a\u200Cb'), 'a\u200Cb');
+  assert.ok(!hasSymbol('Fran\u00E7ois x <- y -> z C:\\a\\b *.js #1'));
+  assert.ok(hasSymbol('1\u20E3'), 'a keycap sequence still is');
+  assert.equal(plain('x \u2764\uFE0F\u200D\u{1F525} \u0915\u094D\u200D\u0937'), 'x \u0915\u094D\u200D\u0937');
+  assert.equal(guard(marked(), `git commit -m "feat: ${devanagari}"`), null, 'the guard does not refuse it either');
+});
+
+test('r1-9: without the marker the guard decides exactly as upstream/main did', () => {
+  const root = fresh('rsc-emoji-r1-guard-');
+  const SPARKLES = '\u2728';
+  // Expected decisions written by hand from upstream/main's guard (checked against its copy).
+  const expected = {
+    'git commit -m "feat: x\n\nbody"': null,
+    'git commit -m "feat: a && b"': null,
+    'git commit -m "feat: a; b"': null,
+    'echo it\'s fine; git commit -m "feat: x"': 'deny',
+    'git add . && git commit -m "feat: x"': 'deny',
+    'git add .\ngit commit -m "feat: x"': 'deny',
+    [`git commit -m "${SPARKLES} feat: x" -m "body"`]: null,
+    'git commit -m "feat: x" -m "body"': 'deny',
+    [`git commit -m "${SPARKLES} a" && git commit -m "b: bad"`]: 'deny',
+    'git commit -m "feat: x': null,
+    'echo "git commit -m x"': null,
+  };
+  for (const [cmd, want] of Object.entries(expected)) {
+    assert.equal(guard(root, cmd) ? 'deny' : null, want, JSON.stringify(cmd));
+  }
 });
