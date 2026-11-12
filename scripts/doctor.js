@@ -244,6 +244,13 @@ function invalidClaudeAgentTools(root, names) {
   });
 }
 
+function piInstructionsWired(file) {
+  try {
+    const text = readFileSync(file, 'utf8');
+    return /^<!-- rsc-suggest:start -->\r?$/m.test(text) && /^<!-- rsc-suggest:end -->\r?$/m.test(text);
+  } catch { return false; }
+}
+
 export function doctor({ target, home, cwd }) {
   const root = cwd || process.cwd();
   const paths = targetPaths(target, home, cwd);
@@ -291,7 +298,14 @@ export function doctor({ target, home, cwd }) {
     installed: Object.keys(state.skills),
     missing: [],
     // Wired means it can actually run, not merely that the file declaring it is there.
-    hookWired: existsSync(paths.hookTarget) && missingHookScripts({ target, home, cwd }).length === 0,
+    hookWired: existsSync(paths.hookTarget) && missingHookScripts({ target, home, cwd }).length === 0
+      && (target !== 'pi' || piInstructionsWired(paths.hookTarget)),
+    ...(target === 'pi' ? { contextFile: {
+      path: paths.hookTarget,
+      ...(piInstructionsWired(paths.hookTarget) ? {} : {
+        action: 'Run `rsc sync` to restore the managed instructions in the context file Pi currently selects.',
+      }),
+    } } : {}),
     manifestSkills: manifest.counts.skills,
     backups: {
       exists: existsSync(join(root, '.rsc', 'backups')),
