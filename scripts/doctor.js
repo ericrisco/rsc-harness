@@ -195,6 +195,55 @@ function ownSkillsIn(paths, declared = []) {
   return { present: present.sort(), missing, declared };
 }
 
+// Diagnose the shipped capability-name defect without rejecting custom MCP tools or
+// changing a user-owned file. Restrict parsing to the frontmatter's tools field.
+function withoutYamlComment(line) {
+  let quote = null;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quote === '"' && c === '\\') { i++; continue; }
+    if (quote && c === quote) {
+      if (quote === "'" && line[i + 1] === "'") { i++; continue; }
+      quote = null;
+    } else if (!quote && (c === '"' || c === "'")) quote = c;
+    else if (!quote && c === '#' && (i === 0 || /\s/.test(line[i - 1]))) return line.slice(0, i).trim();
+  }
+  return line.trim();
+}
+
+function invalidClaudeAgentTools(root, names) {
+  return names.flatMap((id) => {
+    const path = agentPath('claude', root, id);
+    let text;
+    try { text = readFileSync(path, 'utf8').replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n'); } catch { return []; }
+    const fm = /^---\n([\s\S]*?)\n---(?:\n|$)/.exec(text)?.[1] || '';
+    const rawLines = fm.split('\n');
+    const index = rawLines.findIndex((line) => /^tools:/.test(line));
+    const lines = rawLines.map(withoutYamlComment);
+    if (index < 0) return [];
+    let value = lines[index].slice('tools:'.length).trim();
+    if (!value) {
+      for (const line of lines.slice(index + 1)) {
+        if (!line) continue;
+        if (!line.startsWith('- ')) break;
+        value += `${line}\n`;
+      }
+    } else if (value.startsWith('[') && !value.endsWith(']')) {
+      for (const line of lines.slice(index + 1)) {
+        if (/^[\w-]+:/.test(line)) break;
+        value += `\n${line}`;
+        if (line.endsWith(']')) break;
+      }
+    }
+    const values = value.split(/,|\n/)
+      .map((s) => s.trim().replace(/^-\s*/, '').replace(/^[\["']+|[\]"']+$/g, '').trim());
+    const tools = [...new Set(values.filter((s) => ['read', 'search', 'edit', 'shell'].includes(s)))];
+    return tools.length ? [{ id, path, tools,
+      action: `Claude requires native tool names. Run \`rsc sync\`; if this agent was edited, review it or use \`rsc agents reset ${id}\` (backs up your version).`,
+    }] : [];
+  });
+}
+
 export function doctor({ target, home, cwd }) {
   const root = cwd || process.cwd();
   const paths = targetPaths(target, home, cwd);
@@ -274,6 +323,7 @@ export function doctor({ target, home, cwd }) {
     automationGaps: countGaps(root),
     memory,
     missingAgents,
+    invalidAgentTools: target === 'claude' ? invalidClaudeAgentTools(root, state.agents || []) : [],
     agentCollisions: state.agentCollisions || [],
     // #298 — generated agents the user edited and sync kept as they are. Not unhealthy: theirs on
     // purpose. Named with the way back, so a stale edit is one command from rsc's version.
@@ -307,7 +357,7 @@ export function doctor({ target, home, cwd }) {
     report.onboarding = { status: 'incomplete', missing: ['<onboarding readiness could not be read>'], pending: [], action: String(error?.message || error).slice(0, 200) };
   }
   report.healthy = report.hookWired && !report.missing.length && !missingAgents.length && !missingCommands.length
-    && !report.opencodePluginsOutdated.length;
+    && !report.opencodePluginsOutdated.length && !report.invalidAgentTools.length;
   return report;
 }
 
