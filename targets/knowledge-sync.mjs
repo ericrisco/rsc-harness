@@ -54,6 +54,13 @@ export const KNOWLEDGE_BRANCH = 'rsc/knowledge';
 /** The subject of what `applyIncoming` commits: content that came FROM the exchange branch. */
 const SYNC_SUBJECT = `📥 docs(auto): sync desde ${KNOWLEDGE_BRANCH}`;
 
+// `rsc emoji off` (.rsc/.no-emoji): rsc writes its commits and its messages without emoji. The detection
+// of its own commits accepts both forms, so a project that turns emoji on or off mid-life still
+// recognizes what it wrote before.
+const tag = (root, glyph) => (existsSync(join(root, '.rsc', '.no-emoji')) ? '' : `${glyph} `);
+const syncSubject = (root) => `${tag(root, '📥')}docs(auto): sync desde ${KNOWLEDGE_BRANCH}`;
+const isSyncSubject = (subject) => subject === SYNC_SUBJECT || subject === SYNC_SUBJECT.slice(3);
+
 const STATE = 'knowledge-sync.json';
 const LOCK = 'knowledge-sync.lock';
 const FETCH_EVERY_MS = 60_000;
@@ -290,7 +297,7 @@ export function commitLocal(root, s) {
   // No [skip ci] HERE: this commit lands on the working branch, often as its newest commit, and the
   // next ordinary push of that branch would skip CI on main (E2E 2026-10-07). Only the copy on the
   // exchange branch carries it (see `ship`).
-  const message = (names) => `📝 docs(auto): ${summary(names)}`;
+  const message = (names) => `${tag(root, '📝')}docs(auto): ${summary(names)}`;
   // Closed trunk, or code of the agent's still uncommitted: no commit of ours on the branch. The
   // snapshot goes up the same way and the files stay modified, to be committed WITH that work.
   if ((branch === defaultBranch(root) && trunkClosed(root)) || workPending(root)) {
@@ -351,7 +358,7 @@ export function queueCommitted(root, s) {
   const commits = git(root, ['rev-list', '--reverse', '--no-merges', '--first-parent', `${from}..${head}`, ...not, '--', ...KNOWLEDGE]).split('\n').filter(Boolean);
   for (const c of commits) {
     if (s.queue.includes(c) || s.ours.includes(c)) continue;
-    if (line(root, ['log', '-1', '--format=%s', c]) === SYNC_SUBJECT) continue;
+    if (isSyncSubject(line(root, ['log', '-1', '--format=%s', c]))) continue;
     s.queue.push(c);
   }
 }
@@ -484,10 +491,10 @@ export function ship(root, s) {
       // A commit of somebody's own (code + docs) goes up as its knowledge part, under a message that
       // says so and carries [skip ci]: its own message would describe code that is not there, and
       // would run CI on the exchange branch.
-      const ownAuto = /^📝 docs\(auto\):/.test(rest[0] || '');
+      const ownAuto = /^(?:📝 )?docs\(auto\):/.test(rest[0] || '');
       const body = ownAuto ? [`${rest[0].replace(SKIP_CI, '').trim()} ${SKIP_CI}`, ...rest.slice(1)]
         : rest.join('\n').includes(SKIP_CI) ? rest : [
-        `📝 docs(auto): ${summary(zlist(git(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', '-z', sha, '--', ...KNOWLEDGE])).filter(isKnowledge))} ${SKIP_CI}`,
+        `${tag(root, '📝')}docs(auto): ${summary(zlist(git(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', '-z', sha, '--', ...KNOWLEDGE])).filter(isKnowledge))} ${SKIP_CI}`,
         '', `Desde: ${rest[0] || sha.slice(0, 7)}`];
       base = git(root, ['commit-tree', tree, '-p', base, '-F', '-'], {
         input: body.join('\n'),
@@ -571,7 +578,7 @@ export function applyIncoming(root, s) {
     s.waiting[branch] = tip;
     const pending = know.filter((f) => worktreeBlob(root, f) !== blob(root, tip, f));
     if (!pending.length) return said;
-    said.push(`📥 Hay cambios de conocimiento en ${KNOWLEDGE_BRANCH} (${byAuthor(root, pending, touchedBy, s.ours)}). ` +
+    said.push(`${tag(root, '📥')}Hay cambios de conocimiento en ${KNOWLEDGE_BRANCH} (${byAuthor(root, pending, touchedBy, s.ours)}). ` +
       `En ${branch} (cerrada) no los escribo, porque bloquearían tu próximo git pull: llegan con el pull ` +
       'cuando se fusionen, o a la rama que abras en su primer mensaje. ' +
       `Para leer uno ya: git show origin/${KNOWLEDGE_BRANCH}:<fichero>.`);
@@ -600,8 +607,8 @@ export function applyIncoming(root, s) {
     const present = take.filter((f) => blob(root, tip, f));
     if (present.length) git(root, ['--literal-pathspecs', 'checkout', tip, '--', ...present]);
     if (gone.length) git(root, ['--literal-pathspecs', 'rm', '--quiet', '--', ...gone]);
-    git(root, ['--literal-pathspecs', 'commit', '--quiet', '--no-verify', '--only', '-m', SYNC_SUBJECT, '--', ...take]);
-    said.push(`📥 Traídos ${take.length} fichero(s) de conocimiento (${byAuthor(root, take, touchedBy, s.ours)}).`);
+    git(root, ['--literal-pathspecs', 'commit', '--quiet', '--no-verify', '--only', '-m', syncSubject(root), '--', ...take]);
+    said.push(`${tag(root, '📥')}Traídos ${take.length} fichero(s) de conocimiento (${byAuthor(root, take, touchedBy, s.ours)}).`);
   }
   if (clash.length) {
     const who = authorsOf(root, [...new Set(clash.flatMap(touchedBy))].filter((c) => !s.ours.includes(c)));
@@ -626,7 +633,7 @@ export function applyIncoming(root, s) {
 // carries docs. The checkout is not touched, so the closed main stays clean and the next pull works.
 
 export const FTD_CLOSE_OPT_OUT = '.no-ftd-close';
-const CLOSE_SUBJECT = '📝 docs(auto): cierre FTD';
+const closeSubject = (root) => `${tag(root, '📝')}docs(auto): cierre FTD`;
 /** Trailer of a close: `Cierra: <blob it replaces> <path>`, so a teammate's branch takes it (applyIncoming). */
 const CLOSES = 'Cierra:';
 const isFtdDoc = (p) => /^02-DOCS\/wiki\/ftd\/[^/]+\.md$/.test(p);
@@ -755,7 +762,7 @@ function closuresFor(root, orig, head, def, read) {
       if (owner && owner !== name) continue;
       if (!owner) {
         const own = (line(root, ['log', '--no-merges', '--format=%s', `${base}..${tip}`, '--', f]) || '').split('\n').filter(Boolean);
-        if (!own.some((s) => s !== SYNC_SUBJECT)) continue;
+        if (!own.some((s) => !isSyncSubject(s))) continue;
       }
       landing ||= landingOf(root, orig, head, tip);
       const created = (line(root, ['log', '--diff-filter=A', '--format=%an', tip, '--', f]) || '').split('\n').filter(Boolean).pop();
@@ -825,7 +832,7 @@ export function closeLanded(root, { spawnShip = true } = {}) {
         trailers.push(`${CLOSES} ${blob(root, 'HEAD', f)} ${f}`);
       }
       const tree = line(root, ['write-tree'], { env });
-      sha = git(root, ['commit-tree', tree, '-p', head, '-F', '-'], { input: `${CLOSE_SUBJECT}: ${summary(files)}\n\n${trailers.join('\n')}\n` }).trim();
+      sha = git(root, ['commit-tree', tree, '-p', head, '-F', '-'], { input: `${closeSubject(root)}: ${summary(files)}\n\n${trailers.join('\n')}\n` }).trim();
     } finally {
       try { unlinkSync(env.GIT_INDEX_FILE); } catch { /* never created */ }
     }
@@ -833,7 +840,7 @@ export function closeLanded(root, { spawnShip = true } = {}) {
     if (open) {
       // Open: it lands here like any docs(auto) commit — HEAD moves only if nobody moved it meanwhile,
       // then the index and the files follow, for these paths only.
-      git(root, ['update-ref', '-m', `rsc: ${CLOSE_SUBJECT}`, 'HEAD', sha, head]);
+      git(root, ['update-ref', '-m', `rsc: ${closeSubject(root)}`, 'HEAD', sha, head]);
       for (const [f, text] of docs) writeFileSync(join(root, f), text);
       git(root, ['--literal-pathspecs', 'update-index', '--', ...files]);
       return { closed: files, via: 'local' };
@@ -881,7 +888,7 @@ function fetchDown(root, timeout) {
   return false;
 }
 
-const ANNOUNCE = '🔄 La sincronización del conocimiento está activa: lo que cambies en 01-TOOLS/, 02-DOCS/wiki/ ' +
+const announcement = (root) => `${tag(root, '🔄')}La sincronización del conocimiento está activa: lo que cambies en 01-TOOLS/, 02-DOCS/wiki/ ` +
   `y 02-DOCS/attachments/ viaja a tu equipo por la rama ${KNOWLEDGE_BRANCH} (nunca a la principal; allí con ` +
   '[skip ci]) y lo de los demás te llega a tu rama de trabajo. Llega a la principal dentro de vuestras PRs. ' +
   'Para apagarla en este proyecto: `rsc knowledge-sync off`.';
@@ -899,7 +906,7 @@ export function onRequest(root, { spawnFetch = true } = {}) {
     const said = locked(root, (s) => {
       const out = [];
       if (fresh) s.lastFetch = Date.now();
-      if (!s.announced) { out.push(ANNOUNCE); s.announced = true; }
+      if (!s.announced) { out.push(announcement(root)); s.announced = true; }
       try { out.push(...applyIncoming(root, s)); } catch (e) { out.push(`La sincronización del conocimiento falló al traer cambios: ${clean(e.message, 160)}`); }
       try { out.push(...openNotices(root, s)); } catch { out.push(...s.notices); }
       s.notices = [];

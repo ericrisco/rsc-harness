@@ -11,7 +11,8 @@ import {
   effectiveAgentModel, writeAgentsDetailed, readDeveloperTier, AGENT_MODEL_INHERIT, AGENT_TARGET_IDS,
 } from '../targets/agents.js';
 import { doctor } from './doctor.js';
-import { ask, say, select, pickFrom, banner, confirm, isInteractive } from './lib/ui.js';
+import { ask, say, select, pickFrom, banner, confirm, isInteractive, setPlainOutput } from './lib/ui.js';
+import { emojiOff } from '../targets/emoji-policy.mjs';
 import { refreshRegistry, registryStatus } from './lib/registry.js';
 import { audit, writeAuditReport, recordAuditBaseline } from './audit.js';
 import { DOMAINS } from './lib/domains.js';
@@ -31,6 +32,8 @@ import { applyAcceptedOnboarding, verifyOnboarding, ensureHarnessSkeleton, harne
 import { CONSTITUTION_PATH, constitutionIsDraft, ensureConstitutionDraft } from './lib/constitution-draft.js';
 
 const rawArgv = process.argv.slice(2);
+// With `.rsc/.no-emoji` in the project, everything `say` prints is in words (targets/emoji-policy.mjs).
+setPlainOutput(emojiOff(process.cwd()));
 
 // `rsc --version` — answered before anything else runs, offline, and in a shape a bug report can
 // paste. Two numbers because there are two things: the CLI you just ran, and the harness this
@@ -46,7 +49,7 @@ if (['--version', '-v', 'version'].includes(rawArgv[0])) {
   process.exit(0);
 }
 const GENERAL_HELP = [
-  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | risk [--base <ref>] [paths…] | spec gate [specs…] | review consolidate|ledger|escapes | ingest <file...> | copy check <file> | copy rules | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
+  'Use: npx @ericrisco/rsc onboard | reassess | add <id...> | install --profile <p> | consult "<text>" | list | capabilities [--full|gap-log] | audit | registry refresh | doctor | sync | agent-model <target> <model|inherit|status> | agents [status|reset <name|--all>] | memory <on|off|status|save|resume|learn|metrics> | emoji <on|off|status> | risk [--base <ref>] [paths…] | spec gate [specs…] | review consolidate|ledger|escapes | ingest <file...> | copy check <file> | copy rules | sello <on|off|status|…> | worktrees [reap [path] [--confirm]] | backups | restore <id|latest> | upgrade | repair | uninstall <id...> | purge | help',
   'Any command takes --target <claude|codex|cursor|copilot|gemini|…> (comma-separate for several)',
   '   → without it, rsc uses the assistant already installed here; if two are, it asks instead of guessing.',
 ].join('\n');
@@ -75,15 +78,16 @@ const PURGE_HELP = [
 // `--accompaniment` stays listed although the dial is retired: old scripts and agents still pass it,
 // and its value must keep being skipped rather than read as a command or a skill id.
 const GLOBAL_VALUE_FLAGS = new Set([
-  '--topic', '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--accept-plan',
+  '--topic', '--target', '--technical-level', '--accompaniment', '--project-kind', '--goal', '--goal-base64', '--software-scope', '--workflow', '--emoji', '--accept-plan',
 ]);
-const COMMANDS = new Set(['ingest', 'copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'risk', 'spec', 'sello', 'repair', 'uninstall', 'purge']);
+const COMMANDS = new Set(['ingest', 'copy', 'onboard', 'reassess', 'add', 'install', 'consult', 'catalog', 'audit', 'list', 'doctor', 'memory', 'knowledge-sync', 'git-permissions', 'agent-model', 'agents', 'emoji', 'main', 'isolation', 'sync', 'backups', 'restore', 'upgrade', 'registry', 'worktrees', 'capabilities', 'review', 'risk', 'spec', 'sello', 'repair', 'uninstall', 'purge']);
 // Sync preserves project decisions. Only these explicit transitions clear an opt-out;
 // a missing local marker alone does not revoke a teammate's declared decision.
 const EXPLICIT_REARMS = {
   main: { lock: ['trunk-guard'], unlock: ['trunk-open'] },
   isolation: { on: ['worktree-isolation'] },
   'knowledge-sync': { on: ['knowledge-sync'] },
+  emoji: { on: ['emoji'] },
 };
 function positionalTokens(input) {
   const out = [];
@@ -125,6 +129,8 @@ function onboardingInput(targets) {
     goal: value('goal') || (value('goal-base64') ? decodeGoal(value('goal-base64')) : undefined),
     softwareScope: value('software-scope'),
     workflow: value('workflow'),
+    // Not given → what the project already decided, so re-onboarding never undoes `rsc emoji off`.
+    emoji: value('emoji') ?? (emojiOff(process.cwd()) ? 'off' : undefined),
     targets,
   };
 }
@@ -134,7 +140,7 @@ function onboardingRequired(raw, action = 'onboard') {
     code: 'RSC_ONBOARDING_REQUIRED',
     schemaVersion: 1,
     missing: missingOnboardingFields(raw),
-    recovery: `Run npx @ericrisco/rsc@latest ${action} --technical-level <non-technical|mixed|technical> --project-kind <software|operations|research|content|mixed> --goal "<what you want>" --target <assistant> (software or mixed also: --software-scope <small|growing|complex> --workflow <main|branches>)`,
+    recovery: `Run npx @ericrisco/rsc@latest ${action} --technical-level <non-technical|mixed|technical> --project-kind <software|operations|research|content|mixed> --goal "<what you want>" --target <assistant> (software or mixed also: --software-scope <small|growing|complex> --workflow <main|branches>; any project: --emoji <on|off>, default on)`,
     // Each value is the person's own answer, asked as a question. Never infer one from the code or
     // from a nearby answer: a field test mapped «mixto» to technical and «growing» to small.
     ask: {
@@ -143,6 +149,7 @@ function onboardingRequired(raw, action = 'onboard') {
       goal: 'What do you want this project to achieve?',
       'software-scope': 'How much software work is expected? (small | growing | complex)',
       workflow: 'Code changes: straight on main, or on branches closed with a pull request? (main | branches — recommended: branches only for complex, long-lived code)',
+      emoji: 'Emoji in replies, commits and rsc messages? (on | off — default on)',
       target: 'Which assistants? (claude, codex, gemini, cursor, opencode, …)',
     },
   };
@@ -188,6 +195,8 @@ function renderPlan(plan, planId) {
   say(`Project: ${plan.record.projectKind}${plan.record.softwareScope ? ` (${plan.record.softwareScope})` : ''}`);
   say(`Technical level: ${plan.record.technicalLevel}`);
   say(`Workflow: ${plan.record.workflow === 'branches' ? 'branches + pull request (the default branch is closed for the agent; it asks before each code change where it goes)' : 'straight on the default branch (no branch questions)'}`);
+  say(`Emoji: ${plan.record.emoji === 'off' ? 'off (no emoji in replies, commits or rsc messages; rsc writes .rsc/.no-emoji)' : 'on (as before)'}`);
+  say('AGENT: ask the person «¿Quieres emoji en las respuestas, los commits y los mensajes de rsc? (sí | no; por defecto sí)». If their answer differs from the line above, generate the plan again with --emoji <on|off>.');
   if (plan.record.softwareScope) say('AGENT: ask the person «¿Los cambios de código van directos a main, o con ramas y pull request?» (main | branches; branches is for long-lived, complex code). If their answer differs from the line above, generate the plan again with --workflow <answer>.');
   say('AGENT: before accepting, read these values back to the person and check each one is what they answered.');
   say(`Targets: ${plan.policy.targets.join(', ')}`);
@@ -222,6 +231,7 @@ function renderPlan(plan, planId) {
     `--goal-base64 ${encodeGoal(plan.record.goal)}`,
     ...(plan.record.softwareScope ? [`--software-scope ${plan.record.softwareScope}`] : []),
     ...(plan.record.workflow ? [`--workflow ${plan.record.workflow}`] : []),
+    ...(plan.record.emoji === 'off' ? ['--emoji off'] : []),
     `--target ${plan.record.targets.join(',')}`,
     `--accept-plan ${planId}`,
   ];
@@ -262,6 +272,10 @@ async function runOnboarding(targets) {
       ];
       raw.workflow = await select('How should code changes land?', branchesFirst ? options.reverse() : options);
     }
+    raw.emoji ||= await select('Emoji in replies, commits and rsc messages?', [
+      { key: 'on', label: 'Yes — as rsc does by default' },
+      { key: 'off', label: 'No — words instead, in replies, commits and rsc messages' },
+    ]);
     if (!raw.targets?.length) raw.targets = await selectAgents();
     if (!raw.technicalLevel || !raw.projectKind || !raw.goal || !raw.targets?.length) {
       say('Cancelled — nothing was touched.');
@@ -380,6 +394,8 @@ function runReassessment() {
     `--goal-base64 ${encodeGoal(record.goal)}`,
     ...(record.softwareScope ? [`--software-scope ${record.softwareScope}`] : []),
     ...(record.workflow ? [`--workflow ${record.workflow}`] : []),
+    // What the project holds now (the marker), not what the receipt said when it was accepted.
+    ...(emojiOff(process.cwd()) ? ['--emoji off'] : []),
     `--target ${record.targets.join(',')}`,
   ].join(' '));
   say('Show the new plan and ask the user to accept its id before applying it.');
@@ -902,6 +918,30 @@ async function main() {
       printDoctorHeadline(report);
       printContextBudget(report.contextBudget);
       return void say(JSON.stringify({ ...report, contextBudget: undefined }, null, 2));
+    }
+    case 'emoji': {
+      // «sin emoji» / «con emoji»: a PROJECT decision, like `main`. The marker is the decision; syncing
+      // records it in .rsc.json so a clone gets it too. The accepted plan is hash-checked and is not
+      // rewritten: it says what was chosen at install, the marker says what holds now.
+      const sub = argv[1] || 'status';
+      const root = process.cwd();
+      const { mkdirSync, writeFileSync, rmSync } = await import('node:fs');
+      const { join } = await import('node:path');
+      if (sub === 'off' || sub === 'on') {
+        mkdirSync(join(root, '.rsc'), { recursive: true });
+        if (sub === 'off') writeFileSync(join(root, '.rsc', '.no-emoji'), '');
+        else rmSync(join(root, '.rsc', '.no-emoji'), { force: true });
+        setPlainOutput(sub === 'off');
+        const rearmOptOuts = EXPLICIT_REARMS[cmd]?.[sub] || [];
+        for (const t of targets) await syncInstalled({ target: t, cwd: root, rearmOptOuts });
+        return void say(sub === 'off'
+          ? 'rsc emoji off: no reply, commit or rsc message in this project carries an emoji. The next session reads it. Commit .rsc.json so the team gets the same decision.'
+          : 'rsc emoji on: emoji are back in this project, as rsc did before. The next session reads it. Commit .rsc.json so the team gets the same decision.');
+      }
+      if (sub === 'status') return void say(`emoji: ${emojiOff(root) ? 'off' : 'on'}`);
+      console.error('Use: rsc emoji <on|off|status>');
+      process.exitCode = 2;
+      return;
     }
     case 'main':
     case 'isolation': {

@@ -57,6 +57,9 @@ BREAKING CHANGE: description of the incompatible change
 Fixes #123
 ```
 
+- With `.rsc/.no-emoji` (`rsc emoji off`) this reverses: **no gitmoji**, no emoji or `:shortcode:` in
+  any commit or pull request, only `type(scope)!: subject`. The commit guard then refuses a message
+  that carries one. The rest of this section applies without the glyph.
 - The **gitmoji is mandatory** and comes first — the intention of the change, readable in one glyph
   when you scan `git log --oneline`. `type` is what tooling reads; the emoji is what humans read.
 - `type` is mandatory. `scope` in parentheses is optional. `!` before the colon marks a breaking change.

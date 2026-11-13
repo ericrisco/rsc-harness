@@ -13,6 +13,12 @@ still drives the SemVer bump. They are two different jobs and neither replaces t
 with 💥 but no `!`/`BREAKING CHANGE:` footer still releases as a MINOR, because tooling reads the
 type, not the picture.
 
+## When emoji are off
+
+A project with `.rsc/.no-emoji` (`rsc emoji off`) uses none of this table: the commit is
+`type(scope)!: subject`, and the guard refuses an inline message that carries an emoji or a
+`:shortcode:`. The `type` still drives the SemVer bump, so nothing else changes.
+
 ## Picking one
 
 Match the **intention**, not the file that changed. If two fit, take the more specific one (🚑️ over

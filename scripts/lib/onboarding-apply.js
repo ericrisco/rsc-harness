@@ -99,6 +99,7 @@ function recoveryCommand(plan, planId) {
     `--goal-base64 ${encodeGoal(record.goal)}`,
     ...(record.softwareScope ? [`--software-scope ${record.softwareScope}`] : []),
     ...(record.workflow ? [`--workflow ${record.workflow}`] : []),
+    ...(record.emoji === 'off' ? ['--emoji off'] : []),
     `--target ${record.targets.join(',')}`,
     `--accept-plan ${planId}`,
   ].join(' ');
@@ -268,6 +269,20 @@ export function applyWorkflowDecision(cwd, workflow) {
   rmSync(workflow === 'main' ? closed : open, { force: true });
 }
 
+/**
+ * The install-time answer «emoji on | off» is the project's `.rsc/.no-emoji`, the same marker
+ * `rsc emoji off` writes (a PROJECT opt-out, recorded in .rsc.json by the install below, rebuilt in a
+ * clone). A record without `emoji` is `on`: the marker goes. It is NOT a governed path: `rsc emoji`
+ * changes it later, and a digest of it would read that change as drift.
+ */
+export function applyEmojiDecision(cwd, emoji) {
+  const marker = join(cwd, '.rsc', '.no-emoji');
+  if (emoji === 'off') {
+    mkdirSync(dirname(marker), { recursive: true });
+    writeFileSync(marker, '');
+  } else rmSync(marker, { force: true });
+}
+
 export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planId, now = new Date(), apply = applyInstall }) {
   if (identifyPlan(plan) !== planId) throw new Error('RSC_PLAN_CHANGED: regenerate the plan and ask the user to accept the new id');
   const previousManifest = readManifest(cwd);
@@ -302,6 +317,7 @@ export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planI
   };
   try {
     applyWorkflowDecision(cwd, plan.record.workflow);
+    applyEmojiDecision(cwd, plan.record.emoji);
     for (const target of previousPlan?.policy?.targets || []) {
       if (!plan.policy.targets.includes(target)) removeTargetInstall({ cwd, target });
     }

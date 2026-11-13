@@ -49,7 +49,13 @@ function auditDue() {
 }
 
 if (emitBody) {
-  try { process.stdout.write(readFileSync(suggestMd, 'utf8')); } catch { /* missing → emit nothing */ }
+  try {
+    const body = readFileSync(suggestMd, 'utf8');
+    // `rsc emoji off`: the body closes in words and carries the rule. A sibling under `.rsc/`; if it is
+    // missing the body goes out as it is (fail open: startup is never worth breaking for this).
+    const E = has('.rsc', '.no-emoji') ? await import('./emoji-policy.mjs').catch(() => null) : null;
+    process.stdout.write(E ? E.noEmojiBody(body) : body);
+  } catch { /* missing → emit nothing */ }
 }
 
 // De-dup above only works when EVERY wired scope runs an updated hook. A scope left behind keeps

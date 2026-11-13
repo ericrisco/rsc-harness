@@ -15,6 +15,8 @@ export const ONBOARDING_VALUES = Object.freeze({
   softwareScope: ['small', 'growing', 'complex'],
   // How code changes land: straight on the default branch, or on branches closed with a pull request.
   workflow: ['main', 'branches'],
+  // Whether rsc may use emoji: in replies, in the commits it asks for, in its own output. `off` is `.rsc/.no-emoji`.
+  emoji: ['on', 'off'],
 });
 
 const ignored = new Set([
@@ -59,6 +61,9 @@ export function normalizeOnboarding(raw = {}) {
   const workflow = needsScope
     ? (clean(raw.workflow) ? oneOf('workflow', clean(raw.workflow).toLowerCase(), ONBOARDING_VALUES.workflow) : recommendedWorkflow(softwareScope))
     : 'main';
+  // Asked at install for every kind of project. `on` is the absence of the key, so a plan that does not
+  // choose is exactly the plan it always was (same record, same id).
+  const emoji = clean(raw.emoji) ? oneOf('emoji', clean(raw.emoji).toLowerCase(), ONBOARDING_VALUES.emoji) : 'on';
   return {
     schemaVersion,
     technicalLevel,
@@ -66,6 +71,7 @@ export function normalizeOnboarding(raw = {}) {
     goal,
     ...(needsScope ? { softwareScope } : {}),
     workflow,
+    ...(emoji === 'off' ? { emoji } : {}),
     targets,
   };
 }

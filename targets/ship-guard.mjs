@@ -137,7 +137,7 @@ function mergesIntoTrunk(segment) {
 if (!parking && !judged.some((s) => TRUNK.test(s) || mergesIntoTrunk(s))) allow();
 
 // Commits in a range that are the person's: rsc's own knowledge commits are left out.
-const RSC_OWN = /^(?:📥|📝) docs\(auto\)/u;
+const RSC_OWN = /^(?:(?:📥|📝) )?docs\(auto\)/u;
 function ownCommits(range) {
   const log = git('log', '--format=%s', range);
   if (log === null) return null;
