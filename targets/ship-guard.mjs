@@ -11,7 +11,8 @@
 // rsc's own knowledge commits (📥/📝 docs(auto)) are not the person's unpushed work. If the current feature branch has uncommitted changes or commits
 // that were never pushed, the guard DENIES the command and tells the agent to run
 // `ship` (commit → push → PR). Opening the PR itself is `ship`'s job and the skill's
-// hard rule; this hook guarantees you cannot quietly abandon unsaved/unpushed work.
+// hard rule. An explicitly open main also permits parking a clean local-only experiment,
+// with a reminder; publishing and merging still run their separate gates.
 //
 // Design: precise (only fires on a trunk switch/merge), local-only (no network, no gh),
 // and FAIL-OPEN — any ambiguity (detached HEAD, no repo, git error) allows the command.
@@ -22,7 +23,10 @@ import { spawnSync } from 'node:child_process';
 
 const root = process.argv[2] || process.cwd();
 
-function allow() { process.exit(0); }
+function allow(message) {
+  if (message) process.stdout.write(JSON.stringify({ systemMessage: message }));
+  process.exit(0);
+}
 function deny(reason) {
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: {
@@ -86,6 +90,33 @@ const MERGE = new RegExp(String.raw`\bgit\s+${GOPTS}merge\b`);
 const SH = await import(new URL('./shell-unwrap.mjs', import.meta.url)).catch(() => null);
 const judged = SH ? SH.expand(command).map((s) => s.replace(/"(?:[^"\\]|\\.)*"|'[^']*'/g, '""')) : [command];
 
+// A parking exception is deliberately narrower than the legacy landing detector: one
+// non-destructive switch, no chained delivery, and the checkout the command really addresses.
+function parkingSwitch(text, cwd, depth = 0) {
+  if (!SH || depth > 6 || /[$`<>]/.test(text)) return null;
+  const parts = SH.segments(text);
+  if (parts.length !== 1) return null;
+  const args = SH.words(parts[0]).map(w => w.text);
+  // Unlike generic command detection, granting an exception cannot discard environment
+  // assignments or wrapper options: env -C and GIT_DIR can select another checkout.
+  if (['bash', 'sh', 'zsh', 'dash', 'ksh'].includes(args[0]) && args[1] === '-c' && args.length === 3) {
+    return parkingSwitch(args[2], cwd, depth + 1);
+  }
+  if (args.shift() !== 'git') return null;
+  let dir = cwd;
+  while (args[0] === '-C') {
+    args.shift(); const path = args.shift();
+    if (path === undefined) return null;
+    dir = resolve(dir, path);
+  }
+  if (!['switch', 'checkout'].includes(args.shift())) return null;
+  const names = args.filter(arg => !['-q', '--quiet'].includes(arg));
+  if (names.length !== 1 || !['main', 'master'].includes(names[0])) return null;
+  return { dir };
+}
+const parking = parkingSwitch(command, input.cwd || root);
+
+
 const gitIn = (dir, ...args) => {
   const r = spawnSync('git', ['-C', dir, ...args], { windowsHide: true, encoding: 'utf8' });
   return r.status === 0 ? (r.stdout || '').trim() : null;
@@ -103,7 +134,7 @@ function mergesIntoTrunk(segment) {
   const b = gitIn(dir, 'rev-parse', '--abbrev-ref', 'HEAD');
   return b === 'main' || b === 'master';
 }
-if (!judged.some((s) => TRUNK.test(s) || mergesIntoTrunk(s))) allow();
+if (!parking && !judged.some((s) => TRUNK.test(s) || mergesIntoTrunk(s))) allow();
 
 // Commits in a range that are the person's: rsc's own knowledge commits are left out.
 const RSC_OWN = /^(?:📥|📝) docs\(auto\)/u;
@@ -120,8 +151,11 @@ if (!branch || branch === 'HEAD' || branch === 'main' || branch === 'master') al
 const tail = '\n(If this is intentional and you accept the risk, create .rsc/.no-ship-guard to disable this guard.)';
 
 // 1) Uncommitted work would be carried off the feature branch.
-const dirty = git('status', '--porcelain');
-if (dirty && dirty.length > 0) {
+// NUL records preserve unusual filenames and distinguish tracked changes from untracked
+// editor metadata. Git's own ignore rules still apply; source files are never excluded here.
+const dirty = git('status', '--porcelain=v1', '-z', '--untracked-files=all');
+const pending = dirty?.split('\0').filter(Boolean).filter(record => !record.startsWith('?? .vscode/'));
+if (pending?.length) {
   deny(`You're leaving feature branch "${branch}" with uncommitted changes. Commit them first — run the \`ship\` skill (commit → push → PR), don't abandon the diff.${tail}`);
 }
 
@@ -136,6 +170,17 @@ if (upstream) {
   // No upstream at all: if the branch carries commits beyond the trunk, it was never pushed.
   const aheadOfTrunk = ownCommits('main..HEAD') ?? ownCommits('master..HEAD');
   if (aheadOfTrunk && Number(aheadOfTrunk) > 0) {
+    // workflow=main is the person's explicit choice. Parking keeps the local branch;
+    // it neither delivers the experiment nor opts out of any push/spec/seal gate.
+    const sameCheckout = parking && gitIn(parking.dir, 'rev-parse', '--absolute-git-dir') === git('rev-parse', '--absolute-git-dir');
+    const remoteBranches = git('for-each-ref', '--format=%(refname:strip=3)', 'refs/remotes');
+    const knownPublished = remoteBranches === null || remoteBranches.split('\n').includes(branch);
+    if (sameCheckout && !knownPublished && existsSync(join(root, '.rsc', '.no-trunk-guard'))) {
+      allow(`rsc: leaving "${branch}" parked locally with ${aheadOfTrunk} unpublished commit(s). The branch is preserved; return to it to resume. This does not publish or approve the work.`);
+    }
+    if (knownPublished) {
+      deny(`Feature branch "${branch}" has a remote-tracking reference but no upstream configured. Recover: set its upstream with \`git branch --set-upstream-to=<remote>/<branch>\`, review any pending commits, and run the \`ship\` skill before returning to the trunk.${tail}`);
+    }
     deny(`Feature branch "${branch}" was never pushed (no upstream, ${aheadOfTrunk} commit(s) ahead of the trunk). Push it and open a PR — run the \`ship\` skill — before leaving it.${tail}`);
   }
 }
