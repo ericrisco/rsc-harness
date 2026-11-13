@@ -121,6 +121,13 @@ export function isolationContext({ project, here, sessionId, target, memoryRoot 
   const others = otherActiveSessions({ cwd: project, worktreeCwd: here, sessionId, target, memoryRoot });
   if (!others.length) return '';
   const who = others.map((o) => `${o.target}${o.branch ? ` en «${o.branch}»` : ''}`).join(', ');
+  let orca = Boolean(process.env.ORCA_WORKTREE_ID || process.env.ORCA_WORKSPACE_ID);
+  try { orca ||= JSON.parse(readFileSync(join(project, '.rsc.json'), 'utf8'))?.worktreeManager === 'orca'; } catch { /* normal warning below */ }
+  if (orca) return `rsc · aislamiento: otra sesión está trabajando en esta misma carpeta (${who}). ` +
+    'Orca gestiona este entorno: consulta `orca worktree current --json` y verifica las identidades de las sesiones antes de compartir el checkout. ' +
+    'El parentesco entre worktrees no demuestra que las sesiones pertenezcan a la misma tarea; sin esa verificación se mantiene el aislamiento. ' +
+    'Crea trabajo independiente con `orca worktree create --name <tarea> --no-parent --base-branch origin/<troncal> --json`, ' +
+    'espera a que terminen sus hooks de preparación y trabaja en la ruta que devuelve Orca. No cambies de rama en esta carpeta.';
   return `rsc · aislamiento: otra sesión está trabajando en esta misma carpeta (${who}). ` +
     'Cualquier cambio de esta petición se hace en un worktree en `.worktrees/` de la raíz, nunca dentro de una carpeta de proyecto: ' +
     '`git worktree add .worktrees/<rama> -b <rama>` (si el proyecto está en una subcarpeta, `git -C <proyecto> worktree add <raíz>/.worktrees/<proyecto>-<rama> -b <rama>`, con la ruta absoluta) y se trabaja dentro. ' +

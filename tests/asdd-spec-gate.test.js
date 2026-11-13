@@ -120,3 +120,15 @@ test('the shipped template carries the four headings the gate demands', () => {
 test('a spec dated a few days after the cut is held to the four as well', () => {
   assert.equal(specCompleteness(at('2026-11-20')).ok, false);
 });
+
+// #348: Windows checkouts must preserve both positive and negative verdicts.
+for (const ending of ['\r\n', '\r']) {
+  for (const bom of ['', '\uFEFF']) {
+    test(`spec gate preserves verdicts with ${JSON.stringify(ending)} and BOM=${!!bom}`, () => {
+      for (const body of [at('2026-11-11') + FOUR, at('2026-11-11'),
+        (at('2026-11-11') + FOUR).replace('Exportar sus facturas, si es dueño de la cuenta.', '')]) {
+        assert.deepEqual(specCompleteness(bom + body.replace(/\n/g, ending)), specCompleteness(body));
+      }
+    });
+  }
+}

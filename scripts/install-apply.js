@@ -1,9 +1,11 @@
 #!/usr/bin/env node
+import { claudeBootstrapPath } from '../targets/claude-lifecycle.js';
 import { rmSync, rmdirSync, existsSync, cpSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync, appendFileSync, readdirSync, renameSync } from 'node:fs';
 import { join, dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { planInstall } from './install-plan.js';
+import { installedCli, materializeCliInstructions } from './lib/cli-invocation.js';
 import { targetPaths, writeSkill, wireHook, unwireHook, baseDir, TARGET_IDS } from '../targets/index.js';
 import { shadowTarget } from '../targets/agents-md-shadow.js';
 import {
@@ -59,13 +61,16 @@ function writeBaseVersions(cwd, versions) {
 // overwriting on a version change is safe. Mutates `baseVersions` with the new mark.
 function ensureBase(id, cwd, baseVersions) {
   const dest = baseDir(id, cwd);
-  const stale = baseVersions[id] !== CLI_VERSION;
+  const local = installedCli();
+  const stamp = `${CLI_VERSION}:${local ? 'rsc' : 'npx'}`;
+  const stale = baseVersions[id] !== stamp;
   if (stale && existsSync(dest)) rmSync(dest, { recursive: true, force: true });
   if (!existsSync(dest)) {
     mkdirSync(dirname(dest), { recursive: true });
     cpSync(join(ROOT, 'skills', id), dest, { recursive: true });
+    materializeCliInstructions(dest, local);
   }
-  baseVersions[id] = CLI_VERSION;
+  baseVersions[id] = stamp;
   return dest;
 }
 
@@ -84,7 +89,7 @@ export function generatedHookFiles({ target, cwd, policy }) {
     join(cwd, '.rsc', 'hook-once.mjs'),
     join(cwd, '.rsc', 'shell-unwrap.mjs'),
     join(cwd, '.rsc', 'emoji-policy.mjs'),
-    join(cwd, '.rsc', 'worktree-reaper.mjs'),
+    join(cwd, '.rsc', 'worktree-reaper.mjs'), join(cwd, '.rsc', 'risk-policy.mjs'),
     join(cwd, '.rsc', 'auto-update.mjs'),
     join(cwd, '.rsc', 'memslop-offer.mjs'),
     // team-safe-default: the 3.0 start-up duties and the trunk policy (also read by branch-guard).
@@ -112,6 +117,10 @@ export function managedPathsForInstall({ skillIds, agentIds = [], target, home, 
   const paths = targetPaths(target, home, cwd);
   const plan = planInstall({ skillIds, target, home, cwd, hooks: policy?.alwaysOn !== false });
   const out = [paths.stateFile, versionFile(cwd), baseVersionsFile(cwd)];
+  // Knowledge/memory wiring also needs this shared dependency without suggest.
+  if (target === 'claude') out.push(claudeBootstrapPath(cwd));
+  // Pi can move its managed block when the native context-file precedence changes.
+  if (target === 'pi') out.push(...paths.contextFiles);
   if (policy?.context7 === false) out.push(join(cwd, '.rsc', '.no-context7'));
   if (policy?.memory !== false) out.push(...memoryManagedPaths(target, cwd));
   out.push(...updateManagedPaths(target, cwd));
@@ -209,7 +218,7 @@ export function hydrateLocalDecisions(cwd, manifest) {
 // into codex on a machine that already had claude is adding, not replacing. Union, sorted
 // where order carries no meaning, so the file stays diffable and a merge conflict stays
 // readable.
-export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalogVersion = CLI_VERSION, dropTarget, onboarding, gitPermissions }) {
+export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalogVersion = CLI_VERSION, dropTarget, onboarding, gitPermissions, preserveOptOuts = false, rearmOptOuts = [] }) {
   const prev = readManifest(cwd) || { targets: [], skills: [], agents: [], ownSkills: [], optOuts: [] };
   const { optOuts, tier } = localDecisions(cwd);
   const union = (a, b) => [...new Set([...(a || []), ...(b || [])])].sort();
@@ -226,15 +235,16 @@ export function recordInManifest({ cwd, target, skillIds, agentIds = [], catalog
     ownSkills: prev.ownSkills || [],
     catalogVersion,
     tier: tier ?? prev.tier ?? null,
-    optOuts: optOuts ?? projectOptOuts(prev.optOuts),
+    optOuts: preserveOptOuts ? union(projectOptOuts(prev.optOuts), optOuts).filter(name => !rearmOptOuts.includes(name)) : optOuts ?? projectOptOuts(prev.optOuts),
     memory: prev.memory,
     gitPermissions: gitPermissions ?? prev.gitPermissions,
     agentModels: prev.agentModels,
+    worktreeManager: prev.worktreeManager,
     onboarding: onboarding ?? prev.onboarding,
   });
 }
 
-export async function applyInstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), operation = 'install', dryRun = false, policy, onboarding }) {
+export async function applyInstall({ skillIds = [], agentIds = [], target, home, cwd = process.cwd(), operation = 'install', dryRun = false, policy, onboarding, rearmOptOuts = [] }) {
   // Read BEFORE anything can create it — the backup writes under `.rsc/`, and one line later the
   // answer would always be "yes, it exists". This single boolean is what separates a clone (the
   // declaration is the only thing that knows what the team decided) from a built machine (the
@@ -370,7 +380,7 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
   writeState(paths.stateFile, state);
   mkdirSync(dirname(versionFile(cwd)), { recursive: true });
   writeFileSync(versionFile(cwd), CLI_VERSION + '\n');
-  recordInManifest({ cwd, target, skillIds, agentIds, onboarding, gitPermissions });
+  recordInManifest({ cwd, target, skillIds, agentIds, onboarding, gitPermissions, preserveOptOuts: operation === 'sync', rearmOptOuts });
   // The worktree cleanup's trigger. It lives in `.git/hooks/`, which is NOT cloned, so it has to be
   // (re)written by every operation that touches a user's repo — install, sync and repair all land
   // here. Target-agnostic on purpose: it is a git hook, not an assistant hook, and a cleanup that
@@ -390,6 +400,7 @@ export async function applyInstall({ skillIds = [], agentIds = [], target, home,
     if (policy?.codeHooks === false) throw new Error('code hooks not governed by the accepted plan');
     mkdirSync(join(cwd, '.rsc'), { recursive: true });
     cpSync(join(ROOT, 'targets', 'worktree-reaper.mjs'), join(cwd, '.rsc', 'worktree-reaper.mjs'));
+    cpSync(join(ROOT, 'targets', 'risk-policy.mjs'), join(cwd, '.rsc', 'risk-policy.mjs'));
     const { installMergeHook } = await import('../targets/worktree-reaper.mjs');
     if (existsSync(join(cwd, '.git'))) mergeHook = installMergeHook(cwd);
   } catch (err) { mergeHook = { installed: false, state: 'skipped', reason: err.message }; }
@@ -691,7 +702,7 @@ export function pruneSharedBases({ cwd = process.cwd(), skillIds = [] }) {
   writeBaseVersions(cwd, versions);
 }
 
-export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun = false }) {
+export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun = false, rearmOptOuts = [] }) {
   const paths = targetPaths(target, home, cwd);
   const state = readState(paths.stateFile);
   // The per-target state is machine wiring and does not travel, so a fresh clone has
@@ -736,6 +747,7 @@ export async function syncInstalled({ target, home, cwd = process.cwd(), dryRun 
     home,
     cwd,
     operation: 'sync',
+    rearmOptOuts,
     policy: manifest?.onboarding?.plan?.policy,
     onboarding: manifest?.onboarding,
   });

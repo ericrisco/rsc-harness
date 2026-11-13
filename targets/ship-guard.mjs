@@ -68,7 +68,7 @@ try {
   const sello = await import(new URL('./sello.mjs', import.meta.url));
   const { specCompleteness } = await import(new URL('./spec-completeness.mjs', import.meta.url));
   const { asddGate } = await import(new URL('./asdd-gate.mjs', import.meta.url));
-  const verdict = asddGate(root, command, { sello, specCompleteness });
+  const verdict = asddGate(root, command, { sello, specCompleteness }, input.cwd || root);
   if (verdict) deny(verdict);
 } catch { /* sibling missing/unloadable → nothing to enforce, fail open */ }
 

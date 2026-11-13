@@ -15,7 +15,7 @@ import { join } from 'node:path';
 export const MANIFEST = '.rsc.json';
 export const manifestPath = (cwd = process.cwd()) => join(cwd, MANIFEST);
 
-const KEYS = ['version', 'targets', 'skills', 'agents', 'ownSkills', 'catalogVersion', 'tier', 'optOuts', 'memory', 'gitPermissions', 'agentModels', 'onboarding'];
+const KEYS = ['version', 'targets', 'skills', 'agents', 'ownSkills', 'catalogVersion', 'tier', 'optOuts', 'memory', 'gitPermissions', 'agentModels', 'worktreeManager', 'onboarding'];
 
 export function readManifest(cwd = process.cwd()) {
   const file = manifestPath(cwd);
@@ -43,6 +43,7 @@ export function readManifest(cwd = process.cwd()) {
     // #298 — per-target agent model: { opencode: 'openai/gpt-5' | 'inherit' }. Only plain objects of
     // strings survive the read; what each value may contain is checked where it is rendered.
     agentModels: agentModelsFrom(raw.agentModels),
+    worktreeManager: raw.worktreeManager === 'orca' ? 'orca' : undefined,
     onboarding: raw.onboarding ?? undefined,
   };
 }

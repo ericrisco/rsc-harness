@@ -860,6 +860,7 @@ test('40 · autoReap never throws — it runs from a git hook, where throwing br
 function materializeReaper(root) {
   mkdirSync(join(root, '.rsc'), { recursive: true });
   copyFileSync(MOD, join(root, '.rsc', 'worktree-reaper.mjs'));
+  copyFileSync(join(HERE, '..', 'targets', 'risk-policy.mjs'), join(root, '.rsc', 'risk-policy.mjs'));
 }
 
 test('41 · after the hook is installed, a real merge retires the landed worktree by itself', () => {

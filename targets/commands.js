@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { agentByName, allAgentNames } from './agents.js';
+import { cliInstructions } from '../scripts/lib/cli-invocation.js';
 
 const COMMAND_TARGETS = Object.freeze({
   claude: { dir: '.claude/commands', ext: '.md', format: 'claude', skillsAreCommands: true },
@@ -195,7 +196,7 @@ export function reconcileCommands(target, cwd, previousNames = [], desiredComman
       continue;
     }
     mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(path, render(command, target));
+    writeFileSync(path, cliInstructions(render(command, target)));
     written.push(path);
     names.push(command.name);
   }

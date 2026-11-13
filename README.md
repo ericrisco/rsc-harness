@@ -15,7 +15,7 @@
 Keep your project knowledge, skills and working rules together across the assistants you already use.
 Start with your goal. Review what rsc proposes to install. Accept the plan before it changes your project.
 
-**MIT licensed · project-local setup · 18 assistant targets**
+**MIT licensed · project-local setup · 19 assistant targets**
 
 Give this URL to your agent and paste the request in the chat:
 
@@ -118,6 +118,12 @@ each assistant gets a symlink back to that shared base, so picking several dupli
 load progressively: only their description is paid for until a task needs them.
 
 Prefer a short `rsc` command? `npm install -g @ericrisco/rsc`.
+
+When an executable `rsc` is already on PATH, install and sync write operational skill and
+command instructions using that installed CLI. This also applies to unversioned commands
+suggested by hooks. Explicit versions such as `@4.1.1` and `@latest` keep their meaning.
+No execution permission is added for this choice. If the CLI is removed, run sync using the
+version declared in `.rsc.json` to restore the `npx` instructions.
 
 > **Run it inside the project you are equipping, not inside a clone of this repo.** The catalog's own
 > `package.json` is named `@ericrisco/rsc`, so `npx @ericrisco/rsc` from within a clone resolves to
@@ -236,6 +242,12 @@ project. rsc handles four things by default:
 | **Knowledge reaches everyone** | `01-TOOLS/`, `02-DOCS/wiki/` and `02-DOCS/attachments/` travel through one exchange branch, `rsc/knowledge`, and reach `main` inside your normal pull requests. | `rsc knowledge-sync off` |
 
 **Emoji.** The install asks once whether rsc may use emoji (`--emoji <on|off>`, default on). With it off, rsc writes `.rsc/.no-emoji` and uses none: not in replies, not in commits, not in its own output. Change it later with `rsc emoji <on|off>`; `rsc doctor` reports it.
+
+**Orca worktrees.** Set `"worktreeManager": "orca"` in `.rsc.json` to retain externally managed
+checkouts even when Orca is unavailable. rsc also recognises a matching Orca CLI response, and never
+removes these checkouts through plain Git. [Setup and cleanup](skills/worktrees/references/orca.md)
+use the pinned harness version and Orca's lifecycle hooks; workspace lineage does not silence
+warnings about unverified concurrent sessions.
 
 **How it knows a project is complex.** A hook counts what anyone can check: a CI setup, a deployment
 file (`Dockerfile`, `vercel.json`, `fly.toml`…) or at least two people in the last 50 commits. The
@@ -369,17 +381,31 @@ The wizard asks which ones; `--target a,b` does it non-interactively.
 | `amp` | `.amp/rsc/<id>/` → symlink | block in `AGENTS.md` |
 | `opencode` | `.opencode/rsc/<id>/` → symlink | block in `AGENTS.md` |
 | `deepseek` | `.dsh/skills/<id>/` → symlink (discovered natively) | block in `AGENTS.md` |
+| `pi` | `.pi/skills/<id>/` → symlink (copy on Windows; discovered natively) | block in Pi's selected project context file |
 | `jules` | `.jules/rsc/<id>/` → symlink | block in `AGENTS.md` |
 | `junie` | `.junie/rsc/<id>/` → symlink | block in `.junie/guidelines.md` |
 | `kiro` | `.kiro/rsc/<id>/` → symlink | doc in `.kiro/steering/rsc-suggest.md` |
 | `aider` | `.aider/rsc/<id>/` → symlink | block in `CONVENTIONS.md` |
 
 > `codex`, `zed`, `amp`, `opencode`, `deepseek` and `jules` share one root `AGENTS.md`; the block is
-> written once.
+> written once. Pi shares it when that is the context file its native loader selects.
 
 > **DeepSeek Harness** (`dsh`) has no project-level hooks, so once per machine rsc adds one marked
 > block to `~/.dsh/cordis.patch.yml` that runs the hooks of whichever project the session is in.
 > Restart dsh once after the first install; delete the block to turn it off.
+
+> **Pi:** select `--target pi` during onboarding, then run `/reload` in Pi to discover the
+> installed skills. Invoke one explicitly with `/skill:<id>`. Pi loads project resources after
+> project trust is granted; rsc preserves your `.pi/settings.json` and extensions.
+> This target uses Pi's [native skills and context files](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/configuration.md).
+> Its [context loader](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/core/resource-loader.ts)
+> selects the first readable file in this order: `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`,
+> `CLAUDE.md`, `CLAUDE.MD`. rsc adds its marked block to that file, preserving your instructions;
+> it creates `AGENTS.md` only when none exists. If a new override hides the block, doctor reports
+> the missing wiring and sync writes the block into the selected file.
+> It does not install a custom extension, subagents, automatic session-memory hooks, or tool guards.
+> Pi has no built-in subagents; skills that require independent reviewers need an external review.
+> The instructions request an update check on the first turn, as for other targets without a wired session hook.
 
 | Targets | Stack agents | Native commands | Session memory |
 | --- | --- | --- | --- |
@@ -388,6 +414,7 @@ The wizard asks which ones; `--target a,b` does it non-interactively.
 | Cursor desktop | yes | yes | assisted |
 | Gemini CLI, OpenCode | yes | yes | full |
 | DeepSeek Harness | unsupported | unsupported | full (machine bridge) |
+| Pi | unsupported | native `/skill:<id>` (no generated command files) | unsupported |
 | GitHub Copilot | yes | yes | unsupported |
 | Junie, Kiro | yes | unsupported | unsupported |
 | Windsurf, Cline, Roo | unsupported | yes | unsupported |
@@ -675,6 +702,67 @@ Most of this catalog is written here. These are not, and they keep their author'
 
 Adapted, not mirrored: each carries rsc frontmatter, routing evals and hand-offs to its siblings. The
 craft bar in them is the original author's.
+
+### Shared risk policy and external branch checks
+
+Commit `.rsc-risk.json` at the workspace root to share risk rules across clones and submodules:
+
+```json
+{
+  "version": 1,
+  "trunks": ["develop", "integration"],
+  "repositories": { "Catman": { "trunks": ["develop"] } },
+  "testRepos": ["CatmanTest"],
+  "rules": [
+    { "class": "schema", "tier": 2, "path": "\\.Table\\.al$",
+      "removed": "^\\s*field\\s*\\(", "productionOnly": true,
+      "because": "Removing a field changes the stored schema." },
+    { "class": "api", "tier": 2, "path": "\\.Page\\.al$",
+      "contains": "PageType\\s*=\\s*API", "removed": "APIVersion",
+      "because": "The API contract changes." },
+    { "class": "platform", "tier": 2, "path": "(^|/)app\\.json$",
+      "jsonKeys": ["dependencies", "idRanges", "runtime"],
+      "because": "Dependencies or platform requirements change." },
+    { "class": "editor", "tier": 0, "path": "^\\.vscode/settings\\.json$",
+      "because": "Editor preferences only." }
+  ]
+}
+```
+
+Rules can also use `added`, `deleted: true` and `repos: ["relative/path"]`. Conditions in one rule
+must all match. `contains` reads the file before and after the change; `added` and `removed` read
+changed lines with whitespace differences ignored. JSON keys are top-level keys. Renames are
+checked as both old and new paths. Matching rules take their highest tier; explicit zero replaces
+ordinary-code defaults, but built-in risk classes and the secrets/harness floors still apply.
+Patterns are case-insensitive and limited to 200 characters; repeated groups, lookarounds and
+backreferences are rejected. Content lines over 2,000 characters are skipped. Rule evaluation has
+a hard one-second timeout and an 8 MiB input budget: exceeding either reports an error at tier 2.
+At most 64 rules and 16 trunk candidates are supported.
+
+`rsc risk` and the push gate use the policy **from the workspace trunk**, including repository
+settings and exemptions. A proposed policy cannot relax its own outgoing branch. A policy first
+added on a feature branch stays inactive until it lands. Use `rsc risk --policy-preview` to inspect
+the proposed policy explicitly; the output identifies its source. Local `.rsc/sello-config.json`
+remains available for existing settings and bootstrap. Initial trunk discovery uses `origin/HEAD`,
+then `main`, `master` or `develop`; for another name, set the remote HEAD or the local `trunk` first.
+Once a trusted policy exists, its trunk candidates select the nearest branch by commits ahead.
+`rsc doctor` reports an installed ASDD gate that cannot find a trunk.
+
+Specs accept `branches: [feature/a, fix/b]` or a YAML block list, as well as the existing `branch:`.
+An FTD under `02-DOCS/wiki/ftd/` can link its branch to a spec with `spec: <slug>`. Optional trusted
+`asddGate` settings are `require: "spec"` (default: full panel), `exemptBranches: ["^chore/back-merge-"]`
+and `cherryPickSuffix: "-master"`. These settings take effect after the policy reaches the trunk.
+
+External PR tools can run `rsc spec gate --branch-check --repo <directory> [--branch <name>]` from
+the workspace, or run the same command inside a submodule. Exit `0` means allowed, `2` means denied,
+and `1` means the check could not run. `--branch` evaluates that branch even when it is not checked
+out. The hook resolves ordinary `git -C`, directory changes, shell `-c`/`eval` wrappers and `gh pr`
+commands. Arbitrary scripts, aliases and shell functions need the explicit CLI check; their bodies
+cannot be inferred from the shell invocation. This is a local review aid, not a remote-server policy.
+
+Sync preserves opt-outs declared by teammates in `.rsc.json`. Existing local markers remain local
+choices; doctor reports differences. To explicitly re-arm a team gate, remove its local marker and
+run an explicit install, which records the new decision; sync alone does not erase the declaration.
 
 ## License
 

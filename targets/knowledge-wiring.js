@@ -1,3 +1,4 @@
+import { ensureClaudeBootstrap, claudeLifecycleCommand, pruneClaudeBootstrap } from './claude-lifecycle.js';
 // Wiring for knowledge sync (`knowledge-sync.mjs`): two lifecycle events per assistant — the person
 // sends a message, the agent finishes — in the same project-local config files the session memory
 // uses, under a needle of its own so either can be wired or removed without touching the other.
@@ -66,6 +67,7 @@ function handler(target, event) {
       ? '"$(git rev-parse --show-toplevel)/.rsc/knowledge-sync.mjs"'
       : '".rsc/knowledge-sync.mjs"';
   const value = { type: 'command', command: `node ${script} hook ${target} ${event}`, timeout: target === 'gemini' ? 10000 : 10 };
+  if (target === 'claude') value.command = claudeLifecycleCommand('knowledge-sync.mjs', 'hook', target, event);
   if (target === 'codex') value.commandWindows = `node "$((git rev-parse --show-toplevel).Trim())/.rsc/knowledge-sync.mjs" hook ${target} ${event}`;
   if (target === 'gemini') value.name = `rsc-knowledge-${event}`;
   return value;
@@ -145,6 +147,8 @@ export function wireKnowledge(target, cwd = process.cwd()) {
   const config = target === 'opencode' ? null : readConfig(configPath);
   if (target !== 'opencode' && !validHookConfig(config)) return { mode: 'degraded', reason: 'config-invalid', paths: [] };
 
+  if (target === 'claude') ensureClaudeBootstrap(cwd);
+
   const script = join(cwd, '.rsc', 'knowledge-sync.mjs');
   mkdirSync(dirname(script), { recursive: true });
   copyFileSync(join(HERE, 'knowledge-sync.mjs'), script);
@@ -183,6 +187,7 @@ export function unwireKnowledge(target, cwd = process.cwd()) {
     const config = readConfig(path);
     if (config) { strip(config); writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`); touched.push(path); }
   }
+  if (target === 'claude') pruneClaudeBootstrap(cwd);
   return touched;
 }
 

@@ -107,6 +107,8 @@ test('a requested stack agent renders natively with its declared tools on all 8 
       // tools it never declared, and is granted nothing.
       assert.match(text, /^tools:\n {2}edit: false\n {2}write: false\n {2}patch: false\n {2}bash: false$/m);
       assert.doesNotMatch(text, /: true$/m);
+    } else if (target === 'claude') {
+      assert.match(text, /^tools: Read, Grep, Glob$/m);
     } else {
       assert.match(text, /^tools: \[read, search\]$/m);
     }

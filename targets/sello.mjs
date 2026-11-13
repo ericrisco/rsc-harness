@@ -28,6 +28,8 @@ import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+import { chooseTrunk, policyRules, matchPolicyRules, readPolicy, mergePolicyConfig, policyRoot, changeDetails } from './risk-policy.mjs';
+export { readPolicy, mergePolicyConfig, policyRoot, changeDetails } from './risk-policy.mjs';
 
 // ---------------------------------------------------------------- paths & config
 
@@ -127,7 +129,7 @@ export const RISK_TABLE = [
   { class: 'ci', tier: 2, pattern: '(^|/)\\.github/workflows/|(^|/)\\.gitlab-ci\\.yml$|(^|/)Jenkinsfile$' },
   { class: 'migrations', tier: 2, pattern: '(^|/)migrations?/' },
   { class: 'billing', tier: 2, pattern: '(^|/)(billing|payments?|checkout|stripe)(/|\\.|-)' },
-  { class: 'harness', tier: 2, pattern: '(^|/)\\.rsc/|(^|/)\\.claude/|(^|/)CLAUDE\\.md$' },
+  { class: 'harness', tier: 2, pattern: '(^|/)\\.rsc/|(^|/)\\.rsc-risk\\.json$|(^|/)\\.claude/|(^|/)CLAUDE\\.md$' },
 ];
 export const FLOOR_CLASSES = ['secrets', 'harness'];
 export const DEFAULT_TIER = 1;
@@ -264,7 +266,7 @@ export function changeText(rawRoot, base, paths) {
 // Path rows and content rows together. A path scores the higher of the two; `content` lists each
 // content hit (path, class, the matched text) so the reader can see why. Lowered classes apply to
 // content rows too; floor classes stay at tier 2.
-export function classifyChange(paths, texts = {}, cfg = null) {
+export function classifyChange(paths, texts = {}, cfg = null, details = {}) {
   const byPath = classifyRisk(paths, cfg);
   const lowered = byPath.lowered || [];
   const content = [];
@@ -285,12 +287,39 @@ export function classifyChange(paths, texts = {}, cfg = null) {
       break;
     }
   }
-  return { ...byPath, tier, classes, content };
+  const rules = [];
+  const policyTiers = {};
+  let configError = byPath.configError || cfg?.policyError || null;
+  try {
+    const configured = policyRules(cfg);
+    const matched = matchPolicyRules(configured, paths, details, texts, cfg);
+    for (const p of paths) {
+      const detail = details[p] || { added: (texts[p] || '').split('\n') };
+      const hits = (matched[p] || []).map(i => configured[i]);
+      if (!hits.length) continue;
+      const best = hits.reduce((a,b) => a.tier >= b.tier ? a : b);
+      const intrinsic = classifyRisk([p], cfg);
+      const contentTier = content.filter(h => h.path === p).reduce((n,h) => Math.max(n,rowTier(h.class)),0);
+      const floor = intrinsic.classes[p] === 'default' ? 0 : intrinsic.tier;
+      const effective = Math.max(best.tier, floor, contentTier);
+      if (effective === best.tier) classes[p] = best.class;
+      rules.push(...hits.map(r => ({ path:p, class:r.class, tier:r.tier, because:r.because || r.class })));
+      policyTiers[p] = effective;
+    }
+    // Recompute so an explicit level-zero rule can replace the ordinary-code default.
+    tier = paths.reduce((n,p) => Math.max(n, policyTiers[p] ?? Math.max(classifyRisk([p],cfg).tier, ...content.filter(h=>h.path===p).map(h=>rowTier(h.class)))),0);
+  } catch (e) { configError = `${e.message}. Recover: correct risk.rules in .rsc-risk.json.`; }
+  if (configError) tier = Math.max(tier, 2);
+  return { ...byPath, tier, classes, content, rules, configError };
+
 }
 
 export function classifyCandidate(rawRoot, candidate, cfg = null) {
   const paths = Object.keys(candidate.files);
-  return classifyChange(paths, changeText(rawRoot, candidate.base, paths), cfg);
+  const root = resolveRoot(rawRoot);
+  const policy = readPolicy(root, { localConfig: cfg });
+  const effective = mergePolicyConfig(cfg, policy);
+  return classifyChange(paths, changeText(root, candidate.base, paths), effective, changeDetails(root, candidate.base, paths));
 }
 
 // How many lenses a tier requires (capped by an explicit config knob, floor 1).
@@ -315,11 +344,7 @@ function git(root, ...args) {
 const nulList = (out) => (out || '').split('\0').filter(Boolean);
 
 export function trunkRef(root, cfg = null) {
-  const configured = typeof cfg?.trunk === 'string' ? [cfg.trunk, `origin/${cfg.trunk}`] : [];
-  for (const ref of [...configured, 'origin/main', 'origin/master', 'main', 'master']) {
-    if (git(root, 'rev-parse', '--verify', '--quiet', ref) !== null) return ref;
-  }
-  return null;
+  return chooseTrunk(root, cfg);
 }
 
 // The candidate is the change vs the trunk merge-base: every path that differs
@@ -329,7 +354,7 @@ export function trunkRef(root, cfg = null) {
 // read, and a link to a FIFO would hang the hook).
 export function computeCandidate(rawRoot, cfg = null) {
   const root = resolveRoot(rawRoot);
-  const trunk = trunkRef(root, cfg);
+  const trunk = readPolicy(root, { localConfig: cfg }).trunk;
   if (!trunk) return null;
   const head = git(root, 'rev-parse', 'HEAD');
   const base = head ? (git(root, 'merge-base', 'HEAD', trunk) || '').trim() : null;
