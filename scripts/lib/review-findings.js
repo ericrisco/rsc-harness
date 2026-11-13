@@ -29,6 +29,20 @@ const text = (v) => (typeof v === 'string' ? v.trim() : '');
 const normFile = (f) => text(f).replace(/\\/g, '/').replace(/^\.\//, '');
 const normEvidence = (e) => text(e).replace(/\s+/g, ' ').toLowerCase();
 
+// Explicit pairs survive consolidation without attributing every criterion to every lens.
+// A report filename is not a lens, and prose is not an acceptance-criterion identifier.
+export function criterionRefs(f) {
+  const refs = Array.isArray(f.criterion_refs) ? f.criterion_refs : [{ criterion: f.criterion, lens: f.lens }];
+  const unique = new Map();
+  for (const ref of refs) {
+    if (!ref || typeof ref !== 'object') continue;
+    const criterion = text(ref.criterion);
+    const lens = text(ref.lens).toLowerCase();
+    if (criterion && lens) unique.set(JSON.stringify([criterion, lens]), { criterion, lens });
+  }
+  return [...unique.values()];
+}
+
 // Pull every finding out of one source. A source is a lens report (markdown with fenced blocks) or a
 // JSON file. Anything unparseable is reported, never silently dropped: a lost finding is the one
 // failure a consolidation step must not add.
@@ -69,6 +83,7 @@ export function normalizeFinding(f) {
     failure_scenario: text(f.failure_scenario) || text(f.repro),
     evidence: text(f.evidence),
     class: text(f.class) || text(f.bug_class) || text(f.defect_class),
+    criterion_refs: criterionRefs(f),
     notes: [],
   };
   if (!out.severity) {
@@ -143,6 +158,7 @@ export function consolidate(rawFindings, { window = DEFAULT_WINDOW } = {}) {
       evidence: uniq(members.map((m) => m.evidence)),
       // Carried through so `review ledger record` can fingerprint by bug class.
       class: uniq(members.map((m) => m.class))[0] || '',
+      criterion_refs: criterionRefs({ criterion_refs: members.flatMap((m) => m.criterion_refs) }),
       notes: uniq(members.flatMap((m) => m.notes)),
       reported: members.length,
       verify: rank(severity) <= rank('should-fix'),

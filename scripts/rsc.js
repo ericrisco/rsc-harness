@@ -1319,6 +1319,7 @@ async function main() {
         'Use: npx @ericrisco/rsc review consolidate [report.md|findings.json ...] [--json] [--window <lines>]',
         '  Without files it reads stdin. Each lens report carries its findings in ```json findings blocks.',
         '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant|parked> | round <slug>/<task> | panel <slug>/<task> --lenses a,b,c | stats [--json]',
+        '  Findings may include criterion and lens; with a qualified --task, recurring criterion objections are reported without dismissing them. round and panel share a three-round budget.',
         '     npx @ericrisco/rsc review escapes [--since <ref>] [--json]',
       ].join('\n');
       if (argv[1] === 'ledger' || argv[1] === 'escapes') {
@@ -1350,7 +1351,7 @@ async function main() {
           catch { const p = R.parseFindings(raw, file || 'stdin'); if (p.errors.length) return fail(p.errors.join('\n')); list = p.findings; }
           const out = L.record(root, list, { task: str('task') || '' });
           if (json) say(JSON.stringify(out, null, 2));
-          else say(out.map((f) => `${f.id}  ${f.status === 'repeat' ? `repeat of ${f.repeatOf} — do not raise it again` : 'new'}  ${f.file || '(no file)'}  ${f.claim}`).join('\n') || 'nothing to record');
+          else say(out.map((f) => [`${f.id}  ${f.status === 'repeat' ? `repeat of ${f.repeatOf} — do not raise it again` : 'new'}  ${f.file || '(no file)'}  ${f.claim}`, ...f.advisories.map((s) => s.message)].join('\n')).join('\n') || 'nothing to record');
           return;
         }
         if (sub === 'outcome') {

@@ -179,8 +179,13 @@ steps, in this order:
    array of objects in exactly this shape (give it to every reviewer verbatim):
 
    ```json
-   {"severity":"blocker|should-fix|nit|question","file":"path","line":N,"claim":"…","failure_scenario":"concrete input → wrong result","evidence":"quoted code","class":"bug class"}
+   {"severity":"blocker|should-fix|nit|question","file":"path","line":N,"claim":"…","failure_scenario":"concrete input → wrong result","evidence":"quoted code","class":"bug class","lens":"correctness|security|tests","criterion":"stable acceptance-criterion id, when applicable"}
    ```
+
+   Use the spec's actual criterion identifier (for example `AC4`), consistently across rounds;
+   omit `criterion` when no criterion is involved. Name the actual lens, never infer one from the
+   report filename. Consolidation preserves these associations as `criterion_refs` pairs so a
+   criterion raised by one lens is not attributed to another lens that reported the same defect.
 
    Save the reports and run `npx @ericrisco/rsc review consolidate <reports…>`. It merges findings
    on the same place that say the same thing, or that quote the same evidence; keeps the highest
@@ -217,21 +222,37 @@ fix-and-re-review is one round of the loop below.
 ### Convergence — the fix loop ends
 
 A review loop that never converges is worse than none: Anthropic saw a single PR take 50 rounds.
-Four rules, enforced by `npx @ericrisco/rsc review ledger` (`.rsc/review-ledger.jsonl`) rather
+Five rules, enforced by `npx @ericrisco/rsc review ledger` (`.rsc/review-ledger.jsonl`) rather
 than by memory:
 
 1. **Max 3 rounds per task.** Call `review ledger round <slug>/<task>` before **every** review of
    the task, the first included: round 1 is the task's first review, not its first fix. It exits
    non-zero on the 4th. That is not "try harder": rethink the approach, or park the task in the
    decision queue (a `blocking` entry) and continue with independent work.
+   `panel` shares this budget: it completes the pending round, or counts a round itself when an
+   older caller omitted `round`. Repeated panels cannot bypass the limit. After an explicit
+   `round`, either `record → panel` or `panel → record` counts once and attributes findings to
+   that round. Invalid panel arguments consume no round.
+   If `round` was omitted, record the findings **before** `panel`: the successful panel binds
+   those pending findings to its round and can report the criterion advisory immediately.
+   Old findings without recorded round information are not retroactively assigned a round.
 2. **From round 2, re-review only the new diff** — what changed since the last round, not the task
    again from scratch.
 3. **Flag the bug class, not the line.** "Every handler in this file trusts `req.params.id`" — so
    one fix covers every instance and round 3 does not find the sibling.
 4. **Never repeat a finding.** Record each round's findings with `review ledger record
-   <findings.json>` (the consolidate output works). A finding already seen — same file, class and
+   <findings.json> --task <slug>/<task>` (the consolidate output works). A finding already seen — same file, class and
    normalized title — comes back marked `repeat`; it is never re-raised as new. A repeat means the
    last fix missed the class, so say that instead.
+5. **Revisit recurring criterion objections.** Distinct findings linked to the same criterion and
+   lens in two or more rounds of one task produce a **possible criterion evidence gap** advisory in
+   `record`, `stats`, and subsequent `round`/`panel` output. Several findings in one round, or
+   findings without explicit metadata, are not evidence of this pattern. The signal does **not**
+   prove a requirement impossible and does not resolve findings, change severity, or approve work.
+   Route to `clarify`: check whether the required property and the agreed demonstration method
+   match, or park the task with its evidence. For example, source inspection alone is not a claim
+   that all runtime timing is constant. Keep the security requirement intact until the human
+   approves any change to the spec; never make the loop pass by silently deleting its criterion.
 
 **Every finding closes with an outcome**: `review ledger outcome <id> fixed|false|intentional|irrelevant|parked`
 — `parked` when the finding's task went to the decision queue (neither fixed nor dismissed; a human

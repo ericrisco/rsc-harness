@@ -12,6 +12,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { criterionRefs } from './review-findings.js';
 
 export const LEDGER_PATH = '.rsc/review-ledger.jsonl';
 // `parked`: the finding's task went to the decision queue; neither fixed nor dismissed, a human decides.
@@ -46,6 +47,7 @@ export function normalize(f) {
     class: text(f.class) || text(f.bug_class) || text(f.defect_class),
     claim: text(f.claim) || (Array.isArray(f.claims) ? text(f.claims[0]) : '') || text(f.title) || text(f.summary),
     severity: text(f.severity) || 'question',
+    criterion_refs: criterionRefs(f),
   };
 }
 
@@ -69,10 +71,71 @@ function append(root, entries) {
   appendFileSync(join(root, LEDGER_PATH), entries.map((e) => `${JSON.stringify(e)}\n`).join(''));
 }
 
+// A panel completes an explicit round, or starts one when an older caller omitted `round`.
+// Replay legacy records in order rather than trusting their old, independent round counters.
+function reviewBudget(ledger, task) {
+  let count = 0;
+  let panelled = false;
+  let explicit = false;
+  for (const e of ledger) {
+    if (e.task !== task) continue;
+    if (e.type === 'round') { count += 1; panelled = false; explicit = true; }
+    if (e.type === 'panel') {
+      if (!count || panelled) { count += 1; explicit = false; }
+      panelled = true;
+    }
+  }
+  return { count, panelled, explicit };
+}
+
+function panelAssignments(ledger) {
+  const assigned = new Map();
+  for (const e of ledger) {
+    if (e.type !== 'panel' || !Number.isInteger(e.round) || e.round < 1 || !Array.isArray(e.finding_ids)) continue;
+    for (const id of e.finding_ids) assigned.set(JSON.stringify([e.task, id]), e.round);
+  }
+  return assigned;
+}
+
+export function criterionSignals(ledger) {
+  const groups = new Map();
+  const assigned = panelAssignments(ledger);
+  for (const entry of ledger) {
+    if (entry.type !== 'finding' || entry.repeatOf || !QUALIFIED_TASK.test(entry.task)) continue;
+    const round = entry.round ?? (entry.round_pending ? assigned.get(JSON.stringify([entry.task, entry.id])) : undefined);
+    if (!Number.isInteger(round) || round < 1) continue;
+    const f = { ...entry, round };
+    for (const ref of criterionRefs(f)) {
+      const key = JSON.stringify([f.task, ref.criterion, ref.lens]);
+      if (!groups.has(key)) groups.set(key, { task: f.task, ...ref, findings: [] });
+      groups.get(key).findings.push(f);
+    }
+  }
+  const signals = [];
+  for (const group of groups.values()) {
+    const distinct = [];
+    for (const f of group.findings) if (!distinct.some((s) => sameClaim(s, f))) distinct.push(f);
+    const rounds = [...new Set(distinct.map((f) => f.round))].sort((a, b) => a - b);
+    if (rounds.length < 2) continue;
+    const { task, criterion, lens } = group;
+    signals.push({ task, criterion, lens, rounds, findings: distinct.map((f) => f.id),
+      message: `Possible criterion evidence gap: ${task}, ${criterion}, ${lens} has distinct objections across rounds ${rounds.join(', ')}. This does not prove the criterion is impossible. Revisit the spec and its demonstration method with clarify, or park the task in the decision queue; do not weaken the criterion or dismiss findings automatically.` });
+  }
+  return signals;
+}
+
+function convergenceMessage(task) {
+  return `rsc: task "${task}" has had ${MAX_ROUNDS} review rounds and has not converged. Stop fixing line by line: rethink the approach, review the spec criterion and its demonstration method, or park the task in the decision queue (02-DOCS/wiki/sdd/progress/<slug>.md, "## Decision queue") and continue with independent tasks.`;
+}
+
 // → [{id, status: 'new'|'repeat', repeatOf?, ...finding}]. A repeat is recorded too (it is the noise
 // being measured) but points at the original, and the caller must not raise it again.
 export function record(root, rawFindings, { task = '', now = new Date().toISOString() } = {}) {
   const ledger = readLedger(root);
+  const budget = reviewBudget(ledger, task);
+  // An explicit round is the context for the entire review, before AND after its panel. The
+  // implement protocol records the panel first, while other callers consolidate findings first.
+  const reviewRound = budget.explicit ? budget.count : 0;
   // A finding closed as fixed that shows up again is a regression, not noise: it is raised anew.
   const fixed = new Set(ledger.filter((e) => e.type === 'outcome' && e.outcome === 'fixed').map((e) => e.id));
   const seen = ledger.filter((e) => e.type === 'finding' && !e.repeatOf && !fixed.has(e.id));
@@ -83,12 +146,17 @@ export function record(root, rawFindings, { task = '', now = new Date().toISOStr
     const f = normalize(raw);
     n += 1;
     const original = seen.find((s) => sameClaim(s, f));
-    const entry = { type: 'finding', id: `L${n}`, task, at: now, ...f, ...(original ? { repeatOf: original.id } : {}) };
+    // Without an explicit active round, these new findings belong to the next panel. Bind them
+    // only when that panel succeeds; old findings without this marker remain ambiguous.
+    const roundRef = reviewRound ? { round: reviewRound } : (QUALIFIED_TASK.test(task) ? { round_pending: true } : {});
+    const entry = { type: 'finding', id: `L${n}`, task, at: now, ...f, ...roundRef, ...(original ? { repeatOf: original.id } : {}) };
     if (!original) seen.push(entry);
     out.push(entry);
   }
   append(root, out);
-  return out.map((e) => ({ ...e, status: e.repeatOf ? 'repeat' : 'new' }));
+  const signals = criterionSignals([...ledger, ...out]);
+  return out.map((e) => ({ ...e, status: e.repeatOf ? 'repeat' : 'new',
+    advisories: signals.filter((s) => s.findings.includes(e.id)) }));
 }
 
 export function outcome(root, id, value, { now = new Date().toISOString() } = {}) {
@@ -111,15 +179,16 @@ export function round(root, task, { now = new Date().toISOString() } = {}) {
   if (!QUALIFIED_TASK.test(task)) {
     return { ok: false, round: 0, message: `rsc: qualify the task with its spec slug, e.g. \`review ledger round <slug>/${task || 'T001'}\` — task ids repeat across plans.` };
   }
-  const n = readLedger(root).filter((e) => e.type === 'round' && e.task === task).length + 1;
+  const ledger = readLedger(root);
+  const n = reviewBudget(ledger, task).count + 1;
   if (n > MAX_ROUNDS) {
     return {
       ok: false, round: n,
-      message: `rsc: task "${task}" has had ${MAX_ROUNDS} review rounds and has not converged. Stop fixing line by line: rethink the approach, or park the task in the decision queue (02-DOCS/wiki/sdd/progress/<slug>.md, "## Decision queue") and continue with independent tasks.`,
+      message: convergenceMessage(task),
     };
   }
   append(root, [{ type: 'round', task, n, at: now }]);
-  return { ok: true, round: n, message: `task "${task}": review round ${n} of ${MAX_ROUNDS}` };
+  return { ok: true, round: n, message: [`task "${task}": review round ${n} of ${MAX_ROUNDS}`, ...criterionSignals(ledger).filter((s) => s.task === task).map((s) => s.message)].join('\n') };
 }
 
 // Records that a review panel ran on a task: which lenses, distinct. Self-attested, like the sello's
@@ -131,11 +200,19 @@ export function panel(root, task, lenses, { now = new Date().toISOString() } = {
   }
   const list = [...new Set(String(lenses || '').split(',').map((l) => l.trim().toLowerCase()).filter(Boolean))];
   if (!list.length) return { ok: false, message: 'rsc: name the lenses that ran: --lenses correctness,security,tests' };
+  const ledger = readLedger(root);
+  const budget = reviewBudget(ledger, task);
+  const n = budget.count + (!budget.count || budget.panelled ? 1 : 0);
+  if (n > MAX_ROUNDS) return { ok: false, message: convergenceMessage(task) };
   // Bound to the commit reviewed: code committed after it is code no panel has seen.
   const r = spawnSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true });
   const sha = r.status === 0 ? r.stdout.trim() : null;
-  append(root, [{ type: 'panel', task, lenses: list, sha, at: now }]);
-  return { ok: true, message: `task "${task}": panel of ${list.length} recorded (${list.join(', ')})${sha ? ` on ${sha.slice(0, 7)}` : ''}` };
+  const assigned = panelAssignments(ledger);
+  const finding_ids = ledger.filter((e) => e.type === 'finding' && e.task === task && e.round_pending
+    && !assigned.has(JSON.stringify([task, e.id]))).map((e) => e.id);
+  const entry = { type: 'panel', task, round: n, finding_ids, lenses: list, sha, at: now };
+  append(root, [entry]);
+  return { ok: true, message: [`task "${task}": panel of ${list.length} recorded (${list.join(', ')})${sha ? ` on ${sha.slice(0, 7)}` : ''}; review round ${n} of ${MAX_ROUNDS}`, ...criterionSignals([...ledger, entry]).filter((s) => s.task === task).map((s) => s.message)].join('\n') };
 }
 
 export function stats(root) {
@@ -149,7 +226,7 @@ export function stats(root) {
   // Parked is undecided: a human holds it. Counting it as closed would understate the false rate.
   const closed = originals.length - outcomes.open - outcomes.parked;
   const rounds = new Map();
-  for (const e of ledger) if (e.type === 'round') rounds.set(e.task, Math.max(rounds.get(e.task) || 0, e.n));
+  for (const e of ledger) if (e.type === 'round' || e.type === 'panel') rounds.set(e.task, reviewBudget(ledger, e.task).count);
   const totalRounds = [...rounds.values()].reduce((a, b) => a + b, 0);
   return {
     findings: originals.length,
@@ -159,6 +236,7 @@ export function stats(root) {
     tasks: rounds.size,
     meanRounds: rounds.size ? totalRounds / rounds.size : null,
     open: originals.filter((f) => !last.has(f.id)).map((f) => f.id),
+    criterionSignals: criterionSignals(ledger),
   };
 }
 
@@ -170,6 +248,7 @@ export function renderStats(s) {
     `false rate: ${pct(s.falseRate)} of closed findings`,
     `rounds: ${s.tasks} task(s), mean ${s.meanRounds === null ? 'n/a' : s.meanRounds.toFixed(2)} round(s) per task`,
     ...(s.open.length ? [`still open: ${s.open.join(', ')} — close each with \`review ledger outcome <id> <${OUTCOMES.join('|')}>\``] : []),
+    ...(s.criterionSignals || []).map((signal) => signal.message),
   ].join('\n');
 }
 
