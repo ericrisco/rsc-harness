@@ -129,7 +129,7 @@ finding.
 Exactly as `../review/SKILL.md` → *Consolidate, then verify*: `npx @ericrisco/rsc review consolidate
 <reports…>` (tier 1 too: it applies the downgrade), then `finding-verifier` on every finding it
 marks `verify` — every blocker and should-fix. Findings use the JSON shape in
-`references/per-task-review.md`. Then `npx @ericrisco/rsc review ledger record <findings.json>`. A
+`references/per-task-review.md`. Then `npx @ericrisco/rsc review ledger record <findings.json> --task <slug>/<task>`. A
 finding the ledger already holds comes back `repeat`: **never raise it again**. When a finding
 closes, record its outcome: `review ledger outcome <id> fixed|false|intentional|irrelevant|parked`
 (`parked` = its task went to the decision queue). The ledger is local (`.rsc/`, not committed);
@@ -153,6 +153,7 @@ A control that did not run is reported as **not run**, never as passed — and t
 Each re-review opens with another `review ledger round <slug>/<task>` (step c). It exits non-zero
 on the 4th round with the action to take; obey it (step g).
 
+Follow [criterion evidence and rounds](references/per-task-review.md#criterion-evidence-and-rounds) for panel accounting, criterion/lens metadata and advisory handling.
 - **From round 2, re-review only the new diff** (BASE = the previous round's head).
 - **Fix the bug class, not the line**: name the class and fix every instance in the task's scope.
 - **Never repeat a finding** — the ledger marks repeats; drop them.
