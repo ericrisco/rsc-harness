@@ -87,6 +87,7 @@ const EXPLICIT_REARMS = {
   main: { lock: ['trunk-guard'], unlock: ['trunk-open'] },
   isolation: { on: ['worktree-isolation'] },
   'knowledge-sync': { on: ['knowledge-sync'] },
+  emoji: { on: ['emoji'] },
 };
 function positionalTokens(input) {
   const out = [];
@@ -931,7 +932,8 @@ async function main() {
         if (sub === 'off') writeFileSync(join(root, '.rsc', '.no-emoji'), '');
         else rmSync(join(root, '.rsc', '.no-emoji'), { force: true });
         setPlainOutput(sub === 'off');
-        for (const t of targets) await syncInstalled({ target: t, cwd: root });
+        const rearmOptOuts = EXPLICIT_REARMS[cmd]?.[sub] || [];
+        for (const t of targets) await syncInstalled({ target: t, cwd: root, rearmOptOuts });
         return void say(sub === 'off'
           ? 'rsc emoji off: no reply, commit or rsc message in this project carries an emoji. The next session reads it. Commit .rsc.json so the team gets the same decision.'
           : 'rsc emoji on: emoji are back in this project, as rsc did before. The next session reads it. Commit .rsc.json so the team gets the same decision.');
