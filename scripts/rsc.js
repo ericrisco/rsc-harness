@@ -231,7 +231,8 @@ function renderPlan(plan, planId) {
     `--goal-base64 ${encodeGoal(plan.record.goal)}`,
     ...(plan.record.softwareScope ? [`--software-scope ${plan.record.softwareScope}`] : []),
     ...(plan.record.workflow ? [`--workflow ${plan.record.workflow}`] : []),
-    ...(plan.record.emoji === 'off' ? ['--emoji off'] : []),
+    // Omission inherits the local marker, so an on plan must override an existing off decision.
+    ...(plan.record.emoji === 'off' || emojiOff(process.cwd()) ? [`--emoji ${plan.record.emoji || 'on'}`] : []),
     `--target ${plan.record.targets.join(',')}`,
     `--accept-plan ${planId}`,
   ];

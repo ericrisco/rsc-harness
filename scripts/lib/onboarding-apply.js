@@ -99,7 +99,8 @@ function recoveryCommand(plan, planId) {
     `--goal-base64 ${encodeGoal(record.goal)}`,
     ...(record.softwareScope ? [`--software-scope ${record.softwareScope}`] : []),
     ...(record.workflow ? [`--workflow ${record.workflow}`] : []),
-    ...(record.emoji === 'off' ? ['--emoji off'] : []),
+    // Rollback may restore an off marker: retry the accepted choice, not that local default.
+    `--emoji ${record.emoji || 'on'}`,
     `--target ${record.targets.join(',')}`,
     `--accept-plan ${planId}`,
   ].join(' ');
@@ -292,6 +293,8 @@ export async function applyAcceptedOnboarding({ cwd = process.cwd(), plan, planI
     ...(plan.governedPaths || []),
     ...(previousPlan?.governedPaths || []),
     '.rsc.json',
+    // Mutable after onboarding: snapshot it for rollback without adding it to the plan's digests.
+    '.rsc/.no-emoji',
   ])];
   assertManagedPathsStayInsideRoot(cwd, transactionPaths);
   const snapshotPaths = transactionPaths.filter((path) => path !== '.rsc/backups/');
