@@ -271,3 +271,16 @@ test('fc08 · the post-merge hook rsc installs runs the close (end to end, real 
   assert.equal(git(eric, 'status', '--porcelain'), '', 'index and files follow the commit');
   assert.equal(existsSync(join(eric, '.git', 'MERGE_HEAD')), false, 'and git finished its merge');
 });
+
+test('fc03-off · with .rsc/.no-emoji the close commit has no emoji and is still one commit on the merge', () => {
+  const { eric } = team();
+  write(eric, '.rsc/.no-emoji', '');
+  git(eric, 'switch', '-q', '-c', 'feat/filtro');
+  write(eric, '02-DOCS/wiki/ftd/filtro.md', doc('feat/filtro', 'Eric'));
+  write(eric, 'src/app.js', 'filtro\n');
+  git(eric, 'add', '-A'); git(eric, 'commit', '-q', '-m', 'feat: filtro');
+  git(eric, 'switch', '-q', 'main');
+  git(eric, 'merge', '-q', '--no-ff', '--no-edit', 'feat/filtro');
+  assert.deepEqual(closeLanded(eric, { spawnShip: false }).closed, ['02-DOCS/wiki/ftd/filtro.md']);
+  assert.match(git(eric, 'log', '-1', '--format=%s'), /^docs\(auto\): cierre FTD/);
+});

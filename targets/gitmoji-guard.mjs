@@ -18,6 +18,10 @@
 // read. Anything it cannot read with certainty (editor commit, -F file, --amend
 // --no-edit, an unparseable command) is ALLOWED: a guard that guesses is a guard that
 // gets turned off. Every deny names its recovery. Opt out with .rsc/.no-gitmoji.
+//
+// With .rsc/.no-emoji (`rsc emoji off`) the guard turns around: it no longer asks for a gitmoji and
+// refuses an inline commit that carries one. It wins over .no-gitmoji: that file turns the convention
+// off, not the ban on emoji.
 import { fileURLToPath } from 'node:url';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
@@ -148,6 +152,8 @@ const RUNS_GIT = /^\s*(?:(?:sudo|env|command|exec|nohup)\s+|[A-Za-z_][A-Za-z0-9_
 // A commit handed to a shell as a string (`bash -c "git commit -m …"`, `eval …`) is read inside
 // that string (E2E defect 15). shell-unwrap.mjs is a sibling under `.rsc/`; without it, as before.
 const SH = await import(new URL('./shell-unwrap.mjs', import.meta.url)).catch(() => null);
+// What counts as a symbol with emoji off lives in one place, a sibling (also read by the CLI output).
+const EP = await import(new URL('./emoji-policy.mjs', import.meta.url)).catch(() => null);
 
 const SEPARATORS = /&&|\|\||[;\n]/;
 
@@ -168,25 +174,48 @@ function heredocBody(command) {
 }
 
 // -m/--message value, quoted or bare.
-function inlineMessage(segment) {
-  const m = segment.match(/(?:^|\s)(?:-[a-zA-Z]*m|--message)(?:=|\s+)("([^"]*)"|'([^']*)'|([^\s'"][^\s]*))/);
-  if (!m) return null;
-  return m[2] ?? m[3] ?? m[4] ?? null;
+// Every -m is a paragraph of the message; the first one is the subject. `full` joins them all.
+function inlineMessage(segment, full) {
+  const found = [...segment.matchAll(/(?:^|\s)(?:-[a-zA-Z]*m|--message)(?:=|\s+)("([^"]*)"|'([^']*)'|([^\s'"][^\s]*))/g)]
+    .map((m) => m[2] ?? m[3] ?? m[4] ?? '');
+  if (!found.length) return null;
+  return full ? found.join('\n\n') : found[0];
 }
 
 // Every commit message this command would write, or null when nothing is checkable.
-export function commitMessages(command) {
+// `full`: the whole message (every -m, the whole heredoc body) instead of its subject line. The emoji
+// ban reads all of it; the gitmoji rule only ever judges the subject.
+export function commitMessages(command, { full = false } = {}) {
   const cmd = String(command ?? '');
   if (!COMMIT.test(cmd)) return [];
   const inner = SH ? SH.innerScripts(cmd) : [];
-  if (!inner.length) return directMessages(cmd);
+  if (!inner.length) return directMessages(cmd, full);
   // The wrapped strings are read on their own; the rest of the chain without them, so a commit is
   // never read twice (once naively through the quotes, once unwrapped).
   const rest = SH.segments(SH.withoutHeredocs(cmd)).filter((seg) => SH.unwrap(seg)?.inner === undefined).join('\n');
-  return [...directMessages(rest), ...inner.flatMap(commitMessages)];
+  return [...directMessages(rest, full), ...inner.flatMap((c) => commitMessages(c, { full }))];
 }
 
-function directMessages(cmd) {
+// Split a command line at && || ; and newlines, except inside quotes: a message with a body is one
+// argument, and its blank lines are not the end of the command.
+function commandSegments(cmd) {
+  const out = [];
+  let cur = '';
+  let quote = null;
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    if (quote) { if (ch === quote) quote = null; cur += ch; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue; }
+    const two = cmd.slice(i, i + 2);
+    if (two === '&&' || two === '||') { out.push(cur); cur = ''; i++; continue; }
+    if (ch === ';' || ch === '\n') { out.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+function directMessages(cmd, full) {
 
   // The heredoc form must be handled before any splitting: its body is the message and
   // may legitimately contain && or ;. The command that owns it is whatever runs just
@@ -198,13 +227,15 @@ function directMessages(cmd) {
     const body = heredocBody(cmd);
     if (body === null) return [];
     const first = body.split(/\r?\n/).find((l) => l.trim() !== '');
-    return first === undefined ? [] : [first];
+    return first === undefined ? [] : [full ? body.replace(/^\s*\r?\n/, '') : first];
   }
 
   const out = [];
-  for (const segment of cmd.split(SEPARATORS)) {
+  // Quote-aware only for the emoji ban (which reads whole messages); the gitmoji rule keeps the
+  // plain split it always had, so with emoji on every decision is the one it always was.
+  for (const segment of full ? commandSegments(cmd) : cmd.split(SEPARATORS)) {
     if (!readableCommit(segment)) continue;
-    const msg = inlineMessage(segment);
+    const msg = inlineMessage(segment, full);
     if (msg === null) continue;                       // editor commit — cannot read it here
     if (/^\$/.test(msg.trim())) continue;             // a variable/substitution, not a literal
     out.push(msg);
@@ -218,6 +249,20 @@ export const SUGGESTIONS = [
   ['feat', '✨'], ['fix', '🐛'], ['docs', '📝'], ['refactor', '♻️'], ['test', '✅'],
   ['perf', '⚡️'], ['chore', '🔧'], ['ci', '👷'], ['style', '🎨'], ['revert', '⏪️'],
 ];
+
+// Any symbol or :shortcode: anywhere in the whole message — with emoji off, none may be there.
+const SHORTCODE = /(?:^|\s):[a-z0-9_+-]{2,}:(?=\s|$)/m;
+export const hasEmoji = (message) => (EP?.hasSymbol(message ?? '') ?? false) || SHORTCODE.test(String(message ?? ''));
+
+export function denyEmojiMessage(message) {
+  const subject = String(message ?? '').split(/\r?\n/, 1)[0].trim();
+  const clean = (EP?.stripSymbols(subject) ?? subject).replace(/(?:^|\s):[a-z0-9_+-]{2,}:(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim();
+  return [
+    'This commit message carries an emoji.',
+    'Emoji are off in this project (.rsc/.no-emoji): a commit says what changed in words, as Conventional Commits does: type(scope): subject.',
+    `Recover: re-run the commit without the emoji or the :shortcode: — \`${clean || '<type>(<scope>): <subject>'}\`. To allow emoji again, run \`rsc emoji on\`.`,
+  ].join('\n');
+}
 
 export function denyMessage(message) {
   const subject = String(message ?? '').split(/\r?\n/, 1)[0].trim();
@@ -266,7 +311,8 @@ if (isMainModule(import.meta.url)) {
   const root = process.argv[2] || process.cwd();
   const allow = () => process.exit(0);
 
-  if (existsSync(join(root, '.rsc', '.no-gitmoji'))) allow();
+  const emojiOff = existsSync(join(root, '.rsc', '.no-emoji'));
+  if (!emojiOff && existsSync(join(root, '.rsc', '.no-gitmoji'))) allow();
 
   let input = {};
   try { input = JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { allow(); }
@@ -276,7 +322,7 @@ if (isMainModule(import.meta.url)) {
 
   let offender = null;
   try {
-    offender = commitMessages(command).find((m) => !hasGitmoji(m)) ?? null;
+    offender = commitMessages(command, { full: emojiOff }).find((m) => (emojiOff ? hasEmoji(m) : !hasGitmoji(m))) ?? null;
   } catch { allow(); } // any parsing surprise → allow (fail open, by design)
   if (offender === null) allow();
 
@@ -284,7 +330,7 @@ if (isMainModule(import.meta.url)) {
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
       permissionDecision: 'deny',
-      permissionDecisionReason: denyMessage(offender),
+      permissionDecisionReason: emojiOff ? denyEmojiMessage(offender) : denyMessage(offender),
     },
   }));
   process.exit(0);

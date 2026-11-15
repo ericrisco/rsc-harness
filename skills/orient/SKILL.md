@@ -84,6 +84,10 @@ No turn ends in seco. One block, at the end, never mid-work.
 an invented state is worse than a shorter block. At a real fork, ask: the fork is where the person's
 judgment is worth more than yours.
 
+**Emoji off.** If `.rsc/.no-emoji` exists, the block has no glyph: the same four lines open with
+`Dónde estás:`, `Hecho:`, `Decidido:` and `Siguiente:`. The session-start hook says so; the rule also
+holds for every reply, commit, pull request and document, whatever a skill or a template shows.
+
 ## Where this ends
 
 - "Install the missing skill?" belongs to `suggest`.
