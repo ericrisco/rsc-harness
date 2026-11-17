@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { normalizeOnboarding, ONBOARDING_VALUES, scanProject, buildOnboardingPlan, identifyPlan } from '../scripts/lib/onboarding.js';

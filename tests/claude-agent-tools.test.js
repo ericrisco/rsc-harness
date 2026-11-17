@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { agentPath, writeAgentsDetailed } from '../targets/agents.js';
 
 function project(t) {

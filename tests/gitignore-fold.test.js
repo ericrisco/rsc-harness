@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { execFileSync } from 'node:child_process';
 import { ignoreLocalState, foldIgnoreBlocks } from '../scripts/install-apply.js';
 

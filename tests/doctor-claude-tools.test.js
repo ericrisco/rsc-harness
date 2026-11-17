@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { doctor } from '../scripts/doctor.js';
 import { targetPaths } from '../targets/index.js';
 import { writeState } from '../scripts/lib/state.js';

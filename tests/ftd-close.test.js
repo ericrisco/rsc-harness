@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FTD_CLOSE_OPT_OUT, closeDoc, closeLanded, onRequest, onTurn, work } from '../targets/knowledge-sync.mjs';

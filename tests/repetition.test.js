@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import {
   parseGapLog, similarity, terms, groupProcedures, decideOffer, recommendKind, mergeLogs,
   THRESHOLD, GROUP_AT, UNCERTAIN_AT,

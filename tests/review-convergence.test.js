@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import * as L from '../scripts/lib/review-ledger.js';

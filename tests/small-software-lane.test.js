@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decide, classify, NUDGE } from '../targets/ftd-nudge.mjs';

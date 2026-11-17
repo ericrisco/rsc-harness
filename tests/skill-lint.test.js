@@ -54,7 +54,7 @@ test('the real specify body is balanced', () => {
 // The function above is one half of principle 2; the wiring is the other. A gate nobody has seen
 // fail is a gate nobody knows works, so this drives validateBodies over a fake catalog.
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { join } from 'node:path';
 import { validateBodies } from '../scripts/build-manifest.js';
 

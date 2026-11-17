@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { join } from 'node:path';
 import { readManifest, evaluateHarness, composeDivergence, PROJECT_OPT_OUTS as BOOTSTRAP_OPT_OUTS } from '../targets/clone-bootstrap.mjs';
 import { PROJECT_OPT_OUTS } from '../targets/opt-outs.js';

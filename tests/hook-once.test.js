@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, existsSync, writeFileSync, readdirSync, utimesSync, chmodSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { join, sep, resolve, dirname } from 'node:path';
 import { claimOnce, readHookInput, markerDir } from '../targets/hook-once.mjs';
 
