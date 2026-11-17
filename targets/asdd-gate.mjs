@@ -327,6 +327,18 @@ function panelSize(root, slugs, stillValid = () => true) {
   return best;
 }
 
+// A linked checkout owns its spec and ledger, just as the review CLI owns its HEAD.
+// Independent child repositories still use their supervising workspace's evidence.
+function reviewEvidenceRoot(workspace, repo) {
+  if (workspace === repo) return repo;
+  const commonDir = (dir) => {
+    const path = git(dir, 'rev-parse', '--git-common-dir')?.trim();
+    return path ? resolve(dir, path) : null;
+  };
+  const shared = commonDir(workspace);
+  return shared && shared === commonDir(repo) ? repo : workspace;
+}
+
 /**
  * null when the command may go ahead; the denial text (with its way out, P6) when it may not.
  * `lib` carries the sibling modules so tests and the hook load them the same way.
@@ -424,7 +436,8 @@ export function branchCheck(
     (c) => c !== 'default' && c !== 'docs',
   );
   if (tierTwo.length && tierTwo.every((c) => c === 'harness')) return null;
-  const specs = linkedSpecs(root, branch, specCompleteness, cfg);
+  const evidence = reviewEvidenceRoot(root, repo);
+  const specs = linkedSpecs(evidence, branch, specCompleteness, cfg);
   const passing = specs.filter((s) => s.ok);
   if (passing.length) {
     if (cfg.asddGate?.require === 'spec') return null;
@@ -432,7 +445,7 @@ export function branchCheck(
     // by default), recorded against one of its linked specs in the review ledger.
     const required = sello.lensesRequired(2, cfg);
     const slugs = passing.map((s) => s.path.split('/').pop().slice(0, -3));
-    const best = panelSize(root, slugs, (sha) =>
+    const best = panelSize(evidence, slugs, (sha) =>
       reviewedStill(repo, sha, trunk, sello, cfg, tip || 'HEAD'),
     );
     if (best >= required) return null;
