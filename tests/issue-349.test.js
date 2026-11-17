@@ -163,6 +163,18 @@ test('349 gate checks git -C target instead of workspace branch', () => {
     asddGate(d, 'git -C "Child repo" push', { sello, specCompleteness }) || '',
     /feat\/login/,
   );
+  // This repository has its own Git history. Its supervising workspace holds
+  // the evidence, while the reviewed commit belongs to the child.
+  git(child, 'add', 'auth/login.js');
+  git(child, 'commit', '-qm', 'login');
+  write(d, '02-DOCS/wiki/sdd/specs/login.md', SPEC);
+  const check = () => asddGate(d, 'git -C "Child repo" push', { sello, specCompleteness });
+  assert.match(check(), /no review panel/);
+  write(d, '.rsc/review-ledger.jsonl', JSON.stringify({
+    type: 'panel', task: 'login/closing', sha: git(child, 'rev-parse', 'HEAD'),
+    lenses: ['correctness', 'security', 'tests'],
+  }) + '\n');
+  assert.equal(check(), null);
 });
 const CLI = new URL('../scripts/rsc.js', import.meta.url).pathname;
 test('349 external CLI branch gate distinguishes denial, allow and environment error', () => {
