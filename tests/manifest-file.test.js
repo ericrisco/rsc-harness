@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { join } from 'node:path';
 import { readManifest, writeManifest, manifestPath } from '../scripts/lib/manifest-file.js';
 import { resolveTargets, targetPaths } from '../targets/index.js';

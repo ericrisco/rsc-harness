@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import {
   AGENT_TARGET_IDS, targetHasAgents, agentNames, agentPath, writeAgents, removeAgents,
   developerAgentPath, writeDeveloperAgent, removeDeveloperAgent, agentByName,

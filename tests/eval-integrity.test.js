@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, writeFileSync, chmodSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { fileURLToPath } from 'node:url';
 import {
   classifyAgent, findViolations, checkIntegrity, readAgents, ROLE_MARKERS, PROTECTED_PATHS,

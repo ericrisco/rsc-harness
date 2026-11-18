@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { dirname, join } from 'node:path';
 import {
   KNOWLEDGE, OPT_OUT, SKIP_CI, hook, inactiveReason, knowledgeStatus, onRequest, onTurn, work, workerRuntime,

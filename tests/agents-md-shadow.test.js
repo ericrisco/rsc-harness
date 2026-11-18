@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -20,6 +20,10 @@ import {
 // CLAUDE.md at the root, which every version of Claude Code prefers over AGENTS.md.
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SUGGEST_BLOCK = '<!-- rsc-suggest:start -->\nbody\n<!-- rsc-suggest:end -->\n';
+
+// Model a filesystem whose ancestors we own. A relocated TMPDIR may sit below the
+// developer's actual Claude instructions. The parent-discovery test uses the production default.
+const installShadow = (root) => ensureShadowClaudeMd(root, { ancestorBoundary: tmpdir() });
 
 // A project in a given configuration. `claude` wires settings.json the way the installer does;
 // `agentsMd` decides whether the root AGENTS.md carries rsc's block, the user's own prose, or
@@ -47,7 +51,7 @@ test('the duplicating configuration gets a shadow CLAUDE.md', () => {
   // Claude Code wired + rsc's block in the root AGENTS.md + no CLAUDE.md = the body arrives twice
   // on 2.1.277+. This is the one case the shadow exists for.
   const root = project();
-  const written = ensureShadowClaudeMd(root);
+  const written = installShadow(root);
   assert.equal(written, join(root, 'CLAUDE.md'));
   assert.ok(existsSync(join(root, 'CLAUDE.md')), 'no CLAUDE.md was written');
 });
@@ -56,7 +60,7 @@ test('the shadow never imports AGENTS.md', () => {
   // An `@AGENTS.md` import would expand the always-on block into context and recreate exactly the
   // duplication this file prevents. This is the single most load-bearing property of the content.
   const root = project();
-  ensureShadowClaudeMd(root);
+  installShadow(root);
   const body = readFileSync(join(root, 'CLAUDE.md'), 'utf8');
   assert.doesNotMatch(
     body.replace(/<!--[\s\S]*?-->/g, ''),
@@ -72,7 +76,7 @@ test('a project that cannot duplicate is left untouched', () => {
     ['no AGENTS.md at all', { agentsMd: null }],
   ]) {
     const root = project(opts);
-    assert.equal(ensureShadowClaudeMd(root), null, `planted a CLAUDE.md when ${label}`);
+    assert.equal(installShadow(root), null, `planted a CLAUDE.md when ${label}`);
     assert.ok(!existsSync(join(root, 'CLAUDE.md')), `planted a CLAUDE.md when ${label}`);
   }
 });
@@ -82,7 +86,7 @@ test('an existing CLAUDE.md of any form is never overwritten', () => {
   // and overwriting someone's project instructions to fix a context leak would be a far worse bug.
   for (const form of ['CLAUDE.md', join('.claude', 'CLAUDE.md'), 'CLAUDE.local.md']) {
     const root = project({ claudeMd: form });
-    assert.equal(ensureShadowClaudeMd(root), null, `did not respect an existing ${form}`);
+    assert.equal(installShadow(root), null, `did not respect an existing ${form}`);
     assert.equal(readFileSync(join(root, form), 'utf8'), '# mine\n', `overwrote an existing ${form}`);
   }
 });
@@ -97,6 +101,7 @@ test('a CLAUDE.md in a parent directory also suppresses the shadow', () => {
   mkdirSync(join(root, '.claude'));
   writeFileSync(join(root, '.claude', 'settings.json'), JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ type: 'command', command: 'node ".rsc/session-start.mjs"' }] }] } }));
   writeFileSync(join(root, 'AGENTS.md'), SUGGEST_BLOCK);
+  assert.equal(installShadow(root), null, 'ignored a CLAUDE.md within the fixture');
   assert.equal(ensureShadowClaudeMd(root), null, 'ignored a CLAUDE.md in the parent directory');
 });
 
@@ -111,20 +116,20 @@ test('a Windows-wired project is recognised as wired', () => {
     JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ type: 'command', command: 'node "C:\\proj\\.rsc\\session-start.mjs"' }] }] } }, null, 2),
   );
   writeFileSync(join(root, 'AGENTS.md'), SUGGEST_BLOCK);
-  assert.equal(ensureShadowClaudeMd(root), join(root, 'CLAUDE.md'), 'a Windows-wired project was read as unwired');
+  assert.equal(installShadow(root), join(root, 'CLAUDE.md'), 'a Windows-wired project was read as unwired');
 });
 
 test('ensure is idempotent', () => {
   const root = project();
-  ensureShadowClaudeMd(root);
+  installShadow(root);
   const first = readFileSync(join(root, 'CLAUDE.md'), 'utf8');
-  ensureShadowClaudeMd(root);
+  installShadow(root);
   assert.equal(readFileSync(join(root, 'CLAUDE.md'), 'utf8'), first, 'a second install changed the shadow');
 });
 
 test('uninstall takes back an untouched shadow, and only that', () => {
   const root = project();
-  ensureShadowClaudeMd(root);
+  installShadow(root);
   assert.equal(removeShadowClaudeMd(root), join(root, 'CLAUDE.md'));
   assert.ok(!existsSync(join(root, 'CLAUDE.md')), 'the shadow survived uninstall');
 });
@@ -133,7 +138,7 @@ test('uninstall never deletes a shadow the user has edited', () => {
   // The moment someone writes their own instructions into it, it is their file. Deleting it on
   // uninstall would destroy project instructions to clean up after ourselves.
   const root = project();
-  ensureShadowClaudeMd(root);
+  installShadow(root);
   writeFileSync(join(root, 'CLAUDE.md'), SHADOW_BODY + '\n- always run npm test\n');
   assert.equal(removeShadowClaudeMd(root), null, 'deleted an edited CLAUDE.md');
   assert.ok(existsSync(join(root, 'CLAUDE.md')), 'deleted an edited CLAUDE.md');

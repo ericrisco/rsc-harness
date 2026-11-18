@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, realpathSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -18,8 +18,8 @@ const ENV = { ...process.env, RSC_SELLO_HOME: HOME };
 const git = (cwd, ...a) => execFileSync('git', a, { cwd, stdio: ['ignore', 'pipe', 'pipe'] }).toString();
 const write = (root, rel, body = 'x\n') => { mkdirSync(dirname(join(root, rel)), { recursive: true }); writeFileSync(join(root, rel), body); };
 const run = (cwd, args) => spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8', env: ENV });
-const guard = (root, command) => {
-  const r = spawnSync(process.execPath, [GUARD, root], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command } }), encoding: 'utf8', env: ENV });
+const guard = (root, command, cwd = root) => {
+  const r = spawnSync(process.execPath, [GUARD, root], { input: JSON.stringify({ cwd, tool_name: 'Bash', tool_input: { command } }), encoding: 'utf8', env: ENV });
   return r.stdout.trim() ? JSON.parse(r.stdout).hookSpecificOutput.permissionDecisionReason : null;
 };
 
@@ -156,6 +156,29 @@ test('gate: a passing spec without the panel is still refused; one lens is not a
   assert.ok(guard(r, 'git push'), 'a panel on another spec does not count');
   assert.equal(run(r, ['review', 'ledger', 'panel', 'sign-in/closing', '--lenses', 'correctness,security,tests']).status, 0);
   assert.equal(guard(r, 'git push'), null);
+});
+
+test('linked worktree ships with its own spec and panel for its own HEAD', () => {
+  const main = project();
+  git(main, 'switch', '-q', 'main');
+  const tree = join(main, '.worktrees', 'login');
+  git(main, 'worktree', 'add', '-q', tree, 'feat/login');
+  write(tree, 'src/app.js', LOGIN);
+  git(tree, 'commit', '-qam', 'login');
+  const spec = '02-DOCS/wiki/sdd/specs/sign-in.md';
+  const panel = ['review', 'ledger', 'panel', 'sign-in/closing', '--lenses', 'correctness,security,tests'];
+  write(tree, spec, SPEC);
+  assert.match(guard(main, 'gh pr create', tree), /no review panel/);
+  write(main, spec, SPEC);
+  assert.equal(run(main, panel).status, 0);
+  assert.match(guard(main, 'gh pr merge', tree), /no review panel/);
+  assert.equal(run(tree, panel).status, 0);
+  for (const command of ['gh pr create', 'gh pr merge', 'git push']) {
+    assert.equal(guard(main, command, tree), null);
+  }
+  write(tree, 'src/app.js', LOGIN + 'export const updated = true;\n');
+  git(tree, 'commit', '-qam', 'update login');
+  assert.match(guard(main, 'git push', tree), /no review panel/);
 });
 
 test('ledger panel: a bare task or no lenses is refused with the way out', () => {

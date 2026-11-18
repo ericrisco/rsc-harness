@@ -30,7 +30,7 @@
 // The shadow deliberately does NOT `@AGENTS.md`-import: the import would expand the rsc block
 // into context and recreate the duplication it exists to prevent.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, parse } from 'node:path';
+import { dirname, join } from 'node:path';
 
 // The marker _md-block.js wraps the always-on body in. Its presence in a root AGENTS.md is
 // what makes that file a second carrier of the body rather than the user's own prose.
@@ -70,12 +70,12 @@ const CLAUDE_MD_FORMS = ['CLAUDE.md', join('.claude', 'CLAUDE.md'), 'CLAUDE.loca
 // Claude Code looks for those files in the working directory AND every directory above it, so a
 // CLAUDE.md two levels up already suppresses the AGENTS.md read. Walking up costs a few stats and
 // keeps us from planting a file that was never needed.
-function claudeMdAboveOrAt(root) {
+function claudeMdAboveOrAt(root, ancestorBoundary) {
   let dir = root;
   for (;;) {
     for (const form of CLAUDE_MD_FORMS) if (existsSync(join(dir, form))) return join(dir, form);
     const up = dirname(dir);
-    if (up === dir || dir === parse(dir).root) return null;
+    if (dir === ancestorBoundary || up === dir) return null;
     dir = up;
   }
 }
@@ -109,9 +109,9 @@ function agentsMdCarriesBody(root) {
  * @returns the path written, or null when nothing was needed. Never throws: a shadow we could not
  * write costs context, and that must not be the thing that fails an install.
  */
-export function ensureShadowClaudeMd(projectRoot) {
+export function ensureShadowClaudeMd(projectRoot, { ancestorBoundary } = {}) {
   try {
-    const dest = shadowTarget(projectRoot);
+    const dest = shadowTarget(projectRoot, { ancestorBoundary });
     if (!dest) return null;
     mkdirSync(dirname(dest), { recursive: true });
     writeFileSync(dest, SHADOW_BODY);
@@ -127,11 +127,11 @@ export function ensureShadowClaudeMd(projectRoot) {
  * @param assumeClaudeWired for a claude install in flight: settings.json names the project as
  * wired only after wireHook writes it, so at plan time the answer has to be assumed, not read.
  */
-export function shadowTarget(projectRoot, { assumeClaudeWired = false } = {}) {
+export function shadowTarget(projectRoot, { assumeClaudeWired = false, ancestorBoundary } = {}) {
   try {
     if (!assumeClaudeWired && !claudeWired(projectRoot)) return null;
     if (!agentsMdCarriesBody(projectRoot)) return null;
-    if (claudeMdAboveOrAt(projectRoot)) return null;
+    if (claudeMdAboveOrAt(projectRoot, ancestorBoundary)) return null;
     return join(projectRoot, 'CLAUDE.md');
   } catch { return null; }
 }

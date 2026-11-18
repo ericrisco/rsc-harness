@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { tmpdir } from './helpers/scratch.js';
 import { basename, dirname, join } from 'node:path';
 import { trunkPolicy, trunkSignals, defaultBranchName, UNLOCK } from '../targets/trunk-policy.mjs';
 import { evaluate, effectiveDir, unquoted, COMMITS_HERE, MOVES_BRANCH } from '../targets/branch-guard.mjs';
