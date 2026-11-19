@@ -891,6 +891,41 @@ providers:
         Dashboard: https://dashboard.cohere.com/api-keys
         `COHERE_API_KEY` — secret.
 
+  - id: MINIMAX
+    category: ia_texto
+    detectors:
+      imports: ["@ai-sdk/minimax"]
+      env_vars: ["MINIMAX_API_KEY"]
+      deps: ["@ai-sdk/minimax"]
+    dashboard_url: "https://platform.minimax.io/user-center/basic-information/interface-key"
+    env_example: |
+      MINIMAX_API_KEY=
+      # Use cn for a mainland China key.
+      MINIMAX_REGION=global
+    files:
+      test_connection.sh: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        source "$SCRIPT_DIR/.env"
+        : "${MINIMAX_API_KEY:?MINIMAX_API_KEY not set}"
+        case "${MINIMAX_REGION:-global}" in
+          global) base_url="https://api.minimax.io/v1" ;;
+          cn) base_url="https://api.minimaxi.com/v1" ;;
+          *) echo "MINIMAX_REGION must be global or cn" >&2; exit 1 ;;
+        esac
+        curl -fsS --max-time 30 "$base_url/models" -H "Authorization: Bearer $MINIMAX_API_KEY" |
+          python3 -c 'import json, sys; models = json.load(sys.stdin)["data"]; print("Available models:", ", ".join(model["id"] for model in models))'
+      README.md: |
+        # MiniMax
+        Copy `.env.example` to `.env`, run `chmod 600 .env`, and set the key and region.
+        Run `./test_connection.sh` to list the models available to the account.
+        Text model IDs include `MiniMax-M3.1-Flash` and `MiniMax-M3`.
+      CREDENTIALS.md: |
+        # MiniMax credentials
+        Set `MINIMAX_API_KEY` to an API key issued in the selected region.
+        Keep the key in the local `.env` file.
+
   - id: MISTRAL
     category: ia_texto
     detectors:
