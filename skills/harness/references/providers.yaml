@@ -897,7 +897,7 @@ providers:
       imports: ["@ai-sdk/minimax"]
       env_vars: ["MINIMAX_API_KEY"]
       deps: ["@ai-sdk/minimax"]
-    dashboard_url: "https://platform.minimax.io/user-center/basic-information/interface-key"
+    dashboard_url: "https://platform.minimax.io/console/keys"
     env_example: |
       MINIMAX_API_KEY=
       # Use cn for a mainland China key.
@@ -911,7 +911,7 @@ providers:
         : "${MINIMAX_API_KEY:?MINIMAX_API_KEY not set}"
         case "${MINIMAX_REGION:-global}" in
           global) base_url="https://api.minimax.io/v1" ;;
-          cn) base_url="https://api.minimaxi.com/v1" ;;
+          cn) base_url="https://api.minimax.cn/v1" ;;
           *) echo "MINIMAX_REGION must be global or cn" >&2; exit 1 ;;
         esac
         curl -fsS --max-time 30 "$base_url/models" -H "Authorization: Bearer $MINIMAX_API_KEY" |
@@ -923,7 +923,9 @@ providers:
         Text model IDs include `MiniMax-M3.1-Flash` and `MiniMax-M3`.
       CREDENTIALS.md: |
         # MiniMax credentials
-        Set `MINIMAX_API_KEY` to an API key issued in the selected region.
+        For `MINIMAX_REGION=global`, get the key at https://platform.minimax.io/console/keys.
+        For `MINIMAX_REGION=cn`, get the key at https://platform.minimax.cn/console/keys.
+        Set `MINIMAX_API_KEY` to the key issued in that region.
         Keep the key in the local `.env` file.
 
   - id: MISTRAL
