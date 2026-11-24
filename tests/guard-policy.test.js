@@ -41,6 +41,17 @@ test('#273 — a non-technical operations project gets the danger guard, and onl
   assert.ok(existsSync(join(cwd, '.rsc', 'danger-guard.mjs')));
 });
 
+test('#378 — the installed danger hook receives both Claude shell tools', () => {
+  const cwd = onboarded({ level: 'mixed', kind: 'operations' });
+  const settings = JSON.parse(readFileSync(join(cwd, '.claude', 'settings.json'), 'utf8'));
+  const hooks = settings.hooks.PreToolUse.filter((entry) =>
+    entry.hooks.some((hook) => hook.command.includes('danger-guard.mjs')));
+  assert.equal(hooks.length, 1);
+  const matcher = new RegExp(`^(?:${hooks[0].matcher})$`);
+  for (const shell of ['Bash', 'PowerShell']) assert.ok(matcher.test(shell), shell);
+  assert.ok(!matcher.test('Read'));
+});
+
 test('#273 — mixed is guarded too, as init promises', { timeout: 300000 }, () => {
   assert.deepEqual(guards(onboarded({ level: 'mixed', kind: 'operations' })), ['danger-guard']);
 });

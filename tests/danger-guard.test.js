@@ -32,9 +32,9 @@ function guardedRoot() {
 }
 const ROOT = guardedRoot();
 
-function decide(command, root = ROOT) {
+function decide(command, root = ROOT, tool = 'Bash') {
   const r = spawnSync('node', [GUARD, root], {
-    input: JSON.stringify({ tool_name: 'Bash', tool_input: { command } }),
+    input: JSON.stringify({ tool_name: tool, tool_input: { command } }),
     encoding: 'utf8',
   });
   assert.equal(r.status, 0, 'the guard must never fail closed on an internal error');
@@ -146,7 +146,7 @@ test('a missing profile is still guarded — default-safe, not default-open', ()
   assert.equal(decide(`rm ${RF} /tmp/x`, bare).decision, 'deny');
 });
 
-test('the guard only judges Bash', () => {
+test('the guard ignores non-shell tools', () => {
   const r = spawnSync('node', [GUARD, ROOT], {
     input: JSON.stringify({ tool_name: 'Write', tool_input: { command: `rm ${RF} /` } }),
     encoding: 'utf8',
@@ -223,4 +223,31 @@ test('a force push spelled with +refspec or a lease is caught, for both levels',
     assert.equal(decide(cmd, tech).decision, 'allow', `over-fired on ${cmd}`);
     assert.equal(decide(cmd).decision, 'allow', `over-fired (non-technical) on ${cmd}`);
   }
+});
+
+test('#378 — PowerShell hook data follows the same profile decisions as Bash', () => {
+  const tech = mkdtempSync(join(tmpdir(), 'rsc-ps-'));
+  writeFileSync(join(tech, '.rsc.json'), JSON.stringify({ onboarding: { plan: { record: { technicalLevel: 'technical' } } } }));
+  // Only the hook receives these strings. No shell is launched.
+  for (const command of ['git reset --hard', 'git clean -fd', 'git push --force', 'Git.exe reset --hard']) {
+    assert.equal(decide(command, ROOT, 'PowerShell').decision, 'deny');
+    assert.equal(decide(command, tech, 'PowerShell').decision, 'ask');
+  }
+  const remove = 'Remove-Item -Recurse -Force';
+  assert.equal(decide("Remove-Item scratch -Include '*' -Recurse -Force", tech, 'PowerShell').decision, 'allow');
+  assert.equal(decide("Remove-Item '$HOME' -Recurse -Force", tech, 'PowerShell').decision, 'allow');
+  assert.equal(decide('Remove-Item . `\r\n -Recurse -Force', tech, 'PowerShell').decision, 'ask');
+  for (const path of ['.', '$env:USERPROFILE', 'C:\\', `"${tech}"`]) {
+    assert.equal(decide(`${remove} ${path}`, tech, 'PowerShell').decision, 'ask', path);
+  }
+  assert.equal(decide(`${remove} scratch`, ROOT, 'PowerShell').decision, 'deny');
+  assert.equal(decide(`${remove} scratch`, tech, 'PowerShell').decision, 'allow');
+  for (const command of ['git status', 'Remove-Item note.txt', "Write-Output 'DROP TABLE demo'", `${remove} -WhatIf .`,
+    `Write-Output "example; ${remove} ."`]) {
+    assert.equal(decide(command, ROOT, 'PowerShell').decision, 'allow', command);
+  }
+  assert.equal(decide('git clean -fd', ROOT, 'Read').decision, 'allow');
+  mkdirSync(join(tech, '.rsc'), { recursive: true });
+  writeFileSync(join(tech, '.rsc', '.no-danger-guard'), '');
+  assert.equal(decide(`${remove} .`, tech, 'PowerShell').decision, 'allow');
 });

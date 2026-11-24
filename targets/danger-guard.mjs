@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// rsc Danger guard (claude). Wired by targets/claude.js onto PreToolUse (matcher Bash)
+// rsc Danger guard (claude). Wired by targets/claude.js onto PreToolUse (matcher Bash|PowerShell)
 // as `node ...` so it runs on every platform including Windows.
 //   argv[2] = absolute project root   stdin = PreToolUse hook JSON
 //
 // For a NON-TECHNICAL user (per 02-DOCS/wiki/harness/user-profile.md → technical_level),
-// it DENIES irreversible, foot-gun Bash commands and tells the agent to find a safer,
+// it DENIES irreversible, foot-gun shell commands and tells the agent to find a safer,
 // scoped alternative. Default-safe: if there is no profile yet, the harness convention is
 // "assume non-technical", so the guard is ON.
 //
@@ -17,7 +17,8 @@
 // Disable per project with .rsc/.no-danger-guard — but only when the USER explicitly asks
 // for it (the deny message says so). Fail-open on any internal error (never brick a shell).
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { homedir } from 'node:os';
+import { join, win32 } from 'node:path';
 
 const root = process.argv[2] || process.cwd();
 
@@ -68,12 +69,75 @@ function technicalLevel() {
 }
 const technical = technicalLevel() === 'technical';
 
-// Only Bash commands can be dangerous here.
+// Claude sends the same command field for either shell.
 let input = {};
 try { input = JSON.parse(readFileSync(0, 'utf8') || '{}'); } catch { allow(); }
-if ((input.tool_name || input.toolName) !== 'Bash') allow();
-const cmd = input.tool_input?.command || input.toolInput?.command || '';
-if (typeof cmd !== 'string' || !cmd) allow();
+const tool = input.tool_name || input.toolName;
+if (tool !== 'Bash' && tool !== 'PowerShell') allow();
+const command = input.tool_input?.command || input.toolInput?.command || '';
+if (typeof command !== 'string' || !command) allow();
+
+// Read literal arguments of direct PowerShell commands. A backslash is a path separator in
+// this shell. Quoted paths stay together and quoted text is never split at a semicolon.
+function powerShellCommands(line) {
+  const commands = [];
+  let words = [];
+  let invoke = false;
+  for (const [token] of line.matchAll(/`\r?\n|#[^\r\n]*|'(?:''|[^'])*'|"(?:`[\s\S]|""|[^"`])*"|[;|&\r\n]|(?:`[\s\S]|[^\s;|&'"`])+/g)) {
+    if (/^`\r?\n$/.test(token) || token.startsWith('#')) continue;
+    if (/^[;|&\r\n]$/.test(token)) {
+      if (words.length) commands.push(words);
+      words = [];
+      invoke = token === '&';
+    } else {
+      words.push(invoke ? token.replace(/^(['"])(.*)\1$/, '$2') : token);
+      invoke = false;
+    }
+  }
+  if (words.length) commands.push(words);
+  return commands;
+}
+
+function protectedPowerShellPath(raw) {
+  const path = raw.replace(/^(['"])(.*)\1$/, '$2').replace(/\//g, '\\');
+  const target = win32.normalize(path).replace(/\\(?:\*)?$/, '').toLowerCase();
+  if (['.', '..', '*', '.git', '~'].includes(target)) return true;
+  if (!raw.startsWith("'") && ['$home', '$env:userprofile'].includes(target)) return true;
+  const absolute = win32.isAbsolute(path);
+  if (!absolute) return false;
+  const same = (value) => target === win32.normalize(value).replace(/\\$/, '').toLowerCase();
+  return same(win32.parse(path).root) || same(root) || same(homedir());
+}
+
+// Option values such as the include filter or the output variable are not deletion targets.
+const PS_REMOVE_VALUE = /^-(?:filter|include|exclude|credential|erroraction|warningaction|informationaction|progressaction|errorvariable|warningvariable|informationvariable|outvariable|pipelinevariable|outbuffer)$/i;
+function protectedRemoval(args) {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (PS_REMOVE_VALUE.test(arg)) { i++; continue; }
+    if (!arg.startsWith('-') && protectedPowerShellPath(arg)) return true;
+  }
+  return false;
+}
+
+const psCommands = tool === 'PowerShell' ? powerShellCommands(command) : null;
+if (psCommands) {
+  for (const [name, ...args] of psCommands) {
+    if (!/^(?:Microsoft\.PowerShell\.Management\\)?(?:Remove-Item|rm|ri|del|erase|rd|rmdir)$/i.test(name)) continue;
+    const flag = (key) => args.some((arg) => arg.toLowerCase() === key || arg.toLowerCase() === key + ':$true');
+    if (!flag('-recurse') || !flag('-force') || flag('-whatif')) continue;
+    const why = 'recursively deletes files and folders with PowerShell';
+    if (!technical) deny(why);
+    if (protectedRemoval(args)) ask(why);
+  }
+}
+
+// PowerShell output commands and standalone string literals only display their text. Other
+// segments still reach the shared rules, including external database clients and disk tools.
+const cmd = psCommands
+  ? psCommands.filter(([name]) => !/^(?:['"]|(?:echo|write-(?:output|host|verbose|warning|information|debug|error))$)/i.test(name))
+    .map((words) => words.join(' ')).join('; ')
+  : command;
 
 // --- the dangerous-command list ---------------------------------------------
 // High-signal, low-false-positive. Each rule: what it catches and the plain why.
@@ -138,11 +202,13 @@ const runSegments = () => {
 
 // A git rule judges the segment that RUNS git, so `echo 'git reset --hard'` is a sentence, not a reset.
 function gitSegment(re) {
+  if (psCommands) return psCommands.some(([name, ...args]) =>
+    /(?:^|[\\/])git(?:\.exe)?$/i.test(name) && re.test(['git', ...args].join(' ')));
   return runSegments().some((segment) => runs(segment, 'git') && re.test(segment));
 }
 
 function isRmRecursiveForce() {
-  if (!/\brm\b/.test(cmd)) return false;
+  if (psCommands || !/\brm\b/.test(cmd)) return false;
   for (const segment of runSegments()) {
     if (!runsRm(segment)) continue;
     const flags = rmFlagsIn(segment);
