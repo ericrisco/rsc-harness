@@ -61,7 +61,7 @@ class CompletionRequest(BaseModel):
     tools: list[ToolSpec] = Field(default_factory=list)
     response_schema: dict | None = None  # JSON Schema -> structured output
     temperature: float | None = None  # None = provider default; current Claude models reject sampling params
-    max_tokens: int = 1024
+    max_tokens: int = 8192  # thinking is on by default on current Claude models and shares this budget
 
 
 class CompletionResponse(BaseModel):

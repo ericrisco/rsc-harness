@@ -20,6 +20,9 @@ class Message(BaseModel):
     content: str
     tool_call_id: str | None = None  # set when role == "tool"
     name: str | None = None          # tool name for tool-result turns
+    # Provider-native content of an assistant turn, replayed unchanged. On current Claude models
+    # thinking is on and its blocks must go back exactly as received: set it from resp.raw["content"].
+    blocks: list[dict] | None = None
 
 
 class ToolSpec(BaseModel):
@@ -48,7 +51,7 @@ class CompletionRequest(BaseModel):
     response_schema: dict | None = None
     temperature: float | None = None  # None = provider default; current Claude models reject sampling params
     top_p: float | None = None
-    max_tokens: int = 1024
+    max_tokens: int = 8192  # thinking is on by default on current Claude models and shares this budget
     stop: list[str] | None = None
     cache_system: bool = True  # opt-in prompt caching for the system block
 
@@ -268,6 +271,8 @@ def _loads(s: str | dict) -> dict:
 def _anthropic_turn(m: Message) -> dict:
     if m.role == "tool":  # tool result -> a user turn carrying tool_result content
         return {"role": "user", "content": [{"type": "tool_result", "tool_use_id": m.tool_call_id, "content": m.content}]}
+    if m.role == "assistant" and m.blocks:  # thinking + tool_use blocks, exactly as the API returned them
+        return {"role": "assistant", "content": m.blocks}
     return {"role": m.role, "content": m.content}
 ```
 
