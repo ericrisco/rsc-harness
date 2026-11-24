@@ -316,15 +316,15 @@ export function wireHook(paths, sourceMd, policy = {}) {
   settings.hooks.PreToolUse ||= [];
   settings.hooks.PreToolUse = settings.hooks.PreToolUse.filter((e) => !hookWiringOf(e).includes('.rsc/danger-guard.'));
   if (policy.dangerGuard !== false) {
-    // Danger guard: a PreToolUse(Bash) hook that DENIES irreversible foot-gun commands
+    // Danger guard: a PreToolUse shell hook that DENIES irreversible foot-gun commands
     // (rm -rf, git push --force, DROP/TRUNCATE, DELETE/UPDATE without WHERE, dd to /dev,
     // curl|bash, …) when the user-profile says the user is NON-technical (default-safe
-    // when no profile exists yet; never guards a fully `technical` user). Materialized +
+    // when no profile exists yet). Technical profiles confirm the high-risk subset. Materialized +
     // node-run (Windows-safe), idempotent, fail-open, opt-out via .rsc/.no-danger-guard.
     const dgDest = join(paths.projectRoot, '.rsc', 'danger-guard.mjs');
     copyFileSync(join(HERE, 'danger-guard.mjs'), dgDest);
     const dgCmd = viaBootstrap('guard', at('.rsc', 'danger-guard.mjs'), `"${P}"`);
-    settings.hooks.PreToolUse.push({ matcher: 'Bash', hooks: [{ type: 'command', command: dgCmd }] });
+    settings.hooks.PreToolUse.push({ matcher: 'Bash|PowerShell', hooks: [{ type: 'command', command: dgCmd }] });
     written.push(dgDest);
   } else {
     rmSync(join(paths.projectRoot, '.rsc', 'danger-guard.mjs'), { force: true });

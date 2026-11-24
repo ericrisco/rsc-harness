@@ -432,10 +432,10 @@ test('AC#14 — a missing own skill is named as the team\'s, and never offered f
   );
 });
 
-test('AC#16/#17 — a protected action reminds once more, and only once more', () => {
+for (const tool of ['Bash', 'PowerShell']) test(`AC#16/#17 — a protected ${tool} action reminds only once`, () => {
   const { root } = clonedWorkspace();
   const target = join(root, '.rsc', 'danger-guard.mjs');
-  const shellCall = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'git commit -m "x"' } });
+  const shellCall = JSON.stringify({ tool_name: tool, tool_input: { command: 'git commit -m "x"' } });
   const call = () => spawnSync('node', [join(root, '.claude', 'rsc-bootstrap.mjs'), 'guard', root, target], {
     cwd: root, input: shellCall, encoding: 'utf8',
   }).stdout ?? '';
