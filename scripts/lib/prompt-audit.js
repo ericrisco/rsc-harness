@@ -21,10 +21,11 @@
  */
 export const CURRENT_CLAUDE = { opus: [5, 5], sonnet: [5, 5], haiku: [5, 5] };
 
-const FAMILY_ID = /\bclaude-(opus|sonnet|haiku)-(\d+)(?:[-.](\d+))?(?:-\d{8})?\b/g;
+// The minor version is one or two digits; an 8-digit group is a date suffix, never a version.
+const FAMILY_ID = /\bclaude-(opus|sonnet|haiku)-(\d+)(?:[-.](\d{1,2})(?!\d))?(?:-\d{8})?\b/g;
 const LEGACY_ID = /\bclaude-(?:[23](?:[-.]\d+)*-(?:opus|sonnet|haiku)|instant|2(?:\.\d)?)\b[-\w.]*/g;
 
-const GENERATOR_ID = /\bInvoke (?:memory|sello):[a-z-]+\b|\bthe sello backing\b/i;
+const GENERATOR_ID = /\bInvoke\s+(?:memory|sello):[a-z-]+\b|\bthe\s+sello\s+backing\b/i;
 
 // Narrow on purpose: a phrase belongs here only when it cannot be a statement about the world
 // ("X no longer supports Y" is a fact about a framework; "this used to be an instruction" is the
@@ -46,6 +47,7 @@ export const RULES = {
   'history-phrase': 'state the rule as it is now; the history behind it belongs in decisions.md or the commit',
   'dead-skill-link': 'point at a skill that exists under skills/, or remove the link',
   'allow-without-reason': 'write why the exception holds after the dash: `prompt-audit: allow <rule> — <reason>`',
+  'allow-unknown-rule': 'name one of the rules this gate checks, or remove the allow',
 };
 
 const older = ([a, b], [c, d]) => a < c || (a === c && b < d);
@@ -64,8 +66,9 @@ export function retiredModels(line) {
 function allowed(lines, i) {
   const found = [];
   [lines[i], i > 0 ? lines[i - 1] : ''].forEach((l, k) => {
-    const m = ALLOW.exec(l || '');
-    if (m) found.push({ rule: m[1].toLowerCase(), reason: (m[2] || '').replace(/-->\s*$/, '').trim(), own: k === 0 });
+    // Close an HTML comment first: otherwise the `--` of `-->` reads as the dash and `>` as a reason.
+    const m = ALLOW.exec((l || '').replace(/\s*-->\s*$/, ''));
+    if (m) found.push({ rule: m[1].toLowerCase(), reason: (m[2] || '').trim(), own: k === 0 });
   });
   return found;
 }
@@ -96,6 +99,7 @@ export function auditText(text, { skillIds } = {}) {
     const allows = allowed(lines, i);
     for (const a of allows) {
       if (a.own && !a.reason) findings.push({ line: i + 1, rule: 'allow-without-reason', match: `allow ${a.rule}`, fix: RULES['allow-without-reason'] });
+      if (a.own && !(a.rule in RULES)) findings.push({ line: i + 1, rule: 'allow-unknown-rule', match: `allow ${a.rule}`, fix: RULES['allow-unknown-rule'] });
     }
     for (const [rule, match] of hits) {
       if (allows.some((a) => a.rule === rule && a.reason)) continue;

@@ -82,3 +82,32 @@ test('the published catalog passes prompt:audit', () => {
   assert.ok(files > 500, `scanned ${files} files; the walk is not reaching the catalog`);
   assert.deepEqual(findings.map((f) => `${f.file}:${f.line} ${f.rule} ${f.match}`), []);
 });
+
+test('legacy ids (claude-instant, claude-2.x, claude-3) and dated 5.x ids are retired', () => {
+  for (const bad of ['claude-instant-1.2', 'claude-2.1', 'claude-2', 'claude-3-opus-20240229', 'claude-opus-5-20260301', 'claude-sonnet-4-20250514']) {
+    assert.deepEqual(rules(bad), ['retired-model'], bad);
+  }
+  assert.deepEqual(rules('claude-haiku-5-5-20261001'), []);
+});
+
+test('every history phrase and each of its alternatives fails', () => {
+  for (const bad of [
+    'you no longer need to check it', 'you no longer have to check it',
+    'the best catch this lens ever found', 'the best catch this gate ever found', 'the best catch this skill ever found',
+    'That is how this lens found the worst one.',
+  ]) assert.deepEqual(rules(bad), ['history-phrase'], bad);
+});
+
+test('generator-id tolerates extra whitespace', () => {
+  assert.deepEqual(rules('Invoke  memory:learn now'), ['generator-id']);
+});
+
+test('an HTML-comment allow without a reason is a finding and silences nothing', () => {
+  assert.deepEqual(rules('claude-sonnet-4-6 <!-- prompt-audit: allow retired-model -->').sort(), ['allow-without-reason', 'retired-model']);
+  assert.deepEqual(rules('<!-- prompt-audit: allow retired-model -->\nclaude-sonnet-4-6').sort(), ['allow-without-reason', 'retired-model']);
+  assert.deepEqual(rules('claude-sonnet-4-6 <!-- prompt-audit: allow retired-model — migration example -->'), []);
+});
+
+test('an allow naming a rule that does not exist is reported', () => {
+  assert.deepEqual(rules('claude-opus-4-8 <!-- prompt-audit: allow retired-models — typo -->').sort(), ['allow-unknown-rule', 'retired-model']);
+});

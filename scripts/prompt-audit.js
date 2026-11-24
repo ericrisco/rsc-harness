@@ -2,7 +2,7 @@
 // `npm run prompt:audit` — the deterministic prompt-cruft gate over the published catalog.
 // Scope: skills/** (minus verbatim upstream/ copies and evals/) and the generators and hook texts in
 // targets/. Rules and their rationale: scripts/lib/prompt-audit.js. Exit 1 on any finding.
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { auditText } from './lib/prompt-audit.js';
@@ -32,7 +32,12 @@ export function auditCatalog(root = ROOT) {
   return { files: files.length, findings };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// realpath on both sides: reached through a symlink, a plain string compare skips the gate and exits 0.
+const invokedDirectly = () => {
+  try { return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1]); } catch { return false; }
+};
+
+if (process.argv[1] && invokedDirectly()) {
   const { files, findings } = auditCatalog(process.argv[2] || ROOT);
   for (const f of findings) console.log(`${f.file}:${f.line}  [${f.rule}]  ${f.match}\n    fix: ${f.fix}`);
   if (findings.length) {
