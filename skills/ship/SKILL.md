@@ -146,9 +146,7 @@ git push origin --delete feature/<slug> 2>/dev/null || true
 
 Use `--no-ff` so the feature is one legible merge commit tied to the spec. Confirm the trunk still builds after the merge if the repo has a local gate (defer the actual run to `verify`).
 
-**You no longer run the cleanup; you check that it ran.** A `post-merge` hook retires the worktree and its branch the moment the work lands, on both landing paths — the local merge above and the `pull --ff-only` after a forge merge. It removes only what the reaper already classifies as safe, so anything holding unsaved work survives with its reason, exactly as before.
-
-This used to be an instruction in this paragraph, and it was skipped on both features that reached it. That is why it is a hook now: an instruction at the end of a long phase is the least reliable place to put a step that matters (P1).
+**You do not run the cleanup; you check that it ran.** A `post-merge` hook retires the worktree and its branch the moment the work lands, on both landing paths — the local merge above and the `pull --ff-only` after a forge merge. It removes only what the reaper already classifies as safe, so anything holding unsaved work survives with its reason.
 
 If something did survive, it survived *for a reason* — read it rather than forcing it: `npx @ericrisco/rsc worktrees` lists what is left and why. `worktrees reap <path>` still exists for the backlog and for anything the hook deliberately refused; name the path, because bare `reap` retires every worktree that qualifies and with `parallel` running two streams that is how shipping A deletes B. Naming a path selects it, it does not accept the risk: add `--confirm` only after the user has seen the reason and said yes.
 
