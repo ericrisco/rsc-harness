@@ -173,9 +173,8 @@ means the user starts clean.
 ### Phase 5 — HANDOFF
 
 The profile is set, the discovery recorded, the skills installed. What is missing is the workspace
-itself, and this is where onboarding used to end with a request: *"now run `harness`"*. Nothing ran
-it. Finishing depended on the user reading a line and typing something — and in a chat install that
-user has just delegated precisely so they would not have to know what to type.
+itself. The user delegated onboarding so they would not have to know what to type next, so do not
+end with a request to run `harness`.
 
 So **invoke `harness` yourself, now**, as the last step of this phase. Say what you are doing in one
 line, then do it:
