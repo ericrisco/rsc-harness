@@ -149,7 +149,7 @@ A skill ships only when every box is checked or a miss is consciously justified.
 - [ ] **evals present** — `cases.yaml` (≥5 `should_trigger` incl. non-obvious, ≥4 `should_not_trigger` each with a real-sibling `route_to`, ≥1 `capability` with a `must_include` rubric) + an honest `README.md`. `scripts/eval-lint.sh` passes — but it only checks presence and the counts (≥5/≥4/≥1) and that those keys are lists; the `route_to`-points-at-a-real-sibling, non-obvious phrasings, and `must_include` quality are yours to verify here, not the linter's.
 - [ ] **verify.sh** present iff the skill has a checkable artifact; process skills rely on evals.
 - [ ] **Every `must_include` item discriminates** — answerable by the scenario's task, plausibly caused by the skill and plausibly missed without it. An item *both* arms fail measures nothing and lowers the absolute; it has turned a real PASS into a FAIL here. → `references/eval-authoring.md`.
-- [ ] **Sibling links resolve** — every `../x/SKILL.md` points to a skill that exists.
+- [ ] **Sibling links resolve** — every `../x/SKILL.md` points to a skill that exists. <!-- prompt-audit: allow dead-skill-link — placeholder in an example -->
 - [ ] **Wired** — `tags` + `recommends` set, `npm run manifest` re-run, and `npm run validate` / `npm run manifest:check` pass (manifest current, no dangling recommends).
 
 Full rubric rationale and the rsc plumbing steps → `references/rsc-conventions.md`.
@@ -186,7 +186,7 @@ only when **both** are green:
 | A `references/` folder added to look thorough, or a reference nothing links to | An unlinked reference is never loaded — dead weight in the package. Link it at point of use or delete it. |
 | Evals skipped: "I'll just test it by hand once" | Unverifiable = does not ship. Write `cases.yaml`, near-misses with `route_to` included. |
 | `verify.sh` added to a process skill for rigor | A process skill has no artifact to grep. Its rigor is the capability eval. |
-| `../foo/SKILL.md` linked to something not in this repo | A dead link is a defect. Verify the directory exists under `skills/`. |
+| `../foo/SKILL.md` linked to something not in this repo | A dead link is a defect. Verify the directory exists under `skills/`. | <!-- prompt-audit: allow dead-skill-link — placeholder in an example -->
 | Another catalog mirrored wholesale ("it's basically superpowers' writing-skills") | Mine the idea, write it in the rsc voice. Copied artifacts or phrasing are a defect. |
 
 ## Project grounding (02-DOCS + CLAUDE.md)
