@@ -27,7 +27,7 @@ A thin provider adapter, a disciplined agent loop, schema-validated tools, provi
 
 ## The provider adapter (the heart of the skill)
 
-The one payload to internalize. Python 3.12+, Pydantic v2, **async** so it composes directly with the bounded loop (and orchestrator-worker fan-out) in [`references/agent-loops-and-harness.md`](references/agent-loops-and-harness.md). Structured output is the quirk that differs most per vendor: strict JSON Schema (OpenAI), tool-forcing (Anthropic), `response_json_schema` (Gemini). Streaming, the Gemini and OSS/litellm adapters, tool-result plumbing, and a `route()` registry live in [`references/provider-abstraction.md`](references/provider-abstraction.md) — this excerpt is the load-bearing core, not the whole interface.
+The one payload to internalize. Python 3.12+, Pydantic v2, **async** so it composes directly with the bounded loop (and orchestrator-worker fan-out) in [`references/agent-loops-and-harness.md`](references/agent-loops-and-harness.md). Structured output is the quirk that differs most per vendor: strict JSON Schema (OpenAI), `output_config.format` (Anthropic), `response_json_schema` (Gemini). Streaming, the Gemini and OSS/litellm adapters, tool-result plumbing, and a `route()` registry live in [`references/provider-abstraction.md`](references/provider-abstraction.md) — this excerpt is the load-bearing core, not the whole interface.
 
 ```python
 from __future__ import annotations
@@ -56,11 +56,11 @@ class Usage(BaseModel):
 
 
 class CompletionRequest(BaseModel):
-    model: str  # resolved from config, e.g. "claude-sonnet-4-6" — never literal in logic
+    model: str  # resolved from config, e.g. "claude-sonnet-5-5" — never literal in logic
     messages: list[Message]
     tools: list[ToolSpec] = Field(default_factory=list)
     response_schema: dict | None = None  # JSON Schema -> structured output
-    temperature: float = 0.0
+    temperature: float | None = None  # None = provider default; current Claude models reject sampling params
     max_tokens: int = 1024
 
 
@@ -88,7 +88,9 @@ class OpenAIAdapter:
         # Chat Completions shape (universal, still current); references/provider-abstraction.md
         # gives the preferred Responses-API adapter. system stays a `system` role message here.
         kwargs: dict = {"model": self.model, "messages": [m.model_dump() for m in req.messages],
-                        "temperature": req.temperature, "max_tokens": req.max_tokens}
+                        "max_tokens": req.max_tokens}
+        if req.temperature is not None:
+            kwargs["temperature"] = req.temperature
         if req.tools:
             kwargs["tools"] = [{"type": "function", "function": {"name": t.name, "description": t.description, "parameters": t.parameters}} for t in req.tools]
         if req.response_schema:
@@ -108,14 +110,17 @@ class AnthropicAdapter:
 
     async def complete(self, req: CompletionRequest) -> CompletionResponse:
         # QUIRKS: system is a top-level param (not a message); tools use input_schema (not function).
-        system = "\n".join(m.content for m in req.messages if m.role == "system") or None
+        # Current Claude models reject sampling params (temperature/top_p) and forced tool_choice,
+        # so req.temperature is not sent and structured output uses output_config.format.
+        system = "\n".join(m.content for m in req.messages if m.role == "system")
         turns = [{"role": m.role, "content": m.content} for m in req.messages if m.role != "system"]
-        kwargs: dict = {"model": self.model, "system": system, "messages": turns, "max_tokens": req.max_tokens, "temperature": req.temperature}
+        kwargs: dict = {"model": self.model, "messages": turns, "max_tokens": req.max_tokens}
+        if system:
+            kwargs["system"] = system
         if req.tools:
             kwargs["tools"] = [{"name": t.name, "description": t.description, "input_schema": t.parameters} for t in req.tools]
-        if req.response_schema:  # structured output via tool-forcing
-            kwargs["tools"] = [{"name": "out", "description": "Emit the result", "input_schema": req.response_schema}]
-            kwargs["tool_choice"] = {"type": "tool", "name": "out"}
+        if req.response_schema:  # structured output: the first text block is valid JSON
+            kwargs["output_config"] = {"format": {"type": "json_schema", "schema": req.response_schema}}
         r = await self.client.messages.create(**kwargs)
         text = "".join(b.text for b in r.content if b.type == "text")
         calls = [{"id": b.id, "name": b.name, "arguments": b.input} for b in r.content if b.type == "tool_use"]
@@ -137,7 +142,7 @@ def get_provider(spec: str | None = None) -> LLMProvider:
 
 ## Good vs Bad
 
-Call-sites use the adapter and never name a model: `provider = get_provider(settings.llm)` (e.g. `"anthropic:claude-sonnet-4-6"`), then `await provider.complete(req)`. The two failures that survive that discipline:
+Call-sites use the adapter and never name a model: `provider = get_provider(settings.llm)` (e.g. `"anthropic:claude-sonnet-5-5"`), then `await provider.complete(req)`. The two failures that survive that discipline:
 
 ```python
 # BAD — parse-and-pray; wrong shape fails silently at 3am.
@@ -367,7 +372,7 @@ if __name__ == "__main__":
 | "Default everything to the flagship model, it's smartest" | 5–20× cost for no measured gain. Route to the cheapest model that passes the eval. |
 | "Stuff the whole doc in the prompt instead of RAG" | Blows context + cost and still hallucinates. Retrieve + cite + refuse. |
 | "Retry on every exception" | Retrying a 400/401 wastes budget. Retry only transient (429/5xx/timeout) with backoff+jitter. |
-| "Hardcode the model name, it's fine" | Names rot (Opus 4.7 → 4.8 in weeks). Resolve from config/registry. |
+| "Hardcode the model name, it's fine" | Names rot within weeks. Resolve from config/registry. |
 | "MCP for everything" | In-process native tools are simpler and faster when reuse isn't needed. MCP only for cross-client reuse. |
 | "Tool results just return the raw API blob" | Give the model `status/summary/next_actions`; raw blobs waste context and stall recovery. |
 | "Prompt caching is Anthropic-only so skip caching" | Each provider has its own caching/dedup; abstract it behind the adapter, don't skip it. |

@@ -279,7 +279,8 @@ async def traced_complete(p: LLMProvider, system: str, req: CompletionRequest) -
     with tracer.start_as_current_span("chat") as span:
         span.set_attribute("gen_ai.system", system)               # "openai" | "anthropic" | ...
         span.set_attribute("gen_ai.request.model", req.model)
-        span.set_attribute("gen_ai.request.temperature", req.temperature)
+        if req.temperature is not None:  # unset on current Claude models
+            span.set_attribute("gen_ai.request.temperature", req.temperature)
         resp = await p.complete(req)
         span.set_attribute("gen_ai.usage.input_tokens", resp.usage.input_tokens)
         span.set_attribute("gen_ai.usage.output_tokens", resp.usage.output_tokens)
@@ -392,16 +393,17 @@ Compute `cost_usd` from the dated pricing table — never hardcode a price in bu
 
 | Model (provider:id) | $/MTok in | $/MTok out | Notes |
 |---|---|---|---|
-| anthropic:claude-haiku-4-5 | 1.00 | 5.00 | cheap/fast; caching −90% read, batch −50% |
-| anthropic:claude-sonnet-4-6 | 3.00 | 15.00 | default; 1M-token context flat-rate |
-| anthropic:claude-opus-4-8 | 5.00 | 25.00 | flagship Opus (4.8, May 2026); re-verify the id |
+| anthropic:claude-haiku-5-5 | 0.10 | 0.50 | cheap/fast; prompts >100K tokens bill 0.50 / 2.50 |
+| anthropic:claude-sonnet-5-5 | 2.00 | 10.00 | default; cache reads 0.10; 1M context |
+| anthropic:claude-opus-5-5 | 4.00 | 20.00 | flagship Opus; cache reads 0.20; 1M context |
 | openai:gpt-5.5 | 5.00 | 30.00 | flagship; >272K prompt billed 2× in / 1.5× out |
 | openai:gpt-5.4 | 2.50 | 15.00 | cached input −90% |
 | openai:gpt-5.2-codex | 1.75 | 14.00 | code-tuned |
 | gemini:gemini-3.5-flash | 1.50 | 9.00 | cached 0.15; 1M context |
 | gemini:gemini-3.1-pro | — | — | paid-only since 2026-04-01 |
 
-All figures **(as of 2026-06; verify before quoting)**. Load them from config and refresh
+Anthropic rows checked against the official price table in 2026-11; the others are **as of
+2026-06**. Verify before quoting. Load them from config and refresh
 the table before trusting any number.
 
 ## Anti-patterns
