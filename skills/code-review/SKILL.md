@@ -93,6 +93,9 @@ Read the surrounding code, trace the *value*, confirm the path is reachable.
 
 If you cannot trace it to a concrete value and a reachable sink, you do not yet have a finding.
 
+On Codex, pass the catalog ID as `agent_type`. If the router takes a `task_name`, use a unique
+underscore name for the thread, as shown in `../review/SKILL.md`.
+
 When several reviewers looked at the same diff, merge before reporting. Have each one end with a ` ```json findings ` block, run `npx @ericrisco/rsc review consolidate <reports…>`, and send each blocker it marks `verify` to the `finding-verifier` agent. That is the `review` skill's step, and it applies here unchanged.
 
 ## The verdict

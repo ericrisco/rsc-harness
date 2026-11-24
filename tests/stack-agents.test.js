@@ -87,7 +87,7 @@ test('Go, C++ and Python source receipts are dated and primary', () => {
   }
 });
 
-test('a requested stack agent renders natively with its declared tools on all 8 targets', () => {
+test('a requested stack agent renders native settings on all 8 targets', () => {
   assert.equal(typeof agents.writeAgents, 'function');
   for (const target of agents.AGENT_TARGET_IDS) {
     const cwd = mkdtempSync(join(tmpdir(), `rsc-stack-${target}-`));
@@ -100,7 +100,7 @@ test('a requested stack agent renders natively with its declared tools on all 8 
     if (path.endsWith('.json')) {
       assert.deepEqual(JSON.parse(text).tools, ['read', 'search']);
     } else if (path.endsWith('.toml')) {
-      assert.match(text, /^tools = \["read", "search"\]$/m);
+      assert.doesNotMatch(text, /^tools\s*=/m);
     } else if (target === 'opencode') {
       // #298: OpenCode used to get `read: true` / `search: true` — grants that loosened a stricter
       // project policy. It is restrict-only now: a read-only reviewer is denied the edit and shell
