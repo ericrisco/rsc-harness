@@ -340,7 +340,7 @@ every screenshot for content that failed to appear.
 
 ### 10. Report
 
-Do not report until all of these are true; each one was skipped in a test run that came out badly:
+Do not report until all of these are true; skipping any one of them produces a bad page:
 
 - `inspect.mjs` shows **0 FAIL** at 1440, 768 and 390, on the final version of the page.
 - You opened every screenshot it listed after the last change, not only the first screen.
