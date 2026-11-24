@@ -1,4 +1,4 @@
-# Pricing tables — PERISHABLE snapshot (dated 2026-06-02)
+# Pricing tables — PERISHABLE snapshot (each section carries its check date)
 
 These rates move month to month. **Treat this file as data with an expiry, not a constant.** Every number below carries a source; re-fetch before trusting. The whole point of the skill is that prices live in a dated table, never as literals in logic.
 
@@ -6,11 +6,12 @@ These rates move month to month. **Treat this file as data with an expiry, not a
 
 | Model | Input | Output | Cache read | Source |
 |---|---|---|---|---|
-| Haiku 4.5 | $1.00 | $5.00 | $0.10 | cloudzero.com/blog/claude-api-pricing |
-| Sonnet 4.6 | $3.00 | $15.00 | $0.30 | cloudzero.com/blog/claude-api-pricing |
-| Opus 4.7 | $5.00 | $25.00 | $0.50 | evolink.ai/blog/claude-api-pricing-guide-2026 |
+| Haiku 5.5 (prompt ≤100K tokens) | $0.10 | $0.50 | 0.1x input | platform.claude.com/docs/en/about-claude/pricing |
+| Haiku 5.5 (prompt >100K tokens) | $0.50 | $2.50 | 0.1x input | platform.claude.com/docs/en/about-claude/pricing |
+| Sonnet 5.5 | $2.00 | $10.00 | $0.10 | platform.claude.com/docs/en/about-claude/pricing |
+| Opus 5.5 | $4.00 | $20.00 | $0.20 | platform.claude.com/docs/en/about-claude/pricing |
 
-Cache writes: 5-minute = 1.25x base input; 1-hour = 2x base input. Cache reads = 0.1x base input. Break-even on a 5-min cache entry: after ~1 hit (platform.claude.com prompt-caching; finout.io anthropic-api-pricing). All accessed 2026-06-02.
+Anthropic rows checked 2026-11-24. Cache writes: 5-minute = 1.25x base input; 1-hour = 2x base input. Cache reads = 0.05x base input on Opus 5.5 and Sonnet 5.5, 0.1x on most other models; check the pricing page per model. Break-even on a 5-min cache entry: after ~1 hit (platform.claude.com prompt-caching; finout.io anthropic-api-pricing). All accessed 2026-06-02.
 
 ## OpenAI — per 1M tokens
 

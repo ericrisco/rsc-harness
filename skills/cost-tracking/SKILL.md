@@ -57,26 +57,25 @@ Wrap the SDK call **once** so capture cannot be skipped. A meter you have to rem
 Rates drift fast and silently mis-bill when stale. Keep prices in a **versioned table** — one row per model, each with `effective_date` and `source` — loaded as data. Never write a rate as a literal in business logic. Look up by model and **fail loud on an unknown model; never default to $0**, or a new model silently bills as free and the leak is invisible.
 
 ```yaml
-# pricing.yaml — perishable. Verify against source before trusting. Dated 2026-06-02.
+# pricing.yaml — perishable. Verify against source before trusting.
 models:
-  - model: claude-haiku-4.5
-    effective_date: 2026-06-02
-    source: cloudzero.com/blog/claude-api-pricing
-    input_per_mtok: 1.00
-    output_per_mtok: 5.00
+  - model: claude-haiku-5-5           # prompts up to 100K tokens; above that 0.50 / 2.50
+    effective_date: 2026-11-24
+    source: platform.claude.com/docs/en/about-claude/pricing
+    input_per_mtok: 0.10
+    output_per_mtok: 0.50
+  - model: claude-sonnet-5-5
+    effective_date: 2026-11-24
+    source: platform.claude.com/docs/en/about-claude/pricing
+    input_per_mtok: 2.00
+    output_per_mtok: 10.00
     cache_read_per_mtok: 0.10
-  - model: claude-sonnet-4.6
-    effective_date: 2026-06-02
-    source: cloudzero.com/blog/claude-api-pricing
-    input_per_mtok: 3.00
-    output_per_mtok: 15.00
-    cache_read_per_mtok: 0.30
-  - model: claude-opus-4.7
-    effective_date: 2026-06-02
-    source: cloudzero.com/blog/claude-api-pricing
-    input_per_mtok: 5.00
-    output_per_mtok: 25.00
-    cache_read_per_mtok: 0.50
+  - model: claude-opus-5-5
+    effective_date: 2026-11-24
+    source: platform.claude.com/docs/en/about-claude/pricing
+    input_per_mtok: 4.00
+    output_per_mtok: 20.00
+    cache_read_per_mtok: 0.20
   - model: gpt-5.5
     effective_date: 2026-06-02
     source: openai.com/api/pricing
@@ -85,7 +84,7 @@ models:
     cache_read_per_mtok: 0.50   # OpenAI cached input = 90% off standard input
 ```
 
-These numbers are a **snapshot, not a constant** — model names and rates move month to month. Dated 2026-06-02 from the sources above. The dated per-provider snapshots, the `usage`-field map per provider, and refresh instructions live in `references/pricing-tables.md`; read it before you trust a rate.
+These numbers are a **snapshot, not a constant** — model names and rates move month to month. Each row carries its own `effective_date` and `source`. A price that depends on prompt size (Haiku 5.5 above 100K tokens) needs a tier column or a second row, not a single rate. The dated per-provider snapshots, the `usage`-field map per provider, and refresh instructions live in `references/pricing-tables.md`; read it before you trust a rate.
 
 ## Ledger: append-only, idempotent, attributed
 
