@@ -38,9 +38,9 @@ models:
   enabled: false              # opt-in master switch; false = honor the session model, announce nothing
   provider: anthropic         # which provider the tiers below resolve to
   tiers:
-    heavy: claude-opus-4-8
-    balanced: claude-sonnet-4-6
-    light: claude-haiku-4-5-20251001
+    heavy: claude-opus-5-5
+    balanced: claude-sonnet-5-5
+    light: claude-haiku-5-5
   phases:
     constitution: heavy
     specify: balanced
@@ -140,7 +140,7 @@ To target another provider, change `models.provider` and set `models.tiers` to t
 
 | provider | heavy | balanced | light |
 | --- | --- | --- | --- |
-| `anthropic` | `claude-opus-4-8` | `claude-sonnet-4-6` | `claude-haiku-4-5-20251001` |
+| `anthropic` | `claude-opus-5-5` | `claude-sonnet-5-5` | `claude-haiku-5-5` |
 | `openai` | `gpt-5.1` (or current flagship) | `gpt-5.1-mini` | `gpt-5.1-nano` |
 | `google` | `gemini-2.5-pro` | `gemini-2.5-flash` | `gemini-2.5-flash-lite` |
 | `openrouter` | a strong model slug | a mid model slug | a cheap/free model slug |
@@ -173,7 +173,7 @@ Every phase's result envelope carries the model it ran on, so the chain is audit
 ```json
 {
   "status": "complete",
-  "model": { "tier": "heavy", "resolved": "claude-opus-4-8", "routing": "on|off" },
+  "model": { "tier": "heavy", "resolved": "claude-opus-5-5", "routing": "on|off" },
   "...": "rest of the standard envelope"
 }
 ```
