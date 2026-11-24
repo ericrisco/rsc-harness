@@ -32,8 +32,9 @@ nothing else.
 # Generate context per chunk, then index context + chunk for BOTH dense and BM25.
 def contextualize(client, doc_text, chunk_text):
     msg = client.messages.create(
-        model="claude-sonnet-4-5",
+        model="claude-haiku-5-5",          # cheap tier: one call per chunk
         max_tokens=120,
+        thinking={"type": "disabled"},     # a 1-2 sentence context needs no reasoning budget
         system=[{"type": "text",
                  "text": f"<document>\n{doc_text}\n</document>",
                  "cache_control": {"type": "ephemeral"}}],  # cache the doc
@@ -41,7 +42,7 @@ def contextualize(client, doc_text, chunk_text):
                    f"Here is the chunk:\n<chunk>{chunk_text}</chunk>\n"
                    "Give a 1-2 sentence standalone context for retrieval. Context only."}],
     )
-    return msg.content[0].text.strip()
+    return "".join(b.text for b in msg.content if b.type == "text").strip()
 
 def indexable(doc_text, chunk):
     ctx = contextualize(client, doc_text, chunk["text"])
@@ -138,13 +139,14 @@ def answer(query):
 
     context = "\n".join(f"[{c['chunk_id']}] {c['text']}" for c in top)
     resp = llm.messages.create(
-        model="claude-sonnet-4-5",
-        max_tokens=1024,
+        model="claude-sonnet-5-5",
+        max_tokens=4096,                                # thinking is on by default and shares this budget
         system=GROUNDING_PROMPT,                        # section 4, refusal clause included
         messages=[{"role": "user",
                    "content": f"<context>\n{context}\n</context>\n\nQuestion: {query}"}],
     )
-    return resp.content[0].text   # contains [chunk_id] citations or the refusal line
+    # text blocks only: the response can also carry thinking blocks
+    return "".join(b.text for b in resp.content if b.type == "text")  # [chunk_id] citations or the refusal line
 ```
 
 Keep `chunk_id` + `source` on every object from chunking through this function so the cited ids
