@@ -17,13 +17,20 @@ import {
   resolveStackAgentNames, validateAgentCatalog,
 } from './agent-catalog.js';
 
-// Concrete model per provider per tier. June 2026 defaults — EDIT to your account's
-// models; the TIER is the contract, the id is yours to change. `light` is deliberately
-// absent: the developer floor is `balanced`.
+// Concrete model per provider per tier — EDIT to your account's models; the TIER is the
+// contract, the id is yours to change. `light` is deliberately absent: the developer floor is
+// `balanced`.
 const TIER_MODEL = {
-  anthropic: { balanced: 'claude-sonnet-4-6', heavy: 'claude-opus-4-8' },
+  anthropic: { balanced: 'claude-sonnet-5-5', heavy: 'claude-opus-5-5' },
   google: { balanced: 'gemini-2.5-flash', heavy: 'gemini-2.5-pro' },
   openai: { balanced: 'gpt-5.1-mini', heavy: 'gpt-5.1' },
+};
+
+// The Anthropic ids earlier releases wrote into agent files. Never rendered for a new file: they only
+// let `knownRenderings` recognise a file rsc wrote before the ids moved, so an upgrade replaces it
+// instead of keeping it as the user's.
+const PREVIOUS_TIER_MODEL = {
+  anthropic: { balanced: 'claude-sonnet-4-6', heavy: 'claude-opus-4-8' }, // prompt-audit: allow retired-model — recognises agent files written by earlier rsc releases
 };
 
 // Per-target agent capability: where the file goes, its format, and how the model value
@@ -33,16 +40,16 @@ const TIER_MODEL = {
 const AGENT_TARGETS = {
   claude: { dir: '.claude/agents', ext: '.md', format: 'md', toolsFormat: 'claude', model: (t) => (t === 'heavy' ? 'opus' : 'sonnet') },
   junie: { dir: '.junie/agents', ext: '.md', format: 'md', model: (t) => (t === 'heavy' ? 'opus' : 'sonnet') },
-  cursor: { dir: '.cursor/agents', ext: '.md', format: 'md', model: (t) => TIER_MODEL.anthropic[t] },
+  cursor: { dir: '.cursor/agents', ext: '.md', format: 'md', model: (t) => TIER_MODEL.anthropic[t], previousModel: (t) => PREVIOUS_TIER_MODEL.anthropic[t] },
   // #298 — OpenCode is the one tool people point at a local model or another provider per session, so
   // its agents INHERIT the session model by default (`model: null` → no `model:` line) and only carry
   // one when the project pins it (`agentModels.opencode` in .rsc.json). And its `tools` map is
   // restrict-only: rsc never grants a tool there, it can only take away what a role never declared,
   // so a stricter project permission policy is never loosened by an rsc agent.
-  opencode: { dir: '.opencode/agents', ext: '.md', format: 'md', mode: 'subagent', toolsFormat: 'restrict', model: () => null, legacyModel: (t) => `anthropic/${TIER_MODEL.anthropic[t]}` },
+  opencode: { dir: '.opencode/agents', ext: '.md', format: 'md', mode: 'subagent', toolsFormat: 'restrict', model: () => null, legacyModel: (t) => `anthropic/${PREVIOUS_TIER_MODEL.anthropic[t]}` },
   gemini: { dir: '.gemini/agents', ext: '.md', format: 'md', model: (t) => TIER_MODEL.google[t] },
-  copilot: { dir: '.github/agents', ext: '.agent.md', format: 'md', model: (t) => TIER_MODEL.anthropic[t] },
-  kiro: { dir: '.kiro/agents', ext: '.json', format: 'json', model: (t) => (t === 'heavy' ? 'claude-opus-4' : 'claude-sonnet-4') },
+  copilot: { dir: '.github/agents', ext: '.agent.md', format: 'md', model: (t) => TIER_MODEL.anthropic[t], previousModel: (t) => PREVIOUS_TIER_MODEL.anthropic[t] },
+  kiro: { dir: '.kiro/agents', ext: '.json', format: 'json', model: (t) => (t === 'heavy' ? 'claude-opus-4' : 'claude-sonnet-4') }, // prompt-audit: allow retired-model — Kiro's own model names, not Anthropic API ids; change them when Kiro lists newer ones
   codex: { dir: '.codex/agents', ext: '.toml', format: 'toml', model: (t) => TIER_MODEL.openai[t] },
 };
 
@@ -53,11 +60,13 @@ export function targetHasAgents(target) { return Boolean(AGENT_TARGETS[target]);
 // (decided in clarify 2026-08-18: a lens passed as a parameter reintroduces the
 // does-anyone-remember dependency this whole spec exists to remove) — but P5 says length is a cost,
 // so the contract they share is composed, not written three times.
-export const REFUTER_FOUR_INPUTS = `**You get exactly four inputs, and nothing else:**
-1. The task contract — the original request **plus every scope change a human explicitly approved since**. Without the approved changes, a legitimate scope revision reads as a spec gap and you will report a confident false positive.
+const REFUTER_INPUT_LIST = `1. The task contract — the original request **plus every scope change a human explicitly approved since**. Without the approved changes, a legitimate scope revision reads as a spec gap and you will report a confident false positive.
 2. The approved spec.
 3. The exact source state (commit SHA, or a tree hash when git is absent). A verdict attaches to the state you saw, not to the project.
 4. The entry point — the one command that reruns the checks.`;
+
+export const REFUTER_FOUR_INPUTS = `**You get exactly four inputs, and nothing else:**
+${REFUTER_INPUT_LIST}`;
 
 const REFUTER_CONTRACT = `Your mandate is to **refute readiness**, not confirm it. A reviewer looking for confirmation finds confirmation; the asymmetry is the point.
 
@@ -106,7 +115,7 @@ Full discipline lives in the \`implement\` skill.`,
   {
     name: 'refuter-correctness',
     desc: 'Adversarial reviewer, correctness lens: attacks a green diff for boundary and error-path defects, and demands that any home-grown gate prove it can both fail and pass. Fresh context, mandate to refute.',
-    body: `You are the **correctness** refuter for this project — one of three adversarial lenses ${'`review`'} dispatches at tier 2. What matters is not the number of lenses but their **diversity**: the worst defect this panel ever found was found by the privacy lens, which was not looking for it.
+    body: `You are the **correctness** refuter for this project — one of three adversarial lenses ${'`review`'} dispatches at tier 2. What matters is not the number of lenses but their **diversity**: a lens often finds the defect that another lens was not looking for.
 
 ${REFUTER_CONTRACT}
 
@@ -115,18 +124,18 @@ ${REFUTER_CONTRACT}
 **And the lens this panel was missing:** when the change adds or touches a **gate, checker or guard**, ask it in BOTH directions.
 - Can it fail? Feed it a known-bad input and watch it fail. A gate nobody has seen fail is not a gate.
 - **Can it pass?** Feed it a known-good input and watch it pass. Over-blocking is not the safe side — a gate that fires on correct work gets muted, worked around, or wedges the pipeline that depends on it, and it is *harder* to notice because it arrives dressed as diligence.
-- Watch for a check that matches **text** where it should match **structure**: "the path appears in the string" is not "the write targets that location". That exact mistake shipped twice in one day here.`,
+- Watch for a check that matches **text** where it should match **structure**: "the path appears in the string" is not "the write targets that location".`,
   },
   {
     name: 'refuter-security',
     desc: 'Adversarial reviewer, security and privacy lens: hunts untrusted input reaching a sink, authz gaps, leaked secrets and data escaping where it should not. Fresh context, mandate to refute.',
-    body: `You are the **security and privacy** refuter for this project — one of three adversarial lenses ${'`review`'} dispatches at tier 2. Your value is that you are not looking where the others look: the worst defect this panel ever found was found by this lens, chasing something else entirely.
+    body: `You are the **security and privacy** refuter for this project — one of three adversarial lenses ${'`review`'} dispatches at tier 2. Your value is that you are not looking where the others look.
 
 ${REFUTER_CONTRACT}
 
 **Your lens:** untrusted input reaching a sink (injection, SSRF, path traversal), authorization gaps (authenticated is not authorized), secrets in the diff or in config, and **data leaving where it should not** — a log line, an error message, a file written outside its zone, a payload sent to a third party.
 
-**Follow the trail rather than the checklist.** When something looks merely untidy — a file in an odd place, a path that repeats — ask who else cares about that location before dismissing it. That is how this lens found the worst one.`,
+**Follow the trail rather than the checklist.** When something looks merely untidy — a file in an odd place, a path that repeats — ask who else cares about that location before dismissing it.`,
   },
   {
     name: 'refuter-tests',
@@ -150,9 +159,8 @@ ${REFUTER_CONTRACT}
     desc: 'Adversarial verifier of review findings: takes ONE consolidated finding and tries to prove it false against the code. Default stance: the finding is false; only a reproduced or traced failure is CONFIRMED. Fresh context, edits nothing.',
     body: `You are the **finding verifier** for this project. ${'`review`'} hands you **one** finding that survived ${'`rsc review consolidate`'} — a blocker or should-fix some refuter lens reported against a diff. Your job is to **prove it false**. Your starting position is that it is false; the finding has to beat you.
 
-**Your inputs:** the finding (location, claim, failure scenario, evidence) plus the same four the lenses had —
-
-${REFUTER_FOUR_INPUTS}
+**You get five inputs, and nothing else:** the finding (location, claim, failure scenario, evidence), plus the same four the lenses had:
+${REFUTER_INPUT_LIST}
 
 **You do NOT get** the refuter's reasoning or the builder's defence. Judge the claim against the code, not against either story.
 
@@ -311,6 +319,7 @@ function knownRenderings(target, cwd, agent) {
       out.add(renderAgent(target, spec, resolveModel(target, cwd, tier), agent, 'list'));
       out.add(renderAgent(target, spec, spec.model(tier), agent, 'list'));
     }
+    if (spec.previousModel) out.add(renderAgent(target, spec, spec.previousModel(tier), agent));
     if (spec.legacyModel) out.add(renderAgent(target, spec, spec.legacyModel(tier), agent, 'map'));
   }
   return out;

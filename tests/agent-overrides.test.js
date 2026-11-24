@@ -12,7 +12,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from './helpers/scratch.js';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -244,4 +244,19 @@ test('i298 · doctor names the edited agents with the way back, and the model th
   const report = doctor({ target: 'opencode', cwd, home: cwd });
   assert.deepEqual(report.agentsEditedByYou.map((k) => k.name), ['developer']);
   assert.match(report.agentsEditedByYou[0].action, /agents reset developer/);
+});
+
+test('an agent file rsc wrote with the previous Anthropic ids is recognised as rsc\'s and upgraded', () => {
+  // The Anthropic tier ids moved to the current generation. A file an earlier release wrote, with no
+  // digest to vouch for it, must still read as rsc's — otherwise the upgrade keeps it as the user's
+  // and the project stays pinned to the old model.
+  const cwd = tmp('previous-ids');
+  writeAgents('cursor', cwd, 'balanced', ['developer']);
+  const dev = agentPath('cursor', cwd, 'developer');
+  assert.match(read(dev), /claude-sonnet-5-5/);
+  writeFileSync(dev, read(dev).replace('claude-sonnet-5-5', 'claude-sonnet-4-6'));
+  rmSync(join(cwd, '.rsc', 'agent-digests.json'), { force: true });
+  const res = reconcileAgents('cursor', cwd, 'balanced', ['developer'], ['developer']);
+  assert.deepEqual(res.kept, []);
+  assert.match(read(dev), /claude-sonnet-5-5/);
 });
