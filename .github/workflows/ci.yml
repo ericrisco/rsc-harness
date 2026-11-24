@@ -19,6 +19,8 @@ jobs:
         run: npm test
       - name: eval-lint
         run: bash scripts/eval-lint.sh
+      - name: prompt-audit (no retired model ids, generator ids, history phrases or dead skill links)
+        run: npm run prompt:audit
       - name: drift-check (every prose link in the catalog resolves)
         run: npm run drift:check
       - name: cleanup gate (no old marketplace-distribution residue)
