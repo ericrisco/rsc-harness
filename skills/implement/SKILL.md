@@ -115,10 +115,7 @@ review of the task, this first one included. Round 1 is the task's first review,
 | --- | --- |
 | 0 | none — the controls (e) still run |
 | 1 | one fresh-context reviewer; frozen brief in `references/per-task-review.md` |
-| 2 | the three refuters (`refuter-correctness` · `refuter-security` · `refuter-tests`) in parallel, as `../review/SKILL.md` runs them; then `review ledger panel <slug>/<task> --lenses correctness,security,tests` — the push gate checks it. Wait for every reviewer inside the turn; never end the turn to ask whether to continue |
-
-On Codex, pass the catalog ID as `agent_type`. If the router takes a `task_name`, use a unique
-underscore name for the thread, as shown in `../review/SKILL.md`.
+| 2 | the three refuters (`refuter-correctness` · `refuter-security` · `refuter-tests`) in parallel, using the dispatch names in `../review/SKILL.md` (Codex pairs each `agent_type` with a unique underscore `task_name`); then `review ledger panel <slug>/<task> --lenses correctness,security,tests` — the push gate checks it. Wait for every reviewer inside the turn; never end the turn to ask whether to continue |
 
 Every reviewer gets the **spec**, the **diff as a file** (`scripts/review-package <BASE> <HEAD>`, BASE
 = the task's *recorded* base sha, never `HEAD~1`), the **surrounding code** at that sha (not just the
