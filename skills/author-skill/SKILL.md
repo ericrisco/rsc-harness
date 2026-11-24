@@ -150,7 +150,7 @@ A skill ships only when every box is checked or a miss is consciously justified.
 - [ ] **verify.sh** present iff the skill has a checkable artifact; process skills rely on evals.
 - [ ] **Every `must_include` item discriminates** — answerable by the scenario's task, plausibly caused by the skill and plausibly missed without it. An item *both* arms fail measures nothing and lowers the absolute; it has turned a real PASS into a FAIL here. → `references/eval-authoring.md`.
 - [ ] **Sibling links resolve** — every `../x/SKILL.md` points to a skill that exists. <!-- prompt-audit: allow dead-skill-link — placeholder in an example -->
-- [ ] **Wired** — `tags` + `recommends` set, `npm run manifest` re-run, and `npm run validate` / `npm run manifest:check` pass (manifest current, no dangling recommends).
+- [ ] **Wired** — `tags` + `recommends` set, `npm run manifest` re-run, and `npm run validate` / `npm run manifest:check` / `npm run prompt:audit` pass (manifest current, no dangling recommends, no retired model ids or history phrases).
 
 Full rubric rationale and the rsc plumbing steps → `references/rsc-conventions.md`.
 
