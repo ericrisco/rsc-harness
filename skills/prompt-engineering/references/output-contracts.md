@@ -45,40 +45,35 @@ Raw form (no SDK helper):
 }
 ```
 
-## Anthropic — strict tool use
+## Anthropic — `output_config.format`
 
-Reliable schema adherence, close behind OpenAI strict. Define a single tool whose
-`input_schema` is your contract and force it. **Assistant-prefill structured output is
-dead in the latest models** — Anthropic's migration guide states prefill returns a `400`
-on Sonnet 4.6 / Opus 4.6 / Opus 4.7 and routes you to structured outputs / `output_config.format`
-(platform.claude.com/docs/en/about-claude/models/migration-guide). Do not use prefill to
-coerce a shape.
+Constrained decoding against a JSON Schema: the first text block of the answer is valid JSON in
+your shape. Two older routes now fail on current Claude models: **assistant prefill** and **forced
+tool use** (`tool_choice` of `tool` or `any`) both return a `400`. Do not use either to coerce
+a shape. Strict tool use (`"strict": true` on a tool) remains the right tool when you want the
+model to *call your code*, not to shape its final answer.
 
 ```python
+import json
 import anthropic
 client = anthropic.Anthropic()
 msg = client.messages.create(
     model="claude-…",                    # from config
-    max_tokens=256,
-    tools=[{
-        "name": "emit_triage",
-        "description": "Return the ticket category.",
-        "input_schema": {
-            "type": "object",
-            "properties": {"category": {"type": "string", "enum": ["bug", "billing", "other"]}},
-            "required": ["category"],
-        },
-    }],
-    tool_choice={"type": "tool", "name": "emit_triage"},
+    max_tokens=4096,                     # thinking is on by default on current models and shares this budget
+    output_config={"format": {"type": "json_schema", "schema": {
+        "type": "object",
+        "properties": {"category": {"type": "string", "enum": ["bug", "billing", "other"]}},
+        "required": ["category"],
+        "additionalProperties": False,
+    }}},
     messages=[{"role": "user", "content": prompt}],
 )
-block = next(b for b in msg.content if b.type == "tool_use")
-result = block.input  # {"category": "..."}
+text = next(b.text for b in msg.content if b.type == "text")
+result = json.loads(text)  # {"category": "..."}
 ```
 
-**Streaming caveat:** Anthropic tool-use output arrives as ONE block at end of stream —
-you cannot read fields progressively. OpenAI/Gemini stream field-by-field. If your UI
-parses-as-it-streams, that path does not exist on Claude tool use.
+**Streaming caveat:** a structured answer streams as ordinary text deltas, and tool inputs stream
+as partial JSON deltas. Either way, validate only the complete object, never a prefix.
 
 ## Google Gemini — `responseSchema`
 

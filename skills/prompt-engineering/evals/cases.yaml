@@ -8,7 +8,7 @@ should_trigger:
   - prompt: "El prompt a veces da respuestas distintas con la misma entrada, ¿cómo lo hago determinista?"
     why: "Spanish; outputs drift between reruns for identical input — the determinism / contract problem this skill exists to fix."
   - prompt: "Make this prompt enforce a fixed schema reliably instead of sometimes returning prose."
-    why: "Forcing a fixed schema out of a model — the output-contract decision table (strict json_schema / strict tool use vs JSON mode)."
+    why: "Forcing a fixed schema out of a model — the output-contract decision table (strict json_schema / Anthropic output_config.format vs JSON mode)."
   - prompt: "Write me a small eval set to check this prompt before I change it."
     why: "Inline eval set authored before tuning — the discipline the 'Inline evals — write these first' section exists to enforce; the small set, not a standing harness."
   - prompt: "Users can paste 'ignore your instructions' into my input field and the model obeys it."
@@ -37,7 +37,7 @@ capability:
   - scenario: "A 'classify this support ticket' prompt is flaky: it sometimes returns prose explanations instead of exactly one of {bug, billing, other}, and it obeys instructions users paste into the ticket text. Harden it."
     must_include:
       - "Ordered skeleton: role -> task -> context -> constraints -> output contract -> examples, with the real input last."
-      - "An explicit output contract recommending strict json_schema (OpenAI) or strict tool use (Anthropic), noting JSON mode guarantees valid JSON but NOT the schema."
+      - "An explicit output contract recommending strict json_schema (OpenAI) or output_config.format (Anthropic), noting JSON mode guarantees valid JSON but NOT the schema."
       - "Three deliberately different few-shot examples (normal / awkward / edge), not near-identical clones."
       - "At least 5 inline eval cases including one adversarial injection case, written before tuning."
       - "Delimit untrusted ticket text as data and re-state the task after long input; phrase constraints positively; add a refusal anchor."

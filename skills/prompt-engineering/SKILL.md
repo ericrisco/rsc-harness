@@ -43,13 +43,13 @@ JSON requested means a contract is mandatory. Choose by reliability, not habit:
 | Mechanism | Use when | Reliability |
 | --- | --- | --- |
 | OpenAI strict `json_schema` via `response_format` | Provider supports it and you control the schema | Highest — provider compiles schema to a token-masking FSM; **<0.1% schema-failure rate** (figure from OpenAI's 2024 Structured Outputs launch; accessed 2026-06-02) |
-| Anthropic strict tool use | On Claude; output arrives as one block | Close second; reliable schema adherence |
+| Anthropic `output_config.format` | On Claude | Constrained decoding against the schema; values still need validation |
 | JSON *mode* | Nothing stronger is available | Guarantees valid JSON **only** — NOT your schema. Validate after |
 | Freeform + regex/parse | Output is a token or a short fixed shape | You own the parser and the retry; brittle for nested data |
 
-- **Anthropic assistant-prefill structured output is dead in latest models.** Anthropic's own migration guide states prefilling assistant messages returns a `400` error on Sonnet 4.6, Opus 4.6, and Opus 4.7, and points you to structured outputs / `output_config.format` instead (Anthropic, Migration guide, platform.claude.com/docs/en/about-claude/models/migration-guide, accessed 2026-06-02). Do not reach for prefill to force a shape — use strict tool use or native structured output.
-- **Anthropic strict tool-use output arrives as one block at end of stream** — you cannot parse fields progressively. OpenAI/Gemini stream field-by-field. If you parse-as-you-stream, design for the provider you actually use.
-- Per-provider code (OpenAI `response_format`, Anthropic strict tool use, Gemini `responseSchema`, pydantic/zod surface, retry-on-parse-fail): `references/output-contracts.md`.
+- **On current Claude models, assistant prefill and forced tool use both return a `400`.** Anthropic's migration guide routes structured output to `output_config.format` (platform.claude.com/docs/en/about-claude/models/migration-guide). Do not reach for prefill or `tool_choice` to force a shape.
+- **Validate the complete object, never a streamed prefix.** Structured answers stream as text deltas and tool inputs as partial JSON; neither is your contract until it is whole.
+- Per-provider code (OpenAI `response_format`, Anthropic `output_config.format`, Gemini `responseSchema`, pydantic/zod surface, retry-on-parse-fail): `references/output-contracts.md`.
 
 ## Few-shot: how many, which ones
 
@@ -118,9 +118,9 @@ Assert on the contract: schema-valid, exact token, contains/not-contains. Keep t
 
 | Anti-pattern | Why it bites | Do instead |
 | --- | --- | --- |
-| "Please try to output JSON" | No contract, no enforcement — parses until it doesn't | Strict `json_schema` / strict tool use; see table above |
+| "Please try to output JSON" | No contract, no enforcement — parses until it doesn't | Strict `json_schema` / `output_config.format`; see table above |
 | Trusting JSON *mode* for your schema | Valid JSON ≠ your fields/types | JSON mode then validate, or use a strict mechanism |
-| Anthropic assistant-prefill to force a shape | Returns a 400 on Sonnet 4.6 / Opus 4.6 / Opus 4.7 (Anthropic migration guide) | Strict tool use or native structured output |
+| Anthropic assistant-prefill or forced `tool_choice` to force a shape | Returns a 400 on current Claude models (Anthropic migration guide) | `output_config.format` |
 | Wall-of-text prompt | No block order; instructions buried | Use the skeleton; hard rules last |
 | 3 near-identical few-shot examples | Teaches one shape, wastes tokens | 3 deliberately different: normal / awkward / edge |
 | Negative-only constraints ("don't…") | Invites negotiation, ignored on long input | Phrase positively; re-state task after long input |
