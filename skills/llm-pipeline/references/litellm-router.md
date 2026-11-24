@@ -10,7 +10,7 @@ from litellm import Router
 router = Router(
     model_list=[
         {"model_name": "smart",
-         "litellm_params": {"model": "anthropic/claude-sonnet-4-6",
+         "litellm_params": {"model": "anthropic/claude-sonnet-5-5",
                             "api_key": "os.environ/ANTHROPIC_API_KEY",
                             "timeout": 30, "order": 1}},
         {"model_name": "smart",          # same group, order 2 = first internal fallback
@@ -18,7 +18,7 @@ router = Router(
                             "api_key": "os.environ/OPENAI_API_KEY",
                             "timeout": 30, "order": 2}},
         {"model_name": "cheap",
-         "litellm_params": {"model": "anthropic/claude-haiku-4-5",
+         "litellm_params": {"model": "anthropic/claude-haiku-5-5",
                             "api_key": "os.environ/ANTHROPIC_API_KEY",
                             "timeout": 20}},
         {"model_name": "long-ctx",
@@ -48,7 +48,7 @@ Use `os.environ/VAR` indirection (proxy YAML) or read `os.environ[...]` in SDK. 
 model_list:
   - model_name: smart
     litellm_params:
-      model: anthropic/claude-sonnet-4-6
+      model: anthropic/claude-sonnet-5-5
       api_key: os.environ/ANTHROPIC_API_KEY
       timeout: 30
   - model_name: smart-backup
