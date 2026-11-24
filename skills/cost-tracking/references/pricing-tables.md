@@ -6,12 +6,12 @@ These rates move month to month. **Treat this file as data with an expiry, not a
 
 | Model | Input | Output | Cache read | Source |
 |---|---|---|---|---|
-| Haiku 5.5 (prompt ≤100K tokens) | $0.10 | $0.50 | 0.1x input | platform.claude.com/docs/en/about-claude/pricing |
-| Haiku 5.5 (prompt >100K tokens) | $0.50 | $2.50 | 0.1x input | platform.claude.com/docs/en/about-claude/pricing |
+| Haiku 5.5 (prompt ≤100K tokens) | $0.10 | $0.50 | $0.01 | platform.claude.com/docs/en/about-claude/pricing |
+| Haiku 5.5 (prompt >100K tokens) | $0.50 | $2.50 | $0.05 | platform.claude.com/docs/en/about-claude/pricing |
 | Sonnet 5.5 | $2.00 | $10.00 | $0.10 | platform.claude.com/docs/en/about-claude/pricing |
 | Opus 5.5 | $4.00 | $20.00 | $0.20 | platform.claude.com/docs/en/about-claude/pricing |
 
-Anthropic rows checked 2026-11-24. Cache writes: 5-minute = 1.25x base input; 1-hour = 2x base input. Cache reads = 0.05x base input on Opus 5.5 and Sonnet 5.5, 0.1x on most other models; check the pricing page per model. Break-even on a 5-min cache entry: after ~1 hit (platform.claude.com prompt-caching; finout.io anthropic-api-pricing). All accessed 2026-06-02.
+Anthropic rows checked 2026-11-24. Cache writes: 5-minute = 1.25x base input; 1-hour = 2x base input. Cache reads = 0.05x base input on Opus 5.5 and Sonnet 5.5, 0.1x on most other models; check the pricing page per model. Break-even on a 5-min cache entry: after ~1 hit (platform.claude.com prompt-caching; finout.io anthropic-api-pricing, accessed 2026-06-02).
 
 ## OpenAI — per 1M tokens
 

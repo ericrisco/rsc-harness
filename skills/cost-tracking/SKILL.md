@@ -59,11 +59,20 @@ Rates drift fast and silently mis-bill when stale. Keep prices in a **versioned 
 ```yaml
 # pricing.yaml — perishable. Verify against source before trusting.
 models:
-  - model: claude-haiku-5-5           # prompts up to 100K tokens; above that 0.50 / 2.50
+  - model: claude-haiku-5-5           # rate depends on prompt size: one row per tier
+    max_prompt_tokens: 100000
     effective_date: 2026-11-24
     source: platform.claude.com/docs/en/about-claude/pricing
     input_per_mtok: 0.10
     output_per_mtok: 0.50
+    cache_read_per_mtok: 0.01
+  - model: claude-haiku-5-5
+    min_prompt_tokens: 100001
+    effective_date: 2026-11-24
+    source: platform.claude.com/docs/en/about-claude/pricing
+    input_per_mtok: 0.50
+    output_per_mtok: 2.50
+    cache_read_per_mtok: 0.05
   - model: claude-sonnet-5-5
     effective_date: 2026-11-24
     source: platform.claude.com/docs/en/about-claude/pricing
@@ -84,7 +93,7 @@ models:
     cache_read_per_mtok: 0.50   # OpenAI cached input = 90% off standard input
 ```
 
-These numbers are a **snapshot, not a constant** — model names and rates move month to month. Each row carries its own `effective_date` and `source`. A price that depends on prompt size (Haiku 5.5 above 100K tokens) needs a tier column or a second row, not a single rate. The dated per-provider snapshots, the `usage`-field map per provider, and refresh instructions live in `references/pricing-tables.md`; read it before you trust a rate.
+These numbers are a **snapshot, not a constant** — model names and rates move month to month. Each row carries its own `effective_date` and `source`. A price that depends on prompt size (Haiku 5.5 above 100K tokens) gets one row per tier, as above: `price()` picks the row whose prompt-size bounds contain the request's input tokens, and fails loud when none does. The dated per-provider snapshots, the `usage`-field map per provider, and refresh instructions live in `references/pricing-tables.md`; read it before you trust a rate.
 
 ## Ledger: append-only, idempotent, attributed
 
