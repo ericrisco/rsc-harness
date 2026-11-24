@@ -248,10 +248,12 @@ function renderMd(spec, model, agent, toolsFormat = spec.toolsFormat) {
   return `${fm.join('\n')}${agent.body}\n`;
 }
 const renderJson = (model, agent) => `${JSON.stringify({ name: agent.name, description: agent.desc, ...(model ? { model } : {}), ...(agent.tools ? { tools: agent.tools } : {}), prompt: agent.body }, null, 2)}\n`;
-function renderToml(model, agent) {
+function renderToml(model, agent, legacyTools = false) {
   const esc = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   // body as a TOML multiline LITERAL string ('''…''') — no escape processing.
-  const tools = agent.tools ? `tools = [${agent.tools.map((tool) => `"${tool}"`).join(', ')}]\n` : '';
+  // Codex tools config describes tool exposure, not RSC capabilities. Rebuild the
+  // former field only to recognize untouched profiles when their digest is missing.
+  const tools = legacyTools && agent.tools ? `tools = [${agent.tools.map((tool) => `"${tool}"`).join(', ')}]\n` : '';
   return `name = "${agent.name}"\ndescription = "${esc(agent.desc)}"\n${model ? `model = "${model}"\n` : ''}${tools}developer_instructions = '''\n${agent.body}\n'''\n`;
 }
 
@@ -307,6 +309,10 @@ function knownRenderings(target, cwd, agent) {
   for (const tier of ['balanced', 'heavy']) {
     out.add(renderAgent(target, spec, resolveModel(target, cwd, tier), agent));
     out.add(renderAgent(target, spec, spec.model(tier), agent));
+    if (target === 'codex' && agent.tools) {
+      out.add(renderToml(resolveModel(target, cwd, tier), agent, true));
+      out.add(renderToml(spec.model(tier), agent, true));
+    }
     if (target === 'claude') {
       out.add(renderAgent(target, spec, resolveModel(target, cwd, tier), agent, 'list'));
       out.add(renderAgent(target, spec, spec.model(tier), agent, 'list'));
