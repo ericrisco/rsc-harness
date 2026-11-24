@@ -6340,7 +6340,7 @@
       "id": "learn",
       "description": "Propose one local lesson; saving still requires individual explicit approval.",
       "kind": "memory",
-      "backing": "memory:learn"
+      "backing": "rsc memory learn"
     },
     {
       "id": "machine-learning-build",
@@ -6418,7 +6418,7 @@
       "id": "resume-session",
       "description": "Read the bounded local continuation record for this branch and worktree.",
       "kind": "memory",
-      "backing": "memory:resume"
+      "backing": "rsc memory resume"
     },
     {
       "id": "review",
@@ -6442,7 +6442,7 @@
       "id": "save-session",
       "description": "Force a local deterministic session checkpoint.",
       "kind": "memory",
-      "backing": "memory:save"
+      "backing": "rsc memory save"
     },
     {
       "id": "security-audit",
