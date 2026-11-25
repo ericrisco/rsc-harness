@@ -133,7 +133,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('api', {
   readConfig: () => ipcRenderer.invoke('config:read'),
   saveNote: (text: string) => ipcRenderer.invoke('note:save', text),
-  onSync: (cb: () => void) => ipcRenderer.on('sync:done', cb), // events: send/on
+  onSync: (cb: (...args: unknown[]) => void) =>
+    ipcRenderer.on('sync:done', (_e, ...args) => cb(...args)), // events: send/on; never hand the event (its .sender) to the renderer
 });
 ```
 
