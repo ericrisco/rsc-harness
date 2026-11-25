@@ -22,7 +22,7 @@ The single most expensive mistake is choosing on familiarity instead of cost mod
 | Constraint | Zapier | Make | n8n |
 | --- | --- | --- | --- |
 | **Billing unit** (why it dominates cost) | per **task** — every action counts | per **credit** — each module action = 1 credit (was "operations" until 2025-08-27; converted 1:1) | per **execution** — whole run = 1, any step count |
-| **Free tier** | 100 tasks/mo | 1,000 ops/mo | self-host free, unlimited execs |
+| **Free tier** | 100 tasks/mo | ≈ 1,000 credits/mo | self-host free, unlimited execs |
 | **Entry paid** | Pro ≈ $19.99/mo (billed annually), 750 tasks | Core ≈ $9/mo, 10k credits (billing unit became **credits** on 2025-08-27) | cloud Starter ≈ €20/mo (billed annually), 2,500 execs; self-host = $0 |
 | **App breadth** (obscure-app signal) | ≈ 8,000+ integrations — widest | ≈ 1,500, often deeper per app | ≈ 1,000 nodes + generic HTTP node + code |
 | **Self-host / data residency** | no | no | yes — your infra, your data |
