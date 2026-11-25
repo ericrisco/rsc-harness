@@ -229,7 +229,7 @@ the fix is usually the plan, not the config. (Pricing per expo.dev/pricing, veri
 | Testing a custom native module in Expo Go | Expo Go can't load arbitrary native code; build a dev client. |
 | Upgrading the SDK and building straight to production | run `expo-doctor` + a preview build first; there is no Legacy-Arch fallback to catch a New-Arch-incompatible dep. |
 | Setting `newArchEnabled: false` to dodge a broken native dep | the flag was removed in SDK 55 and the Legacy Architecture is gone; fix or replace the dep. |
-| Committing the keystore so CI can sign | never; let EAS manage credentials or use EAS secrets. |
+| Committing the keystore so CI can sign | never; let EAS manage credentials or use EAS environment variables (secret visibility). |
 | Putting the API key in `app.config` extra | app config ships in the public bundle; use EAS env vars / a backend. |
 | Reaching for GitHub Actions to call `eas build` | EAS Workflows is the native CI; only reach for github-actions if explicitly required. |
 
