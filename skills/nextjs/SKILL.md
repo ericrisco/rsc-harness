@@ -106,7 +106,7 @@ export async function renameProject(_prev: RenameResult | null, formData: FormDa
   if (!owned) return { status: "error", message: "Forbidden" };
 
   const updated = await db.project.update({ where: { id: parsed.data.id }, data: { name: parsed.data.name } });
-  revalidateTag(`project:${updated.id}`);
+  revalidateTag(`project:${updated.id}`); // v15. On v16: updateTag(`project:${updated.id}`) (read-your-writes)
   return { status: "ok", data: { id: updated.id, name: updated.name } };
 }
 ```

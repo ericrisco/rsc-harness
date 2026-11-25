@@ -1,6 +1,6 @@
 # Register & Profile — the first-contact question and how it persists
 
-This file holds the runtime detail behind the SKILL.md section "First contact". It defines: the first-contact question, the register it sets, the exact `02-DOCS` file formats, and the rule every downstream skill follows. (The filename is historical: the accompaniment dial it once described is retired.)
+This file holds the runtime detail behind the SKILL.md section "First contact". It defines: the first-contact question, the register it sets, the exact `02-DOCS` file formats, and the rule every downstream skill follows.
 
 ## Why this matters
 

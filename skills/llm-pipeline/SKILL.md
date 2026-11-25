@@ -70,7 +70,7 @@ from litellm import Router
 router = Router(
     model_list=[
         {"model_name": "smart",
-         "litellm_params": {"model": "anthropic/claude-sonnet-4-6", "timeout": 30}},
+         "litellm_params": {"model": "anthropic/claude-sonnet-5-5", "timeout": 30}},
         {"model_name": "smart-backup",
          "litellm_params": {"model": "openai/gpt-4o", "timeout": 30}},
     ],
@@ -122,7 +122,7 @@ The cheapest, fastest, most reliable call is the one you never made — so cache
 
 ## Cost & latency control
 
-- **Model-tier routing, cheap-first.** Run the cheap tier, escalate only on low confidence or detected complexity. Anchor prices (Anthropic, 2026): Haiku 4.5 $1/$5 per M in/out, Sonnet 4.6 $3/$15, Opus 4.7 $5/$25 — flagship-for-everything is 5× the cost for zero quality gain on easy calls.
+- **Model-tier routing, cheap-first.** Run the cheap tier, escalate only on low confidence or detected complexity. Anchor prices (Anthropic, checked 2026-11): Haiku 5.5 $0.10/$0.50 per M in/out (prompts up to 100K tokens), Sonnet 5.5 $2/$10, Opus 5.5 $4/$20 — flagship-for-everything is up to 40× the cost for zero quality gain on easy calls.
 - **Budget caps that ABORT, not just log.** Per-request and per-tenant caps that kill a runaway loop. A logged-but-uncapped budget still lets a bug spend $10k overnight.
 - **Token and latency budgets per step**, and stream output for perceived latency on user-facing calls.
 

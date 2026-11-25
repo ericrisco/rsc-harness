@@ -118,13 +118,13 @@ CREATE TABLE orders (
 );
 ```
 
-With Prisma, declare `relationMode = "prisma"` so the client emulates relations and adds the implicit
-indexes instead of emitting DB-level FKs:
+With Prisma, declare `relationMode = "prisma"` so the client emulates relations instead of emitting
+DB-level FKs. Prisma does not create the FK indexes: add `@@index` on each relation scalar yourself.
+The connection URL lives in `prisma.config.ts`, not the datasource block (see `../prisma-orm/SKILL.md`):
 
 ```prisma
 datasource db {
   provider     = "mysql"
-  url          = env("DATABASE_URL")
   relationMode = "prisma"
 }
 ```

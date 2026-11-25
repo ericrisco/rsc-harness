@@ -1,12 +1,12 @@
 # Shopify apps & the GraphQL Admin API — deep dive
 
-Companion to the App surface section of `../SKILL.md`. The template is `@shopify/shopify-app-remix`.
+Companion to the App surface section of `../SKILL.md`. The template is `@shopify/shopify-app-react-router`.
 
 ## Template wiring
 
 ```js
 // app/shopify.server.js
-import { shopifyApp, ApiVersion } from "@shopify/shopify-app-remix/server";
+import { shopifyApp, ApiVersion } from "@shopify/shopify-app-react-router/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 
 const shopify = shopifyApp({
@@ -87,7 +87,7 @@ webhooks can be missed.
 ## App Bridge & Polaris
 
 Embedded UI runs inside the Shopify admin iframe. App Bridge handles session-token auth, navigation,
-and toasts; Polaris React gives admin-consistent components. Keep app UI in Polaris so it matches the
+and toasts; Polaris web components give admin-consistent UI. Keep app UI in Polaris so it matches the
 admin chrome — do not hand-roll admin-looking CSS.
 
 ## App extensions & deploy

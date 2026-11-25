@@ -148,12 +148,12 @@ sentinel; service passes it through; handler classifies once and maps to a statu
 only the unexpected.
 
 ```go
-// repository: translate sql.ErrNoRows into a domain sentinel, keep the chain.
+// repository: translate pgx.ErrNoRows into a domain sentinel, keep the chain.
 func (r *Repo) GetUser(ctx context.Context, id string) (*User, error) {
 	var u User
-	err := r.db.QueryRowContext(ctx, "SELECT id, name FROM users WHERE id = $1", id).
+	err := r.pool.QueryRow(ctx, "SELECT id, name FROM users WHERE id = $1", id). // *pgxpool.Pool
 		Scan(&u.ID, &u.Name)
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("user %s: %w", id, ErrNotFound)
 	}
 	if err != nil {

@@ -809,9 +809,9 @@ providers:
       imports: ["import anthropic", "from anthropic", "@anthropic-ai/sdk", "@ai-sdk/anthropic", "from langchain_anthropic"]
       env_vars: ["ANTHROPIC_API_KEY"]
       deps: ["anthropic", "@anthropic-ai/sdk", "@ai-sdk/anthropic", "langchain-anthropic"]
-    dashboard_url: "https://console.anthropic.com/settings/keys"
+    dashboard_url: "https://platform.claude.com/settings/keys"
     env_example: |
-      # ANTHROPIC — generate at https://console.anthropic.com/settings/keys
+      # ANTHROPIC — generate at https://platform.claude.com/settings/keys
       ANTHROPIC_API_KEY=
     files:
       test_connection.sh: |
@@ -827,11 +827,11 @@ providers:
         Claude API (Opus, Sonnet, Haiku).
         ## Setup
         1. `cp .env.example .env && chmod 600 .env`
-        2. Key from https://console.anthropic.com/settings/keys
+        2. Key from https://platform.claude.com/settings/keys
         3. `./test_connection.sh`
       CREDENTIALS.md: |
         # Credentials — ANTHROPIC
-        Dashboard: https://console.anthropic.com/settings/keys
+        Dashboard: https://platform.claude.com/settings/keys
         `ANTHROPIC_API_KEY` — secret. Rotate on leak.
 
   - id: GOOGLE_AI

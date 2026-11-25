@@ -11,7 +11,7 @@ origin: risco
 
 *The front door for letting an agent build for hours without coming back with a Frankenstein: intent in, shipped-and-verified software out, every decision recorded in `02-DOCS/wiki/sdd/`.*
 
-**Why it exists.** Classic SDD reviewed at the end. On paper it checked the spec; in a long autonomous run, the only thing that bit for hours was the test — and tests prove the code works, not that it does what was asked (a real run: 8 hours, 4,500 green tests, and a dropped token plus a QR nobody requested). ASDD keeps the phases and changes two things: **the spec must prove itself**, and **the review moves inside every task**, scaled by risk. The human stops reviewing everything and only takes the decisions the agent must not take alone.
+**Why it exists.** Classic SDD reviewed at the end. On paper it checked the spec; in a long autonomous run, the only thing that bit for hours was the test — and tests prove the code works, not that it does what was asked. ASDD keeps the phases and changes two things: **the spec must prove itself**, and **the review moves inside every task**, scaled by risk. The human stops reviewing everything and only takes the decisions the agent must not take alone.
 
 This skill does **not** do a phase. It names the method, reads the register, places the request on the map and hands off. Each phase skill points at the next one.
 
@@ -55,7 +55,7 @@ Every spec answers four questions, and `spec:gate` refuses one dated 2026-11-03 
 
 ### The loop converges
 
-`npx @ericrisco/rsc review ledger` holds it to the rules that stopped Anthropic's 50-round reviews: `round <slug>/<task>` refuses a 4th round (rethink the approach or park the task), `record` marks a finding already raised as a `repeat` that is never raised again, `outcome` closes each finding as `fixed|false|intentional|irrelevant`, `stats` measures the noise. Flag the bug class, not the line; from round 2 re-review only the new diff.
+`npx @ericrisco/rsc review ledger` holds it to rules that make review converge instead of looping: `round <slug>/<task>` refuses a 4th round (rethink the approach or park the task), `record` marks a finding already raised as a `repeat` that is never raised again, `outcome` closes each finding as `fixed|false|intentional|irrelevant`, `stats` measures the noise. Flag the bug class, not the line; from round 2 re-review only the new diff.
 
 ### Park, don't block
 

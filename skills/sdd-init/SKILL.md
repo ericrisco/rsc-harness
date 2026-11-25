@@ -127,9 +127,9 @@ models:
   enabled: false              # opt-in master switch; false = honor session model, announce nothing
   provider: anthropic         # which provider the tiers below resolve to
   tiers:
-    heavy: claude-opus-4-8
-    balanced: claude-sonnet-4-6
-    light: claude-haiku-4-5-20251001
+    heavy: claude-opus-5-5
+    balanced: claude-sonnet-5-5
+    light: claude-haiku-5-5
   phases:
     constitution: heavy
     specify: balanced

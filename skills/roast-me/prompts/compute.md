@@ -6,11 +6,11 @@ You are analysing a batch of user prompts to identify cases where a heavier (mor
 
 This skill uses three tier labels. The mapping to specific model names shifts over releases — the tiers are stable even when the names change.
 
-| Tier | Description | Example models (2026) | Relative cost |
+| Tier | Description | Example models | Relative input cost (Claude 5.5 list prices) |
 |------|-------------|----------------------|---------------|
-| `light` | Fast, cheap, low reasoning | Haiku, GPT-3.5, Gemini Flash | 1× |
-| `balanced` | General purpose, solid reasoning | Sonnet, GPT-4 mini, Gemini Pro | 3–5× |
-| `heavy` | Frontier reasoning, long-horizon work | Opus, Fable/Mythos, GPT-4 full | 10–50× |
+| `light` | Fast, cheap, low reasoning | Claude Haiku 5.5 | 1× |
+| `balanced` | General purpose, solid reasoning | Claude Sonnet 5.5 | ≈20× |
+| `heavy` | Frontier reasoning, long-horizon work | Claude Opus 5.5, Fable | ≈40× |
 
 Overuse = using `heavy` where `balanced` would suffice, or using `balanced`/`heavy` where `light` would suffice.
 
@@ -95,6 +95,6 @@ Return a single JSON object:
 - `architectural_decision` — design/plan/migrate/strategy (usually NOT overuse)
 - `debug_complex` — race conditions, memory leaks, performance (usually NOT overuse)
 
-`estimated_tier_ratio`: approximate cost ratio (e.g. 10 means the heavy tier cost ~10× the recommended tier). Use rough multiples: light→balanced ≈ 3–5×; light→heavy ≈ 10–50×; balanced→heavy ≈ 3–10×.
+`estimated_tier_ratio`: approximate cost ratio (e.g. 10 means the heavy tier cost ~10× the recommended tier). Use rough multiples from Claude 5.5 list prices: light→balanced ≈ 20×; light→heavy ≈ 40×; balanced→heavy ≈ 2×. Other providers' ladders differ; use their own price ratio when the session ran on them.
 
 Only return `high` and `medium` confidence cases. If you are uncertain, omit the record — false positives harm the user's trust in the report.

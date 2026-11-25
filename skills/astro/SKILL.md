@@ -243,7 +243,7 @@ npx @astrojs/upgrade
 `bash scripts/verify.sh` from the Astro project root — grep-based, needs no install. It **FAILS** if
 a v6 project still has `src/content/config.ts` instead of `src/content.config.ts`, **WARNS** on
 over-hydration smells (many `client:load`, or `client:only` with no framework string), **CHECKS**
-that content schemas import from `astro:content`, and — only if the `astro` binary resolves —
+that the content config imports `defineCollection` from `astro:content`, and — only if the `astro` binary resolves —
 optionally runs `npx astro check`. On an empty or clean tree it prints OK and exits 0; warnings are
 advisory and never fail the run.
 

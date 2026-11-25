@@ -30,7 +30,7 @@ Target the current APIs. **Never emit these deprecated / removed APIs:**
 
 | Engine | Target | Banned (removed/legacy) | Emit instead |
 |---|---|---|---|
-| **Godot** | 4.x | `master`/`puppet`/`remote`/`sync` keywords, `rpc_config()` as a func, `rset`, `NetworkedMultiplayerENet` | `@rpc(...)` annotation, `set_multiplayer_authority()`, `ENetMultiplayerPeer`, `MultiplayerSynchronizer` |
+| **Godot** | 4.x | `master`/`puppet`/`remote`/`sync` keywords, `rset`, `NetworkedMultiplayerENet` | `@rpc(...)` annotation, `set_multiplayer_authority()`, `ENetMultiplayerPeer`, `MultiplayerSynchronizer` |
 | **Unity** | Netcode for GameObjects (NGO) 1.x/2.x | UNet / HLAPI: `NetworkIdentity`, `[Command]`, `[SyncVar]`, `NetworkServer`, `UnityEngine.Networking` | NGO `NetworkObject`, `NetworkBehaviour`, `NetworkVariable<T>`, `[Rpc(SendTo.X)]` |
 | **Unreal** | 5.x | replicating by polling in `Tick`, skipping `WithValidation` on gameplay RPCs | `UPROPERTY(Replicated / ReplicatedUsing=...)` + `GetLifetimeReplicatedProps`, `Server`/`Client`/`NetMulticast` `UFUNCTION`s |
 
@@ -187,7 +187,7 @@ void MulticastMuzzleFx(FVector At);
 
 void AMyPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const {
     Super::GetLifetimeReplicatedProps(Out);
-    DOREPLIFETIME(AMyPawn, Health);          // or DOREPLIFETIME_CONDITION for push/owner-only
+    DOREPLIFETIME(AMyPawn, Health);          // DOREPLIFETIME_CONDITION for owner-only; DOREPLIFETIME_WITH_PARAMS_FAST (bIsPushBased) for push model
 }
 ```
 

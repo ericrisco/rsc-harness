@@ -48,7 +48,7 @@ If the row says **No**, you are doing expand-contract. Go to Step 2.
 
 ## Step 2 — The expand-contract loop
 
-Three phases, each tied to a **distinct deploy**. Worked example: rename `users.email` → `users.email_address`.
+Four phases — expand, backfill, switch reads, contract — spread over **distinct deploys**. Worked example: rename `users.email` → `users.email_address`.
 
 **Expand** — add the new structure, start dual-writing, leave the old one fully working.
 
@@ -62,7 +62,7 @@ ALTER TABLE users ADD COLUMN email_address text;  -- nullable, no default → me
 App deploy A: write BOTH columns on every insert/update; keep READING email.
 ```
 
-**Backfill** — copy historical data in small background batches (Step 4), then verify counts/checksums.
+**Backfill** — copy historical data in small background batches (Step 5), then verify counts/checksums.
 
 **Switch reads** — once backfilled and verified, deploy the app that reads `email_address`.
 
@@ -130,12 +130,13 @@ CREATE INDEX CONCURRENTLY idx_orders_region ON orders (region);
 > A failed `CONCURRENTLY` build leaves an INVALID index behind. Drop it (`DROP INDEX CONCURRENTLY`) before
 > retrying. For PG-specific lock-level detail, see `../postgresdb/SKILL.md`.
 
-**Add NOT NULL in four steps, never in one.** A single `ALTER ... SET NOT NULL` (or `ADD COLUMN ... NOT
+**Add NOT NULL in five steps, never in one.** A single `ALTER ... SET NOT NULL` (or `ADD COLUMN ... NOT
 NULL DEFAULT <volatile>`) scans/rewrites the whole table under lock.
 
 ```sql
 -- Bad: full-table validation/rewrite under an exclusive lock
-ALTER TABLE users ADD COLUMN status text NOT NULL DEFAULT 'active';  -- on a 40M-row table = outage
+ALTER TABLE users ALTER COLUMN status SET NOT NULL;                    -- 40M rows: full scan under lock = outage
+ALTER TABLE users ADD COLUMN token uuid NOT NULL DEFAULT gen_random_uuid();  -- volatile default: full rewrite
 
 -- Good: add nullable, backfill in batches (Step 5), then add a constraint without a blocking scan
 SET lock_timeout = '1s';
@@ -145,7 +146,7 @@ ALTER TABLE users ADD CONSTRAINT users_status_nn
   CHECK (status IS NOT NULL) NOT VALID;                                -- 3. instant, no scan
 ALTER TABLE users VALIDATE CONSTRAINT users_status_nn;                 -- 4. scans WITHOUT blocking writes
 -- PG 12+: a validated CHECK (col IS NOT NULL) lets SET NOT NULL skip its own scan
-ALTER TABLE users ALTER COLUMN status SET NOT NULL;
+ALTER TABLE users ALTER COLUMN status SET NOT NULL;                    -- 5. no scan
 ```
 
 Same `NOT VALID` → `VALIDATE` pattern for adding a foreign key. The full per-change checklists live in

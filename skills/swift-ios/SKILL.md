@@ -9,10 +9,10 @@ origin: risco
 
 # swift-ios
 
-**Hand-off — the language vs the platform.** This skill owns the **platform**: SwiftUI/UIKit views,
-app lifecycle, Xcode, iOS APIs, App Store shipping. Language-level Swift — Swift 6 data-race safety
-and approachable concurrency, actors and task groups, `some` vs `any`, ARC and performance, Swift
-Testing, macros — is this skill's own ground. A concurrency error, a hang, a data race or a
+**Scope — the platform and the language.** This skill owns the **platform**: SwiftUI/UIKit views,
+app lifecycle, Xcode, iOS APIs, App Store shipping. It owns language-level Swift too — Swift 6
+data-race safety and approachable concurrency, actors and task groups, `some` vs `any`, ARC and
+performance, Swift Testing, macros. A concurrency error, a hang, a data race or a
 retain cycle belongs here, and so do interface feel, springs and materials on iOS.
 
 

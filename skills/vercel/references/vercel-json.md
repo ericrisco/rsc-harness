@@ -62,13 +62,16 @@ time, so it can compute config from env vars or API calls.
 
 ### Per-plan duration & memory
 
-| Plan | `maxDuration` default → ceiling | Default memory |
-| --- | --- | --- |
-| Hobby | 10s → 60s | 1024 MB |
-| Pro | 15s → 300s | 1024 MB |
-| Enterprise | 15s → 900s | 1024 MB |
+Under Fluid compute (on by default):
 
-Memory defaults to 1024 MB; under Fluid the default is a dashboard setting, not a `vercel.json` key.
+| Plan | `maxDuration` default → ceiling | Memory / CPU default → max |
+| --- | --- | --- |
+| Hobby | 300s → 300s | 2 GB / 1 vCPU → 2 GB / 1 vCPU |
+| Pro | 300s → 800s (1800s in the extended-duration beta) | 2 GB / 1 vCPU → 4 GB / 2 vCPU |
+| Enterprise | 300s → 800s (1800s in the extended-duration beta) | 2 GB / 1 vCPU → 4 GB / 2 vCPU |
+
+Above 800s, set `maxDuration` per function, not as a project default. Under Fluid the default
+memory/CPU is a dashboard setting, not a `vercel.json` key.
 
 ## `crons`
 

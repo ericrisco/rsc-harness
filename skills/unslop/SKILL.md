@@ -54,7 +54,7 @@ When a text needs both passes: audit first, register last.
 
 Voiceless writing is as obvious as slopped writing. After the cuts, put something back:
 
-- **Have an opinion.** React to the facts instead of listing balanced pros and cons.
+- **Keep the author's opinion.** Where the source takes a stand, state it plainly instead of flattening it into balanced pros and cons. Never add a stance the author did not take.
 - **Vary the rhythm.** Short sentence. Then a longer one that takes its time and earns the length.
 - **Admit complexity.** "Impressive and slightly unsettling" beats "impressive".
 - **Use "I" when it fits.** First person is not unprofessional.

@@ -19,12 +19,11 @@ and answer it.
 
 ## Why this lane exists
 
-The constitution's seventh principle has said it from the start: *«la fricción es proporcional al
+The constitution's seventh principle sets the rule: *«la fricción es proporcional al
 riesgo. Silencio para lo trivial, ceremonia solo donde el fallo es caro. Un sistema que molesta en el
 80% inofensivo acaba apagado, y apagado no protege el 20% que importa.»*
 
-The harness spent a long time contradicting it — every request that sounded like building went
-through the whole chain. This lane is that principle finally implemented, not a new idea.
+This lane applies it: ordinary authorised change does not go through the whole chain.
 
 ## The feature document
 

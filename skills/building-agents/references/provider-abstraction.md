@@ -20,6 +20,9 @@ class Message(BaseModel):
     content: str
     tool_call_id: str | None = None  # set when role == "tool"
     name: str | None = None          # tool name for tool-result turns
+    # Provider-native content of an assistant turn, replayed unchanged. On current Claude models
+    # thinking is on and its blocks must go back exactly as received: set it from resp.raw["content"].
+    blocks: list[dict] | None = None
 
 
 class ToolSpec(BaseModel):
@@ -46,9 +49,9 @@ class CompletionRequest(BaseModel):
     messages: list[Message]
     tools: list[ToolSpec] = Field(default_factory=list)
     response_schema: dict | None = None
-    temperature: float = 0.0
+    temperature: float | None = None  # None = provider default; current Claude models reject sampling params
     top_p: float | None = None
-    max_tokens: int = 1024
+    max_tokens: int = 8192  # thinking is on by default on current Claude models and shares this budget
     stop: list[str] | None = None
     cache_system: bool = True  # opt-in prompt caching for the system block
 
@@ -94,9 +97,10 @@ class OpenAIAdapter:
         kwargs: dict = {
             "model": self.model,
             "input": [{"role": m.role, "content": m.content} for m in req.messages],
-            "temperature": req.temperature,
             "max_output_tokens": req.max_tokens,
         }
+        if req.temperature is not None:
+            kwargs["temperature"] = req.temperature
         if req.tools:
             kwargs["tools"] = [
                 {"type": "function", "name": t.name, "description": t.description, "parameters": t.parameters}
@@ -138,27 +142,23 @@ class AnthropicAdapter:
 
     async def complete(self, req: CompletionRequest) -> CompletionResponse:
         sys_text = "\n".join(m.content for m in req.messages if m.role == "system")
-        system = None
+        turns = [_anthropic_turn(m) for m in req.messages if m.role != "system"]
+        # Current Claude models reject sampling params (temperature/top_p) and forced tool_choice:
+        # req.temperature is not sent, and structured output uses output_config.format.
+        kwargs: dict = {"model": self.model, "messages": turns, "max_tokens": req.max_tokens}
         if sys_text:  # cache the (large, stable) system block when asked
             block = {"type": "text", "text": sys_text}
             if req.cache_system:
                 block["cache_control"] = {"type": "ephemeral"}
-            system = [block]
-        turns = [_anthropic_turn(m) for m in req.messages if m.role != "system"]
-        kwargs: dict = {"model": self.model, "system": system, "messages": turns,
-                        "max_tokens": req.max_tokens, "temperature": req.temperature}
+            kwargs["system"] = [block]
         if req.tools:
             kwargs["tools"] = [{"name": t.name, "description": t.description, "input_schema": t.parameters}
                                for t in req.tools]
-        if req.response_schema:  # structured output via tool-forcing
-            kwargs["tools"] = [{"name": "out", "description": "Emit the result", "input_schema": req.response_schema}]
-            kwargs["tool_choice"] = {"type": "tool", "name": "out"}
+        if req.response_schema:  # structured output: the first text block is valid JSON
+            kwargs["output_config"] = {"format": {"type": "json_schema", "schema": req.response_schema}}
         r = await self.client.messages.create(**kwargs)
         text = "".join(b.text for b in r.content if b.type == "text")
         calls = [ToolCall(id=b.id, name=b.name, arguments=b.input) for b in r.content if b.type == "tool_use"]
-        if req.response_schema and calls:  # tool-forced JSON -> surface as text
-            text = _dumps(calls[0].arguments)
-            calls = []
         return CompletionResponse(
             text=text, tool_calls=calls,
             finish_reason="tool_calls" if calls else "stop",
@@ -268,13 +268,11 @@ def _loads(s: str | dict) -> dict:
     return s if isinstance(s, dict) else json.loads(s or "{}")
 
 
-def _dumps(d: dict) -> str:
-    return json.dumps(d, ensure_ascii=False)
-
-
 def _anthropic_turn(m: Message) -> dict:
     if m.role == "tool":  # tool result -> a user turn carrying tool_result content
         return {"role": "user", "content": [{"type": "tool_result", "tool_use_id": m.tool_call_id, "content": m.content}]}
+    if m.role == "assistant" and m.blocks:  # thinking + tool_use blocks, exactly as the API returned them
+        return {"role": "assistant", "content": m.blocks}
     return {"role": m.role, "content": m.content}
 ```
 
@@ -283,12 +281,12 @@ def _anthropic_turn(m: Message) -> dict:
 | Aspect | OpenAI | Anthropic | Gemini | OSS / litellm |
 |---|---|---|---|---|
 | Tool schema | `tools[].function.parameters` (JSON Schema) | `tools[].input_schema` | `FunctionDeclaration.parameters_json_schema` | OpenAI shape |
-| Structured output | strict JSON Schema (`text.format`) | tool-forcing (`tool_choice`) | `response_json_schema` + `response_mime_type` | strict JSON Schema if backend supports |
+| Structured output | strict JSON Schema (`text.format`) | `output_config.format` (JSON Schema) | `response_json_schema` + `response_mime_type` | strict JSON Schema if backend supports |
 | System prompt | `system` role message | top-level `system=` param | `system_instruction` in config | `system` role message |
 | Streaming event | `response.output_text.delta` | `content_block_delta` | chunk stream (`.text` per chunk) | OpenAI delta |
 | Prompt caching | automatic cached input (−90% cached) | explicit `cache_control` (−90% read) | implicit/explicit cached content | backend-dependent |
-| Max context | model-dependent; >272K billed 2×/1.5× | 1M flat-rate on Opus/Sonnet | 1M on Flash | backend-dependent |
-| JSON-mode strictness | strict (validated) | only as strict as the tool schema | enforced by `responseSchema` | backend-dependent |
+| Max context | model-dependent; >272K billed 2×/1.5× | 1M on current Opus/Sonnet/Haiku (Haiku 5.5 bills prompts >100K at a higher rate) | 1M on Flash | backend-dependent |
+| JSON-mode strictness | strict (validated) | constrained to the schema | enforced by `responseSchema` | backend-dependent |
 
 ## Structured / JSON output
 
@@ -301,7 +299,7 @@ from pydantic import BaseModel, ValidationError
 
 async def complete_structured(provider: LLMProvider, req: CompletionRequest,
                               schema: type[BaseModel], max_retries: int = 2) -> BaseModel:
-    req = req.model_copy(update={"response_schema": schema.model_json_schema(), "temperature": 0.0})
+    req = req.model_copy(update={"response_schema": schema.model_json_schema()})
     last_err: str = ""
     for attempt in range(max_retries + 1):
         if attempt:  # feed the prior validation error back as a correction turn
@@ -416,7 +414,9 @@ def preflight(messages: list[Message], provider: str, model: str, ctx_limit: int
 
 ```python
 def normalize_sampling(req: CompletionRequest) -> dict:
-    out: dict = {"temperature": req.temperature, "max_tokens": req.max_tokens}
+    out: dict = {"max_tokens": req.max_tokens}
+    if req.temperature is not None:
+        out["temperature"] = req.temperature
     if req.top_p is not None:
         out["top_p"] = req.top_p
     if req.stop:
@@ -428,10 +428,11 @@ def normalize_sampling(req: CompletionRequest) -> dict:
 |---|---|---|---|
 | `max_tokens` | `max_output_tokens` (Responses) | `max_tokens` (required) | `max_output_tokens` |
 | `stop` | `stop` | `stop_sequences` | `stop_sequences` |
-| `temperature` | 0–2 | 0–1 | 0–2 |
+| `temperature` | 0–2 | rejected by current models — omit | 0–2 |
 
-Note (as of 2026-06; verify before quoting): some reasoning models ignore
-`temperature`/`top_p`. Treat sampling as advisory, not guaranteed.
+Note (as of 2026-06; verify before quoting): current Claude models reject
+`temperature`/`top_p`/`top_k` with a 400, and some reasoning models elsewhere ignore them. Leave
+them unset unless the model documents support; treat sampling as advisory, not guaranteed.
 
 ## Config-driven selection
 
@@ -441,9 +442,9 @@ from functools import lru_cache
 
 # Roles, not raw ids. App code says route("cheap"); ids live here and rot here only.
 MODEL_REGISTRY: dict[str, str] = {
-    "default": "anthropic:claude-sonnet-4-6",
-    "cheap":   "anthropic:claude-haiku-4-5",
-    "smart":   "anthropic:claude-opus-4-8",   # Opus 4.8 (current as of 2026-06); ids rot — re-verify
+    "default": "anthropic:claude-sonnet-5-5",
+    "cheap":   "anthropic:claude-haiku-5-5",
+    "smart":   "anthropic:claude-opus-5-5",   # ids rot — re-verify against the provider's model list
 }
 
 
@@ -473,7 +474,7 @@ from litellm import Router
 router = Router(
     model_list=[
         {"model_name": "default",
-         "litellm_params": {"model": "anthropic/claude-sonnet-4-6"}},
+         "litellm_params": {"model": "anthropic/claude-sonnet-5-5"}},
         {"model_name": "default",  # same alias = automatic fallback target
          "litellm_params": {"model": "openai/gpt-5.4"}},
     ],

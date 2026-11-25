@@ -28,7 +28,7 @@ If they want the public privacy notice, DPA clauses, or SOC 2 readiness instead,
 
 ## Build the retention schedule
 
-This is the core artifact. For every category of personal data, walk five columns in order: **data category -> purpose -> lawful basis -> retention period -> expiry action -> system of record**. GDPR's storage-limitation principle (Art. 5(1)(e)) requires data be held in identifiable form *no longer than necessary for the purpose it was collected for*; GDPR sets no fixed periods — duration is driven by purpose plus sector law (gdpr-info.eu Art. 5; Usercentrics, 2026).
+This is the core artifact. For every category of personal data, walk six columns in order: **data category -> purpose -> lawful basis -> retention period -> expiry action -> system of record**. GDPR's storage-limitation principle (Art. 5(1)(e)) requires data be held in identifiable form *no longer than necessary for the purpose it was collected for*; GDPR sets no fixed periods — duration is driven by purpose plus sector law (gdpr-info.eu Art. 5; Usercentrics, 2026).
 
 The expiry action is one of three, and you must pick one explicitly:
 

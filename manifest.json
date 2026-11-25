@@ -1,5 +1,5 @@
 {
-  "version": "4.1.11",
+  "version": "4.2.0",
   "counts": {
     "skills": 273,
     "agents": 34,
@@ -2705,7 +2705,7 @@
     },
     {
       "id": "laravel",
-      "description": "Use when building or extending a Laravel 11/12 app — Eloquent models, migrations and relationships, routing with controllers and Form Requests, queues and background jobs, framework-native security (validation, mass-assignment, policies, signed URLs, rate limiting), and Pest/PHPUnit feature tests. NOT pure PHP language or toolchain work (that is `php`).",
+      "description": "Use when building or extending a Laravel 11+ app — Eloquent models, migrations and relationships, routing with controllers and Form Requests, queues and background jobs, framework-native security (validation, mass-assignment, policies, signed URLs, rate limiting), and Pest/PHPUnit feature tests. NOT pure PHP language or toolchain work (that is `php`).",
       "tags": [
         "laravel",
         "php",
@@ -4454,7 +4454,7 @@
     },
     {
       "id": "shopify",
-      "description": "Use when building or customizing a Shopify store across its three code surfaces — themes (Liquid, Online Store 2.0 sections, blocks and JSON templates), apps (Remix with the versioned GraphQL Admin API and its query-cost model), and checkout (UI extensions, Functions, Web Pixels), plus the CLI flow and checkout-extensibility migration. NOT WooCommerce or PHP stores (that is `wordpress`), NOT the React layer of a headless storefront (that is `nextjs`), NOT non-Shopify payment integrations (that is `stripe`).",
+      "description": "Use when building or customizing a Shopify store across its three code surfaces — themes (Liquid, Online Store 2.0 sections, blocks and JSON templates), apps (the React Router template with the versioned GraphQL Admin API and its query-cost model), and checkout (UI extensions, Functions, Web Pixels), plus the CLI flow and checkout-extensibility migration. NOT WooCommerce or PHP stores (that is `wordpress`), NOT the React layer of a headless storefront (that is `nextjs`), NOT non-Shopify payment integrations (that is `stripe`).",
       "tags": [
         "shopify",
         "liquid",
@@ -6340,7 +6340,7 @@
       "id": "learn",
       "description": "Propose one local lesson; saving still requires individual explicit approval.",
       "kind": "memory",
-      "backing": "memory:learn"
+      "backing": "rsc memory learn"
     },
     {
       "id": "machine-learning-build",
@@ -6418,7 +6418,7 @@
       "id": "resume-session",
       "description": "Read the bounded local continuation record for this branch and worktree.",
       "kind": "memory",
-      "backing": "memory:resume"
+      "backing": "rsc memory resume"
     },
     {
       "id": "review",
@@ -6442,7 +6442,7 @@
       "id": "save-session",
       "description": "Force a local deterministic session checkpoint.",
       "kind": "memory",
-      "backing": "memory:save"
+      "backing": "rsc memory save"
     },
     {
       "id": "security-audit",

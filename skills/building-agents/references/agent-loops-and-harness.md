@@ -205,8 +205,9 @@ def call_signature(name: str, args: dict) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 ```
 
-- For evals, pin `temperature=0.0` and (where supported) a fixed seed so transcripts are
-  reproducible.
+- For evals, pin `temperature=0.0` and a fixed seed where the model accepts them, so transcripts
+  are reproducible. Current Claude models reject sampling params: there, fix the prompt, the tool
+  results and the model id, and compare runs by grade rather than by exact text.
 - For side-effecting tools, pass an **idempotency key** (`call.id` or `call_signature`)
   so a retried step does not double-charge or double-insert (see `tools-and-rag.md`).
 - Persist the full message transcript; a replayable transcript is the cheapest debugger

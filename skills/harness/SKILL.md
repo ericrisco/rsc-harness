@@ -50,8 +50,9 @@ The **harness** is the control plane of a workspace. A workspace need not be cod
 
   It compounds on its own: every Ingest, Sweep and Query triggers a Maintenance Pass (lint, score
   recomputation, gap detection, Related sweep), a Micro-Improve runs every N interactions, and Deep
-  Improve runs on request or on the daily schedule (`references/daily-curation-automation.md` — on
-  Claude Code, wire it via the `schedule` skill). Protocol → `references/wiki-protocol.md`;
+  Improve runs on request or on a weekly schedule, and a daily curation pass keeps the inbox and links
+  current (`references/daily-curation-automation.md` — on Claude Code, wire both via the `schedule`
+  skill). Protocol → `references/wiki-protocol.md`;
   formats → `references/ingest-formats.md`; capture → `references/wiki-worklog-template.md`;
   vault → `references/obsidian-scaffolding.md`.
 - **The Knowledge map** — the `## Knowledge map` section of the root `CLAUDE.md` that indexes the wiki (including the `harness/` topic) and is read by every other skill before it works in its area.
@@ -272,7 +273,7 @@ a row per wiki article, appended by many skills, forever.
 
 **The rule:** the **full** Knowledge map lives in `02-DOCS/wiki/index.md` (loaded on demand, grows
 freely). Root `CLAUDE.md`'s `## Knowledge map` is a **short pointer** — only the read-first entries
-(`harness/user-profile.md`, `sdd/constitution.md`) plus "full index → `02-DOCS/wiki/index.md`".
+(`harness/user-profile.md`, `harness/decisions.md`, and `sdd/constitution.md` when it exists) plus "full index → `02-DOCS/wiki/index.md`".
 
 **Offload when it bloats (a move, never a trim — no info lost):** when `CLAUDE.md` passes ~200 lines
 (the SessionStart hook nudges you) or its `## Knowledge map` has grown past the read-first entries:

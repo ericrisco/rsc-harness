@@ -85,6 +85,8 @@ jobs:
         run: npm test
       - name: eval-lint
         run: bash scripts/eval-lint.sh
+      - name: prompt-audit
+        run: npm run prompt:audit
       - name: originality
         run: npm run originality:check
 

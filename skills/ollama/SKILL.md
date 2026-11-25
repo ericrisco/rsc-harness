@@ -71,7 +71,7 @@ in the table below are derived from this formula, not vendor-published numbers �
 | --- | --- | --- |
 | 8 GB | 7–8B Q4_K_M (~5–6 GB) | leave headroom for KV cache + the OS |
 | 12 GB | up to ~14B Q4_K_M (~9–10 GB) | 7–8B at Q8_0 also fits |
-| 16 GB | 14B Q4_K_M comfortably; 32B is tight | 32B Q4_K_M ≈ 20 GB — won't fit |
+| 16 GB | 14B Q4_K_M comfortably | 32B Q4_K_M ≈ 20 GB — won't fit |
 | 24 GB | 32B Q4_K_M (~20 GB) | 70B does **not** fit at any usable quant |
 | 48 GB+ / 2×24 GB | 70B Q4_K_M (~40–48 GB) | needs the full budget; long context pushes over |
 | Mac unified (e.g. 64 GB) | weights share RAM with everything else | budget against total unified memory |

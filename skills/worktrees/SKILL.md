@@ -108,10 +108,10 @@ never a silent cleanup: refuse the silent path and confirm the discard with the 
 would be lost.
 
 **You do not have to remember to clean up.** Once the work lands on the trunk, a `post-merge` hook
-retires the worktree and its branch on its own — it removes only what the reaper already classifies
-as safe, and anything holding unsaved work is refused exactly as it is above. Nothing to run, and
-nothing to remember: the previous version of this skill asked an agent to remember, and it was
-skipped on both features that reached that point.
+retires the worktree on its own, and its branch when git deletes it safely (`branch -d`; a
+squash-merged branch stays) — it removes only what the reaper already classifies as safe, and
+anything holding unsaved work is refused exactly as it is above. Nothing to run, and nothing to
+remember: the cleanup lives in a hook because an agent asked to remember it skips it.
 
 ```bash
 # from the repo root, default branch up to date
@@ -124,7 +124,7 @@ git worktree add -b feat/<slug> .worktrees/<slug> origin/<default-branch>
 the folder holding `.rsc.json`. For the repo at that root the worktree is `.worktrees/<slug>`. For a
 project that lives in a folder under it (a workspace with `03-PROJECTS/<p>/`), it is
 `<root>/.worktrees/<p>-<slug>`, and the path is written absolute — a relative one resolves inside
-the project, which is how they ended up there:
+the project:
 
 ```bash
 git -C 03-PROJECTS/<p> fetch origin
@@ -173,7 +173,8 @@ Three things have to hold before a worktree is retired without asking, and each 
   user's, so it is asked about, never removed silently. Neither → foreign; not touched, not offered.
 - **The branch adds nothing the trunk does not have** — asked about *content*, so a squash-merged
   pull request counts as landed. Its branch is kept even so: git will not delete it safely, and while
-  it exists the commits survive a wrong call.
+  it exists the commits survive a wrong call. Deleting it is `tidy`'s job, after its content check
+  proves the branch landed.
 - **Nothing inside would be lost** — not just "no pending changes": untracked and ignored files count,
   because a worktree that git calls clean can still hold the only copy of a `.env` or a local
   database. Installed dependencies and build output are the one carve-out.
@@ -186,7 +187,8 @@ exit through that tool's `remove`/`keep`; the reaper is for worktrees git alone 
 **When the command is unavailable** (no rsc in this project), the manual equivalent is: confirm it is
 a linked worktree (`git rev-parse --git-dir` ≠ `--git-common-dir`), rule out a submodule
 (`git rev-parse --show-superproject-working-tree` must be empty), `cd` to the main working tree, then
-`git worktree remove` and `git worktree prune`. Never `-D` a branch to make the cleanup succeed.
+`git worktree remove` and `git worktree prune`. Never `-D` a branch to make the cleanup succeed;
+only `tidy` deletes a branch with `-D`, and only one its content check proved squash-merged.
 
 ## Model tier — `light` (opt-in routing)
 
@@ -206,7 +208,7 @@ wish for brevity removes the check before risking someone's WIP.
 
 | Rationalization | Reality / Fix |
 | --- | --- |
-| "I'll just implement on `main`, it's a small change" | Small changes become commits on the wrong branch. Branch/worktree first — always, before the first edit. |
+| "I'll just implement on `main`, it's a small change" | Small changes become commits on the wrong branch. Where the default branch is closed, branch/worktree first — before the first edit. Where it is open, the project already decided. |
 | "There's uncommitted WIP, I'll stash it and switch" | A worktree avoids the stash entirely and can't drop it. Use a worktree; if you must stash, confirm with the user and name the stash. |
 | "I'll branch off local HEAD, fetching is slow" | Stale base = merge conflicts you pay for later. Branch off an up-to-date `origin/<default>` unless the user wants HEAD. |
 | "The worktree's dirty but I'll `remove --force` to clean up" | Force-removing a dirty/unmerged worktree throws away work irreversibly. Resolve or confirm explicitly first; never silent-force. |

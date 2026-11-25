@@ -26,7 +26,7 @@ The Commission's modernised Standard Contractual Clauses (adopted 4 June 2021) c
 |---|---|---|
 | **Module 1 (C2C)** | Controller → Controller | EU company shares data with an independent third-party controller abroad |
 | **Module 2 (C2P)** | Controller → Processor | EU company → a non-EEA vendor processing on its behalf (most common SaaS case) |
-| **Module 3 (P2P)** | Processor → Sub-processor | Your non-EEA sub-processor onward-transfers to its own sub-processor |
+| **Module 3 (P2P)** | Processor → Sub-processor | An EEA processor engages a sub-processor outside the EEA |
 | **Module 4 (P2C)** | Processor → Controller | A processor returns/sends data to a controller outside the EEA |
 
 ## Transfer Impact Assessment (TIA) skeleton

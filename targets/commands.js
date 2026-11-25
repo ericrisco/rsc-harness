@@ -44,24 +44,24 @@ const FIXED_COMMANDS = Object.freeze([
   {
     name: 'checkpoint', kind: 'capability', backing: 'sello',
     description: 'Freeze the current candidate for review and seal it only after the required lenses approve.',
-    body: `Use the sello backing for this checkpoint: {{ARGS}}\nRun \`npx @ericrisco/rsc sello freeze\`, complete the required review, then run \`sello approve\` only with the observed lenses. Do not treat freeze as approval.`,
+    body: `Checkpoint: {{ARGS}}\nRun \`npx @ericrisco/rsc sello freeze\`, complete the required review, then run \`sello approve\` only with the observed lenses. Do not treat freeze as approval.`,
   },
   skillCommand('harness-audit', 'harness'),
   skillCommand('security-audit', 'security-audit'),
   {
-    name: 'learn', kind: 'memory', backing: 'memory:learn',
+    name: 'learn', kind: 'memory', backing: 'rsc memory learn',
     description: 'Propose one local lesson; saving still requires individual explicit approval.',
-    body: `Invoke memory:learn for exactly one proposed lesson: {{ARGS}}\nAfter individual explicit approval, run \`npx @ericrisco/rsc memory learn\` with its text, evidence, scope, confidence and \`--approve\`. Without that approval, write nothing.`,
+    body: `For exactly one proposed lesson: {{ARGS}}\nAfter individual explicit approval, run \`npx @ericrisco/rsc memory learn\` with its text, evidence, scope, confidence and \`--approve\`. Without that approval, write nothing.`,
   },
   {
-    name: 'save-session', kind: 'memory', backing: 'memory:save',
+    name: 'save-session', kind: 'memory', backing: 'rsc memory save',
     description: 'Force a local deterministic session checkpoint.',
-    body: `Invoke memory:save with the current local session identifiers: {{ARGS}}\nRun \`npx @ericrisco/rsc memory save --session <id>\`. Persist only allowed git and SDD ledger metadata; never include conversation or file content.`,
+    body: `With the current local session identifiers: {{ARGS}}\nRun \`npx @ericrisco/rsc memory save --session <id>\`. Persist only allowed git and SDD ledger metadata; never include conversation or file content.`,
   },
   {
-    name: 'resume-session', kind: 'memory', backing: 'memory:resume',
+    name: 'resume-session', kind: 'memory', backing: 'rsc memory resume',
     description: 'Read the bounded local continuation record for this branch and worktree.',
-    body: `Invoke memory:resume for the current branch and worktree: {{ARGS}}\nRun \`npx @ericrisco/rsc memory resume\`. Label a nearby branch result as nearby; never merge it silently into the exact continuation.`,
+    body: `For the current branch and worktree: {{ARGS}}\nRun \`npx @ericrisco/rsc memory resume\`. Label a nearby branch result as nearby; never merge it silently into the exact continuation.`,
   },
 ]);
 

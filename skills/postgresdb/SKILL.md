@@ -250,8 +250,8 @@ Full sequences (zero-downtime expand-contract, batched backfills, per-ORM runner
 [migrations](references/migrations.md). These four are absolute because each one is a lock you cannot
 take back once traffic is on the table:
 
-1. Index creation on a live table is **always** `CONCURRENTLY` — plain `CREATE INDEX` holds ACCESS
-   EXCLUSIVE for the entire build and blocks every writer. It therefore cannot run inside a txn.
+1. Index creation on a live table is **always** `CONCURRENTLY` — plain `CREATE INDEX` holds SHARE
+   for the entire build and blocks every writer. `CONCURRENTLY` cannot run inside a txn.
 2. Never `ADD COLUMN ... NOT NULL` without a default/backfill plan, and never add a **volatile**
    default (`now()`, `gen_random_uuid()`) on a large table without a batched backfill — a volatile
    default rewrites the whole table under ACCESS EXCLUSIVE. A non-volatile constant is instant (PG11+).
@@ -261,8 +261,8 @@ take back once traffic is on the table:
    somewhere, so the next environment replays a history that no longer matches the one in production.
 
 Lock modes: `CREATE INDEX CONCURRENTLY` takes SHARE UPDATE EXCLUSIVE (allows writes); plain
-`CREATE INDEX`, `ALTER TABLE ... TYPE`, `ADD COLUMN` with a volatile default, and `VACUUM FULL` take
-ACCESS EXCLUSIVE (blocks everything). Full table in
+`CREATE INDEX` takes SHARE (allows reads, blocks writes); `ALTER TABLE ... TYPE`, `ADD COLUMN` with a
+volatile default, and `VACUUM FULL` take ACCESS EXCLUSIVE (blocks everything). Full table in
 [migrations](references/migrations.md#lock-impact-reference).
 
 ## Anti-patterns

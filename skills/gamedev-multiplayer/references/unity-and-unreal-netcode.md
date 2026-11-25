@@ -72,8 +72,8 @@ The **legacy** attributes still compile and enforce method-name suffixes:
 [ClientRpc]                           void PlayFxClientRpc(Vector3 a) { } // name MUST end in ClientRpc
 ```
 
-Prefer `[Rpc(SendTo.X)]` on new code; recognize the legacy pair in existing code. RPCs are unreliable by
-default for some configs — mark reliability via the attribute's `Delivery` where consistency matters.
+Prefer `[Rpc(SendTo.X)]` on new code; recognize the legacy pair in existing code. RPCs are reliable by
+default — set `Delivery = RpcDelivery.Unreliable` on the attribute for cosmetic, high-frequency calls (FX, sounds).
 
 ### Transforms & movement
 
@@ -118,8 +118,8 @@ void AMyPawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const {
 ```
 
 `ReplicatedUsing` (RepNotify) is how you react to a change — use it instead of polling the value in `Tick`.
-The **push model** (`SetReplicatedByCondition` / `MARK_PROPERTY_DIRTY`) avoids per-frame comparison for
-high-count actors.
+The **push model** (`FDoRepLifetimeParams` with `bIsPushBased = true` + `DOREPLIFETIME_WITH_PARAMS_FAST`, then
+`MARK_PROPERTY_DIRTY_FROM_NAME` on each write) avoids per-frame comparison for high-count actors.
 
 ### RPCs
 

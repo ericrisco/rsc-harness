@@ -121,13 +121,13 @@ Based on their actual usage patterns, produce a 4–6 row personalised cheat she
 
 | Task pattern | Use this tier | Reasoning level | Notes |
 |--------------|--------------|-----------------|-------|
-| Read/show/list a file | light | none | 10–50× cheaper than heavy |
+| Read/show/list a file | light | none | ≈40× cheaper than heavy |
 | One-word confirmation | light | none | Heavy has no work to do here |
 | Single-file edit (clear scope) | balanced | low | Heavy adds nothing |
 | Multi-file refactor | heavy | medium | Justified — needs context |
 | Architecture / system design | heavy | high | Worth the premium |
 
-Anchor cost comparisons to the tier ladder: light ≈ 1×, balanced ≈ 3–5×, heavy ≈ 10–50×.
+Anchor cost comparisons to the tier ladder: light ≈ 1×, balanced ≈ 20×, heavy ≈ 40× (Claude 5.5 list input prices).
 
 #### 4d. What You Got Right (Compute)
 

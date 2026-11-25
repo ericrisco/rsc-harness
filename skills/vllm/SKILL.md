@@ -128,11 +128,13 @@ live without merging or a second server
 ([LoRA docs](https://docs.vllm.ai/en/latest/features/lora.html), accessed 2026-07).
 
 ```bash
+# --max-loras: how many adapters resident at once
+# --max-lora-rank: must be >= the rank the adapter was trained at
 vllm serve meta-llama/Llama-3.2-3B-Instruct \
   --enable-lora \
   --lora-modules sql=/adapters/sql-lora legal=/adapters/legal-lora \
-  --max-loras 2 \        # how many adapters resident at once
-  --max-lora-rank 16     # must be >= the rank the adapter was trained at
+  --max-loras 2 \
+  --max-lora-rank 16
 ```
 
 Route to an adapter by naming it in the request `model` field: `"model": "sql"` hits the SQL adapter,

@@ -92,7 +92,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /posts/{postId} {
       allow get:    if resource.data.ownerId == request.auth.uid;
-      allow list:   if request.auth != null;            // query MUST add where(ownerId == uid)
+      allow list:   if resource.data.ownerId == request.auth.uid;  // rejects any query not constrained by where(ownerId == uid)
       allow create: if request.auth.uid == request.resource.data.ownerId;
       allow update, delete: if resource.data.ownerId == request.auth.uid;
     }

@@ -80,7 +80,7 @@ Before publishing as an org, confirm the authed member holds an eligible **page 
 Current organic endpoint: `POST https://api.linkedin.com/rest/posts`. The legacy `/v2/ugcPosts` and `/v2/shares` are deprecated — migrate to the versioned `/rest/posts`. Pin the version **once**:
 
 ```bash
-LINKEDIN_VERSION=202605   # latest; 202505 is sunset — pinning a sunset version breaks
+LINKEDIN_VERSION=202605   # supported until 2027-05-15; 202505 is sunset — pinning a sunset version breaks
 ```
 
 Every versioned call carries **two** headers (omit either and you get 426/400):

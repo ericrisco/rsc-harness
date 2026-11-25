@@ -37,7 +37,7 @@ Extract, in this order:
 5. **SSI trend** — the 0-100 score's direction over the trailing window.
 6. **Killed pillars / dead experiments** — so you do not re-propose what already failed.
 
-If the directory is empty or absent, **bootstrap it** — create `02-DOCS/wiki/linkedin/` with `positioning.md`, `decisions/`, and `what-worked.md`. Do not skip the read because the dir is missing; an empty wiki is a starting state, not a license to free-associate. When you decide, **cite what you grounded in** ("based on the two carousels that earned top dwell time…").
+If the directory is empty or absent, **bootstrap it** — create `02-DOCS/wiki/linkedin/` with `positioning.md`, `pillars.md`, `decisions/`, and `what-worked.md`. Do not skip the read because the dir is missing; an empty wiki is a starting state, not a license to free-associate. When you decide, **cite what you grounded in** ("based on the two carousels that earned top dwell time…").
 
 Full file layout and templates: `references/wiki-records.md`.
 
@@ -96,7 +96,7 @@ If any answer is NO, lower the cadence. A held 3/week beats an aspirational 5/we
 
 ## 5. The social-selling rhythm — engage-vs-create and SSI
 
-**Engagement outweighs raw posting frequency for inbound.** Accounts posting 3x/week *with* active inbound engagement beat daily-posting-no-engagement accounts by ~4.2x in lead gen. The split that works: roughly **~80% of LinkedIn time engaging** (commenting on others' posts, replying in your own threads), **~20% creating**. "20 min creating + 40 min engaging" beats "60 min creating + 0 engaging." Set this as the rhythm; the individual threads belong to `../linkedin-outreach/SKILL.md`.
+**Engagement outweighs raw posting frequency for inbound.** Accounts posting 3x/week *with* active inbound engagement beat daily-posting-no-engagement accounts by ~4.2x in lead gen. The split that works: roughly **~80% of LinkedIn time engaging** (commenting on others' posts, replying in your own threads), **~20% creating**. "12 min creating + 48 min engaging" beats "60 min creating + 0 engaging." Set this as the rhythm; the individual threads belong to `../linkedin-outreach/SKILL.md`.
 
 **SSI as a habit system, not a vanity number.** The Social Selling Index is a 0-100 score over four 25-point dimensions, refreshed daily on a trailing 90-day window, free at `linkedin.com/sales/ssi`:
 

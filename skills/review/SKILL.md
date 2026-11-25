@@ -102,9 +102,9 @@ The reviewer is held to the same evidence bar as the author, because a reviewer 
 
 End every review you give with one of three, and nothing mushy in between:
 
-- **`APPROVE`** — no blockers, no unresolved should-fix. Say it plainly and **point to ship**.
-- **`APPROVE WITH NITS`** — mergeable; the nits are the author's call.
-- **`CHANGES REQUESTED`** — one or more blockers/should-fix. List exactly what unblocks it.
+- **`APPROVE`** — no confirmed blocker, nothing else worth noting. Say it plainly and **point to ship**.
+- **`APPROVE WITH NITS`** — no confirmed blocker; should-fix and nits are noted (`--note`) and are the author's call.
+- **`CHANGES REQUESTED`** — one or more blockers that survived the three filters below. List exactly what unblocks it.
 
 ### The sello — when this project opted in
 
@@ -233,7 +233,7 @@ fix-and-re-review is one round of the loop below.
 
 ### Convergence — the fix loop ends
 
-A review loop that never converges is worse than none: Anthropic saw a single PR take 50 rounds.
+A review loop that never converges is worse than none: without a cap, fix and re-review can run indefinitely.
 Five rules, enforced by `npx @ericrisco/rsc review ledger` (`.rsc/review-ledger.jsonl`) rather
 than by memory:
 

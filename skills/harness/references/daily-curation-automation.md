@@ -19,7 +19,7 @@ Run once per day, at a quiet hour, to keep the second brain alive:
   record them in `wiki/.ingested.json`, and propose the ambiguous ones
 - process pending `raw/worklog/` material into `wiki/`
 - strengthen weak / low-score pages; fill one open gap
-- repair links and the graph (resolve broken wikilinks, add `## Related` where proper nouns recur)
+- repair links and the graph (convert any `[[...]]` wikilinks to markdown links, fix broken links, add `## Related` where proper nouns recur)
 - mark `stale` pages whose sources moved on
 - record what changed in `wiki/log.md`
 

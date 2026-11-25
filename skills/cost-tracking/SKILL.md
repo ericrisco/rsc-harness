@@ -57,26 +57,34 @@ Wrap the SDK call **once** so capture cannot be skipped. A meter you have to rem
 Rates drift fast and silently mis-bill when stale. Keep prices in a **versioned table** — one row per model, each with `effective_date` and `source` — loaded as data. Never write a rate as a literal in business logic. Look up by model and **fail loud on an unknown model; never default to $0**, or a new model silently bills as free and the leak is invisible.
 
 ```yaml
-# pricing.yaml — perishable. Verify against source before trusting. Dated 2026-06-02.
+# pricing.yaml — perishable. Verify against source before trusting.
 models:
-  - model: claude-haiku-4.5
-    effective_date: 2026-06-02
-    source: cloudzero.com/blog/claude-api-pricing
-    input_per_mtok: 1.00
-    output_per_mtok: 5.00
+  - model: claude-haiku-5-5           # rate depends on prompt size: one row per tier
+    max_prompt_tokens: 100000
+    effective_date: 2026-11-24
+    source: platform.claude.com/docs/en/about-claude/pricing
+    input_per_mtok: 0.10
+    output_per_mtok: 0.50
+    cache_read_per_mtok: 0.01
+  - model: claude-haiku-5-5
+    min_prompt_tokens: 100001
+    effective_date: 2026-11-24
+    source: platform.claude.com/docs/en/about-claude/pricing
+    input_per_mtok: 0.50
+    output_per_mtok: 2.50
+    cache_read_per_mtok: 0.05
+  - model: claude-sonnet-5-5
+    effective_date: 2026-11-24
+    source: platform.claude.com/docs/en/about-claude/pricing
+    input_per_mtok: 2.00
+    output_per_mtok: 10.00
     cache_read_per_mtok: 0.10
-  - model: claude-sonnet-4.6
-    effective_date: 2026-06-02
-    source: cloudzero.com/blog/claude-api-pricing
-    input_per_mtok: 3.00
-    output_per_mtok: 15.00
-    cache_read_per_mtok: 0.30
-  - model: claude-opus-4.7
-    effective_date: 2026-06-02
-    source: cloudzero.com/blog/claude-api-pricing
-    input_per_mtok: 5.00
-    output_per_mtok: 25.00
-    cache_read_per_mtok: 0.50
+  - model: claude-opus-5-5
+    effective_date: 2026-11-24
+    source: platform.claude.com/docs/en/about-claude/pricing
+    input_per_mtok: 4.00
+    output_per_mtok: 20.00
+    cache_read_per_mtok: 0.20
   - model: gpt-5.5
     effective_date: 2026-06-02
     source: openai.com/api/pricing
@@ -85,7 +93,7 @@ models:
     cache_read_per_mtok: 0.50   # OpenAI cached input = 90% off standard input
 ```
 
-These numbers are a **snapshot, not a constant** — model names and rates move month to month. Dated 2026-06-02 from the sources above. The dated per-provider snapshots, the `usage`-field map per provider, and refresh instructions live in `references/pricing-tables.md`; read it before you trust a rate.
+These numbers are a **snapshot, not a constant** — model names and rates move month to month. Each row carries its own `effective_date` and `source`. A price that depends on prompt size (Haiku 5.5 above 100K tokens) gets one row per tier, as above: `price()` picks the row whose prompt-size bounds contain the request's input tokens, and fails loud when none does. The dated per-provider snapshots, the `usage`-field map per provider, and refresh instructions live in `references/pricing-tables.md`; read it before you trust a rate.
 
 ## Ledger: append-only, idempotent, attributed
 
@@ -131,9 +139,9 @@ Two distinct checks, do not conflate them:
 
 Don't assert savings — show the break-even. Pricing per fact-checked sources accessed 2026-06-02 (platform.claude.com prompt-caching; finout.io anthropic-api-pricing).
 
-- **Prompt caching.** Cache *reads* cost 0.1x base input. The 5-min write costs 1.25x, the 1-hour write 2x. So a 5-min entry pays for itself after roughly **one** cache hit: `1.25 + 0.1·h` (cached) beats `1·(1+h)` (uncached) once `h ≥ 1`. Caching a stable system prompt across a session is almost always net cheaper.
+- **Prompt caching.** Cache *reads* cost 0.05x base input on Opus 5.5 and Sonnet 5.5, 0.1x on Haiku 5.5 (`references/pricing-tables.md`). The 5-min write costs 1.25x, the 1-hour write 2x. So a 5-min entry pays for itself after **one** cache hit: `1.25 + r·h` (cached, `r` = read ratio) beats `1·(1+h)` (uncached) once `h ≥ 0.25/(1−r)`, which is `h ≥ 1` at either ratio. Caching a stable system prompt across a session is almost always net cheaper.
 - **Batch API.** 50% off on both OpenAI and Anthropic, async within 24h, and it **stacks with caching** — combined up to ~95% off. Use it for anything not user-facing-realtime: evals, backfills, nightly summaries.
-- **Model downshift.** The largest lever. Route easy requests to Haiku/cheap models and reserve Opus/GPT-5.5 for hard ones — at 5x the rate, downshifting the routable half of traffic dwarfs a few percent of caching.
+- **Model downshift.** The largest lever. Route easy requests to Haiku/cheap models and reserve Opus/GPT-5.5 for hard ones — Opus 5.5 input costs 40x Haiku 5.5 ($4 vs $0.10 per MTok) and 2x Sonnet 5.5, downshifting the routable half of traffic dwarfs a few percent of caching.
 
 "We'll add caching later" without measuring the hit rate is a guess, not a lever. Instrument `cache_read_tokens` in the ledger first, then you know.
 

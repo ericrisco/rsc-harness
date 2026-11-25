@@ -76,7 +76,7 @@ else
 fi
 
 # --- 2. content schema imports ---------------------------------------------
-# A content config should import defineCollection/z from astro:content.
+# A content config should import defineCollection from astro:content (z comes from astro/zod).
 if [ -f src/content.config.ts ]; then
   if grep -q 'astro:content' src/content.config.ts; then
     ok "content schema imports from astro:content"

@@ -163,7 +163,7 @@ idea → predicted outlier multiple → why (the mechanism) → judge-by metric 
 
 ```text
 Bad:  "This one should do well."
-Good: "Predict 2.5x baseline. Bet: the contrarian title + we own first-hand proof no
+Good: "Predict 3x baseline. Bet: the contrarian title + we own first-hand proof no
        outlier has. Judge by 28-day views vs trailing-10 average AND CTR vs channel
        median. 2026-06-02."
 ```

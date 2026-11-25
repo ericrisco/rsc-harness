@@ -44,8 +44,8 @@ LOCATE  → find the spec, the task done-checks, and which stack(s) changed
 RUN     → execute the relevant stack scripts/verify.sh (lint, type, test+coverage, audit),
           or the generic gate from config.yaml when no stack ships one
 WALK    → check every task done-check and every spec acceptance criterion against real output
-ROLLBACK→ write how to undo the change (revert sha, migration down, flag off) into the record
-RECORD  → write the verification record under 02-DOCS/wiki/sdd/, index it
+RECORD  → write the verification record under 02-DOCS/wiki/sdd/, with the rollback plan (revert
+          sha, migration down, flag off), index it
 VERDICT → PASS only if every item has passing evidence; otherwise FAIL with the gaps + handoff
 ```
 
@@ -107,7 +107,7 @@ The dangerous way a checker breaks is not a crash — it is **fail-open**: nothi
 
 **Over-blocking is not the safe side.** It feels like caution and it is not: a gate that fires on correct work gets muted, worked around, or wedges the pipeline that depends on it, which is the same damage as a gate that checks nothing with the sign reversed. And it is *harder* to notice, because the failure arrives dressed as diligence.
 
-Where this bites hardest is a check that matches text rather than structure — **"the path appears in the string" is not "the write targets that location"**. Our own integrity gate shipped that defect: twelve mutants proved it could fail, none asked whether it could pass — and the first real run blocked every reading of a protected file as if it were a write to it.
+Where this bites hardest is a check that matches text rather than structure — **"the path appears in the string" is not "the write targets that location"**. A gate proven only by mutants that make it fail can still block every correct input: a text match on a protected path blocks every read of that file as if it were a write to it.
 
 So when you write the negative control, write the positive one beside it, and prefer matching **structure** (a parsed tool call, a resolved path, an exit code) over matching text that happens to contain the thing you care about.
 

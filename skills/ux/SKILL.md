@@ -92,7 +92,7 @@ When the task is to audit an existing interface: steps 0 and 4 first, then repor
 by impact on the job, in the format of `upstream/ux-designer/GUIDE.md` › *Reviewing or auditing a
 UI* (Blocker / Major / Minor, where, fix, reference). Inspection order and the full checklists:
 `upstream/ux-usability-foundations/GUIDE.md` › *Workflow for critiquing* and
-`references/checklists.md`. Split quick wins from structural changes. If nothing serious turns up,
+`upstream/ux-usability-foundations/references/checklists.md`. Split quick wins from structural changes. If nothing serious turns up,
 say so in one line.
 
 ## Report

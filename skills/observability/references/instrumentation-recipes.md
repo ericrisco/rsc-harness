@@ -102,7 +102,7 @@ Use `gen_ai.*` semantic conventions (client spans exited experimental, early 202
 
 ```python
 with tracer.start_as_current_span("chat gpt-4o") as span:
-    span.set_attribute("gen_ai.system", "openai")
+    span.set_attribute("gen_ai.provider.name", "openai")
     span.set_attribute("gen_ai.operation.name", "chat")
     span.set_attribute("gen_ai.request.model", "gpt-4o")
     span.set_attribute("gen_ai.request.temperature", 0.2)

@@ -24,7 +24,7 @@ You are not slowing them down; you make the intent reviewable *before* code exis
 
 ### Your first sentence is not a verdict on the idea
 
-Catching the intent eagerly, above, is right. What comes *after* catching it is where this phase has been failing: the opening line validates. "Great idea", "makes sense", "that would be really useful" — or, since half this catalog's work happens in Spanish, "buena idea", "qué gran idea", "me encanta", "tiene todo el sentido" — is a verdict you do not have the evidence for, delivered at the cheapest possible moment to be wrong, to someone who still believes you. The ban is on the **judgement**, in any language, not on any particular wording: the list above is what it looks like, not what it is limited to. A spec built on a validated premise is coherent, plannable, testable and pointed at the wrong thing; nothing downstream can catch that, because every later gate compares artifacts to each other and they all agree.
+Catching the intent eagerly, above, is right. What comes *after* catching it must not validate: the opening line carries no verdict. "Great idea", "makes sense", "that would be really useful" — or, since half this catalog's work happens in Spanish, "buena idea", "qué gran idea", "me encanta", "tiene todo el sentido" — is a verdict you do not have the evidence for, delivered at the cheapest possible moment to be wrong, to someone who still believes you. The ban is on the **judgement**, in any language, not on any particular wording: the list above is what it looks like, not what it is limited to. A spec built on a validated premise is coherent, plannable, testable and pointed at the wrong thing; nothing downstream can catch that, because every later gate compares artifacts to each other and they all agree.
 
 So the first response to an intent carries exactly two things:
 
@@ -40,7 +40,7 @@ If, having looked, there is no real objection, **say so in one line and move on 
 **Offer autopilot once, right here.** At this boundary, propose how to run the rest of the chain:
 > *"¿Quieres que lo lleve hasta el final yo solo — spec → plan → código → verify, parando solo si algo es ambiguo — o prefieres que pare a que apruebes en cada fase?"*
 
-A **yes engages autopilot** (`../asdd/SKILL.md`): you still write the spec and every artifact, but you auto-advance through the phases without re-asking — that up-front yes is the approval that satisfies the hard gate above, for the whole run. A **no** (or silence) keeps the default gated flow: write the spec, hand to `clarify`/`plan`, stop for approval before code. Either way the spec gets written; autopilot only changes whether you pause *between* phases — and it still stops for genuine ambiguity, hard failures, or destructive/outward actions (ship still confirms). If `sdd.autopilot: true` in config, autopilot is the default — still surface it once.
+A **yes engages autopilot** (`../asdd/SKILL.md`): you still write the spec and every artifact, but you auto-advance through the phases without re-asking — that up-front yes is the approval that satisfies the hard gate above, for the whole run. A **no** (or silence) keeps the default gated flow: write the spec, hand to `clarify`/`plan`, stop for approval before code. Either way the spec gets written; autopilot only changes whether you pause *between* phases — and it still stops for genuine ambiguity, hard failures, or destructive/outward actions (ship still confirms). If `sdd.execution_mode: automatic` in config, autopilot is the default — still surface it once.
 
 ## The one rule that defines this skill
 
@@ -66,7 +66,7 @@ If no profile exists, use analogies and keep questions plain. Never assume fluen
 
 ## FRAME before you ask anything — from `idea-refinement`
 
-Before the frontier round, write five lines. They are the FRAME block of `../idea-refinement/SKILL.md`, a skill this catalog ships and the README advertises, and that until now no phase invoked:
+Before the frontier round, write five lines. They are the FRAME block of `../idea-refinement/SKILL.md`:
 
 - **Actor** — who is struggling, and in what situation?
 - **Current workaround** — what do they do today, *including doing nothing*?

@@ -163,7 +163,7 @@ Run queries from the **fixed physics tick** so results match the simulated state
   `intersect_shape`, `cast_motion`. Node helpers: `RayCast2D/3D`, `ShapeCast2D/3D`. Queries respect
   `collision_mask`.
 - **Unity:** `Physics.Raycast`, `SphereCast`/`CapsuleCast`, `OverlapSphere`, `CheckSphere` (2D:
-  `Physics2D.*`). Always pass a `LayerMask`; prefer non-allocating `RaycastNonAlloc`/`RaycastAll`.
+  `Physics2D.*`). Always pass a `LayerMask`; prefer non-allocating `RaycastNonAlloc`/`OverlapSphereNonAlloc` (`RaycastAll` allocates).
 - **Unreal:** `LineTraceSingleByChannel`, `SweepSingleByChannel`, `OverlapMultiByChannel` (and
   `...ByObjectType`). Use a **trace channel**, set the query params (`bTraceComplex`).
 
@@ -178,7 +178,8 @@ The rules that keep physics from jittering, drifting, or tunneling:
    tick. Never simulate in the render frame.
 2. **Scale by delta.** Multiply forces/accelerations/manual position changes by the tick's `delta` /
    `fixedDeltaTime` — but **not** the output of a helper that already integrates time (Godot
-   `move_and_slide()`, Unity `CharacterController.Move` when you pass a per-second velocity).
+   `move_and_slide()`, Unity `CharacterController.SimpleMove`, which takes a per-second velocity). Unity `CharacterController.Move`
+   takes a per-frame displacement, so multiply its velocity by `Time.deltaTime`.
 3. **CCD for fast/thin things.** Small fast projectiles + thin walls tunnel. Enable Continuous
    Collision Detection: Godot `continuous_cd`, Unity `collisionDetectionMode = Continuous*`, Unreal
    `Use CCD`. Enable only on the fast bodies (it costs). Or use a shapecast/raycast-then-move.

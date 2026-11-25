@@ -39,8 +39,8 @@ One rule per stage, with the why:
   the comparison is meaningless.
 - **Run a structured loop.** Same questions, same rubric, every candidate —
   structured interviews are the single highest-validity selection method
-  (~.51 predictive validity vs ~.38 unstructured; the 2022 Sackett et al.
-  re-analysis ranks them above cognitive-ability tests). Unstructured = lottery.
+  (~.42 predictive validity vs ~.19 unstructured in the 2022 Sackett et al.
+  re-analysis, which ranks them above cognitive-ability tests). Unstructured = lottery.
 - **Score independently, then calibrate.** Each interviewer submits before the
   group talks. Debrief is calibration, not a re-vote.
 
@@ -141,7 +141,7 @@ would you change?
 ## The scorecard
 
 This is where gut-feel hiring dies. A structured scorecard with behavioral
-anchors lifts interview validity from ~.20 to ~.51 (most rigorous scoring ~.57)
+anchors lifts interview validity from ~.19 to ~.42 (Sackett et al. 2022)
 and a 2022 SHRM-cited figure puts bias reduction above 50% versus unstructured
 scoring. Shape it exactly:
 

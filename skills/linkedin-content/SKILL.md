@@ -61,7 +61,7 @@ Rules, each with its why:
 | "Some thoughts on remote work and productivity." | "We went fully remote and our output dropped 30%. The fix wasn't more meetings." |
 | "Happy to announce our new feature is live!" | "It took 4 rewrites and a near-mutiny to ship one button. Worth it." |
 
-For the full 8–10 pattern library (number-lead, false-start, contrarian, open-loop, named-stakes), see `references/hooks-and-formats.md`.
+For the full 10-pattern library (number-lead, false-start, contrarian, open-loop, named-stakes), see `references/hooks-and-formats.md`.
 
 ## The story arc and the character budget
 

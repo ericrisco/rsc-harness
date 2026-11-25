@@ -364,7 +364,7 @@ encapsulation → `references/i18n-and-dependencies.md`.
 ## Production checklist
 
 - `FlutterError.onError` + `PlatformDispatcher.instance.onError` + `ErrorWidget.builder` wired to Crashlytics/Sentry.
-- Secrets via `--dart-define` / `--dart-define-from-file`; tokens in secure storage (Keychain / EncryptedSharedPreferences), **never plaintext**.
+- Build config via `--dart-define` / `--dart-define-from-file` — compiled into the binary, so never secrets; secrets stay on a backend; tokens in secure storage (Keychain / EncryptedSharedPreferences), **never plaintext**.
 - HTTPS only.
 - Strict `analysis_options.yaml`: `strict-casts` / `strict-inference` / `strict-raw-types` + `flutter_lints` or `very_good_analysis`.
 - l10n via `flutter_localizations` + ARB (ICU plurals, RTL-safe geometry, locale-aware `intl` formatting);

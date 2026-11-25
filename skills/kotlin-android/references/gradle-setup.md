@@ -37,7 +37,6 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }   # the Compose compiler plugin
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
@@ -53,7 +52,6 @@ tracks the Kotlin version automatically.
 ```kotlin
 plugins {
     alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ksp) apply false
@@ -65,8 +63,7 @@ plugins {
 
 ```kotlin
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.android.application)          // AGP 9 compiles Kotlin itself: no org.jetbrains.kotlin.android
     alias(libs.plugins.kotlin.compose)        // Compose compiler — replaces composeOptions
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)                    // KSP, never kapt, for Room + Hilt

@@ -256,7 +256,8 @@ export async function POST(req: Request) {
 
 ```ts
 // Before any send: skip suppressed addresses
-const recipients = candidates.filter(async (e) => !(await db.suppressions.has(e)));
+const suppressed = await Promise.all(candidates.map((e) => db.suppressions.has(e)));
+const recipients = candidates.filter((_, i) => !suppressed[i]); // filter() ignores a Promise: resolve first
 ```
 
 Generic webhook hardening (replay windows, queueing, retries beyond email) is

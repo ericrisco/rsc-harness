@@ -63,8 +63,8 @@ resp = client.responses.create(
 
 ```python
 resp = client.messages.create(
-    model="claude-opus-4-8",
-    max_tokens=2048,
+    model="claude-opus-5-5",
+    max_tokens=16000,          # thinking is on by default on current models and shares this budget
     messages=[{"role": "user", "content": text}],
     output_config={"format": {"type": "json_schema", "schema": {
         "type": "object",
@@ -81,8 +81,9 @@ resp = client.messages.create(
 
 - Anthropic compiles the schema into a grammar and **caches it for 24h**, then constrains decoding
   token-by-token.
-- Supported models: Claude Opus 4.5 / 4.6 / 4.7 / 4.8, Sonnet 4.5 / 4.6, Haiku 4.5. Also on Bedrock,
-  Vertex, and Foundry (beta).
+- Supported on the current Claude models (Opus 5.5, Sonnet 5.5, Haiku 5.5) and earlier generations
+  back to 4.5; confirm a given model with the Models API (`capabilities["structured_outputs"]`).
+  Also on Bedrock, Vertex, and Foundry (beta).
 - SDK helpers: Python `client.messages.parse(...)` returns a parsed object; TS `zodOutputFormat(schema)` /
   `jsonSchemaOutputFormat(schema)`.
 - **Deprecated** (transition window only — do not write new code against these): the `output_format` param
@@ -119,7 +120,9 @@ class Order(BaseModel):
     total_cents: int
     due_date: str | None
 
-client = instructor.from_provider("anthropic/claude-opus-4-8")  # or "openai/gpt-5.1", "ollama/llama3.3"
+# Instructor's default Anthropic mode (Mode.TOOLS) forces a tool call, and current Claude models
+# reject a forced tool_choice with a 400. MD_JSON does not force one.
+client = instructor.from_provider("anthropic/claude-opus-5-5", mode=instructor.Mode.MD_JSON)  # or "openai/gpt-5.1", "ollama/llama3.3"
 order = client.chat.completions.create(
     response_model=Order,
     max_retries=2,            # bound the reask loop

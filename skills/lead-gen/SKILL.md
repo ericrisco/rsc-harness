@@ -10,9 +10,9 @@ origin: risco
 
 *You turn "we sell X to Y" into a deduplicated, scored, compliance-cleared roster of named accounts and people. You define the target, you build the list, you rank it — then you stop. What you produce is a prioritized roster plus the rationale that ranked it; the hand-off is the finish line, not the campaign.*
 
-## The pipeline — three phases, two gates
+## The pipeline — three phases and a compliance gate
 
-Run these in order. Each gate is a hard stop: do not advance until the prior phase produced its artifact.
+Run these in order. Each phase is a hard stop: do not advance until the prior phase produced its artifact.
 
 1. **Define the target** → a falsifiable ICP + persona. *Why: you cannot dedupe or score against a vibe; a vague ICP guarantees reps chase the wrong companies.*
 2. **Build the list** → sourced, deduped, verified rows with provenance. *Why: an unverified or undocumented list is a deliverability and legal liability before a single email goes out.*
@@ -120,7 +120,7 @@ A list that ships without these fields is not done. Run both checklists; the str
 - [ ] A documented **Legitimate Interest Assessment (LIA)** exists.
 - [ ] Every email will carry the data-source disclosure + a privacy-policy link + a one-click opt-out.
 - [ ] Objections will be honored.
-- [ ] **No purchased or scraped data** — those confer no lawful basis, full stop.
+- [ ] **No bought or scraped list emailed as-is** — every row, including rows from a data vendor (Apollo, ZoomInfo), carries documented provenance and falls under the LIA; a list with no provenance confers no lawful basis.
 
 **CAN-SPAM (US).** *(ftc.gov CAN-SPAM compliance guide, accessed 2026-06-02.)*
 

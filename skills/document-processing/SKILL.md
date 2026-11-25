@@ -119,9 +119,10 @@ for page in writer.pages:
         page,
         {"applicant_name": "Eric Risco", "agree": "/Yes"},  # checkbox = its on-state
         auto_regenerate=False,  # else a spurious "save changes?" prompt fires on open
+        flatten=True,           # not editable: bakes the values into the page content
     )
 
-# flatten=True bakes the values and drops the editable widgets
+writer.remove_annotations(subtypes="/Widget")  # with flatten=True: drop the widgets flatten leaves behind
 with open("filled.pdf", "wb") as f:
     writer.write(f)
 ```

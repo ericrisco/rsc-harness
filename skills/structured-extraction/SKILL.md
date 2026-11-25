@@ -74,8 +74,8 @@ data = json.loads(resp.choices[0].message.content)  # now guaranteed valid + typ
 ```
 
 On the OpenAI Responses API the same block moves under `text.format` instead of `response_format`. On
-Anthropic, the equivalent is `output_config={"format": {"type": "json_schema", "schema": {...}}}` on Claude
-Opus 4.5–4.8 / Sonnet 4.5+ / Haiku 4.5; Anthropic compiles your schema into a grammar and **caches it for
+Anthropic, the equivalent is `output_config={"format": {"type": "json_schema", "schema": {...}}}` on the
+current Claude models (Opus 5.5, Sonnet 5.5, Haiku 5.5) and earlier ones back to the 4.5 generation; Anthropic compiles your schema into a grammar and **caches it for
 24h**, and the SDKs ship helpers (`client.messages.parse(...)` in Python, `zodOutputFormat(schema)` in TS).
 The older deprecated `output_format` param and the deprecated `structured-outputs-2025-11-13` beta header
 still work in a transition window — do not write new code against them. Full shapes in
@@ -181,7 +181,11 @@ When you want one Pydantic model to run across OpenAI, Anthropic, and local back
 SDK, use Instructor's unified entrypoint:
 
 ```python
-client = instructor.from_provider("anthropic/claude-opus-4-8")  # or "openai/gpt-5.1", "ollama/llama3.3"
+from instructor import Mode
+
+# Instructor's default Anthropic mode (Mode.TOOLS) forces a tool call, and current Claude models
+# reject a forced tool_choice with a 400. MD_JSON does not force one.
+client = instructor.from_provider("anthropic/claude-opus-5-5", mode=Mode.MD_JSON)  # or "openai/gpt-5.1", "ollama/llama3.3"
 ```
 
 Reach for Instructor when you need **provider portability** or **value-level validation with reask**. Reach

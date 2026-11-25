@@ -110,18 +110,19 @@ Your legal lever (source: EU Directive 2011/7/EU on late payment; EC Late Paymen
 When the user wants invoices sent by software rather than by hand, use Stripe. SDK is **stripe-node v19.1.0**; invoice status enum is `draft → open → paid | uncollectible | void` (source: Stripe API Reference; context7 /stripe/stripe-node v19.1.0; accessed 2026-06-02).
 
 ```javascript
-// 1. add line items to the customer, then 2. create the invoice
-await stripe.invoiceItems.create({
-  customer: customerId,
-  amount: 120000,          // cents — 12h consulting @ EUR 100/h
-  currency: 'eur',
-  description: '12h consulting',
-});
-
+// 1. create the draft invoice, then 2. attach line items to it by id
 const invoice = await stripe.invoices.create({
   customer: customerId,
   collection_method: 'send_invoice', // email the customer (vs charge_automatically)
   days_until_due: 30,                // due-date / payment terms
+});
+
+await stripe.invoiceItems.create({
+  customer: customerId,
+  invoice: invoice.id,     // without it the item stays pending and the invoice is empty
+  amount: 120000,          // cents — 12h consulting @ EUR 100/h
+  currency: 'eur',
+  description: '12h consulting',
 });
 
 // 3. finalize assigns the sequential number, 4. send emails it

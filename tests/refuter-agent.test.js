@@ -194,3 +194,13 @@ test('install records EVERY agent it wrote, derived from the files not a hardcod
     assert.ok(existsSync(agentPath('claude', cwd, n)), `${n} is recorded but its file is not there`);
   }
 });
+
+test('the finding verifier counts its own inputs: the finding plus the four the lenses had', () => {
+  // It once inherited the refuters' "exactly four inputs, and nothing else" while also receiving the
+  // finding — a contradiction inside one prompt.
+  const body = agentByName('finding-verifier').body;
+  assert.match(body, /five inputs, and nothing else/i);
+  assert.doesNotMatch(body, /exactly four inputs/i);
+  assert.match(body, /The task contract/);
+  assert.match(body, /The entry point/);
+});

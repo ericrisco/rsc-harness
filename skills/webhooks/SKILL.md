@@ -163,9 +163,18 @@ try {
   if (e.code === "23505") return res.sendStatus(200); // already seen → ack, skip
   throw e;
 }
-await queue.add("process", { id, event });
+try {
+  await queue.add("process", { id, event });
+} catch (e) {
+  // Enqueue failed: release the gate, or the provider's retry is skipped as "seen" and the event is lost.
+  await db.query("DELETE FROM seen_events WHERE id = $1", [id]);
+  return res.sendStatus(503); // transient → provider retries
+}
 res.sendStatus(200);
 ```
+
+Where the queue lives in the same database, write the dedupe row and the job in one transaction
+(outbox) instead; then neither can exist without the other.
 
 Prefer **insert-then-process** over **process-then-mark**. Marking after the
 work leaves a window where two concurrent deliveries both pass the "have I seen

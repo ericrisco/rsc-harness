@@ -28,12 +28,12 @@ SeasonalNaive(season_length=m)
 ## Moving average / simple exponential smoothing (SES)
 
 Flat series with no trend or season. SES weights recent observations more. Honest
-for a noisy mean; do not use SES on intermittent demand (see Croston). `AutoCES`
+for a noisy mean; do not use SES on intermittent demand (see Croston). `SimpleExponentialSmoothingOptimized`
 auto-tunes the smoothing.
 
 ```python
-from statsforecast.models import AutoCES
-AutoCES(season_length=m)
+from statsforecast.models import SimpleExponentialSmoothingOptimized
+SimpleExponentialSmoothingOptimized()
 ```
 
 ## ETS (error-trend-season)

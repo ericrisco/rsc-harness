@@ -108,7 +108,7 @@ scaler = torch.amp.GradScaler("cuda")            # current namespace (not torch.
 for x, y in train_loader:
     x, y = x.to(device), y.to(device)
     optimizer.zero_grad(set_to_none=True)
-    with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+    with torch.autocast(device_type="cuda", dtype=torch.float16):   # fp16 needs the scaler; bf16 drops it
         out  = model(x)                          # forward + loss ONLY under autocast
         loss = loss_fn(out, y)
     scaler.scale(loss).backward()                # backward OUTSIDE autocast, on scaled loss
@@ -185,7 +185,7 @@ your code layout and breaks on refactor.
 
 ```python
 torch.save({"epoch": epoch,
-            "model": model.state_dict(),          # DDP/FSDP: model.module.state_dict(), rank 0 only
+            "model": model.state_dict(),          # DDP: model.module.state_dict(), rank 0 only; FSDP2: torch.distributed.checkpoint
             "optimizer": opt.state_dict(),
             "scheduler": scheduler.state_dict(),
             "scaler": scaler.state_dict()},        # AMP scale must survive a resume

@@ -64,7 +64,7 @@ Why it fails: `no-story`, `unnamed`, `no-analogy`, `jargon-dense` (idempotency, 
    "Have you ever double-clicked a 'Pay' button, then sat there sweating, wondering if you just
     paid twice? Hold that feeling — because your users feel it about YOUR system every day."
 
-2. EPIPHANY STORY  (six beats, true)
+2. EPIPHANY STORY  (six beats; illustrative, fictional — a real lesson uses the user's true story)
    - Backstory: "Two years in, I owned payments. 4am, on call."
    - Desire:    "I just wanted failed charges to retry on their own so I could sleep."
    - Wall:      "My retry fired before the first response came back. We charged 4,000 people twice.

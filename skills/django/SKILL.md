@@ -98,7 +98,7 @@ class Article(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["tenant", "slug"], name="uniq_tenant_slug"),
             models.CheckConstraint(
-                check=models.Q(status="draft") | models.Q(published_at__isnull=False),
+                condition=models.Q(status="draft") | models.Q(published_at__isnull=False),
                 name="published_needs_date",
             ),
         ]

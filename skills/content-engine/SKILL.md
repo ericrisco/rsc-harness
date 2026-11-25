@@ -154,7 +154,7 @@ its derivatives). In Claude Code a Stop hook runs the same check on your final a
 | 100%-planned, zero slack | can't react to anything timely | leave 20–30% of slots open |
 | Net-new only, never updating | discards highest-ROI winners | budget 15–25% capacity for updates |
 | Copy-paste cross-posting | each channel punishes non-native content | reformat per channel (`references/atomization.md`) |
-| >7 pillars | effort scatters, no theme compounds | hold to 4–6 |
+| >6 pillars | effort scatters, no theme compounds | hold to 4–6 |
 
 ## Verify
 

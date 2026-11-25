@@ -71,7 +71,7 @@ The H1 carries the *what*; the subhead carries the *benefit*; both must stay con
 
 ```text
 Bad  — "Reimagine The Future Of Financial Operations"   (clever, 6 words, says nothing)
-Good — "Expense reports done in 30 seconds"             (clear, 5 words, names the outcome)
+Good — "Expense reports done in 30 seconds"             (clear, 6 words, names the outcome)
          Subhead: For finance teams drowning in receipts — snap, submit, approved.
 ```
 

@@ -50,9 +50,10 @@ A command is a Rust function the frontend can call. Each rule below has a one-li
   camelCase (JS) ⇄ snake_case (Rust).*
 - **Fallible commands return `Result<T, E>` where `E: Serialize`.** *An `Err` becomes a
   rejected JS promise; a panic instead crashes the command thread silently.*
-- **Never block the command thread.** Long or I/O work goes in an `async` command or a
-  spawned task. *Commands run on a shared IPC thread pool — a blocking call freezes other
-  IPC, which users see as a frozen UI.*
+- **Never block the main thread.** Long or I/O work goes in an `async` command (or
+  `#[tauri::command(async)]`) or a spawned task. *A command without `async` runs on the main
+  thread — a blocking call there freezes the UI; `async` commands run on a separate task via
+  `async_runtime::spawn`.*
 - **Share state with `.manage(x)` + `State<'_, T>`.** *If a guard is held across an
   `.await`, use `tokio::sync::Mutex`, not `std::sync::Mutex` — the std guard is not `Send`
   and will not compile in an async command.*

@@ -117,9 +117,9 @@ at position 0 and rejects the emoji prefix. Either widen its `headerPattern` —
 `references/gitmoji.md` — or move the emoji behind the header (`feat(api): ✨ add cursor paging`),
 which every parser accepts. Both forms satisfy this convention; dropping the gitmoji does not.
 
-**Authorship is always Eric.** Never add a `Co-Authored-By: Claude` trailer, never a
+**Authorship is always the human author — the configured git user.** Never add a `Co-Authored-By: Claude` trailer, never a
 "Generated with" footer, never any line crediting an AI tool — in a commit *or* a PR body. The work
-is Eric's; the agent is a tool, like the compiler.
+is the author's; the agent is a tool, like the compiler.
 
 ## History hygiene — rebase, merge, or squash?
 
@@ -204,7 +204,7 @@ enough to hand over. Setting up the isolated checkout *before* you start coding 
 | `BREAKING CHANGE` lowercase                            | tooling won't detect it → wrong (too-low) bump            | uppercase `BREAKING CHANGE:` in the footer            |
 | PR with no description                                | reviewer reverse-engineers intent from the diff           | `--fill` plus a why, link the issue                   |
 | Tagging a release with no notes                       | users can't tell what changed                             | `gh release create --generate-notes`                  |
-| `Co-Authored-By: Claude` / "Generated with" footer    | forges authorship onto a tool                             | author is always Eric; no AI attribution              |
+| `Co-Authored-By: Claude` / "Generated with" footer    | forges authorship onto a tool                             | author is the configured git user; no AI attribution |
 
 ## Checklist — before a PR or a release
 

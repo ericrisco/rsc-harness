@@ -172,8 +172,9 @@ Add the `$schema` line first — you get editor autocomplete and validation for 
 
 Whys:
 
-- **`maxDuration`** caps wall-clock per invocation. Defaults/ceilings are plan-bound (Hobby 60s, Pro
-  300s, Enterprise 900s). Setting `30` on Hobby is fine; setting `300` on Hobby silently can't apply.
+- **`maxDuration`** caps wall-clock per invocation. Under Fluid the default is 300s on every plan;
+  the ceiling is plan-bound (Hobby 300s, Pro and Enterprise 800s, 1800s in the extended-duration
+  beta). Setting `30` on Hobby is fine; setting `800` on Hobby silently can't apply.
 - **No `memory` key here when Fluid is on** (default for new projects since 2025-04-23). Under Fluid,
   default function memory/CPU is a *dashboard* setting, not a `vercel.json` key — putting `memory`
   in-file is ignored or rejected. See `references/vercel-json.md`.

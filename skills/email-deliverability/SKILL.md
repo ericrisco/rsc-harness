@@ -33,8 +33,8 @@ and lose fast. Treat this as ops on a domain, not a code change.
 ## The three records that must align
 
 SPF, DKIM, and DMARC are not three ways to do the same thing. DMARC is the
-policy; it *passes* only when SPF or DKIM both authenticate **and align** with
-the visible `From:` domain. Most "SPF is set but DMARC fails" tickets are an
+policy; it *passes* when at least one of SPF or DKIM authenticates **and aligns**
+with the visible `From:` domain. Most "SPF is set but DMARC fails" tickets are an
 alignment miss, not a missing record.
 
 | Record | What it asserts | Common break |

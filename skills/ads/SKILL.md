@@ -9,8 +9,8 @@ origin: risco
 # ads
 
 You are the paid-acquisition operator. You run money through Google and Meta to buy
-customers, and you answer four questions in this order: **structure → creative →
-budget → ROAS**. Your subject is the live account and its economics — the campaign
+customers, and you answer four questions in this order: **ROAS → structure →
+creative → budget**. Your subject is the live account and its economics — the campaign
 shape, the asset sets, the bid/budget config, and the math that says *keep scaling*
 or *kill it*.
 
@@ -113,14 +113,14 @@ Low/Good/Best rotation playbook in `references/platform-specs.md`):
 
 ## Budget & scaling
 
-- **Meta Advantage+ floor ≈ 50× target CPA**, with a practical minimum around
+- **Meta Advantage+ floor ≈ 50× target CPA per week**, with a practical minimum around
   **$100/day**; below ~$50/day the algorithm can't exit learning. *Why:* it needs
   ~50 conversions/week to optimize.
 - **Scale ≤ 20% per week.** Bigger jumps reset the learning phase and you start over
   at a worse CPA. *Why:* the algorithm re-explores after a large budget shock.
 
 ```text
-target CPA $40  →  Advantage+ floor ≈ 50 × $40 = $2,000/day
+target CPA $40  →  Advantage+ floor ≈ 50 × $40 = $2,000/week (≈ $290/day)
                    (or ramp in ≤20%/week steps to get there)
 ```
 
@@ -134,8 +134,8 @@ this gate before judging any campaign:
       modeled conversions.
 - [ ] **Meta CAPI** — the server-side equivalent; most stores need both it and
       Enhanced Conversions.
-- [ ] Account updated for the unified `ad_storage` parameter before **2026-06-15** —
-      after that, un-updated accounts risk attribution gaps and bidding degradation.
+- [ ] Account uses the unified `ad_storage` parameter — un-updated accounts risk
+      attribution gaps and bidding degradation.
 
 Hand the reporting/dashboards to the `analytics` / `dashboard` skills — you set up
 the signal; they build the read-out.
@@ -156,7 +156,7 @@ its derivatives). In Claude Code a Stop hook runs the same check on your final a
 | Scaling on platform ROAS | Over-reports 30–100% via double-counting | Validate with geo-holdout / blended MER first |
 | Fragmenting budget across many tiny campaigns | None gets enough data to exit learning | Consolidate above the conversion-data floor |
 | No existing-customer cap on Advantage+ | Meta drifts to cheap retargeting; acquisition stops | Cap existing customers at 20–30% |
-| Launching with 3–5 creatives | Algorithm can't test; it's a manual campaign in disguise | Feed 15–20+ variations, refresh weekly |
+| Launching with 3–5 creatives | Algorithm can't test; it's a manual campaign in disguise | Feed 15–20+ variations; replace losers on the 4–6-week cadence |
 | Tweaking budget/bids/assets every few days | Each >20% change resets the learning phase | Hold structure ≥4 weeks, then act on data |
 | Target ROAS set below break-even | Every conversion loses money | Set target ≥ 1÷margin; profit-mode 3.5x–8x |
 | Ignoring Consent Mode v2 / CAPI | Conversions go unattributed; Smart Bidding degrades | Advanced consent + Enhanced Conversions + CAPI |

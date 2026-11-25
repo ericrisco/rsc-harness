@@ -114,7 +114,7 @@ Per-stack init (Node SDK 2.0 manual setup, Go SDK, context propagation across HT
 ```javascript
 // LLM call as a span: model + token attrs. These attributes feed ../cost-tracking/SKILL.md.
 await tracer.startActiveSpan('chat gpt-4o', async (span) => {
-  span.setAttribute('gen_ai.system', 'openai');
+  span.setAttribute('gen_ai.provider.name', 'openai');
   span.setAttribute('gen_ai.request.model', 'gpt-4o');
   const res = await openai.chat.completions.create({ /* ... */ });
   span.setAttribute('gen_ai.usage.input_tokens', res.usage.prompt_tokens);
