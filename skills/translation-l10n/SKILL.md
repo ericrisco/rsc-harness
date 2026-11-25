@@ -163,7 +163,8 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-export default function RootLayout({ children, params: { locale } }) {
+export default async function RootLayout({ children, params }) {
+  const { locale } = await params; // params is a Promise
   const dir = locale === "ar" || locale === "he" ? "rtl" : "ltr";
   return <html lang={locale} dir={dir}>{children}</html>;
 }
