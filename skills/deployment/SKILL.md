@@ -154,7 +154,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: app_dev
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql        # postgres 18+ volume root; PGDATA is /var/lib/postgresql/18/docker
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d app_dev"]
       interval: 5s

@@ -247,7 +247,7 @@ services:
       POSTGRES_DB: app
     command: ["postgres", "-c", "shared_buffers=256MB", "-c", "max_connections=100"]
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql        # postgres 18+ volume root; PGDATA is /var/lib/postgresql/18/docker
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
