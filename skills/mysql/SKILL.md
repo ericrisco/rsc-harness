@@ -207,7 +207,7 @@ They share a heritage and diverge in ways that break copy-pasted SQL. Do not ass
 |---|---|---|
 | Default auth | `caching_sha2_password` | `mysql_native_password` / `ed25519` |
 | `VECTOR` | MySQL 9.0+ only; `STRING_TO_VECTOR()` | Native in 11.8; `VEC_DISTANCE_COSINE()` — different syntax |
-| `RETURNING` | `INSERT ... RETURNING` only (8.0+) | `INSERT`/`UPDATE`/`DELETE ... RETURNING` |
+| `RETURNING` | Not supported (use `LAST_INSERT_ID()` / `ROW_COUNT()`) | `INSERT`/`UPDATE`/`DELETE ... RETURNING` |
 | Sequences | No `CREATE SEQUENCE` | `CREATE SEQUENCE` supported |
 | System-versioned (temporal) tables | Not supported | `WITH SYSTEM VERSIONING` supported |
 | Snapshot isolation | RR snapshot, no write-conflict detection | `innodb_snapshot_isolation` defaults **ON** |

@@ -56,7 +56,7 @@ on MariaDB.
 
 | Feature | MySQL | MariaDB |
 |---|---|---|
-| `RETURNING` | `INSERT ... RETURNING` only (8.0+) | `INSERT` / `UPDATE` / `DELETE ... RETURNING` |
+| `RETURNING` | Not supported (use `LAST_INSERT_ID()` / `ROW_COUNT()`) | `INSERT` / `UPDATE` / `DELETE ... RETURNING` |
 | Sequences | No `CREATE SEQUENCE` (use `AUTO_INCREMENT`) | `CREATE SEQUENCE` supported |
 | System-versioned (temporal) tables | Not supported | `WITH SYSTEM VERSIONING` + `FOR SYSTEM_TIME` queries |
 | `JSON` type | Native binary `JSON` | Historically a `LONGTEXT` alias with JSON functions; check the version — behaviour and storage differ |
