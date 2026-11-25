@@ -201,7 +201,7 @@ AICon->MoveToActor(TargetActor, /*AcceptanceRadius*/ 50.f);   // or MoveToLocati
 | Setting `agent.destination` and reading the path the same frame | Path is async (`pathPending`); gate on it before trusting `remainingDistance`. |
 | Inflating `h` because a bigger heuristic seems smarter | Over-estimating `h` breaks A* optimality; keep it admissible (or weight it *knowingly*). |
 | Trusting a path query that came back empty | Start/end are **off the navmesh** or in disconnected islands — snap to the nearest poly and check reachability first. |
-| Assuming an off-mesh link works both ways | Links are **directional and manual** — a jump-down link does not imply a jump-up link. |
+| Leaving a jump-down link at its default | Links are **bidirectional by default** (Godot `NavigationLink3D.bidirectional = true`) — untick it for one-way drops, or agents path *up* a ledge they cannot climb. |
 | Feeding raw grid paths to the mover | Smooth them (funnel / string-pull) or agents walk visible zig-zag staircases. |
 
 ## Related skills
