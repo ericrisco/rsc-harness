@@ -156,7 +156,7 @@ its derivatives). In Claude Code a Stop hook runs the same check on your final a
 | Scaling on platform ROAS | Over-reports 30–100% via double-counting | Validate with geo-holdout / blended MER first |
 | Fragmenting budget across many tiny campaigns | None gets enough data to exit learning | Consolidate above the conversion-data floor |
 | No existing-customer cap on Advantage+ | Meta drifts to cheap retargeting; acquisition stops | Cap existing customers at 20–30% |
-| Launching with 3–5 creatives | Algorithm can't test; it's a manual campaign in disguise | Feed 15–20+ variations, refresh weekly |
+| Launching with 3–5 creatives | Algorithm can't test; it's a manual campaign in disguise | Feed 15–20+ variations; replace losers on the 4–6-week cadence |
 | Tweaking budget/bids/assets every few days | Each >20% change resets the learning phase | Hold structure ≥4 weeks, then act on data |
 | Target ROAS set below break-even | Every conversion loses money | Set target ≥ 1÷margin; profit-mode 3.5x–8x |
 | Ignoring Consent Mode v2 / CAPI | Conversions go unattributed; Smart Bidding degrades | Advanced consent + Enhanced Conversions + CAPI |
