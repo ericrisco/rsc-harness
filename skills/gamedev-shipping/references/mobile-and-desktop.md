@@ -70,8 +70,12 @@ Gatekeeper will refuse an unsigned/un-notarized app for end users. The full chai
 notarize → staple, inside-out.
 
 ```bash
-# 1. Sign every nested binary FIRST, then the outer .app (Hardened Runtime is mandatory)
-codesign --deep --force --timestamp --options runtime \
+# 1. Sign every nested binary FIRST, then the outer .app (Hardened Runtime is mandatory).
+#    Inside-out, without --deep: --deep applies one set of options to every nested item.
+find Game.app/Contents -type f \( -name '*.dylib' -o -perm -111 \) ! -path '*/MacOS/Game' -exec \
+  codesign --force --timestamp --options runtime \
+  --sign "Developer ID Application: Studio Name (TEAMID)" {} \;
+codesign --force --timestamp --options runtime \
   --sign "Developer ID Application: Studio Name (TEAMID)" Game.app
 
 # 2. Store notarization creds once (App Store Connect API key or Apple ID app-password)
@@ -102,7 +106,7 @@ spctl --assess --type execute -vvv Game.app   # should say: accepted, source=Not
 ## Windows
 
 - Signing is **optional** but recommended: an Authenticode code-signing certificate reduces the
-  SmartScreen "unknown publisher" warning. An **EV** certificate builds reputation faster.
+  SmartScreen "unknown publisher" warning. OV and EV certificates both build SmartScreen reputation over downloads.
 
 ```powershell
 signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a Game.exe

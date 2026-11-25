@@ -19,13 +19,13 @@ project ──[engine export/build]──▶ artifact ──[per-platform sign/c
 Godot templates·Unity Build Profiles·Unreal Shipping    desktop·web·mobile    Steam·Play·App Store·itch
 ```
 
-## Version anchors (what "current" means here — July 2026)
+## Version anchors (check the current stable release of each before pinning)
 
 | Tool | Target | Ship note |
 | --- | --- | --- |
-| Godot | 4.5 stable (4.6 dev) | Export templates must match the editor build **exactly** (4.5.1 editor ⇒ 4.5.1 templates). **C#/.NET edition has NO web export** — GDScript/standard only. |
+| Godot | 4.x, current stable | Export templates must match the editor build **exactly** (4.5.1 editor ⇒ 4.5.1 templates). **C#/.NET edition has NO web export** — GDScript/standard only. |
 | Unity | Unity 6 (6000.x) | "Build Settings" is now **Build Profiles**. IL2CPP backend for iOS/Android/WebGL. |
-| Unreal | 5.6 | Ship in the **Shipping** config; test packaged builds in **Development**. |
+| Unreal | 5.x, current stable | Ship in the **Shipping** config; test packaged builds in **Development**. |
 | Android | JDK **17**, target a recent API level | AAB required for Google Play (new apps + updates). APK only for sideload/itch/direct. |
 | iOS/macOS | Xcode 16+, `notarytool` | `altool` notarization is dead — use `xcrun notarytool`. |
 
@@ -98,14 +98,17 @@ and [references/stores-and-ci.md](references/stores-and-ci.md).
 
 | OS | Sign? | Gotcha |
 | --- | --- | --- |
-| Windows | Optional (Authenticode; EV avoids SmartScreen warm-up) | Unsigned still runs but SmartScreen warns; ship `.exe` + engine data next to it, or an installer. |
+| Windows | Optional (Authenticode; OV and EV both build SmartScreen reputation over downloads) | Unsigned still runs but SmartScreen warns; ship `.exe` + engine data next to it, or an installer. |
 | Linux | No | Ship binary + data, or wrap as **AppImage**/**Flatpak** for a portable single file. |
 | macOS | **Required** | Must codesign (Developer ID Application) **+ notarize + staple**, or Gatekeeper refuses to open it. |
 
 macOS notarization (the step everyone forgets):
 
 ```bash
-codesign --deep --force --timestamp --options runtime \
+# sign nested code inside-out (dylibs, frameworks, helpers), then the .app; never --deep
+find Game.app/Contents -type f \( -name '*.dylib' -o -perm -111 \) ! -path '*/MacOS/Game' -exec \
+  codesign --force --timestamp --options runtime --sign "Developer ID Application: Studio (TEAMID)" {} \;
+codesign --force --timestamp --options runtime \
   --sign "Developer ID Application: Studio (TEAMID)" Game.app
 ditto -c -k --keepParent Game.app Game.zip
 xcrun notarytool submit Game.zip --keychain-profile "AC" --wait   # store creds once via store-credentials
