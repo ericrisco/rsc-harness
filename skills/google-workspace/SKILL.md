@@ -84,8 +84,8 @@ https://www.googleapis.com/auth/drive.file
 
 ## Build the authed client
 
-Node uses `googleapis` (latest 173.x, maintenance mode — bugs/security only) with
-`google-auth-library` (10.6.2). Python uses `google-auth` +
+Node uses `googleapis` (latest 190.x, maintenance mode — bugs/security only) with
+`google-auth-library` (11.x). Python uses `google-auth` +
 `google-api-python-client`. The impersonation line is the `subject` / `with_subject`.
 
 ```javascript
@@ -172,17 +172,21 @@ sheets.spreadsheets().values().update(
 
 The per-user ceiling is the one that bites a cron looping over a mailbox.
 
-- **Gmail:** 1.2M units/min per project, **6,000 units/min per user**, 80M
-  units/day. Costs: `messages.send` 100, `messages.get` 20, `messages.list` 5,
+- **Gmail:** 1.2M units/min per project, **6,000 units/min per user**.
+  Costs: `messages.send` 100, `messages.get` 20 (60 with `format=full|raw`), `messages.list` 5,
   `messages.modify` 5, `drafts.create` 10. Hard cap **500 recipients/message**.
-- **Drive:** 1M units/min per project, **325,000 units/min per user**, 1 TB/day
-  egress.
+- **Drive:** 1M units/min per project, **325,000 units/min per user**, 1 TiB/day
+  egress per project (not yet enforced), 750 GB/day upload per user.
 - **Sheets:** read and write each 300/min per project, **60/min per user**; 429
   on overage; 180s request timeout; keep payloads under ~2 MB.
-- **Policy shift:** as of 2026-05-01 Google updated Workspace quota policy —
-  projects active Nov 2025–Apr 2026 keep legacy quotas, new projects get the new
-  model, and overage will start incurring Cloud billing charges later in 2026.
-  Treat quota as a cost line, not a free ceiling.
+- **Tiering (Gmail, Calendar, Drive):** baseline quotas apply to new projects
+  since 2026-05-01. Since 2026-11-24 there is a free **Standard Tier** and a
+  billed **Scaled Tier**; higher REST quotas need Scaled Tier (linked billing) or
+  the internal-use exception. From **2027-02-01** AI agents must use the Workspace
+  MCP servers — agents calling REST directly are held to Standard Tier quotas.
+  From **2027-04-01** Standard limits are enforced on every project and Scaled
+  Tier usage past the daily no-charge allowance is billed. Treat quota as a cost
+  line, not a free ceiling.
 
 Three habits keep you under it:
 
@@ -227,7 +231,7 @@ def with_backoff(call, max_retries=6, max_backoff=64):
 | `unauthorized_client` | SA client ID / scope not authorized for DWD | Add the client ID + **exact** scopes in Admin console Manage DWD |
 | `403 insufficient permissions` | Scope too narrow, or API not enabled | Widen to the right scope (still least), enable the API |
 | `403 rateLimitExceeded` / `429` | Per-user or per-project quota hit | Exponential backoff + jitter; batch; spread load |
-| `400 failedPrecondition` on impersonation | `subject` set but DWD not configured | Either remove `subject` (app-owned) or finish DWD setup |
+| `400 failedPrecondition` ("Precondition check failed") on Gmail | No `subject`: the bare SA has no mailbox | Set `subject` to a real Workspace user and finish DWD |
 | `invalid_grant` | Clock skew or stale/rotated key | Sync clock; re-issue the key |
 
 ## Anti-patterns
