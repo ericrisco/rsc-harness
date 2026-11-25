@@ -72,7 +72,7 @@ Good: Given a 200-line module, the learner critiques its layering against 4 name
 
 ## Course-level vs module-level outcomes
 
-- **Course-level outcomes** (3–8) are the contract: what the learner can DO when the whole course
+- **Course-level outcomes** (1–8, sized to the format: 1–2 for a workshop, 5–8 for a full course) are the contract: what the learner can DO when the whole course
   ends. They tend to sit at Apply→Create and are proven by the *summative* assessment.
 - **Module-level outcomes** are the steps that build toward a course outcome. They can sit lower
   (Remember/Understand/Apply) and are proven by *formative* checks. Each module-level outcome should

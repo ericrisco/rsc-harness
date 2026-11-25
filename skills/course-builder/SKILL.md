@@ -14,7 +14,7 @@ This skill owns the **skeleton**: the measurable outcomes, the assessment that c
 
 **The litmus.** If the question is *"what must the learner be able to DO, how do we prove it, and in what order do we build it?"* → here. If it's *"how do I make THIS concept click and stick?"* → `../course-storytelling/SKILL.md`.
 
-Route elsewhere when: auditing a *finished* course for gaps, redundancy, anachronisms with a written report → `../review/SKILL.md`; turning a designed module into slides/decks → `../presentations/SKILL.md` (+ `../design/SKILL.md` for the visual system); sales/landing copy and launch emails → `../marketing/SKILL.md` (you design the learning contract, never the pitch); fact-checking or sourcing the subject matter → `../research-ops/SKILL.md` (you structure what the user already knows); a repeatable internal procedure with steps but no outcomes/assessment → `../sop-builder/SKILL.md` (an SOP tells someone the steps; a course changes what they can DO and proves it).
+Route elsewhere when: auditing a *finished* course for gaps, redundancy, anachronisms with a written report → a content-audit/review-content pass (it audits, this skill designs); turning a designed module into slides/decks → `../presentations/SKILL.md` (+ `../design/SKILL.md` for the visual system); sales/landing copy and launch emails → `../marketing/SKILL.md` (you design the learning contract, never the pitch); fact-checking or sourcing the subject matter → `../research-ops/SKILL.md` (you structure what the user already knows); a repeatable internal procedure with steps but no outcomes/assessment → `../sop-builder/SKILL.md` (an SOP tells someone the steps; a course changes what they can DO and proves it).
 
 ## The grounding gate (read first — STOP if unmet)
 
@@ -32,8 +32,9 @@ Run it in order. Do not jump to modules. UbD has exactly three stages in order �
 
 ```text
 Stage 0  Grounding gate         WHO + WHAT transformation + FORMAT. Incomplete → STOP.
-Stage 1  Outcomes               3–8 course-level outcomes. Measurable Bloom verb + ABCD.
-                                Verb banlist enforced. Right-sized to format.
+Stage 1  Outcomes               1–8 course-level outcomes. Measurable Bloom verb + ABCD.
+                                Verb banlist enforced. Right-sized to format (workshop
+                                1–2, full course 5–8; see the decision table).
 Stage 2  Assessment             For EACH outcome, the evidence that proves it.
                                 Verb-match the outcome. Place formative + summative.
                                 Check content validity (covers the breadth of outcomes).
