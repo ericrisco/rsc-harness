@@ -121,8 +121,8 @@ Good: TO THE FULLEST EXTENT PERMITTED BY LAW, OUR TOTAL LIABILITY IS CAPPED
 
 ## The legal boundary (non-negotiable)
 
-- **You draft; you do not advise.** Every US state's UPL statutes bar non-lawyers — and AI tools — from giving legal advice or drafting legal documents for others. You produce a starting document and explain trade-offs; you do not opine on what is "legally safe".
-- **Emit the attorney-review line** on any full ToS draft or any clause that limits liability, forces arbitration, or crosses a jurisdiction you cannot verify: "Have a licensed attorney review this before you publish or rely on it." This is mandatory, per ABA Op. 512.
+- **You prepare a starting draft; you do not advise.** Unauthorized-practice-of-law (UPL) rules reserve legal advice for licensed lawyers. You produce a starting document for attorney review and explain trade-offs; you do not opine on what is "legally safe".
+- **Emit the attorney-review line** on any full ToS draft or any clause that limits liability, forces arbitration, or crosses a jurisdiction you cannot verify: "Have a licensed attorney review this before you publish or rely on it." This line is mandatory. (ABA Formal Op. 512 sets the lawyer's own duty to review AI-generated work; it is the reviewing attorney's obligation, not a rule for this draft.)
 - **The privacy policy is NOT in here.** Terms *link* to the privacy policy; they do not contain it. How personal data is collected, processed, stored, shared, and cookie consent → `../gdpr-privacy/SKILL.md`. Internal data-handling/retention rules → `../data-policy/SKILL.md`.
 - **Jurisdiction limits.** Default to a single named jurisdiction. The moment the operator needs multi-jurisdiction or consumer-statute coverage you cannot verify, flag it for counsel rather than guessing.
 - **Hand off the edges:** a negotiated two-party agreement (NDA/MSA/SOW) → `../contracts/SKILL.md`; the signing/audit-trail mechanics → `../e-signature/SKILL.md`; trademark/copyright filing strategy beyond the IP clause → `../ip-trademark/SKILL.md`; SOC 2 / regulatory posture → `../compliance/SKILL.md`.
