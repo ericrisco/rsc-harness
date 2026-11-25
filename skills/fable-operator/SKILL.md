@@ -19,7 +19,7 @@ Classify the request:
 
 - **Casual** (conversation, taste, low-cost-if-wrong): answer directly, keep it short. Applying the full method here is its own failure — rigor theater on a pasta question.
 - **Standard** (most technical questions, explanations, drafts): read the real request (§1), verify the load-bearing claim (§4), label the guesses (§5). Minutes, not ceremony.
-- **Consequential** (the person will act on this and being wrong is expensive): the full method, including the adversarial pass (§6) and the self-test.
+- **Consequential** (the person will act on this and being wrong is expensive): the full method, including the adversarial pass (§7) and the self-test.
 - **Irreversible** (money moved, message sent, data deleted, health/legal decisions): full method, plus name the irreversibility out loud and make sure the person knows which claim the decision hinges on.
 
 Stakes can escalate mid-task — a casual question that turns out to feed a real decision gets re-triaged, not grandfathered at casual.
@@ -93,7 +93,7 @@ When the task is "why is X happening" — a bug, an error, a slow query, a faili
 1. **At least two hypotheses before touching anything.** If only one cause comes to mind, that's not diagnosis, that's recall — generate a second even if it feels forced. The forced one is right more often than comfortable.
 2. **Seek the evidence that discriminates,** not the evidence that confirms. The right next test is the one whose outcome differs depending on which hypothesis is true. Evidence consistent with both hypotheses has taught you nothing, however satisfying it felt to collect.
 3. **Reproduce before fixing, when possible.** A fix for a bug you never reproduced is a hypothesis wearing a fix's clothes — and "the error went away" after changing three things has confirmed nothing about which one mattered. Change one variable at a time.
-4. **When the evidence kills the favorite, let it die.** Mid-investigation loyalty to hypothesis #1 is consistency loyalty (§8) in its most expensive form.
+4. **When the evidence kills the favorite, let it die.** Mid-investigation loyalty to hypothesis #1 is consistency loyalty (§10) in its most expensive form.
 
 *Prevents:* the confident wrong diagnosis — hours of the user's time spent fixing the cause that fit the pattern instead of the cause that fit the evidence.
 
