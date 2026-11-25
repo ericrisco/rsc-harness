@@ -4,11 +4,11 @@ Offloaded depth for `linkedin-api`. All paths assume the two versioned headers f
 
 ```text
 Authorization: Bearer $LINKEDIN_TOKEN
-Linkedin-Version: 202605
+Linkedin-Version: 202611
 X-Restli-Protocol-Version: 2.0.0
 ```
 
-`202605` (`li-lms-2026-05`) is a supported version, sunset 2027-05-15; newer monthly versions exist — check the [API migration status](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/migrations#api-migration-status) table before pinning. `202505` is sunset — do not pin it.
+`202611` (`li-lms-2026-11`) is the latest version, sunset 2027-11-16. LinkedIn ships a version each month and supports it for at least one year — check the [API migration status](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/migrations#api-migration-status) table before pinning or bumping. `202511` is sunset — do not pin it.
 
 ## Publish payloads — `POST /rest/posts`
 
@@ -83,7 +83,7 @@ Images / Documents / Videos use the same two-step shape: register an upload to g
 # Images example
 curl -X POST "https://api.linkedin.com/rest/images?action=initializeUpload" \
   -H "Authorization: Bearer $LINKEDIN_TOKEN" \
-  -H "Linkedin-Version: 202605" \
+  -H "Linkedin-Version: 202611" \
   -H "X-Restli-Protocol-Version: 2.0.0" \
   -H "Content-Type: application/json" \
   -d '{ "initializeUploadRequest": { "owner": "urn:li:organization:12345" } }'

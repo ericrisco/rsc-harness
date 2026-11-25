@@ -32,7 +32,7 @@ capability:
   - scenario: "Take an app from zero to a logged result: complete 3-legged OAuth, resolve the org author URN, publish a document post (Documents API upload -> document URN -> Posts API), pull organizationalEntityShareStatistics, and write 02-DOCS/wiki/linkedin/<post-id>.md with the metric front-matter."
     must_include:
       - "sends both required headers: Linkedin-Version and X-Restli-Protocol-Version: 2.0.0"
-      - "pins version 202605 (not the sunset 202505)"
+      - "pins version 202611 (not the sunset 202511)"
       - "sets lifecycleState: PUBLISHED in the post body"
       - "reads the new post URN from the x-restli-id response header"
       - "uploads the document via the Documents API to get urn:li:document: then references it in content.media.id"
