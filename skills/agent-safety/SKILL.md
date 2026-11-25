@@ -131,7 +131,7 @@ short-lived token so the approved action cannot be swapped after the click.
 | Send email/payment to external party, post live | no          | external     | **approve (HITL)** |
 | Delete backups, rotate prod creds, mass-delete  | no          | catastrophic | **block** (or step-up auth) |
 
-- **Step up for the top row** — high-value irreversible actions deserve fresh auth, not the
+- **Step up for the bottom rows** — high-value irreversible actions deserve fresh auth, not the
   ambient session. Why: a hijacked session should not also hold the keys to the worst action.
 
 ## Memory hygiene
