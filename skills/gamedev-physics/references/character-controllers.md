@@ -67,7 +67,7 @@ public class Player : MonoBehaviour {
 
     void Awake() => cc = GetComponent<CharacterController>();
 
-    void Update() {            // CharacterController is kinematic: Update is fine
+    void Update() {            // kinematic CharacterController: the documented exception to the fixed-tick rule
         if (cc.isGrounded && vel.y < 0f) vel.y = -2f;               // keep grounded
         Vector3 wish = transform.right * Input.GetAxis("Horizontal")
                      + transform.forward * Input.GetAxis("Vertical");
