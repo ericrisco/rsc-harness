@@ -450,9 +450,13 @@ export function branchCheck(
     );
     if (best >= required) return null;
     // A child repo keeps its evidence in the workspace; the panel must name the child's commit.
-    const at = relative(evidence, repo);
+    // Forward slashes, and single quotes around anything unusual: the line is meant to be pasted
+    // into a shell, and a directory named after a branch may hold `$()`, `;` or a backtick.
+    const at = relative(evidence, repo).split('\\').join('/');
     const repoFlag =
-      evidence === repo ? '' : ` --repo ${/[\s"'$`]/.test(at) ? JSON.stringify(at) : at}`;
+      evidence === repo
+        ? ''
+        : ` --repo ${/^[\w./-]+$/.test(at) ? at : `'${at.replace(/'/g, "'\\''")}'`}`;
     return (
       `Branch "${branch}" is risk tier 2 and its spec passes, but no review panel of ${required} lens(es) is recorded for it` +
       `${best ? ` (largest still valid: ${best})` : ''}. Tier 2 is reviewed by the full panel, not by one reviewer, and a panel covers ` +

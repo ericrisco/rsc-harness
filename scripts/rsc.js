@@ -1412,6 +1412,7 @@ async function main() {
         if (sub === 'panel') {
           if (!a || a.startsWith('--')) return fail(USE);
           const { resolve } = await import('node:path');
+          if (flag('repo') === true) return fail('rsc: --repo needs the path of the reviewed checkout, e.g. --repo .worktrees/<branch>');
           const r = L.panel(root, a, str('lenses'), str('repo') ? { repo: resolve(process.cwd(), str('repo')) } : {});
           if (!r.ok) return fail(r.message);
           say(r.message);

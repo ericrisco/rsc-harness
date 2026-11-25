@@ -9,7 +9,7 @@
 // One JSONL file, append-only: `finding`, `outcome` and `round` entries. It sits under .rsc/ and is
 // excluded from the sello's candidate like every other journal the harness writes (targets/sello.mjs).
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { criterionRefs } from './review-findings.js';
@@ -210,7 +210,14 @@ export function panel(root, task, lenses, { now = new Date().toISOString(), repo
   // Bound to the commit reviewed: code committed after it is code no panel has seen.
   const r = spawnSync('git', ['-C', repo, 'rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true });
   const sha = r.status === 0 ? r.stdout.trim() : null;
-  if (repo !== root && !sha) return { ok: false, message: `rsc: --repo ${repo} is not a git checkout with a commit; name the repository the panel reviewed.` };
+  if (repo !== root) {
+    // A folder inside some repo resolves HEAD by walking up; only the checkout's own top level counts.
+    const top = spawnSync('git', ['-C', repo, 'rev-parse', '--show-toplevel'], { encoding: 'utf8', windowsHide: true });
+    const real = (p) => { try { return realpathSync(p); } catch { return null; } };
+    if (!sha || top.status !== 0 || real(top.stdout.trim()) !== real(repo)) {
+      return { ok: false, message: `rsc: --repo ${repo} is not the top of a git checkout with a commit; name the repository the panel reviewed.` };
+    }
+  }
   const assigned = panelAssignments(ledger);
   const finding_ids = ledger.filter((e) => e.type === 'finding' && e.task === task && e.round_pending
     && !assigned.has(JSON.stringify([task, e.id]))).map((e) => e.id);
