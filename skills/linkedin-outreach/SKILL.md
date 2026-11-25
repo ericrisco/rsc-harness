@@ -67,7 +67,7 @@ When you do send a note, you do **not** write it here — hand the brief (the ho
 
 | Account | Realistic weekly cap | Daily target | Health rule |
 | --- | --- | --- | --- |
-| Free | ~100/wk | ~20/weekday, stay under ~80/wk | Pause and warm more if acceptance drops below ~30%. |
+| Free | ~100/wk | ~16/weekday, stay under ~80/wk | Pause and warm more if acceptance drops below ~30%. |
 | Premium / Sales Nav | up to ~200/wk | up to ~40/day | Only with strong SSI and acceptance >40%; otherwise treat as free. |
 
 Over the cap, requests get throttled or the account flagged. Below ~30% acceptance you are spraying — go back to phase 2 instead of pushing volume, and withdraw stale pending requests before they pile up.
@@ -123,9 +123,9 @@ Full column spec, the outcome enum, a filled 5-row example, and the weekly-revie
 
 **Weekly review ritual** (15 min, same day each week). Compute from the ledger:
 
-- **Acceptance %** = accepted ÷ requested.
-- **Post-accept reply %** = replied ÷ accepted.
-- **Conversations → calls %** = call_booked ÷ conversation.
+- **Acceptance %** = accepted-or-better ÷ all requests sent.
+- **Post-accept reply %** = replied-or-better ÷ accepted-or-better.
+- **Conversations → calls %** = call_booked ÷ (conversation + call_booked).
 - **Touches/week** = rows added this week (is the loop actually running?).
 
 If acceptance < ~30%, warm harder (phase 2). If reply < ~10%, your hooks are weak (better brief to cold-outreach). If touches/week is near zero, the loop stopped — that's the real failure.
