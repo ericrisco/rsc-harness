@@ -97,7 +97,7 @@ A line that is silently dropped is a hole in the books. `verify.sh` fails if any
 - **Confirm the current-year numbers — never carry last year's.** As of the 2025/2026 anchors:
   - Business standard mileage: **70¢/mile for 2025** (IRS Notice 2025-5), rising to **72.5¢/mile for 2026**. Re-confirm the year before applying.
   - Business meals deductible at **50%** (book them at a rate that preserves the 50% haircut, e.g. category L24b).
-  - **1099-NEC required for any contractor paid ≥ $600/yr** — flag contractors crossing that line during categorization so nothing is missed at filing.
+  - **1099-NEC threshold: ≥ $600 for payments made in 2025, ≥ $2,000 for payments made in 2026** (IRS Instructions for Forms 1099-MISC and 1099-NEC; inflation-indexed from 2027). Re-confirm the year, and flag contractors crossing that line during categorization so nothing is missed at filing.
 
 ## Month-close
 
