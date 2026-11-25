@@ -1,6 +1,6 @@
 # Type-system deep dives
 
-Recipes the SKILL body points to. All target TypeScript 5.9. Read the relevant section, not
+Recipes the SKILL body points to. All target TypeScript 7. Read the relevant section, not
 the whole file.
 
 ## Conditional types + `infer`
@@ -47,6 +47,15 @@ type CSSVar = `--${string}`;
 // Inference inside templates:
 type ParseId<T> = T extends `user_${infer N}` ? N : never; // ParseId<"user_42"> = "42"
 ```
+
+`infer` over a template literal consumes whole code points:
+
+```ts
+type HeadTail<S> = S extends `${infer H}${infer R}` ? [H, R] : never;
+type T = HeadTail<"😀abc">; // ["😀", "abc"], not half a surrogate pair
+```
+
+Character-counting utility types therefore count code points, not UTF-16 units (`"😀".length` is still `2` at runtime).
 
 ## Recursive types (with care)
 
@@ -116,7 +125,9 @@ declare global {
 export {}; // make this file a module so `declare global` is allowed
 ```
 
-`type` aliases do **not** merge — only `interface` and `namespace` do.
+`type` aliases do **not** merge — only `interface` and `namespace` do. Write internal
+namespaces with the `namespace` keyword; `module Foo {}` is an error (TS1540), while
+`declare module "pkg"` for module augmentation is unchanged.
 
 ## Function overloads
 
@@ -150,8 +161,8 @@ assertDefined(v);
 v.toUpperCase(); // v is string here
 ```
 
-TS 5.5+ infers type predicates for simple filter callbacks, so
-`arr.filter((x) => x != null)` now narrows to `T[]` without a hand-written predicate in many
+TypeScript infers type predicates for simple filter callbacks, so
+`arr.filter((x) => x != null)` narrows to `T[]` without a hand-written predicate in many
 cases — but an explicit predicate is still clearer for non-trivial checks.
 
 ## `const` type parameters & `NoInfer`
