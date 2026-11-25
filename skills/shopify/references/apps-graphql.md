@@ -87,7 +87,7 @@ webhooks can be missed.
 ## App Bridge & Polaris
 
 Embedded UI runs inside the Shopify admin iframe. App Bridge handles session-token auth, navigation,
-and toasts; Polaris React gives admin-consistent components. Keep app UI in Polaris so it matches the
+and toasts; Polaris web components give admin-consistent UI. Keep app UI in Polaris so it matches the
 admin chrome — do not hand-roll admin-looking CSS.
 
 ## App extensions & deploy
