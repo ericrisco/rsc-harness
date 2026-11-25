@@ -22,9 +22,9 @@ JavaScript, you have stopped doing htmx and started building an SPA — use a di
    `change` for inputs)
 
 **Versions (verify before pinning).** htmx 2.0.x is current stable (2.0.10 latest 2.x line);
-v1 (1.9.x) is legacy, kept only for IE/old-browser support. htmx v4 is in beta targeting
-Summer 2026 and changes some defaults (default swap behavior, config) — do **not** write to v4
-yet. Pin to 2.x:
+v1 (1.9.x) is legacy, kept only for IE/old-browser support. htmx 4.0 is released but npm keeps
+2.x as `latest` (4.x is tagged `next`); v4 changes some defaults (default swap behavior,
+config) — write to v4 only when the project already chose it. Pin to 2.x:
 
 ```html
 <script src="https://unpkg.com/htmx.org@2.0.10" crossorigin="anonymous"></script>
@@ -116,7 +116,7 @@ def contacts(request: Request, q: str = ""):
     rows = search_contacts(q)
     # htmx asked for just the table body; a browser nav gets the whole page.
     template = "contacts/_rows.html" if request.headers.get("HX-Request") else "contacts/index.html"
-    return templates.TemplateResponse(template, {"request": request, "rows": rows, "q": q})
+    return templates.TemplateResponse(request, template, {"rows": rows, "q": q})
 ```
 
 ```jinja

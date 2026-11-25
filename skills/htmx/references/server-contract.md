@@ -41,7 +41,7 @@ injection.
 def contacts(request: Request, q: str = ""):
     rows = search_contacts(q)
     name = "contacts/_rows.html" if request.headers.get("HX-Request") else "contacts/index.html"
-    return templates.TemplateResponse(name, {"request": request, "rows": rows, "q": q})
+    return templates.TemplateResponse(request, name, {"rows": rows, "q": q})
 ```
 
 Fire a client event from the server:
@@ -81,7 +81,7 @@ app.get("/contacts", (req, res) => {
 });
 ```
 
-CSRF (e.g. `csurf` or a double-submit cookie): expose the token to htmx via `hx-headers`, the
+CSRF (a double-submit cookie or a maintained CSRF middleware; `csurf` is deprecated): expose the token to htmx via `hx-headers`, the
 same pattern as Django — htmx never adds CSRF tokens itself.
 
 ## Fragment-vs-page rule (all stacks)
