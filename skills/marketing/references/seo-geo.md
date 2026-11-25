@@ -240,7 +240,7 @@ Metadata API or a `<Script>` tag). Validate every block before shipping.
 
 **Pick by page type:** `Organization` (homepage/about) · `WebPage` (any page) · `Article`
 (blog/news, with author + `datePublished`/`dateModified`) · `FAQPage` (any Q&A — highest GEO value)
-· `Product` (e-commerce) · `SoftwareApplication` (tools/apps) · `HowTo` (tutorials) ·
+· `Product` (e-commerce) · `SoftwareApplication` (tools/apps) · `HowTo` (tutorials; Google retired HowTo rich results in 2023) ·
 `BreadcrumbList` (navigation) · `LocalBusiness` (physical location). Combine several on one page with
 `@graph`.
 
@@ -306,7 +306,7 @@ Metadata API or a `<Script>` tag). Validate every block before shipping.
 
 For Product, SoftwareApplication, HowTo, BreadcrumbList, LocalBusiness, SpeakableSpecification, and
 a combined `@graph` example, the full template set lives in the upstream skill credited above; the
-five types here cover the overwhelming majority of marketing sites.
+three types here cover the overwhelming majority of marketing sites.
 
 **Validate before shipping (no fabricated ratings or reviews in schema — same proof rule):**
 
