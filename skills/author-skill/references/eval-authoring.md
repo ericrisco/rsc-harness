@@ -17,7 +17,7 @@ Everything lives in `evals/cases.yaml` (the cases) and `evals/README.md` (how to
 
 `scripts/eval-lint.sh` parses every `cases.yaml` and fails the build only on the **structural minimums**: that `evals/cases.yaml` exists, that `should_trigger`, `should_not_trigger`, and `capability` are present as lists, and that their item counts meet **≥ 5 / ≥ 4 / ≥ 1**. (Without python3+PyYAML it degrades to a presence-only key check.) Run it before shipping to catch a missing or undersized section.
 
-It also resolves every `route_to`: each value must be a real catalog skill id, `none`, or `external:<name>` for a skill that deliberately lives outside this catalog — a stale route now fails the build. What it still does **not** read: whether each `should_not_trigger` actually carries a `route_to`, whether your `should_trigger` set includes a genuinely non-obvious or non-English phrasing, and whether each `capability` scenario has a real `must_include` rubric of gradeable points. Those are **author and review responsibilities**: verify them by hand (and in the self-audit / code-review pass) before shipping. A green eval-lint means the shape is right, not that the cases are good.
+It also resolves every `route_to`: each value must be a real catalog skill id, `none`, or `external:<name>` for a skill that deliberately lives outside this catalog — a stale route fails the build. What it still does **not** read: whether each `should_not_trigger` actually carries a `route_to`, whether your `should_trigger` set includes a genuinely non-obvious or non-English phrasing, and whether each `capability` scenario has a real `must_include` rubric of gradeable points. Those are **author and review responsibilities**: verify them by hand (and in the self-audit / code-review pass) before shipping. A green eval-lint means the shape is right, not that the cases are good.
 
 ## cases.yaml structure
 
@@ -65,12 +65,11 @@ For a process skill (no `verify.sh`), the capability scenario is the *primary* r
 
 ## A `must_include` item must discriminate, or it subtracts
 
-Measured on 2026-08-18, running the behavioral eval on five skills for the first time. Two items
-added to `testing-py` and `testing-web` came back **unsatisfied in both arms** — treatment and
-baseline alike. They demanded the answer *name* a tool (`mutmut`, Stryker); both arms did the
-behaviour (planted a bug, checked the suite caught it) without naming one. Contributing nothing to
-lift and still counting against the coverage term, they dragged `testing-py` from **PASS (9.0,
-lift +2.2) to FAIL (7.5, lift +1.7)**. The rule they encoded was fine; the item was not.
+An item that comes back **unsatisfied in both arms** — treatment and baseline alike — adds nothing
+to lift and still counts against the coverage term, so it lowers the score and can flip a PASS to a
+FAIL. The typical case: an item that demands the answer *name* a tool (`mutmut`, Stryker) when
+both arms do the behaviour (plant a bug, check the suite catches it) without naming one. The rule
+it encodes can be fine while the item is not.
 
 Two tests before an item earns its place:
 
