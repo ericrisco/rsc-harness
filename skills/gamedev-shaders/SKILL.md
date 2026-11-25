@@ -91,10 +91,8 @@ render_mode blend_add, cull_back;
 uniform vec3 rim_color : source_color = vec3(0.2, 0.6, 1.0);
 uniform float power : hint_range(0.0, 8.0) = 3.0;
 
-varying vec3 v_normal;
-void vertex()   { v_normal = NORMAL; }        // pass to fragment via varying
-void fragment() {
-    float f = pow(1.0 - dot(normalize(v_normal), normalize(VIEW)), power);
+void fragment() {                             // NORMAL and VIEW are both view space here
+    float f = pow(1.0 - dot(normalize(NORMAL), normalize(VIEW)), power);
     EMISSION = rim_color * f;
     ALPHA = f;
 }
