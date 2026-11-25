@@ -16,13 +16,13 @@ gcloud run deploy api --region=europe-west1 \
   --vpc-egress=all-traffic
 ```
 
-- `--vpc-egress=all-traffic` routes all outbound through the VPC. The older explicit
-  Direct-VPC-egress value is deprecated in favour of `all-traffic`.
+- `--vpc-egress=all-traffic` routes all outbound through the VPC. The value `all` is a
+  deprecated alias — write `all-traffic`.
 - `--vpc-egress=private-ranges-only` sends only RFC-1918 traffic through the VPC and
   lets public traffic exit directly — use it when only the DB is private.
 
-The legacy `--vpc-connector` still works but is no longer the default recommendation;
-do not provision a new connector for greenfield work.
+The Serverless VPC Access connector (`--vpc-connector`) works but is not the
+recommendation for new work; do not provision a new connector for greenfield work.
 
 ## Cloud SQL private IP
 

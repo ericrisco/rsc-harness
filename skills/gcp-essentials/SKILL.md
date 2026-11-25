@@ -87,9 +87,10 @@ Choosing a role:
 
 Two hard rules, each with teeth:
 
-1. **Never run a workload as the default compute service account.** It carries
-   `Editor` on the whole project, so a single RCE in your container = full project
-   takeover. Mint a dedicated SA per service and pass it explicitly (see Cloud Run).
+1. **Never run a workload as the default compute service account.** Unless the org
+   enforces `iam.automaticIamGrantsForDefaultServiceAccounts` (the default only for
+   orgs created after 2024-05-03), it carries `Editor` on the whole project, so a
+   single RCE in your container = full project takeover. Mint a dedicated SA per service and pass it explicitly (see Cloud Run).
    ```bash
    gcloud iam service-accounts create api-sa --display-name="api runtime"
    ```
@@ -217,9 +218,10 @@ when you actually need its dedicated cores and faster failover, and drop `--tier
 Put the password in Secret Manager, not in a flag or a file:
 
 ```bash
-gcloud sql users create app --instance=acme-db --password="$(openssl rand -base64 24)"
-printf '%s' "$(openssl rand -base64 24)" | \
-  gcloud secrets create db-password --data-file=-
+DB_PASS="$(openssl rand -base64 24)"   # generate ONCE: the user and the secret must match
+gcloud sql users create app --instance=acme-db --password="$DB_PASS"
+printf '%s' "$DB_PASS" | gcloud secrets create db-password --data-file=-
+unset DB_PASS
 ```
 
 Attach the instance to Cloud Run — serverless connects over a Unix socket, **no Auth
@@ -248,7 +250,7 @@ One service, one dedicated SA, exactly the roles it needs — and nothing else.
 gcloud iam service-accounts create api-sa --display-name="api runtime"
 SA=api-sa@acme-prod.iam.gserviceaccount.com
 
-# Exactly four predefined roles. No Editor, no Owner.
+# Exactly three predefined roles. No Editor, no Owner.
 gcloud projects add-iam-policy-binding acme-prod \
   --member="serviceAccount:$SA" --role="roles/cloudsql.client"
 gcloud secrets add-iam-policy-binding db-password \
@@ -296,7 +298,7 @@ attach SQL, mount a secret, full teardown — are in
 
 | Bad | Good | Why |
 |-----|------|-----|
-| Deploy with no `--service-account` | Pass a dedicated per-service SA | Default compute SA has Editor; an RCE becomes project takeover |
+| Deploy with no `--service-account` | Pass a dedicated per-service SA | Default compute SA usually has Editor; an RCE becomes project takeover |
 | `gcloud iam service-accounts keys create key.json` | Attached SA + Workload Identity Federation | JSON keys are long-lived, leak, and are rarely rotated |
 | `--role=roles/editor` on a workload SA | Scoped predefined roles (`cloudsql.client`, …) | Primitive roles grant far more than the service needs |
 | Bucket public via `allUsers` | Signed URL via `--impersonate-service-account` (+ Token Creator) | A public bucket is a data leak; keyless signing needs `signBlob`, not a key file |
