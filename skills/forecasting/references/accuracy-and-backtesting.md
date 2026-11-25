@@ -86,7 +86,7 @@ Collapse to one row per model:
 
 | model         | WAPE | bias  | MASE | verdict                         |
 |---------------|------|-------|------|---------------------------------|
-| SeasonalNaive | 0.18 | +0.02 | 1.00 | the bar (MASE is 1 by definition)|
+| SeasonalNaive | 0.18 | +0.02 | 1.00 | the bar (MASE ≈ 1: the scaling reference)|
 | AutoETS       | 0.12 | -0.01 | 0.67 | beats naive — ship this         |
 | AutoARIMA     | 0.13 | +0.06 | 0.72 | beats naive but biased high      |
 

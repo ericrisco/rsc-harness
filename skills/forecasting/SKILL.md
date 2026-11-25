@@ -39,7 +39,7 @@ Match the method to the *shape* of the history, not to what sounds sophisticated
 
 | Data shape | Method | statsforecast call | Why |
 |---|---|---|---|
-| Flat, no trend or season | Moving average or SES | `AutoCES()` / 3-period MA | Nothing to model; a mean is honest. |
+| Flat, no trend or season | Moving average or SES | `SimpleExponentialSmoothingOptimized()` / 3-period MA | Nothing to model; a mean is honest. |
 | Trend, with or without season | ETS | `AutoETS(season_length=m)` | ETS captures level+trend+season cleanly, no manual order. |
 | Strong known seasonality / autocorrelation | ARIMA | `AutoARIMA(season_length=m)` | Handles autocorrelated errors; ~20x faster than pmdarima. |
 | Many zeros (intermittent / lumpy demand) | Croston / SBA | `CrostonOptimized()` | SES is *provably* wrong on sporadic demand (Croston 1972); SBA debiases it. |
