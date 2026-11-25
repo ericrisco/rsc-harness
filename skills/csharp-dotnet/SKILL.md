@@ -14,8 +14,8 @@ and the .NET-specific quality/security gates. You delegate everything language-
 agnostic to the right sibling.
 
 **Target: .NET 10 (LTS, released 2025-11-11, supported 3 years) with C# 14, EF Core
-10, ASP.NET Core 10.** .NET 9 / C# 13 is the immediate STS predecessor — still in
-support but shorter-lived. Features gate on the target framework moniker (TFM): a
+10, ASP.NET Core 10.** .NET 9 / C# 13 (STS) reached end of support on 2026-11-10,
+together with .NET 8; move such projects to .NET 10. Features gate on the target framework moniker (TFM): a
 `net10.0` project gets C# 14 by default; a `net9.0` project caps at C# 13. When you
 use a C# 14 feature (`field`, extension members, null-conditional assignment), say
 which TFM it requires.
