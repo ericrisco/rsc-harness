@@ -172,6 +172,6 @@ Details in `references/n8n-mcp-tools.md`.
 |---|---|
 | Designing the flow (trigger/steps/error path, dedup) and producing the importable JSON | `automation-flows` — start there if the logic isn't settled |
 | Whether n8n is the right platform at all — cost model, self-host vs cloud | `automation-strategy` |
-| Operating a different platform | `make`, `zapier`, `power-automate` (neither Zapier nor Power Automate can create flows via API — n8n's edge) |
+| Operating a different platform | `make`, `zapier`, `power-automate` (Zapier has no flow-creation API on a normal account; Power Automate creates only solution-aware flows, via the Dataverse Web API) |
 | A generic typed HTTP client with auth/pagination/backoff — real code, not a workflow | `api-connector-builder` |
 | The inbound webhook receiver in your own app (here webhooks are only n8n triggers) | `webhooks` |
