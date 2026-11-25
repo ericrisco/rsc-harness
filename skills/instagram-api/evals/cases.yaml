@@ -8,7 +8,7 @@ should_trigger:
   - prompt: "My /insights call started returning an error when I ask for metric=plays"
     why: Non-obvious — the deprecated-metric trap; plays was retired 2025-04-21, swap to views.
   - prompt: "How many posts do we have left in the 24-hour Instagram publish window?"
-    why: content_publishing_limit check before a batch; the 50/24h cap.
+    why: content_publishing_limit check before a batch; the 100/24h cap.
   - prompt: "Ingesta el rendimiento de los Reels en el wiki de shortform"
     why: Spanish — ingest IG performance into 02-DOCS/wiki/shortform, the checkable artifact.
   - prompt: "My media container is stuck IN_PROGRESS and never publishes"

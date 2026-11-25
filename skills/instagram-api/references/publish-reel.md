@@ -39,7 +39,7 @@ Why the extra stage: children must each finish before the parent can be publishe
 - `IN_PROGRESS` — keep polling (~60s cadence).
 - `FINISHED` — publish now.
 - `ERROR` — read `status` for the reason; do not retry the same source blindly.
-- `EXPIRED` — container sat unpublished too long; recreate from step 1.
+- `EXPIRED` — container sat unpublished for 24h; recreate from step 1.
 
 Poll ceiling ~5 minutes. Containers are not permanent.
 
@@ -47,10 +47,11 @@ Poll ceiling ~5 minutes. Containers are not permanent.
 
 | Subcode | Meaning | Fix |
 |---|---|---|
-| 51 | 24h publish limit reached (50/account) | Wait or read `content_publishing_limit` |
-| 9007 | Media not ready / not `FINISHED` | Poll until `FINISHED` first |
-| 2207003 | Media download failed | Make `video_url` truly public |
-| 2207026 | Unsupported video format | Re-encode H.264/HEVC, 9:16, 5–90s |
+| 2207042 (code 9) | 24h publish limit reached (100/account) | Wait or read `content_publishing_limit` |
+| 2207027 (code 9007) | Media not ready / not `FINISHED` | Poll until `FINISHED` first |
+| 2207003 (code -2) | Media download took too long | Serve `video_url` from a fast, public host |
+| 2207052 (code 9004) | Media could not be fetched | Make `video_url` truly public |
+| 2207026 (code 352) | Unsupported video format | Re-encode H.264/HEVC + AAC, 3 s–15 min, ≤300 MB, 9:16 recommended |
 
 ## Retry / backoff snippet
 
@@ -77,13 +78,13 @@ def remaining_quota(base, uid, tok):
     d = requests.get(f"{base}/{uid}/content_publishing_limit",
                      params={"fields": "quota_usage,config", "access_token": tok}
                      ).json()["data"][0]
-    return d.get("config", {}).get("quota_total", 50) - d.get("quota_usage", 0)
+    return d.get("config", {}).get("quota_total", 100) - d.get("quota_usage", 0)
 
 def publish_batch(base, uid, tok, jobs):
     published = []
     for video_url, caption in jobs:
         if remaining_quota(base, uid, tok) <= 0:
-            break  # stop cleanly; don't trip subcode 51
+            break  # stop cleanly; don't trip subcode 2207042
         cid = requests.post(f"{base}/{uid}/media", data={
             "media_type": "REELS", "video_url": video_url,
             "caption": caption, "access_token": tok}).json()["id"]
