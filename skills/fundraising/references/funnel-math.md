@@ -84,7 +84,7 @@ Cold slice  (10 meetings @ ~2%  cold conversion):  ~500 cold outreaches  ← bru
 Decision: that cold slice is uneconomical. Re-weight to 80% warm:
   20 warm meetings @ ~35% ⇒ ~57 warm outreaches
    5 cold meetings @ ~2%  ⇒ ~250 cold outreaches
-Top-of-funnel:  ~60 Tier-A/B warm targets + a small cold tail.
+Top-of-funnel:  ~60 Tier-A/B warm targets + a ~250-outreach cold tail for 5 meetings.
 ```
 
 The lesson the math forces: **the cold tail is a rounding error of meetings for a mountain of work** — invest the time in manufacturing warm paths, not in scaling cold. Hand the resulting dilution and cap-table arithmetic to `../financial-model/SKILL.md`; hand the cold-message copy for the tail to `../cold-outreach/SKILL.md`.
