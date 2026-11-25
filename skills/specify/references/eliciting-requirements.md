@@ -85,9 +85,9 @@ Phrase by register:
   > "Expired-link recovery in scope, or defer?"
 
 Always: emit the round → wait → record each answer in its section → confirm it
-→ recompute the frontier. The thing to avoid was never two questions in
-one message; it was ten questions whose answers depend on each other, which is
-what crossing a dependency produces.
+→ recompute the frontier. Two independent questions in one message are
+fine; avoid questions whose answers depend on each other, which is what
+crossing a dependency produces.
 
 ## Turning answers into testable criteria
 
