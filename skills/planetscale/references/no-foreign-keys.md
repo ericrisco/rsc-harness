@@ -39,13 +39,13 @@ For large fan-out, prefer a batched background job over one giant transaction so
 ## Prisma: relationMode = "prisma"
 
 Setting `relationMode = "prisma"` tells Prisma to emulate relations in the client instead of emitting
-DB-level foreign keys. Prisma then also creates the **implicit indexes** on relation scalar fields that
-a real FK would have given you for free.
+DB-level foreign keys. Prisma does **not** create the index a real FK would have given you for free:
+declare `@@index` on every relation scalar field yourself (schema validation warns when one is missing).
+The connection URL lives in `prisma.config.ts`, not the datasource block.
 
 ```prisma
 datasource db {
   provider     = "mysql"
-  url          = env("DATABASE_URL")
   relationMode = "prisma"
 }
 
