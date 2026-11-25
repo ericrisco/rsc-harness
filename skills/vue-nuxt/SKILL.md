@@ -279,8 +279,9 @@ preset here, then hand platform specifics to [`deployment`](../deployment/SKILL.
 - `defineAsyncComponent` and Nuxt's auto `Lazy<Component>` prefix to code-split below the fold.
 - `<NuxtImg>` / `@nuxt/image` for responsive, optimized images (a top LCP lever).
 - Shrink the SSR payload with `pick`/`transform` on `useFetch`/`useAsyncData`.
-- Vue 3.6 **Vapor Mode** (compile-time, no-VDOM, opt-in per component via `<script setup vapor>`) is
-  a 2026 preview targeting mid-2026 stable — treat as opt-in, not the default.
+- Vue 3.6 **Vapor Mode** (compile-time, no-VDOM, opt-in per component via `<script setup vapor>`)
+  ships with Vue 3.6; check `npm view vue dist-tags` for whether 3.6 is `latest` or still
+  pre-release — treat it as opt-in, not the default.
 - Targets: LCP < 2.5s, CLS < 0.1, INP < 200ms.
 
 ## Anti-patterns → STOP
@@ -314,9 +315,8 @@ In a project with a `02-DOCS/` layer (the [`harness`](../harness/SKILL.md) Karpa
 `02-DOCS/wiki/stack/vue-nuxt.md` first and stay consistent with it. If it is missing or stale,
 create/update it with this app's real choices — rendering mode per route (`routeRules`), the
 `useFetch`/`useAsyncData` conventions, `useState` vs Pinia, the Nitro preset/deploy target, the
-design-system hookup — bump its `Updated` date, and link it from a `## Knowledge map` section in
-the root `CLAUDE.md` (creating that section, and `CLAUDE.md` itself, if absent). No `02-DOCS/`
-layer? Skip silently. Technical conventions are *recorded, not gated* — never block the task.
+design-system hookup — bump its `Updated` date, and index it in `02-DOCS/wiki/index.md` (root
+`CLAUDE.md` keeps only a short pointer to that index). No `02-DOCS/` layer? Skip silently. Technical conventions are *recorded, not gated* — never block the task.
 
 Nuxt 3 → 4 deltas (`app/` move, `compatibilityVersion`, shared-key data, shallowRef payload,
 renamed APIs) and Vue 3.4 → 3.5 changes are in
