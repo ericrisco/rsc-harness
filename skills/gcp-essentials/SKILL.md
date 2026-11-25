@@ -219,6 +219,7 @@ Put the password in Secret Manager, not in a flag or a file:
 
 ```bash
 DB_PASS="$(openssl rand -base64 24)"   # generate ONCE: the user and the secret must match
+# --password sits in the process list while gcloud runs: run this on your own machine or in Cloud Shell, never on a shared host
 gcloud sql users create app --instance=acme-db --password="$DB_PASS"
 printf '%s' "$DB_PASS" | gcloud secrets create db-password --data-file=-
 unset DB_PASS
