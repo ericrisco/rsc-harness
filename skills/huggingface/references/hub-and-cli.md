@@ -1,7 +1,7 @@
 # Hub & the `hf` CLI
 
-The CLI was renamed `huggingface-cli` → **`hf`**, shaped `hf <resource> <action>`. The legacy
-name still works but prints a deprecation warning — use `hf` in all new scripts.
+The CLI is **`hf`**, shaped `hf <resource> <action>`. `huggingface_hub` 2.0 removed the
+`huggingface-cli` entry point and the singular `hf repo` group (now `hf repos`) — use `hf` everywhere.
 
 ## Command map
 
@@ -10,7 +10,7 @@ hf auth login                 # interactive token store; or export HF_TOKEN=...
 hf auth whoami                # confirm identity + token scope
 hf download <repo>            # pull a repo (model/dataset/space) to the local cache
 hf upload <repo> <path>       # push files to a repo
-hf repo create <repo>         # create a new repo (--repo-type model|dataset|space)
+hf repos create <repo>        # create a new repo (--repo-type model|dataset|space)
 hf jobs run <image> -- <cmd>  # run a containerized/uv job on HF infra (PRO)
 ```
 
@@ -37,7 +37,7 @@ cfg = hf_hub_download("BAAI/bge-small-en-v1.5", filename="config.json")
 ## Upload patterns
 
 ```bash
-hf repo create my-org/my-model --repo-type model
+hf repos create my-org/my-model --repo-type model
 hf upload my-org/my-model ./checkpoints --commit-message "v1 weights"
 ```
 

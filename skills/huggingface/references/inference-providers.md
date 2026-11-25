@@ -95,7 +95,7 @@ resp = client.chat.completions.create(
 
 ## Billing & org headers
 
-- Monthly Inference-Providers credits: **Free $0.10**, **PRO $2.00**, **Team/Enterprise $2.00 per
+- Monthly Inference-Providers credits: **Free none** (buy credits first), **PRO $2.00**, **Team/Enterprise $2.00 per
   seat** (shared across the org). Past credits → pay-as-you-go (you must purchase credits).
 - A **Custom Provider Key** (your own key for a partner) bypasses HF billing — the provider bills
   you directly and HF credits do not apply.
