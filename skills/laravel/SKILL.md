@@ -1,15 +1,15 @@
 ---
 name: laravel
-description: "Use when building or extending a Laravel 11/12 app — Eloquent models, migrations and relationships, routing with controllers and Form Requests, queues and background jobs, framework-native security (validation, mass-assignment, policies, signed URLs, rate limiting), and Pest/PHPUnit feature tests. NOT pure PHP language or toolchain work (that is `php`)."
+description: "Use when building or extending a Laravel 11+ app — Eloquent models, migrations and relationships, routing with controllers and Form Requests, queues and background jobs, framework-native security (validation, mass-assignment, policies, signed URLs, rate limiting), and Pest/PHPUnit feature tests. NOT pure PHP language or toolchain work (that is `php`)."
 tags: [laravel, php, eloquent, queues, pest, artisan]
 recommends: [php, mysql, redis, api-design, security-audit, testing-web]
 origin: risco
 ---
 
-# Laravel (11/12 era)
+# Laravel (11–13 era)
 
-Build Laravel the way the framework ships **today** — Laravel 12 (released 2025-02-24,
-PHP 8.2–8.4), continuing the slimmed Laravel 11 skeleton. That means **no
+Build Laravel the way the framework ships **today** — Laravel 13 (released 2026-03-17,
+PHP 8.3–8.5), on the slimmed skeleton Laravel 11 introduced. That means **no
 `app/Http/Kernel.php` and no `app/Console/Kernel.php`**: middleware, routing, exception
 handling and providers are all configured in **`bootstrap/app.php`**, and scheduled tasks
 live in **`routes/console.php`**. Generate that structure, not 2019 Laravel.
@@ -26,18 +26,18 @@ A wrong version assumption generates dead code. Detect the version and skeleton 
 
 ```bash
 composer show laravel/framework            # exact installed version
-ls bootstrap/app.php                        # present  -> L11/12 slim skeleton
+ls bootstrap/app.php                        # present  -> L11+ slim skeleton
 ls app/Http/Kernel.php 2>/dev/null          # present  -> L10 or older (Kernel era)
 php artisan --version                       # confirms runtime + version
 ```
 
-If `bootstrap/app.php` exists and `app/Http/Kernel.php` does **not**, you are on L11/12 —
+If `bootstrap/app.php` exists and `app/Http/Kernel.php` does **not**, you are on L11+ —
 use the modern idioms below. Then pick your path:
 
 | Situation | Do |
 |---|---|
 | Greenfield | `laravel new <app>`, then a starter kit: React (React 19 + TS + Inertia 2 + shadcn/ui), Vue (Vue 3 + Inertia 2 + shadcn-vue), or Livewire (Livewire 3 + Volt + Flux UI). Optional WorkOS AuthKit for auth. |
-| Brownfield L11/12 | Follow the repo's existing conventions; do not "reorganize" into folders it dropped. |
+| Brownfield L11+ | Follow the repo's existing conventions; do not "reorganize" into folders it dropped. |
 | Pre-11 (Kernel era) | Migrate to `bootstrap/app.php` deliberately; move Kernel middleware to `withMiddleware()`, schedule to `routes/console.php`. Treat as a project, not an inline tweak. |
 
 ## The slim structure (where things live now)
@@ -55,7 +55,7 @@ app/Policies/          # authorization policies
 ```
 
 ```php
-// Bad: hunting for or editing app/Http/Kernel.php to register middleware (L11/12 deleted it).
+// Bad: hunting for or editing app/Http/Kernel.php to register middleware (L11+ deleted it).
 // Good: bootstrap/app.php
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(web: __DIR__.'/../routes/web.php', commands: __DIR__.'/../routes/console.php')
@@ -191,7 +191,7 @@ Bus::batch([new ProcessOrder($a), new ProcessOrder($b)])
 | Simple, low volume, no extra infra | `database` driver (a `jobs` table) |
 | High throughput + a dashboard (retries, runtime, failures) | **Redis + Horizon** — Horizon manages the workers and gives you the monitor |
 
-Schedule recurring work in `routes/console.php` (the L11/12 home for the scheduler — there
+Schedule recurring work in `routes/console.php` (the L11+ home for the scheduler — there
 is no `app/Console/Kernel.php`):
 
 ```php
@@ -269,14 +269,14 @@ over rolling your own.
 | Pattern | Why it is bad | Do instead |
 |---|---|---|
 | `protected $guarded = []` on a user-facing model | any request column becomes mass-assignable (`is_admin`, `balance`) | explicit `$fillable` allowlist |
-| Hunting for / re-creating `app/Http/Kernel.php` on L11/12 | the file was deleted; your middleware never registers | configure in `bootstrap/app.php` `withMiddleware()` |
+| Hunting for / re-creating `app/Http/Kernel.php` on L11+ | the file was deleted; your middleware never registers | configure in `bootstrap/app.php` `withMiddleware()` |
 | Lazy access inside a loop/Blade (`$post->author` per row) | N+1 — one query per row | eager load with `with()` |
 | Fat controllers / logic in `routes/web.php` | untestable, unreusable, no authz boundary | thin controller + Form Request + service/model |
 | Asserting a queued job's *side effects* in a test | sync driver runs it inline — you test execution, not dispatch | `Queue::fake()` + `Queue::assertPushed()` |
 | `env()` outside `config/*.php` | returns `null` once `config:cache` runs in prod | read via `config()`; `env()` only inside config files |
 | `$tries` unset on a flaky job | one transient failure = permanent failure | set `$tries` + `backoff()` |
 | Committing real secrets in `.env` | leaks credentials into history | `.env` is git-ignored; commit `.env.example` only |
-| Old `$casts = [...]` array (deprecated form) | misses the L11+ `casts()` method idioms | the `casts(): array` method |
+| Old `$casts = [...]` array (legacy form, still supported) | misses the L11+ `casts()` method idioms | the `casts(): array` method |
 
 ## Verify
 
