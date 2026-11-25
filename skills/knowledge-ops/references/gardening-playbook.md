@@ -84,8 +84,8 @@ unresolved conflict annotation, and a pile of old `[FILLED]` gaps.
    claim with `> Superseded by [winner](./winner.md) per owner decision YYYY-MM-DD`
    (standard markdown link, never a wikilink) and clear the conflict annotation. Log.
 4. **Gap compaction:** only `[FILLED YYYY-MM-DD]` gaps **older than 90 days** may
-   be compacted, via a single marker line prepended to `log.md` (newest first) — `gaps.md`
-   stays append-only; you never delete a gap entry.
+   be removed from `gaps.md`, recorded by a single marker line prepended to `log.md`
+   (newest first). Open gaps are never deleted.
 
 ## `wiki/log.md` entry shapes
 
@@ -117,7 +117,7 @@ Superseded by stripe-webhook-retry-policy.md. Removed from index.md.
 Conflict on retry window arbitrated by owner: 3 days wins. Loser claim annotated. conflict_count cleared.
 
 ## [2026-06-02] prune | compact | gaps.md
-Compacted 4 [FILLED] gaps older than 90 days into this marker. No gap entries deleted.
+Compacted 4 [FILLED] gaps older than 90 days into this marker. No open gap deleted.
 ```
 
 Keep entries terse and factual: date, op, target paths, one-line why. The log is

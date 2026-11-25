@@ -55,9 +55,8 @@ Worked examples for each rung are in `references/gardening-playbook.md`.
 
 - It carries **≥2 unrelated theses** (e.g. "Stripe retries" *and* "our refund SLA").
 - Its `## Overview` cannot be written as **one honest paragraph**.
-- It has grown past readability and the score signal flags it.
 
-Why: one article = one thesis keeps scoring, linking, and retrieval meaningful. After a split, fix `> Sources:` and `> Raw:` on both halves and repair `## See Also` so they reference each other. Recipe in the playbook.
+Length alone is a flag to review the article for a second thesis, not a reason to split. Why: one article = one thesis keeps scoring, linking, and retrieval meaningful. After a split, fix `> Sources:` and `> Raw:` on both halves and repair `## See Also` so they reference each other. Recipe in the playbook.
 
 **Merge** near-duplicates into the **higher-scored** page; fold the loser's unique content in, then archive the loser to `wiki/<topic>/_archive/<loser>__YYYY-MM-DD.md` and redirect every inbound link to the survivor. Why: never lose history, never keep two competing truths.
 
@@ -81,7 +80,7 @@ Every article earns **≥1 inbound link** or is a conscious leaf you can justify
 
 - **Conflicts:** you **flag** contradictions and the **human arbitrates**. Once they choose a winner, you may apply the resolution and annotate the loser — but you never auto-pick. Why: silently choosing a side is data corruption.
 - **Stale answers:** mark a page or archived copy with a `> ⚠ Stale — superseded YYYY-MM-DD` note rather than rewriting history.
-- **Compaction is bounded:** only `[FILLED YYYY-MM-DD]` gaps **older than 90 days** may be compacted, and only via a single marker prepended to `log.md` — a gap gets a `[FILLED]` stamp, never a deletion.
+- **Compaction is bounded:** a filled gap gets a `[FILLED YYYY-MM-DD]` stamp; only `[FILLED]` gaps **older than 90 days** may be removed from `gaps.md`, in Deep Improve, with a single compaction marker prepended to `log.md`. Open gaps are never deleted.
 - **Log every prune** by prepending to `wiki/log.md`.
 
 A full worked prune session (stale + superseded + conflict + gap compaction, all logged) is in `references/gardening-playbook.md`.
@@ -92,7 +91,7 @@ Inherited from `../harness/references/wiki-protocol.md` — do not override them
 
 1. **Preserve before overwrite.** Never overwrite an article without first copying the old version to `wiki/<topic>/_archive/<article>__YYYY-MM-DD.md`.
 2. **Never auto-resolve a conflict.** Flag it; the human arbitrates.
-3. **The reserved files only grow.** Log every change in `wiki/log.md`, the OKF reserved change-log: new entries are **prepended at the top (newest first)**, ISO 8601 dates. `gaps.md` is the append-only one — new entries go at the bottom. Past entries in either are immutable: a gap gets a `[FILLED YYYY-MM-DD]` stamp, nothing is ever edited out or deleted.
+3. **The reserved files only grow.** Log every change in `wiki/log.md`, the OKF reserved change-log: new entries are **prepended at the top (newest first)**, ISO 8601 dates. `gaps.md` is the append-only one — new entries go at the bottom. Past entries in either are immutable: a gap gets a `[FILLED YYYY-MM-DD]` stamp, and nothing is edited out or deleted except the bounded compaction above.
 4. **Never touch an article whose `timestamp` is < 24h ago** without explicit user say-so. Why: it is likely still being worked. (`timestamp` is the OKF last-meaningful-edit field, ISO 8601 — see `../harness/references/wiki-protocol.md` "## Conventions".)
 
 ## Anti-patterns
