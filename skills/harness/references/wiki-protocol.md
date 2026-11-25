@@ -788,7 +788,8 @@ doing anything but dropping files.
 ### Knowledge Gaps log — format
 
 `wiki/gaps.md` accumulates wanted-but-missing topics. Append-only; gaps get
-flagged `[FILLED YYYY-MM-DD]` when addressed, never deleted.
+flagged `[FILLED YYYY-MM-DD]` when addressed. Open gaps are never deleted; the only
+removal is Deep Improve's compaction of `[FILLED]` entries older than 90 days.
 
 ```
 # Knowledge Gaps
