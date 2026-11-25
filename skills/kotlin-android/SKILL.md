@@ -108,7 +108,7 @@ sealed interface ArticlesUiState {
 
 @HiltViewModel
 class ArticlesViewModel @Inject constructor(
-    repository: ArticleRepository,
+    private val repository: ArticleRepository,
 ) : ViewModel() {
     val uiState: StateFlow<ArticlesUiState> =
         repository.observeArticles()
@@ -119,6 +119,10 @@ class ArticlesViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = ArticlesUiState.Loading,
             )
+
+    fun refresh() {
+        viewModelScope.launch { repository.refresh() }
+    }
 }
 ```
 
@@ -127,9 +131,12 @@ off-screen:
 
 ```kotlin
 @Composable
-fun ArticlesRoute(viewModel: ArticlesViewModel = hiltViewModel()) {
+fun ArticlesRoute(
+    onOpen: (String) -> Unit,
+    viewModel: ArticlesViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ArticlesScreen(state = state, onRetry = viewModel::refresh)
+    ArticlesScreen(state = state, onRetry = viewModel::refresh, onOpen = onOpen)
 }
 ```
 
