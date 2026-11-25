@@ -9,8 +9,8 @@ origin: risco
 # Hetzner — the cheap European box, made safe and reproducible
 
 Hetzner Cloud is chosen for one reason: price/performance. A 2 vCPU / 4 GB AMD
-box runs about €7.99/mo, the EU Intel line dips under €4, and EU locations
-include 20 TB of egress. The risk is that "cheap" becomes "unhardened and
+box (CPX22) lists at about €19.49/mo, the EU Intel line (CX23) at about €5.49
+when it is orderable, and EU locations include 20 TB of egress. The risk is that "cheap" becomes "unhardened and
 unmonitored" — a root-SSH box on a public IPv4 with password auth on. Your job
 is to make the cheap box **safe** and **reproducible**: every server comes up
 from a committed cloud-init file and a Cloud Firewall ruleset, never from
@@ -19,15 +19,16 @@ a pet.
 
 ## Decide before you create
 
-Pick the line, then the location. Prices are post-2026-04-01 (a price adjustment
-took effect that date); treat exact cents as "verify in the console."
+Pick the line, then the location. Prices are new-order prices after the
+2026-06-15 adjustment (existing servers keep their old price until rescaled);
+treat exact cents as "verify in the console."
 
 | Line | Chip | When to pick | Price band | EU-only? |
 |---|---|---|---|---|
-| **CX** | Intel (shared) | Cost-optimized, tiny EU workloads | ~€3.99/mo (2 vCPU/4 GB/40 GB) | Yes |
-| **CPX** | AMD (shared) | Default for apps; best general value | CPX22 ~€7.99, CPX32 ~€13.99, CPX42 ~€25.49 | No |
-| **CAX** | ARM64 (shared) | Cheapest per-core; ARM-clean workloads | Cheapest per-core | Yes |
-| **CCX** | Dedicated vCPU | Steady CPU load, no noisy-neighbor | CCX13 ~€15.99 (2 vCPU/8 GB) | No |
+| **CX** | Intel (shared) | Cost-optimized, tiny EU workloads | ~€5.49/mo (2 vCPU/4 GB/40 GB); often out of stock | Yes |
+| **CPX** | AMD (shared) | Default for apps; best general value | CPX22 ~€19.49; larger sizes: check `hcloud server-type list` | No |
+| **CAX** | ARM64 (shared) | Cheapest per-core; ARM-clean workloads | CAX11 ~€5.99; cheapest per-core | Yes |
+| **CCX** | Dedicated vCPU | Steady CPU load, no noisy-neighbor | CCX13 ~€42.99 (2 vCPU/8 GB) | No |
 
 Rules:
 
@@ -49,7 +50,7 @@ Full dated matrix, latency notes, and the no-SLA / no-managed-DB reality:
 
 ## Provision reproducibly
 
-Install the official CLI (latest **v1.65.0**, released 2026-05-21) and create a
+Install the official CLI (latest **v1.70.2**, released 2026-10-23) and create a
 context (the token comes from the project's *Security → API tokens*, Read &
 Write):
 
@@ -72,8 +73,8 @@ hcloud server create \
   --user-data-from-file cloud-init.yaml
 ```
 
-Use `--location`, not `--datacenter`: the `datacenter` attribute is **deprecated
-and removed after 2026-07-01** for Servers and Primary IPs. Trimmed cloud-init
+Use `--location`: the `datacenter` property was removed from Servers and Primary
+IPs in the API on 2026-07-01, and hcloud v1.67.0 dropped the `--datacenter` flag. Trimmed cloud-init
 skeleton (full annotated file in `references/cloud-init.md`):
 
 ```yaml
@@ -185,7 +186,7 @@ This skill stops at a clean, hardened host. Then route the install/deploy:
 | Snapshot treated as backup | One stale manual image, no rotation, no schedule | Enable the Backups add-on or push to off-box storage |
 | US location, then surprised by the bill | US/Singapore include far less than EU's 20 TB egress | EU location for egress-heavy apps; check the traffic cap first |
 | IPv6-only to save €0.50 | Registry/CI/mirror pulls over IPv4-only break | Keep one IPv4 unless every upstream is confirmed dual-stack |
-| Using `--datacenter` | Deprecated, removed after 2026-07-01 | Use `--location` |
+| Using `--datacenter` | Removed from the API (2026-07-01) and from hcloud (v1.67.0) | Use `--location` |
 
 ## Verify
 

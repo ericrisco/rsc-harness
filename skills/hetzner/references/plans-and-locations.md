@@ -1,19 +1,20 @@
 # Reference: plans, prices, locations, reliability
 
-Dated figures (post the **2026-04-01 price adjustment**). Hetzner raised most
-plan prices on that date — treat exact cents as "verify in the console," use
-these as bands for the decision.
+Dated figures (new-order prices after the **2026-06-15 price adjustment**, which
+followed a first round on 2026-04-01). Existing servers keep their price until
+they are rescaled — treat exact cents as "verify in the console," use these as
+bands for the decision.
 
 ## Plan matrix
 
-| Plan | Chip | vCPU / RAM / disk | Price band (post-2026-04-01) | EU-only? | Pick when |
+| Plan | Chip | vCPU / RAM / disk | Price band (post-2026-06-15) | EU-only? | Pick when |
 |---|---|---|---|---|---|
-| CX23-class | Intel (shared) | 2 / 4 GB / 40 GB | ~€3.99/mo | Yes | Cheapest viable, tiny EU workloads |
-| CPX22 | AMD (shared) | 2 / 4 GB / 80 GB | ~€7.99/mo | No | Default app box, best value |
-| CPX32 | AMD (shared) | 4 / 8 GB / 160 GB | ~€13.99/mo | No | Mid app + small DB |
-| CPX42 | AMD (shared) | 8 / 16 GB / 320 GB | ~€25.49/mo | No | Heavier services |
-| CAX (ARM64) | Ampere (shared) | varies | cheapest per-core | Yes | ARM-clean workloads, max cores/€ |
-| CCX13 | Dedicated vCPU | 2 / 8 GB | ~€15.99/mo | No | Steady CPU, no noisy-neighbor |
+| CX23-class | Intel (shared) | 2 / 4 GB / 40 GB | ~€5.49/mo (often out of stock) | Yes | Cheapest viable, tiny EU workloads |
+| CPX22 | AMD (shared) | 2 / 4 GB / 80 GB | ~€19.49/mo | No | Default app box, best value |
+| CPX32 | AMD (shared) | 4 / 8 GB / 160 GB | verify (`hcloud server-type list`) | No | Mid app + small DB |
+| CPX42 | AMD (shared) | 8 / 16 GB / 320 GB | verify (`hcloud server-type list`) | No | Heavier services |
+| CAX (ARM64) | Ampere (shared) | varies | CAX11 ~€5.99/mo; cheapest per-core | Yes | ARM-clean workloads, max cores/€ |
+| CCX13 | Dedicated vCPU | 2 / 8 GB | ~€42.99/mo | No | Steady CPU, no noisy-neighbor |
 
 ## IPv4 / IPv6 economics
 
@@ -47,10 +48,10 @@ thing you're accepting — not also an unhardened, un-monitored host.
 
 ## Sources
 
-- hcloud CLI v1.65.0 (2026-05-21): github.com/hetznercloud/cli/releases
-- `datacenter` deprecation (removed after 2026-07-01): hcloud CLI release notes
-- Price adjustment (2026-04-01): docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/
+- hcloud CLI v1.70.2 (2026-10-23): github.com/hetznercloud/cli/releases
+- `datacenter` removal (API 2026-07-01, `--datacenter` flag dropped in v1.67.0): hcloud CLI CHANGELOG
+- Price adjustments (2026-04-01, 2026-06-15): docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/
 - Plans/prices/traffic/locations/reliability: betterstack.com Hetzner Cloud review + hetzner.com/cloud
 - Firewall layers + cloud-init: community.hetzner.com tutorials
 
-All accessed 2026-06-02.
+Prices and CLI facts re-checked 2026-11-25.
