@@ -49,7 +49,7 @@ Rule: **never ship `FAL_KEY` to a browser bundle.** Proxy every call through you
 
 ## Pick a call mode
 
-All three modes hit the same queue. Choose by how long the job runs and where you call it from.
+`subscribe` and `submit` go through the queue; `run` is a direct call that skips it. Choose by how long the job runs and where you call it from.
 
 | Situation | Mode | Why |
 | --- | --- | --- |
