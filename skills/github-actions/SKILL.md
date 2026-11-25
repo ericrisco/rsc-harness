@@ -59,8 +59,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6        # first-party, current major
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7        # first-party, current major
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm                     # built-in lockfile-keyed cache
@@ -72,26 +72,26 @@ jobs:
 Why those three lines are not optional:
 - `permissions: contents: read` at the top — **default token permissions may be write**, and a leaked write token can push tags or publish packages. Widen per job and only to what that job needs (`packages: write` to publish, `id-token: write` for OIDC), never at the top.
 - `concurrency` + `cancel-in-progress: true` — without it every push to an open PR leaves the old run finishing and billing. One group per ref keeps at most one running + one pending.
-- `actions/checkout@v6`, `setup-node@v6` are the current majors (checkout v6.0.2, setup-node v6.4.0). Old majors run on Node 20, removed from runners in **September 2026**; JS actions are forced onto **Node 24** by default since June 2026.
+- `actions/checkout@v7`, `setup-node@v7` are the current majors (checkout v7.0.1, setup-node v7.1.0). Node 20 was removed as an action runtime on **2026-09-23**; runners now execute every JS action on **Node 24**, so stay on majors built for it. checkout v7 also refuses to check out a fork PR under `pull_request_target` / `workflow_run` unless you set `allow-unsafe-pr-checkout: true` — never set it.
 
 ## Caching
 
 Two mechanisms, in order of preference:
 
 1. **Built-in `cache:` on `setup-*`** — `setup-node`, `setup-python`, `setup-go`, etc. cache the package manager's store keyed on the lockfile. Free, one line. Use it.
-2. **`actions/cache@v4`** — for anything else (build output, custom tool dirs, compiled artifacts).
+2. **`actions/cache@v6`** — for anything else (build output, custom tool dirs, compiled artifacts).
 
 The cache key is the whole game. A cache is **immutable once written for a key** — if your key never changes, you cache stale deps forever.
 
 ```yaml
 # Bad — fixed key never invalidates; you restore yesterday's broken node_modules forever
-- uses: actions/cache@v4
+- uses: actions/cache@v6
   with:
     path: ~/.npm
     key: npm-cache
 
 # Good — key changes when the lockfile changes; restore-keys gives a warm partial hit
-- uses: actions/cache@v4
+- uses: actions/cache@v6
   with:
     path: ~/.npm
     key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -114,17 +114,17 @@ jobs:
       max-parallel: 4
       matrix:
         os: [ubuntu-latest, macos-latest]
-        node: [20, 22, 24]
+        node: [22, 24, 26]
         exclude:
           - os: macos-latest      # don't pay the macOS multiplier on every version
-            node: 20
+            node: 22
         include:
-          - os: ubuntu-latest     # one extra cell: lint only on the canonical combo
+          - os: ubuntu-latest     # matches an existing cell: adds lint: true to it, no new cell
             node: 24
             lint: true
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: { node-version: "${{ matrix.node }}", cache: npm }
       - run: npm ci && npm test
 ```
@@ -209,7 +209,7 @@ deploy:
     id-token: write
     contents: read
   steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: aws-actions/configure-aws-credentials@<full-40-char-sha>
       with:
         role-to-assume: arn:aws:iam::123456789012:role/gh-deploy
