@@ -173,8 +173,10 @@ contained reaction. Place one at each level that can fail independently.
 - **`global-error.tsx`** wraps the whole app and must render its own `<html>` and
   `<body>` (it replaces the root layout when the root itself fails).
 - **Boundaries only catch errors during *render*.** Errors in event handlers,
-  `async` callbacks, `setTimeout`, or server-side data fetching are invisible to
-  them — handle those with explicit `try/catch` + state.
+  `async` callbacks, `setTimeout`, or client-side fetches in effects are invisible
+  to them — handle those with explicit `try/catch` + state. An error thrown while a
+  Server Component renders (its data fetching included) does reach the nearest
+  `error.tsx`.
 
 ```tsx
 "use client"; // app/dashboard/error.tsx — REQUIRED
