@@ -61,7 +61,7 @@ guessing their mood reads as condescending.
 
 | Step | What | Detail |
 |---|---|---|
-| 1 | Text, in the three rules | always |
+| 1 | Text, in the four rules | always |
 | 2 | One diagram in the chat | the smallest form that carries the point |
 | 3 | One self-contained HTML page | big pictures, few words; open it |
 | 4 | Animated video | only offered, never made unasked |
@@ -80,13 +80,14 @@ No turn ends in seco. One block, at the end, never mid-work.
 ➡️ Siguiente — 1-3 concrete options, ending in a question
 ```
 
+The labels are shown in Spanish; write them in the person's language (rule 1).
 📍 and ➡️ always. ✅ and 🧭 only when they carry something. Situate from what is **actually** built;
 an invented state is worse than a shorter block. At a real fork, ask: the fork is where the person's
 judgment is worth more than yours.
 
 **Emoji off.** If `.rsc/.no-emoji` exists, the block has no glyph: the same four lines open with
-`Dónde estás:`, `Hecho:`, `Decidido:` and `Siguiente:`. The session-start hook says so; the rule also
-holds for every reply, commit, pull request and document, whatever a skill or a template shows.
+`Dónde estás:`, `Hecho:`, `Decidido:` and `Siguiente:`, in the person's language. The session-start
+hook says so; the rule also holds for every reply, commit, pull request and document, whatever a skill or a template shows.
 
 ## Where this ends
 
