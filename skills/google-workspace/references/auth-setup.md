@@ -94,7 +94,7 @@ genuinely cannot federate, and then secret-manage + rotate them.
 | `unauthorized_client` | Client ID/scope not authorized for DWD | Add client ID + exact scopes in Manage DWD |
 | `403 accessNotConfigured` / `SERVICE_DISABLED` | API not enabled on the project | Enable it in the Cloud console |
 | `403 insufficient permissions` | Scope too narrow for the call | Use the correct (still least) scope |
-| `400 failedPrecondition` | `subject` set without DWD configured | Finish DWD, or drop `subject` for app-owned |
+| `400 failedPrecondition` ("Precondition check failed") | Gmail called as the bare SA, no `subject` — an SA has no mailbox | Set `subject` to a Workspace user and authorize DWD |
 | `invalid_grant` | Clock skew, or rotated/revoked key | Sync clock (NTP); re-issue key |
 | `404` on a user's resource via SA, no DWD | SA can't see resources it doesn't own | Share the resource to the SA, or impersonate via DWD |
 | `403 rateLimitExceeded` / `429` | Per-user/project quota hit | Exponential backoff + jitter; batch; spread load |

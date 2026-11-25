@@ -9,10 +9,11 @@ when you need fixed latency/SLA or the router's pay-as-you-go cost stops being p
 
 | Tier | From |
 |---|---|
-| CPU | ~$0.032 / core / hr |
+| CPU | ~$0.033 / core / hr |
 | GPU (entry) | ~$0.50 / hr |
 | GPU A10G | ~$1.00 / hr |
-| GPU H100 | ~$6.40–8.00 / hr |
+| GPU H200 (AWS) | ~$5.00 / hr |
+| GPU H100 (GCP) | ~$10.00 / hr |
 
 ### Scale-to-zero
 
@@ -78,7 +79,8 @@ A Space hosts a demo app at a public `*.hf.space` URL. Pick the SDK by need:
 
 ### ZeroGPU
 
-Dynamic GPU allocation: an **H200 MIG slice (3g.71gb, ~70GB)** is grabbed only while a decorated
+Dynamic GPU allocation: **half an NVIDIA RTX Pro 6000 Blackwell (48GB)** by default — or the full
+96GB card with `@spaces.GPU(size="xlarge")`, at 2x quota cost — is grabbed only while a decorated
 function runs and released when idle. **Gradio SDK only.**
 
 ```python

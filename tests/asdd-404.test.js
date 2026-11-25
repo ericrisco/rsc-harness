@@ -150,6 +150,9 @@ test('gate: a passing spec without the panel is still refused; one lens is not a
   const none = guard(r, 'git push');
   assert.match(none, /no review panel of 3 lens\(es\) is recorded/);
   assert.match(none, /review ledger panel sign-in\/closing --lenses correctness,security,tests/);
+  // One repository is its own evidence: no --repo, and the command runs where the repo is.
+  assert.doesNotMatch(none, /--repo/);
+  assert.match(none, /\(run from the repository\)/);
   assert.equal(run(r, ['review', 'ledger', 'panel', 'sign-in/T001', '--lenses', 'security']).status, 0);
   assert.match(guard(r, 'git push'), /largest still valid: 1/);
   assert.equal(run(r, ['review', 'ledger', 'panel', 'other-spec/closing', '--lenses', 'a,b,c']).status, 0);

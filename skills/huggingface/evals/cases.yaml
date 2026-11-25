@@ -37,5 +37,5 @@ capability:
       - "InferenceClient or the OpenAI-compatible router base URL https://router.huggingface.co/v1"
       - "a partner provider (e.g. together/fireworks), not hf-inference, for the 8B LLM"
       - "HF_TOKEN read from the environment, never a hardcoded hf_ literal"
-      - "cost awareness: Free $0.10 / PRO $2 monthly credits then pay-as-you-go, no markup"
+      - "cost awareness: no monthly credits on Free, PRO $2/mo, then pay-as-you-go, no markup"
       - "a dedicated Inference Endpoint with scale-to-zero as the graduation path when traffic is steady"

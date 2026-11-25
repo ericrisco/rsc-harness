@@ -48,7 +48,7 @@ Symptom of requesting any of these: the whole `/insights` call returns a 400, no
 
 Added late 2025 / early 2026; present only on recent versions. Confirm against `GRAPH_VERSION` before requesting, or they trip the same 400:
 
-- Reels **skip rate** / swipe-away signal.
+- Reels **skip rate** / swipe-away signal (`reels_skip_rate`).
 - **Repost** counts (`reposts`).
 - **Crossposted** Reel views (`crossposted_views`, `facebook_views`).
 

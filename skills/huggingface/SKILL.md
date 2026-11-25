@@ -30,7 +30,7 @@ did not need.
 
 | Situation | Use | Why |
 |---|---|---|
-| Try a model now, low/dev volume, own no infra | **Inference Providers router** (`InferenceClient`) | Fastest path; monthly credits cover dev. |
+| Try a model now, low/dev volume, own no infra | **Inference Providers router** (`InferenceClient`) | Fastest path; pay-as-you-go (PRO includes monthly credits, Free has none). |
 | CPU task: embeddings, text-ranking, text-classification, small BERT/GPT-2 | `provider="hf-inference"` | That is exactly its remaining niche as of July 2025. |
 | Big LLM (8B, 70B, 405B) through HF | router with a **partner provider** (Together/Fireworks/Cerebras/DeepInfra…) | `hf-inference` does not serve big LLMs — it will 404 or stall. |
 | Steady prod traffic, need fixed latency/SLA | **dedicated Inference Endpoint** + scale-to-zero | Predictable, autoscaling, billed per minute. |
@@ -41,14 +41,14 @@ did not need.
 ## Auth & install
 
 ```bash
-pip install "huggingface_hub[inference]"   # 1.17.0; needs Python >=3.10
+pip install huggingface_hub               # 2.4.0; needs Python >=3.10
 pip install transformers                    # 5.x line, PyTorch-first, optional/local
 hf auth login                               # stores a token; or export HF_TOKEN=...
 ```
 
-- **The CLI is `hf` now**, shaped `hf <resource> <action>` (`hf auth login`, `hf download`,
-  `hf upload`, `hf repo create`, `hf jobs run`). `huggingface-cli` still runs but prints a
-  deprecation warning — do not write it into new scripts.
+- **The CLI is `hf`**, shaped `hf <resource> <action>` (`hf auth login`, `hf download`,
+  `hf upload`, `hf repos create`, `hf jobs run`). `huggingface_hub` 2.0 removed the
+  `huggingface-cli` entry point and the singular `hf repo` group — scripts that call them fail.
 - **Never hardcode a `hf_...` token in code** — tokens leak the moment the file hits git. Read
   from the environment instead:
 
@@ -91,8 +91,8 @@ client = OpenAI(
 - **`InferenceClient.post()` was removed** (dropped in hub v0.31.0). Use the task methods:
   `chat.completions.create()`, `text_generation()`, `feature_extraction()` (embeddings),
   `text_to_image()`, `automatic_speech_recognition()`.
-- **Credits are real and small**: Free $0.10/mo, PRO $2.00/mo, Team/Enterprise $2.00 per seat
-  (shared). Past that you are pay-as-you-go and must buy credits. Budget accordingly — why: a
+- **Credits are real and small**: Free users get none (buy credits first), PRO $2.00/mo,
+  Team/Enterprise $2.00 per seat (shared). Past that you are pay-as-you-go and must buy credits. Budget accordingly — why: a
   chat loop on a 70B model burns the free tier in minutes.
 - A **Custom Provider Key** bypasses HF billing entirely (the provider bills you; HF credits do
   not apply). For org billing, pass `bill_to="org-name"` (header `X-HF-Bill-To`).
@@ -103,7 +103,7 @@ client = OpenAI(
 
 ```bash
 hf download meta-llama/Llama-3.1-8B-Instruct --include "*.safetensors"
-hf repo create my-org/my-model --repo-type model
+hf repos create my-org/my-model --repo-type model
 hf upload my-org/my-model ./out --commit-message "v1 weights"
 ```
 
@@ -134,7 +134,7 @@ commit. Match the model to your constraint; do not grab whatever is trending.
 Move off the router when you need fixed latency/SLA, or the router's PAYG cost stops being
 predictable. An Endpoint is your own autoscaling deployment.
 
-- Pricing: CPU from ~$0.032/core/hr, GPU from ~$0.50/hr (A10G ~$1.00/hr, H100 ~$6.40–8.00/hr),
+- Pricing: CPU from ~$0.033/core/hr, GPU from ~$0.50/hr (A10G ~$1.00/hr, H200 on AWS ~$5.00/hr, H100 on GCP ~$10.00/hr),
   **billed per minute** even though shown hourly.
 - Enable **scale-to-zero** for bursty traffic — it parks at $0 when idle and cold-starts on the
   next request. A bursty 100–1000 req/day workload typically lands at **$20–60/mo**.
@@ -143,7 +143,7 @@ predictable. An Endpoint is your own autoscaling deployment.
 
 ## Spaces + ZeroGPU
 
-A Space hosts a demo app with a public URL. **ZeroGPU** grabs an H200 MIG slice (~70GB) only
+A Space hosts a demo app with a public URL. **ZeroGPU** grabs half an NVIDIA RTX Pro 6000 Blackwell (48GB; `size="xlarge"` for the full 96GB at 2x quota) only
 while a decorated function runs, then releases it.
 
 ```python
@@ -162,12 +162,12 @@ def generate(prompt: str) -> str:
 ```python
 from transformers import pipeline
 pipe = pipeline("text-generation", model="meta-llama/Llama-3.1-8B-Instruct",
-                device_map="auto", torch_dtype="auto")
+                device_map="auto", dtype="auto")
 print(pipe("Hello", max_new_tokens=64)[0]["generated_text"])
 ```
 
 - `pipeline("task", model=...)` for quick use; `AutoModelForCausalLM.from_pretrained(...)` when
-  you need control over generation/quantization. Set `device_map`/`torch_dtype` explicitly.
+  you need control over generation/quantization. Set `device_map`/`dtype` explicitly (`torch_dtype` is deprecated).
 - Use local only when you are **offline, data-private, or already on a GPU**. Otherwise the
   router is far less ops than babysitting CUDA and weights.
 
@@ -179,13 +179,13 @@ print(pipe("Hello", max_new_tokens=64)[0]["generated_text"])
 | `provider="hf-inference"` for a 70B/405B LLM | CPU niche; 404s or stalls | Route to a partner provider (Together/Fireworks/Cerebras) |
 | `api_key="hf_abc123..."` in code | Token leaks in git history | Read `os.environ["HF_TOKEN"]` |
 | Spin up a dedicated Endpoint just to try a model | Burns money idle | Use the router first; graduate only on real traffic |
-| Assuming router calls are free/unlimited | Free tier is $0.10/mo | Budget credits; expect PAYG |
+| Assuming router calls are free/unlimited | Free accounts get no monthly credits; PRO $2/mo | Budget credits; expect PAYG |
 | ZeroGPU under Streamlit/Docker SDK | Unsupported, silently no GPU | Use the Gradio SDK |
-| `huggingface-cli ...` in new scripts | Deprecated, warns | Use `hf ...` |
+| `huggingface-cli ...` / `hf repo ...` in scripts | Removed in `huggingface_hub` 2.0; the command fails | Use `hf ...` / `hf repos ...` |
 | OpenAI base URL other than `https://router.huggingface.co/v1` | Won't reach the HF router | Use that exact host |
 
 ## verify.sh
 
 `scripts/verify.sh [TARGET]` is a static, read-only linter (no network, no token). It flags the
 hard violations above — `.post(`, hardcoded `hf_` tokens, big-LLM-to-`hf-inference`, wrong router
-host — and warns on legacy `huggingface-cli`. It exits 0 on a clean or empty target.
+host, the removed `huggingface-cli`. It exits 0 on a clean or empty target.

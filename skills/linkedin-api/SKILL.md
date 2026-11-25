@@ -80,13 +80,13 @@ Before publishing as an org, confirm the authed member holds an eligible **page 
 Current organic endpoint: `POST https://api.linkedin.com/rest/posts`. The legacy `/v2/ugcPosts` and `/v2/shares` are deprecated — migrate to the versioned `/rest/posts`. Pin the version **once**:
 
 ```bash
-LINKEDIN_VERSION=202605   # supported until 2027-05-15; 202505 is sunset — pinning a sunset version breaks
+LINKEDIN_VERSION=202611   # supported until 2027-11-16; 202511 is sunset — pinning a sunset version breaks
 ```
 
 Every versioned call carries **two** headers (omit either and you get 426/400):
 
 ```text
-Linkedin-Version: 202605
+Linkedin-Version: 202611
 X-Restli-Protocol-Version: 2.0.0
 ```
 
@@ -200,7 +200,7 @@ CTR ~4.4%. The "common 403 causes" hook outperformed the plain howto.
 
 | Anti-pattern | Why it breaks | Do instead |
 |---|---|---|
-| Pinning `Linkedin-Version: 202505` | That version is sunset; calls start failing on cutover | Pin `202605` in one constant; bump deliberately |
+| Pinning `Linkedin-Version: 202511` | That version is sunset; calls start failing on cutover | Pin `202611` in one constant; bump deliberately |
 | Sending only `Linkedin-Version`, dropping `X-Restli-Protocol-Version` | Versioned endpoints reject the request (426/400) | Always send both headers together |
 | Expecting the API to scrape an article URL | Posts API never fetches OG tags; you get a bare link | Set `source`/`title`/`description` + an uploaded Image URN |
 | Reading the new post id from the response body | The URN is in `x-restli-id`, body has no id | Read the `x-restli-id` response header |

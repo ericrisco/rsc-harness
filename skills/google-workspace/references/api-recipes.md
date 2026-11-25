@@ -1,8 +1,8 @@
 # API recipes — extended Node + Python
 
 Longer, copy-paste recipes that did not fit in SKILL.md. All assume an authed
-client built per SKILL.md "Build the authed client". Versions as of 2026-06-02:
-`googleapis` latest 173.x (maintenance mode), `google-auth-library` 10.6.2.
+client built per SKILL.md "Build the authed client". Versions as of 2026-11-25:
+`googleapis` latest 190.x (maintenance mode), `google-auth-library` 11.x.
 
 ## Gmail — raw MIME with an attachment
 

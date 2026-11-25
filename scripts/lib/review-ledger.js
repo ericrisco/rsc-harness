@@ -9,7 +9,7 @@
 // One JSONL file, append-only: `finding`, `outcome` and `round` entries. It sits under .rsc/ and is
 // excluded from the sello's candidate like every other journal the harness writes (targets/sello.mjs).
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { criterionRefs } from './review-findings.js';
@@ -194,7 +194,10 @@ export function round(root, task, { now = new Date().toISOString() } = {}) {
 // Records that a review panel ran on a task: which lenses, distinct. Self-attested, like the sello's
 // approve — it binds the claim to a task, it does not prove the review was good. The ship guard reads
 // it: a tier-2 branch does not leave the machine without a panel of the required size on its spec.
-export function panel(root, task, lenses, { now = new Date().toISOString() } = {}) {
+// `repo` names the reviewed checkout when it is not the ledger's own repository: a child repo or its
+// worktree supervised by a workspace keeps its evidence in the workspace, but the commit reviewed is
+// the child's, and that is the commit the push gate checks the panel against.
+export function panel(root, task, lenses, { now = new Date().toISOString(), repo = root } = {}) {
   if (!QUALIFIED_TASK.test(task)) {
     return { ok: false, message: `rsc: qualify the task with its spec slug, e.g. \`review ledger panel <slug>/closing --lenses correctness,security,tests\`.` };
   }
@@ -205,8 +208,16 @@ export function panel(root, task, lenses, { now = new Date().toISOString() } = {
   const n = budget.count + (!budget.count || budget.panelled ? 1 : 0);
   if (n > MAX_ROUNDS) return { ok: false, message: convergenceMessage(task) };
   // Bound to the commit reviewed: code committed after it is code no panel has seen.
-  const r = spawnSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true });
+  const r = spawnSync('git', ['-C', repo, 'rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true });
   const sha = r.status === 0 ? r.stdout.trim() : null;
+  if (repo !== root) {
+    // A folder inside some repo resolves HEAD by walking up; only the checkout's own top level counts.
+    const top = spawnSync('git', ['-C', repo, 'rev-parse', '--show-toplevel'], { encoding: 'utf8', windowsHide: true });
+    const real = (p) => { try { return realpathSync(p); } catch { return null; } };
+    if (!sha || top.status !== 0 || real(top.stdout.trim()) !== real(repo)) {
+      return { ok: false, message: `rsc: --repo ${repo} is not the top of a git checkout with a commit; name the repository the panel reviewed.` };
+    }
+  }
   const assigned = panelAssignments(ledger);
   const finding_ids = ledger.filter((e) => e.type === 'finding' && e.task === task && e.round_pending
     && !assigned.has(JSON.stringify([task, e.id]))).map((e) => e.id);

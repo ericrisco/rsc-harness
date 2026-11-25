@@ -816,3 +816,77 @@ for (const command of ['memory', 'git-permissions']) {
     assert.deepEqual(readManifest(d).optOuts, optOuts);
   });
 }
+test('349 a child repo panel recorded from the workspace with --repo clears the gate', () => {
+  const d = repo('main');
+  const child = join(d, 'Child repo');
+  mkdirSync(child);
+  git(child, 'init', '-qb', 'main');
+  git(child, 'config', 'user.email', 't@example.com');
+  git(child, 'config', 'user.name', 'Test');
+  write(child, 'a.txt', 'a');
+  git(child, 'add', '.');
+  git(child, 'commit', '-qm', 'initial');
+  git(child, 'switch', '-qc', 'feat/login');
+  write(child, 'auth/login.js', 'changed');
+  git(child, 'add', '.');
+  git(child, 'commit', '-qm', 'login');
+  write(d, '02-DOCS/wiki/sdd/specs/login.md', SPEC);
+  const check = () => asddGate(d, 'git -C "Child repo" push', { sello, specCompleteness });
+  // The way out names the child, so following it literally records the commit the gate checks.
+  assert.match(check() || '', /--repo 'Child repo'` \(run from the workspace root\)/);
+  const panel = (args) => spawnSync(process.execPath, [CLI, 'review', 'ledger', 'panel', 'login/closing', '--lenses', 'correctness,security,tests', ...args], { cwd: d, encoding: 'utf8' });
+  // Without --repo the panel binds the workspace HEAD, which is not in the child's history.
+  assert.equal(panel([]).status, 0);
+  assert.match(check() || '', /no review panel/);
+  const r = panel(['--repo', 'Child repo']);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, new RegExp(git(child, 'rev-parse', '--short=7', 'HEAD')));
+  assert.equal(check(), null);
+  // Code committed in the child after the panel needs it again.
+  write(child, 'auth/login.js', 'changed again');
+  git(child, 'commit', '-qam', 'more');
+  assert.match(check() || '', /no review panel/);
+});
+test('349 --repo that is not a checkout is refused and records nothing', () => {
+  const d = repo('main');
+  const r = spawnSync(process.execPath, [CLI, 'review', 'ledger', 'panel', 'login/closing', '--lenses', 'a,b,c', '--repo', 'nope'], { cwd: d, encoding: 'utf8' });
+  assert.equal(r.status, 1);
+  assert.match(r.stdout + r.stderr, /not the top of a git checkout/);
+  assert.equal(spawnSync('test', ['-e', join(d, '.rsc', 'review-ledger.jsonl')]).status, 1);
+  // A folder inside the workspace is not a checkout: git would walk up and bind the workspace HEAD.
+  mkdirSync(join(d, 'sub'));
+  const s = spawnSync(process.execPath, [CLI, 'review', 'ledger', 'panel', 'login/closing', '--lenses', 'a,b,c', '--repo', 'sub'], { cwd: d, encoding: 'utf8' });
+  assert.equal(s.status, 1);
+  const bare = spawnSync(process.execPath, [CLI, 'review', 'ledger', 'panel', 'login/closing', '--lenses', 'a,b,c', '--repo'], { cwd: d, encoding: 'utf8' });
+  assert.equal(bare.status, 1);
+  assert.match(bare.stdout + bare.stderr, /--repo needs the path/);
+  assert.equal(spawnSync('test', ['-e', join(d, '.rsc', 'review-ledger.jsonl')]).status, 1);
+});
+test('349 without --repo a repo with no commits still records, as before', () => {
+  const d = mkdtempSync(join(tmpdir(), 'rsc-349-'));
+  git(d, 'init', '-qb', 'main');
+  const r = spawnSync(process.execPath, [CLI, 'review', 'ledger', 'panel', 'x/closing', '--lenses', 'a,b,c'], { cwd: d, encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+});
+test('349 the printed --repo survives a shell: hostile directory names stay literal', () => {
+  const d = repo('main');
+  const name = "it's $(echo PWNED);`id`|x";
+  const child = join(d, name);
+  mkdirSync(child);
+  git(child, 'init', '-qb', 'main');
+  git(child, 'config', 'user.email', 't@example.com');
+  git(child, 'config', 'user.name', 'Test');
+  write(child, 'a.txt', 'a');
+  git(child, 'add', '.');
+  git(child, 'commit', '-qm', 'initial');
+  git(child, 'switch', '-qc', 'feat/login');
+  write(child, 'auth/login.js', 'changed');
+  git(child, 'add', '.');
+  git(child, 'commit', '-qm', 'login');
+  write(d, '02-DOCS/wiki/sdd/specs/login.md', SPEC);
+  const why = asddGate(d, `git -C ${JSON.stringify(child)} push`, { sello, specCompleteness }) || '';
+  const arg = /--repo (.+?)` \(run from/.exec(why)?.[1];
+  assert.ok(arg, why);
+  const out = spawnSync('sh', ['-c', `printf '%s' ${arg}`], { encoding: 'utf8' });
+  assert.equal(out.stdout, name);
+});

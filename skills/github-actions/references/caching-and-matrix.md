@@ -39,7 +39,7 @@ For image builds inside a workflow, cache layers with the GitHub Actions cache b
 
 ## Matrix shaping
 
-`include` adds cells or extra variables; `exclude` removes specific combinations. They compose: the matrix is built, `exclude` prunes, then `include` appends.
+`include` adds cells or extra variables; `exclude` removes specific combinations. They compose: the matrix is built, `exclude` prunes, then `include` is applied — an entry whose original keys all match an existing cell only adds its extra variables to that cell; any other entry appends a new cell.
 
 ```yaml
 strategy:
@@ -47,12 +47,12 @@ strategy:
   max-parallel: 6
   matrix:
     os: [ubuntu-latest, macos-latest, windows-latest]
-    node: [20, 22, 24]
+    node: [22, 24, 26]
     exclude:
-      - { os: windows-latest, node: 20 }   # drop an unsupported combo
-      - { os: macos-latest, node: 20 }
+      - { os: windows-latest, node: 22 }   # drop an unsupported combo
+      - { os: macos-latest, node: 22 }
     include:
-      - { os: ubuntu-latest, node: 24, coverage: true }  # one cell does coverage
+      - { os: ubuntu-latest, node: 24, coverage: true }  # matches an existing cell: adds coverage to it
 ```
 
 - `fail-fast: false` — every cell reports, even after one fails. Use it for compatibility matrices where you want the full grid of results.

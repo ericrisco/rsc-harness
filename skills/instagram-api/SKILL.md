@@ -32,7 +32,7 @@ You cannot publish from a personal account. Confirm these before writing any cal
   - Facebook Login for Business → IG account linked to a FB Page → host `graph.facebook.com`.
   - Instagram Login (direct) → host `graph.instagram.com`.
   Why: the host is not interchangeable per call; mixing tokens and hosts throws auth errors.
-- **Scopes (current names):** `instagram_business_content_publish` to publish, `instagram_business_manage_insights` to read metrics. Why: the old `instagram_basic` / `instagram_content_publish` were deprecated 2025-01-27 and silently grant nothing now.
+- **Scopes depend on the login path:** Instagram Login uses `instagram_business_basic`, `instagram_business_content_publish` and `instagram_business_manage_insights`; Facebook Login for Business uses `instagram_basic`, `instagram_content_publish`, `instagram_manage_insights` and `pages_read_engagement`. Why: on Instagram Login the old `business_basic` / `business_content_publish` / `business_manage_insights` names were deprecated 2025-01-27 — requesting a scope from the wrong path grants nothing.
 - **Long-lived token = 60 days**, refreshable before expiry. A short-lived user token lasts ~1h. Why: anything in a script needs the long-lived token or it dies within the hour.
 
 Env block — generate code that reads these, never hard-code the token:
@@ -133,22 +133,22 @@ Full container field reference (reels / carousel / story), cover & thumb handlin
 | `ERROR` | Failed (bad url, bad codec, eligibility) | Stop; read `status`, fix source |
 | `EXPIRED` | Container unpublished too long | Stop; recreate from step 1 |
 
-Why the 5-min ceiling: containers expire. If you poll forever you will eventually publish an `EXPIRED` id and get an error. Cap retries.
+Why the 5-min ceiling: Meta's guidance is to poll once per minute for no more than 5 minutes; a container still not `FINISHED` by then is stuck, so stop and inspect `status`. Containers left unpublished for 24h become `EXPIRED`. Cap retries.
 
 ## Limits — check before a batch
 
 | Rule | How |
 |---|---|
-| **50 API-published posts per rolling 24h** per IG account | `GET /{IG_USER_ID}/content_publishing_limit?fields=quota_usage,config` |
-| Over the cap | `media_publish` rejects with **error subcode #51** ("publishing limit reached") |
+| **100 API-published posts per rolling 24h** per IG account | `GET /{IG_USER_ID}/content_publishing_limit?fields=quota_usage,config` |
+| Over the cap | `media_publish` rejects with **error code 9, subcode 2207042** ("maximum number of posts") |
 
 ```bash
 curl -s "https://$GRAPH_HOST/$GRAPH_VERSION/$IG_USER_ID/content_publishing_limit?fields=quota_usage" \
   -d "access_token=$IG_ACCESS_TOKEN"
-# -> {"data":[{"quota_usage": 12, "config": {"quota_total": 50}}]}
+# -> {"data":[{"quota_usage": 12, "config": {"quota_total": 100}}]}
 ```
 
-Why check first: in a batch, hitting #51 mid-run leaves half your queue unpublished and no clean resume point. Read `quota_usage` and stop early.
+Why check first: in a batch, hitting the cap (subcode 2207042) mid-run leaves half your queue unpublished and no clean resume point. Read `quota_usage` and stop early.
 
 ## Fetch insights
 
@@ -229,10 +229,10 @@ current valid Reels set; no deprecated names requested.
 | Requesting `plays` / `impressions` | 400s the whole insights call | Use `views`; consult the trap table |
 | Leaving `GRAPH_VERSION` blank / using default | Metric set silently shifts on Meta's rollout | Pin `v25.0` in every call |
 | Signed/auth-gated `video_url` | Container stalls in `ERROR` | Plain public MP4 for the full window |
-| Batch publishing without cap check | Hit #51 mid-run, half-published queue | `content_publishing_limit` before the loop |
-| Old scopes (`instagram_basic`, `instagram_content_publish`) | Grant nothing since 2025-01-27 | `instagram_business_basic` / `instagram_business_content_publish` |
+| Batch publishing without cap check | Hit the cap (subcode 2207042) mid-run, half-published queue | `content_publishing_limit` before the loop |
+| Pre-2025 Instagram Login scopes (`business_basic`, `business_content_publish`), or scopes from the other login path | Grant nothing (IG Login names deprecated 2025-01-27) | IG Login: `instagram_business_*`; FB Login: `instagram_basic` / `instagram_content_publish` |
 | Storing the container id as "the post" | It's not the published media id | Persist the `media_publish` id |
 | Sending a `graph.instagram.com` token to `graph.facebook.com` | Host is fixed by the login path, not chosen per call | Pick the host with the auth path and stay on it |
 | Letting the 60-day long-lived token lapse | Every call fails with an auth error, not a 404 | Refresh before expiry |
-| A source video outside Reel eligibility | Surfaces as container `ERROR`, not a clean validation message | 9:16, 5–90s, H.264/HEVC |
+| A source video outside Reel eligibility | Surfaces as container `ERROR`, not a clean validation message | 3 s–15 min, ≤300 MB, H.264/HEVC + AAC, 9:16 recommended |
 | Requesting the 2025–2026 additions (Reels skip rate, repost counts, crossposted views) blind | Version-gated — trips the same 400 trap as a deprecated name | Confirm they exist on `GRAPH_VERSION` first |

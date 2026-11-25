@@ -107,11 +107,12 @@ if printf '%s' "$URLHITS" | grep -q .; then
   fi
 fi
 
-# --- SOFT: legacy huggingface-cli in shell/scripts ---
+# --- HARD: huggingface-cli was removed in huggingface_hub 2.0 ---
 CLIHITS="$(scan 'huggingface-cli ' || true)"
 if printf '%s' "$CLIHITS" | grep -q .; then
-  warn_msg "legacy 'huggingface-cli' is deprecated — prefer 'hf <resource> <action>':"
+  fail_msg "'huggingface-cli' was removed in huggingface_hub 2.0 — use 'hf <resource> <action>':"
   printf '%s\n' "$CLIHITS"
+  HARD=1
 fi
 
 if [ "$HARD" -ne 0 ]; then

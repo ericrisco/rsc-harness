@@ -449,12 +449,20 @@ export function branchCheck(
       reviewedStill(repo, sha, trunk, sello, cfg, tip || 'HEAD'),
     );
     if (best >= required) return null;
+    // A child repo keeps its evidence in the workspace; the panel must name the child's commit.
+    // Forward slashes, and single quotes around anything unusual: the line is meant to be pasted
+    // into a shell, and a directory named after a branch may hold `$()`, `;` or a backtick.
+    const at = relative(evidence, repo).split('\\').join('/');
+    const repoFlag =
+      evidence === repo
+        ? ''
+        : ` --repo ${/^[\w./-]+$/.test(at) ? at : `'${at.replace(/'/g, "'\\''")}'`}`;
     return (
       `Branch "${branch}" is risk tier 2 and its spec passes, but no review panel of ${required} lens(es) is recorded for it` +
       `${best ? ` (largest still valid: ${best})` : ''}. Tier 2 is reviewed by the full panel, not by one reviewer, and a panel covers ` +
       'the commit it was recorded on: code committed after it needs the panel again (the record is self-attested, like the sello). ' +
       `Recover: run the ${required} fresh-context refuters (correctness, security, tests) on the branch, then record it — ` +
-      `\`npx @ericrisco/rsc review ledger panel ${slugs[0]}/closing --lenses correctness,security,tests\` — and push again. ` +
+      `\`npx @ericrisco/rsc review ledger panel ${slugs[0]}/closing --lenses correctness,security,tests${repoFlag}\` (run from ${evidence === repo ? 'the repository' : 'the workspace root'}) — and push again. ` +
       'To turn this gate off for the project: create `.rsc/.no-asdd-gate`.'
     );
   }

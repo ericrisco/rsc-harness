@@ -13,6 +13,8 @@ should_trigger:
     why: Spanish trigger — strict config plus replacing any with precise types, language/compiler scope.
   - prompt: "Convert these magic-string statuses into a discriminated union with an exhaustiveness check."
     why: Discriminated unions + never guard, the canonical modeling pattern here.
+  - prompt: "We upgraded to TypeScript 7 and tsc now says Option 'baseUrl' has been removed. How do I migrate the tsconfig?"
+    why: Compiler config migration to TS 7 (removed options, paths without baseUrl) — owned here.
   - prompt: "Por que no estrecha el tipo despues del if? sigue siendo string | undefined."
     why: Catalan/Spanish non-obvious narrowing question — type-system diagnosis.
 
@@ -36,11 +38,12 @@ should_not_trigger:
 capability:
   - scenario: >
       Given a loosely-typed module (any-heavy, string-keyed state object, no tsconfig),
-      produce strict types plus a tsconfig that compiles under `tsc --noEmit`.
+      produce strict types plus a tsconfig that compiles under TypeScript 7 `tsc --noEmit`.
     must_include:
       - "Replaces every `any` with `unknown`, a generic, or a precise type."
       - "Models the state as a discriminated union with a literal discriminant (not string)."
       - "Adds an exhaustive `never` guard so a new union member is a compile error."
       - "Ships a strict tsconfig: strict, noUncheckedIndexedAccess, verbatimModuleSyntax, isolatedModules."
+      - "The tsconfig is valid on TypeScript 7: no baseUrl, outFile, node10/classic resolution or esModuleInterop false; moduleResolution is nodenext or bundler; any needed @types are listed in `types`."
       - "Uses `import type` for type-only imports where applicable."
       - "Uses no `as` casts to silence errors (each remaining `as` is justified, e.g. `as const` or a validated boundary)."

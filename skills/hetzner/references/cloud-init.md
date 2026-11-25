@@ -32,13 +32,15 @@ packages:
   - unattended-upgrades
 
 # --- drop-in sshd hardening (braces) so an image default can't re-enable it ---
+# sshd keeps the FIRST value it reads and loads drop-ins in lexical order, so the
+# file must sort before the image's 50-cloud-init.conf: 00-, never 99-.
 write_files:
-  - path: /etc/ssh/sshd_config.d/99-hardening.conf
+  - path: /etc/ssh/sshd_config.d/00-hardening.conf
     content: |
       PermitRootLogin no
       PasswordAuthentication no
       PubkeyAuthentication yes
-      ChallengeResponseAuthentication no
+      KbdInteractiveAuthentication no
       # Optional: move the port. Obscurity, not security — keep key-only + firewall regardless.
       # Port 2222
   - path: /etc/apt/apt.conf.d/20auto-upgrades

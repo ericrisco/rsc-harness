@@ -36,7 +36,7 @@ should_not_trigger:
 capability:
   - scenario: "I have a Node 20 service in a GitHub repo. Give me a hardened CI + deploy pipeline that tests on a matrix of node versions and deploys to AWS on tag pushes without static credentials."
     must_include:
-      - "First-party actions on current majors (checkout@v6, setup-node@v6); third-party actions pinned to a full 40-char commit SHA."
+      - "First-party actions on current majors (checkout@v7, setup-node@v7); third-party actions pinned to a full 40-char commit SHA."
       - "Top-level permissions set to contents: read, widened per job only where needed."
       - "Built-in npm cache via setup-node (cache: npm) keyed on the lockfile."
       - "A test job using strategy.matrix across multiple node versions."
