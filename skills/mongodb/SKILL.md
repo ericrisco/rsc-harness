@@ -191,7 +191,7 @@ db.orders.aggregate([
       pipeline: [ { $project: { name: 1 } } ]     // project inside $lookup: pull only what you need
   }},
   { $group: { _id: "$customerId", total: { $sum: "$amount" } } }
-], { allowDiskUse: true })  // $group/$sort spill past 100 MB/stage; this lets large groups complete,
+], { allowDiskUse: true })  // spill past 100 MB/stage even where allowDiskUseByDefault=false (6.0+ default: true);
                             // it is NOT a substitute for a missing $match index — see anti-patterns.
 ```
 
@@ -291,7 +291,8 @@ Serverless / M2 / M5 were auto-migrated to Flex.
 ### Aggregation memory
 
 Each blocking stage (`$group`, `$sort` without an index, `$bucket`) is capped at **100 MB**. Past it
-the stage errors unless `allowDiskUse:true` lets it spill. Spilling is a correctness fallback for
+the stage spills to disk (6.0+, `allowDiskUseByDefault` is `true` on `mongod`); it errors only when
+the server sets that parameter to `false` or the query passes `allowDiskUse:false`. Spilling is a correctness fallback for
 genuinely large groups, not a performance fix for a missing index.
 
 ## Verify

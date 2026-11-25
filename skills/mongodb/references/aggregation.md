@@ -88,8 +88,9 @@ transactions-and-ops.)
 ## Memory limit and `allowDiskUse`
 
 Each blocking stage (`$group`, `$sort` without a supporting index, `$bucket`,
-`$setWindowFields`) is capped at **100 MB**. Past it the stage errors unless you pass
-`allowDiskUse: true`, which lets it spill to temporary files on disk.
+`$setWindowFields`) is capped at **100 MB**. Past it the stage spills to temporary files on disk:
+since 6.0 the `mongod` parameter `allowDiskUseByDefault` is `true`. The stage errors instead when that
+parameter is `false` (then pass `allowDiskUse: true` to spill) or the query passes `allowDiskUse: false`.
 
 Spilling is the right tool for a genuinely large aggregation (an analytics rollup over the whole
 collection). It is the **wrong** tool to "fix" a slow pipeline whose real problem is a `$match` that
