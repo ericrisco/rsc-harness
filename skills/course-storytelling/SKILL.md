@@ -91,7 +91,7 @@ LANDING RECIPE — <concept>
 ```text
 Bad  (lecture)  — "Idempotency means an operation can be applied multiple times without
                    changing the result beyond the initial application."
-Good (landed)   — HOOK: "Ever double-clicked 'Pay' and panicked you'd be charged twice?"
+Good (landed; story illustrative — use the user's true one) — HOOK: "Ever double-clicked 'Pay' and panicked you'd be charged twice?"
                   STORY: the night a retry double-charged 4,000 customers...
                   MODEL: 'The Elevator Button' — pressing it five times still calls one elevator.
                   ANALOGY: the button's already lit; more presses change nothing.
