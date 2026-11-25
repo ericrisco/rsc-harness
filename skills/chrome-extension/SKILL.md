@@ -16,7 +16,7 @@ An MV3 extension is **three isolated JavaScript contexts that never share memory
 
 Internalize that picture first. Most extension bugs are someone treating one of these as if it shared state with another. They do not. The wire between them is `chrome.runtime` messaging and `chrome.storage`.
 
-Manifest V3 is the only version the Chrome Web Store accepts; MV2 phase-out began June 2024 and is still rolling out. Build MV3 from the start.
+Manifest V3 is the only version the Chrome Web Store accepts; MV2 extensions are disabled in Chrome stable (from Chrome 138) and stop running from Chrome 139, when the enterprise exception ends. Build MV3 from the start.
 
 ## Pick a skeleton
 
