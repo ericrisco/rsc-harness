@@ -1,6 +1,6 @@
 ---
 name: shopify
-description: "Use when building or customizing a Shopify store across its three code surfaces — themes (Liquid, Online Store 2.0 sections, blocks and JSON templates), apps (Remix with the versioned GraphQL Admin API and its query-cost model), and checkout (UI extensions, Functions, Web Pixels), plus the CLI flow and checkout-extensibility migration. NOT WooCommerce or PHP stores (that is `wordpress`), NOT the React layer of a headless storefront (that is `nextjs`), NOT non-Shopify payment integrations (that is `stripe`)."
+description: "Use when building or customizing a Shopify store across its three code surfaces — themes (Liquid, Online Store 2.0 sections, blocks and JSON templates), apps (the React Router template with the versioned GraphQL Admin API and its query-cost model), and checkout (UI extensions, Functions, Web Pixels), plus the CLI flow and checkout-extensibility migration. NOT WooCommerce or PHP stores (that is `wordpress`), NOT the React layer of a headless storefront (that is `nextjs`), NOT non-Shopify payment integrations (that is `stripe`)."
 tags: [shopify, liquid, ecommerce, themes, checkout, graphql, storefront]
 recommends: [nextjs, stripe, wordpress, api-design, seo-geo]
 origin: risco
@@ -23,7 +23,7 @@ Pinned stack (verify against shopify.dev before pinning in a repo):
   2025-07†. Each version is supported ~12 months. Pin `apiVersion` and bump quarterly.
   † `2025-07` is at the edge of its window — accessible only until 2026-07-16; treat it as
   sunsetting and do not pin it in new work. Re-check the live list at shopify.dev/docs/api/usage/versioning.
-- **Remix app template** (`@shopify/shopify-app-remix`, App Bridge, Polaris React). GraphQL > REST —
+- **React Router app template** (`@shopify/shopify-app-react-router`, App Bridge, Polaris web components; Remix merged into React Router 7 and the Remix template is for existing apps only). GraphQL > REST —
   REST Admin API is legacy; Shopify steers all new app work to GraphQL.
 - **Dawn** — Shopify's source-available reference theme; OS 2.0 architecture is the baseline.
 
@@ -35,7 +35,7 @@ was a Liquid section, or editing `checkout.liquid` when the seam is now an exten
 | Surface | You're working on… | Tool & entry | Reference |
 |---|---|---|---|
 | **Theme** | `.liquid` files, `{% schema %}`, JSON templates, storefront rendering, merchant-editable content | `shopify theme dev` on a Dawn-based theme | `references/liquid-themes.md` |
-| **App** | embedded admin UI, reading/writing store data, webhooks, automation | `shopify app dev` on the Remix template + Admin GraphQL | `references/apps-graphql.md` |
+| **App** | embedded admin UI, reading/writing store data, webhooks, automation | `shopify app dev` on the React Router template + Admin GraphQL | `references/apps-graphql.md` |
 | **Checkout** | checkout/thank-you/order-status UI or logic, discounts, shipping, tracking | Checkout UI extensions / Functions / Web Pixels | `references/checkout-extensibility.md` |
 
 If the answer is "the React rendering layer of a headless storefront", that is `../nextjs/SKILL.md`,
@@ -125,13 +125,13 @@ shopify app deploy   # release app + extensions  (NOT `app config push` — remo
 CLI 4.x auto-upgrades via your package manager but skips CI and project-local installs — pin the
 version in CI so a silent bump never changes a release.
 
-## App surface — Remix + GraphQL Admin API
+## App surface — React Router template + GraphQL Admin API
 
-Apps are the Remix template. The shape:
+New apps start from the React Router template (existing Remix apps: Shopify's upgrade guide). The shape:
 
 ```text
 app/shopify.server.js     # shopifyApp({ apiVersion, sessionStorage, webhooks, ... })
-app/routes/app.*.jsx      # embedded admin pages (App Bridge + Polaris)
+app/routes/app.*.jsx      # embedded admin pages (App Bridge + Polaris web components, `<s-page>`)
 shopify.app.toml          # app config, scopes, webhook subscriptions
 extensions/*              # app extensions (theme app ext, UI ext, Functions, Flow)
 ```

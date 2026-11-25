@@ -1,12 +1,12 @@
 # Shopify apps & the GraphQL Admin API — deep dive
 
-Companion to the App surface section of `../SKILL.md`. The template is `@shopify/shopify-app-remix`.
+Companion to the App surface section of `../SKILL.md`. The template is `@shopify/shopify-app-react-router`.
 
 ## Template wiring
 
 ```js
 // app/shopify.server.js
-import { shopifyApp, ApiVersion } from "@shopify/shopify-app-remix/server";
+import { shopifyApp, ApiVersion } from "@shopify/shopify-app-react-router/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 
 const shopify = shopifyApp({
