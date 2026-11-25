@@ -83,7 +83,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routers import health, users
 from app.core.config import Settings, get_settings
-from app.db.base import engine
+from app.db.base import get_engine
 from app.exceptions import register_exception_handlers
 
 # Routers paired with their mount prefix + OpenAPI tag, declared once so the factory
@@ -99,7 +99,7 @@ async def lifespan(_app: FastAPI):
     # Open pools/caches on startup (here), never at import time, so importing the module has
     # no side effects (tests and Alembic import it freely).
     yield
-    await engine.dispose()   # release pooled DB connections so workers exit cleanly
+    await get_engine().dispose()   # release pooled DB connections so workers exit cleanly
 
 
 def _install_cors(app: FastAPI, settings: Settings) -> None:
@@ -232,11 +232,11 @@ from typing import Annotated
 from fastapi import Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.base import async_session_factory
+from app.db.base import get_sessionmaker
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:
-    session = async_session_factory()
+    session = get_sessionmaker()()
     try:
         yield session
         await session.commit()   # commit only if the handler returned without raising
@@ -266,7 +266,7 @@ def get_pagination(
 PageParams = Annotated[Pagination, Depends(get_pagination)]
 ```
 
-→ [`references/database.md`](references/database.md) for `async_session_factory` wiring; → [`references/security.md`](references/security.md)
+→ [`references/database.md`](references/database.md) for session-factory wiring; → [`references/security.md`](references/security.md)
 for `get_current_user` and `require_roles`.
 
 ## Routers & endpoints
@@ -360,16 +360,25 @@ hierarchy in → [`references/production.md`](references/production.md) (AppErro
 
 ```python
 from datetime import datetime
+from functools import lru_cache
 from uuid import UUID, uuid4
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.core.config import get_settings
 
-engine = create_async_engine(str(get_settings().database_url), pool_pre_ping=True)
-async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
+
+@lru_cache
+def get_engine() -> AsyncEngine:
+    # Built on first use, never at import time: tests and Alembic import this module freely.
+    return create_async_engine(str(get_settings().database_url), pool_pre_ping=True)
+
+
+@lru_cache
+def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(get_engine(), expire_on_commit=False)
 
 
 class Base(DeclarativeBase):
@@ -455,7 +464,7 @@ Dockerfile and CI/CD pipeline.
 | `BackgroundTasks` for a payment-webhook retry | No durability/retry. Use a real broker. |
 | Skipping `mypy --strict` because it is noisy | Strict catches the bugs FastAPI's runtime won't. Keep it. |
 | Committing inside the handler | Let `get_db` own commit/rollback; handlers stay thin. |
-| Default-mutable arg / engine built at import time | Mutable defaults bite; engine must live in lifespan. |
+| Default-mutable arg / engine built at import time | Mutable defaults bite; build the engine lazily (`get_engine()`), dispose it in lifespan. |
 
 ## Project grounding
 
