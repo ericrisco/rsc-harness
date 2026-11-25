@@ -11,12 +11,13 @@ origin: risco
 Express data and contracts precisely in the TypeScript type system, and configure the
 compiler so the types actually hold.
 
-Targets **TypeScript 5.9** (current stable, Q1 2026): redesigned `tsc --init` defaults
+Written against **TypeScript 5.9**: redesigned `tsc --init` defaults
 (`module: nodenext`, `target: esnext`, `moduleDetection: force`, strict on), `import defer`
 for deferred module evaluation, expandable editor hovers. The **TypeScript 7 native
-compiler** (`tsgo`, the Go port) is in preview as `@typescript/native-preview` and
-type-checks roughly 10x faster (VS Code's 1.5M LOC: 89s -> 8.74s) — adopt it for fast
-local checks; stable 7.0 lands early 2026.
+compiler** (the Go port) type-checks roughly 10x faster (VS Code's 1.5M LOC: 89s -> 8.74s);
+`typescript` 7.x on npm ships it as `tsc`, and `@typescript/native-preview` ships it as `tsgo`.
+Read the project's version first (`npx tsc -v`) and check its release notes before advising on
+a version newer than 5.9.
 
 ## Boundary: language vs runtime vs framework
 

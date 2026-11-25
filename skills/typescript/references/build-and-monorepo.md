@@ -102,8 +102,8 @@ Adoption steps:
 1. Add it as a dev dependency; keep `typescript` (`tsc`) installed as the stable fallback.
 2. Run `tsgo --noEmit` in CI for the speed win; if a diagnostic differs, fall back to `tsc` for
    that check and report it — the preview does not yet cover 100% of `tsc` behavior.
-3. Stable TS 7.0 is targeted for 2026; until then treat `tsgo` as the checker, `tsc` as the
-   reference/emitter.
+3. On a project whose `typescript` is 7.x, `tsc` is already the native compiler and the preview
+   package is unnecessary; check `npx tsc -v` before adding it.
 
 ## Declaration emit & publishing a library
 
