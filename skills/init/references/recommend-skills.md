@@ -1,9 +1,9 @@
 # Recommend Skills — the skill map, sample printouts & the "siempre 3 opciones" pattern
 
-Phase 3 detail. Map discovery to individual rsc skills, print the exact
+Phase 3 detail. Map discovery to individual rsc skills, propose the exact
 `npx @ericrisco/rsc add` commands, and run the requirements-first 3-option decision pattern
-for any significant choice. A skill **cannot install anything** — it recommends
-and prints commands the user runs.
+for any significant choice. With a terminal, run them yourself after a one-word
+confirm; only without a shell, print them for the user to run.
 
 ## The skill map
 
@@ -38,7 +38,7 @@ npx @ericrisco/rsc add <skill> [<skill> ...]
 
 ```text
 Based on what you described (a web app with a backend, a Next.js UI, a landing
-page, and you want to ship it securely), install these:
+page, and you want to ship it securely), I'll install these:
 
 npx @ericrisco/rsc add harness        # the control plane — scaffolds and governs the workspace
 npx @ericrisco/rsc add fastapi postgresdb   # the API and the database
@@ -46,33 +46,33 @@ npx @ericrisco/rsc add nextjs design  # the web UI people see
 npx @ericrisco/rsc add marketing      # the words for your landing page
 npx @ericrisco/rsc add security-audit deployment   # ship it safely
 
-Once they're installed, run the harness skill and I'll build the project structure.
+Say yes and I'll install them, then build the project structure.
 ```
 
 ### Sample printout — non-code harness, running an agency's operations
 
 ```text
 You're organizing how your agency runs — client emails, contracts, invoicing,
-and you want it all findable. That's a non-code harness; install:
+and you want it all findable. That's a non-code harness; I'll install:
 
 npx @ericrisco/rsc add harness        # your 01-TOOLS (connections) + 02-DOCS (your second brain)
 npx @ericrisco/rsc add security-audit deployment   # connect email, payments, drive — and keep credentials safe
 npx @ericrisco/rsc add marketing      # for the proposals, decks and copy you send clients
 
-Once installed, run the harness skill and I'll set up the structure that holds it all.
+Say yes and I'll install them, then set up the structure that holds it all.
 ```
 
 ### Sample printout — greenfield AI agent
 
 ```text
-You want an AI agent that answers questions over your own documents. Install:
+You want an AI agent that answers questions over your own documents. I'll install:
 
 npx @ericrisco/rsc add harness            # the control plane
 npx @ericrisco/rsc add building-agents    # agent loops, tools, RAG
 npx @ericrisco/rsc add fastapi postgresdb # an API + database to serve it
 npx @ericrisco/rsc add security-audit deployment   # ship it safely
 
-Then run the harness skill.
+Say yes and I'll install them and set up the workspace.
 ```
 
 ## The "siempre 3 opciones" decision pattern
