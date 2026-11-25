@@ -776,7 +776,7 @@ function profileDir(level) {
   return root;
 }
 
-test('claude: wires danger-guard on PreToolUse(Bash) alongside ship-guard, materialized + idempotent', async () => {
+test('claude: wires danger-guard on Bash and PowerShell alongside ship-guard, materialized + idempotent', async () => {
   const cwd = mkdtempSync(join(tmpdir(), 'rsc-cwd-'));
   await applyInstall({ skillIds: ['suggest'], target: 'claude', cwd });
   await applyInstall({ skillIds: ['suggest'], target: 'claude', cwd }); // re-install → no dupes
@@ -786,7 +786,9 @@ test('claude: wires danger-guard on PreToolUse(Bash) alongside ship-guard, mater
   const ship = settings.hooks.PreToolUse.filter((e) => JSON.stringify(e).includes('ship-guard'));
   assert.equal(danger.length, 1, 'exactly one danger-guard entry');
   assert.equal(ship.length, 1, 'ship-guard still wired (two distinct Bash guards)');
-  assert.equal(danger[0].matcher, 'Bash');
+  const matcher = new RegExp(`^(?:${danger[0].matcher})$`);
+  for (const shell of ['Bash', 'PowerShell']) assert.ok(matcher.test(shell), shell);
+  assert.ok(!matcher.test('Read'));
   assert.ok(danger[0].hooks[0].command.startsWith('node '));
   assert.ok(existsSync(join(cwd, '.rsc/danger-guard.mjs')), 'danger-guard.mjs materialized');
 });

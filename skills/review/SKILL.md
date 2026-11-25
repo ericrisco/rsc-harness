@@ -139,6 +139,18 @@ fresh-context subagents** (`refuter-correctness` · `refuter-security` · `refut
 told to *refute* readiness, not confirm it. Fresh context is the point: a reviewer who inherits the
 implementer's context inherits its blind spots. The closing review is always at least tier 1.
 
+On Codex, select the installed profile with `agent_type`. When the router asks for a
+`task_name`, give the thread a separate name using lowercase letters, digits and underscores.
+For a fresh review, use `fork_turns: "none"` when supported. For repeated calls, append a
+unique suffix to the task name (for example, `finding_verifier_2`).
+
+`agent_type` | `task_name`
+--- | ---
+`refuter-correctness` | `refuter_correctness`
+`refuter-security` | `refuter_security`
+`refuter-tests` | `refuter_tests`
+`finding-verifier` | `finding_verifier`
+
 **Give each refuter exactly four inputs — no more, no less.** The diff alone is not enough, and
 that is not a detail: with only the diff, the one failure class no test suite can structurally
 catch — *the change is correct and is not what the approved spec asked for* — is invisible to the
