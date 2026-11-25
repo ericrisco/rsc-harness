@@ -100,8 +100,8 @@ recall data says you should.
 
 ```python
 # Asymmetric model: query and document use DIFFERENT input_type. Getting this wrong is silent.
-q_vec   = embed(text=user_question, input_type="search_query")     # Cohere / Voyage
-d_vec   = embed(text=passage,       input_type="search_document")
+q_vec   = embed(text=user_question, input_type="search_query")     # Cohere; Voyage: "query"
+d_vec   = embed(text=passage,       input_type="search_document")  # Voyage: "document"
 # e5 / BGE convention is a textual prefix instead:
 #   query    -> "query: how do refunds work"
 #   passage  -> "passage: Refunds are processed within 14 days…"
@@ -173,7 +173,7 @@ flags hybrid/rerank artifacts that mention no recall/nDCG/MRR for exactly this r
 | Anti-pattern | Why it bites | Do instead |
 |---|---|---|
 | Chunk size in characters | "512" means a different token count per language/model | Token-accurate count (`tiktoken`/model tokenizer) |
-| Same `input_type` for query and document | Asymmetric models silently lose recall, no error | `search_query` vs `search_document` (or `query:`/`passage:`) |
+| Same `input_type` for query and document | Asymmetric models silently lose recall, no error | `search_query` vs `search_document` (Cohere), `query` vs `document` (Voyage), or `query:`/`passage:` prefixes |
 | Cosine model indexed/queried with L2 | Ranking is silently wrong | Match metric to model (cosine → `<=>`) |
 | Add a reranker to fix bad recall | Reranker only reorders what retrieval returned | Fix recall (hybrid, chunking, model) first |
 | No overlap on prose | Sentences cut mid-thought lose the answer | 10–20% overlap |
