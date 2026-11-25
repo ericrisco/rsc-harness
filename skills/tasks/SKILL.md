@@ -41,7 +41,7 @@ use analogies and ask once "technical or with analogies?"; never invent one.
 
 ## Inputs (refuse to start without them)
 
-You break down a **plan**, not an intent. Before slicing, confirm all three exist:
+You break down a **plan**, not an intent. Before slicing, confirm the first three exist; read the fourth if present:
 
 1. **The plan** — `02-DOCS/wiki/sdd/plans/<slug>.md`, written by the `plan`
    phase. It must contain the architecture, interfaces, and testing strategy.
