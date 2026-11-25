@@ -8,7 +8,7 @@ Linkedin-Version: 202605
 X-Restli-Protocol-Version: 2.0.0
 ```
 
-`202605` is the latest version moniker (`li-lms-2026-05`). `202505` is sunset — do not pin it.
+`202605` (`li-lms-2026-05`) is a supported version, sunset 2027-05-15; newer monthly versions exist — check the [API migration status](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/migrations#api-migration-status) table before pinning. `202505` is sunset — do not pin it.
 
 ## Publish payloads — `POST /rest/posts`
 
