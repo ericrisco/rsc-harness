@@ -158,8 +158,9 @@ String describe(PaymentResult r) {
 }
 ```
 
-Java 25 adds **primitive type patterns** in `instanceof` and `switch` (e.g. `case int i`),
-extending exhaustiveness to primitives.
+Java 25 previews **primitive type patterns** in `instanceof` and `switch` (e.g. `case int i`),
+extending exhaustiveness to primitives. It is still a preview feature (JEP 507): it needs
+`--enable-preview`, so keep it out of production code.
 
 ## Concurrency: virtual threads
 
