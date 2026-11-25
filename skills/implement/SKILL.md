@@ -66,7 +66,7 @@ GREEN    → write the least code that makes that test pass. No extra features, 
 TRIANGULATE → add the smallest edge-case test that proves the behavior is not hard-coded
            (only when config.testing.strict_tdd is true and the task has meaningful edge cases).
 REFACTOR → with the test green, clean up names/duplication/shape. Re-run; still green. Only now.
-COMMIT   → commit this task as one logical unit (authorship = Eric; see ship for the rule).
+COMMIT   → commit this task as one logical unit (authorship = the human author, the configured git user; no AI attribution; see ship for the rule).
 ```
 
 The order is load-bearing. **Red before green** is not a suggestion — a test you write *after* the
@@ -339,7 +339,7 @@ outranks the plan, and the plan outranks your in-the-moment preference.
 - **Unresolved `analyze` findings** (contradiction between constitution ↔ spec ↔ plan ↔ tasks) →
   resolve them before any code; they will only get more expensive after the diff exists.
 - **A task forces a constitution violation** → surface it, stop, kick it back to `analyze`/`plan`.
-- **You're on the default branch** → stop before the first commit and ask: branch or default branch (`worktrees`).
+- **You're on a closed default branch** → stop before the first commit and ask: this branch, a new one, or unlock (`worktrees`).
 - **A test won't go red** for the right reason (import error, syntax) → stub the module, fix the test.
 - **The combined suite is red after a parallel merge** → do not checkpoint as done; debug with
   `debug` before continuing.
@@ -349,7 +349,7 @@ outranks the plan, and the plan outranks your in-the-moment preference.
 ## Checklist (copy per task)
 
 ```text
-- [ ] a) RED for the right reason → GREEN → REFACTOR; committed as one unit (authorship = Eric)
+- [ ] a) RED for the right reason → GREEN → REFACTOR; committed as one unit (authorship = the configured git user, no AI attribution)
 - [ ] b) `rsc risk` on the task diff; tier recorded
 - [ ] c) `review ledger round <slug>/<task>` before each review (≤ 3); by tier, fresh context, no pre-judging
 - [ ] d) `review consolidate` + `finding-verifier`; `review ledger record`; outcomes closed
