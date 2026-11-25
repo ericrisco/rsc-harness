@@ -43,7 +43,7 @@ obligations. Ask the operator the attribute questions, then apply this table.
 | Stores / processes / transmits cardholder data | PCI DSS v4.0.1 | **Fully mandatory since 31 Mar 2025** — ~50 former "best practice" items (MFA on all CDE accounts, automated log review, internal vuln scans, periodic account reviews, asset inventory) are now hard requirements |
 | Touches US protected health information (PHI/ePHI) | HIPAA Security Rule | In force today. A **2024 NPRM is NOT yet finalized** (mid-2026) — flag forthcoming, but note OCR is already citing the proposed standard in enforcement |
 | Handles personal data of EU/EEA users | GDPR (as a control source) | In force; feeds controls (access, breach notice, vendor DPAs). Document *text* → `../gdpr-privacy/SKILL.md` |
-| Builds or deploys an AI system, esp. high-risk use | EU AI Act | Phased — see below; **2 Aug 2026 is the active legal date** for Annex III high-risk |
+| Builds or deploys an AI system, esp. high-risk use | EU AI Act | Phased — see below; Annex III high-risk applies from **2 Dec 2027** (Digital Omnibus) |
 | Is an EU financial entity (or critical ICT vendor to one) | DORA | **In force since Jan 2025** — ICT risk mgmt, incident reporting, resilience testing, third-party risk |
 | Operates essential/important services in the EU | NIS2 | Transposed in 21/27 member states by Mar 2026; many set a first audit deadline of **30 Jun 2026** |
 
@@ -51,13 +51,13 @@ obligations. Ask the operator the attribute questions, then apply this table.
 
 - Prohibited practices + AI-literacy: **2 Feb 2025**.
 - GPAI-model obligations + governance + penalties: **2 Aug 2025**.
-- Annex III (use-based) high-risk obligations: **2 Aug 2026**.
-- Annex I (product-regulated, incl. medical devices): **2 Aug 2027**.
-- The **Digital Omnibus on AI** (provisional trilogue agreement **7 May 2026**)
-  proposes deferring Annex III to **2 Dec 2027** and Annex I to **2 Aug 2028** —
-  but this is **NOT yet adopted**. Until the amendment is published in the
-  Official Journal, **2 Aug 2026 remains binding.** Plan to the original date;
-  flag the deferral as forthcoming-not-final.
+- Annex III (use-based) high-risk obligations: **2 Dec 2027**.
+- Annex I (product-regulated, incl. medical devices): **2 Aug 2028**.
+- Both high-risk dates come from the **Digital Omnibus on AI**, Regulation (EU)
+  2026/1744 (Official Journal 24 Jul 2026, in force 27 Jul 2026), which moved
+  Annex III from 2 Aug 2026 and Annex I from 2 Aug 2027. The deferral covers the
+  Chapter III high-risk obligations only; other obligations (e.g. transparency)
+  keep their own dates — check the consolidated text before scoping.
 - Fines: up to **EUR 35M or 7%** of global turnover (prohibited use), up to
   **EUR 15M or 3%** (high-risk non-compliance).
 

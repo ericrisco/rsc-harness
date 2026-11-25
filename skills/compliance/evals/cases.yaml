@@ -12,7 +12,7 @@ should_trigger:
   - prompt: "Set up a continuous-compliance calendar so we stop scrambling the week before every audit."
     why: Non-obvious operating-rhythm trigger — the weekly control-health review and cadence calendar.
   - prompt: "Does the EU AI Act apply to our recommender system, and what's the deadline we have to hit?"
-    why: Scoping to a dated framework — must surface 2 Aug 2026 as active and flag the Omnibus deferral as not-yet-adopted.
+    why: Scoping to a dated framework — must surface the Annex III date set by the Digital Omnibus (2 Dec 2027), not the superseded 2 Aug 2026.
   - prompt: "¿Qué compliance necesitamos para una app de salud con datos médicos de usuarios europeos?"
     why: Spanish + multi-framework sector scoping (HIPAA-style PHI, GDPR-as-source, SOC 2), not a single document.
 
@@ -39,7 +39,7 @@ capability:
       - Scopes to HIPAA for the PHI, flagging the 2024 NPRM as forthcoming/not-yet-finalized while noting OCR is already enforcing toward it
       - Treats GDPR as a control source for the EU users (and routes the privacy-document drafting to gdpr-privacy, not drafting it here)
       - Includes SOC 2 (Security TSC) for the enterprise-readiness angle and notes Type II tests operating effectiveness over a 3-12 month window
-      - Scopes the EU AI Act high-risk obligations to the active 2 Aug 2026 date while flagging the 7 May 2026 Digital Omnibus proposed deferral to 2 Dec 2027 as not-yet-adopted
+      - Scopes the EU AI Act Annex III high-risk obligations to 2 Dec 2027 (Digital Omnibus, Regulation (EU) 2026/1744, in force 27 Jul 2026), not the superseded 2 Aug 2026
       - Produces a control register with owner / evidence / cadence columns, one row per control
       - Notes the SOC 2 / ISO 27001 ~60-70% overlap to keep a single multi-tagged register instead of duplicates
       - Stands up an operating rhythm with a weekly control-health review and a cadence calendar

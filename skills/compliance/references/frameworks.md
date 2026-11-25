@@ -41,17 +41,17 @@ Phased application:
 | --- | --- |
 | Prohibited practices + AI-literacy | 2 Feb 2025 |
 | GPAI-model obligations + governance + penalties | 2 Aug 2025 |
-| Annex III (use-based) high-risk obligations | **2 Aug 2026 — active legal date** |
-| Annex I (product-regulated, incl. medical devices) | 2 Aug 2027 |
+| Annex III (use-based) high-risk obligations | **2 Dec 2027** |
+| Annex I (product-regulated, incl. medical devices) | 2 Aug 2028 |
 
 High-risk obligations include conformity assessment, registration, risk
 management, data governance, logging, and human oversight.
 
-**Digital Omnibus on AI** — a provisional trilogue agreement (**7 May 2026**)
-proposes deferring Annex III high-risk to **2 Dec 2027** and Annex I to
-**2 Aug 2028**. It is **NOT yet adopted**. Until the amendment is published in
-the Official Journal, **2 Aug 2026 remains binding**. Plan to the original date;
-record the deferral as forthcoming-not-final.
+**Digital Omnibus on AI** — Regulation (EU) 2026/1744 (Official Journal
+**24 Jul 2026**, in force **27 Jul 2026**) set the high-risk dates above, moving
+Annex III from 2 Aug 2026 and Annex I from 2 Aug 2027. The deferral covers the
+Chapter III high-risk obligations only; other obligations (e.g. transparency)
+keep their own dates — check the consolidated text before scoping.
 
 Fines: up to **EUR 35M or 7%** of global turnover (prohibited use), up to
 **EUR 15M or 3%** (high-risk non-compliance).
