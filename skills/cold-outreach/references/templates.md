@@ -24,7 +24,7 @@ We {{outcome}} for {{a comparable team}}.
 {{compliant footer: see references/compliance-footer.md}}
 ```
 
-## Email — 4-step bump (same thread, reply to your own send)
+## Email — 5-step sequence (same thread, reply to your own send)
 
 ```text
 STEP 1 — Day 0   (the first touch above)
@@ -37,12 +37,16 @@ STEP 3 — Day +7   (angle: different pain, lower-friction ask)
 One more angle: teams like {{company}} also hit {{second pain}}. I wrote a
 2-page teardown on it — want me to send it? (no call required)
 
-STEP 4 — Day +12 (the breakup)
+STEP 4 — Day +12  (angle: social proof)
+{{peer company}} cut {{metric}} after {{change}} — similar setup to yours.
+{{ask}} — yes or no?
+
+STEP 5 — Day +18 (the breakup)
 Hi {{name}} — I'll stop here so I'm not cluttering your inbox. Should I
 close the file, or is {{the value}} worth 15 minutes later this quarter?
 ```
 
-The breakup is the highest-converting follow-up after step 1 — never skip it. Extend to step 5-7 only if a genuinely new `{{signal}}` appears.
+The breakup is the highest-converting follow-up after step 1 — never skip it. Extend to step 6-7 only if a genuinely new `{{signal}}` appears.
 
 ## LinkedIn — connection note (≤ ~300 chars, NO pitch)
 

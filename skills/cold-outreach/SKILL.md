@@ -133,7 +133,7 @@ Rules that make the table work:
 
 On LinkedIn the connection note must **not** pitch — earn the connection on a real signal, then make the ask in the first DM after they accept.
 
-Reusable skeletons for both channels — first-touch + 4-step bump, with every variable slot (`{{signal}}`, `{{outcome}}`, `{{proof}}`) marked — live in `references/templates.md`. Start from a skeleton, then fill every slot with a *real* value before sending. An unfilled slot is a defect, not a placeholder to ship.
+Reusable skeletons for both channels — the 5-step email sequence, with every variable slot (`{{signal}}`, `{{outcome}}`, `{{proof}}`) marked — live in `references/templates.md`. Start from a skeleton, then fill every slot with a *real* value before sending. An unfilled slot is a defect, not a placeholder to ship.
 
 ## Sending cadence & deliverability guardrails
 
