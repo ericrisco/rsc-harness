@@ -78,7 +78,12 @@ shipment = client.shipment.create(
     parcel={"length": 9, "width": 6, "height": 3, "weight": 12},  # drives DIM
 )
 # Filter to services that hit the promised delivery date, THEN take the cheapest.
-rate = shipment.lowest_rate(carriers=["USPS", "UPS", "FedEx"])
+on_time = [
+    r for r in shipment.rates
+    if r.carrier in {"USPS", "UPS", "FedEx"}
+    and r.delivery_days is not None and r.delivery_days <= 2   # the 2-day promise
+]
+rate = min(on_time, key=lambda r: float(r.rate))
 bought = client.shipment.buy(shipment.id, rate=rate)
 # `bought.tracker` is now live (pre_transit → ... → delivered).
 ```
