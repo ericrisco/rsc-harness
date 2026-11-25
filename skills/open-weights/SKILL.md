@@ -15,8 +15,8 @@ serve, or fine-tune anything — it feeds the skills that do (see [Related skill
 ## The one rule (read before you name a model)
 
 **Model names and their licenses change monthly. Never state a license from memory — open the
-model card and confirm it, every time.** This file was authored against cards live in mid-2026;
-by the time you read it, versions have shipped and terms have moved. So:
+model card and confirm it, every time.** Versions ship and terms move between one read and the
+next. So:
 
 - Treat every specific version/license line below as **[verify the card]**, not as settled fact.
 - State the license **class** (OSI-open vs custom-community vs restricted), then send the reader to
@@ -24,8 +24,7 @@ by the time you read it, versions have shipped and terms have moved. So:
 - The *decision framework* and the *class taxonomy* are the durable parts. The version list is the
   perishable part. Weight your trust accordingly.
 
-Real, verified-mid-2026 examples of *why* this rule exists — all confirmed against the source, and
-all things that were different at my Jan-2026 cutoff:
+Examples of *why* this rule exists, each confirmed against its source in mid-2026:
 
 - **Gemma 4** moved to **Apache-2.0**, while Gemma 1–3 stay on the custom Gemma Terms of Use
   (confirmed on [ai.google.dev/gemma/terms](https://ai.google.dev/gemma/terms), accessed
