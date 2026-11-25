@@ -94,9 +94,9 @@ skill. Note `.rsc/.no-ship-guard` opts out of the branch-hygiene rules above but
 sello, which has its own switch. The sello binds bytes, not intent — it proves what ships is what
 was reviewed, never that the review was any good.
 
-## The three landing options — always present exactly three
+## The landing options — three, or two when main is closed
 
-This mirrors the harness "siempre 3 opciones" pattern. Gather the one fact that changes the answer (does this repo use PRs / require review on `main`?), then present **exactly three** with an honest recommendation matched to the workflow, in the user's register.
+This mirrors the harness "siempre 3 opciones" pattern. Gather the one fact that changes the answer (does this repo use PRs / require review on `main`?), then present **all the legal options** (three; two when the default branch is closed, below) with an honest recommendation matched to the workflow, in the user's register.
 
 | Option | What it does | Choose it when |
 | --- | --- | --- |
@@ -137,7 +137,7 @@ Stacked PR / feature-track support still fits inside the three landing options: 
 
 ```bash
 git switch main && git pull --ff-only
-git merge --no-ff feature/<slug> -m "feat: <what shipped> (<spec-slug>)"   # no AI trailer
+git merge --no-ff feature/<slug> -m "✨ feat: <what shipped> (<spec-slug>)"   # no AI trailer
 git push origin main
 # the merge above already retired the worktree and its branch: post-merge does it
 git branch -d feature/<slug> 2>/dev/null || true   # no worktree involved? then the branch alone
@@ -157,7 +157,7 @@ Write the **commit(s)** clean, push, then open the PR with `gh`. The PR body lin
 ```bash
 git push -u origin feature/<slug>
 gh pr create \
-  --title "feat: <what shipped> (<spec-slug>)" \
+  --title "✨ feat: <what shipped> (<spec-slug>)" \
   --body-file /tmp/ship-pr-body.md          # body authored per the template below — NO AI footer
 ```
 
@@ -242,7 +242,7 @@ In the `orient` voice: the explainer, the checklist result in one line, the thre
 | Rationalization | Reality |
 | --- | --- |
 | "I'll add `Co-Authored-By: Claude` / a 'Generated with Claude Code' footer to be transparent" | It forges the record. The work is the responsible person's — no AI trailer, ever. Strip it. |
-| "Review didn't formally approve but it's obviously fine" | No verdict = not ready. Ship runs on APPROVE only. Route back to review. |
+| "Review didn't formally approve but it's obviously fine" | No verdict = not ready. Ship runs on APPROVE or APPROVE WITH NITS only. Route back to review. |
 | "Tier 2, but the three refuters approved — I'll self-merge" | An agent's approval never counts as a human's. Tier 2 waits for human approval. |
 | "Tier 2, one reviewer was enough here" | The push gate wants the panel recorded (`review ledger panel … --lenses correctness,security,tests`). Run the three, record them, then push. |
 | "The tree has a couple of stray edits, they're harmless" | A dirty tree means the merge is not the reviewed diff. Clean it or stash it first. |
@@ -284,7 +284,7 @@ End with:
     "used": ["ship"],
     "missing": [],
     "fallback": [],
-    "compact_rules": ["Keep exactly three landing options.", "Archive the final state."]
+    "compact_rules": ["Present every legal landing option: three, or two when main is closed.", "Archive the final state."]
   },
   "evidence": ["closing review verdict", "rsc risk tier", "verification record", "PR/merge/park/discard reference", "human approval when tier 2"]
 }
