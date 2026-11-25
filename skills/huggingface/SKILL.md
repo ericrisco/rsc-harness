@@ -30,7 +30,7 @@ did not need.
 
 | Situation | Use | Why |
 |---|---|---|
-| Try a model now, low/dev volume, own no infra | **Inference Providers router** (`InferenceClient`) | Fastest path; monthly credits cover dev. |
+| Try a model now, low/dev volume, own no infra | **Inference Providers router** (`InferenceClient`) | Fastest path; pay-as-you-go (PRO includes monthly credits, Free has none). |
 | CPU task: embeddings, text-ranking, text-classification, small BERT/GPT-2 | `provider="hf-inference"` | That is exactly its remaining niche as of July 2025. |
 | Big LLM (8B, 70B, 405B) through HF | router with a **partner provider** (Together/Fireworks/Cerebras/DeepInfra…) | `hf-inference` does not serve big LLMs — it will 404 or stall. |
 | Steady prod traffic, need fixed latency/SLA | **dedicated Inference Endpoint** + scale-to-zero | Predictable, autoscaling, billed per minute. |
