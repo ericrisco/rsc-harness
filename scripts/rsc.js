@@ -1359,7 +1359,7 @@ async function main() {
       const USE = [
         'Use: npx @ericrisco/rsc review consolidate [report.md|findings.json ...] [--json] [--window <lines>]',
         '  Without files it reads stdin. Each lens report carries its findings in ```json findings blocks.',
-        '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant|parked> | round <slug>/<task> | panel <slug>/<task> --lenses a,b,c | stats [--json]',
+        '     npx @ericrisco/rsc review ledger record <findings.json> [--task <id>] | outcome <id> <fixed|false|intentional|irrelevant|parked> | round <slug>/<task> | panel <slug>/<task> --lenses a,b,c [--repo <reviewed checkout>] | stats [--json]',
         '  Findings may include criterion and lens; with a qualified --task, recurring criterion objections are reported without dismissing them. round and panel share a three-round budget.',
         '     npx @ericrisco/rsc review escapes [--since <ref>] [--json]',
       ].join('\n');
@@ -1411,7 +1411,8 @@ async function main() {
         }
         if (sub === 'panel') {
           if (!a || a.startsWith('--')) return fail(USE);
-          const r = L.panel(root, a, str('lenses'));
+          const { resolve } = await import('node:path');
+          const r = L.panel(root, a, str('lenses'), str('repo') ? { repo: resolve(process.cwd(), str('repo')) } : {});
           if (!r.ok) return fail(r.message);
           say(r.message);
           return;

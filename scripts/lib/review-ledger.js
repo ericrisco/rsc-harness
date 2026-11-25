@@ -194,7 +194,10 @@ export function round(root, task, { now = new Date().toISOString() } = {}) {
 // Records that a review panel ran on a task: which lenses, distinct. Self-attested, like the sello's
 // approve — it binds the claim to a task, it does not prove the review was good. The ship guard reads
 // it: a tier-2 branch does not leave the machine without a panel of the required size on its spec.
-export function panel(root, task, lenses, { now = new Date().toISOString() } = {}) {
+// `repo` names the reviewed checkout when it is not the ledger's own repository: a child repo or its
+// worktree supervised by a workspace keeps its evidence in the workspace, but the commit reviewed is
+// the child's, and that is the commit the push gate checks the panel against.
+export function panel(root, task, lenses, { now = new Date().toISOString(), repo = root } = {}) {
   if (!QUALIFIED_TASK.test(task)) {
     return { ok: false, message: `rsc: qualify the task with its spec slug, e.g. \`review ledger panel <slug>/closing --lenses correctness,security,tests\`.` };
   }
@@ -205,8 +208,9 @@ export function panel(root, task, lenses, { now = new Date().toISOString() } = {
   const n = budget.count + (!budget.count || budget.panelled ? 1 : 0);
   if (n > MAX_ROUNDS) return { ok: false, message: convergenceMessage(task) };
   // Bound to the commit reviewed: code committed after it is code no panel has seen.
-  const r = spawnSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true });
+  const r = spawnSync('git', ['-C', repo, 'rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true });
   const sha = r.status === 0 ? r.stdout.trim() : null;
+  if (repo !== root && !sha) return { ok: false, message: `rsc: --repo ${repo} is not a git checkout with a commit; name the repository the panel reviewed.` };
   const assigned = panelAssignments(ledger);
   const finding_ids = ledger.filter((e) => e.type === 'finding' && e.task === task && e.round_pending
     && !assigned.has(JSON.stringify([task, e.id]))).map((e) => e.id);
