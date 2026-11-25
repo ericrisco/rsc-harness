@@ -26,7 +26,7 @@ Two things break Svelte code more than anything else: treating `$effect` as the 
 - Next.js / React Server Components → `../nextjs/SKILL.md`. Different reactivity model and data-loading contract. Never cross runes with RSC.
 - Pure TypeScript typing (generics, mapped/conditional types) with no Svelte dimension → `../typescript/SKILL.md`.
 - Deploy-target specifics (env, edge, project config) → `../vercel/SKILL.md`, `../netlify/SKILL.md`, `../cloudflare/SKILL.md`. This skill *picks the adapter*; those skills own the platform.
-- React, Vue/Nuxt, Astro, SolidJS, Angular are not in this catalog yet — keep any framework comparison brief and inline; do not link them.
+- React → `../react/SKILL.md`, Vue/Nuxt → `../vue-nuxt/SKILL.md`, Astro → `../astro/SKILL.md`, SolidJS → `../solid-js/SKILL.md`, Angular → `../angular/SKILL.md`.
 
 Current as of June 2026: **Svelte 5.56.x**, **SvelteKit 2.61.x**. Svelte 5 (runes) shipped Oct 2024.
 
